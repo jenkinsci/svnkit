@@ -40,17 +40,22 @@ public class SVNExternal {
     private String myURL;
     private String myPath;
     private SVNURL myResolvedURL;
+    private boolean myIsRevisionExplicit;
+    private boolean myIsPegRevisionExplicit;
     
     private SVNExternal() {
         myRevision = SVNRevision.UNDEFINED;
         myPegRevision = SVNRevision.UNDEFINED;
     }
     
-    public SVNExternal(String target, String url, SVNRevision pegRevision, SVNRevision revision) {
+    public SVNExternal(String target, String url, SVNRevision pegRevision, SVNRevision revision, 
+            boolean isRevisionExplicit, boolean isPegRevisionExplicit) {
         myPath = target;
         myURL = url;
         myRevision = revision;
         myPegRevision = pegRevision;
+        myIsRevisionExplicit = isRevisionExplicit;
+        myIsPegRevisionExplicit = isPegRevisionExplicit;
     }
     
     public SVNRevision getRevision() {
@@ -68,7 +73,15 @@ public class SVNExternal {
     public String getUnresolvedUrl() {
         return myURL;
     }
+
+    public boolean isRevisionExplicit() {
+        return myIsRevisionExplicit;
+    }
     
+    public boolean isPegRevisionExplicit() {
+        return myIsPegRevisionExplicit;
+    }
+
     public SVNURL resolveURL(SVNURL rootURL, SVNURL ownerURL) throws SVNException {
         String canonicalURL = SVNPathUtil.canonicalizePath(myURL);
         if (SVNPathUtil.isURL(canonicalURL)) {
@@ -127,13 +140,18 @@ public class SVNExternal {
     }
 
     public String toString() {
-        String value =  myPath + " -r" + myRevision + " " + myURL;
-        if (myPegRevision != SVNRevision.HEAD && !myPegRevision.equals(myRevision)) {
-            if (SVNRevision.isValidRevisionNumber(myPegRevision.getNumber())) {
-                value += "@" + myPegRevision; 
-            } else if (myPegRevision.getDate() != null) {
-                value += "@{" + myPegRevision + "}"; 
+        String value = "";
+        if (myIsPegRevisionExplicit && SVNRevision.isValidRevisionNumber(myPegRevision.getNumber())) {
+            if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
+                value += "-r" + myRevision + " ";
             }
+            value += myURL + "@" + myPegRevision + " " + myPath;
+        } else {
+            value += myPath; 
+            if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
+                value += " -r" + myRevision;
+            }            
+            value += " " + myURL;
         }
         return value;
     }
@@ -175,6 +193,9 @@ public class SVNExternal {
                 if (external.myPegRevision == SVNRevision.BASE) {
                     external.myPegRevision = SVNRevision.HEAD;
                 }
+                if (external.myPegRevision != SVNRevision.UNDEFINED) {
+                    external.myIsPegRevisionExplicit = true;
+                }
             } else {
                 external.myPath = token0;
                 external.myURL = token1;
@@ -182,7 +203,7 @@ public class SVNExternal {
             }
             if (external.myPegRevision == SVNRevision.UNDEFINED) {
                 external.myPegRevision = SVNRevision.HEAD;
-            }
+            } 
             if (external.myRevision == SVNRevision.UNDEFINED) {
                 external.myRevision = external.myPegRevision;
             }
@@ -227,6 +248,7 @@ public class SVNExternal {
                     SVNErrorManager.error(err);
                 }
                 external.myRevision = SVNRevision.create(revNumber);
+                external.myIsRevisionExplicit = true;
                 tokens.remove(i);
                 return i;
             }
@@ -243,4 +265,5 @@ public class SVNExternal {
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
         SVNErrorManager.error(err);
     }
+
 }

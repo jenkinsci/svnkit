@@ -653,8 +653,7 @@ public class SVNCopyClient extends SVNBasicClient {
                         boolean introduceVirtualExternalChange = false;
                         newExternals.clear();
                         for (int k = 0; k < externals.length; k++) {
-                            if (externals[k].getRevision() == SVNRevision.UNDEFINED || 
-                                    externals[k].getRevision() == SVNRevision.HEAD) {
+                            if (!externals[k].isRevisionExplicit()) {
                                 if (!introduceVirtualExternalChange) {
                                     introduceVirtualExternalChange = true;
                                 }
@@ -665,7 +664,8 @@ public class SVNCopyClient extends SVNBasicClient {
                                     wcAccess.open(externalWC, false, 0);
                                     externalEntry = wcAccess.getVersionedEntry(externalWC, false);
                                 } catch (SVNException svne) {
-                                    if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
+                                    SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
+                                    if (errCode == SVNErrorCode.ENTRY_NOT_FOUND || errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
                                         SVNErrorMessage err = svne.getErrorMessage().wrap("You specified to record " +
                                                 "externals revision but externals wc is missing, maybe make update first");
                                         SVNErrorManager.error(err);
@@ -678,7 +678,8 @@ public class SVNCopyClient extends SVNBasicClient {
                                 long externalCurrentRevision = externalEntry.getRevision();
                                 SVNExternal newExternal = new SVNExternal(externals[k].getPath(), 
                                         externals[k].getUnresolvedUrl(), externals[k].getPegRevision(), 
-                                        SVNRevision.create(externalCurrentRevision));
+                                        SVNRevision.create(externalCurrentRevision), true, 
+                                        externals[k].isPegRevisionExplicit());
                                 newExternals.add(newExternal);
                             } else {
                                 newExternals.add(externals[k]);
