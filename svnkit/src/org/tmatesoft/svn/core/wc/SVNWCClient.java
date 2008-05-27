@@ -1446,8 +1446,12 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             SVNAdminAreaInfo areaInfo = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
             SVNAdminArea anchor = areaInfo.getAnchor();
-            SVNEntry entry = anchor.getEntry(path.getName(), false);
-            SVNWCManager.markEntry(anchor, entry, SVNProperty.SCHEDULE_REPLACE, false, false, SVNWCManager.SCHEDULE);
+            if (path.equals(anchor.getRoot().getAbsoluteFile())) {
+                SVNWCManager.markTree(anchor, SVNProperty.SCHEDULE_REPLACE, false, false, SVNWCManager.SCHEDULE);
+            } else {
+                SVNEntry entry = anchor.getEntry(path.getName(), false);
+                SVNWCManager.markEntry(anchor, entry, SVNProperty.SCHEDULE_REPLACE, false, false, SVNWCManager.SCHEDULE);
+            }
             anchor.saveEntries(false);
         } finally {
             wcAccess.close();
