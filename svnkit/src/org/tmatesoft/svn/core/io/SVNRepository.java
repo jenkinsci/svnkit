@@ -1812,12 +1812,15 @@ public abstract class SVNRepository {
      */    
     public abstract ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, final ISVNWorkspaceMediator mediator) throws SVNException;
     
-    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, SVNProperties revProps, final ISVNWorkspaceMediator mediator) throws SVNException {
+    public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, SVNProperties revProps, 
+            final ISVNWorkspaceMediator mediator) throws SVNException {
         if (hasSVNProperties(revProps)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Standard properties can't be set explicitly as revision properties");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Standard properties can't be set explicitly as revision properties");
             SVNErrorManager.error(err);
         }
-        revProps = revProps == null ? new SVNProperties() : revProps;
+        
+        revProps = revProps == null ? new SVNProperties() : new SVNProperties(revProps);
         if (logMessage != null) {
             revProps.put(SVNRevisionProperty.LOG, logMessage);
         }
