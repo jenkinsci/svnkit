@@ -656,6 +656,10 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public long[] commit(String[] path, String message, boolean recurse, boolean noUnlock, boolean atomicCommit) throws ClientException {
+        return commit(path, message, JavaHLObjectFactory.infinityOrEmpty(recurse), noUnlock, false, null, null, atomicCommit);
+    }
+
+    public long[] commit(String[] path, String message, int depth, boolean noUnlock, boolean keepChangelist, String[] changlelists, Map revprops, boolean atomicCommit) throws ClientException {
         if (path == null || path.length == 0) {
             return new long[0];
         }
@@ -680,8 +684,10 @@ public class SVNClientImpl implements SVNClientInterface {
                     
                 });
             }
-            packets = client.doCollectCommitItems(files, noUnlock, !recurse, recurse, atomicCommit);
-            commitResults = client.doCommit(packets, noUnlock, message);
+            SVNDepth svnDepth = SVNDepth.fromID(depth);    
+            boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
+            packets = client.doCollectCommitItems(files, noUnlock, !recurse, svnDepth, atomicCommit, changlelists);
+            commitResults = client.doCommit(packets, noUnlock, keepChangelist, message, revprops != null ? SVNProperties.wrap(revprops) : null);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1669,7 +1675,7 @@ public class SVNClientImpl implements SVNClientInterface {
                         }
                     }
                     if (path == null) {
-                        return;                        
+                        path = "";
                     }
                     if (myNotify != null && event.getErrorMessage() == null) {
                         myNotify.onNotify(
