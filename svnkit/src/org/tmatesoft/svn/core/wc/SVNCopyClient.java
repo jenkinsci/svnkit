@@ -818,6 +818,9 @@ public class SVNCopyClient extends SVNBasicClient {
         if (makeParents) {
             CopyPair pair = (CopyPair) copyPairs.get(0);
             String relativeDir = SVNPathUtil.getPathAsChild(topURL, SVNPathUtil.removeTail(pair.myDst));
+            if (relativeDir == null) {
+                relativeDir = SVNPathUtil.getPathAsChild(topURL, pair.myDst);
+            }
             if (relativeDir != null) {
                 relativeDir = SVNEncodingUtil.uriDecode(relativeDir);
                 SVNNodeKind kind = topRepos.checkPath(relativeDir, -1);
@@ -828,6 +831,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 }
             }
         }
+        
         String rootURL = topRepos.getRepositoryRoot(true).toString();
         for (int i = 0; i < copyPairs.size(); i++) {
             CopyPair pair = (CopyPair) copyPairs.get(i);
@@ -840,6 +844,7 @@ public class SVNCopyClient extends SVNBasicClient {
 //                }
             }
         }
+        
         topRepos.setLocation(SVNURL.parseURIEncoded(topURL), false);
         long latestRevision = topRepos.getLatestRevision();
         
@@ -883,18 +888,18 @@ public class SVNCopyClient extends SVNBasicClient {
             info.mySourcePath = srcRelative;
             info.myDstPath = dstRelative;
         }
+        
         List paths = new ArrayList(copyPairs.size() * 2);
-        if (makeParents) {
-            for (Iterator dirs = newDirs.iterator(); dirs.hasNext();) {
-                String dirPath = (String) dirs.next();
-                CopyPathInfo info = new CopyPathInfo();
-                info.myDstPath = dirPath;
-                info.isDirAdded = true;
-                paths.add(info.myDstPath);
-                pathsMap.put(dirPath, info);
-            }
-        }
         List commitItems = new ArrayList(copyPairs.size() * 2);
+        if (makeParents) {
+            for (Iterator newDirsIter = newDirs.iterator(); newDirsIter.hasNext();) {
+                String dirPath = (String) newDirsIter.next();
+                SVNURL itemURL = SVNURL.parseURIEncoded(SVNPathUtil.append(topURL, dirPath));
+                SVNCommitItem item = new SVNCommitItem(null, itemURL, null, null, null, null, true, false, false, false, false, false);
+                commitItems.add(item);
+            }            
+        }
+        
         for (Iterator infos = pathInfos.iterator(); infos.hasNext();) {
             CopyPathInfo info = (CopyPathInfo) infos.next();
             SVNURL itemURL = SVNURL.parseURIEncoded(SVNPathUtil.append(topURL, info.myDstPath));
@@ -906,6 +911,17 @@ public class SVNCopyClient extends SVNBasicClient {
                 item = new SVNCommitItem(null, itemURL, null, null, null, null, false, true, false, false, false, false);
                 commitItems.add(item);
                 pathsMap.put(info.mySourcePath, info);
+            }
+        }
+
+        if (makeParents) {
+            for (Iterator newDirsIter = newDirs.iterator(); newDirsIter.hasNext();) {
+                String dirPath = (String) newDirsIter.next();
+                CopyPathInfo info = new CopyPathInfo();
+                info.myDstPath = dirPath;
+                info.isDirAdded = true;
+                paths.add(info.myDstPath);
+                pathsMap.put(dirPath, info);
             }
         }
         
@@ -921,6 +937,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 paths.add(info.mySourcePath);
             }
         }
+        
         SVNCommitItem[] commitables = (SVNCommitItem[]) commitItems.toArray(new SVNCommitItem[commitItems.size()]);
         message = getCommitHandler().getCommitMessage(message, commitables);
         if (message == null) {
