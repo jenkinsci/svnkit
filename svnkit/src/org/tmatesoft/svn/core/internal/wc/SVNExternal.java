@@ -42,6 +42,7 @@ public class SVNExternal {
     private SVNURL myResolvedURL;
     private boolean myIsRevisionExplicit;
     private boolean myIsPegRevisionExplicit;
+    private String myRawValue;
     
     private SVNExternal() {
         myRevision = SVNRevision.UNDEFINED;
@@ -72,6 +73,10 @@ public class SVNExternal {
 
     public String getUnresolvedUrl() {
         return myURL;
+    }
+
+    public String getRawValue() {
+        return myRawValue;
     }
 
     public boolean isRevisionExplicit() {
@@ -213,6 +218,7 @@ public class SVNExternal {
                         "Invalid {0} property on ''{1}'': target ''{2}'' is an absolute path or involves ''..''", new Object[] {SVNProperty.EXTERNALS, owner, external.myPath});
                 SVNErrorManager.error(err);
             }
+            external.myRawValue = line;
             externals.add(external);
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);

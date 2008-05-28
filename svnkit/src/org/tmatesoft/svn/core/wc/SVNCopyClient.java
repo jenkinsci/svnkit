@@ -680,17 +680,17 @@ public class SVNCopyClient extends SVNBasicClient {
                                         externals[k].getUnresolvedUrl(), externals[k].getPegRevision(), 
                                         SVNRevision.create(externalCurrentRevision), true, 
                                         externals[k].isPegRevisionExplicit());
-                                newExternals.add(newExternal);
+                                newExternals.add(newExternal.toString());
                             } else {
-                                newExternals.add(externals[k]);
+                                newExternals.add(externals[k].getRawValue());
                             }
                         }
                         
                         if (introduceVirtualExternalChange) {
                             String newExternalsProp = "";
                             for (Iterator externalsIter = newExternals.iterator(); externalsIter.hasNext();) {
-                                SVNExternal external = (SVNExternal) externalsIter.next();
-                                newExternalsProp += external.toString() + '\n';
+                                String external = (String) externalsIter.next();
+                                newExternalsProp += external + '\n';
                             }
                             
                             SVNCommitItem itemWithExternalsChanges = (SVNCommitItem) allCommitables.get(localPath);
