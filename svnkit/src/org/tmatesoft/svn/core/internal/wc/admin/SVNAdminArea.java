@@ -401,7 +401,7 @@ public abstract class SVNAdminArea {
         
         ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
         ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
-        propDiff = propDiff == null ? SVNProperties.EMPTY_PROPERTIES : propDiff;
+        propDiff = propDiff == null ? new SVNProperties() : propDiff;
 
         SVNMergeResult result = merger.mergeProperties(name, workingProps, baseProps, serverBaseProps, 
                 propDiff, this, log, baseMerge, dryRun);

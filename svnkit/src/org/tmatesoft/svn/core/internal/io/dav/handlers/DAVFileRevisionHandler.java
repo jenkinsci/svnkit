@@ -99,10 +99,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             // handle file revision with props.
             if (myPath != null && myFileRevisionsHandler != null) {
                 if (myProperties == null) {
-                    myProperties = SVNProperties.EMPTY_PROPERTIES;
+                    myProperties = new SVNProperties();
                 }
                 if (myPropertiesDelta == null) {
-                    myPropertiesDelta = SVNProperties.EMPTY_PROPERTIES;
+                    myPropertiesDelta = new SVNProperties();
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath,
                         myRevision,
@@ -126,10 +126,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (myPath != null && myFileRevisionsHandler != null) {
                 // handle file revision if was not handled yet (no tx delta).
                 if (myProperties == null) {
-                    myProperties = SVNProperties.EMPTY_PROPERTIES;
+                    myProperties = new SVNProperties();
                 }
                 if (myPropertiesDelta == null) {
-                    myPropertiesDelta = SVNProperties.EMPTY_PROPERTIES;
+                    myPropertiesDelta = new SVNProperties();
                 }
                 SVNFileRevision revision = new SVNFileRevision(myPath,
                         myRevision,

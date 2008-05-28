@@ -79,7 +79,7 @@ class DAVCommitEditor implements ISVNEditor {
         myDirsStack = new Stack();
         myPathsMap = new SVNHashMap();
         myFilesMap = new SVNHashMap();
-        myRevProps = revProps != null ? revProps : SVNProperties.EMPTY_PROPERTIES;
+        myRevProps = revProps != null ? revProps : new SVNProperties();
     }
 
     /* do nothing */

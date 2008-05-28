@@ -81,7 +81,7 @@ public class FSCommitEditor implements ISVNEditor {
         myRepository = repository;
         myFSFS = owner;
         myDirsStack = new Stack();
-        myRevProps = revProps != null ? revProps : SVNProperties.EMPTY_PROPERTIES;
+        myRevProps = revProps != null ? revProps : new SVNProperties();
     }
 
     public void targetRevision(long revision) throws SVNException {

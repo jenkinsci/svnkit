@@ -127,7 +127,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 if (props != null && !props.isEmpty()) {
                     SVNWCProperties.setProperties(props.asMap(), target, SVNWCProperties.SVN_HASH_TERMINATOR);
                 } else {
-                    SVNWCProperties.setProperties(SVNProperties.EMPTY_PROPERTIES, target, SVNWCProperties.SVN_HASH_TERMINATOR);
+                    SVNWCProperties.setProperties(new SVNProperties(), target, SVNWCProperties.SVN_HASH_TERMINATOR);
                 }
     
                 for(Iterator entries = wcPropsCache.keySet().iterator(); entries.hasNext();) {

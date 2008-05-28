@@ -27,13 +27,11 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  */
 public class SVNProperties {
 
-    public static final SVNProperties EMPTY_PROPERTIES = new SVNProperties(Collections.EMPTY_MAP);
-
     private Map myProperties;
     
-    public static SVNProperties create(Map map) {
+    public static SVNProperties wrap(Map map) {
         if (map == null) {
-            return EMPTY_PROPERTIES;
+            return new SVNProperties();
         }
         return new SVNProperties(map);
     }

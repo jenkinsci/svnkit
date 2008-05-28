@@ -130,7 +130,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)  throws SVNException {
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path, true);
-        myCurrentDirectory.myBaseProperties = SVNProperties.EMPTY_PROPERTIES;
+        myCurrentDirectory.myBaseProperties = new SVNProperties();
         
         SVNEventAction expectedAction = SVNEventAction.UPDATE_ADD;
         SVNEventAction action = expectedAction;
@@ -232,7 +232,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path, true);
-        myCurrentFile.myBaseProperties = SVNProperties.EMPTY_PROPERTIES;
+        myCurrentFile.myBaseProperties = new SVNProperties();
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
         SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
     }

@@ -507,7 +507,8 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
             }
             try {
-                client.doDelete(urls, message, SVNProperties.create(revprops));
+                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+                client.doDelete(urls, message, revisionProperties);
             } catch (SVNException e) {
                 throwException(e);
             } finally {
@@ -644,7 +645,8 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             SVNDepth svnDepth = SVNDepth.fromID(depth);
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
-            return client.doCommit(files, noUnlock, message, SVNProperties.create(revprops), changelists, keepChangelist, !recurse, svnDepth).getNewRevision();
+            SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+            return client.doCommit(files, noUnlock, message, revisionProperties, changelists, keepChangelist, !recurse, svnDepth).getNewRevision();
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -771,7 +773,8 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNCopyClient client = getSVNCopyClient();
         try {
             if (isURL(destPath)) {
-                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, SVNProperties.create(revprops));
+                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+                client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, revisionProperties);
             } else {
                 client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild);
             }
@@ -805,7 +808,8 @@ public class SVNClientImpl implements SVNClientInterface {
         File[] files = (File[]) paths.toArray(new File[paths.size()]);
         if (svnURLs.length > 0) {
             try {
-                client.doMkDir(svnURLs, message, SVNProperties.create(revprops), makeParents);
+                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+                client.doMkDir(svnURLs, message, revisionProperties, makeParents);
             } catch (SVNException e) {
                 throwException(e);
             }
@@ -885,7 +889,8 @@ public class SVNClientImpl implements SVNClientInterface {
     public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes, Map revprops) throws ClientException {
         SVNCommitClient commitClient = getSVNCommitClient();
         try {
-            commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, SVNProperties.create(revprops), !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
+            SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+            commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, revisionProperties, !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1165,8 +1170,9 @@ public class SVNClientImpl implements SVNClientInterface {
        SVNWCClient client = getSVNWCClient();
        if (isURL(path)) {
            try {
-               client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD, 
-                        "", SVNProperties.create(revprops), force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
+               SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+               client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD,
+                        "", revisionProperties, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
            } catch (SVNException e) {
                throwException(e);
            } finally {

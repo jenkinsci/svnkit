@@ -184,8 +184,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     public void displayPropDiff(String path, SVNProperties baseProps, SVNProperties diff, OutputStream result) throws SVNException {
-        baseProps = baseProps != null ? baseProps : SVNProperties.EMPTY_PROPERTIES;
-        diff = diff != null ? diff : SVNProperties.EMPTY_PROPERTIES;
+        baseProps = baseProps != null ? baseProps : new SVNProperties();
+        diff = diff != null ? diff : new SVNProperties();
         for (Iterator changedPropNames = diff.nameSet().iterator(); changedPropNames.hasNext();) {
             String name = (String) changedPropNames.next();
             SVNPropertyValue originalValue = baseProps.getSVNPropertyValue(name);

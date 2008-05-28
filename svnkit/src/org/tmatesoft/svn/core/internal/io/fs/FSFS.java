@@ -1092,7 +1092,7 @@ public class FSFS {
                 reader.close();
             }
         } else {
-            lockProps = SVNProperties.EMPTY_PROPERTIES;
+            lockProps = new SVNProperties();
         }
 
         SVNLock lock = null;

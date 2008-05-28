@@ -84,7 +84,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff, 
 			SVNAdminArea adminArea, SVNLog log, boolean baseMerge, boolean dryRun) throws SVNException {
-        propDiff = propDiff == null ? SVNProperties.EMPTY_PROPERTIES : propDiff;
+        propDiff = propDiff == null ? new SVNProperties() : propDiff;
         
         if (baseProperties == null) {
             baseProperties = adminArea.getBaseProperties(localPath).asMap();

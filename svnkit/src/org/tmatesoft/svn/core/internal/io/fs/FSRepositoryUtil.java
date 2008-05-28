@@ -145,11 +145,11 @@ public class FSRepositoryUtil {
         SVNProperties result = new SVNProperties();
         
         if(sourceProps == null){
-            sourceProps = SVNProperties.EMPTY_PROPERTIES;
+            sourceProps = new SVNProperties();
         }
         
         if(targetProps == null){
-            targetProps = SVNProperties.EMPTY_PROPERTIES;
+            targetProps = new SVNProperties();
         }
     
         for(Iterator names = sourceProps.nameSet().iterator(); names.hasNext();){
