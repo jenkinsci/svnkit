@@ -193,8 +193,8 @@ public class SVNMoveClient extends SVNBasicClient {
                     if (srcEntry.getKind() == dstEntry.getKind() && srcEntry.getSchedule() == null && srcEntry.isFile()) {
                         // make normal move to keep history (R+).
                         SVNCopyClient copyClient = new SVNCopyClient((ISVNAuthenticationManager) null, null);
-                        // TODO restore that.
-//                        copyClient.doCopy(src, SVNRevision.WORKING, dst, true, true);
+                        SVNCopySource source = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
+                        copyClient.doCopy(new SVNCopySource[]{source}, dst, true, false, true);
                         return;
                     }
                     // attempt replace.
