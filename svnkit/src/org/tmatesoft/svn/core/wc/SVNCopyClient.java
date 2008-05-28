@@ -679,7 +679,7 @@ public class SVNCopyClient extends SVNBasicClient {
                                 SVNExternal newExternal = new SVNExternal(externals[k].getPath(), 
                                         externals[k].getUnresolvedUrl(), externals[k].getPegRevision(), 
                                         SVNRevision.create(externalCurrentRevision), true, 
-                                        externals[k].isPegRevisionExplicit());
+                                        externals[k].isPegRevisionExplicit(), externals[k].isNewFormat());
                                 newExternals.add(newExternal.toString());
                             } else {
                                 newExternals.add(externals[k].getRawValue());

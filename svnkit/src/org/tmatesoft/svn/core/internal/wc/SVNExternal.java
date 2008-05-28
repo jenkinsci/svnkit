@@ -42,6 +42,7 @@ public class SVNExternal {
     private SVNURL myResolvedURL;
     private boolean myIsRevisionExplicit;
     private boolean myIsPegRevisionExplicit;
+    private boolean myIsNewFormat;
     private String myRawValue;
     
     private SVNExternal() {
@@ -50,13 +51,14 @@ public class SVNExternal {
     }
     
     public SVNExternal(String target, String url, SVNRevision pegRevision, SVNRevision revision, 
-            boolean isRevisionExplicit, boolean isPegRevisionExplicit) {
+            boolean isRevisionExplicit, boolean isPegRevisionExplicit, boolean isNewFormat) {
         myPath = target;
         myURL = url;
         myRevision = revision;
         myPegRevision = pegRevision;
         myIsRevisionExplicit = isRevisionExplicit;
         myIsPegRevisionExplicit = isPegRevisionExplicit;
+        myIsNewFormat = isNewFormat; 
     }
     
     public SVNRevision getRevision() {
@@ -85,6 +87,14 @@ public class SVNExternal {
     
     public boolean isPegRevisionExplicit() {
         return myIsPegRevisionExplicit;
+    }
+    
+    public boolean isNewFormat() {
+        return myIsNewFormat;
+    }
+
+    public SVNURL getResolvedURL() {
+        return myResolvedURL;
     }
 
     public SVNURL resolveURL(SVNURL rootURL, SVNURL ownerURL) throws SVNException {
@@ -140,10 +150,6 @@ public class SVNExternal {
         return null;
     }
 
-    public SVNURL getResolvedURL() {
-        return myResolvedURL;
-    }
-
     public String toString() {
         String value = "";
         if (myIsPegRevisionExplicit && SVNRevision.isValidRevisionNumber(myPegRevision.getNumber())) {
@@ -152,11 +158,18 @@ public class SVNExternal {
             }
             value += myURL + "@" + myPegRevision + " " + myPath;
         } else {
-            value += myPath; 
-            if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
-                value += " -r" + myRevision;
-            }            
-            value += " " + myURL;
+            if (myIsNewFormat) {
+                if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
+                    value += "-r" + myRevision + " ";
+                }
+                value += myURL + " " + myPath;
+            } else {
+                value += myPath; 
+                if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
+                    value += " -r" + myRevision;
+                }            
+                value += " " + myURL;
+            }
         }
         return value;
     }
@@ -192,33 +205,43 @@ public class SVNExternal {
                 if (schemeRelative) {
                     token0 = token0.substring(2);
                 }
+            
                 SVNPath path = new SVNPath(token0, true);
                 external.myURL = schemeRelative ? "//" + path.getTarget() : path.getTarget();
                 external.myPegRevision = path.getPegRevision();
                 if (external.myPegRevision == SVNRevision.BASE) {
                     external.myPegRevision = SVNRevision.HEAD;
                 }
+                
                 if (external.myPegRevision != SVNRevision.UNDEFINED) {
                     external.myIsPegRevisionExplicit = true;
                 }
+                
+                external.myIsNewFormat = true;
             } else {
                 external.myPath = token0;
                 external.myURL = token1;
                 external.myPegRevision = external.myRevision;
             }
+            
             if (external.myPegRevision == SVNRevision.UNDEFINED) {
                 external.myPegRevision = SVNRevision.HEAD;
             } 
+            
             if (external.myRevision == SVNRevision.UNDEFINED) {
                 external.myRevision = external.myPegRevision;
             }
+            
             external.myPath = SVNPathUtil.canonicalizePath(external.myPath.replace(File.separatorChar, '/'));
+            
             if (external.myPath.length() == 0 || external.myPath.startsWith("/") || external.myPath.indexOf("/../") > 0 || external.myPath.endsWith("/..")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                         "Invalid {0} property on ''{1}'': target ''{2}'' is an absolute path or involves ''..''", new Object[] {SVNProperty.EXTERNALS, owner, external.myPath});
                 SVNErrorManager.error(err);
             }
+            
             external.myRawValue = line;
+            
             externals.add(external);
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
