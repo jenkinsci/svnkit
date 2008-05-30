@@ -269,18 +269,19 @@ public class SVNFileUtil {
         SVNFileUtil.rename(tmpFile, file);
         setReadonly(file, true);
     }
-    
-    public static File createUniqueFile(File parent, String name, String suffix) throws SVNException {
+
+    public static synchronized File createUniqueFile(File parent, String name, String suffix) throws SVNException {
         File file = new File(parent, name + suffix);
-        for (int i = 1; i < 99999; i++) {
+        int i = 1;
+        do {
             if (SVNFileType.getType(file) == SVNFileType.NONE) {
+                createEmptyFile(file);
                 return file;
             }
             file = new File(parent, name + "." + i + suffix);
-        }
-        if (SVNFileType.getType(file) == SVNFileType.NONE) {
-            return file;
-        }
+            i++;
+        } while (i < 99999);
+
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, "Unable to make name for ''{0}''", new File(parent, name));
         SVNErrorManager.error(err);
         return null;

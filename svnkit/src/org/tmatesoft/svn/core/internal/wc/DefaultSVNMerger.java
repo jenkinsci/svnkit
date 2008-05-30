@@ -693,157 +693,158 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     	return newStatus;
     	
     }
-    
-    private boolean maybeGeneratePropConflict(String localPath, String propName, 
-    		SVNProperties workingProps, SVNPropertyValue oldValue, SVNPropertyValue newValue, 
-    		SVNPropertyValue baseValue,	SVNPropertyValue workingValue,  
-    		SVNAdminArea adminArea, SVNLog log,	boolean isDir) throws SVNException {
-    	boolean conflictRemains = true;
-    	if (myConflictCallback == null) {
-    		return conflictRemains;
-    	}
-    	
-    	File path = adminArea.getFile(localPath);
-    	File workingFile = null;
-    	if (workingValue != null) {
-    		workingFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
-    		workingFile.deleteOnExit();
-            OutputStream os = SVNFileUtil.openFileForWriting(workingFile);
-            try {
-            	os.write(SVNPropertyValue.getPropertyAsBytes(workingValue));
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                		"Cannot write a working property value file: {1}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
-    	}
 
-    	File newFile = null;
-    	if (newValue != null) {
-    		newFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
-    		newFile.deleteOnExit();
-            OutputStream os = SVNFileUtil.openFileForWriting(newFile);
-            try {
-            	os.write(SVNPropertyValue.getPropertyAsBytes(newValue));
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                		"Cannot write a new property value file: {1}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
-    	}
-    	
-    	File baseFile = null;
-    	File mergedFile = null;
-    	if ((baseValue != null && oldValue == null) ||
-    			(baseValue == null && oldValue != null)) {
-    		SVNPropertyValue theValue = baseValue != null ? baseValue : oldValue;
-    		baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
-    		baseFile.deleteOnExit();
-    		OutputStream os = SVNFileUtil.openFileForWriting(baseFile);
-    		try {
-            	os.write(SVNPropertyValue.getPropertyAsBytes(theValue));
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                		"Cannot write a base property value file: {1}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
-    	} else if (baseValue != null && oldValue != null) {
-    		SVNPropertyValue theValue = baseValue;
-    		if (!baseValue.equals(oldValue)) {
-    			if (workingValue != null && baseValue.equals(workingValue)) {
-    				theValue = oldValue;
-    			} 
-    		} 
-    		baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
-    		baseFile.deleteOnExit();
-    		OutputStream os = SVNFileUtil.openFileForWriting(baseFile);
-    		try {
-            	os.write(SVNPropertyValue.getPropertyAsBytes(theValue));
-            } catch (IOException e) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                		"Cannot write a base property value file: {1}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
-            } finally {
-                SVNFileUtil.closeFile(os);
-            }
-    	
-            if (workingValue != null && newValue != null) {
-                FSMergerBySequence merger = new FSMergerBySequence(getConflictStartMarker(), 
-                		getConflictSeparatorMarker(), getConflictEndMarker());
-            	OutputStream result = null;
+    private boolean maybeGeneratePropConflict(String localPath, String propName,
+                                              SVNProperties workingProps, SVNPropertyValue oldValue, SVNPropertyValue newValue,
+                                              SVNPropertyValue baseValue, SVNPropertyValue workingValue,
+                                              SVNAdminArea adminArea, SVNLog log, boolean isDir) throws SVNException {
+        boolean conflictRemains = true;
+        if (myConflictCallback == null) {
+            return conflictRemains;
+        }
+
+        File path = adminArea.getFile(localPath);
+        File workingFile = null;
+        File newFile = null;
+        File baseFile = null;
+        File mergedFile = null;
+        try {
+            if (workingValue != null) {
+                workingFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                OutputStream os = SVNFileUtil.openFileForWriting(workingFile);
                 try {
-                	mergedFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
-                	mergedFile.deleteOnExit();
-                	result = SVNFileUtil.openFileForWriting(mergedFile);
-
-                	QSequenceLineRAData baseData = new QSequenceLineRAByteData(theValue.getBytes());
-                    QSequenceLineRAData localData = new QSequenceLineRAByteData(workingValue.getBytes());
-                    QSequenceLineRAData latestData = new QSequenceLineRAByteData(newValue.getBytes());
-                    merger.merge(baseData, localData, latestData, null, result);
+                    os.write(SVNPropertyValue.getPropertyAsBytes(workingValue));
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                            "Cannot write a working property value file: {1}", e.getLocalizedMessage());
                     SVNErrorManager.error(err, e);
                 } finally {
-                    SVNFileUtil.closeFile(result);
+                    SVNFileUtil.closeFile(os);
                 }
             }
-    	}
-    	
-    	String mimeType = null;
-    	if (!isDir && workingProps != null) {
-    		mimeType = workingProps.getStringValue(SVNProperty.MIME_TYPE);
-    	}
-    	SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, newFile, 
-    			mergedFile, adminArea.getFile(localPath), null, mimeType, SVNProperty.isBinaryMimeType(mimeType));
-    	
-    	SVNConflictAction action = SVNConflictAction.EDIT;
-    	if (oldValue == null && newValue != null) {
-    		action = SVNConflictAction.ADD;
-    	} else if (oldValue != null && newValue == null) {
-    		action = SVNConflictAction.DELETE;
-    	}
-    	
-    	SVNConflictReason reason = SVNConflictReason.EDITED;
-    	if (baseValue != null && workingValue == null) {
-    		reason = SVNConflictReason.DELETED;
-    	} else if (baseValue == null && workingValue != null) {
-    		reason = SVNConflictReason.OBSTRUCTED;
-    	}
-    	SVNConflictDescription description = new SVNConflictDescription(fileSet, 
-    			isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propName, true, action, reason);
-    	SVNConflictResult result = myConflictCallback.handleConflict(description);
-    	if (result == null) {
-    		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, 
-    		"Conflict callback violated API: returned no results.");
-    		SVNErrorManager.error(err);
-    	}
-    	SVNConflictChoice choice = result.getConflictChoice();
-    	if (choice == SVNConflictChoice.MINE_FULL) {
-    		conflictRemains = false;
-    	} else if (choice == SVNConflictChoice.THEIRS_FULL) {
-    		changeProperty(workingProps, propName, newValue);
-    		conflictRemains = false;
-    	} else if (choice == SVNConflictChoice.BASE) {
-    	    changeProperty(workingProps, propName, baseValue);
-    		conflictRemains = false;
-    	} else if (choice == SVNConflictChoice.MERGED) {
-    		if (mergedFile == null && result.getMergedFile() == null) {
-        		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, 
-        		"Conflict callback violated API: returned no merged file.");
-        		SVNErrorManager.error(err);
-    		}
-    		
-    		String mergedString = SVNFileUtil.readFile(mergedFile != null ? mergedFile : result.getMergedFile());
-    		changeProperty(workingProps, propName, SVNPropertyValue.create(mergedString));
-    		conflictRemains = false;
-    	}
-    	return conflictRemains;
+
+            if (newValue != null) {
+                newFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                OutputStream os = SVNFileUtil.openFileForWriting(newFile);
+                try {
+                    os.write(SVNPropertyValue.getPropertyAsBytes(newValue));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                            "Cannot write a new property value file: {1}", e.getLocalizedMessage());
+                    SVNErrorManager.error(err, e);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+            }
+
+            if ((baseValue != null && oldValue == null) ||
+                    (baseValue == null && oldValue != null)) {
+                SVNPropertyValue theValue = baseValue != null ? baseValue : oldValue;
+                baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                OutputStream os = SVNFileUtil.openFileForWriting(baseFile);
+                try {
+                    os.write(SVNPropertyValue.getPropertyAsBytes(theValue));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                            "Cannot write a base property value file: {1}", e.getLocalizedMessage());
+                    SVNErrorManager.error(err, e);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+            } else if (baseValue != null && oldValue != null) {
+                SVNPropertyValue theValue = baseValue;
+                if (!baseValue.equals(oldValue)) {
+                    if (workingValue != null && baseValue.equals(workingValue)) {
+                        theValue = oldValue;
+                    }
+                }
+                baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                OutputStream os = SVNFileUtil.openFileForWriting(baseFile);
+                try {
+                    os.write(SVNPropertyValue.getPropertyAsBytes(theValue));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                            "Cannot write a base property value file: {1}", e.getLocalizedMessage());
+                    SVNErrorManager.error(err, e);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+
+                if (workingValue != null && newValue != null) {
+                    FSMergerBySequence merger = new FSMergerBySequence(getConflictStartMarker(),
+                            getConflictSeparatorMarker(), getConflictEndMarker());
+                    OutputStream result = null;
+                    try {
+                        mergedFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                        result = SVNFileUtil.openFileForWriting(mergedFile);
+
+                        QSequenceLineRAData baseData = new QSequenceLineRAByteData(theValue.getBytes());
+                        QSequenceLineRAData localData = new QSequenceLineRAByteData(workingValue.getBytes());
+                        QSequenceLineRAData latestData = new QSequenceLineRAByteData(newValue.getBytes());
+                        merger.merge(baseData, localData, latestData, null, result);
+                    } catch (IOException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                        SVNErrorManager.error(err, e);
+                    } finally {
+                        SVNFileUtil.closeFile(result);
+                    }
+                }
+            }
+
+            String mimeType = null;
+            if (!isDir && workingProps != null) {
+                mimeType = workingProps.getStringValue(SVNProperty.MIME_TYPE);
+            }
+            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, newFile,
+                    mergedFile, adminArea.getFile(localPath), null, mimeType, SVNProperty.isBinaryMimeType(mimeType));
+
+            SVNConflictAction action = SVNConflictAction.EDIT;
+            if (oldValue == null && newValue != null) {
+                action = SVNConflictAction.ADD;
+            } else if (oldValue != null && newValue == null) {
+                action = SVNConflictAction.DELETE;
+            }
+
+            SVNConflictReason reason = SVNConflictReason.EDITED;
+            if (baseValue != null && workingValue == null) {
+                reason = SVNConflictReason.DELETED;
+            } else if (baseValue == null && workingValue != null) {
+                reason = SVNConflictReason.OBSTRUCTED;
+            }
+            SVNConflictDescription description = new SVNConflictDescription(fileSet,
+                    isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propName, true, action, reason);
+            SVNConflictResult result = myConflictCallback.handleConflict(description);
+            if (result == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
+                        "Conflict callback violated API: returned no results.");
+                SVNErrorManager.error(err);
+            }
+            SVNConflictChoice choice = result.getConflictChoice();
+            if (choice == SVNConflictChoice.MINE_FULL) {
+                conflictRemains = false;
+            } else if (choice == SVNConflictChoice.THEIRS_FULL) {
+                changeProperty(workingProps, propName, newValue);
+                conflictRemains = false;
+            } else if (choice == SVNConflictChoice.BASE) {
+                changeProperty(workingProps, propName, baseValue);
+                conflictRemains = false;
+            } else if (choice == SVNConflictChoice.MERGED) {
+                if (mergedFile == null && result.getMergedFile() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
+                            "Conflict callback violated API: returned no merged file.");
+                    SVNErrorManager.error(err);
+                }
+
+                String mergedString = SVNFileUtil.readFile(mergedFile != null ? mergedFile : result.getMergedFile());
+                changeProperty(workingProps, propName, SVNPropertyValue.create(mergedString));
+                conflictRemains = false;
+            }
+            return conflictRemains;
+        } finally {
+            SVNFileUtil.deleteFile(workingFile);
+            SVNFileUtil.deleteFile(newFile);
+            SVNFileUtil.deleteFile(baseFile);
+            SVNFileUtil.deleteFile(mergedFile);
+        }
     }
-    
 }

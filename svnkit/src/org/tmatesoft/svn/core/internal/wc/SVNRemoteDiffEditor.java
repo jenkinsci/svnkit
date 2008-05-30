@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,6 +26,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -234,7 +234,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         myCurrentFile = new SVNFileInfo(path, true);
         myCurrentFile.myBaseProperties = new SVNProperties();
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp");
-        SVNFileUtil.createEmptyFile(myCurrentFile.myBaseFile);
     }
 
     public void openFile(String path, long revision) throws SVNException {

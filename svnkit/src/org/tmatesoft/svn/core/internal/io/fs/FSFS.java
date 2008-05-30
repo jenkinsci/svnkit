@@ -473,7 +473,16 @@ public class FSFS {
             SVNFileUtil.createFile(formatFile, contents, "US-ASCII");
         } else {
             File tmpFile = SVNFileUtil.createUniqueFile(formatFile.getParentFile(), formatFile.getName(), ".tmp");
-            SVNFileUtil.createFile(tmpFile, contents, "US-ASCII");
+            OutputStream os = null;
+            try {
+                os = SVNFileUtil.openFileForWriting(tmpFile);
+                os.write(contents.getBytes("US-ASCII"));
+            } catch (IOException e) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                SVNErrorManager.error(error);
+            } finally {
+                SVNFileUtil.closeFile(os);
+            }
             if (SVNFileUtil.isWindows) {
                 SVNFileUtil.setReadonly(formatFile, false);
             }

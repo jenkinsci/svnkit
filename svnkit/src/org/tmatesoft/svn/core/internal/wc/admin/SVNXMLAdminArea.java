@@ -22,7 +22,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,11 +33,12 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -606,9 +606,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         // translate versioned file.
         File baseTmpFile = SVNFileUtil.createUniqueFile(getRoot(), 
                 SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp");
-        if (!baseTmpFile.getParentFile().exists()) {
-            baseTmpFile.getParentFile().mkdirs();
-        }
+
         File versionedFile = getFile(name);
         SVNTranslator.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false);
 
