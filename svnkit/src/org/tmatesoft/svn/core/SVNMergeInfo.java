@@ -51,4 +51,8 @@ public class SVNMergeInfo {
     public void setMergeSourcesToMergeLists(Map srcsToMergeLists) {
         myMergeSrcPathsToRangeLists = srcsToMergeLists;
     }
+
+	public String toString() {
+		return myPath + "=" + myMergeSrcPathsToRangeLists;
+	}
 }
