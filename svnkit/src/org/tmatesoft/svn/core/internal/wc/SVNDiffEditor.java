@@ -283,8 +283,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 } else {
                     originalProps = dir.getProperties(dir.getThisDirName()).asMap();
                     SVNProperties baseProps = dir.getBaseProperties(dir.getThisDirName()).asMap();
-                    SVNProperties reposProps = new SVNProperties(baseProps);
-                    reposProps.putAll(diff);
+                    SVNProperties reposProps = applyPropChanges(baseProps, myCurrentDirectory.myPropertyDiff);
                     diff = computePropsDiff(originalProps, reposProps);
                     
                 }
@@ -358,10 +357,7 @@ public class SVNDiffEditor implements ISVNEditor {
         } else {
             baseProperties = dir != null ? dir.getBaseProperties(fileName).asMap() : new SVNProperties();
         }
-        SVNProperties reposProperties = new SVNProperties();
-        if (myCurrentFile.myPropertyDiff != null) {
-            reposProperties.putAll(myCurrentFile.myPropertyDiff);
-        }
+        SVNProperties reposProperties = applyPropChanges(baseProperties, myCurrentFile.myPropertyDiff);
         String reposMimeType = reposProperties.getStringValue(SVNProperty.MIME_TYPE);
         File reposFile = myCurrentFile.myFile;
         File localFile = null;
@@ -438,6 +434,22 @@ public class SVNDiffEditor implements ISVNEditor {
         if (myTempDirectory != null) {
             SVNFileUtil.deleteAll(myTempDirectory, true);
         }
+    }
+    
+    private SVNProperties applyPropChanges(SVNProperties props, SVNProperties propChanges) {
+        SVNProperties result = new SVNProperties(props);
+        if (propChanges != null) {
+            for(Iterator names = propChanges.nameSet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                SVNPropertyValue value = propChanges.getSVNPropertyValue(name);
+                if (value == null) {
+                    result.remove(name);
+                } else {
+                    result.put(name, value);
+                }
+            }
+        }
+        return result;
     }
 
     private void localDirectoryDiff(SVNDirectoryInfo info) throws SVNException {
