@@ -236,9 +236,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
     
     public void applyTextDelta(String token, String baseChecksum) throws SVNException {
-        if (myCurrentFile != null) {
-            myCurrentFile.delete();
-        } else {
+        if (myCurrentFile == null) {
             myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
         }
         myDeltaProcessor.applyTextDelta(myPreviousFile, myCurrentFile, false);
