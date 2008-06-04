@@ -1491,7 +1491,9 @@ public abstract class SVNAdminArea {
             handlePropTime(log, newEntry);
 
             SVNVersionedProperties wcProps = adminArea.getWCProperties(entry.getName());
-            log.logChangedWCProperties(entry.getName(), wcProps.asMap());
+            if (wcProps != null) {
+                log.logChangedWCProperties(entry.getName(), wcProps.asMap());                                
+            }
         }
         saveVersionedProperties(log, true);
         log.save();
