@@ -806,17 +806,21 @@ public class SVNMoveClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
                 SVNErrorManager.error(err);
             }
-            if (dstRepoRoot != null && !dstRepoRoot.equals(srcRepoRoot)) {
+            if (srcRepoRoot != null && dstRepoRoot != null && !dstRepoRoot.equals(srcRepoRoot)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: paths belong to different repositories", opName);
                 SVNErrorManager.error(err);                
             }
             
             SVNAdminArea srcArea = srcAccess.probeOpen(src, false, 0);
             SVNVersionedProperties srcProps = srcArea.getProperties(src.getName());
+            SVNVersionedProperties srcBaseProps = srcArea.getBaseProperties(src.getName());
             SVNVersionedProperties dstProps = dstArea.getProperties(dst.getName());
-
+            SVNVersionedProperties dstBaseProperties  = dstArea.getBaseProperties(dst.getName());
             dstProps.removeAll();
+            dstBaseProperties.removeAll();
+
             srcProps.copyTo(dstProps);
+            srcBaseProps.copyTo(dstBaseProperties);
 
             dstEntry = dstArea.addEntry(dst.getName());
             dstEntry.setCopyFromURL(cfURL);
@@ -841,7 +845,6 @@ public class SVNMoveClient extends SVNBasicClient {
             srcAccess.close();
             dstAccess.close();
         }
-        
     }
 
     private static boolean isVersionedFile(File file) {
