@@ -472,7 +472,7 @@ public class FSFS {
         if (!overwrite) {
             SVNFileUtil.createFile(formatFile, contents, "US-ASCII");
         } else {
-            File tmpFile = SVNFileUtil.createUniqueFile(formatFile.getParentFile(), formatFile.getName(), ".tmp", true);
+            File tmpFile = SVNFileUtil.createUniqueFile(formatFile.getParentFile(), formatFile.getName(), ".tmp", false);
             OutputStream os = null;
             try {
                 os = SVNFileUtil.openFileForWriting(tmpFile);
@@ -781,7 +781,7 @@ public class FSFS {
     }
     
     public void setUUID(String uuid) throws SVNException {
-        File uniqueFile = SVNFileUtil.createUniqueFile(getDBRoot(), UUID_FILE, ".tmp", true);
+        File uniqueFile = SVNFileUtil.createUniqueFile(getDBRoot(), UUID_FILE, ".tmp", false);
         uuid += '\n';
 
         OutputStream uuidOS = null;
@@ -1549,7 +1549,7 @@ public class FSFS {
         
         File currentFile = getCurrentFile();
         File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), currentFile.getName(), 
-                ".tmp", true);
+                ".tmp", false);
         OutputStream currentOS = null;
 
         try {
@@ -1749,7 +1749,7 @@ public class FSFS {
             props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
         }
         try {
-            SVNWCProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp", true), SVNWCProperties.SVN_HASH_TERMINATOR);
+            SVNWCProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp", false), SVNWCProperties.SVN_HASH_TERMINATOR);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
             SVNErrorManager.error(err, svne);

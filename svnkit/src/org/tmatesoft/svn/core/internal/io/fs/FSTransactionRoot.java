@@ -322,7 +322,7 @@ public class FSTransactionRoot extends FSRoot {
         File propsFile = getTransactionRevNodePropsFile(node.getId());
         SVNWCProperties.setProperties(properties, propsFile,
                                     SVNFileUtil.createUniqueFile(propsFile.getParentFile(), 
-                                                                 ".props", ".tmp", true), 
+                                                                 ".props", ".tmp", false), 
                                     SVNWCProperties.SVN_HASH_TERMINATOR);
 
         if (node.getPropsRepresentation() == null || !node.getPropsRepresentation().isTxn()) {
