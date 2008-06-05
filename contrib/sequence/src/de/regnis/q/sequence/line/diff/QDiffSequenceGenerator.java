@@ -51,9 +51,13 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	}
 
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-		final QSequenceLineResult result;
+        generateTextDiff(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), encoding, output);
+	}
+
+    public void generateTextDiff(QSequenceLineRAData left, QSequenceLineRAData right, String encoding, Writer output) throws IOException {
+        final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), getSimplifier());
+			result = QSequenceLineMedia.createBlocks(left, right, getSimplifier());
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());
@@ -81,9 +85,24 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 		finally {
 			result.close();
 		}
+    }
+
+    public void generateTextDiff(RandomAccessFile left, RandomAccessFile right, String encoding, Writer output) throws IOException {
+        QSequenceLineRAData leftData = null, rightData = null;
+        if (left == null) {
+            leftData = new QSequenceLineRAByteData(new byte[0]);
+        } else {
+            leftData = new QSequenceLineRAFileData(left);
+        }
+        if (right == null) {
+            rightData = new QSequenceLineRAByteData(new byte[0]);
+        } else {
+            rightData = new QSequenceLineRAFileData(right);
+        }
+        generateTextDiff(leftData, rightData, encoding, output);
 	}
 
-	// Accessing ==============================================================
+    // Accessing ==============================================================
 
 	protected Map getProperties() {
 		return myProperties;

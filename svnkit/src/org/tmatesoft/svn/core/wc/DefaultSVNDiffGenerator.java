@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -368,11 +369,11 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             header = "";
         }
 
-        InputStream is1 = null;
-        InputStream is2 = null;
+        RandomAccessFile is1 = null;
+        RandomAccessFile is2 = null;
         try {
-            is1 = file1 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file1);
-            is2 = file2 == null ? EMPTY_FILE_IS : SVNFileUtil.openFileForReading(file2);
+            is1 = file1 == null ? null : SVNFileUtil.openRAFileForReading(file1);
+            is2 = file2 == null ? null : SVNFileUtil.openRAFileForReading(file2);
 
             QDiffUniGenerator.setup();
             Map properties = new SVNHashMap();
