@@ -12,6 +12,8 @@
 
 package de.regnis.q.sequence.line.diff;
 
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+
 import java.io.*;
 
 /**
@@ -23,5 +25,9 @@ public interface QDiffGenerator {
 
 	void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException;
 
-	void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException;
+    void generateTextDiff(RandomAccessFile left, RandomAccessFile right, String encoding, Writer output) throws IOException;
+
+    void generateTextDiff(QSequenceLineRAData left, QSequenceLineRAData right, String encoding, Writer output) throws IOException;
+
+    void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException;
 }

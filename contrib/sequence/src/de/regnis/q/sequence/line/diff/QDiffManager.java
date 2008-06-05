@@ -57,7 +57,17 @@ public final class QDiffManager {
 		generator.generateTextDiff(left, right, encoding, output);
 	}
 
-	public static void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output, QDiffGenerator generator) throws IOException {
+    public static void generateTextDiff(RandomAccessFile left, RandomAccessFile right, String encoding, Writer output, QDiffGenerator generator) throws IOException {
+		if (generator == null || output == null) {
+			throw new NullPointerException("null argument is not accepted by SVNDiffManager.generateDiff()");
+		}
+		if (encoding == null) {
+			encoding = System.getProperty("file.encoding", "US-ASCII");
+		}
+		generator.generateTextDiff(left, right, encoding, output);
+	}
+
+    public static void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output, QDiffGenerator generator) throws IOException {
 		if (generator == null || left == null || right == null || output == null) {
 			throw new NullPointerException("null argument is not accepted by SVNDiffManager.generateDiff()");
 		}
