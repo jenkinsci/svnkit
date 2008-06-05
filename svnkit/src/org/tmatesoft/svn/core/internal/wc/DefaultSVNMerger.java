@@ -158,14 +158,14 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             SVNEntry entry = adminArea.getVersionedEntry(localPath, false);
         	String prejTmpPath = adminArea.getThisDirName().equals(localPath) ? 
             		"tmp/dir_conflicts" : "tmp/props/" + localPath;
-            File prejTmpFile = SVNFileUtil.createUniqueFile(adminArea.getAdminDirectory(),  prejTmpPath, ".prej");
+            File prejTmpFile = SVNFileUtil.createUniqueFile(adminArea.getAdminDirectory(),  prejTmpPath, ".prej", false);
 
             prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
             String prejPath = entry.getPropRejectFile();
 
             if (prejPath == null) {
                 prejPath = adminArea.getThisDirName().equals(localPath) ? "dir_conflicts" : localPath;
-                File prejFile = SVNFileUtil.createUniqueFile(adminArea.getRoot(), prejPath, ".prej");
+                File prejFile = SVNFileUtil.createUniqueFile(adminArea.getRoot(), prejPath, ".prej", false);
                 prejPath = SVNFileUtil.getBasePath(prejFile);
             }
             File file = adminArea.getFile(prejTmpPath);
@@ -335,14 +335,14 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
 
-        File oldFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getBaseLabel());
-        File newFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getRepositoryLabel());
+        File oldFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getBaseLabel(), false);
+        File newFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getRepositoryLabel(), false);
         SVNFileUtil.copyFile(files.getBaseFile(), oldFile, false);
         SVNFileUtil.copyFile(files.getRepositoryFile(), newFile, false);
         
         
         if (!files.getLocalPath().equals(files.getWCPath())) {
-            File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel());
+            File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel(), false);
             String minePath = SVNFileUtil.getBasePath(mineFile);
             command.put(SVNLog.NAME_ATTR, files.getLocalPath());
             command.put(SVNLog.DEST_ATTR, minePath);
@@ -377,9 +377,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
 
-        File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel());
-        File oldFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getBaseLabel());
-        File newFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getRepositoryLabel());
+        File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel(), false);
+        File oldFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getBaseLabel(), false);
+        File newFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getRepositoryLabel(), false);
         
         String newPath = SVNFileUtil.getBasePath(newFile);
         String oldPath = SVNFileUtil.getBasePath(oldFile);
@@ -710,7 +710,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         File mergedFile = null;
         try {
             if (workingValue != null) {
-                workingFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                workingFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp", false);
                 OutputStream os = SVNFileUtil.openFileForWriting(workingFile);
                 try {
                     os.write(SVNPropertyValue.getPropertyAsBytes(workingValue));
@@ -724,7 +724,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             }
 
             if (newValue != null) {
-                newFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                newFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp", false);
                 OutputStream os = SVNFileUtil.openFileForWriting(newFile);
                 try {
                     os.write(SVNPropertyValue.getPropertyAsBytes(newValue));
@@ -740,7 +740,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             if ((baseValue != null && oldValue == null) ||
                     (baseValue == null && oldValue != null)) {
                 SVNPropertyValue theValue = baseValue != null ? baseValue : oldValue;
-                baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp", false);
                 OutputStream os = SVNFileUtil.openFileForWriting(baseFile);
                 try {
                     os.write(SVNPropertyValue.getPropertyAsBytes(theValue));
@@ -758,7 +758,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                         theValue = oldValue;
                     }
                 }
-                baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                baseFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp", false);
                 OutputStream os = SVNFileUtil.openFileForWriting(baseFile);
                 try {
                     os.write(SVNPropertyValue.getPropertyAsBytes(theValue));
@@ -775,7 +775,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                             getConflictSeparatorMarker(), getConflictEndMarker());
                     OutputStream result = null;
                     try {
-                        mergedFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp");
+                        mergedFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp", false);
                         result = SVNFileUtil.openFileForWriting(mergedFile);
 
                         QSequenceLineRAData baseData = new QSequenceLineRAByteData(theValue.getBytes());

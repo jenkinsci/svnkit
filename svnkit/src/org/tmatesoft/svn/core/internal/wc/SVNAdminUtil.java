@@ -213,7 +213,7 @@ public class SVNAdminUtil {
         }
         String adminPath = buffer.toString();
         File dir = adminArea.getFile(adminPath);
-        return SVNFileUtil.createUniqueFile(dir, prefix, suffix);
+        return SVNFileUtil.createUniqueFile(dir, prefix, suffix, false);
     }
 
 }

@@ -333,7 +333,7 @@ public abstract class SVNRepositoryFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
             SVNErrorManager.error(err);
         }
-        File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar");
+        File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar", true);
         OutputStream uuidOS = null; 
         OutputStream reposFormatOS = null;
         OutputStream fsFormatOS = null;
@@ -426,7 +426,7 @@ public abstract class SVNRepositoryFactory {
                     String format = String.valueOf(fsFormat) + "\n";
                     if (maxFilesPerDir > 0) {
                         File revFileBefore = new File(path, "db/revs/0");
-                        File tmpFile = SVNFileUtil.createUniqueFile(new File(path, "db/revs"), "0", "tmp");
+                        File tmpFile = SVNFileUtil.createUniqueFile(new File(path, "db/revs"), "0", "tmp", true);
                         SVNFileUtil.rename(revFileBefore, tmpFile);
                         File shardRevDir = new File(path, "db/revs/0");
                         shardRevDir.mkdirs();
@@ -434,7 +434,7 @@ public abstract class SVNRepositoryFactory {
                         SVNFileUtil.rename(tmpFile, revFileAfter);
 
                         File revPropFileBefore = new File(path, "db/revprops/0");
-                        tmpFile = SVNFileUtil.createUniqueFile(new File(path, "db/revprops"), "0", "tmp");
+                        tmpFile = SVNFileUtil.createUniqueFile(new File(path, "db/revprops"), "0", "tmp", true);
                         SVNFileUtil.rename(revPropFileBefore, tmpFile);
                         File shardRevPropDir = new File(path, "db/revprops/0");
                         shardRevPropDir.mkdirs();
@@ -588,7 +588,7 @@ public abstract class SVNRepositoryFactory {
             File tmpChild = null;
             if (child.isFile()) {
                 try {
-                    tmpChild = SVNFileUtil.createUniqueFile(directory, ".repos", ".tmp");
+                    tmpChild = SVNFileUtil.createUniqueFile(directory, ".repos", ".tmp", true);
                     SVNTranslator.translate(child, tmpChild, null, eol, null, false, true);
                     SVNFileUtil.deleteFile(child);
                     SVNFileUtil.rename(tmpChild, child);

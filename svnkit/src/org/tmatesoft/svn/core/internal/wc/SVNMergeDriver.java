@@ -2233,7 +2233,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private File loadFile(SVNRepository repository, long revision, 
                           SVNProperties properties, SVNAdminArea adminArea) throws SVNException {
         File tmpDir = adminArea.getAdminTempDirectory();
-        File result = SVNFileUtil.createUniqueFile(tmpDir, ".merge", ".tmp");
+        File result = SVNFileUtil.createUniqueFile(tmpDir, ".merge", ".tmp", false);
         
         OutputStream os = null;
         try {

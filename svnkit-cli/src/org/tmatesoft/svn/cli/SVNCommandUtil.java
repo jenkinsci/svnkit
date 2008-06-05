@@ -129,7 +129,7 @@ public class SVNCommandUtil {
     
     public static byte[] runEditor(AbstractSVNCommandEnvironment env, String editorCommand, byte[] existingValue, String prefix) throws SVNException {
         File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-        File tmpFile = SVNFileUtil.createUniqueFile(tmpDir, prefix, ".tmp");
+        File tmpFile = SVNFileUtil.createUniqueFile(tmpDir, prefix, ".tmp", true);
         OutputStream os = null;
         try {
             os = SVNFileUtil.openFileForWriting(tmpFile);

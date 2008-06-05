@@ -472,7 +472,7 @@ public class FSFS {
         if (!overwrite) {
             SVNFileUtil.createFile(formatFile, contents, "US-ASCII");
         } else {
-            File tmpFile = SVNFileUtil.createUniqueFile(formatFile.getParentFile(), formatFile.getName(), ".tmp");
+            File tmpFile = SVNFileUtil.createUniqueFile(formatFile.getParentFile(), formatFile.getName(), ".tmp", true);
             OutputStream os = null;
             try {
                 os = SVNFileUtil.openFileForWriting(tmpFile);
@@ -705,7 +705,7 @@ public class FSFS {
                 File tmpFile = null;
                 try {
                     tmpFile = SVNFileUtil.createUniqueFile(txnCurrentFile.getParentFile(),
-                                                           TXN_CURRENT_FILE, ".tmp");
+                                                           TXN_CURRENT_FILE, ".tmp", false);
                     txnCurrentOS = SVNFileUtil.openFileForWriting(tmpFile);
                     nextTxnId = nextTxnId + "\n";
                     txnCurrentOS.write(nextTxnId.getBytes("UTF-8"));
@@ -781,7 +781,7 @@ public class FSFS {
     }
     
     public void setUUID(String uuid) throws SVNException {
-        File uniqueFile = SVNFileUtil.createUniqueFile(getDBRoot(), UUID_FILE, ".tmp");
+        File uniqueFile = SVNFileUtil.createUniqueFile(getDBRoot(), UUID_FILE, ".tmp", true);
         uuid += '\n';
 
         OutputStream uuidOS = null;
@@ -1389,7 +1389,7 @@ public class FSFS {
         
         File nodeOriginFile = getNodeOriginFile(nodeID);
         File tmpFile = SVNFileUtil.createUniqueFile(nodeOriginFile.getParentFile(), nodeOriginFile.getName(), 
-                ".tmp");
+                ".tmp", false);
         SVNWCProperties.setProperties(nodeOrigins, nodeOriginFile, tmpFile, 
                 SVNWCProperties.SVN_HASH_TERMINATOR);
     }
@@ -1549,7 +1549,7 @@ public class FSFS {
         
         File currentFile = getCurrentFile();
         File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), currentFile.getName(), 
-                ".tmp");
+                ".tmp", true);
         OutputStream currentOS = null;
 
         try {
@@ -1749,7 +1749,7 @@ public class FSFS {
             props.put(FSFS.CHILDREN_LOCK_KEY, value.toString());
         }
         try {
-            SVNWCProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp"), SVNWCProperties.SVN_HASH_TERMINATOR);
+            SVNWCProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp", true), SVNWCProperties.SVN_HASH_TERMINATOR);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
             SVNErrorManager.error(err, svne);

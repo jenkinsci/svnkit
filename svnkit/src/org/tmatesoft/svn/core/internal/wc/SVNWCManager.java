@@ -635,7 +635,7 @@ public class SVNWCManager {
             SVNFileUtil.rename(textBase, tmpTextBase);
         }
         if (text != null) {
-            File tmpFile = SVNFileUtil.createUniqueFile(dir.getRoot(), fileName, ".tmp");
+            File tmpFile = SVNFileUtil.createUniqueFile(dir.getRoot(), fileName, ".tmp", false);
             SVNFileUtil.rename(text, tmpFile);
             if (baseProperties != null && baseProperties.containsName(SVNProperty.SPECIAL)) {
                 command.put(SVNLog.NAME_ATTR, tmpFile.getName());
