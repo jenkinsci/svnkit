@@ -15,7 +15,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -56,8 +58,8 @@ public class DAVReplayHandler extends DAVEditorHandler {
     protected static final String CHECKSUM_ATTR = "checksum";
     protected static final String DEL_ATTR = "del";
 
-    public DAVReplayHandler(ISVNEditor editor, boolean fetchContent) {
-        super(editor, fetchContent);
+    public DAVReplayHandler(DAVConnection connection, DAVRepository owner, ISVNEditor editor, boolean fetchContent) {
+        super(connection, owner, editor, null, fetchContent);
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {

@@ -238,4 +238,21 @@ public class DAVUtil {
         }
         return target;
     }
+
+    public static String getPathFromURL(String url) {
+        String schemeEnd = "://";
+        int ind = url.indexOf(schemeEnd);
+        if (ind == -1) {
+            return url;
+        }
+        
+        url = url.substring(schemeEnd.length());
+        for (int i = 0; i < url.length(); i++) {
+            char currentChar = url.charAt(i);
+            if (currentChar == '/' || currentChar == '?' || currentChar == '#') {
+                return url.substring(i);
+            }
+        }
+        return "/";
+    }
 }

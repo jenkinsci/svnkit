@@ -742,7 +742,7 @@ public class DAVRepository extends SVNRepository {
         try {
             openConnection();
             StringBuffer request = DAVReplayHandler.generateReplayRequest(highRevision, lowRevision, sendDeltas);
-            DAVReplayHandler handler = new DAVReplayHandler(editor, true);
+            DAVReplayHandler handler = new DAVReplayHandler(myConnection, this, editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             HTTPStatus status = myConnection.doReport(bcPath, request, handler);
@@ -969,7 +969,7 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
-    protected String doGetFullPath(String relativeOrRepositoryPath) throws SVNException {
+    public String doGetFullPath(String relativeOrRepositoryPath) throws SVNException {
         if (relativeOrRepositoryPath == null) {
             return doGetFullPath("/");
         }
@@ -1181,10 +1181,11 @@ public class DAVRepository extends SVNRepository {
         }
         try {
             openConnection();
+            Map lockTokens = new SVNHashMap();
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, 
-                    url.toString(), targetRevision, target, dstPath, depth, ignoreAncestry, resourceWalk, 
-                    fetchContents, sendCopyFromArgs, sendAll, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(editor, fetchContents);
+                    url.toString(), targetRevision, target, dstPath, depth, lockTokens, ignoreAncestry, 
+                    resourceWalk, fetchContents, sendCopyFromArgs, sendAll, reporter);
+            DAVEditorHandler handler = new DAVEditorHandler(myConnection, this, editor, lockTokens, fetchContents);
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             try {
                 bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);

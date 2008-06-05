@@ -227,6 +227,18 @@ public class DAVConnection {
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "GET request failed for ''{0}''", path);
 		myHttpConnection.request("GET", path, null, (StringBuffer) null, 200, 226, os, null, context);
     }
+
+	public void doGet(String path, String deltaBaseVersionURL, DefaultHandler handler) throws SVNException {
+        HTTPHeader header = null;
+        if (deltaBaseVersionURL != null) {
+            header = new HTTPHeader();
+            header.addHeaderValue(HTTPHeader.SVN_DELTA_BASE_HEADER, deltaBaseVersionURL);
+        }
+
+	    SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+	            "GET request failed for ''{0}''", path);
+        myHttpConnection.request("GET", path, header, (StringBuffer) null, 200, 226, null, handler, context);
+    }
 	
     public HTTPStatus doReport(String path, StringBuffer requestBody, DefaultHandler handler) throws SVNException {
         return doReport(path, requestBody, handler, false);
