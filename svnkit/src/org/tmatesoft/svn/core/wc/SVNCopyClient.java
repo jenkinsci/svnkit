@@ -1359,9 +1359,10 @@ public class SVNCopyClient extends SVNBasicClient {
                         }
                     }
                     // do real copy.
-                    copyFiles(new File(pair.mySource), new File(dstParentPath), dstAccess, pair.myBaseName);
+                    File sourceFile = new File(pair.mySource);
+                    copyFiles(sourceFile, new File(dstParentPath), dstAccess, pair.myBaseName);
                     if (srcAccess != null) {
-                        propagateMegeInfo(pair, srcAccess, dstAccess);
+                        propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
                     }
                 } finally {
                     if (srcAccess != null && srcAccess != dstAccess) {
@@ -1381,7 +1382,8 @@ public class SVNCopyClient extends SVNBasicClient {
             checkCancelled();
             File srcParent = new File(SVNPathUtil.removeTail(pair.mySource));
             File dstParent = new File(SVNPathUtil.removeTail(pair.myDst));
-            SVNFileType srcType = SVNFileType.getType(new File(pair.mySource));
+            File sourceFile = new File(pair.mySource);
+            SVNFileType srcType = SVNFileType.getType(sourceFile);
             SVNWCAccess srcAccess = createWCAccess();
             SVNWCAccess dstAccess = null;
             try {
@@ -1399,10 +1401,10 @@ public class SVNCopyClient extends SVNBasicClient {
                         dstAccess.open(dstParent, true, 0);
                     }
                 }
-                copyFiles(new File(pair.mySource), dstParent, dstAccess, pair.myBaseName);
-                propagateMegeInfo(pair, srcAccess, dstAccess);
+                copyFiles(sourceFile, dstParent, dstAccess, pair.myBaseName);
+                propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
                 // delete src.
-                SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), new File(pair.mySource), true, true);
+                SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), sourceFile, true, true);
             } finally {
                 if (dstAccess != srcAccess) {
                     dstAccess.close();
@@ -1412,16 +1414,14 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         sleepForTimeStamp();
     }
-    
-    private void propagateMegeInfo(CopyPair pair, SVNWCAccess srcAccess, SVNWCAccess dstAccess) throws SVNException {
-        File src = new File(pair.mySource);
-        File dst = new File(pair.myDst);
+
+    private void propagateMegeInfo(File src, File dst, SVNWCAccess srcAccess, SVNWCAccess dstAccess) throws SVNException {
         boolean[] extend = { false };
         Map mergeInfo = fetchMergeInfoForPropagation(src, extend, srcAccess);
         propagateMegeInfo(dst, mergeInfo, extend, dstAccess);
     }
 
-    private Map fetchMergeInfoForPropagation(File src, boolean[] extend, SVNWCAccess srcAccess) throws SVNException {
+    Map fetchMergeInfoForPropagation(File src, boolean[] extend, SVNWCAccess srcAccess) throws SVNException {
         SVNEntry entry = srcAccess.getVersionedEntry(src, false);
         if (entry.getSchedule() == null || (entry.isScheduledForAddition() && entry.isCopied())) {
             Map mergeInfo = calculateTargetMergeInfo(src, srcAccess, entry.getSVNURL(), 

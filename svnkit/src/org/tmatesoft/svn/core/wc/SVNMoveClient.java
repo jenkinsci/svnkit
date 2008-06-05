@@ -13,18 +13,23 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
@@ -60,6 +65,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 public class SVNMoveClient extends SVNBasicClient {
 
     private SVNWCClient myWCClient;
+    private SVNCopyClient myCopyClient;
     /**
      * Constructs and initializes an <b>SVNMoveClient</b> object
      * with the specified run-time configuration and authentication 
@@ -86,11 +92,13 @@ public class SVNMoveClient extends SVNBasicClient {
     public SVNMoveClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
         myWCClient = new SVNWCClient(authManager, options);
+        myCopyClient = new SVNCopyClient(authManager, options);
     }
 
     public SVNMoveClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
         myWCClient = new SVNWCClient(repositoryPool, options);
+        myCopyClient = new SVNCopyClient(repositoryPool, options);
     }
     
     /**
@@ -192,9 +200,8 @@ public class SVNMoveClient extends SVNBasicClient {
                     wcAccess.close();
                     if (srcEntry.getKind() == dstEntry.getKind() && srcEntry.getSchedule() == null && srcEntry.isFile()) {
                         // make normal move to keep history (R+).
-                        SVNCopyClient copyClient = new SVNCopyClient((ISVNAuthenticationManager) null, null);
                         SVNCopySource source = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
-                        copyClient.doCopy(new SVNCopySource[]{source}, dst, true, false, true);
+                        myCopyClient.doCopy(new SVNCopySource[]{source}, dst, true, false, true);
                         return;
                     }
                     // attempt replace.
@@ -815,18 +822,34 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNVersionedProperties srcProps = srcArea.getProperties(src.getName());
             SVNVersionedProperties srcBaseProps = srcArea.getBaseProperties(src.getName());
             SVNVersionedProperties dstProps = dstArea.getProperties(dst.getName());
-            SVNVersionedProperties dstBaseProperties  = dstArea.getBaseProperties(dst.getName());
+            SVNVersionedProperties dstBaseProps  = dstArea.getBaseProperties(dst.getName());
             dstProps.removeAll();
-            dstBaseProperties.removeAll();
-
+            dstBaseProps.removeAll();
             srcProps.copyTo(dstProps);
-            srcBaseProps.copyTo(dstBaseProperties);
+            srcBaseProps.copyTo(dstBaseProps);
 
             dstEntry = dstArea.addEntry(dst.getName());
             dstEntry.setCopyFromURL(cfURL);
             dstEntry.setCopyFromRevision(cfRevision);
             dstEntry.setCopied(true);
             dstEntry.setKind(SVNNodeKind.FILE);
+
+            boolean[] extend = new boolean[]{false};
+            Map mergeInfo = myCopyClient.fetchMergeInfoForPropagation(src, extend, srcAccess);
+            Map wcMergeInfo = null;
+            if (extend[0]) {
+                wcMergeInfo = SVNPropertiesManager.parseMergeInfo(dst, dstEntry, false);
+                if (wcMergeInfo != null && mergeInfo != null) {
+                    wcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(wcMergeInfo, mergeInfo);
+                } else if (wcMergeInfo == null) {
+                    wcMergeInfo = mergeInfo;
+                }
+            }
+            SVNPropertyValue prop = null;
+            if (wcMergeInfo != null) {
+                prop = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo));
+            }
+            dstProps.setPropertyValue(SVNProperty.MERGE_INFO, prop);
 
             if (dstEntry.isScheduledForDeletion()) {
                 dstEntry.unschedule();
@@ -835,7 +858,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 dstEntry.unschedule();
                 dstEntry.scheduleForAddition();
             }
-            
+
             dstArea.saveEntries(false);
             SVNLog log = dstArea.getLog();
             dstArea.saveVersionedProperties(log, true);
