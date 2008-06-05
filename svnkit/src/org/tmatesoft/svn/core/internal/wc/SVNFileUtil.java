@@ -83,10 +83,13 @@ public class SVNFileUtil {
     private static File ourAppDataPath;
     private static String ourAdminDirectoryName;
     private static File ourSystemAppDataPath;
+    private static boolean ourSleepForTimestamp;
     
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
+        setSleepForTimestamp(true);
+        
         String osName = System.getProperty("os.name");
         boolean windows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
         if (!windows && osName != null) {
@@ -759,6 +762,11 @@ public class SVNFileUtil {
     }
 
     public static void sleepForTimestamp() {
+        synchronized (SVNFileUtil.class) {
+            if (!ourSleepForTimestamp) {
+                return;
+            }
+        }
         long time = System.currentTimeMillis();
         time = 1100 - (time - (time / 1000) * 1000);
         try {
@@ -1180,6 +1188,14 @@ public class SVNFileUtil {
 
     public static void setAdminDirectoryName(String name) {
         ourAdminDirectoryName = name;
+    }
+    
+    public synchronized static void setSleepForTimestamp(boolean sleep) {
+        ourSleepForTimestamp = sleep;
+    }
+
+    public synchronized static boolean isSleepForTimestamp() {
+        return ourSleepForTimestamp;
     }
 
     public static File getApplicationDataPath() {
