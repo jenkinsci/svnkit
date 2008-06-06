@@ -728,7 +728,7 @@ public class DAVRepository extends SVNRepository {
         try {
             openConnection();
             StringBuffer request = DAVReplayHandler.generateReplayRequest(highRevision, lowRevision, sendDeltas);
-            DAVReplayHandler handler = new DAVReplayHandler(myConnection, this, editor, true);
+            DAVReplayHandler handler = new DAVReplayHandler(editor, true);
 
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             HTTPStatus status = myConnection.doReport(bcPath, request, handler);
