@@ -263,15 +263,7 @@ public class DAVRepository extends SVNRepository {
                 DAVUtil.filterProperties(props, properties);
                 for (Iterator names = props.getProperties().keySet().iterator(); names.hasNext();) {
                     DAVElement property = (DAVElement) names.next();
-                    if (property == DAVElement.VERSION_NAME) {
-                        properties.put(SVNProperty.COMMITTED_REVISION, props.getPropertyValue(property));
-                    } else if (property == DAVElement.MD5_CHECKSUM) {
-                        properties.put(SVNProperty.CHECKSUM, props.getPropertyValue(property));
-                    } else if (property == DAVElement.CREATOR_DISPLAY_NAME) {
-                        properties.put(SVNProperty.LAST_AUTHOR, props.getPropertyValue(property));
-                    } else if (property == DAVElement.CREATION_DATE) {
-                        properties.put(SVNProperty.COMMITTED_DATE, props.getPropertyValue(property));
-                    }
+                    DAVUtil.setSpecialWCProperties(properties, property, props.getPropertyValue(property));
                 }
                 if (fileRevision >= 0) {
                     properties.put(SVNProperty.REVISION, Long.toString(fileRevision));
@@ -424,13 +416,7 @@ public class DAVRepository extends SVNRepository {
                 DAVUtil.filterProperties(dirProps, properties);
                 for(Iterator props = dirProps.getProperties().keySet().iterator(); props.hasNext();) {
                     DAVElement property = (DAVElement) props.next();
-                    if (property == DAVElement.VERSION_NAME) {
-                        properties.put(SVNProperty.COMMITTED_REVISION, dirProps.getPropertyValue(property));
-                    } else if (property == DAVElement.CREATOR_DISPLAY_NAME) {
-                        properties.put(SVNProperty.LAST_AUTHOR, dirProps.getPropertyValue(property));
-                    } else if (property == DAVElement.CREATION_DATE) {
-                        properties.put(SVNProperty.COMMITTED_DATE, dirProps.getPropertyValue(property));
-                    }
+                    DAVUtil.setSpecialWCProperties(properties, property, dirProps.getPropertyValue(property));
                 }
             }
         } finally {
@@ -1045,7 +1031,7 @@ public class DAVRepository extends SVNRepository {
             revision = targetRevision;
         }
         runReport(getLocation(), targetRevision, target, url.toString(), depth, ignoreAncestry, false, 
-                getContents, false, true, false, true, reporter, editor);
+                getContents, false, false, false, true, reporter, editor);
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
@@ -1179,13 +1165,16 @@ public class DAVRepository extends SVNRepository {
         if (depth != SVNDepth.FILES && depth != SVNDepth.INFINITY && !serverSupportsDepth) {
             editor = SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, target != null);
         }
+        
+        DAVEditorHandler handler = null;
         try {
             openConnection();
             Map lockTokens = new SVNHashMap();
             StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, 
                     url.toString(), targetRevision, target, dstPath, depth, lockTokens, ignoreAncestry, 
                     resourceWalk, fetchContents, sendCopyFromArgs, sendAll, reporter);
-            DAVEditorHandler handler = new DAVEditorHandler(myConnection, this, editor, lockTokens, fetchContents);
+            handler = new DAVEditorHandler(myConnectionFactory, this, editor, lockTokens, fetchContents, 
+                    target != null && !"".equals(target));
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             try {
                 bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
@@ -1200,6 +1189,9 @@ public class DAVRepository extends SVNRepository {
                 SVNErrorManager.error(status.getError());
             }
         } finally {
+            if (handler != null) {
+                handler.closeConnection();
+            }
             closeConnection();
         }
     }

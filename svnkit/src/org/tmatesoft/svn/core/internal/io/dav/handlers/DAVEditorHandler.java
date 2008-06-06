@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
@@ -31,20 +32,22 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
-import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
-import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
+import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 
 /**
@@ -190,21 +193,24 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     private boolean myIsReceiveAll;
     private Stack myDirs; 
     private DAVConnection myConnection;
+    private IHTTPConnectionFactory myConnectionFactory;
     private DAVRepository myOwner;
     private String myHref;
     private String myCurrentWCPath;
     private boolean myIsInResource;
     private boolean myIsFetchContent;
     private boolean myIsFetchProps;
+    private boolean myHasTarget;
     private Map myVersionURLs;
     private Map myLockTokens;
     
-    public DAVEditorHandler(DAVConnection connection, DAVRepository owner, ISVNEditor editor, Map lockTokens, 
-            boolean fetchContent) {
-        myConnection = connection;
+    public DAVEditorHandler(IHTTPConnectionFactory connectionFactory, DAVRepository owner, ISVNEditor editor, 
+            Map lockTokens, boolean fetchContent, boolean hasTarget) {
+        myConnectionFactory = connectionFactory;
         myOwner = owner;
         myEditor = editor;
         myIsFetchContent = fetchContent;
+        myHasTarget = hasTarget;
         myLockTokens = lockTokens;
         
         myDeltaConsumer = fetchContent ? (ISVNDeltaConsumer) editor : new ISVNDeltaConsumer() {
@@ -225,6 +231,13 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         myVersionURLs = new SVNHashMap();
     }
 
+    public void closeConnection() {
+        if (myConnection != null) {
+            myConnection.close();
+            myConnection = null;
+        }
+    }
+    
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == UPDATE_REPORT) {
             String receiveAll = attrs.getValue(SEND_ALL_ATTR);
@@ -265,7 +278,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
             
             DirInfo dirInfo = new DirInfo();
-            dirInfo.myPath = myPath;
             myDirs.push(dirInfo);
         } else if (element == ADD_DIRECTORY) {
             myIsDirectory = true;
@@ -292,23 +304,22 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             DirInfo dirInfo = new DirInfo(); 
             myDirs.push(dirInfo);
             
-            dirInfo.myPath = myPath;
             dirInfo.myIsFetchProps = true;
             
             String bcURL = attrs.getValue(BC_URL_ATTR);
             if (!myIsReceiveAll && bcURL != null) {
                 DAVElement[] elements = null;
                 Map propsMap = new SVNHashMap();
-                DAVUtil.getProperties(myConnection, DAVUtil.getPathFromURL(bcURL), 0, null, 
+                DAVUtil.getProperties(getConnection(), DAVUtil.getPathFromURL(bcURL), 0, null, 
                         elements, propsMap);
                 
                 if (!propsMap.isEmpty()) {
                     dirInfo.myChildren = new SVNHashMap();
                     for (Iterator propsIter = propsMap.values().iterator(); propsIter.hasNext();) {
-                        DAVProperties resource = (DAVProperties) propsIter.next();
-                        SVNPropertyValue vcURL = resource.getPropertyValue(DAVElement.CHECKED_IN);
+                        DAVProperties props = (DAVProperties) propsIter.next();
+                        SVNPropertyValue vcURL = props.getPropertyValue(DAVElement.CHECKED_IN);
                         if (vcURL != null) {
-                            dirInfo.myChildren.put(vcURL.getString(), resource);
+                            dirInfo.myChildren.put(vcURL.getString(), props);
                         }
                     }
                 }
@@ -386,7 +397,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             String baseChecksum = attrs.getValue(BASE_CHECKSUM_ATTR);
             myChecksum = null;
             if (!myIsReceiveAll) {
-                fetchFile(myPath, baseChecksum);
+                fetchFile(baseChecksum);
             }
         } else if (element == RESOURCE) {
             myCurrentWCPath = attrs.getValue(PATH_ATTR);
@@ -399,9 +410,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == FETCH_PROPS) {
             if (!myIsFetchContent) {
                 if (myIsDirectory) {
-                    myEditor.changeDirProperty(SVNProperty.SVN_ENTRY_PREFIX + "BOGOSITY", null);
+                    myEditor.changeDirProperty(SVNProperty.SVN_PREFIX + "BOGOSITY", null);
                 } else {
-                    myEditor.changeFileProperty(myPath, SVNProperty.SVN_ENTRY_PREFIX + "BOGOSITY", null);
+                    myEditor.changeFileProperty(myPath, SVNProperty.SVN_PREFIX + "BOGOSITY", null);
                 }
             } else {
                 if (myIsDirectory) {
@@ -425,11 +436,23 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         } else if (element == UPDATE_REPORT) {
             myEditor.closeEdit();
         } else if (element == OPEN_DIRECTORY || element == ADD_DIRECTORY) {
-            
+            if (myDirs.size() != 1 || !myHasTarget) {
+                addNodeProperties(myPath, true);
+            }
             myEditor.closeDir();
             myChecksum = null;
             myPath = SVNPathUtil.removeTail(myPath);
-        } else if (element == OPEN_FILE || element == ADD_FILE) {
+            myDirs.pop();
+        } else if (element == ADD_FILE) {
+            if (!myIsReceiveAll) {
+                fetchFile(null);
+                addNodeProperties(myPath, false);
+            }
+            myEditor.closeFile(myPath, myChecksum);
+            myChecksum = null;
+            myPath = SVNPathUtil.removeTail(myPath);
+        } else if (element == OPEN_FILE) {
+            addNodeProperties(myPath, false);
             myEditor.closeFile(myPath, myChecksum);
             myChecksum = null;
             myPath = SVNPathUtil.removeTail(myPath);
@@ -437,36 +460,65 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             myChecksum = cdata.toString();
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME ||
                 element == DAVElement.VERSION_NAME ||
-                element == DAVElement.CREATION_DATE ||
-                element == SET_PROP ||
-                element == DAVElement.HREF) {
+                element == DAVElement.CREATION_DATE) {
+            DAVUtil.setSpecialWCProperties(myEditor, myIsDirectory, myPath, element, 
+                    SVNPropertyValue.create(cdata.toString()));
+        } else if (element == DAVElement.HREF) {
+            if (myIsFetchContent) {
+                myHref = cdata.toString();
+                
+                if (myIsInResource) {
+                    myVersionURLs.put(myCurrentWCPath, myHref);
+                } else if (myIsDirectory) {
+                    if (myDirs.size() != 1 || !myHasTarget) {
+                        try {
+                            myEditor.changeDirProperty(SVNProperty.WC_URL, 
+                                    SVNPropertyValue.create(myHref));
+                        } catch (SVNException svne) {
+                            SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"));
+                        }
+                        DirInfo topDirInfo = (DirInfo) myDirs.peek();
+                        topDirInfo.myVSNURL = myHref;
+                    }
+                } else {
+                    try {
+                        myEditor.changeFileProperty(myPath, SVNProperty.WC_URL, 
+                                SVNPropertyValue.create(myHref));
+                    } catch (SVNException svne) {
+                        SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"));
+                    }
+                }
+            }
+        } else if (element == SET_PROP) {
             if (myPropertyName == null) {
                 myPropertyName = computeWCPropertyName(element);
             }
+            
             SVNPropertyValue value = null;
-            if ("base64".equals(myEncoding)) {
+            if (myEncoding == null || "".equals(myEncoding)) {
+                value = SVNPropertyValue.create(cdata.toString());
+            } else if ("base64".equals(myEncoding)) {
                 byte[] buffer = allocateBuffer(cdata.length());
                 int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
                 value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);                
             } else {
-                value = SVNPropertyValue.create(cdata.toString());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING, 
+                        "Unknown XML encoding: ''{0}''", myEncoding);
+                SVNErrorManager.error(err);
             }
+            
             if (myIsDirectory) {
                 myEditor.changeDirProperty(myPropertyName, value);
             } else {
                 myEditor.changeFileProperty(myPath, myPropertyName, value);
             }
             
-            if (element == DAVElement.HREF) {
-                if (myIsInResource) {
-                    myVersionURLs.put(myCurrentWCPath, cdata.toString());
-                }
-            }
-            
             myPropertyName = null;
             myEncoding = null;
         } else if (element == TX_DELTA) {
-            setDeltaProcessing(false);
+            if (myIsReceiveAll) {
+                setDeltaProcessing(false);
+            }
         }
     }
 
@@ -478,17 +530,24 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         return myDeltaConsumer;
     }
 
-    protected void fetchFile(String path, String baseChecksum) throws SVNException {
+    protected void fetchFile(String baseChecksum) throws SVNException {
         setDeltaProcessing(true);
         try {
-            myEditor.applyTextDelta(path, baseChecksum);
+            myEditor.applyTextDelta(myPath, baseChecksum);
         } catch (SVNException svne) {
             SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save file"));
         }
         
         if (myIsFetchContent) {
-            String deltaBaseVersionURL = path != null ? (String) myVersionURLs.get(path) : null;
-            myConnection.doGet(path, deltaBaseVersionURL, this);
+            if (myHref == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "assertion failure in DAVEditorHandler.fetchFile(): myHref is null");
+                SVNErrorManager.error(err);
+            }
+            String deltaBaseVersionURL = myPath != null ? (String) myVersionURLs.get(myPath) : null;
+            DeltaOutputStreamWrapper osWrapper = new DeltaOutputStreamWrapper(deltaBaseVersionURL != null, myPath);
+            DAVConnection connection = getConnection();
+            connection.doGet(myHref, deltaBaseVersionURL, osWrapper);
         }
         setDeltaProcessing(false);
     }
@@ -507,7 +566,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (lockToken != null) {
                 String fullPath = myOwner.doGetFullPath(path);
                 fullPath = SVNEncodingUtil.uriEncode(fullPath);
-                SVNLock lock = myConnection.doGetLock(fullPath, myOwner);
+                DAVConnection connection = getConnection(); 
+                SVNLock lock = connection.doGetLock(fullPath, myOwner);
                 
                 if (!(lock != null && lock.getID() != null && lockToken.equals(lock.getID()))) {
                     myEditor.changeFileProperty(path, SVNProperty.LOCK_TOKEN, null);
@@ -519,25 +579,154 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
             
             DirInfo topDirInfo = (DirInfo) myDirs.peek();
-//            if (!(topDirInfo.myChildren != null && )) {
-                
-//            }
+            DAVProperties props = topDirInfo.myChildren != null ? (DAVProperties ) topDirInfo.myChildren.get(myHref) 
+                    : null;
+            if (props == null) {
+                props = DAVUtil.getResourceProperties(getConnection(), myHref, null, null);
+            }
+            addProps(props, false);
         } else {
-            
+            DirInfo topDirInfo = (DirInfo) myDirs.peek();
+            if (!topDirInfo.myIsFetchProps) {
+                return;
+            }
+
+            DAVProperties props = topDirInfo.myChildren != null ? (DAVProperties ) topDirInfo.myChildren.get(topDirInfo.myVSNURL) 
+                    : null;
+            if (props == null) {
+                props = DAVUtil.getResourceProperties(getConnection(), topDirInfo.myVSNURL, null, null);
+            }
+            addProps(props, true);
         }
+    }
+    
+    private void addProps(DAVProperties props, boolean isDir) throws SVNException {
+        Map propsMap = props.getProperties();
+        for (Iterator propsIter = propsMap.keySet().iterator(); propsIter.hasNext();) {
+            DAVElement element = (DAVElement) propsIter.next();
+            SVNPropertyValue propValue = (SVNPropertyValue) propsMap.get(element);
+            String elementNamespace = element.getNamespace();
+            if (elementNamespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
+                String propName = element.getName();
+                if (isDir) {
+                    myEditor.changeDirProperty(propName, propValue);
+                } else {
+                    myEditor.changeFileProperty(myPath, propName, propValue);
+                }
+                continue;
+            }
             
+            if (elementNamespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
+                String propName = SVNProperty.SVN_PREFIX + element.getName();
+                if (isDir) {
+                    myEditor.changeDirProperty(propName, propValue);
+                } else {
+                    myEditor.changeFileProperty(myPath, propName, propValue);
+                }
+            } else {
+                DAVUtil.setSpecialWCProperties(myEditor, isDir, myPath, element, propValue);
+            }
+        }
+    }
+    
+    private DAVConnection getConnection() throws SVNException {
+        if (myConnection == null) {
+            myConnection = new DAVConnection(myConnectionFactory, myOwner);
+            myConnection.setReportResponseSpooled(myOwner.isSpoolResponse());
+            myConnection.open(myOwner);
+        }
+        return myConnection;
     }
     
     private static String computeWCPropertyName(DAVElement element) {
-        if (element == DAVElement.HREF) {
-            return SVNProperty.WC_URL;
-        }
         return SVNProperty.SVN_ENTRY_PREFIX + element.getName();
     }
     
     private class DirInfo {
         private boolean myIsFetchProps;
-        private String myPath;
         private Map myChildren;
+        private String myVSNURL;
+    }
+    
+    private class DeltaOutputStreamWrapper extends OutputStream {
+        private boolean myIsDelta;
+        private SVNDeltaGenerator myDeltaGenerator;
+        private String myPath;
+        
+        public DeltaOutputStreamWrapper(boolean isDelta, String path) {
+            myIsDelta = isDelta;
+            myPath = path;
+        }
+        
+        public void write(int b) throws IOException {
+            if (myIsDelta) {
+                try {
+                    DAVEditorHandler.this.characters(new char[] { (char) (b & 0xff) }, 0, 1);
+                } catch (SAXException saxe) {
+                    throw new IOException(saxe.getMessage());
+                }
+            } else {
+                try {
+                    getDeltaGenerator().sendDelta(myPath, new byte[] { (byte) b }, 1, myDeltaConsumer);
+                } catch (SVNException svne) {
+                    IOExceptionWrapper ioeWrapper = new IOExceptionWrapper(svne);
+                    throw ioeWrapper;
+                }
+            }
+        }
+        
+        public void write(byte[] b, int off, int len) throws IOException {
+            if (myIsDelta) {
+                char[] chars = new char[len];
+                for (int i = 0; i < len; i++) { 
+                    chars[i] = (char) (b[off + i] & 0xff);
+                }
+                
+                try {
+                    DAVEditorHandler.this.characters(chars, 0, chars.length);
+                } catch (SAXException saxe) {
+                    throw new IOException(saxe.getMessage());
+                }
+            } else {
+                try {
+                    byte[] target = new byte[len];
+                    System.arraycopy(b, off, target, 0, len);
+                    getDeltaGenerator().sendDelta(myPath, target, len, myDeltaConsumer);
+                } catch (SVNException svne) {
+                    IOExceptionWrapper ioeWrapper = new IOExceptionWrapper(svne);
+                    throw ioeWrapper;
+                }
+            }
+        }
+        
+        public void write(byte[] b) throws IOException {
+            if (myIsDelta) {
+                char[] chars = new char[b.length];
+                for (int i = 0; i < b.length; i++) { 
+                    chars[i] = (char) (b[i] & 0xff);
+                }
+                
+                try {
+                    DAVEditorHandler.this.characters(chars, 0, chars.length);
+                } catch (SAXException saxe) {
+                    throw new IOException(saxe.getMessage());
+                }
+            } else {
+                try {
+                    getDeltaGenerator().sendDelta(myPath, b, b.length, myDeltaConsumer);
+                } catch (SVNException svne) {
+                    IOExceptionWrapper ioeWrapper = new IOExceptionWrapper(svne);
+                    throw ioeWrapper;
+                }
+                
+            }
+        }
+        
+        private SVNDeltaGenerator getDeltaGenerator() {
+            if (myDeltaGenerator == null) {
+                myDeltaGenerator = new SVNDeltaGenerator();
+            }
+            return myDeltaGenerator;
+        }
     }
 }

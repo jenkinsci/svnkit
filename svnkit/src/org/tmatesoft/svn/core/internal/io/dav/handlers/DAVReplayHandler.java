@@ -59,7 +59,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
     protected static final String DEL_ATTR = "del";
 
     public DAVReplayHandler(DAVConnection connection, DAVRepository owner, ISVNEditor editor, boolean fetchContent) {
-        super(connection, owner, editor, null, fetchContent);
+        super(connection, owner, editor, null, fetchContent, false);
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {

@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
@@ -27,6 +28,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 
 /**
  * @version 1.1.1
@@ -239,6 +241,25 @@ public class DAVUtil {
         return target;
     }
 
+    public static void setSpecialWCProperties(SVNProperties props, DAVElement property, SVNPropertyValue propValue) {
+        String propName = convertDAVElementToPropName(property);
+        if (propName != null) {
+            props.put(propName, propValue);
+        }
+    }
+
+    public static void setSpecialWCProperties(ISVNEditor editor, boolean isDir, String path, DAVElement property, 
+            SVNPropertyValue propValue) throws SVNException {
+        String propName = convertDAVElementToPropName(property);
+        if (propName != null) {
+            if (isDir) {
+                editor.changeDirProperty(propName, propValue);
+            } else {
+                editor.changeFileProperty(path, propName, propValue);
+            }
+        }
+    }
+
     public static String getPathFromURL(String url) {
         String schemeEnd = "://";
         int ind = url.indexOf(schemeEnd);
@@ -254,5 +275,21 @@ public class DAVUtil {
             }
         }
         return "/";
+    }
+
+    private static String convertDAVElementToPropName(DAVElement property) {
+        String propName = null;
+        if (property == DAVElement.VERSION_NAME) {
+            propName = SVNProperty.COMMITTED_REVISION;    
+        } else if (property == DAVElement.CREATOR_DISPLAY_NAME) {
+            propName = SVNProperty.LAST_AUTHOR;
+        } else if (property == DAVElement.CREATION_DATE) {
+            propName = SVNProperty.COMMITTED_DATE;
+        } else if (property == DAVElement.REPOSITORY_UUID) {
+            propName = SVNProperty.UUID;
+        } else if (property == DAVElement.MD5_CHECKSUM) {
+            propName = SVNProperty.CHECKSUM;
+        }
+        return propName;
     }
 }
