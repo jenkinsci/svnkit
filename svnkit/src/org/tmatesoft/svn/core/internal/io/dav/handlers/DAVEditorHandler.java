@@ -451,11 +451,13 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             myEditor.closeFile(myPath, myChecksum);
             myChecksum = null;
             myPath = SVNPathUtil.removeTail(myPath);
+            myIsDirectory = true;
         } else if (element == OPEN_FILE) {
             addNodeProperties(myPath, false);
             myEditor.closeFile(myPath, myChecksum);
             myChecksum = null;
             myPath = SVNPathUtil.removeTail(myPath);
+            myIsDirectory = true;
         } else if (element == DAVElement.MD5_CHECKSUM) {
             myChecksum = cdata.toString();
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME ||
