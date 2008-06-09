@@ -69,4 +69,4 @@ Remarks: need to change copy (add empty .revert-base prop file) ((+))
 27) svndumpfilter functionality
 28) file:/// improvements:
  - new txn dir names ((+))
-29) dumpfilter 
+29) dumpfilter ((+))
