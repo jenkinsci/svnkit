@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -131,7 +132,13 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 }
                 String linkedPath = url.getURIEncodedPath();
                 DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, null, linkedPath, revision, false, false, null);
-                attrs.put("linkpath", SVNEncodingUtil.uriDecode(info.baselinePath));
+                linkedPath = SVNEncodingUtil.uriDecode(info.baselinePath); 
+                
+                if (!linkedPath.startsWith("/")) {
+                    linkedPath = "/" + linkedPath;
+                }
+                
+                attrs.put("linkpath", linkedPath);
                 SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "entry", path, attrs, report);
             }
 
@@ -388,6 +395,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                         "Missing name attr in remove-prop element");
                 SVNErrorManager.error(err);
             }
+            SVNDebugLog.getDefaultLog().info("deleting prop for '" + myPath + "': " + name + " = " + null);
             if (myIsDirectory) {
                 myEditor.changeDirProperty(name, null);
             } else {
@@ -509,6 +517,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 SVNErrorManager.error(err);
             }
             
+            SVNDebugLog.getDefaultLog().info("in setProp - prop for '" + myPath + "': " + myPropertyName + " = " + value);
+
             if (myIsDirectory) {
                 myEditor.changeDirProperty(myPropertyName, value);
             } else {
@@ -549,6 +559,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             String deltaBaseVersionURL = myPath != null ? (String) myVersionURLs.get(myPath) : null;
             DeltaOutputStreamWrapper osWrapper = new DeltaOutputStreamWrapper(deltaBaseVersionURL != null, myPath);
             DAVConnection connection = getConnection();
+            SVNDebugLog.getDefaultLog().info("fetching '" + myHref + "', baseVSN is '" + deltaBaseVersionURL + "', DAVRepos.location is '" + myOwner.getLocation() + "'");
             connection.doGet(myHref, deltaBaseVersionURL, osWrapper);
         }
         setDeltaProcessing(false);
@@ -610,6 +621,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             String elementNamespace = element.getNamespace();
             if (elementNamespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
                 String propName = element.getName();
+                SVNDebugLog.getDefaultLog().info("in addProps - prop for '" + myPath + "': " + propName + " = " + propValue);
                 if (isDir) {
                     myEditor.changeDirProperty(propName, propValue);
                 } else {
@@ -620,6 +632,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             
             if (elementNamespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
                 String propName = SVNProperty.SVN_PREFIX + element.getName();
+                SVNDebugLog.getDefaultLog().info("in addProps - prop for '" + myPath + "': " + propName + " = " + propValue);
                 if (isDir) {
                     myEditor.changeDirProperty(propName, propValue);
                 } else {
