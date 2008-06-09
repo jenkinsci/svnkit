@@ -97,7 +97,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
         } else if (element == DAVElement.COLLECTION) {
             myCurrentResource.setCollection(true);
         } else {
-            myEncoding = attrs.getValue("encoding");
+            myEncoding = attrs.getValue(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, "encoding");
         }
     }
 
