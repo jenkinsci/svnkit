@@ -113,7 +113,7 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void closeDir() throws SVNException {
         myCurrentDirectory = myCurrentDirectory.getParentFile();
-        myCurrentPath = SVNPathUtil.tail(myCurrentPath);
+        myCurrentPath = SVNPathUtil.removeTail(myCurrentPath);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision)
