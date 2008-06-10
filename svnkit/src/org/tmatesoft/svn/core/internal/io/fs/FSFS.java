@@ -67,6 +67,7 @@ public class FSFS {
     
     private static final int REPOSITORY_FORMAT = 5;
     private static final int DB_FORMAT = 2;
+    public static final int DB_FORMAT_LOW = 1;    
     private static final String DB_TYPE = "fsfs";
     
     private int myDBFormat;
