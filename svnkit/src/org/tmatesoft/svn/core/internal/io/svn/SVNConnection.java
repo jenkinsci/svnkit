@@ -17,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -27,14 +28,14 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-class SVNConnection {
+public class SVNConnection {
 
     private final ISVNConnector myConnector;
     private String myRealm;
@@ -50,9 +51,6 @@ class SVNConnection {
     private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
     
-    private static final String SUCCESS = "success";
-    private static final String FAILURE = "failure";
-    private static final String STEP = "step";
     private static final String EDIT_PIPELINE = "edit-pipeline";
     private static final String SVNDIFF1 = "svndiff1";
     private static final String ABSENT_ENTRIES = "absent-entries";
@@ -61,6 +59,7 @@ class SVNConnection {
     private static final String DEPTH = "depth";
     private static final String LOG_REVPROPS = "log-revprops";
 //    private static final String PARTIAL_REPLAY = "partial-replay";
+    private SVNAuthenticator myAuthenticator;
 
     public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
@@ -154,77 +153,61 @@ class SVNConnection {
     }
     
     public void authenticate(SVNRepositoryImpl repository) throws SVNException {
-        SVNErrorMessage failureReason = null;
         List items = read("ls", null, true);
         List mechs = SVNReader.getList(items, 0);
-        myRealm = SVNReader.getString(items, 1);
         if (mechs == null || mechs.size() == 0) {
             return;
         }
+        if (myAuthenticator != null) {
+            myAuthenticator.dispose();
+            myAuthenticator = null;
+        }
+
+        myRealm = SVNReader.getString(items, 1);
+        
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
         if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && mechs.contains("CRAM-MD5")) {
             mechs.remove("ANONYMOUS");
         }
-        SVNURL location = myRepository.getLocation();
-        SVNPasswordAuthentication auth = null;
-        if (repository.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
-            write("(w(s))", new Object[]{"EXTERNAL", repository.getExternalUserName()});
-            failureReason = readAuthResponse();
-        } else if (mechs.contains("ANONYMOUS")) {
-            write("(w())", new Object[]{"ANONYMOUS"});
-            failureReason = readAuthResponse();
-        } else if (mechs.contains("CRAM-MD5")) {
-            while (true) {
-                CramMD5 authenticator = new CramMD5();
-                String realm = getRealm();
-                if (location != null) {
-                    realm = "<" + location.getProtocol() + "://"
-                            + location.getHost() + ":"
-                            + location.getPort() + "> " + realm;
+        
+        myAuthenticator = null;
+        if (mechs.contains("ANONYMOUS") || mechs.contains("EXTERNAL")) {
+            myAuthenticator = new SVNPlainAuthenticator(this);
+            myAuthenticator.authenticate(mechs, myRealm, repository);
+        } else {
+            myAuthenticator = createSASLAuthenticator();
+            try {
+                myAuthenticator.authenticate(mechs, myRealm, repository);
+            } catch (SVNException e) {
+                if (!myAuthenticator.hasTried()) {
+                    // SASL error on initialization, could retry.
+                    myAuthenticator = new SVNPlainAuthenticator(this);
+                    myAuthenticator.authenticate(mechs, myRealm, repository);
+                } else {
+                    throw e;
                 }
-                if (auth == null && authManager != null) {
-                    auth = (SVNPasswordAuthentication) authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
-                } else if (authManager != null) {
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, failureReason, auth);
-                    auth = (SVNPasswordAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
-                }
-                if (auth == null || auth.getUserName() == null || auth.getPassword() == null) {
-                    failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Can't get password. Authentication is required for ''{0}''", realm);
-                    break;
-                }
-                write("(w())", new Object[]{"CRAM-MD5"});
-                while (true) {
-                    authenticator.setUserCredentials(auth);
-                    items = readTuple("w(?s)", true);
-                    String status = SVNReader.getString(items, 0);
-                    if (SUCCESS.equals(status)) {
-                        authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, auth);
-                        receiveRepositoryCredentials(repository);
-                        return;
-                    } else if (FAILURE.equals(status)) {
-                        failureReason = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));
-                        break;
-                    } else if (STEP.equals(status)) {
-                        try {
-                            byte[] response = authenticator.buildChallengeResponse(SVNReader.getBytes(items, 1));
-                            getOutputStream().write(response);
-                            getOutputStream().flush();
-                        } catch (IOException e) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
-                        }
-                    }
+                
+            }
+        }
+        receiveRepositoryCredentials(repository);
+    }
+    
+    private SVNAuthenticator createSASLAuthenticator() throws SVNException {
+        try {
+            Class saslClass = 
+                SVNConnection.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator");
+            if (saslClass != null) {
+                Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
+                if (constructor != null) {
+                    return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
                 }
             }
-        } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Cannot negotiate authentication mechanism"));
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().info(th.getMessage());
         }
-        if (failureReason == null) {
-            receiveRepositoryCredentials(repository);
-            return;
-        }
-        SVNErrorManager.error(failureReason);
+        return new SVNPlainAuthenticator(this);
     }
-
+    
     private void addCapabilities(List capabilities) throws SVNException {
         if (myCapabilities == null) {
             myCapabilities = new HashSet();
@@ -270,17 +253,11 @@ class SVNConnection {
         }
     }
 
-    private SVNErrorMessage readAuthResponse() throws SVNException {
-        List items = readTuple("w(?s)", true);
-        if (SUCCESS.equals(SVNReader.getString(items, 0))) {
-            return null;
-        } else if (FAILURE.equals(SVNReader.getString(items, 0))) {
-            return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));
-        }
-        return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
-    }
-
     public void close() throws SVNException {
+        if (myAuthenticator != null) {
+            myAuthenticator.dispose();
+            myAuthenticator = null;
+        }
         myInputStream = null;
         myLoggingInputStream = null;
         myOutputStream = null;
@@ -404,7 +381,7 @@ class SVNConnection {
         };
     }
 
-    private OutputStream getOutputStream() throws SVNException {
+    OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
                 myOutputStream = myRepository.getDebugLog().createLogStream(myConnector.getOutputStream());
@@ -415,7 +392,7 @@ class SVNConnection {
         return myOutputStream;
     }
 
-    private InputStream getInputStream() throws SVNException {
+    InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
                 myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
@@ -425,5 +402,13 @@ class SVNConnection {
             }
         }
         return myInputStream;
+    }
+    
+    void setOutputStream(OutputStream os) {
+        myOutputStream = os;
+    }
+
+    void setInputStream(InputStream is) {
+        myInputStream = is;
     }
 }

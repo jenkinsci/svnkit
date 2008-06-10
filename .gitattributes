@@ -209,6 +209,10 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSTranslateReporter.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSWriteLock.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/PathInfo.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNReader.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNCallbackHandler.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/DefaultSVNDebugLogger.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNEncodingUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/SVNFormatUtil.java -text
