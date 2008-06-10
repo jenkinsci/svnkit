@@ -61,6 +61,10 @@ public class SVNUUIDGenerator {
         return currentTime + ourFudgeFactor;
     }
 
+    public static String generateUUIDString() throws SVNException {
+        return formatUUID(generateUUID());
+    }
+
     public static synchronized byte[] generateUUID() throws SVNException {
         if (ourUUIDStateNode[0] == 0) {
             initState();

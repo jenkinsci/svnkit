@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -167,17 +168,30 @@ public class SVNFileUtil {
         return created;
     }
 
-    public static File createUniqueFile(File parent, String name, String suffix) throws SVNException {
-        File file = new File(parent, name + suffix);
-        for (int i = 1; i < 99999; i++) {
+    public static synchronized File createUniqueFile(File parent, String name, String suffix, boolean useUUIDGenerator) throws SVNException {
+        StringBuffer fileName = new StringBuffer();
+        fileName.append(name);
+        fileName.append(suffix);
+        File file = new File(parent, fileName.toString());
+        int i = 1;
+        do {
             if (SVNFileType.getType(file) == SVNFileType.NONE) {
+                createEmptyFile(file);
                 return file;
             }
-            file = new File(parent, name + "." + i + suffix);
-        }
-        if (SVNFileType.getType(file) == SVNFileType.NONE) {
-            return file;
-        }
+            fileName.setLength(0);
+            fileName.append(name);
+            fileName.append(".");
+            if (useUUIDGenerator) {
+                fileName.append(SVNUUIDGenerator.generateUUIDString());
+            } else {
+                fileName.append(i);
+            }
+            fileName.append(suffix);
+            file = new File(parent, fileName.toString());
+            i++;
+        } while (i < 99999);
+
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, "Unable to make name for ''{0}''", new File(parent, name));
         SVNErrorManager.error(err);
         return null;
@@ -250,7 +264,7 @@ public class SVNFileUtil {
         try {
             if (file.length() < 1024 * 100) {
                 // faster way for small files.
-                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro");
+                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro", true);
                 copyFile(file, tmp, false);
                 copyFile(tmp, file, false);
                 deleteFile(tmp);
@@ -341,7 +355,7 @@ public class SVNFileUtil {
         File tmpDst = dst;
         if (dst.exists()) {
             if (safe) {
-                tmpDst = createUniqueFile(dst.getParentFile(), ".copy", ".tmp");
+                tmpDst = createUniqueFile(dst.getParentFile(), ".copy", ".tmp", true);
             } else {
                 dst.delete();
             }

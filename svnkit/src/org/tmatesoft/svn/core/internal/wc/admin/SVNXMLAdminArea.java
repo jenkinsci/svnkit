@@ -537,10 +537,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
         // translate versioned file.
         File baseTmpFile = SVNFileUtil.createUniqueFile(getRoot(), 
-                SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp");
-        if (!baseTmpFile.getParentFile().exists()) {
-            baseTmpFile.getParentFile().mkdirs();
-        }
+                SVNFileUtil.getBasePath(getBaseFile(name, true)), ".tmp", true);
+
         File versionedFile = getFile(name);
         SVNTranslator.translate(this, name, name, SVNFileUtil.getBasePath(baseTmpFile), false);
 
@@ -809,7 +807,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 boolean modified = false;
                 File workingFile = getFile(fileName);  
-                File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
+                File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", true);
                 try {
                     String tmpFile2Path = SVNFileUtil.getBasePath(tmpFile2);
                     SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false);
@@ -876,7 +874,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             File wcFile = getFile(fileName);
             File tmpFile2 = null;
             try {
-                tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp");
+                tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", true);
                 boolean overwritten = false;
                 SVNFileType fileType = SVNFileType.getType(tmpFile);
                 boolean special = getProperties(fileName).getPropertyValue(SVNProperty.SPECIAL) != null;

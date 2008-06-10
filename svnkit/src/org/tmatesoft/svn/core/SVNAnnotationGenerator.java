@@ -199,8 +199,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         }
         if (myPreviousFile == null) {
             // create previous file.
-            myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");
-            SVNFileUtil.createEmptyFile(myPreviousFile);
+            myPreviousFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp", false);
         }
     }
     
@@ -214,10 +213,8 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
     
     public void applyTextDelta(String token, String baseChecksum) throws SVNException {
-        if (myCurrentFile != null) {
-            myCurrentFile.delete();
-        } else {
-            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp");;
+        if (myCurrentFile == null) {
+            myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp", false);
         }
         myDeltaProcessor.applyTextDelta(myPreviousFile, myCurrentFile, false);
     }

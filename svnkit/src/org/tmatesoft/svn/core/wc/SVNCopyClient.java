@@ -633,7 +633,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 File tmpFile = null;
     
                 File baseTmpFile = adminArea.getBaseFile(dstPath.getName(), true);
-                tmpFile = SVNFileUtil.createUniqueFile(baseTmpFile.getParentFile(), ".copy", ".tmp");
+                tmpFile = SVNFileUtil.createUniqueFile(baseTmpFile.getParentFile(), ".copy", ".tmp", false);
                 OutputStream os = null;
                 
                 long realRevision = -1;
@@ -885,7 +885,7 @@ public class SVNCopyClient extends SVNBasicClient {
         Map properties = srcArea.getProperties(srcEntry.getName()).asMap();
         
         SVNFileUtil.copyFile(textBase, tmpTextBase, false);
-        File tmpFile = SVNFileUtil.createUniqueFile(dstParent.getRoot(), ".copy", ".tmp");
+        File tmpFile = SVNFileUtil.createUniqueFile(dstParent.getRoot(), ".copy", ".tmp", false);
         SVNFileUtil.copy(srcArea.getFile(srcEntry.getName()), tmpFile, false, false);
        
         SVNWCManager.addRepositoryFile(dstParent, dstName, tmpFile, tmpTextBase, baseProperties, properties, copyFromURL, copyFromRevision);

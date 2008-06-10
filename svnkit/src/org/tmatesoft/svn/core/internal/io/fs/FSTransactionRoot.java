@@ -270,7 +270,7 @@ public class FSTransactionRoot extends FSRoot {
         }
 
         File propsFile = getTransactionRevNodePropsFile(node.getId());
-        SVNProperties.setProperties(properties, propsFile, SVNFileUtil.createUniqueFile(propsFile.getParentFile(), ".props", ".tmp"), SVNProperties.SVN_HASH_TERMINATOR);
+        SVNProperties.setProperties(properties, propsFile, SVNFileUtil.createUniqueFile(propsFile.getParentFile(), ".props", ".tmp", false), SVNProperties.SVN_HASH_TERMINATOR);
 
         if (node.getPropsRepresentation() == null || !node.getPropsRepresentation().isTxn()) {
             FSRepresentation mutableRep = new FSRepresentation();
@@ -422,7 +422,7 @@ public class FSTransactionRoot extends FSRoot {
         String newCopyId = FSTransactionRoot.addKeys(startCopyId, txnCopyId);
         String line = newRevision + " " + newNodeId + " " + newCopyId + "\n";
         File currentFile = getOwner().getCurrentFile();
-        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp");
+        File tmpCurrentFile = SVNFileUtil.createUniqueFile(currentFile.getParentFile(), ".txnfile", ".tmp", false);
         OutputStream currentOS = null;
 
         try {

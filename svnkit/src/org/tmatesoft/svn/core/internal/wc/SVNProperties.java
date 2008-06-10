@@ -132,7 +132,7 @@ public class SVNProperties {
         for (Iterator props = tmp.iterator(); props.hasNext();) {
             String added = (String) props.next();
             try {
-                tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp");
+                tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp", true);
 
                 os = SVNFileUtil.openFileForWriting(tmpFile);
                 properties.getPropertyValue(added, os);
@@ -160,8 +160,8 @@ public class SVNProperties {
             String changed = (String) props.next();
 
             try {
-                tmpFile1 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp1");
-                tmpFile2 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp2");
+                tmpFile1 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp1", true);
+                tmpFile2 = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp2", true);
 
                 os = new FileOutputStream(tmpFile1);
                 getPropertyValue(changed, os);
@@ -279,7 +279,7 @@ public class SVNProperties {
         File tmpFile = null;
         boolean empty = false;
         try {
-            tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp");
+            tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp", false);
             if (!isEmpty()) {
                 src = SVNFileUtil.openFileForReading(getFile());
             }

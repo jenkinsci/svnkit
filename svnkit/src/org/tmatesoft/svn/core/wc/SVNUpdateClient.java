@@ -643,7 +643,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             Map properties = new HashMap();
             OutputStream os = null;
-            File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), ".export", ".tmp");
+            File tmpFile = SVNFileUtil.createUniqueFile(dstPath.getParentFile(), ".export", ".tmp", false);
             try {
                 os = SVNFileUtil.openFileForWriting(tmpFile);
                 try {
@@ -1019,7 +1019,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         
         if (error != null && error.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
             external.getFile().getParentFile().mkdirs();
-            File newLocation = SVNFileUtil.createUniqueFile(external.getFile().getParentFile(), external.getFile().getName(), ".OLD");
+            File newLocation = SVNFileUtil.createUniqueFile(external.getFile().getParentFile(), external.getFile().getName(), ".OLD", false);
             SVNFileUtil.rename(external.getFile(), newLocation);
         } else if (error != null) {
             throw error;

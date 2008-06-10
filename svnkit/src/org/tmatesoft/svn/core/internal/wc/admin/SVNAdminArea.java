@@ -210,7 +210,7 @@ public abstract class SVNAdminArea {
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = new SVNTranslatorInputStream(textStream, eols, false, keywordsMap, false);
                     } else {
-                        tmpFile = SVNFileUtil.createUniqueFile(getAdminFile("tmp/text-base"), text.getName(), ".tmp");
+                        tmpFile = SVNFileUtil.createUniqueFile(getAdminFile("tmp/text-base"), text.getName(), ".tmp", false);
                         String tmpPath = SVNFileUtil.getBasePath(tmpFile);
                         SVNTranslator.translate(this, text.getName(), text.getName(), tmpPath, false);
                         textStream = SVNFileUtil.openFileForReading(getFile(tmpPath));
@@ -479,7 +479,7 @@ public abstract class SVNAdminArea {
         
         if (!conflicts.isEmpty()) {
             String prejTmpPath = getThisDirName().equals(name) ? "tmp/dir_conflicts" : "tmp/props/" + name;
-            File prejTmpFile = SVNFileUtil.createUniqueFile(getAdminDirectory(),  prejTmpPath, ".prej");
+            File prejTmpFile = SVNFileUtil.createUniqueFile(getAdminDirectory(),  prejTmpPath, ".prej", false);
             
             prejTmpPath = SVNFileUtil.getBasePath(prejTmpFile);
             
@@ -493,7 +493,7 @@ public abstract class SVNAdminArea {
 
             if (prejPath == null) {
                 prejPath = getThisDirName().equals(name) ? "dir_conflicts" : name;
-                File prejFile = SVNFileUtil.createUniqueFile(getRoot(), prejPath, ".prej");
+                File prejFile = SVNFileUtil.createUniqueFile(getRoot(), prejPath, ".prej", false);
                 prejPath = SVNFileUtil.getBasePath(prejFile);
             }
             File file = getFile(prejTmpPath);
@@ -556,8 +556,8 @@ public abstract class SVNAdminArea {
         if (SVNProperty.isBinaryMimeType(mimeType) && !customMerger) {
             // binary
             if (!dryRun) {                
-                File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
-                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
+                File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel, false);
+                File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel, false);
                 SVNFileUtil.copyFile(base, oldFile, false);
                 SVNFileUtil.copyFile(latest, newFile, false);
                 // update entry props
@@ -570,11 +570,11 @@ public abstract class SVNAdminArea {
         } else {
             // text
             // 1. destranslate local
-            File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, ".tmp");
+            File localTmpFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, ".tmp", false);
             SVNTranslator.translate(this, localPath, localPath, SVNFileUtil.getBasePath(localTmpFile), false);
             // 2. run merge between all files we have :)
             OutputStream result = null;
-            File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result");
+            File resultFile = dryRun ? null : SVNFileUtil.createUniqueFile(getRoot(), localPath, ".result", false);
             
             result = resultFile == null ? SVNFileUtil.DUMMY_OUT : SVNFileUtil.openFileForWriting(resultFile);
             try {
@@ -594,12 +594,12 @@ public abstract class SVNAdminArea {
                     SVNTranslator.translate(this, localPath, SVNFileUtil.getBasePath(resultFile), localPath, true);
                 } else {
                     // copy all to wc.
-                    File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel);
+                    File mineFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, localLabel, false);
                     String minePath = SVNFileUtil.getBasePath(mineFile);
                     SVNFileUtil.copyFile(getFile(localPath), mineFile, false);
-                    File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel);
+                    File oldFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, baseLabel, false);
                     String oldPath = SVNFileUtil.getBasePath(oldFile);
-                    File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel);
+                    File newFile = SVNFileUtil.createUniqueFile(getRoot(), localPath, latestLabel, false);
                     String newPath = SVNFileUtil.getBasePath(newFile);
                     
                     SVNTranslator.translate(this, localPath, base, oldFile, true);

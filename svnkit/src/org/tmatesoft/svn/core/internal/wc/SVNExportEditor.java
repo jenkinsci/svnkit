@@ -133,7 +133,7 @@ public class SVNExportEditor implements ISVNEditor {
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         String name = SVNPathUtil.tail(commitPath);
-        myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, name, ".tmp");
+        myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, name, ".tmp", false);
         myDeltaProcessor.applyTextDelta(null, myCurrentTmpFile, true);
     }
 
