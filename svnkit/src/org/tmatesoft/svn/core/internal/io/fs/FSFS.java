@@ -236,7 +236,7 @@ public class FSFS {
             readOptions(formatFile, format);
         } catch (SVNException svne) {
             if (svne.getCause() instanceof FileNotFoundException) {
-                format = DB_FORMAT;
+                format = DB_FORMAT_LOW;
             } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
                         "Can''t read first line of format file ''{0}''", formatFile.getFile());
