@@ -121,7 +121,7 @@ public class FSFS {
             format = formatFile.readInt();
         } catch (SVNException svne) {
             if (svne.getCause() instanceof FileNotFoundException) {
-                format = DB_FORMAT;
+                format = DB_FORMAT_LOW;
             }
         } finally {
             formatFile.close();
