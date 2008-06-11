@@ -293,7 +293,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             
             String chValue = optionValue.getValue();
-            for(StringTokenizer tokens = new StringTokenizer(chValue, ","); tokens.hasMoreTokens();) {
+            for(StringTokenizer tokens = new StringTokenizer(chValue, ", \n\r\t"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken();
                 while (token.startsWith("r")) {
                     token = token.substring(1);
@@ -303,7 +303,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                     change = Long.parseLong(token);
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                            "Non-numeric change argument given to -c");
+                            "Non-numeric change argument ({0}) given to -c", token);
                     SVNErrorManager.error(err);
                 }
                 SVNRevisionRange range = null;

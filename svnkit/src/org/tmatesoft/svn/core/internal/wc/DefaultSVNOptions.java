@@ -493,7 +493,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             value = "";
         }
         Collection tokensList = new ArrayList();
-        for (StringTokenizer tokens = new StringTokenizer(value, " \t"); tokens.hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(value, " \n\r\t"); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             if ("".equals(token)) {
                 continue;
