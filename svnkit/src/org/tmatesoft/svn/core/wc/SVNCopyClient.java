@@ -264,6 +264,21 @@ public class SVNCopyClient extends SVNBasicClient {
      *                           </ul>
      */
     public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, String commitMessage) throws SVNException {
+        try {
+            return copyReposToRepos(srcURL, srcRevision, dstURL, isMove, commitMessage);
+        } catch (SVNException e) {
+            SVNErrorCode code = e.getErrorMessage().getErrorCode();
+            if (code == SVNErrorCode.FS_ALREADY_EXISTS || code == SVNErrorCode.ENTRY_EXISTS) {
+                if (!failWhenDstExists) {
+                    dstURL = dstURL.appendPath(SVNPathUtil.tail(srcURL.getPath()), false);
+                    return copyReposToRepos(srcURL, srcRevision, dstURL, isMove, commitMessage);
+                }
+            }
+            throw e;
+        }
+    }
+    
+    private SVNCommitInfo copyReposToRepos(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {
         SVNURL topURL = SVNURLUtil.getCommonURLAncestor(srcURL, dstURL);
         if (topURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source and dest appear not to be in the same repository (src: ''{0}''; dst: ''{1}'')", new Object[] {srcURL, dstURL});
@@ -307,15 +322,8 @@ public class SVNCopyClient extends SVNBasicClient {
         }
         SVNNodeKind dstKind = repository.checkPath(dstPath, latestRevision);
         if (dstKind == SVNNodeKind.DIR) {
-            if (failWhenDstExists) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
-                SVNErrorManager.error(err);
-            }
-            dstPath = SVNPathUtil.append(dstPath, SVNPathUtil.tail(srcURL.getPath()));
-            if (repository.checkPath(dstPath, latestRevision) != SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
-                SVNErrorManager.error(err);
-            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
+            SVNErrorManager.error(err);
         } else if (dstKind == SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, "Path ''{0}'' already exists", dstPath);
             SVNErrorManager.error(err);
