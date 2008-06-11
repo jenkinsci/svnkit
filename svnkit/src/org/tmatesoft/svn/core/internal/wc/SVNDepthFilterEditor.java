@@ -189,7 +189,7 @@ public class SVNDepthFilterEditor implements ISVNEditor {
             
             int effectiveDepth = myDirDepth - (myHasTarget ? 1 : 0);
             if (myRequestedDepth == SVNDepth.EMPTY) {
-                return entryKind == SVNNodeKind.DIR && effectiveDepth <= 0;
+                return effectiveDepth <= 0;
             } else if (myRequestedDepth == SVNDepth.FILES) {
                 return effectiveDepth <= 0 || (entryKind == SVNNodeKind.FILE && effectiveDepth == 1);
             } else if (myRequestedDepth == SVNDepth.IMMEDIATES) {
