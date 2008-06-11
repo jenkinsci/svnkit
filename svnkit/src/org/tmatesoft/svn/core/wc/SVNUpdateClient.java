@@ -317,38 +317,34 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNURL repositoryRoot = repos.getRepositoryRoot(true);
 
         long result = -1;
-        try {
-            SVNWCAccess wcAccess = createWCAccess();
-            SVNFileType kind = SVNFileType.getType(dstPath);
-            if (kind == SVNFileType.NONE) {
-                SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
-                result = doUpdate(dstPath, revision, recursive);
-            } else if (kind == SVNFileType.DIRECTORY) {
-                int formatVersion = SVNAdminAreaFactory.checkWC(dstPath, true);
-                if (formatVersion != 0) {
-                    SVNAdminArea adminArea = wcAccess.open(dstPath, false, 0);
-                    SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
-                    wcAccess.closeAdminArea(dstPath);
-                    if (rootEntry.getSVNURL() != null && url.equals(rootEntry.getSVNURL())) {
-                        result = doUpdate(dstPath, revision, recursive);
-                    } else {
-                        String message = "''{0}'' is already a working copy for a different URL";
-                        if (rootEntry.isIncomplete()) {
-                            message += "; perform update to complete it";
-                        }
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, message, dstPath);
-                        SVNErrorManager.error(err);
-                    }
-                } else {
-                    SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
+        SVNWCAccess wcAccess = createWCAccess();
+        SVNFileType kind = SVNFileType.getType(dstPath);
+        if (kind == SVNFileType.NONE) {
+            SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
+            result = doUpdate(dstPath, revision, recursive);
+        } else if (kind == SVNFileType.DIRECTORY) {
+            int formatVersion = SVNAdminAreaFactory.checkWC(dstPath, true);
+            if (formatVersion != 0) {
+                SVNAdminArea adminArea = wcAccess.open(dstPath, false, 0);
+                SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
+                wcAccess.closeAdminArea(dstPath);
+                if (rootEntry.getSVNURL() != null && url.equals(rootEntry.getSVNURL())) {
                     result = doUpdate(dstPath, revision, recursive);
+                } else {
+                    String message = "''{0}'' is already a working copy for a different URL";
+                    if (rootEntry.isIncomplete()) {
+                        message += "; perform update to complete it";
+                    }
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, message, dstPath);
+                    SVNErrorManager.error(err);
                 }
             } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", dstPath);
-                SVNErrorManager.error(err);
+                SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber);
+                result = doUpdate(dstPath, revision, recursive);
             }
-        } finally {
-            sleepForTimeStamp();
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", dstPath);
+            SVNErrorManager.error(err);
         }
         return result;
     }
