@@ -268,7 +268,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                         String userName = myAuthentication.getUserName();
                         ((NameCallback) callback).setName(userName != null ? userName : "");
                     } else {
-                        SVNException svne = myError.getErrorCode() == SVNErrorCode.CANCELLED ? new SVNCancelException(myError) : new SVNAuthenticationException(myError);
+                        SVNException svne = myError.getErrorCode() == SVNErrorCode.CANCELLED ? new SVNCancelException(myError) : (SVNException)new SVNAuthenticationException(myError);
                         throw (IOException) new IOException().initCause(svne);
                     }
                 } else if (callback instanceof PasswordCallback) {
@@ -277,7 +277,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                         String password = ((SVNPasswordAuthentication) myAuthentication).getPassword();
                         ((PasswordCallback) callback).setPassword(password != null ? password.toCharArray() : new char[0]);
                     } else {
-                        SVNException svne = myError.getErrorCode() == SVNErrorCode.CANCELLED ? new SVNCancelException(myError) : new SVNAuthenticationException(myError);
+                        SVNException svne = myError.getErrorCode() == SVNErrorCode.CANCELLED ? new SVNCancelException(myError) : (SVNException)new SVNAuthenticationException(myError);
                         throw (IOException) new IOException().initCause(svne);
                     }
                 } else if (callback instanceof RealmCallback) {
