@@ -286,7 +286,7 @@ public class FSHooks {
     
     private static String getCapabilitiesAsString(List capabilities) {
         if (capabilities == null || capabilities.isEmpty()) {
-            return null;
+            return "";
         }
         StringBuffer buffer = new StringBuffer();
         for (int i = 0; i < capabilities.size(); i++) {
