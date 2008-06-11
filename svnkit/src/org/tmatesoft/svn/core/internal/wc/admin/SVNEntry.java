@@ -68,6 +68,9 @@ public class SVNEntry implements Comparable {
     }
     
     public boolean isThisDir() {
+        if (myAdminArea != null) {
+            return myAdminArea.getThisDirName().equals(getName());
+        }
         return "".equals(getName());
     }
 

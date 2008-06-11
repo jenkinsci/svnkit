@@ -134,6 +134,10 @@ public class SVNChangelistClient extends SVNBasicClient {
         }
         
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
+            if (!SVNWCAccess.matchesChangeList(myChangelists, entry)) {
+                return;
+            }
+            
             if (!entry.isFile()) {
                 if (entry.isThisDir()) {
                     SVNEventAction action = myChangelist != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR;
@@ -143,15 +147,15 @@ public class SVNChangelistClient extends SVNBasicClient {
                 return;
                 
             }
-            if (!SVNWCAccess.matchesChangeList(myChangelists, entry)) {
-                return;
-            }
+            
             if (entry.getChangelistName() == null && myChangelist == null) {
                 return;
             }
+            
             if (entry.getChangelistName() != null && entry.getChangelistName().equals(myChangelist)) {
                 return;
             }
+            
             if (myChangelist != null && entry.getChangelistName() != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CHANGELIST_MOVE, "Removing ''{0}'' from changelist ''{1}''.", new Object[] {path, entry.getChangelistName()});
                 SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_MOVED, SVNEventAction.CHANGELIST_MOVED, err, null);
