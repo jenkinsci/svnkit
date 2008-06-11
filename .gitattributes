@@ -23,8 +23,6 @@ contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileData.java -tex
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineRAFileDataStream.java -text
 contrib/sequence/src/de/regnis/q/sequence/line/QSequenceLineResult.java -text
 contrib/sequence/src/de/regnis/q/sequence/media/QSequenceIntMedia.java -text
-contrib/servlet-api/servlet-api-2.3src.zip -text
-contrib/servlet-api/servlet-api.jar -text
 contrib/trilead/TRILEAD-LICENSE -text
 contrib/trilead/trilead.jar -text
 contrib/trilead/trileadsrc.zip -text
@@ -149,10 +147,6 @@ svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/options.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/commands.properties -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/options.properties -text
-svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVDepth.java -text
-svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVBase64OutputStream.java -text
-svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVHandlerFactory.java -text
-svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/ServletDAVHandler.java -text
 svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.properties eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.xml eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit/.options eol=lf

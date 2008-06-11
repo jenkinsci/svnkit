@@ -2,7 +2,7 @@
 <project name="svnkit" default="deploy" basedir=".">
 	
 	<target name="init-revision" if="build.vcs.number.1">
-    	<replace file="build/lib/svnkit.build.properties" token="SNAPSHOT" value="${build.vcs.number.1}" ></replace>
+    	<replace file="build/lib/svnkit.build.properties" token="SNAPSHOT" value="${build.vcs.number.1}" />
 	</target>
 
     <target name="init-environment">
@@ -60,19 +60,6 @@
                classpathref="library.classpath">
         </javac>
     </target>
-
-	<target name="compile-dav" depends="init-environment,compile-library"> 
-        <mkdir dir="svnkit-dav/bin" />
-        <path id="library-dav.classpath">
-            <pathelement location="contrib/servlet-api/servlet-api.jar" />
-            <pathelement path="svnkit/bin"/>
-        </path>
-        <javac debug="true"
-               destdir="svnkit-dav/bin"
-               srcdir="svnkit-dav/src"
-               classpathref="library-dav.classpath">
-        </javac>
-	</target>
 
 	<target name="compile-library-eclipse" depends="init-environment" if="eclipse.present"> 
         <path id="library-eclipse.classpath">
@@ -158,9 +145,9 @@
 
     <target name="build-library" depends="compile-library, compile-library-eclipse">
         <mkdir dir="build/lib" />
-    	<copy file="svnkit.build.properties" tofile="build/lib/svnkit.build.properties"></copy>
+    	<copy file="svnkit.build.properties" tofile="build/lib/svnkit.build.properties"/>
     	<!-- update svnkit.build.properties here -->
-    	<antcall target="init-revision"></antcall>
+    	<antcall target="init-revision"/>
 
         <jar destfile="build/lib/svnkit.jar">
             <fileset dir="svnkit/bin">
@@ -217,15 +204,6 @@
             </fileset>
         </copy>
     </target>
-
-	<target name="build-dav" depends="compile-dav,build-library">
-		<war destfile="build/lib/svnkit.war" webxml="svnkit-dav/WEB-INF/web.xml">
-			<classes dir="svnkit-dav/bin"/>
-			<lib dir="build/lib">
-				<include name="svnkit.jar"/>
-			</lib>
-		</war>
-	</target>
 
     <target name="build-cli" depends="build-library">
         <jar destfile="build/lib/svnkit-cli.jar">
@@ -386,7 +364,6 @@
                 <include name="svnkit-eclipse/bin/**" />
                 <include name="svnkit-test/bin/**" />
                 <include name="svnkit-cli/bin/**" />
-			    <include name="svnkit-dav/bin/**" />
             </fileset>
         </delete>
     </target>
@@ -512,8 +489,8 @@
             </fileset>
 		</jar>
 		
-		<copy file="pom.xml" tofile="build/maven/pom.xml"></copy>
-		<replace token="%svnkit.version%" value="${build.number}" file="build/maven/pom.xml"></replace>
+		<copy file="pom.xml" tofile="build/maven/pom.xml"/>
+		<replace token="%svnkit.version%" value="${build.number}" file="build/maven/pom.xml"/>
         <jar destfile="build/maven/svnkit-${build.number}-bundle.jar">
         	<fileset dir="build/maven">
                 <include name="pom.xml" />
@@ -569,10 +546,7 @@
         </zip>
     </target>
 
-	<target name="deploy-dav" depends="build-dav">
-	</target>
-
-    <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot,deploy-dav,deploy-bundle" />
+    <target name="deploy" depends="clean,deploy-library,deploy-eclipse,deploy-snapshot,deploy-bundle" />
 
     <target name="test-java" depends="init-environment,compile-tests">
         <path id="test.classpath">
@@ -590,8 +564,8 @@
     </target>
 	
 	<target name="init-test-properties" unless="python.test.properties">
-		<available file="svnkit-test/test.properties" property="python.test.properties" value="svnkit-test/test.properties"></available>
-		<available file="svnkit-test/test.${os}.properties" property="python.test.properties" value="svnkit-test/test.${os}.properties"></available>
+		<available file="svnkit-test/test.properties" property="python.test.properties" value="svnkit-test/test.properties"/>
+		<available file="svnkit-test/test.${os}.properties" property="python.test.properties" value="svnkit-test/test.${os}.properties"/>
 	</target>
 
     <target name="test-python" depends="init-test-properties,init-environment,compile-tests,build-library,build-cli">
@@ -640,7 +614,7 @@
 			</fileset>
     	</chmod>
     	<pathconvert targetos="unix" property="basedir.unix">
-    		<path location="${basedir}"></path>
+    		<path location="${basedir}"/>
     	</pathconvert>
 
     	<path id="python.classpath">
@@ -662,8 +636,8 @@
               tofile="${python.test.home}/logging.python.properties"
               failonerror="false"
         />
-    	<replace token="%ant.dir%" file="build/lib/logging.properties" value="${basedir.unix}"></replace>
-    	<replace token="%ant.dir%" file="${python.test.home}/logging.python.properties" value="${basedir.unix}"></replace>
+    	<replace token="%ant.dir%" file="build/lib/logging.properties" value="${basedir.unix}"/>
+    	<replace token="%ant.dir%" file="${python.test.home}/logging.python.properties" value="${basedir.unix}"/>
 
     	<mkdir dir="build/logs"/>
     	<delete failonerror="false">
@@ -686,9 +660,9 @@
          <arg path="${basedir}/build/lib" />
     	</java>
     	<property name="teamcity.buildConfName" value="local" />
-    	<antcall target="zip-logs"></antcall>
-    	<delete file="build/lib/logging.properties" failonerror="false"></delete>
-    	<delete file="build/lib/logging.python.properties" failonerror="false"></delete>
+    	<antcall target="zip-logs"/>
+    	<delete file="build/lib/logging.properties" failonerror="false"/>
+    	<delete file="build/lib/logging.python.properties" failonerror="false"/>
     	<delete failonerror="false">
     		<fileset dir="build/logs">
     			<include name="**/*.lck"/>

@@ -24,7 +24,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
