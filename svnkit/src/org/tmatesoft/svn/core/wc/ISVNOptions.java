@@ -94,140 +94,9 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * 
      * @return <span class="javakeyword">true</span> if commit-times
      *         are enabled, otherwise <span class="javakeyword">false</span>
-     * @see    #setUseCommitTimes(boolean)        
      */
     public boolean isUseCommitTimes();
-    
-    /**
-     * Enables or disables the commit-times option. 
-     * 
-     * <p>
-     * The commit-times option makes checkout/update/switch/revert operations put
-     * last-committed timestamps on every file they touch. 
-     * 
-     * <p>
-     * This option corresponds to
-     * the <i>'use-commit-times'</i> option that can be found in the 
-     * SVN's <i>config</i> file under the <i>[miscellany]</i> section.
-     *  
-     * @param useCommitTimes  <span class="javakeyword">true</span> to 
-     *                        enable commit-times, <span class="javakeyword">false</span>
-     *                        to disable
-     * @see                   #isUseCommitTimes()                        
-     */
-    public void setUseCommitTimes(boolean useCommitTimes);
-    
-    /**
-     * Determines if the autoproperties option is enabled. 
-     * 
-     * <p>
-     * Autoproperties are the properties that are automatically set 
-     * on files when they are added or imported. 
-     * 
-     * <p>
-     * This option corresponds to the <i>'enable-auto-props'</i> option 
-     * that can be found in the SVN's <i>config</i> file under the 
-     * <i>[miscellany]</i> section.
-     * 
-     * @return  <span class="javakeyword">true</span> if autoproperties
-     *          are enabled, otherwise <span class="javakeyword">false</span>
-     * @see     #setUseAutoProperties(boolean)         
-     */
-    public boolean isUseAutoProperties();
-    
-    /**
-     * Enables or disables the autoproperties option.
-     *
-     * <p>
-     * Autoproperties are the properties that are automatically set 
-     * on files when they are added or imported. 
-     * 
-     * <p>
-     * This option corresponds to the <i>'enable-auto-props'</i> option 
-     * that can be found in the SVN's <i>config</i> file under the 
-     * <i>[miscellany]</i> section.
-     * 
-     * @param useAutoProperties  <span class="javakeyword">true</span> to 
-     *                           enable autoproperties, <span class="javakeyword">false</span>
-     *                           to disable
-     * @see                      #isUseAutoProperties()
-     */
-    public void setUseAutoProperties(boolean useAutoProperties);
-    
-    /**
-     * Determines if the authentication storage is enabled.  
-     * 
-     * <p>
-     * The auth storage is used for disk-caching of all 
-     * authentication information: usernames, passwords, server certificates, 
-     * and any other types of cacheable credentials. 
-     * 
-     * <p>
-     * This option corresponds to the 
-     * <i>'store-auth-creds'</i> option that can be found 
-     * in the SVN's <i>config</i> file under the <i>[auth]</i> section. 
-     * 
-     * @return  <span class="javakeyword">true</span> if auth storage
-     *          is enabled, otherwise <span class="javakeyword">false</span>
-     * @see     #setAuthStorageEnabled(boolean)
-     */
-    public boolean isAuthStorageEnabled();
-    
-    /**
-     * Enables or disables the authentication storage.
-     * 
-     * <p>
-     * The auth storage is used for disk-caching of all 
-     * authentication information: usernames, passwords, server certificates, 
-     * and any other types of cacheable credentials. 
-     * 
-     * <p>
-     * This option corresponds to the 
-     * <i>'store-auth-creds'</i> option that can be found 
-     * in the SVN's <i>config</i> file under the <i>[auth]</i> section. 
-     * 
-     * @param storeAuth  <span class="javakeyword">true</span> to 
-     *                   enable the auth storage, <span class="javakeyword">false</span>
-     *                   to disable
-     * @see              #isAuthStorageEnabled()
-     */
-    public void setAuthStorageEnabled(boolean storeAuth);
-    
-    /**
-     * Determines if a file is ignored according to the 
-     * global ignore patterns.
-     * 
-     * <p>
-     * The global ignore patterns describe the names of 
-     * files and directories that SVNKit should ignore during status, add and 
-     * import operations. Similar to the 
-     * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
-     * file under the <i>[miscellany]</i> section.
-     * 
-     * @param  name  a file name
-     * @return       <span class="javakeyword">true</span> if the file
-     *               is ignored, otherwise <span class="javakeyword">false</span>
-     * @deprecated
-     */
-    public boolean isIgnored(String name);
 
-    /**
-     * Determines if a file is ignored according to the 
-     * global ignore patterns.
-     * 
-     * <p>
-     * The global ignore patterns describe the names of 
-     * files and directories that SVNKit should ignore during status, add and 
-     * import operations. Similar to the 
-     * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
-     * file under the <i>[miscellany]</i> section.
-     * 
-     * @param  file  a file
-     * @return       <span class="javakeyword">true</span> if the file
-     *               is ignored, otherwise <span class="javakeyword">false</span>
-     */
-    public boolean isIgnored(File file);
-    
     /**
      * Returns all the global ignore patterns.
      * 
@@ -241,98 +110,9 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * @return an array of patterns (that usually contain wildcards)
      *         that specify file and directory names to be ignored until
      *         they are versioned
-     * @see    #setIgnorePatterns(String[])
      */
     public String[] getIgnorePatterns();
-    
-    /**
-     * Sets global ignore patterns.
-     * 
-     * <p>
-     * The global ignore patterns describe the names of 
-     * files and directories that SVNKit should ignore during status, add and 
-     * import operations. Similar to the 
-     * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i> 
-     * file under the <i>[miscellany]</i> section.
-     * 
-     * <p>
-     * For example, to set all <code>.exe</code> files to be ignored include
-     * <code>"*.exe"</code> pattern into <code>patterns</code>.
-     * 
-     * <p>
-     * If <code>patterns</code> is <span class="javakeyword">null</span> or
-     * empty then all the patterns will be removed.
-     * 
-     * @param patterns  an array of patterns (that usually contain wildcards)
-     *                  that specify file and directory names to be ignored until
-     *                  they are versioned
-     * @see             #getIgnorePatterns()
-     */
-    public void setIgnorePatterns(String[] patterns);
-    
-    /**
-     * Removes a particular global ignore pattern.
-     * 
-     * @param pattern a patterna to be removed
-     * @see           #addIgnorePattern(String)
-     */
-    public void deleteIgnorePattern(String pattern);
-    
-    /**
-     * Adds a new particular ignore pattern to global
-     * ignore patterns. 
-     * 
-     * @param pattern an ignore pattern to be added
-     * @see           #deleteIgnorePattern(String)
-     */
-    public void addIgnorePattern(String pattern);
-    
-    /**
-     * Returns autoproperties as a {@link java.util.Map} 
-     * where each key is a file name pattern and the corresponding
-     * value is a string in the form of <code>"propName=propValue"</code>.
-     * 
-     * @return a {@link java.util.Map} containing autoproperties
-     * @see      #setAutoProperties(Map)
-     */
-    public Map getAutoProperties();
-    
-    /**
-     * Sets autoproperties that will be automatically put on all files
-     * that will be added or imported. 
-     * 
-     * <p>
-     * There can be several properties specified for one file pattern - 
-     * they should be delimited by ";". 
-     * 
-     * @param autoProperties  a {@link java.util.Map} which keys are file
-     *                        name patterns and their values are strings 
-     *                        in the form of <code>"propName=propValue"</code>
-     * @see                   #getAutoProperties()
-     */
-    public void setAutoProperties(Map autoProperties);
-    
-    /**
-     * Removes a particular autoproperty by specifying a file name
-     * pattern. 
-     * 
-     * @param pattern a file name pattern 
-     * @see           #setAutoProperty(String, String)       
-     * 
-     */
-    public void deleteAutoProperty(String pattern);
-    
-    /**
-     * Sets an autoproperty - binds a file name pattern with a
-     * string in the form of <code>"propName=propValue"</code>.
-     * 
-     * @param pattern      a file name pattern (usually containing 
-     *                     wildcards)
-     * @param properties   a property for <code>pattern</code>
-     * @see                #deleteAutoProperty(String)
-     */
-    public void setAutoProperty(String pattern, String properties);
-    
+
     /**
      * Collects and puts into a {@link java.util.Map} all 
      * autoproperties specified for the file name pattern matched by the 
@@ -360,56 +140,13 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      * 
      * @return a factory that produces merger drivers
      *         for merge operations
-     * @see    #setMergerFactory(ISVNMergerFactory) 
      */
     public ISVNMergerFactory getMergerFactory();
     
-    /**
-     * Sets a factory object which is responsible for creating 
-     * merger drivers.
-     *  
-     * @param merger  a factory that produces merger drivers
-     *                for merge operations
-     * @see           #getMergerFactory()
-     */
-    public void setMergerFactory(ISVNMergerFactory merger);
-    
-    /**
-     * Returns the value of a property from the <i>[svnkit]</i> section
-     * of the <i>config</i> file. Currently not used.
-     * 
-     * @param   propertyName a SVNKit specific config property name
-     * @return               the value of the property
-     */
-    public String getPropertyValue(String propertyName);
-    
-    /**
-     * Sets the value of a property from the <i>[svnkit]</i> section
-     * of the <i>config</i> file. Currently not used.
-     * 
-     * @param   propertyName   a SVNKit specific config property name
-     * @param   propertyValue  a new value for the property; if 
-     *                         <span class="javakeyword">null</span> the 
-     *                         property is removed
-     */
-    public void setPropertyValue(String propertyName, String propertyValue);
-
     public DateFormat getKeywordDateFormat();
     
     public String[] getPreservedConflictFileExtensions();
-    
-    public String getEditor();
 
-    public String getMergeTool();
-    
-    public boolean isKeepLocks();
-    
-    public void setKeepLocks(boolean keep);
-    
-    public boolean isInteractiveConflictResolution();
-    
-    public void setConflictHandler(ISVNConflictHandler resolver);
-    
     public boolean isAllowAllForwardMergesFromSelf();
 
     public byte[] getNativeEOL();

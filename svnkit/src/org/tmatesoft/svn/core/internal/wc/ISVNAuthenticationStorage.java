@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.auth;
+package org.tmatesoft.svn.core.internal.wc;
 
 /**
  * The <b>ISVNAuthenticationStorage</b> interface is used to implement custom 
@@ -19,7 +19,7 @@ package org.tmatesoft.svn.core.auth;
  * 
  * <p>
  * To make an authentication manager use your custom auth storage manager, 
- * provide it to the {@link ISVNAuthenticationManager#setRuntimeStorage(ISVNAuthenticationStorage) setRuntimeStorage()} 
+ * provide it to the {@link org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager#setRuntimeStorage(ISVNAuthenticationStorage) setRuntimeStorage()}
  * method of the authentication manager. 
  * 
  * <p>
@@ -30,7 +30,7 @@ package org.tmatesoft.svn.core.auth;
  * 
  * @version 1.1.1
  * @author  TMate Software Ltd.
- * @see     ISVNAuthenticationManager
+ * @see     org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
  */
 public interface ISVNAuthenticationStorage {
     /**
@@ -38,7 +38,7 @@ public interface ISVNAuthenticationStorage {
      * authentication realm in the auth storage.  
      * 
      * @param kind   a credential kind (for example, like those defined in 
-     *               {@link ISVNAuthenticationManager})
+     *               {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager})
      * @param realm  a repository authentication realm including a hostname, 
      *               a port number and a realm string 
      * @param data   a credential object
@@ -50,7 +50,7 @@ public interface ISVNAuthenticationStorage {
      * given repository authentication realm from the auth storage.
      * 
      * @param  kind   a credential kind (for example, like those defined in 
-     *                {@link ISVNAuthenticationManager})
+     *                {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager})
      * @param  realm  a repository authentication realm including a hostname, 
      *                a port number and a realm string 
      * @return        a credential object

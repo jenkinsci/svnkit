@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -212,7 +213,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * @param  password    a user password 
      * @return             a new <b>SVNClientManager</b> instance
      */
-    public static SVNClientManager newInstance(ISVNOptions options, String userName, String password) {
+    public static SVNClientManager newInstance(DefaultSVNOptions options, String userName, String password) {
         boolean storeAuth = options == null ? true : options.isAuthStorageEnabled();
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(null, userName, password, storeAuth);
         return new SVNClientManager(options, authManager);

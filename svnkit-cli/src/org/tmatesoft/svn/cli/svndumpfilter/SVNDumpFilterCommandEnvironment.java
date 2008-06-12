@@ -30,8 +30,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 
 
 /**
@@ -88,7 +88,7 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
         return null;
     }
 
-    protected ISVNOptions createClientOptions() throws SVNException {
+    protected DefaultSVNOptions createClientOptions() throws SVNException {
         return null;
     }
 

@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -442,7 +443,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * @param  commitMessage    a string to be a commit log message
      * @param  useGlobalIgnores if <span class="javakeyword">true</span> 
      *                          then those paths that match global ignore patterns controlled 
-     *                          by a config options driver (see {@link ISVNOptions#isIgnored(String) isIgnored()}) 
+     *                          by a config options driver (see {@link org.tmatesoft.svn.core.wc.ISVNOptions#getIgnorePatterns()}) 
      *                          will not be imported, otherwise global ignore patterns are not  
      *                          used
      * @param  recursive        this flag is relevant only when the <code>path</code> is 
@@ -529,7 +530,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, 
                         ignoreUnknownNodeTypes, depth, commitEditor);
             } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
-                if (!useGlobalIgnores || !getOptions().isIgnored(path)) {
+                if (!useGlobalIgnores || !DefaultSVNOptions.isIgnored(getOptions(), path.getName())) {
                     changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
                 }
             } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
@@ -1113,7 +1114,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            if (useGlobalIgnores && getOptions().isIgnored(file)) {
+            if (useGlobalIgnores && DefaultSVNOptions.isIgnored(getOptions(), file.getName())) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());

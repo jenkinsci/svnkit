@@ -33,10 +33,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
@@ -162,7 +162,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         return SVNWCUtil.createDefaultAuthenticationManager();
     }
 
-    protected ISVNOptions createClientOptions() {
+    protected DefaultSVNOptions createClientOptions() {
         return SVNWCUtil.createDefaultOptions(true);
     }
 

@@ -76,7 +76,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -88,6 +88,8 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
@@ -147,7 +149,7 @@ public class SVNClientImpl implements SVNClientInterface {
     private ConflictResolverCallback myConflictResolverCallback;
     private ProgressListener myProgressListener;
     private CommitMessage myMessageHandler;
-    private ISVNOptions myOptions;
+    private DefaultSVNOptions myOptions;
     private boolean myCancelOperation = false;
     private SVNClientManager myClientManager;
     private SVNClientInterface myOwner;
@@ -386,7 +388,9 @@ public class SVNClientImpl implements SVNClientInterface {
         } else {
             myAuthenticationManager.setAuthenticationProvider(null);
         }
-        myAuthenticationManager.setRuntimeStorage(getClientCredentialsStorage());
+        if (myAuthenticationManager instanceof DefaultSVNAuthenticationManager) {
+            ((DefaultSVNAuthenticationManager)myAuthenticationManager).setRuntimeStorage(getClientCredentialsStorage());
+        }
         if (myClientManager != null) {
             myClientManager.setDebugLog(JavaHLDebugLog.wrap(myProgressListener, getDebugLog()));
             myClientManager.shutdownConnections(true);

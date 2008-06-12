@@ -796,10 +796,10 @@ public class SVNMoveClient extends SVNBasicClient {
         } finally {
             srcAccess.close();
         }
-        if (move) {
-            myWCClient.doDelete(src, true, false);
-        }
         if (added && !versionedDst) {
+            if (move) {
+                myWCClient.doDelete(src, true, false);
+            }
             myWCClient.doAdd(dst, true, false, false, false, false);            
             return;
         }
@@ -827,12 +827,16 @@ public class SVNMoveClient extends SVNBasicClient {
             dstBaseProps.removeAll();
             srcProps.copyTo(dstProps);
             srcBaseProps.copyTo(dstBaseProps);
-
+            
             dstEntry = dstArea.addEntry(dst.getName());
             dstEntry.setCopyFromURL(cfURL);
             dstEntry.setCopyFromRevision(cfRevision);
             dstEntry.setCopied(true);
             dstEntry.setKind(SVNNodeKind.FILE);
+
+            File baseSrc = srcArea.getBaseFile(src.getName(), false);
+            File baseDst = dstArea.getBaseFile(dst.getName(), false);
+            SVNFileUtil.copyFile(baseSrc, baseDst, false);
 
             boolean[] extend = new boolean[]{false};
             Map mergeInfo = myCopyClient.fetchMergeInfoForPropagation(src, extend, srcAccess);
@@ -848,7 +852,7 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNPropertyValue prop = null;
             if (wcMergeInfo != null) {
                 prop = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo));
-            }
+            } 
             dstProps.setPropertyValue(SVNProperty.MERGE_INFO, prop);
 
             if (dstEntry.isScheduledForDeletion()) {
@@ -864,9 +868,13 @@ public class SVNMoveClient extends SVNBasicClient {
             dstArea.saveVersionedProperties(log, true);
             log.save();
             dstArea.runLogs();
+
         } finally {
             srcAccess.close();
             dstAccess.close();
+        }
+        if (move) {
+            myWCClient.doDelete(src, true, false);
         }
     }
 

@@ -36,13 +36,13 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -60,6 +60,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     private PrintStream myErr;
     private PrintStream myOut;
     private SVNClientManager myClientManager;
+    private DefaultSVNOptions myOptions;
     private List myArguments;
     private String myProgramName;
     private AbstractSVNCommand myCommand;
@@ -90,6 +91,10 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
 
     public SVNClientManager getClientManager() {
         return myClientManager;
+    }
+
+    public DefaultSVNOptions getOptions() {
+        return myOptions;
     }
 
     public List getArguments() {
@@ -184,14 +189,15 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     
     protected abstract String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException;
     
-    protected abstract ISVNOptions createClientOptions() throws SVNException;
+    protected abstract DefaultSVNOptions createClientOptions() throws SVNException;
 
     protected abstract ISVNAuthenticationManager createClientAuthenticationManager();
     
     protected abstract String getCommandLineClientName();
     
     public void initClientManager() throws SVNException {
-        myClientManager = SVNClientManager.newInstance(createClientOptions(), createClientAuthenticationManager());
+        myOptions = createClientOptions();
+        myClientManager = SVNClientManager.newInstance(myOptions, createClientAuthenticationManager());
         myClientManager.setEventHandler(new ISVNEventHandler() {
             public void handleEvent(SVNEvent event, double progress) throws SVNException {
             }

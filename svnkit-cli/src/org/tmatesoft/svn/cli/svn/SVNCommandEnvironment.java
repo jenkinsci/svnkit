@@ -37,11 +37,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -182,9 +182,9 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return commandName;
     }
 
-    protected ISVNOptions createClientOptions() throws SVNException {
+    protected DefaultSVNOptions createClientOptions() throws SVNException {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
-        ISVNOptions options = SVNWCUtil.createDefaultOptions(configDir, true);
+        DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(configDir, true);
         options.setAuthStorageEnabled(!myIsNoAuthCache);
         if (myIsAutoProps) {
             options.setUseAutoProperties(true);

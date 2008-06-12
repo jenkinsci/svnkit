@@ -194,7 +194,7 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         String schedule = entry.getSchedule();
         String fileName = entry.getName();
-        if (entry.isCopied()) {
+        if (!getDiffCallback().isDiffCopiedAsAdded() && entry.isCopied()) {
             schedule = null;
         }
         if (!myUseAncestry && entry.isScheduledForReplacement()) {
@@ -204,12 +204,16 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNProperties baseProps = null;
         File baseFile = dir.getBaseFile(fileName, false);
         if (!entry.isScheduledForDeletion()) {
-            boolean modified = dir.hasPropModifications(fileName);
-            if (modified) {
-                baseProps = dir.getBaseProperties(fileName).asMap();
-                propDiff = computePropsDiff(baseProps, dir.getProperties(fileName).asMap());
+            if (getDiffCallback().isDiffCopiedAsAdded() && entry.isCopied()) {
+                propDiff = dir.getProperties(fileName).asMap();
             } else {
-                propDiff = new SVNProperties();
+                boolean modified = dir.hasPropModifications(fileName);
+                if (modified) {
+                    baseProps = dir.getBaseProperties(fileName).asMap();
+                    propDiff = computePropsDiff(baseProps, dir.getProperties(fileName).asMap());
+                } else {
+                    propDiff = new SVNProperties();
+                }
             }
         } else {
             baseProps = dir.getBaseProperties(fileName).asMap();
@@ -225,15 +229,21 @@ public class SVNDiffEditor implements ISVNEditor {
             String mimeType = dir.getProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
             
             File tmpFile = detranslateFile(dir, fileName);
-//            SVNDebugLog.getDefaultLog().info("added");
-            getDiffCallback().fileAdded(filePath, null, tmpFile, 0, entry.getRevision(), mimeType, null, dir.getBaseProperties(fileName).asMap(), propDiff);
+            SVNProperties originalProperties = null; 
+            long revision = entry.getRevision();
+            if (entry.isCopied() && getDiffCallback().isDiffCopiedAsAdded()) {
+                originalProperties = new SVNProperties();
+                revision = 0;
+            } else {
+                originalProperties = dir.getBaseProperties(fileName).asMap();
+            }
+            getDiffCallback().fileAdded(filePath, null, tmpFile, 0, revision, mimeType, null, originalProperties, propDiff);
         } else if (schedule == null) {
             boolean modified = dir.hasTextModifications(fileName, false);
             File tmpFile = null;
             if (modified) {
                 tmpFile = detranslateFile(dir, fileName);
             }
-//            SVNDebugLog.getDefaultLog().info("modified: " + modified);
             if (modified || (propDiff != null && !propDiff.isEmpty())) {
                 String baseMimeType = dir.getBaseProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
                 String mimeType = dir.getProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
