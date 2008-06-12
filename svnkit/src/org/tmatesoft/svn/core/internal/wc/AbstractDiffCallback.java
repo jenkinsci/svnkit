@@ -43,6 +43,8 @@ public abstract class AbstractDiffCallback {
     }
     
     public abstract boolean isDiffUnversioned();
+
+    public abstract boolean isDiffCopiedAsAdded();
     
     public abstract File createTempDirectory() throws SVNException;
 

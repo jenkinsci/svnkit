@@ -71,6 +71,10 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     public boolean isDiffUnversioned() {
         return false;
     }
+    
+    public boolean isDiffCopiedAsAdded() {
+        return false;
+    }
 
     public Map getConflictedPaths() {
         return myConflictedPaths;

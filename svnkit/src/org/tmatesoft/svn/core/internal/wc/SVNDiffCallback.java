@@ -49,6 +49,10 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     public boolean isDiffUnversioned() {
         return myGenerator.isDiffUnversioned();
     }
+    
+    public boolean isDiffCopiedAsAdded() {
+        return myGenerator.isDiffCopied();
+    }
 
     public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
         myGenerator.displayAddedDirectory(getDisplayPath(path), getRevision(myRevision1), getRevision(revision));
