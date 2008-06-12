@@ -1,7 +1,6 @@
 * text=auto !eol
 /.options eol=lf
 /COPYING eol=lf
-/REMARKS.txt -text
 /changelog.txt eol=lf
 contrib/javahl/JAVAHL-LICENSE eol=lf
 contrib/jna/JNA-LICENSE eol=lf
