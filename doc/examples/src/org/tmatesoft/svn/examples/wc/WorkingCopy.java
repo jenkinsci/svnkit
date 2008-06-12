@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
@@ -413,7 +414,7 @@ public class WorkingCopy {
          * 
          * SVNWCUtil is a utility class that creates a default options driver.
          */
-        ISVNOptions options = SVNWCUtil.createDefaultOptions(true);
+        DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
         
         /*
          * Creates an instance of SVNClientManager providing authentication

@@ -57,7 +57,7 @@ public class SVNCommandUtil {
         if (testEnvironment[1] == null) {
             mergeToolCommand = SVNFileUtil.getEnvironmentVariable("SVN_MERGE");
             if (mergeToolCommand == null) {
-                mergeToolCommand = env.getClientManager().getOptions().getMergeTool();
+                mergeToolCommand = env.getOptions().getMergeTool();
             }
             testEnvironment = null;
         } else {
@@ -233,7 +233,7 @@ public class SVNCommandUtil {
         if (command == null) {
             command = SVNFileUtil.getEnvironmentVariable("SVN_EDITOR");
             if (command == null) {
-                command = env.getClientManager().getOptions().getEditor();
+                command = env.getOptions().getEditor();
             }
             if (command == null) {
                 command = SVNFileUtil.getEnvironmentVariable("VISUAL");

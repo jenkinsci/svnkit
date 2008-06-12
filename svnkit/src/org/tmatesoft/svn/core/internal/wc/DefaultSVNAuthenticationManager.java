@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -253,6 +253,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return myConfigFile;
     }
 
+    /**
+     * Sets a specific runtime authentication storage manager. This storage
+     * manager will be asked by this auth manager for cached credentials as
+     * well as used to cache new ones accepted recently.
+     *
+     * @param storage a custom auth storage manager
+     */
     public void setRuntimeStorage(ISVNAuthenticationStorage storage) {
         myRuntimeAuthStorage = storage;
     }
@@ -640,6 +647,15 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return myIsAuthenticationForced;
     }
 
+    /**
+     * Specifies the way how credentials are to be supplied to a
+     * repository server.
+     *
+     * @param forced  <span class="javakeyword">true</span> to force
+     *                credentials sending; <span class="javakeyword">false</span>
+     *                to put off sending credentials till a server challenge
+     * @see           #isAuthenticationForced()
+     */
     public void setAuthenticationForced(boolean forced) {
         myIsAuthenticationForced = forced;
     }

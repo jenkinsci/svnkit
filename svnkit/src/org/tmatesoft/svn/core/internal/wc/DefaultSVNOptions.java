@@ -100,19 +100,84 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return getBooleanValue(value, false);
     }
 
+    /**
+     * Enables or disables the commit-times option.
+     *
+     * <p>
+     * The commit-times option makes checkout/update/switch/revert operations put
+     * last-committed timestamps on every file they touch.
+     *
+     * <p>
+     * This option corresponds to
+     * the <i>'use-commit-times'</i> option that can be found in the
+     * SVN's <i>config</i> file under the <i>[miscellany]</i> section.
+     *
+     * @param useCommitTimes  <span class="javakeyword">true</span> to
+     *                        enable commit-times, <span class="javakeyword">false</span>
+     *                        to disable
+     * @see                   #isUseCommitTimes()
+     */
     public void setUseCommitTimes(boolean useCommitTimes) {
         getConfigFile().setPropertyValue(MISCELLANY_GROUP, USE_COMMIT_TIMES, useCommitTimes ? YES : NO, !myIsReadonly);
     }
 
-    public boolean isUseAutoProperties() {
+    /**
+     * Determines if the autoproperties option is enabled.
+     *
+     * <p>
+     * Autoproperties are the properties that are automatically set
+     * on files when they are added or imported.
+     *
+     * <p>
+     * This option corresponds to the <i>'enable-auto-props'</i> option
+     * that can be found in the SVN's <i>config</i> file under the
+     * <i>[miscellany]</i> section.
+     *
+     * @return  <span class="javakeyword">true</span> if autoproperties
+     *          are enabled, otherwise <span class="javakeyword">false</span>
+     */
+    private boolean isUseAutoProperties() {
         String value = getConfigFile().getPropertyValue(MISCELLANY_GROUP, ENABLE_AUTO_PROPS);
         return getBooleanValue(value, false);
     }
 
+    /**
+     * Enables or disables the autoproperties option.
+     *
+     * <p>
+     * Autoproperties are the properties that are automatically set
+     * on files when they are added or imported.
+     *
+     * <p>
+     * This option corresponds to the <i>'enable-auto-props'</i> option
+     * that can be found in the SVN's <i>config</i> file under the
+     * <i>[miscellany]</i> section.
+     *
+     * @param useAutoProperties  <span class="javakeyword">true</span> to
+     *                           enable autoproperties, <span class="javakeyword">false</span>
+     *                           to disable
+     * @see                      #isUseAutoProperties()
+     */
     public void setUseAutoProperties(boolean useAutoProperties) {
         getConfigFile().setPropertyValue(MISCELLANY_GROUP, ENABLE_AUTO_PROPS, useAutoProperties ? YES : NO, !myIsReadonly);
     }
     
+    /**
+     * Determines if the authentication storage is enabled.
+     *
+     * <p>
+     * The auth storage is used for disk-caching of all
+     * authentication information: usernames, passwords, server certificates,
+     * and any other types of cacheable credentials.
+     *
+     * <p>
+     * This option corresponds to the
+     * <i>'store-auth-creds'</i> option that can be found
+     * in the SVN's <i>config</i> file under the <i>[auth]</i> section.
+     *
+     * @return  <span class="javakeyword">true</span> if auth storage
+     *          is enabled, otherwise <span class="javakeyword">false</span>
+     */
     public boolean isAuthStorageEnabled() {
         String value = getConfigFile().getPropertyValue(AUTH_GROUP, STORE_AUTH_CREDS);
         return getBooleanValue(value, true);
@@ -122,7 +187,25 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         String value = getConfigFile().getPropertyValue(MISCELLANY_GROUP, NO_UNLOCK);
         return getBooleanValue(value, false);
     }
-    
+
+    /**
+     * Enables or disables the authentication storage.
+     *
+     * <p>
+     * The auth storage is used for disk-caching of all
+     * authentication information: usernames, passwords, server certificates,
+     * and any other types of cacheable credentials.
+     *
+     * <p>
+     * This option corresponds to the
+     * <i>'store-auth-creds'</i> option that can be found
+     * in the SVN's <i>config</i> file under the <i>[auth]</i> section.
+     *
+     * @param storeAuth  <span class="javakeyword">true</span> to
+     *                   enable the auth storage, <span class="javakeyword">false</span>
+     *                   to disable
+     * @see              #isAuthStorageEnabled()
+     */
     public void setAuthStorageEnabled(boolean storeAuth) {
         getConfigFile().setPropertyValue(AUTH_GROUP, STORE_AUTH_CREDS, storeAuth ? YES : NO, !myIsReadonly);
     }
@@ -131,12 +214,8 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(MISCELLANY_GROUP, NO_UNLOCK, keep ? YES : NO, !myIsReadonly);
     }
 
-    public boolean isIgnored(File file) {
-        return file != null && isIgnored(file.getName());
-    }
-
-    public boolean isIgnored(String name) {
-        String[] patterns = getIgnorePatterns();
+    public static boolean isIgnored(ISVNOptions options, String name) {
+        String[] patterns = options.getIgnorePatterns();
         for (int i = 0; patterns != null && i < patterns.length; i++) {
             String pattern = patterns[i];
             if (matches(pattern, name)) {
@@ -162,6 +241,29 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return (String[]) tokensList.toArray(new String[tokensList.size()]);
     }
 
+    /**
+     * Sets global ignore patterns.
+     *
+     * <p>
+     * The global ignore patterns describe the names of
+     * files and directories that SVNKit should ignore during status, add and
+     * import operations. Similar to the
+     * <i>'global-ignores'</i> option that can be found in the SVN's <i>config</i>
+     * file under the <i>[miscellany]</i> section.
+     *
+     * <p>
+     * For example, to set all <code>.exe</code> files to be ignored include
+     * <code>"*.exe"</code> pattern into <code>patterns</code>.
+     *
+     * <p>
+     * If <code>patterns</code> is <span class="javakeyword">null</span> or
+     * empty then all the patterns will be removed.
+     *
+     * @param patterns  an array of patterns (that usually contain wildcards)
+     *                  that specify file and directory names to be ignored until
+     *                  they are versioned
+     * @see             #getIgnorePatterns()
+     */
     public void setIgnorePatterns(String[] patterns) {
         if (patterns == null || patterns.length == 0) {
             getConfigFile().setPropertyValue(MISCELLANY_GROUP, GLOBAL_IGNORES, null, !myIsReadonly);
@@ -182,6 +284,12 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         getConfigFile().setPropertyValue(MISCELLANY_GROUP, GLOBAL_IGNORES, valueStr, !myIsReadonly);
     }
 
+    /**
+     * Removes a particular global ignore pattern.
+     *
+     * @param pattern a patterna to be removed
+     * @see           #addIgnorePattern(String)
+     */
     public void deleteIgnorePattern(String pattern) {
         if (pattern == null) {
             return;
@@ -198,6 +306,13 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         setIgnorePatterns(patterns);
     }
 
+    /**
+     * Adds a new particular ignore pattern to global
+     * ignore patterns.
+     *
+     * @param pattern an ignore pattern to be added
+     * @see           #deleteIgnorePattern(String)
+     */
     public void addIgnorePattern(String pattern) {
         if (pattern == null) {
             return;
@@ -211,10 +326,30 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         }
     }
 
+    /**
+     * Returns autoproperties as a {@link java.util.Map}
+     * where each key is a file name pattern and the corresponding
+     * value is a string in the form of <code>"propName=propValue"</code>.
+     *
+     * @return a {@link java.util.Map} containing autoproperties
+     */
     public Map getAutoProperties() {
         return getConfigFile().getProperties(AUTOPROPS_GROUP);
     }
 
+    /**
+     * Sets autoproperties that will be automatically put on all files
+     * that will be added or imported.
+     *
+     * <p>
+     * There can be several properties specified for one file pattern -
+     * they should be delimited by ";".
+     *
+     * @param autoProperties  a {@link java.util.Map} which keys are file
+     *                        name patterns and their values are strings
+     *                        in the form of <code>"propName=propValue"</code>
+     * @see                   #getAutoProperties()
+     */
     public void setAutoProperties(Map autoProperties) {
         autoProperties = autoProperties == null ? Collections.EMPTY_MAP : autoProperties;
         Map existingProperties = getAutoProperties();
@@ -249,10 +384,26 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return getConfigFile().getPropertyValue(HELPERS_GROUP, MERGE_TOOL_CMD);
     }
 
+    /**
+     * Removes a particular autoproperty by specifying a file name
+     * pattern.
+     *
+     * @param pattern a file name pattern
+     * @see           #setAutoProperty(String, String)
+     *
+     */
     public void deleteAutoProperty(String pattern) {
         getConfigFile().setPropertyValue(AUTOPROPS_GROUP, pattern, null, !myIsReadonly);
     }
 
+    /**
+     * Sets an autoproperty - binds a file name pattern with a
+     * string in the form of <code>"propName=propValue"</code>.
+     *
+     * @param pattern      a file name pattern (usually containing
+     *                     wildcards)
+     * @param properties   a property for <code>pattern</code>
+     */
     public void setAutoProperty(String pattern, String properties) {
         getConfigFile().setPropertyValue(AUTOPROPS_GROUP, pattern, properties, !myIsReadonly);
     }
@@ -304,11 +455,26 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         }
         return myMergerFactory;
     }
-    
+
+    /**
+     * Sets a factory object which is responsible for creating
+     * merger drivers.
+     *
+     * @param merger  a factory that produces merger drivers
+     *                for merge operations
+     * @see           #getMergerFactory()
+     */
     public void setMergerFactory(ISVNMergerFactory mergerFactory) {
         myMergerFactory = mergerFactory;
     }
 
+    /**
+     * Returns the value of a property from the <i>[svnkit]</i> section
+     * of the <i>config</i> file. Currently not used.
+     *
+     * @param   propertyName a SVNKit specific config property name
+     * @return the value of the property
+     */
     public String getPropertyValue(String propertyName) {
         if (propertyName == null) {
             return null;
@@ -320,6 +486,15 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return value;
     }
 
+    /**
+     * Sets the value of a property from the <i>[svnkit]</i> section
+     * of the <i>config</i> file. Currently not used.
+     *
+     * @param   propertyName   a SVNKit specific config property name
+     * @param   propertyValue  a new value for the property; if
+     *                         <span class="javakeyword">null</span> the
+     *                         property is removed
+     */
     public void setPropertyValue(String propertyName, String propertyValue) {
         if (propertyName == null || "".equals(propertyName.trim())) {
             return;

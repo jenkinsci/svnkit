@@ -225,14 +225,6 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
     }
     
-    /**
-     * Does nothing.
-     * 
-     * @param storage
-     */
-    public void setRuntimeStorage(ISVNAuthenticationStorage storage) {
-    }
-
     public boolean isAuthenticationForced() {
         return myIsAuthenticationForced;
     }

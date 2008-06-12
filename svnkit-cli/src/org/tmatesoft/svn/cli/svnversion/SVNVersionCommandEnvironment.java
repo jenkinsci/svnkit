@@ -26,7 +26,7 @@ import org.tmatesoft.svn.cli.SVNCommandLine;
 import org.tmatesoft.svn.cli.SVNOptionValue;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
@@ -65,7 +65,7 @@ public class SVNVersionCommandEnvironment extends AbstractSVNCommandEnvironment 
         return SVNWCUtil.createDefaultAuthenticationManager();
     }
 
-    protected ISVNOptions createClientOptions() {
+    protected DefaultSVNOptions createClientOptions() {
         return SVNWCUtil.createDefaultOptions(true);
     }
 

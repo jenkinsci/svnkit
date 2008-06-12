@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.javahl;
 import java.util.Hashtable;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 
 /**
  * @version 1.1.1

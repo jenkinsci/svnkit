@@ -92,7 +92,7 @@ public class SVNCommitCommand extends SVNCommand {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }        
         client.setCommitHandler(getSVNEnvironment());
-        boolean keepLocks = getSVNEnvironment().getClientManager().getOptions().isKeepLocks();
+        boolean keepLocks = getSVNEnvironment().getOptions().isKeepLocks();
         SVNCommitInfo info = null;
         try {
             info = client.doCommit(files, keepLocks, getSVNEnvironment().getMessage(), 

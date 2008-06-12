@@ -219,15 +219,6 @@ public interface ISVNAuthenticationManager {
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
     
     /**
-     * Sets a specific runtime authentication storage manager. This storage 
-     * manager will be asked by this auth manager for cached credentials as 
-     * well as used to cache new ones accepted recently.
-     * 
-     * @param storage a custom auth storage manager
-     */
-    public void setRuntimeStorage(ISVNAuthenticationStorage storage);
-    
-    /**
      * Checks whether client should send authentication credentials to 
      * a repository server not waiting for the server's challenge. 
      * 
@@ -240,22 +231,9 @@ public interface ISVNAuthenticationManager {
      * @return <span class="javakeyword">true</span> if authentication 
      *         credentials are forced to be sent;<span class="javakeyword">false</span> 
      *         when credentials are to be sent only in response to a server challenge    
-     * 
-     * @see    #setAuthenticationForced(boolean)
      */
     public boolean isAuthenticationForced();
 
-    /**
-     * Specifies the way how credentials are to be supplied to a 
-     * repository server.
-     * 
-     * @param forced  <span class="javakeyword">true</span> to force 
-     *                credentials sending; <span class="javakeyword">false</span> 
-     *                to put off sending credentials till a server challenge
-     * @see           #isAuthenticationForced()
-     */
-    public void setAuthenticationForced(boolean forced);
-    
     /**
      * Returns a connection timeout value.
      * 

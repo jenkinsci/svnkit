@@ -132,7 +132,7 @@ public class SVNWCUtil {
      *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password) {
-        ISVNOptions options = createDefaultOptions(configDir, true);
+        DefaultSVNOptions options = createDefaultOptions(configDir, true);
         boolean store = options.isAuthStorageEnabled();
         return createDefaultAuthenticationManager(configDir, userName, password, store);
     }
@@ -228,7 +228,7 @@ public class SVNWCUtil {
      * @return a default implementation of the run-time configuration options
      *         driver interface
      */
-    public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
+    public static DefaultSVNOptions createDefaultOptions(File dir, boolean readonly) {
         return new DefaultSVNOptions(dir, readonly);
     }
 
@@ -245,7 +245,7 @@ public class SVNWCUtil {
      *         driver interface
      * @see #getDefaultConfigurationDirectory()
      */
-    public static ISVNOptions createDefaultOptions(boolean readonly) {
+    public static DefaultSVNOptions createDefaultOptions(boolean readonly) {
         return new DefaultSVNOptions(null, readonly);
     }
 
