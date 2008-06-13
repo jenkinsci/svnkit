@@ -65,9 +65,11 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
             OutputStream logStream = SVNFileUtil.openFileForWriting(logPath);
             handler = new StreamHandler(logStream, formatter);
         }
+        myHandlers.put(logPath, handler);
         handler.setFormatter(formatter);
         handler.setLevel(level);
-        myHandlers.put(logPath, handler);
+        resetLogHandlers();
+        getLogger().addHandler(handler);
     }
 
     private void resetLogHandlers() {
@@ -83,6 +85,7 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
     private Logger getLogger() {
         if (myLogger == null) {
             myLogger = Logger.getLogger(JAVAHL_LOGGER_NAME);
+            myLogger.setLevel(Level.FINEST);
             resetLogHandlers();
         }
         return myLogger;
