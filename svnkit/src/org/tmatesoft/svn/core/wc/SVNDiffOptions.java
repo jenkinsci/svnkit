@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.util.Collection;
+import java.util.LinkedList;
+
 
 /**
  * The <b>SVNDiffOptions</b> class is used to contain some rules for controlling the 
@@ -109,4 +112,18 @@ public class SVNDiffOptions {
         myIsIgnoreEOLStyle = isIgnoreEOLStyle;
     }
 
+    public Collection toOptionsCollection() {
+        Collection opts = new LinkedList();
+        if (isIgnoreAllWhitespace()) {
+            opts.add("-w");
+        }
+        if (isIgnoreAmountOfWhitespace()) {
+            opts.add("-b");
+        }
+        if (isIgnoreEOLStyle()) {
+            opts.add("--ignore-eol-style");
+        }
+        return opts;
+    }
+    
 }

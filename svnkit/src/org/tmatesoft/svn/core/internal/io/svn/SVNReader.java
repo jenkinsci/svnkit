@@ -144,7 +144,7 @@ public class SVNReader {
         String comment = getString(values, 3);
         Date creationDate = getDate(values, 4);
         Date expirationDate = null;
-        if (values.get(5) != null) {
+        if (values.size() >= 6 && values.get(5) != null) {
             expirationDate = getDate(values, 5);
         }
         return new SVNLock(path, token, owner, comment, creationDate, expirationDate);

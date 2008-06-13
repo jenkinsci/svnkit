@@ -974,7 +974,7 @@ public class SVNFileUtil {
         }
     }
 
-    public static boolean isExecutable(File file) {
+    public static boolean isExecutable(File file) throws SVNException {
         if (isWindows || isOpenVMS) {
             return false;
         }
@@ -1262,29 +1262,40 @@ public class SVNFileUtil {
         }
     }
 
-    public static String execCommand(String[] commandLine) {
-        return execCommand(commandLine, false);
+    public static String execCommand(String[] commandLine) throws SVNException {
+        return execCommand(commandLine, false, null);
     }
 
-    public static String execCommand(String[] commandLine, boolean waitAfterRead) {
-        return execCommand(commandLine, null, waitAfterRead);
+    public static String execCommand(String[] commandLine, boolean waitAfterRead, 
+            ISVNReturnValueCallback callback) throws SVNException {
+        return execCommand(commandLine, null, waitAfterRead, callback);
     }
 
-    public static String execCommand(String[] commandLine, String[] env, boolean waitAfterRead) {
+    public static String execCommand(String[] commandLine, String[] env, boolean waitAfterRead, 
+            ISVNReturnValueCallback callback) throws SVNException {
         InputStream is = null;
-        StringBuffer result = new StringBuffer();
+        boolean handleOutput = callback != null && callback.isHandleProgramOutput(); 
+        StringBuffer result =  handleOutput ? null : new StringBuffer();
         try {
             Process process = Runtime.getRuntime().exec(commandLine, env);
             is = process.getInputStream();
             if (!waitAfterRead) {
                 int rc = process.waitFor();
+                if (callback != null) {
+                    callback.handleReturnValue(rc);
+                }
                 if (rc != 0) {
                     return null;
                 }
             }
             int r;
             while ((r = is.read()) >= 0) {
-                result.append((char) (r & 0xFF));
+                char ch = (char) (r & 0xFF);
+                if (handleOutput) {
+                    callback.handleChar(ch);
+                } else {
+                    result.append(ch);
+                }
             }
             if (waitAfterRead) {
                 int rc = process.waitFor();
@@ -1292,7 +1303,7 @@ public class SVNFileUtil {
                     return null;
                 }
             }
-            return result.toString().trim();
+            return handleOutput ? null : result.toString().trim();
         } catch (IOException e) {
             SVNDebugLog.getDefaultLog().info(e);
         } catch (InterruptedException e) {
@@ -1303,7 +1314,7 @@ public class SVNFileUtil {
         return null;
     }
 
-    private static String getCurrentUser() {
+    private static String getCurrentUser() throws SVNException {
         if (isWindows || isOpenVMS) {
             return System.getProperty("user.name");
         }
@@ -1318,7 +1329,7 @@ public class SVNFileUtil {
         return ourUserID;
     }
 
-    private static String getCurrentGroup() {
+    private static String getCurrentGroup() throws SVNException {
         if (isWindows || isOpenVMS) {
             return System.getProperty("user.name");
         }

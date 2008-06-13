@@ -34,7 +34,7 @@ public class DefaultSVNCommandLineDiffGenerator extends DefaultSVNDiffGenerator 
         myFile2 = file2;
     }
     
-    protected void displayHeaderFields(OutputStream os, String path1, String rev1, String path2, String rev2) throws IOException {
+    protected void displayHeaderFields(OutputStream os, String label1, String label2) throws IOException {
         Date time1 = new Date(myFile1.lastModified());
         Date time2 = new Date(myFile2.lastModified());
         String timestamp1 = SVNDate.formatConsoleDiffDate(time1);

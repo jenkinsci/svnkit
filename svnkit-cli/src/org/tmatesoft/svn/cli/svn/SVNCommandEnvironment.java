@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -90,6 +91,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private String myMessage;
     private boolean myIsForceLog;
     private String myEditorCommand;
+    private String myDiffCommand;
     private SVNProperties myRevisionProperties;
     private boolean myIsNoUnlock;
     private boolean myIsDryRun;
@@ -125,7 +127,6 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myIsDescend = true;
         myLimit = -1;
         myResolveAccept = SVNConflictAcceptPolicy.UNSPECIFIED;
-        myExtensions = new HashSet();
         myDepth = SVNDepth.UNKNOWN;
         mySetDepth = SVNDepth.UNKNOWN;
         myStartRevision = SVNRevision.UNDEFINED;
@@ -435,9 +436,16 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             myIsRelocate = true;
         } else if (option == SVNOption.EXTENSIONS) {
-            myExtensions.add(optionValue.getValue());
+            String extensionsString = optionValue.getValue();
+            String[] extensions = extensionsString.trim().split("\\s+");
+            if (myExtensions == null) {
+                myExtensions = new HashSet();
+            }
+            myExtensions.addAll(Arrays.asList(extensions));
         } else if (option == SVNOption.RECORD_ONLY) {
             myIsRecordOnly = true;
+        } else if (option == SVNOption.DIFF_CMD) {
+            myDiffCommand = optionValue.getValue();
         } else if (option == SVNOption.EDITOR_CMD) {
             myEditorCommand = optionValue.getValue();
         } else if (option == SVNOption.OLD) {
@@ -651,7 +659,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     public String getEditorCommand() {
         return myEditorCommand;
     }
-    
+
+    public String getDiffCommand() {
+        return myDiffCommand;
+    }
+
     public String getMessage() {
         return myMessage;
     }
@@ -745,6 +757,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     }
     
     public SVNDiffOptions getDiffOptions() throws SVNException {
+        if (myExtensions == null) {
+            return null;
+        }
+        
         LinkedList extensions = new LinkedList(myExtensions);
         boolean ignoreAllWS = myExtensions.contains("-w") || myExtensions.contains("--ignore-all-space");
         if (ignoreAllWS) {

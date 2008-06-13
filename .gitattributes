@@ -221,6 +221,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNMerger.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/IOExceptionWrapper.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNFileFetcher.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNMergeInfoFilter.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNReturnValueCallback.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNAdminDeltifier.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNAmbientDepthFilterEditor.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCancellableOutputStream.java -text
@@ -247,6 +248,7 @@ svnkit/src/org/tmatesoft/svn/core/io/SVNLocationSegment.java -text
 svnkit/src/org/tmatesoft/svn/core/io/diff/package.html -text
 svnkit/src/org/tmatesoft/svn/core/io/package.html -text
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
+svnkit/src/org/tmatesoft/svn/core/javahl/JavaHLProgressLog.java -text
 svnkit/src/org/tmatesoft/svn/core/javahl/package.html -text
 svnkit/src/org/tmatesoft/svn/core/package.html -text
 svnkit/src/org/tmatesoft/svn/core/replicator/SVNReplicationEditor.java -text
