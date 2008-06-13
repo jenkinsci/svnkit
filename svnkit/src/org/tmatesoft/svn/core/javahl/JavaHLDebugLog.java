@@ -54,6 +54,7 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
                 resetLogHandlers();
             } else {
                 Handler handler = (Handler) myHandlers.remove(logPath);
+                handler.close();
                 getLogger().removeHandler(handler);
             }
             return;
@@ -68,7 +69,6 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         myHandlers.put(logPath, handler);
         handler.setFormatter(formatter);
         handler.setLevel(level);
-        resetLogHandlers();
         getLogger().addHandler(handler);
     }
 
@@ -78,6 +78,7 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         }
         for (int i = 0; i < getLogger().getHandlers().length; i++) {
             Handler handler = getLogger().getHandlers()[i];
+            handler.close();
             getLogger().removeHandler(handler);
         }
     }
