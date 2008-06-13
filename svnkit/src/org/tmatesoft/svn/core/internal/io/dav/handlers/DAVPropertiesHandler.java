@@ -104,6 +104,9 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         DAVElement name = null;
         SVNPropertyValue value = null;
+        if (myCurrentProperties == null) {
+            invalidXML();
+        }
         if (element == DAVElement.RESPONSE) {
             if (myCurrentResource.getURL() == null) {
                 invalidXML();
