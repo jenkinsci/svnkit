@@ -68,11 +68,14 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     throw new SVNAuthenticationException(err);
                 }
                 if (tryAuthentication()) {
+	                callback.acknowledgeAuthentication(true, realm, null);
                     setEncryption();
                     return;
                 }
+                callback.acknowledgeAuthentication(false, realm, getLastError());
             }
         } catch (SVNException e) {
+	        callback.acknowledgeAuthentication(false, realm, getLastError());
             failed = true;
             if (getLastError() != null) {
                 SVNErrorManager.error(getLastError());
@@ -287,7 +290,15 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 }
             }
         }
-        
+
+	    private void acknowledgeAuthentication(boolean accepted, String realm, SVNErrorMessage errorMessage) throws SVNException {
+		    if (myAuthenticationManager == null || myAuthentication == null) {
+			    return;
+		    }
+
+		    myAuthenticationManager.acknowledgeAuthentication(accepted, ISVNAuthenticationManager.PASSWORD, realm, errorMessage, myAuthentication);
+	    }
+
         private void fetchCredentials() {
             if (myAuthentication != null && myCallbackCount == 1) {
                 myCallbackCount = 0;
@@ -297,9 +308,12 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
             try {
                 if (myAuthentication != null) {
                     myAuthentication = myAuthenticationManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, myRealm, myLocation);
-                } else {
+                } else if (myAuthenticationManager != null) {
                     myAuthentication = myAuthenticationManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, myRealm, myLocation);
+                } else {
+	                myAuthentication = null;
                 }
+	            
                 if (myAuthentication == null) {
                     myError = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "Authentication cancelled");
                     setLastError(myError);
