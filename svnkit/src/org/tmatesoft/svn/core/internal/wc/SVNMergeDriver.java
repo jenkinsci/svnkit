@@ -178,7 +178,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             return getReposMergeInfo(repository, relPath, revisionNum, 
                     SVNMergeInfoInheritance.INHERITED, false);
         } finally {
-            repository.closeSession();
+            if (repository != null) {
+                repository.closeSession();
+            }
         }
     }
     
