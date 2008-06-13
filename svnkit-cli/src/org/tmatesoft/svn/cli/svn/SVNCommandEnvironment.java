@@ -441,7 +441,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (myExtensions == null) {
                 myExtensions = new HashSet();
             }
-            myExtensions.add(Arrays.asList(extensions));
+            myExtensions.addAll(Arrays.asList(extensions));
         } else if (option == SVNOption.RECORD_ONLY) {
             myIsRecordOnly = true;
         } else if (option == SVNOption.DIFF_CMD) {
