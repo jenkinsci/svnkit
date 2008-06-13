@@ -27,6 +27,9 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -53,6 +56,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -68,6 +72,8 @@ import org.xml.sax.helpers.DefaultHandler;
 class HTTPConnection implements IHTTPConnection {
     
     private static final DefaultHandler DEFAULT_SAX_HANDLER = new DefaultHandler();
+    private static final boolean ourIsNoKeepAlive = Boolean.getBoolean("svnkit.http.noKeepAlive");
+    
     private static EntityResolver NO_ENTITY_RESOLVER = new EntityResolver() {
         public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
             return new InputSource(new ByteArrayInputStream(new byte[0]));
@@ -94,6 +100,7 @@ class HTTPConnection implements IHTTPConnection {
     private String myCharset;
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
+    private long myNextRequestTimeout;
     
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
@@ -102,6 +109,7 @@ class HTTPConnection implements IHTTPConnection {
         myIsSecured = "https".equalsIgnoreCase(myHost.getProtocol());
         myIsSpoolAll = spoolAll;
         mySpoolDirectory = spoolDirectory;
+        myNextRequestTimeout = -1;
     }
     
     public SVNURL getHost() {
@@ -270,6 +278,10 @@ class HTTPConnection implements IHTTPConnection {
 
         while (true) {
             HTTPStatus status = null;
+            if (ourIsNoKeepAlive || myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
+                SVNDebugLog.getDefaultLog().info("Keep-Alive timeout detected");
+                close();
+            }
             try {
                 err = null;
                 connect(sslManager);
@@ -286,6 +298,7 @@ class HTTPConnection implements IHTTPConnection {
                     request.setAuthentication(authResponse);
                 }
                 request.dispatch(method, path, header, ok1, ok2, context);
+                myNextRequestTimeout = request.getNextRequestTimeout();
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
                 myRepository.getDebugLog().info(ssl);
@@ -574,7 +587,7 @@ class HTTPConnection implements IHTTPConnection {
         try {
             while (true) {
                 int count = stream.read(buffer);
-                if (count <= 0) {
+                if (count < 0) {
                     break;
                 }
                 if (dst != null) {
@@ -809,23 +822,39 @@ class HTTPConnection implements IHTTPConnection {
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
+            Map supportedFeatures = new HashMap();
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
+                supportedFeatures.put("http://xml.org/sax/features/namespaces", Boolean.TRUE);
             } catch (SAXNotRecognizedException e) {
             } catch (SAXNotSupportedException e) {
             } catch (ParserConfigurationException e) {
             }
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/validation", false);
+                supportedFeatures.put("http://xml.org/sax/features/validation", Boolean.FALSE);
             } catch (SAXNotRecognizedException e) {
             } catch (SAXNotSupportedException e) {
             } catch (ParserConfigurationException e) {
             }
             try {
                 ourSAXParserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                supportedFeatures.put("http://apache.org/xml/features/nonvalidating/load-external-dtd", Boolean.FALSE);
             } catch (SAXNotRecognizedException e) {
             } catch (SAXNotSupportedException e) {
             } catch (ParserConfigurationException e) {
+            }
+            if (supportedFeatures.size() < 3) {
+                ourSAXParserFactory = SAXParserFactory.newInstance();
+                for (Iterator names = supportedFeatures.keySet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    try {
+                        ourSAXParserFactory.setFeature(name, supportedFeatures.get(name) == Boolean.TRUE);
+                    } catch (SAXNotRecognizedException e) {
+                    } catch (SAXNotSupportedException e) {
+                    } catch (ParserConfigurationException e) {
+                    }
+                }
             }
             ourSAXParserFactory.setNamespaceAware(true);
             ourSAXParserFactory.setValidating(false);

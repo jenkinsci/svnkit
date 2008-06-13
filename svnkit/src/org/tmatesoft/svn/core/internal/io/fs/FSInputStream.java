@@ -103,7 +103,7 @@ public class FSInputStream extends InputStream {
     public int read() throws IOException {
         byte[] buf = new byte[1];
         int r = read(buf, 0, 1);
-        if (r <= 0) {
+        if (r < 0) {
             return -1;
         }
         return buf[0];
@@ -111,7 +111,7 @@ public class FSInputStream extends InputStream {
 
     private int readContents(byte[] buf, int offset, int length) throws SVNException {
         length = getContents(buf, offset, length);
-        if (!isChecksumFinalized) {
+        if (!isChecksumFinalized && length >= 0) {
             myDigest.update(buf, offset, length);
             myOffset += length;
 
@@ -134,6 +134,7 @@ public class FSInputStream extends InputStream {
     private int getContents(byte[] buffer, int offset, int length) throws SVNException {
         int remaining = length;
         int targetPos = offset;
+        int read = 0;
 
         while (remaining > 0) {
 
@@ -143,9 +144,13 @@ public class FSInputStream extends InputStream {
                 myBuffer.get(buffer, targetPos, copyLength);
                 targetPos += copyLength;
                 remaining -= copyLength;
+                read += copyLength;
             } else {
                 FSRepresentationState resultState = (FSRepresentationState) myRepStateList.getFirst();
                 if (resultState.myOffset == resultState.myEnd) {
+                    if (read == 0) {
+                        read = -1;
+                    }
                     break;
                 }
                 myCombiner.reset();
@@ -173,7 +178,7 @@ public class FSInputStream extends InputStream {
                 }
             }
         }
-        return targetPos;
+        return read;
     }
 
     public void close() {

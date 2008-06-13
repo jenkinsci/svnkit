@@ -1,14 +1,14 @@
 8
 
 dir
-4088
-http://svn.svnkit.com/repos/svnkit/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+4348
+http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-02-20T22:53:33.821549Z
-3850
+2008-04-03T19:14:46.160311Z
+4109
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-03-31T15:58:03.000000Z
-ea13f79ee28f08cbc03392718cca506e
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+eca0c8a8941c3b346e75f7dba084f8c2
+2008-04-03T19:14:46.160311Z
+4109
 alex
 has-props
 
@@ -136,10 +136,10 @@ file
 
 
 
-2008-03-31T15:58:03.000000Z
-6f5277537e77ae1502a88af9b8c5c96e
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+b80b31bcda39c079796faab57e3c3d7b
+2008-03-31T21:54:38.010446Z
+4092
 alex
 has-props
 
@@ -188,10 +188,10 @@ file
 
 
 
-2008-03-31T15:58:03.000000Z
-c7a8cbc6b8c0867299f9d36b6d1eba24
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+fc1b7bdf915f9fb54d7a8d148c6a3ae7
+2008-04-03T18:32:44.110979Z
+4108
 alex
 has-props
 
@@ -213,10 +213,10 @@ file
 
 
 
-2008-03-31T15:58:03.000000Z
-68c3e4aa4bf2ba686c33edd34b9949e7
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+9987ffc3ba25a0bd1fa19665ef52f093
+2008-03-31T21:54:38.010446Z
+4092
 alex
 has-props
 

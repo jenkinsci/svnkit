@@ -430,6 +430,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                     #doGetRevisionProperty(File, String, SVNRevision, ISVNPropertyHandler)
      */
     public void doSetProperty(File path, String propName, String propValue, boolean force, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        path = path.getAbsoluteFile();
         propName = validatePropertyName(propName);
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Revision property ''{0}'' not allowed in this context", propName);
@@ -1881,6 +1882,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see                    #doInfo(File, SVNRevision, boolean, ISVNInfoHandler)
      */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
+        path = path.getAbsoluteFile();
         if (handler == null) {
             return;
         }

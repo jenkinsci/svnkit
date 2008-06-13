@@ -1,0 +1,54 @@
+8
+
+dir
+4348
+http://svn.svnkit.com/repos/svnkit/tags/1.1.7/.settings
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2007-03-28T18:29:03.055870Z
+3009
+alex
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+org.eclipse.jdt.core.prefs
+file
+
+
+
+
+2008-06-13T20:36:48.000000Z
+a28f87a2b7eb7b645769bf5af415491a
+2006-10-30T17:51:06.860444Z
+2741
+alex
+has-props
+
+org.eclipse.jdt.ui.prefs
+file
+
+
+
+
+2008-06-13T20:36:48.000000Z
+8bbd47a256368e033deae893b2a7ff80
+2007-03-28T18:29:03.055870Z
+3009
+alex
+has-props
+

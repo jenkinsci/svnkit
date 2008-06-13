@@ -14,9 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -32,7 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public abstract class FSRoot {
 
-    private RevisionCache myRevNodesCache;
+    private FSSoftCache myRevNodesCache;
     private FSFS myFSFS;
     protected FSRevisionNode myRootRevisionNode;
 
@@ -143,7 +141,7 @@ public abstract class FSRoot {
             SVNErrorManager.error(err);
         }
         if (myRevNodesCache == null) {
-            myRevNodesCache = new RevisionCache(100);
+            myRevNodesCache = new FSSoftCache();
         }
         myRevNodesCache.put(path, node);
     }
@@ -305,53 +303,6 @@ public abstract class FSRoot {
     public InputStream getFileStreamForPath(SVNDeltaCombiner combiner, String path) throws SVNException {
         FSRevisionNode fileNode = getRevisionNode(path);
         return FSInputStream.createDeltaStream(combiner, fileNode, getOwner());
-    }
-
-    private static final class RevisionCache {
-
-        private LinkedList myKeys;
-        private Map myCache;
-        private int mySizeLimit;
-
-        public RevisionCache(int limit) {
-            mySizeLimit = limit;
-            myKeys = new LinkedList();
-            myCache = new TreeMap();
-        }
-
-        public void put(Object key, Object value) {
-            if (mySizeLimit <= 0) {
-                return;
-            }
-            if (myKeys.size() == mySizeLimit) {
-                Object cachedKey = myKeys.removeLast();
-                myCache.remove(cachedKey);
-            }
-            myKeys.addFirst(key);
-            myCache.put(key, value);
-        }
-
-        public void delete(Object key) {
-            myKeys.remove(key);
-            myCache.remove(key);
-        }
-
-        public Object fetch(Object key) {
-            int ind = myKeys.indexOf(key);
-            if (ind != -1) {
-                if (ind != 0) {
-                    Object cachedKey = myKeys.remove(ind);
-                    myKeys.addFirst(cachedKey);
-                }
-                return myCache.get(key);
-            }
-            return null;
-        }
-
-        public void clear() {
-            myKeys.clear();
-            myCache.clear();
-        }
     }
 
 }

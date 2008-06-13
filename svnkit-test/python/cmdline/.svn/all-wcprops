@@ -117,11 +117,11 @@ svn:wc:ra_dav:version-url
 V 81
 /repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/svnversion_tests.py
 END
-special_tests.py
+blame_tests.py
 K 25
 svn:wc:ra_dav:version-url
-V 78
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/special_tests.py
+V 76
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/blame_tests.py
 END
 prop_tests.py
 K 25
@@ -129,23 +129,23 @@ svn:wc:ra_dav:version-url
 V 75
 /repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/prop_tests.py
 END
-blame_tests.py
+special_tests.py
 K 25
 svn:wc:ra_dav:version-url
-V 76
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/blame_tests.py
-END
-basic_tests.py
-K 25
-svn:wc:ra_dav:version-url
-V 76
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/basic_tests.py
+V 78
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/special_tests.py
 END
 export_tests.py
 K 25
 svn:wc:ra_dav:version-url
 V 77
 /repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/export_tests.py
+END
+basic_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/tests/cmdline/basic_tests.py
 END
 update_tests.py
 K 25

@@ -1315,6 +1315,8 @@ public class SVNDiffClient extends SVNBasicClient {
      */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recusrsive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
+        path1 = new File(SVNPathUtil.validateFilePath(path1.getAbsolutePath())).getAbsoluteFile();
+        dstPath = new File(SVNPathUtil.validateFilePath(dstPath.getAbsolutePath())).getAbsoluteFile();
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);

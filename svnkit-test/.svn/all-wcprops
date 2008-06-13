@@ -1,53 +1,11 @@
 K 25
 svn:wc:ra_dav:version-url
 V 50
-/repos/svnkit/!svn/ver/3857/tags/1.1.6/svnkit-test
+/repos/svnkit/!svn/ver/4173/tags/1.1.7/svnkit-test
 END
 python-tests-log.xml
 K 25
 svn:wc:ra_dav:version-url
 V 71
-/repos/svnkit/!svn/ver/3857/tags/1.1.6/svnkit-test/python-tests-log.xml
-END
-logging.properties
-K 25
-svn:wc:ra_dav:version-url
-V 69
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/logging.properties
-END
-test.windows.properties
-K 25
-svn:wc:ra_dav:version-url
-V 74
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/test.windows.properties
-END
-python-suite.txt
-K 25
-svn:wc:ra_dav:version-url
-V 67
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/python-suite.txt
-END
-logging.cli.properties
-K 25
-svn:wc:ra_dav:version-url
-V 73
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/logging.cli.properties
-END
-test.mac.properties
-K 25
-svn:wc:ra_dav:version-url
-V 70
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/test.mac.properties
-END
-svnkit-test.iml
-K 25
-svn:wc:ra_dav:version-url
-V 66
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/svnkit-test.iml
-END
-test.unix.properties
-K 25
-svn:wc:ra_dav:version-url
-V 71
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/svnkit-test/test.unix.properties
+/repos/svnkit/!svn/ver/4173/tags/1.1.7/svnkit-test/python-tests-log.xml
 END

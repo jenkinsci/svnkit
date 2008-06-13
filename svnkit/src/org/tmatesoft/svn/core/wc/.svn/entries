@@ -1,14 +1,14 @@
 8
 
 dir
-4088
-http://svn.svnkit.com/repos/svnkit/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/wc
+4348
+http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit/src/org/tmatesoft/svn/core/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
+2008-02-27T17:01:11.729184Z
+3868
 alex
 
 
@@ -314,10 +314,10 @@ file
 
 
 
-2008-03-31T15:57:58.000000Z
-b4a56d35eb6f14b887116ed5152384b5
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+68124269506923634aca435a1ff42c1b
+2008-02-27T17:01:11.729184Z
+3868
 alex
 has-props
 
@@ -540,10 +540,10 @@ file
 
 
 
-2008-03-31T15:57:58.000000Z
-50fa6c753a3ab52debe134073a5ef9be
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+2a8746178c295d9e23d7362b71ce83a7
+2008-02-27T17:01:11.729184Z
+3868
 alex
 has-props
 

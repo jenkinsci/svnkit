@@ -1,14 +1,14 @@
 8
 
 dir
-4088
-http://svn.svnkit.com/repos/svnkit/tags/1.1.6/svnkit/src/org/tmatesoft/svn/core/javahl
+4348
+http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit/src/org/tmatesoft/svn/core/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
+2008-03-25T20:08:25.186244Z
+4050
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-03-31T15:57:49.000000Z
-27cc95c2b818a5522935c294a4c89f93
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+4c41e28acd0f2135990741cd64393213
+2008-03-25T20:08:25.186244Z
+4050
 alex
 has-props
 
@@ -71,10 +71,10 @@ file
 
 
 
-2008-03-31T15:57:49.000000Z
-4d9a0925cd8b41a30e4cdab2fd13bc73
-2008-01-31T17:15:19.994189Z
-3814
+2008-06-13T20:37:45.000000Z
+d2cc699c8e41977732de7a4db4be507c
+2008-02-26T18:09:57.082860Z
+3864
 alex
 has-props
 

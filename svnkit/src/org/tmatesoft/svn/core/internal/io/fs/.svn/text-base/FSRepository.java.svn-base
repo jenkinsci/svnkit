@@ -68,9 +68,11 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 public class FSRepository extends SVNRepository implements ISVNReporter {
     public static final int SVN_INVALID_REVNUM = -1;
 
+    private FSSoftCache myRootCache;
     private File myReposRootDir;
     private FSUpdateContext myReporterContext;
     private FSFS myFSFS;
+    private boolean myIsUseRootCache;
 
     protected FSRepository(SVNURL location, ISVNSession options) {
         super(location, options);
@@ -223,7 +225,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 revision = myFSFS.getYoungestRevision();
             }
             String repositoryPath = getRepositoryPath(path);
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            FSRevisionRoot root = createRevisionRoot(revision);
             return root.checkNodeKind(repositoryPath); 
         } finally {
             closeRepository();
@@ -238,7 +240,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
             
             String repositoryPath = getRepositoryPath(path);
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            FSRevisionRoot root = createRevisionRoot(revision);
             
             if (contents != null) {
                 InputStream fileStream = null;
@@ -334,7 +336,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 revision = myFSFS.getYoungestRevision();
             }
             String repositoryPath = getRepositoryPath(path);
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            FSRevisionRoot root = createRevisionRoot(revision);
             
             FSRevisionNode parent = root.getRevisionNode(repositoryPath);
             if (handler != null) {
@@ -365,7 +367,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             String repositoryPath = getRepositoryPath(path);
             SVNURL parentURL = getLocation().appendPath(path, false);
             
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            FSRevisionRoot root = createRevisionRoot(revision);
             
             FSRevisionNode parent = root.getRevisionNode(repositoryPath);
             if (entries != null) {
@@ -384,7 +386,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             path = getRepositoryPath(path);
             startRevision = isInvalidRevision(startRevision) ? myFSFS.getYoungestRevision() : startRevision;
             endRevision = isInvalidRevision(endRevision) ? myFSFS.getYoungestRevision() : endRevision;
-            FSRevisionRoot root = myFSFS.createRevisionRoot(endRevision);
+            FSRevisionRoot root = createRevisionRoot(endRevision);
 
             if (root.checkNodeKind(path) != SVNNodeKind.FILE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "''{0}'' is not a file", path);
@@ -421,7 +423,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 String revPath = location.getPath();
                 Map revProps = myFSFS.getRevisionProperties(rev);
 
-                root = myFSFS.createRevisionRoot(rev);
+                root = createRevisionRoot(rev);
 
                 FSRevisionNode fileNode = root.getRevisionNode(revPath);
                 Map props = fileNode.getProperties(myFSFS);
@@ -524,7 +526,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             }
 
             LinkedList histories = new LinkedList();
-            FSRevisionRoot root = myFSFS.createRevisionRoot(histEnd);
+            FSRevisionRoot root = createRevisionRoot(histEnd);
             for (int i = 0; i < absPaths.length; i++) {
                 String path = absPaths[i];
                 FSNodeHistory hist = FSNodeHistory.getNodeHistory(root, path);
@@ -680,7 +682,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
             FSRevisionRoot root = null;
             while (count < revisions.length) {
-                root = myFSFS.createRevisionRoot(revision);
+                root = createRevisionRoot(revision);
                 FSClosestCopy tempClCopy = closestCopy(root, path);
                 if (tempClCopy == null) {
                     break;
@@ -709,7 +711,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 revision = copyfromRevision;
             }
             
-            root = myFSFS.createRevisionRoot(revision);
+            root = createRevisionRoot(revision);
             FSRevisionNode curNode = root.getRevisionNode(path);
 
             while (count < revisions.length) {
@@ -739,7 +741,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     public void replay(long lowRevision, long highRevision, boolean sendDeltas, ISVNEditor editor) throws SVNException {
         try {
             openRepository();
-            FSRevisionRoot root = myFSFS.createRevisionRoot(highRevision);
+            FSRevisionRoot root = createRevisionRoot(highRevision);
             String basePath = getRepositoryPath("");
             FSRepositoryUtil.replay(myFSFS, root, basePath, lowRevision, sendDeltas, editor);
         } finally {
@@ -851,7 +853,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             if (FSRepository.isInvalidRevision(revision)) {
                 revision = myFSFS.getYoungestRevision();
             }
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+            FSRevisionRoot root = createRevisionRoot(revision);
 
             if (root.checkNodeKind(path) == SVNNodeKind.NONE) {
                 return null;
@@ -986,7 +988,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
 
         if (revNum > 0 && discoverChangedPaths) {
-            FSRevisionRoot root = myFSFS.createRevisionRoot(revNum);
+            FSRevisionRoot root = createRevisionRoot(revNum);
             changedPaths = root.detectChanged();
         }
         changedPaths = changedPaths == null ? new HashMap() : changedPaths;
@@ -994,6 +996,17 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     public void closeSession() {
+    }
+    
+    public void setUseRootChache(boolean useRootCache) {
+        myIsUseRootCache = useRootCache;
+        if (!myIsUseRootCache) {
+            myRootCache = null;
+        }
+    }
+
+    public boolean isUseRootChache() {
+        return myIsUseRootCache;
     }
 
     public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
@@ -1110,4 +1123,22 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return System.getProperty("user.name");
     }
+    
+	private FSRevisionRoot createRevisionRoot(long revision) {
+	    if (!myIsUseRootCache) {
+            return myFSFS.createRevisionRoot(revision);
+	    }
+		if(myRootCache == null) {
+			myRootCache = new FSSoftCache();
+		}
+		Long rev = new Long(revision);
+		FSRevisionRoot ret = (FSRevisionRoot) myRootCache.fetch(rev);
+		if(ret == null) {
+			ret = myFSFS.createRevisionRoot(revision);
+			myRootCache.put(rev, ret);
+		}
+	    return ret;
+    }
+
+
 }

@@ -1,3 +1,10 @@
+== version 1.1.7
+
++ SVNKit didn't work properly with Subversion 1.5.0 servers over svn protocol
++ JNA library updated to version 3.0.2
++ Trilead-SSH library updated to build 212
++ Other bugfixes
+
 == version 1.1.6
 
 + Bugfixes:
