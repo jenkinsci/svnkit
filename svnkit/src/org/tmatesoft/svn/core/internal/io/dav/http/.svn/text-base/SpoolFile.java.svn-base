@@ -25,6 +25,7 @@ import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -33,7 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class SpoolFile {
 
-    private static final long LIMIT = 1024*1024*512; // 1/2GB.
+    private static final long LIMIT = 1024*1024*512; // 512MB
     
     private File myDirectory;
     private LinkedList myFiles;
@@ -67,10 +68,10 @@ public class SpoolFile {
         public int read() throws IOException {
             byte[] buffer = new byte[1];
             int read = read(buffer);
-            if (read <= 0) {
+            if (read != 1) {
                 return -1;
             }
-            return read;
+            return buffer[0];
         }
 
         public int read(byte[] b) throws IOException {
@@ -78,41 +79,60 @@ public class SpoolFile {
         }
 
         public int read(byte[] b, int off, int len) throws IOException {
-            if (myCurrentFile == null) {
-                if (myFiles.isEmpty()) {
-                    return -1;
+            int read = 0;
+            while(len - read > 0) {
+                if (myCurrentFile == null) {
+                    if (myFiles.isEmpty()) {
+                        SVNDebugLog.getDefaultLog().info("FAILED TO READ SPOOLED RESPONSE FULLY (no more files): " + (read == 0 ? -1 : read));
+                        return read == 0 ? -1 : read;
+                    }
+                    openNextFile();
                 }
-                openNextFile();
+                int toRead = (int) Math.min(len - read, myCurrentSize);
+                int wasRead = myCurrentInput.read(b, off + read, toRead);
+                if (wasRead < 0) {
+                    SVNDebugLog.getDefaultLog().info("FAILED TO READ SPOOLED RESPONSE FULLY (cannot read more from the current file): " + (read == 0 ? -1 : read));
+                    return read == 0 ? -1 : read;
+                }
+                read += wasRead;
+                myCurrentSize -= wasRead;
+                if (myCurrentSize == 0) {
+                    SVNDebugLog.getDefaultLog().info("SPOOLED RESPONSE FULLY READ");
+                    closeCurrentFile();
+                }
             }
-            int toRead = (int) Math.min(len, myCurrentSize);
-            toRead = myCurrentInput.read(b, off, toRead);
-            myCurrentSize -= toRead;
-            if (myCurrentSize == 0) {
-                closeCurrentFile();
-            }
-            return toRead;
+            return read;
         }
 
         private void openNextFile() throws FileNotFoundException {
             myCurrentFile = (File) myFiles.removeFirst();
+            SVNDebugLog.getDefaultLog().info("READING SPOOLED FILE: " + myCurrentFile);
             myCurrentSize = myCurrentFile.length();
+            SVNDebugLog.getDefaultLog().info("ABOUT TO READ: " + myCurrentSize);
             myCurrentInput = new BufferedInputStream(new FileInputStream(myCurrentFile));
         }
 
         public long skip(long n) throws IOException {
-            if (myCurrentFile == null) {
-                if (myFiles.isEmpty()) {
-                    return -1;
+            int skipped = 0;
+            while(n - skipped > 0) {
+                if (myCurrentFile == null) {
+                    if (myFiles.isEmpty()) {
+                        return skipped == 0 ? -1 : skipped;
+                    }
+                    openNextFile();
                 }
-                openNextFile();
+                long toSkip = Math.min(n - skipped, myCurrentSize);
+                long wasSkipped = myCurrentInput.skip(toSkip);
+                if (wasSkipped < 0) {
+                    return skipped == 0 ? -1 : skipped;
+                }
+                skipped += wasSkipped;
+                myCurrentSize -= wasSkipped;
+                if (myCurrentSize == 0) {
+                    closeCurrentFile();
+                }
             }
-            long toSkip = Math.min(myCurrentSize, n);
-            toSkip = myCurrentInput.skip(toSkip);
-            myCurrentSize -= toSkip;
-            if (myCurrentSize == 0) {
-                closeCurrentFile();
-            }
-            return toSkip;
+            return skipped;
         }
 
         private void closeCurrentFile() throws IOException {
@@ -122,7 +142,7 @@ public class SpoolFile {
                 try {
                     SVNFileUtil.deleteFile(myCurrentFile);
                 } catch (SVNException e) {
-                    //
+
                 }
                 myCurrentFile = null;
             }
@@ -153,6 +173,7 @@ public class SpoolFile {
             if (myCurrentOutput == null) {
                 // open first file.
                 File file = createNextFile();
+                SVNDebugLog.getDefaultLog().info("SPOOLING RESPONSE TO FILE: " + file);
                 myFiles.add(file);
                 myCurrentOutput = new BufferedOutputStream(new FileOutputStream(file));
             }
@@ -167,6 +188,7 @@ public class SpoolFile {
             if (myCurrentOutput != null) {
                 try {
                     myCurrentOutput.close();
+                    SVNDebugLog.getDefaultLog().info("SPOOLED: " + myCurrentSize);
                 } finally {
                     myCurrentOutput = null;
                 }
@@ -181,7 +203,7 @@ public class SpoolFile {
         }
         
         private File createNextFile() throws IOException {
-            File file = File.createTempFile(".svnkit.", ".spool", myDirectory);
+            File file = File.createTempFile("svnkit.", ".spool", myDirectory);
             file.createNewFile();
             return file;
         }

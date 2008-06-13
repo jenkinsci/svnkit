@@ -49,9 +49,7 @@ public class SVNException extends Exception {
             while(parent.hasChildErrorMessage()) {
                 parent = parent.getChildErrorMessage();
             }
-            if (parent != childMessages) {
-                parent.setChildErrorMessage(childMessages);
-            }
+	        parent.setChildErrorMessage(childMessages);
         }
         myErrorMessage = errorMessage;
     }

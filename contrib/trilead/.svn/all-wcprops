@@ -1,35 +1,35 @@
 K 25
 svn:wc:ra_dav:version-url
 V 54
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/trilead
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/contrib/trilead
 END
 HISTORY.txt
 K 25
 svn:wc:ra_dav:version-url
 V 66
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/trilead/HISTORY.txt
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/contrib/trilead/HISTORY.txt
 END
 trilead.jar
 K 25
 svn:wc:ra_dav:version-url
 V 66
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/trilead/trilead.jar
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/contrib/trilead/trilead.jar
 END
 TRILEAD-LICENSE
 K 25
 svn:wc:ra_dav:version-url
 V 70
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/trilead/TRILEAD-LICENSE
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/contrib/trilead/TRILEAD-LICENSE
 END
 README.txt
 K 25
 svn:wc:ra_dav:version-url
 V 65
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/trilead/README.txt
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/contrib/trilead/README.txt
 END
 trileadsrc.zip
 K 25
 svn:wc:ra_dav:version-url
 V 69
-/repos/svnkit/!svn/ver/3854/tags/1.1.6/contrib/trilead/trileadsrc.zip
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/contrib/trilead/trileadsrc.zip
 END

@@ -1,14 +1,14 @@
 8
 
 dir
-4088
-http://svn.svnkit.com/repos/svnkit/tags/1.1.6/svnkit-test
+4348
+http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit-test
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-02-22T00:26:56.498729Z
-3857
+2008-04-17T14:42:22.333023Z
+4173
 alex
 has-props
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-03-31T15:56:38.000000Z
-25daab7d06e165269ee308118cb104bd
-2008-02-22T00:26:56.498729Z
-3857
+2008-06-13T20:36:53.000000Z
+4b2639034d62ebf1cb238a7d38198d13
+2008-04-17T14:42:22.333023Z
+4173
 alex
 
 apache

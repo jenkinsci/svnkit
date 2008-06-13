@@ -53,6 +53,8 @@ class HTTPRequest {
     private boolean myIsKeepAlive;
     private String myCharset;
 
+    private long myTimeout;
+
     public HTTPRequest(String charset) {
         myCharset = charset;
     }
@@ -161,7 +163,9 @@ class HTTPRequest {
         }
         // if method is "CONNECT", then just return normal status 
         // only if there is nothing to read.
-        myConnection.readHeader(this);        
+        myConnection.readHeader(this);
+        // store last time for the next request in case it was keep-alive one.
+        myTimeout = computeTimeout(getResponseHeader());
         context = context == null ? SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} of ''{1}''", new Object[] {request, path}) : context; 
         
         // check status.
@@ -207,6 +211,36 @@ class HTTPRequest {
             } 
         }
     }
+    
+    private static long computeTimeout(HTTPHeader header) {
+        if (header == null) {
+            return -1;
+        }
+        String keepAlive = header.getFirstHeaderValue("Keep-Alive");
+        if (keepAlive == null) {
+            return -1;
+        }
+        String[] fields = keepAlive.split(",");
+        for (int i = 0; i < fields.length; i++) {
+            int index = fields[i].indexOf('=');
+            if (index < 0) {
+                continue;
+            }
+            String name = fields[i].substring(0, index).trim();
+            String value = fields[i].substring(index + 1).trim();
+            if ("timeout".equalsIgnoreCase(name)) {
+                try {
+                    int seconds = Integer.parseInt(value);
+                    if (seconds >= 1) {
+                        return System.currentTimeMillis() + (seconds - 1)*1000;
+                    }
+                } catch (NumberFormatException nfe){                    
+                }
+                return -1;
+            }
+        }
+        return -1;
+    }
 
     private SVNErrorMessage readError(String request, String path, SVNErrorMessage context) {
         String contextMessage = context.getMessageTemplate();
@@ -228,6 +262,10 @@ class HTTPRequest {
     
     public HTTPHeader getResponseHeader() {
         return myResponseHeader;
+    }
+    
+    public long getNextRequestTimeout() {
+        return myTimeout;
     }
     
     public HTTPStatus getStatus() {

@@ -1,0 +1,16 @@
+This is a THIRD-PARTY.txt file for SVNKit - pure Java Subversion client library.
+This file lists all third party libraries used by this version of SVNKit.
+
+1) JNA
+
+JNA Libary, version 3.0.2 - Dynamically access native libraries from Java without JNI.
+License: LGPL 2.1 or later (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
+URL: https://jna.dev.java.net/
+Note: JNA is optional component, remove jna.jar from the classpath if you would not like to use it.
+
+2) TriLead SSH-2
+
+Trilead Library, build 212 - Java SSH-2 library
+License: http://www.trilead.com/Download/Trilead-SSH-2-Java/LICENSE.txt 
+URL: http://www.trilead.com/Products/Trilead-SSH-2-Java/
+Note: Trilead library is only used for svn+ssh connections. Otherwise you may remove trilead.jar from the classpath.

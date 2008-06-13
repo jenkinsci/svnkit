@@ -1,10 +1,10 @@
-svnkit.version=1.1.6
+svnkit.version=1.1.7
 # could be overriden by build server, e.g. TeamCity.
 build.number=${svnkit.version}
 
 #properties for SVN runtime
-svnkit.version.string=SVNKit 1.1.6 (http://svnkit.com/) rSNAPSHOT
+svnkit.version.string=SVNKit 1.1.7 (http://svnkit.com/) rSNAPSHOT
 svnkit.version.major=1
 svnkit.version.minor=1
-svnkit.version.micro=6
+svnkit.version.micro=7
 svnkit.version.revision=SNAPSHOT

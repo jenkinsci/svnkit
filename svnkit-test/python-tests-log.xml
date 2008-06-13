@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PythonTests start="2008.02.21  at 16:51:32 CET" elapsed="5 hours 4 minutes 46 seconds">
+<PythonTests start="2008.04.17  at 05:39:47 CEST" elapsed="5 hours 19 minutes 29 seconds">
   <server name="file" url="file:///home/builder/agent1ram/python/cmdline">
     <suite name="authz" total="0" passed="0" failed="0">
     </suite>
@@ -19,7 +19,7 @@
       <test name="add directory" id="13" result="PASSED"></test>
       <test name="import directory" id="14" result="PASSED"></test>
     </suite>
-    <suite name="basic" total="32" passed="32" failed="0">
+    <suite name="basic" total="33" passed="33" failed="0">
       <test name="basic checkout of a wc" id="1" result="PASSED"></test>
       <test name="basic status command" id="2" result="PASSED"></test>
       <test name="basic commit command" id="3" result="PASSED"></test>
@@ -37,6 +37,7 @@
       <test name="basic import of single new file" id="15" result="PASSED"></test>
       <test name="basic cat of files" id="16" result="PASSED"></test>
       <test name="basic ls" id="17" result="PASSED"></test>
+      <test name="'svn log file:///nonexistent_path' should fail" id="18" result="PASSED"></test>
       <test name="basic auth caching" id="19" result="PASSED"></test>
       <test name="ignored files in added dirs should not be added" id="20" result="PASSED"></test>
       <test name="make sure URI syntaxes are parsed correctly" id="21" result="PASSED"></test>
@@ -500,7 +501,7 @@
       <test name="test 'svnversion' with svn:externals" id="2" result="PASSED"></test>
     </suite>
   </server>
-  <server name="svnserve" url="svn://localhost:35931">
+  <server name="svnserve" url="svn://localhost:57365">
     <suite name="authz" total="10" passed="10" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="broken authz files cause errors" id="3" result="PASSED"></test>
@@ -863,7 +864,7 @@
       <test name="status after replace+, revert, and local rm" id="16" result="PASSED"></test>
       <test name="revert a file that was replaced by a copied file" id="17" result="PASSED"></test>
     </suite>
-    <suite name="schedule" total="12" passed="12" failed="0">
+    <suite name="schedule" total="13" passed="13" failed="0">
       <test name="revert: add some files" id="1" result="PASSED"></test>
       <test name="revert: add some directories" id="2" result="PASSED"></test>
       <test name="revert: add some nested files and directories" id="3" result="PASSED"></test>
@@ -875,6 +876,7 @@
       <test name="revert inside a newly added dir" id="9" result="PASSED"></test>
       <test name="status after add of deleted directory" id="10" result="PASSED"></test>
       <test name="'svn add' should traverse already-versioned dirs" id="11" result="PASSED"></test>
+      <test name="'svn mkdir' should clean up after itself on error" id="12" result="PASSED"></test>
       <test name="'svn rm non-existent' should exit with an error" id="13" result="PASSED"></test>
     </suite>
     <suite name="special" total="7" passed="7" failed="0">
@@ -1014,7 +1016,7 @@
       <test name="test 'svnversion' with svn:externals" id="2" result="PASSED"></test>
     </suite>
   </server>
-  <server name="apache" url="http://localhost:36568">
+  <server name="apache" url="http://localhost:34687">
     <suite name="authz" total="10" passed="10" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="broken authz files cause errors" id="3" result="PASSED"></test>

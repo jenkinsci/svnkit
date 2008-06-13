@@ -2,6 +2,20 @@
 Release Notes:
 ==============
 
+build212, 2008-03-03:
+
+- Added possibility to enable debugging output without recompiling the library.
+  See the Connection.enableDebugging(...) method and the DebugLogger interface.
+
+- Added Connection.ping() and Session.ping() methods to perform end-to-end
+  connection/session testing. Initial code supplied by Alexander Kitaev. Thanks!
+
+- Some buggy SFTP servers send too big packets when we instruct them to read
+  directory entries. Therefore, increased the packet size limit for answers
+  to the SSH_FXP_READDIR request. Thanks to Ross Perry.
+  
+- Coming soon: SSH server support. 
+
 build211, 2007-10-28:
 
 - The library is now called "Trilead SSH-2 for Java".
