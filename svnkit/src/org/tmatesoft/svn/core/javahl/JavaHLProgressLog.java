@@ -11,15 +11,10 @@
  */
 package org.tmatesoft.svn.core.javahl;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import org.tmatesoft.svn.util.ISVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLogAdapter;
-
-import org.tigris.subversion.javahl.ProgressListener;
-import org.tigris.subversion.javahl.ProgressEvent;
 import org.tigris.subversion.javahl.JavaHLObjectFactory;
+import org.tigris.subversion.javahl.ProgressEvent;
+import org.tigris.subversion.javahl.ProgressListener;
+import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 
 /**

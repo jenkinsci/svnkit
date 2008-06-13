@@ -154,7 +154,7 @@ public class FSLog {
                     sendLog(currentRev, hasChildren);
                     sendCount++;
                     if (hasChildren) {
-                        handleMergedRevisions(currentRev, mergeInfo);
+                        handleMergedRevisions(mergeInfo);
                     }
                     if (limit > 0 && sendCount >= limit) {
                         break;
@@ -187,7 +187,7 @@ public class FSLog {
                 }
                 sendLog(rev, hasChildren);
                 if (hasChildren) {
-                    handleMergedRevisions(rev, mergeInfo);
+                    handleMergedRevisions(mergeInfo);
                 }
                 sendCount++;
                 if (limit > 0 && sendCount >= limit) {
@@ -285,7 +285,7 @@ public class FSLog {
         return entry;
     }
     
-    private void handleMergedRevisions(long revision, Map mergeInfo) throws SVNException {
+    private void handleMergedRevisions(Map mergeInfo) throws SVNException {
         if (mergeInfo == null || mergeInfo.isEmpty()) {
             return;
         }
