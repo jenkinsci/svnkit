@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.zip.GZIPInputStream;
 
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLException;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -312,7 +313,7 @@ class HTTPConnection implements IHTTPConnection {
             } catch (SVNCancellableOutputStream.IOCancelException cancel) {
                 myRepository.getDebugLog().info(cancel);
                 SVNErrorManager.cancel(cancel.getMessage());
-            } catch (IOException e) {
+            } catch (SSLException e) {
                 myRepository.getDebugLog().info(e);
                 if (sslManager != null) {
                     close();
@@ -324,7 +325,9 @@ class HTTPConnection implements IHTTPConnection {
                     sslManager = promptSSLClientCertificate(sslAuth == null, true);
                     continue;
                 }
-                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e);
+            } catch (IOException e) {
+                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e);
             } catch (SVNException e) {
                 myRepository.getDebugLog().info(e);
                 // force connection close on SVNException 
