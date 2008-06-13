@@ -255,6 +255,7 @@ svnkit/src/org/tmatesoft/svn/core/io/SVNLocationSegment.java -text
 svnkit/src/org/tmatesoft/svn/core/io/diff/package.html -text
 svnkit/src/org/tmatesoft/svn/core/io/package.html -text
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
+svnkit/src/org/tmatesoft/svn/core/javahl/JavaHLProgressLog.java -text
 svnkit/src/org/tmatesoft/svn/core/javahl/package.html -text
 svnkit/src/org/tmatesoft/svn/core/package.html -text
 svnkit/src/org/tmatesoft/svn/core/replicator/SVNReplicationEditor.java -text

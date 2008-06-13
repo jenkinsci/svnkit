@@ -22,7 +22,72 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+
+import org.tmatesoft.svn.core.ISVNDirEntryHandler;
+import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
+import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
+import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
+import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
+import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
+import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
+import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
+import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
+import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNChangelistClient;
+import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCommitItem;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictResult;
+import org.tmatesoft.svn.core.wc.SVNCopyClient;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNDiffStatus;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.Version;
 
 import org.tigris.subversion.javahl.BlameCallback;
 import org.tigris.subversion.javahl.BlameCallback2;
@@ -61,70 +126,6 @@ import org.tigris.subversion.javahl.SVNClientLogLevel;
 import org.tigris.subversion.javahl.Status;
 import org.tigris.subversion.javahl.StatusCallback;
 import org.tigris.subversion.javahl.SubversionException;
-import org.tmatesoft.svn.core.ISVNDirEntryHandler;
-import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNCommitInfo;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNDirEntry;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
-import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.ISVNConnectorFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
-import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
-import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
-import org.tmatesoft.svn.core.wc.DefaultSVNRepositoryPool;
-import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
-import org.tmatesoft.svn.core.wc.ISVNChangelistHandler;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.ISVNDiffStatusHandler;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNCommitClient;
-import org.tmatesoft.svn.core.wc.SVNCommitItem;
-import org.tmatesoft.svn.core.wc.SVNCommitPacket;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictResult;
-import org.tmatesoft.svn.core.wc.SVNCopyClient;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNDiffStatus;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.util.ISVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.Version;
 
 
 /**
@@ -147,13 +148,14 @@ public class SVNClientImpl implements SVNClientInterface {
     private Notify myNotify;
     private Notify2 myNotify2;
     private ConflictResolverCallback myConflictResolverCallback;
-    private ProgressListener myProgressListener;
     private CommitMessage myMessageHandler;
     private DefaultSVNOptions myOptions;
     private boolean myCancelOperation = false;
     private SVNClientManager myClientManager;
     private SVNClientInterface myOwner;
-    private ISVNDebugLog myDebugLog;
+
+    private JavaHLCompositeLog myDebugLog;
+    private JavaHLProgressLog myProgressListener;
 
     private ISVNAuthenticationManager myAuthenticationManager;
 
@@ -165,7 +167,6 @@ public class SVNClientImpl implements SVNClientInterface {
      * @version 1.1.1
      */
     public static final class LogLevel implements SVNClientLogLevel {
-
     }
 
     public static SVNClientImpl newInstance() {
@@ -188,6 +189,21 @@ public class SVNClientImpl implements SVNClientInterface {
             SVNClientImplTracker.registerClient(client);
         }
         return client;
+    }
+
+    protected SVNClientImpl(SVNClient owner) {
+        this(owner, null, null);
+    }
+
+    protected SVNClientImpl(SVNClient owner, IHTTPConnectionFactory httpConnectionFactory, ISVNConnectorFactory svnConnectorFactory) {
+        DAVRepositoryFactory.setup(httpConnectionFactory);
+        SVNRepositoryFactoryImpl.setup(svnConnectorFactory);
+        FSRepositoryFactory.setup();
+        myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
+        myOwner = owner == null ? (SVNClientInterface) this : (SVNClientInterface) owner;
+        synchronized (SVNClientImpl.class) {
+            ourInstanceCount++;
+        }
     }
 
     public static ISVNAuthenticationStorage getRuntimeCredentialsStorage() {
@@ -217,31 +233,13 @@ public class SVNClientImpl implements SVNClientInterface {
         updateClientManager();
     }
 
-    public void setDebugLog(ISVNDebugLog debugLog) {
-        myDebugLog = debugLog;
-        updateClientManager();
-    }
-
     public ISVNDebugLog getDebugLog() {
-        if (myDebugLog != null){
-            return myDebugLog;
+        if (myDebugLog == null) {
+            myDebugLog = new JavaHLCompositeLog();
+            myDebugLog.addLogger(SVNDebugLog.getDefaultLog());
+            myDebugLog.addLogger(JavaHLDebugLog.getInstance());
         }
-        return SVNDebugLog.getDefaultLog();
-    }
-
-    protected SVNClientImpl(SVNClient owner) {
-        this(owner, null, null);
-    }
-
-    protected SVNClientImpl(SVNClient owner, IHTTPConnectionFactory httpConnectionFactory, ISVNConnectorFactory svnConnectorFactory) {
-        DAVRepositoryFactory.setup(httpConnectionFactory);
-        SVNRepositoryFactoryImpl.setup(svnConnectorFactory);
-        FSRepositoryFactory.setup();
-        myConfigDir = SVNWCUtil.getDefaultConfigurationDirectory().getAbsolutePath();
-        myOwner = owner == null ? (SVNClientInterface) this : (SVNClientInterface) owner;
-        synchronized (SVNClientImpl.class) {
-            ourInstanceCount++;
-        }
+        return myDebugLog;
     }
 
     public String getLastPath() {
@@ -392,7 +390,6 @@ public class SVNClientImpl implements SVNClientInterface {
             ((DefaultSVNAuthenticationManager)myAuthenticationManager).setRuntimeStorage(getClientCredentialsStorage());
         }
         if (myClientManager != null) {
-            myClientManager.setDebugLog(JavaHLDebugLog.wrap(myProgressListener, getDebugLog()));
             myClientManager.shutdownConnections(true);
             myClientManager.setAuthenticationManager(myAuthenticationManager);
             myClientManager.setOptions(myOptions);
@@ -473,13 +470,19 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void setProgressListener(ProgressListener listener) {
-        myProgressListener = listener;
+        getDebugLog();
+        if (listener != null) {
+            myProgressListener = new JavaHLProgressLog(listener);
+            myDebugLog.addLogger(myProgressListener);
+        } else if (myProgressListener != null) {
+            myDebugLog.removeLogger(myProgressListener);
+            myProgressListener = null;
+        }
     }
 
     private void resetLog(){
-        if (getClientManager().getDebugLog() instanceof JavaHLDebugLog){
-            JavaHLDebugLog debugLog = (JavaHLDebugLog) getClientManager().getDebugLog();
-            debugLog.reset();
+        if (myProgressListener != null) {
+            myProgressListener.reset();            
         }
     }
 
@@ -1652,7 +1655,11 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public static void enableLogging(int logLevel, String logFilePath) {
-        Logger.getLogger("svnkit").setLevel(JavaHLObjectFactory.getLoggingLevel(logLevel));
+        try {
+            JavaHLDebugLog.getInstance().enableLogging(logLevel, new File(logFilePath), new DefaultSVNDebugFormatter());
+        } catch (SVNException e) {
+            JavaHLDebugLog.getInstance().error(e);
+        }
     }
 
     /**
@@ -1743,6 +1750,7 @@ public class SVNClientImpl implements SVNClientInterface {
         if (myClientManager == null) {
             updateClientManager();
             myClientManager = SVNClientManager.newInstance(myOptions, new DefaultSVNRepositoryPool(myAuthenticationManager, myOptions));
+            myClientManager.setDebugLog(getDebugLog());
             myClientManager.setEventHandler(getEventListener());
         }
         return myClientManager;
