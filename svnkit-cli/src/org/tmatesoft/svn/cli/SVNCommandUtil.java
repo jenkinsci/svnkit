@@ -83,14 +83,14 @@ public class SVNCommandUtil {
             String merger = mergeToolCommand.toLowerCase();
             if (!(merger.endsWith(".exe") || merger.endsWith(".bat") || merger.endsWith(".cmd"))) {
                 result = SVNFileUtil.execCommand(new String[] { "cmd.exe", "/C", merger, basePath, repositoryPath, 
-                        localPath, mergeResultPath }, testEnvironment, true);
+                        localPath, mergeResultPath }, testEnvironment, true, null);
             } else {
                 result = SVNFileUtil.execCommand(new String[] { merger, basePath, repositoryPath, localPath, 
-                        mergeResultPath }, testEnvironment, true);
+                        mergeResultPath }, testEnvironment, true, null);
             }
         } else {
             result = SVNFileUtil.execCommand(new String[] { mergeToolCommand, basePath, repositoryPath, localPath, 
-                    mergeResultPath }, testEnvironment, true);
+                    mergeResultPath }, testEnvironment, true, null);
         }
 
         if (result == null) {
@@ -112,12 +112,12 @@ public class SVNCommandUtil {
             String editor = editorCommand.trim().toLowerCase();
             if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
                 result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, 
-                        path}, testEnv, false);
+                        path}, testEnv, false, null);
             } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false);
+                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false, null);
             }
         } else {
-            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false);
+            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false, null);
         }
         
         if (result == null) {
@@ -154,12 +154,12 @@ public class SVNCommandUtil {
             if (SVNFileUtil.isWindows) {
                 String editor = editorCommand.trim().toLowerCase();
                 if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, testEnv, false);
+                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
                 } else {
-                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false);
+                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
                 }
             } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false);
+                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
             }
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");

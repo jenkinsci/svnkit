@@ -52,6 +52,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption MESSAGE = new SVNOption("message", "m", false);
     public static final SVNOption WITH_REVPROP = new SVNOption("with-revprop", false);
     public static final SVNOption EDITOR_CMD = new SVNOption("editor-cmd", false);
+    public static final SVNOption DIFF_CMD = new SVNOption("diff-cmd", false);
 
     public static final SVNOption NO_UNLOCK = new SVNOption("no-unlock");
     public static final SVNOption DRY_RUN = new SVNOption("dry-run");

@@ -62,6 +62,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String KEYWORD_TIMEZONE = "keyword_timezone";
     private static final String KEYWORD_LOCALE = "keyword_locale";
     private static final String EDITOR_CMD = "editor-cmd";
+    private static final String DIFF_CMD = "diff-cmd";
     private static final String MERGE_TOOL_CMD = "merge-tool-cmd";
     private static final String NO_UNLOCK = "no-unlock";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
@@ -732,5 +733,13 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         }
 
         return extensionsToMimeTypes;
+    }
+
+    public String getDiffCommand() {
+        return getConfigFile().getPropertyValue(HELPERS_GROUP, DIFF_CMD);
+    }
+
+    public void setDiffCommand(String diffCmd) {
+        getConfigFile().setPropertyValue(HELPERS_GROUP, DIFF_CMD, diffCmd, !myIsReadonly);
     }
 }

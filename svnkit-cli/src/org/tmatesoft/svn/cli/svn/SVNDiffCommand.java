@@ -66,6 +66,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.XML);
+        options.add(SVNOption.DIFF_CMD);
         return options;
     }
 
@@ -171,7 +172,13 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
 
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
-        diffGenerator.setDiffOptions(getSVNEnvironment().getDiffOptions());
+        if (getSVNEnvironment().getDiffCommand() != null) {
+            client.getOptions().setDiffCommand(getSVNEnvironment().getDiffCommand());
+            diffGenerator.setRawDiffOptions(getSVNEnvironment().getExtensions());
+        } else {
+            diffGenerator.setDiffOptions(getSVNEnvironment().getDiffOptions());
+        }
+        
         diffGenerator.setDiffDeleted(!getSVNEnvironment().isNoDiffDeleted());
         diffGenerator.setForcedBinaryDiff(getSVNEnvironment().isForce());
         diffGenerator.setBasePath(new File("").getAbsoluteFile());

@@ -121,7 +121,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
         os.write(getEOL());
     }
 
-    protected void displayHeaderFields(OutputStream os, String path1, String rev1, String path2, String rev2) throws IOException {
+    protected void displayHeaderFields(OutputStream os, String label1, String label2) throws IOException {
         os.write("--- ".getBytes(getEncoding()));
         String originalLabel = null;
         String newLabel = null;
