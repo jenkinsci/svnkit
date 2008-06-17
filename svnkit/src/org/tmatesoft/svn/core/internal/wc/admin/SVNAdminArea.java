@@ -790,7 +790,7 @@ public abstract class SVNAdminArea {
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
                 if (!isEntryPropertyApplicable(attName)) {
-                    attributes.remove(attName);
+                    atts.remove();
                     continue;                                        
                 }
                 String value = (String) attributes.get(attName);
