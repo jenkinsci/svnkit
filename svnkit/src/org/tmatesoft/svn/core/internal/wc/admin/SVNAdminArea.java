@@ -790,7 +790,7 @@ public abstract class SVNAdminArea {
             for (Iterator atts = attributes.keySet().iterator(); atts.hasNext();) {
                 String attName = (String) atts.next();
                 if (!isEntryPropertyApplicable(attName)) {
-                    attributes.remove(attName);
+                    atts.remove();
                     continue;                                        
                 }
                 String value = (String) attributes.get(attName);
@@ -924,8 +924,8 @@ public abstract class SVNAdminArea {
                             throw e;
                         }
                         if (isSafeCleanup()) {
-                            SVNDebugLog.getDefaultLog().info("CLEANUP FAILED for " + childDir);
-                            SVNDebugLog.getDefaultLog().info(e);
+//                            SVNDebugLog.getDefaultLog().logInfo("CLEANUP FAILED for " + childDir);
+//                            SVNDebugLog.getDefaultLog().logInfo(e);
                             continue;
                         }
                         throw e;
@@ -1453,7 +1453,7 @@ public abstract class SVNAdminArea {
         File logFile = adminArea.getAdminFile("log");
         SVNFileType type = SVNFileType.getType(logFile);
         if (type == SVNFileType.FILE) {
-            SVNDebugLog.getDefaultLog().info("Changing working copy format failed: found a log file at '" + logFile + "'");
+//            SVNDebugLog.getDefaultLog().logInfo("Changing working copy format failed: found a log file at '" + logFile + "'");
             return adminArea;
         }
 
