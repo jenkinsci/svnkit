@@ -238,7 +238,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
 
     public void closeNode() throws SVNException {
         myCurrentNodeBaton = null;
-        SVNDebugLog.getDefaultLog().info(" done.\n");
+        SVNDebugLog.getDefaultLog().logInfo(" done.\n");
     }
 
     public void applyTextDelta() throws SVNException {
@@ -409,7 +409,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
             }
             myCurrentRevisionBaton.getCommitter().makeCopy(copyRoot, nodeBaton.myCopyFromPath, nodeBaton.myPath, true);
-            SVNDebugLog.getDefaultLog().info("COPIED...");
+            SVNDebugLog.getDefaultLog().logInfo("COPIED...");
         }
     }
     

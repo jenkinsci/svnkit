@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNCopyClient</b> provides methods to perform any kinds of copying and moving that SVN
@@ -761,7 +762,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 try {
                     commitEditor.abortEdit();
                 } catch (SVNException e) {
-                    SVNDebugLog.getDefaultLog().info(e);
+                    SVNDebugLog.getLog(SVNLogType.WC).logInfo(e);
                 }
             }
             if (wcAccess != null) {
@@ -968,8 +969,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 try {
                     commitEditor.abortEdit();
                 } catch (SVNException e) {
-                    SVNDebugLog.getDefaultLog().info(e);
-                    //
+                    SVNDebugLog.getLog(SVNLogType.WC).logInfo(e);
                 }
             }
         }

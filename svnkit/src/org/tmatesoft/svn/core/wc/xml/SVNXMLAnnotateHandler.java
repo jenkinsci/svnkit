@@ -92,7 +92,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             addAttribute(PATH_ATTR, pathOrURL);
             openTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
     
@@ -105,7 +105,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         try {
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
 
@@ -122,7 +122,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             }
             closeTag(ENTRY_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } finally {
@@ -155,7 +155,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             }
             closeTag(ENTRY_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } 

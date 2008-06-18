@@ -41,31 +41,31 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
         myLoggers.remove(debugLog);        
     }
 
-    public void info(String message) {
+    public void logInfo(String message) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.info(message);
+            log.logInfo(message);
         }
     }
 
-    public void error(String message) {
+    public void logInfo(Throwable th) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.error(message);
+            log.logInfo(th);
         }
     }
 
-    public void info(Throwable th) {
+    public void logSevere(String message) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.info(th);
+            log.logSevere(message);
         }
     }
 
-    public void error(Throwable th) {
+    public void logSevere(Throwable th) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.error(th);
+            log.logSevere(th);
         }
     }
 
@@ -73,6 +73,48 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
             log.log(message, data);
+        }
+    }
+
+    public void logFine(Throwable th) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.logFine(th);
+        }
+    }
+
+    public void logFine(String message) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.logFine(message);
+        }
+    }
+
+    public void logFiner(Throwable th) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.logFiner(th);
+        }
+    }
+
+    public void logFiner(String message) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.logFiner(message);
+        }
+    }
+
+    public void logFinest(Throwable th) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.logFinest(th);
+        }
+    }
+
+    public void logFinest(String message) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.logFinest(message);
         }
     }
 }

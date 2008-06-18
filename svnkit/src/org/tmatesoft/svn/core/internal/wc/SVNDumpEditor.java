@@ -232,7 +232,7 @@ public class SVNDumpEditor implements ISVNEditor {
                         mustDumpProps = true;
                     } else {
                         if (cmpRev < myOldestDumpedRevision) {
-                            SVNDebugLog.getDefaultLog().info("WARNING: Referencing data in revision " + cmpRev + 
+                            SVNDebugLog.getDefaultLog().logInfo("WARNING: Referencing data in revision " + cmpRev + 
                                     ", which is older than the oldest\nWARNING: dumped revision (" + 
                                     myOldestDumpedRevision + 
                                     ").  Loading this dump into an empty repository\nWARNING: will fail.\n");

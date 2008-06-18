@@ -265,8 +265,7 @@ public class PythonTests {
 			errReader.start();
 			try {
 				process.waitFor();
-			}
-			catch (InterruptedException e) {
+			} catch (InterruptedException e) {
 			} finally {
 			    inReader.close();
 			    errReader.close();

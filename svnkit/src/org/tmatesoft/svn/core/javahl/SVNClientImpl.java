@@ -1658,7 +1658,7 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             JavaHLDebugLog.getInstance().enableLogging(logLevel, new File(logFilePath), new DefaultSVNDebugFormatter());
         } catch (SVNException e) {
-            JavaHLDebugLog.getInstance().error(e);
+            JavaHLDebugLog.getInstance().logSevere(e);
         }
     }
 

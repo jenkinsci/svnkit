@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -27,27 +28,72 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
 
     private Logger myLogger;
+    private SVNLogType myLogType;
 
-    public void info(String message) {
-        getLogger().log(Level.FINE, message);
+    public DefaultSVNDebugLogger(SVNLogType logType) {
+        myLogType = logType != null ? logType : SVNLogType.DEFAULT;
     }
-
-    public void error(String message) {
-        getLogger().log(Level.SEVERE, message);
-    }
-
-    public void info(Throwable th) {
-        if (getLogger().isLoggable(Level.FINE)) {
-            getLogger().log(Level.FINE, th != null ? th.getMessage() : "", th);
+    
+    public void logInfo(String message) {
+        if (getLogger().isLoggable(Level.INFO) && message != null) {
+            getLogger().log(Level.INFO, getMessage(message));
         }
     }
 
-    public void error(Throwable th) {
-        if (getLogger().isLoggable(Level.SEVERE)) {
-            getLogger().log(Level.SEVERE, th != null ? th.getMessage() : "", th);
+    public void logInfo(Throwable th) {
+        if (getLogger().isLoggable(Level.INFO) && th != null) {
+            getLogger().log(Level.INFO, getMessage(th.getMessage()), th);
         }
     }
 
+    public void logSevere(String message) {
+        if (getLogger().isLoggable(Level.SEVERE) && message != null) {
+            getLogger().log(Level.SEVERE, getMessage(message));
+        }
+    }
+
+    public void logSevere(Throwable th) {
+        if (getLogger().isLoggable(Level.SEVERE) && th != null) {
+            getLogger().log(Level.SEVERE, getMessage(th.getMessage()), th);
+        }
+    }
+
+    public void logFine(Throwable th) {
+        if (getLogger().isLoggable(Level.FINE) && th != null) {
+            getLogger().log(Level.FINE, getMessage(th.getMessage()), th);
+        }
+    }
+
+    public void logFine(String message) {
+        if (getLogger().isLoggable(Level.FINE) && message != null) {
+            getLogger().log(Level.FINE, getMessage(message));
+        }
+    }
+
+    public void logFiner(Throwable th) {
+        if (getLogger().isLoggable(Level.FINER) && th != null) {
+            getLogger().log(Level.FINER, getMessage(th.getMessage()), th);
+        }
+    }
+
+    public void logFiner(String message) {
+        if (getLogger().isLoggable(Level.FINER) && message != null) {
+            getLogger().log(Level.FINER, getMessage(message));
+        }
+    }
+
+    public void logFinest(Throwable th) {
+        if (getLogger().isLoggable(Level.FINEST) && th != null) {
+            getLogger().log(Level.FINEST, getMessage(th.getMessage()), th);
+        }
+    }
+
+    public void logFinest(String message) {
+        if (getLogger().isLoggable(Level.FINEST) && message != null) {
+            getLogger().log(Level.FINEST, getMessage(message));
+        }
+    }
+    
     public void log(String message, byte[] data) {
         if (getLogger().isLoggable(Level.FINEST)) {
             try {
@@ -74,8 +120,12 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
     
     private Logger getLogger() {
         if (myLogger == null) {
-            myLogger = Logger.getLogger("svnkit");
+            myLogger = Logger.getLogger(myLogType.getName());
         }
         return myLogger;
+    }
+
+    private String getMessage(String originalMessage) {
+        return myLogType.getShortName() + ": " + originalMessage;
     }
 }

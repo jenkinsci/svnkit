@@ -618,7 +618,6 @@ public class SVNAdminClient extends SVNBasicClient {
         for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
             String txnName = (String) names.next();
             File txnDir = (File) txns.get(txnName);
-            SVNDebugLog.getDefaultLog().info(txnName + "\n");            
             if (myEventHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(txnName, txnDir, SVNAdminEventAction.TRANSACTION_LISTED);
                 myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
@@ -653,7 +652,7 @@ public class SVNAdminClient extends SVNBasicClient {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
             fsfs.purgeTxn(txnName);
-            SVNDebugLog.getDefaultLog().info("Transaction '" + txnName + "' removed.\n");
+            SVNDebugLog.getDefaultLog().logInfo("Transaction '" + txnName + "' removed.\n");
             if (myEventHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);
                 myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);

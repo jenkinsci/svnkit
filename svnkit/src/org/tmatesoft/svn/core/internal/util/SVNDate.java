@@ -184,7 +184,7 @@ public class SVNDate extends Date {
         try {
             return parseDatestamp(str);
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().info(th);
+            SVNDebugLog.getDefaultLog().logInfo(th);
         }
         return NULL;
     }

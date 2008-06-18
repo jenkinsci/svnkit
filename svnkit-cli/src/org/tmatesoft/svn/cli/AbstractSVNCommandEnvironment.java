@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -132,7 +133,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         try {
             myCommand.run();
         } catch (SVNException e) {
-            SVNDebugLog.getDefaultLog().error(e);
+            SVNDebugLog.getLog(SVNLogType.CLIENT).logSevere(e);
             SVNErrorMessage err = e.getErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.CL_INSUFFICIENT_ARGS || err.getErrorCode() == SVNErrorCode.CL_ARG_PARSING_ERROR) {
                 err = err.wrap("Try ''{0} help'' for more info", getProgramName());

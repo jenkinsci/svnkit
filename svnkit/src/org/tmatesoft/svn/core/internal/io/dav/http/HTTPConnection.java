@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -131,7 +132,7 @@ class HTTPConnection implements IHTTPConnection {
                 readTimeout = DEFAULT_HTTP_TIMEOUT;
             }
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
-			    myRepository.getDebugLog().info("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
+			    myRepository.getDebugLog().logInfo("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
                 mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout, readTimeout);
                 if (myProxyAuthentication == null) {
                     myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
@@ -288,7 +289,7 @@ class HTTPConnection implements IHTTPConnection {
         while (true) {
             HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
-                SVNDebugLog.getDefaultLog().info("Keep-Alive timeout detected");
+                SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("Keep-Alive timeout detected");
                 close();
             }
             int retryCount = 1;
@@ -332,7 +333,7 @@ class HTTPConnection implements IHTTPConnection {
                 myNextRequestTimeout = request.getNextRequestTimeout();
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
-                myRepository.getDebugLog().info(ssl);
+                myRepository.getDebugLog().logInfo(ssl);
                 close();
 	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
 		            SVNErrorManager.cancel(ssl.getCause().getMessage());
@@ -344,7 +345,7 @@ class HTTPConnection implements IHTTPConnection {
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
 	              continue;
             } catch (IOException e) {
-                myRepository.getDebugLog().info(e);
+                myRepository.getDebugLog().logInfo(e);
                 if (e instanceof SocketTimeoutException) {
 	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof UnknownHostException) {
@@ -363,7 +364,7 @@ class HTTPConnection implements IHTTPConnection {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 }
             } catch (SVNException e) {
-                myRepository.getDebugLog().info(e);
+                myRepository.getDebugLog().logInfo(e);
                 // force connection close on SVNException 
                 // (could be thrown by user's auth manager methods).
                 close();
@@ -390,7 +391,7 @@ class HTTPConnection implements IHTTPConnection {
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
                 } catch (SVNException svne) {
-                    myRepository.getDebugLog().info(svne);
+                    myRepository.getDebugLog().logInfo(svne);
                     err = svne.getErrorMessage(); 
                     break;
                 }
@@ -543,7 +544,7 @@ class HTTPConnection implements IHTTPConnection {
         }
         // err2 is another default context...
 //        myRepository.getDebugLog().info(err.getMessage());
-        myRepository.getDebugLog().info(new Exception(err.getMessage()));
+        myRepository.getDebugLog().logInfo(new Exception(err.getMessage()));
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
         SVNErrorManager.error(err, err2);
         return null;

@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -79,7 +80,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         try {
             startElement(getParent(), element, attributes);
         } catch (SVNException e) {
-            SVNDebugLog.getDefaultLog().info(e);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo(e);
             throw new SAXException(e);
         }
         myParent.push(element);
@@ -92,7 +93,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         try {
             endElement(getParent(), element, myCDATA);
         } catch (SVNException e) {
-            SVNDebugLog.getDefaultLog().info(e);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo(e);
             throw new SAXException(e);
         }
         myCDATA = null;

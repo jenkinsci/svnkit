@@ -21,16 +21,28 @@ import java.io.OutputStream;
  */
 public interface ISVNDebugLog {
     
-    public void info(String message);
+    public void logInfo(String message);
 
-    public void error(String message);
-    
-    public void info(Throwable th);
+    public void logInfo(Throwable th);
 
-    public void error(Throwable th);
+    public void logSevere(Throwable th);
+
+    public void logSevere(String message);
+
+    public void logFine(Throwable th);
+
+    public void logFine(String message);
+
+    public void logFiner(Throwable th);
+
+    public void logFiner(String message);
+
+    public void logFinest(Throwable th);
+
+    public void logFinest(String message);
     
     public void log(String message, byte[] data);
-    
+
     public void flushStream(Object stream);
     
     public InputStream createLogStream(InputStream is);

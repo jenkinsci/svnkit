@@ -203,7 +203,7 @@ public class SVNConnection {
                 }
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().info(th.getMessage());
+            SVNDebugLog.getDefaultLog().logInfo(th.getMessage());
         }
         return new SVNPlainAuthenticator(this);
     }

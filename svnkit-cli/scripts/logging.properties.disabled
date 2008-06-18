@@ -1,4 +1,7 @@
-.level=FINEST
+svnkit.level=FINEST
+svnkit-network.level=FINEST
+svnkit-wc.level=FINEST
+svnkit-cli.level=FINEST
 handlers = java.util.logging.FileHandler
 
 java.util.logging.FileHandler.pattern = %h/svnkit.%u.log
