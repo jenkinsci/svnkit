@@ -56,7 +56,6 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -901,7 +900,6 @@ public abstract class SVNAdminArea {
                 }
             }
         }
-        Collections.sort(copy);
         return copy.iterator();
     }
 
@@ -924,8 +922,6 @@ public abstract class SVNAdminArea {
                             throw e;
                         }
                         if (isSafeCleanup()) {
-//                            SVNDebugLog.getDefaultLog().logInfo("CLEANUP FAILED for " + childDir);
-//                            SVNDebugLog.getDefaultLog().logInfo(e);
                             continue;
                         }
                         throw e;
