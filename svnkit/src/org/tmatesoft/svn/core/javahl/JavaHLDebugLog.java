@@ -36,7 +36,7 @@ import org.tigris.subversion.javahl.SVNClientLogLevel;
  */
 public class JavaHLDebugLog extends SVNDebugLogAdapter {
 
-    private static final String JAVAHL_LOGGER_NAME = "javahl.svnkit";
+    private static final String JAVAHL_LOGGER_NAME = "svnkit-javahl";
 
     private static JavaHLDebugLog ourInstance = new JavaHLDebugLog();
 
@@ -86,7 +86,7 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
     private Logger getLogger() {
         if (myLogger == null) {
             myLogger = Logger.getLogger(JAVAHL_LOGGER_NAME);
-            myLogger.setLevel(Level.FINEST);
+            myLogger.setLevel(Level.ALL);
             resetLogHandlers();
         }
         return myLogger;
