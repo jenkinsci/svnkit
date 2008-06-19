@@ -178,17 +178,17 @@ public class PythonTests {
 	}
     
     private static void setupLogging() {
-        setupLogger("python");
-        setupLogger(SVNLogType.DEFAULT.getName());
-        setupLogger(SVNLogType.CLIENT.getName());
-        setupLogger(SVNLogType.NETWORK.getName());
-        setupLogger(SVNLogType.WC.getName());
+        setupLogger("python", Level.INFO);
+        setupLogger(SVNLogType.DEFAULT.getName(), Level.ALL);
+        setupLogger(SVNLogType.CLIENT.getName(), Level.ALL);
+        setupLogger(SVNLogType.NETWORK.getName(), Level.ALL);
+        setupLogger(SVNLogType.WC.getName(), Level.ALL);
     }
 
-    private static void setupLogger(String name) {
+    private static void setupLogger(String name, Level level) {
         Logger python = Logger.getLogger(name);
         python.setUseParentHandlers(false);
-        python.setLevel(Level.INFO);
+        python.setLevel(level);
     }
     
     private static Handler createLogHandler(String logName) throws IOException {
