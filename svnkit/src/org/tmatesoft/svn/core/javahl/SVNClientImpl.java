@@ -447,9 +447,9 @@ public class SVNClientImpl implements SVNClientInterface {
             } else {
                 client.doLog(
                         new File[]{new File(path).getAbsoluteFile()},
-                        JavaHLObjectFactory.getSVNRevision(pegRevision),
                         JavaHLObjectFactory.getSVNRevision(revisionStart),
                         JavaHLObjectFactory.getSVNRevision(revisionEnd),
+                        JavaHLObjectFactory.getSVNRevision(pegRevision),
                         stopOnCopy, discoverPath, includeMergeInfo, limit, revisionProperties, logEntryHandler);
             }
         } catch (SVNException e) {
