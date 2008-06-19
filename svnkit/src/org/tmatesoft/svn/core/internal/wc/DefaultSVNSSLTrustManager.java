@@ -9,13 +9,11 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateParsingException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 
 import javax.net.ssl.X509TrustManager;
@@ -127,7 +125,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 				return;
 			}
 			ISVNAuthenticationProvider authProvider = myAuthManager.getAuthenticationProvider();
-			int failures = getServerCertificateFailures(certs[0]);
+			int failures = SVNSSLUtil.getServerCertificateFailures(certs[0], myURL.getHost());
 			// compose bit mask.
 			// 8 is default
 			// check dates for 1 and 2
@@ -151,50 +149,6 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 			// like as tmp. accepted.
 			return;
 		}
-	}
-
-	private int getServerCertificateFailures(X509Certificate cert) {
-		int mask = 8;
-		Date time = new Date(System.currentTimeMillis());
-		if (time.before(cert.getNotBefore())) {
-			mask |= 1;
-		}
-		if (time.after(cert.getNotAfter())) {
-			mask |= 2;
-		}
-		String hostName = cert.getSubjectDN().getName();
-		int index = hostName.indexOf("CN=") + 3;
-		if (index >= 0) {
-			hostName = hostName.substring(index);
-			if (hostName.indexOf(' ') >= 0) {
-				hostName = hostName.substring(0, hostName.indexOf(' '));
-			}
-			if (hostName.indexOf(',') >= 0) {
-				hostName = hostName.substring(0, hostName.indexOf(','));
-			}
-		}
-		String realHostName = myURL.getHost();
-		if (!realHostName.equals(hostName)) {
-			try {
-			    Collection altNames = cert.getSubjectAlternativeNames();
-			    for (Iterator names = altNames.iterator(); names.hasNext();) {
-                    Object nameList = names.next();
-                    if (nameList instanceof Collection && ((Collection) nameList).size() >= 2) {
-                        Object[] name = ((Collection) nameList).toArray();
-                        Object type = name[0];
-                        Object host = name[1];
-                        if (type instanceof Integer && host instanceof String) {
-                            if (((Integer) type).intValue() == 2 && host.equals(realHostName)) {
-                                return mask;
-                            }
-                        }
-                    }
-                }
-            } catch (CertificateParsingException e) {
-            }
-            mask |= 4;
-		}
-		return mask;
 	}
 
 	private String getStoredServerCertificate(String realm) {

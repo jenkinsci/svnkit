@@ -13,8 +13,11 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.security.MessageDigest;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
 
 /**
@@ -85,7 +88,7 @@ public class SVNSSLUtil {
       info.append(getFingerprint(cert));
   }
 
-  private static int getServerCertificateFailures(X509Certificate cert, String realHostName) {
+  public static int getServerCertificateFailures(X509Certificate cert, String realHostName) {
       int mask = 8;
       Date time = new Date(System.currentTimeMillis());
       if (time.before(cert.getNotBefore())) {
@@ -94,31 +97,48 @@ public class SVNSSLUtil {
       if (time.after(cert.getNotAfter())) {
           mask |= 2;
       }
-      String hostName = cert.getSubjectDN().getName();
-      int index = hostName.indexOf("CN=") + 3;
+      String certHostName = cert.getSubjectDN().getName();
+      int index = certHostName.indexOf("CN=") + 3;
       if (index >= 0) {
-          hostName = hostName.substring(index);
-          if (hostName.indexOf(' ') >= 0) {
-              hostName = hostName.substring(0, hostName.indexOf(' '));
+          certHostName = certHostName.substring(index);
+          if (certHostName.indexOf(' ') >= 0) {
+              certHostName = certHostName.substring(0, certHostName.indexOf(' '));
           }
-          if (hostName.indexOf(',') >= 0) {
-              hostName = hostName.substring(0, hostName.indexOf(','));
+          if (certHostName.indexOf(',') >= 0) {
+              certHostName = certHostName.substring(0, certHostName.indexOf(','));
           }
       }
-      if (realHostName != null && !realHostName.equals(hostName)) {
+      if (!realHostName.equals(certHostName)) {
+          try {
+              Collection altNames = cert.getSubjectAlternativeNames();
+              for (Iterator names = altNames.iterator(); names.hasNext();) {
+                  Object nameList = names.next();
+                  if (nameList instanceof Collection && ((Collection) nameList).size() >= 2) {
+                      Object[] name = ((Collection) nameList).toArray();
+                      Object type = name[0];
+                      Object host = name[1];
+                      if (type instanceof Integer && host instanceof String) {
+                          if (((Integer) type).intValue() == 2 && host.equals(realHostName)) {
+                              return mask;
+                          }
+                      }
+                  }
+              }
+          } catch (CertificateParsingException e) {
+          }
           mask |= 4;
       }
       return mask;
   }
 
-	public static class CertificateNotTrustedException extends CertificateException {
+    public static class CertificateNotTrustedException extends CertificateException {
 
-		public CertificateNotTrustedException() {
-			super();
-		}
+        public CertificateNotTrustedException() {
+            super();
+        }
 
-		public CertificateNotTrustedException(String msg) {
-			super(msg);
-		}
-	}
+        public CertificateNotTrustedException(String msg) {
+            super(msg);
+        }
+    }
 }
