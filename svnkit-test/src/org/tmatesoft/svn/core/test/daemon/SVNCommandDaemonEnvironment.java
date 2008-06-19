@@ -34,6 +34,7 @@ import org.tmatesoft.svn.cli.svnversion.SVNVersion;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 public class SVNCommandDaemonEnvironment {
     
@@ -95,7 +96,10 @@ public class SVNCommandDaemonEnvironment {
         try {
             if (testName != null) {
                 logHandler = createTestLogger(testName);
-                Logger.getLogger("svnkit").addHandler(logHandler);
+                Logger.getLogger(SVNLogType.DEFAULT.getName()).addHandler(logHandler);
+                Logger.getLogger(SVNLogType.NETWORK.getName()).addHandler(logHandler);
+                Logger.getLogger(SVNLogType.WC.getName()).addHandler(logHandler);
+                Logger.getLogger(SVNLogType.CLIENT.getName()).addHandler(logHandler);
             }
             SVNFileUtil.setTestEnvironment(editor, mergeTool, testFunction);
             SVNFileUtil.setSleepForTimestamp(doNotSleep == null || !"yes".equals(doNotSleep));

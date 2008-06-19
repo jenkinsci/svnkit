@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -78,7 +79,7 @@ public class SpoolFile {
             while(len - read > 0) {
                 if (myCurrentFile == null) {
                     if (myFiles.isEmpty()) {
-                        SVNDebugLog.getDefaultLog().info("FAILED TO READ SPOOLED RESPONSE FULLY (no more files): " + (read == 0 ? -1 : read));
+                        SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("FAILED TO READ SPOOLED RESPONSE FULLY (no more files): " + (read == 0 ? -1 : read));
                         return read == 0 ? -1 : read;
                     }
                     openNextFile();
@@ -86,13 +87,13 @@ public class SpoolFile {
                 int toRead = (int) Math.min(len - read, myCurrentSize);
                 int wasRead = myCurrentInput.read(b, off + read, toRead);
                 if (wasRead < 0) {
-                    SVNDebugLog.getDefaultLog().info("FAILED TO READ SPOOLED RESPONSE FULLY (cannot read more from the current file): " + (read == 0 ? -1 : read));
+                    SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("FAILED TO READ SPOOLED RESPONSE FULLY (cannot read more from the current file): " + (read == 0 ? -1 : read));
                     return read == 0 ? -1 : read;
                 }
                 read += wasRead;
                 myCurrentSize -= wasRead;
                 if (myCurrentSize == 0) {
-                    SVNDebugLog.getDefaultLog().info("SPOOLED RESPONSE FULLY READ");
+                    SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("SPOOLED RESPONSE FULLY READ");
                     closeCurrentFile();
                 }
             }
@@ -101,9 +102,9 @@ public class SpoolFile {
 
         private void openNextFile() throws IOException {
             myCurrentFile = (File) myFiles.removeFirst();
-            SVNDebugLog.getDefaultLog().info("READING SPOOLED FILE: " + myCurrentFile);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("READING SPOOLED FILE: " + myCurrentFile);
             myCurrentSize = myCurrentFile.length();
-            SVNDebugLog.getDefaultLog().info("ABOUT TO READ: " + myCurrentSize);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("ABOUT TO READ: " + myCurrentSize);
             try {
                 myCurrentInput = SVNFileUtil.openFileForReading(myCurrentFile);
             } catch (SVNException e) {
@@ -175,7 +176,7 @@ public class SpoolFile {
             if (myCurrentOutput == null) {
                 // open first file.
                 File file = createNextFile();
-                SVNDebugLog.getDefaultLog().info("SPOOLING RESPONSE TO FILE: " + file);
+                SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("SPOOLING RESPONSE TO FILE: " + file);
                 myFiles.add(file);
                 try {
                     myCurrentOutput = SVNFileUtil.openFileForWriting(file);
@@ -197,7 +198,7 @@ public class SpoolFile {
             if (myCurrentOutput != null) {
                 try {
                     myCurrentOutput.close();
-                    SVNDebugLog.getDefaultLog().info("SPOOLED: " + myCurrentSize);
+                    SVNDebugLog.getLog(SVNLogType.NETWORK).logInfo("SPOOLED: " + myCurrentSize);
                 } finally {
                     myCurrentOutput = null;
                 }

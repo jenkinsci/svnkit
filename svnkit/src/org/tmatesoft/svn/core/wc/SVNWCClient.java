@@ -69,6 +69,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNWCClient</b> class combines a number of version control
@@ -444,8 +445,8 @@ public class SVNWCClient extends SVNBasicClient {
             } else if (!SVNAdminArea.isSafeCleanup()) {
                 throw e;
             }
-            SVNDebugLog.getDefaultLog().info("CLEANUP FAILED for " + path);
-            SVNDebugLog.getDefaultLog().info(e);
+            SVNDebugLog.getLog(SVNLogType.WC).logInfo("CLEANUP FAILED for " + path);
+            SVNDebugLog.getLog(SVNLogType.WC).logInfo(e);
         } finally {
             wcAccess.close();
             sleepForTimeStamp();
@@ -1512,7 +1513,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNEntry entry = wcAccess.getEntry(path, false);
                     if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
                         if (depth != SVNDepth.INFINITY) {
-                            getDebugLog().info("Forcing revert on path '" + path + "' to recurse");
+                            getDebugLog().logInfo("Forcing revert on path '" + path + "' to recurse");
                             depth = SVNDepth.INFINITY;
                             wcAccess.close();
                             info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);

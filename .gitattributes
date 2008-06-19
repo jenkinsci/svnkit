@@ -272,6 +272,7 @@ svnkit/src/org/tmatesoft/svn/core/wc/xml/SVNXMLInfoHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/wc/xml/package.html -text
 svnkit/src/org/tmatesoft/svn/util/ISVNDebugLog.java -text
 svnkit/src/org/tmatesoft/svn/util/SVNDebugLog.java -text
+svnkit/src/org/tmatesoft/svn/util/SVNLogType.java -text
 www/.htaccess -text
 www/css/home.css -text
 www/download/.htaccess -text

@@ -107,7 +107,7 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
         try {
             sendToHandler(info);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getMessage());
             SVNErrorManager.error(err, e);
         }

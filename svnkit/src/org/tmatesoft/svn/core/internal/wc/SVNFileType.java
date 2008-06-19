@@ -150,7 +150,7 @@ public class SVNFileType {
                     SVNFileUtil.LS_COMMAND, "-ld", file.getAbsolutePath()
             });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().info(th);
+            SVNDebugLog.getDefaultLog().logInfo(th);
         }
         return line != null && line.startsWith("l");
     }

@@ -97,7 +97,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             addAttribute(PATH_ATTR, path.getPath());
             openTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
 
@@ -105,7 +105,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         try {
             sendToHandler(status);
         } catch (SAXException th) {
-            getDebugLog().error(th);
+            getDebugLog().logSevere(th);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, th.getLocalizedMessage());
             SVNErrorManager.error(err, th);
         }
@@ -127,7 +127,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             }
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
     

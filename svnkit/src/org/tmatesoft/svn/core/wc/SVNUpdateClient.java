@@ -63,6 +63,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * This class provides methods which allow to check out, update, switch and relocate a
@@ -886,7 +887,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         } catch (SVNCancelException e) {
                             throw e;
                         } catch (SVNException e) {
-                            getDebugLog().info(e);
+                            getDebugLog().logInfo(e);
                         }
                     }
                 }
@@ -1187,7 +1188,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         } catch (SVNCancelException cancel) {
             throw cancel;
         } catch (SVNException e) {
-            SVNDebugLog.getDefaultLog().info(e); 
+            SVNDebugLog.getLog(SVNLogType.WC).logInfo(e); 
             SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, e.getErrorMessage(), null);
             dispatchEvent(event);
         } finally {
@@ -1209,7 +1210,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             adminArea.removeFromRevisionControl(adminArea.getThisDirName(), true, false);
         } catch (SVNException svne) {
-            getDebugLog().info(svne);
+            getDebugLog().logInfo(svne);
             error = svne;
         }
         

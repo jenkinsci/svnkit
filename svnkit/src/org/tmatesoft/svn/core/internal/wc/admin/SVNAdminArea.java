@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -1450,7 +1451,8 @@ public abstract class SVNAdminArea {
         File logFile = adminArea.getAdminFile("log");
         SVNFileType type = SVNFileType.getType(logFile);
         if (type == SVNFileType.FILE) {
-            SVNDebugLog.getDefaultLog().info("Changing working copy format failed: found a log file at '" + logFile + "'");
+            SVNDebugLog.getLog(SVNLogType.WC).logInfo("Changing working copy format failed: found a log file at '" + 
+                    logFile + "'");
             return adminArea;
         }
 

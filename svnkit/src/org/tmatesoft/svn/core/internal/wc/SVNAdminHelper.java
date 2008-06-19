@@ -227,13 +227,13 @@ public class SVNAdminHelper {
     }
     
     public static void generateIncompleteDataError() throws SVNException {
-        SVNDebugLog.getDefaultLog().info(new Exception());
+        SVNDebugLog.getDefaultLog().logInfo(new Exception());
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Premature end of content data in dumpstream");
         SVNErrorManager.error(err);
     }
 
     public static void generateStreamMalformedError() throws SVNException {
-        SVNDebugLog.getDefaultLog().info(new Exception());
+        SVNDebugLog.getDefaultLog().logInfo(new Exception());
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dumpstream data appears to be malformed");
         SVNErrorManager.error(err);
     }

@@ -94,7 +94,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             addAttribute(PATH_ATTR, path == null || path.length() == 9 ? "." : path);
             openTag(LIST_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
 
@@ -115,7 +115,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             myDirEntries = null;
             closeTag(LIST_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
     

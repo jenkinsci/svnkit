@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -808,7 +807,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             OutputStream baseTextOS = null;
             try {
                 baseTextOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
-                SVNDebugLog.getDefaultLog().info("writing to " + info.baseFile);
                 myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, baseProperties);
             } finally {
                 SVNFileUtil.closeFile(baseTextOS);

@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -268,8 +269,9 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
                 event.getErrorMessage().getErrorCode() }, myEnvironment.isQuiet());
             return;
         }
+        
         if (buffer.length() > 0) {
-            SVNDebugLog.getDefaultLog().info(buffer.toString());
+            SVNDebugLog.getLog(SVNLogType.CLIENT).logInfo(buffer.toString());
             out.print(buffer);
         }
     }

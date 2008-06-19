@@ -67,12 +67,12 @@ public class SVNCommandDaemon implements Runnable {
         try {
             serverSocket = new ServerSocket(myPort);
         } catch (IOException e) {
-            log.error("cannot create server socket at port " + myPort);
-            log.error(e);
+            log.logSevere("cannot create server socket at port " + myPort);
+            log.logSevere(e);
             return;
         }
         if (serverSocket == null) {
-            log.error("cannot create server socket at port " + myPort);
+            log.logSevere("cannot create server socket at port " + myPort);
             return;
         }
         while(true) {
@@ -80,12 +80,12 @@ public class SVNCommandDaemon implements Runnable {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
-                log.error("cannot accept connection");
-                log.error(e);
+                log.logSevere("cannot accept connection");
+                log.logSevere(e);
                 continue;
             }
             if (socket == null) {
-                log.error("cannot accept connection");
+                log.logSevere("cannot accept connection");
                 continue;
             }
             OutputStream os = null;
@@ -99,7 +99,7 @@ public class SVNCommandDaemon implements Runnable {
                 // run!
                 int rc = environment.run();
                 // send back
-                log.error("command exit code: " + rc);
+                log.logSevere("command exit code: " + rc);
                 try {
                     os.write(escape(environment.getStdOut()));
                     os.write(new byte[] {
@@ -112,30 +112,30 @@ public class SVNCommandDaemon implements Runnable {
                     os.write(Integer.toString(rc).getBytes());
                     os.flush();
                 } catch (IOException e) {
-                    log.error("error sending execution results");
-                    log.error(e);
+                    log.logSevere("error sending execution results");
+                    log.logSevere(e);
                 }
             } catch (IOException e) {
-                log.error("error processing client request");
-                log.error(e);
+                log.logSevere("error processing client request");
+                log.logSevere(e);
             } finally {
                 try {
                     is.close();
                 } catch (IOException e) {
-                    log.error("error closing client stream");
-                    log.error(e);
+                    log.logSevere("error closing client stream");
+                    log.logSevere(e);
                 }
                 try {
                     os.close();
                 } catch (IOException e) {
-                    log.error("error closing client stream");
-                    log.error(e);
+                    log.logSevere("error closing client stream");
+                    log.logSevere(e);
                 }
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    log.error("error closing client socket");
-                    log.error(e);
+                    log.logSevere("error closing client socket");
+                    log.logSevere(e);
                 }
             }
         }

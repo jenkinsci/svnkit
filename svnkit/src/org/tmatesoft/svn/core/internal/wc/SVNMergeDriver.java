@@ -70,6 +70,7 @@ import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -2057,7 +2058,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 	continue;
                 }
                 merges.put(skippedPath, new SVNMergeRangeList(new SVNMergeRange[0]));
-                SVNDebugLog.getDefaultLog().info("empty merge range set for skipped path: " + skippedPath);
+                SVNDebugLog.getLog(SVNLogType.WC).logInfo("empty merge range set for skipped path: " + skippedPath);
             }
         }
         
@@ -2072,7 +2073,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     childMergeRange.setInheritable(true);
                     childRangeList = new SVNMergeRangeList(childMergeRange);
                     merges.put(mergedPath, childRangeList);
-                    SVNDebugLog.getDefaultLog().info("non-empty merge range set for path: " + mergedPath);
+                    SVNDebugLog.getLog(SVNLogType.WC).logInfo("non-empty merge range set for path: " + mergedPath);
                 }
             }
         }
@@ -2152,7 +2153,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND) {
                     throw svne;
                 }
-                SVNDebugLog.getDefaultLog().info(svne);
+                SVNDebugLog.getLog(SVNLogType.WC).logInfo(svne);
             }
         }
     }

@@ -99,7 +99,7 @@ public class SVNDeltaCombiner {
         try {
             file.read(myReadWindowBuffer);
         } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().error(e);
+            SVNDebugLog.getDefaultLog().logSevere(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err, e);
         }

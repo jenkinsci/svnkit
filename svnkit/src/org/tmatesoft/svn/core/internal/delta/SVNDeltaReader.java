@@ -126,7 +126,7 @@ public class SVNDeltaReader {
                     instructionsLength = deflate(instructionsLength, out);
                     newDataLength = deflate(newDataLength, out);
                 } catch (IOException e) {
-                    SVNDebugLog.getDefaultLog().error(e);
+                    SVNDebugLog.getDefaultLog().logSevere(e);
                 }
                 byte[] bytes = out.toByteArray();
                 ByteBuffer decompressed = ByteBuffer.wrap(bytes);

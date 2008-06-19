@@ -92,23 +92,27 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         return myLogger;
     }
 
-    public void info(String message) {
-        getLogger().log(Level.FINE, message);
-    }
-
-    public void error(String message) {
-        getLogger().log(Level.SEVERE, message);
-    }
-
-    public void info(Throwable th) {
-        if (getLogger().isLoggable(Level.FINE)) {
-            getLogger().log(Level.FINE, th != null ? th.getMessage() : "", th);
+    public void logInfo(String message) {
+        if (getLogger().isLoggable(Level.INFO) && message != null) {
+            getLogger().log(Level.INFO, message);
         }
     }
 
-    public void error(Throwable th) {
-        if (getLogger().isLoggable(Level.SEVERE)) {
-            getLogger().log(Level.SEVERE, th != null ? th.getMessage() : "", th);
+    public void logInfo(Throwable th) {
+        if (getLogger().isLoggable(Level.INFO) && th != null) {
+            getLogger().log(Level.INFO, th.getMessage(), th);
+        }
+    }
+
+    public void logSevere(String message) {
+        if (getLogger().isLoggable(Level.SEVERE) && message != null) {
+            getLogger().log(Level.SEVERE, message);
+        }
+    }
+
+    public void logSevere(Throwable th) {
+        if (getLogger().isLoggable(Level.SEVERE) && th != null) {
+            getLogger().log(Level.SEVERE, th.getMessage(), th);
         }
     }
 
@@ -119,6 +123,42 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
             } catch (UnsupportedEncodingException e) {
                 getLogger().log(Level.FINEST, message + "\n" + new String(data));
             }
+        }
+    }
+
+    public void logFine(Throwable th) {
+        if (getLogger().isLoggable(Level.FINE) && th != null) {
+            getLogger().log(Level.FINE, th.getMessage(), th);
+        }
+    }
+
+    public void logFine(String message) {
+        if (getLogger().isLoggable(Level.FINE) && message != null) {
+            getLogger().log(Level.FINE, message);
+        }
+    }
+
+    public void logFiner(Throwable th) {
+        if (getLogger().isLoggable(Level.FINER) && th != null) {
+            getLogger().log(Level.FINER, th.getMessage(), th);
+        }
+    }
+
+    public void logFiner(String message) {
+        if (getLogger().isLoggable(Level.FINER) && message != null) {
+            getLogger().log(Level.FINER, message);
+        }
+    }
+
+    public void logFinest(Throwable th) {
+        if (getLogger().isLoggable(Level.FINEST) && th != null) {
+            getLogger().log(Level.FINEST, th.getMessage(), th);
+        }
+    }
+
+    public void logFinest(String message) {
+        if (getLogger().isLoggable(Level.FINEST) && message != null) {
+            getLogger().log(Level.FINEST, message);
         }
     }
 }

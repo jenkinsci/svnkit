@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -515,8 +516,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     }
                 }
                 if (propName == null || !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
-                    SVNDebugLog.getDefaultLog().info("attempt to write invalid entry property: " + propName + "=" + propValue);
-                    SVNDebugLog.getDefaultLog().info(new Exception());
+                    SVNDebugLog.getLog(SVNLogType.WC).logInfo("attempt to write invalid entry property: " + propName + "=" + propValue);
+                    SVNDebugLog.getLog(SVNLogType.WC).logInfo(new Exception());
                     continue;
                 }
                 propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
@@ -840,7 +841,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             try {
                 removeFromRevisionControl(getThisDirName(), true, false);
             } catch (SVNException svne) {
-                SVNDebugLog.getDefaultLog().info(svne);
+                SVNDebugLog.getLog(SVNLogType.WC).logInfo(svne);
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
                     throw svne;
                 }

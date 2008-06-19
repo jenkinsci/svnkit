@@ -56,7 +56,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			}
 		}
 		catch (Throwable th) {
-			SVNDebugLog.getDefaultLog().info(th);
+			SVNDebugLog.getDefaultLog().logInfo(th);
 			throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
 		}
 		finally {
@@ -73,7 +73,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 				}
 			}
 			catch (Throwable th) {
-				SVNDebugLog.getDefaultLog().info(th);
+				SVNDebugLog.getDefaultLog().logInfo(th);
 				throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage()), th);
 			}
 		}
