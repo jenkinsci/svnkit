@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.test.daemon.SVNCommandDaemon;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -177,13 +178,17 @@ public class PythonTests {
 	}
     
     private static void setupLogging() {
-        Logger python = Logger.getLogger("python");
+        setupLogger("python");
+        setupLogger(SVNLogType.DEFAULT.getName());
+        setupLogger(SVNLogType.CLIENT.getName());
+        setupLogger(SVNLogType.NETWORK.getName());
+        setupLogger(SVNLogType.WC.getName());
+    }
+
+    private static void setupLogger(String name) {
+        Logger python = Logger.getLogger(name);
         python.setUseParentHandlers(false);
         python.setLevel(Level.INFO);
-                
-        Logger svnkit = Logger.getLogger("svnkit");
-        svnkit.setUseParentHandlers(false);
-        svnkit.setLevel(Level.ALL);
     }
     
     private static Handler createLogHandler(String logName) throws IOException {
