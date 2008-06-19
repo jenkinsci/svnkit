@@ -76,6 +76,7 @@ import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -1678,6 +1679,9 @@ public class SVNClientImpl implements SVNClientInterface {
             mySVNEventListener = new ISVNEventHandler() {
 
                 public void handleEvent(SVNEvent event, double progress) {
+                    if (event.getAction() == SVNEventAction.UPGRADE) {
+                        return;
+                    }
                     String path = null;
                     if (event.getFile() != null) {
                         path = event.getFile().getAbsolutePath();
