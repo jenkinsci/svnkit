@@ -444,7 +444,7 @@ public class SVNLogClient extends SVNBasicClient {
             checkCancelled();
             File path = paths[i];
             wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
-            wcAccess.probeOpen(path, false, 0); 
+            SVNAdminArea area = wcAccess.probeOpen(path, false, 0); 
             SVNEntry entry = wcAccess.getVersionedEntry(path, false); 
             if (entry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
@@ -452,7 +452,9 @@ public class SVNLogClient extends SVNBasicClient {
                 SVNErrorManager.error(err);
             }
             urls[i] = entry.getSVNURL();
-            wcAccess.closeAdminArea(path);
+            if (area != null) {
+                wcAccess.closeAdminArea(area.getRoot());
+            }
         }
         if (urls.length == 0) {
             return;
@@ -484,7 +486,9 @@ public class SVNLogClient extends SVNBasicClient {
             File root = new File(rootWCPath);
             SVNAdminArea area = wcAccess.probeOpen(root, false, 0);
             repos = createRepository(null, root, area, pegRevision, rev, null);
-            wcAccess.closeAdminArea(root);
+            if (area != null) {
+                wcAccess.closeAdminArea(area.getRoot());
+            }
         } else {
             repos = createRepository(baseURL, null, null, pegRevision, rev, null);
         }
