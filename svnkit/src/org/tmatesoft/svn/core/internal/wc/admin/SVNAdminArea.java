@@ -901,7 +901,6 @@ public abstract class SVNAdminArea {
                 }
             }
         }
-        Collections.sort(copy);
         return copy.iterator();
     }
 
@@ -924,8 +923,6 @@ public abstract class SVNAdminArea {
                             throw e;
                         }
                         if (isSafeCleanup()) {
-                            SVNDebugLog.getDefaultLog().info("CLEANUP FAILED for " + childDir);
-                            SVNDebugLog.getDefaultLog().info(e);
                             continue;
                         }
                         throw e;

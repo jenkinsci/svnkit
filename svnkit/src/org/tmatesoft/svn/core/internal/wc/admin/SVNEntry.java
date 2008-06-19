@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNEntry implements Comparable {
+public class SVNEntry {
 
     private Map myAttributes;
     private SVNAdminArea myAdminArea;
@@ -53,20 +53,6 @@ public class SVNEntry implements Comparable {
         return myAttributes.hashCode() + 17 * myName.hashCode();
     }
 
-    public int compareTo(Object obj) {
-        if (obj == this) {
-            return 0;
-        }
-        if (obj == null || obj.getClass() != SVNEntry.class) {
-            return 1;
-        }
-        if (isThisDir()) {
-            return -1;
-        }
-        SVNEntry entry = (SVNEntry) obj;
-        return myName.toLowerCase().compareTo(entry.myName.toLowerCase());
-    }
-    
     public boolean isThisDir() {
         if (myAdminArea != null) {
             return myAdminArea.getThisDirName().equals(getName());
