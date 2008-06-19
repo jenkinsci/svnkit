@@ -30,7 +30,6 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
 
     public JavaHLCompositeLog() {
         myLoggers = new HashSet();
-        myLoggers.add(SVNDebugLog.getDefaultLog());
     }
 
     public void addLogger(ISVNDebugLog debugLog) {
