@@ -355,13 +355,7 @@ class HTTPConnection implements IHTTPConnection {
 	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage());
-                } else if (e instanceof SSLException) {
-                    if (keyManager != null) {
-                        close();
-                        SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", e.getMessage());
-                        keyManager.acknowledgeAndClearAuthentication(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", sslErr));
-                        continue;
-                    }
+                } else if (e instanceof SSLException) {                   
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 } else {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
