@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
@@ -437,9 +439,11 @@ public class SVNLogClient extends SVNBasicClient {
         
         SVNURL[] urls = new SVNURL[paths.length];
         SVNWCAccess wcAccess = createWCAccess();
+        Collection wcPaths = new ArrayList();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();
             File path = paths[i];
+            wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
             wcAccess.probeOpen(path, false, 0); 
             SVNEntry entry = wcAccess.getVersionedEntry(path, false); 
             if (entry.getURL() == null) {
@@ -453,6 +457,8 @@ public class SVNLogClient extends SVNBasicClient {
         if (urls.length == 0) {
             return;
         }
+        String[] wcPathsArray = (String[]) wcPaths.toArray(new String[wcPaths.size()]);
+        String rootWCPath = SVNPathUtil.condencePaths(wcPathsArray, null, true);
         Collection targets = new TreeSet();
         SVNURL baseURL = SVNURLUtil.condenceURLs(urls, targets, true);
         if (baseURL == null) {
@@ -469,8 +475,19 @@ public class SVNLogClient extends SVNBasicClient {
         } else if (startRevision.getDate() != null && endRevision.getDate() != null) {
             rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
         } 
-        SVNRepository repos = rev.isValid() ? //!startRevision.isLocal() && !pegRevision.isLocal() ?
-                createRepository(baseURL, null, null, pegRevision, rev, null) : createRepository(baseURL, null, null, true);
+        SVNRepository repos = null;
+        if (rootWCPath != null && (pegRevision == SVNRevision.BASE ||
+                pegRevision == SVNRevision.WORKING ||
+                pegRevision == SVNRevision.PREVIOUS ||
+                pegRevision == SVNRevision.COMMITTED)) {
+            // open and use wc to create repository.
+            File root = new File(rootWCPath);
+            SVNAdminArea area = wcAccess.probeOpen(root, false, 0);
+            repos = createRepository(null, root, area, pegRevision, rev, null);
+            wcAccess.closeAdminArea(root);
+        } else {
+            repos = createRepository(baseURL, null, null, pegRevision, rev, null);
+        }
         String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
         for (int i = 0; i < targetPaths.length; i++) {
             targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
