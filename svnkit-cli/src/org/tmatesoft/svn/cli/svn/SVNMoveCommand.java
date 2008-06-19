@@ -88,8 +88,8 @@ public class SVNMoveCommand extends SVNCommand {
         SVNCopySource[] copySources = (SVNCopySource[]) sources.toArray(new SVNCopySource[sources.size()]);
         try {
             if (dst.isURL()) {
-                SVNCommitInfo info = client.doCopy(copySources, dst.getURL(), true, false, 
-                        getSVNEnvironment().isParents(), getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties());
+                SVNCommitInfo info = client.doCopy(copySources, dst.getURL(), true, getSVNEnvironment().isParents(), 
+                        false, getSVNEnvironment().getMessage(), getSVNEnvironment().getRevisionProperties());
                 if (!getSVNEnvironment().isQuiet()) {
                     getSVNEnvironment().printCommitInfo(info);
                 }
