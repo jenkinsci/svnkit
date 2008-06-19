@@ -54,7 +54,6 @@ doc/JSPWikiDocs/UpdatingFromARepository/Update_Tree1.png -text
 doc/JSPWikiDocs/UpdatingFromARepository/Update_Tree2.png -text
 doc/JSPWikiDocs/WhatIsSubversionFor/repository_tree.png -text
 doc/JSPWikiDocs/WhatIsSubversionFor/right.gif -text
-doc/examples/src/Tests.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/Commit.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayFile.java -text
 doc/examples/src/org/tmatesoft/svn/examples/repository/DisplayRepositoryTree.java -text
@@ -107,8 +106,6 @@ doc/wiki/main.vm -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
-/log -text
-/log.message -text
 svnkit-cli/scripts/jsvndumpfilter -text
 svnkit-cli/scripts/jsvndumpfilter.bat -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/DefaultSVNCommandLineDiffGenerator.java -text

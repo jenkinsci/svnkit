@@ -1,9 +1,0 @@
-Bugfixes in 4th working copy format code.
-
- * svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNXMLAdminArea.java
-   (fetchEntries()): set SVNProperty.DEPTH attribute to SVNDepth.INFINITY for 
-                     every entry, it's necessary for update to work properly
-   (writeEntries()): check an entry attribute name for applicability with a
-                     call to SVNAdminArea.isEntryPropertyApplicabe() to filter
-                     out attributes from modern formats
-
