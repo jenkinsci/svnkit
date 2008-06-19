@@ -78,6 +78,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private boolean myIsDiffUnversioned;
     private SVNDiffOptions myDiffOptions;
     private Collection myRawDiffOptions;
+    private String myDiffCommand;
     
     /**
      * Constructs a <b>DefaultSVNDiffGenerator</b>.
@@ -109,6 +110,20 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
     public void setOptions(ISVNOptions options){
         myOptions = options;
+    }
+    
+    public void setExternalDiffCommand(String command) {
+        myDiffCommand = command;
+    }
+    
+    protected String getExternalDiffCommand() {
+        if (myDiffCommand != null) {
+            return myDiffCommand;
+        }
+        if (myOptions instanceof DefaultSVNOptions) {
+            return ((DefaultSVNOptions) myOptions).getDiffCommand();
+        }
+        return null;
     }
 
     protected ISVNOptions getOptions(){
@@ -359,7 +374,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             return;
         }
 
-        final String diffCommand = getOptions().getDiffCommand();
+        final String diffCommand = getExternalDiffCommand();
         if (diffCommand != null) {
             try {
                 bos.close();

@@ -173,7 +173,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         DefaultSVNDiffGenerator diffGenerator = new DefaultSVNDiffGenerator();
         if (getSVNEnvironment().getDiffCommand() != null) {
-            client.getOptions().setDiffCommand(getSVNEnvironment().getDiffCommand());
+            diffGenerator.setExternalDiffCommand(getSVNEnvironment().getDiffCommand());
             diffGenerator.setRawDiffOptions(getSVNEnvironment().getExtensions());
         } else {
             diffGenerator.setDiffOptions(getSVNEnvironment().getDiffOptions());

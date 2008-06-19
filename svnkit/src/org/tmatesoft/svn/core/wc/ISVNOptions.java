@@ -147,10 +147,6 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     
     public String[] getPreservedConflictFileExtensions();
 
-    public String getDiffCommand();
-
-    public void setDiffCommand(String diffCmd);
-
     public boolean isAllowAllForwardMergesFromSelf();
 
     public byte[] getNativeEOL();
