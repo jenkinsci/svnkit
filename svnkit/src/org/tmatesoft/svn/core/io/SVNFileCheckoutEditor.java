@@ -54,6 +54,7 @@ class SVNFileCheckoutEditor implements ISVNEditor {
     }
 
     public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
+        myTarget.filePropertyChanged(path, name, value);
     }
 
     public void closeDir() throws SVNException {
