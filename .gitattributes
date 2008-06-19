@@ -1,6 +1,5 @@
 * text=auto !eol
 /.options eol=lf
-/.pydevproject -text
 /COPYING eol=lf
 /REMARKS.txt -text
 /changelog.txt eol=lf
