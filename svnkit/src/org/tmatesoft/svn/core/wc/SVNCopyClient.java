@@ -762,7 +762,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 try {
                     commitEditor.abortEdit();
                 } catch (SVNException e) {
-                    SVNDebugLog.getLog(SVNLogType.WC).logInfo(e);
+                    SVNDebugLog.getLog(SVNLogType.WC).logFine(e);
                 }
             }
             if (wcAccess != null) {
@@ -969,7 +969,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 try {
                     commitEditor.abortEdit();
                 } catch (SVNException e) {
-                    SVNDebugLog.getLog(SVNLogType.WC).logInfo(e);
+                    SVNDebugLog.getLog(SVNLogType.WC).logFine(e);
                 }
             }
         }

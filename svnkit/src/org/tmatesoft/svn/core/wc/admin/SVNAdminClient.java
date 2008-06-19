@@ -652,7 +652,7 @@ public class SVNAdminClient extends SVNBasicClient {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
             fsfs.purgeTxn(txnName);
-            SVNDebugLog.getDefaultLog().logInfo("Transaction '" + txnName + "' removed.\n");
+            SVNDebugLog.getDefaultLog().logFine("Transaction '" + txnName + "' removed.\n");
             if (myEventHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);
                 myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);

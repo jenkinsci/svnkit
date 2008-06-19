@@ -887,7 +887,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         } catch (SVNCancelException e) {
                             throw e;
                         } catch (SVNException e) {
-                            getDebugLog().logInfo(e);
+                            getDebugLog().logFine(e);
                         }
                     }
                 }
@@ -1188,7 +1188,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         } catch (SVNCancelException cancel) {
             throw cancel;
         } catch (SVNException e) {
-            SVNDebugLog.getLog(SVNLogType.WC).logInfo(e); 
+            SVNDebugLog.getLog(SVNLogType.WC).logFine(e); 
             SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, e.getErrorMessage(), null);
             dispatchEvent(event);
         } finally {
@@ -1210,7 +1210,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             adminArea.removeFromRevisionControl(adminArea.getThisDirName(), true, false);
         } catch (SVNException svne) {
-            getDebugLog().logInfo(svne);
+            getDebugLog().logFine(svne);
             error = svne;
         }
         

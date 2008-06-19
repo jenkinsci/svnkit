@@ -67,13 +67,13 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 		return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
 	}
 
-    public void logInfo(String message) {
+    public void logError(String message) {
         if (isInfoEnabled()) {
             myLog.log(createStatus(IStatus.INFO, message, null));
         }
     }
 
-    public void logInfo(Throwable th) {
+    public void logError(Throwable th) {
         if (isInfoEnabled()) {
             myLog.log(createStatus(IStatus.INFO, th != null ? th.getMessage() : "", th));
         }

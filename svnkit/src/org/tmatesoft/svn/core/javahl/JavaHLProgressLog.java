@@ -48,10 +48,10 @@ public class JavaHLProgressLog extends SVNDebugLogAdapter {
     public void logSevere(Throwable th) {
     }
 
-    public void logInfo(String message) {
+    public void logError(String message) {
     }
 
-    public void logInfo(Throwable th) {
+    public void logError(Throwable th) {
     }
 
     public void logFine(Throwable th) {

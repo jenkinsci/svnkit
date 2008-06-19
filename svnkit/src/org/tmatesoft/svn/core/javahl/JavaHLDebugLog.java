@@ -92,13 +92,13 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         return myLogger;
     }
 
-    public void logInfo(String message) {
+    public void logError(String message) {
         if (getLogger().isLoggable(Level.INFO) && message != null) {
             getLogger().log(Level.INFO, message);
         }
     }
 
-    public void logInfo(Throwable th) {
+    public void logError(Throwable th) {
         if (getLogger().isLoggable(Level.INFO) && th != null) {
             getLogger().log(Level.INFO, th.getMessage(), th);
         }

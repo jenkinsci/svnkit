@@ -575,6 +575,8 @@ public class PythonTests {
         
         String pythonTests = new File(props.getProperty("python.tests")).getAbsolutePath().replace(File.separatorChar, '/');
         config = config.replaceAll("%python.tests%", pythonTests);
+        String apacheOptions = props.getProperty("apache.options", "");
+        config = config.replaceAll("%apache.options%", apacheOptions);
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(config.getBytes());
