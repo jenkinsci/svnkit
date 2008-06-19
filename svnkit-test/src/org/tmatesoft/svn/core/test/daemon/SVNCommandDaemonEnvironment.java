@@ -123,12 +123,15 @@ public class SVNCommandDaemonEnvironment {
         } catch (SVNCommandExitException e) {
             return e.getCode();
         } catch (Throwable th) {
-            Logger.getLogger("svnkit").log(Level.SEVERE, th.getMessage() != null ? th.getMessage() : "", th);                    
+            Logger.getLogger(SVNLogType.DEFAULT.getName()).log(Level.SEVERE, th.getMessage() != null ? th.getMessage() : "", th);                    
             return 1;
         } finally {            
             if (logHandler != null) {
                 logHandler.close();
-                Logger.getLogger("svnkit").removeHandler(logHandler);                    
+                Logger.getLogger(SVNLogType.DEFAULT.getName()).removeHandler(logHandler);
+                Logger.getLogger(SVNLogType.NETWORK.getName()).removeHandler(logHandler);
+                Logger.getLogger(SVNLogType.WC.getName()).removeHandler(logHandler);
+                Logger.getLogger(SVNLogType.CLIENT.getName()).removeHandler(logHandler);
             }
             SVNFileUtil.setTestEnvironment(null, null, null);
             SVNFileUtil.setSleepForTimestamp(true);
