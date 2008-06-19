@@ -425,6 +425,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                         if (entryName == null) {
                             return entries;
                         }
+
+                        entry.put(SVNProperty.DEPTH, SVNDepth.INFINITY.getName());
                         entries.put(entryName, new SVNEntry(entry, this, entryName));
                         if (!getThisDirName().equals(entryName)) {
                             SVNEntry rootEntry = (SVNEntry)entries.get(getThisDirName());
@@ -483,6 +485,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             writer.write("<entry");
             for (Iterator names = entryAttrs.keySet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
+                if (!isEntryPropertyApplicable(propName)) {
+                    continue;
+                }
                 Object value = entryAttrs.get(propName);
                 if (!(value instanceof String)) {
                     continue;
