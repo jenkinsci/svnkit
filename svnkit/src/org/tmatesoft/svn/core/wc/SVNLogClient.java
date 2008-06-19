@@ -640,13 +640,13 @@ public class SVNLogClient extends SVNBasicClient {
     }
     
     public SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
-        SVNRepository repos = createRepository(url, path, null, revision, revision, null);
+        long[] pegRev = { SVNRepository.INVALID_REVISION };
+        SVNRepository repos = createRepository(url, path, null, revision, revision, pegRev);
         SVNLocationEntry copyFromEntry = null;
         String targetPath = getPathRelativeToRoot(path, url, null, null, repos);
-        SVNRevision oldestRevision = SVNRevision.create(1);
         CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
             try {
-                doLog(new File[] { path }, revision, revision, oldestRevision, true, true, 0, receiver);
+                repos.log(new String[] { "" }, pegRev[0], 1, true, true, 0, false, new String[0], receiver);
                 copyFromEntry = receiver.getCopyFromLocation();
             } catch (SVNException e) {
                 SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
