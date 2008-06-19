@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 
 /**
@@ -23,5 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 public interface ISVNFileCheckoutTarget {
     
     public OutputStream getOutputStream(String path) throws SVNException;
+
+    public void filePropertyChanged(String path, String name, SVNPropertyValue value) throws SVNException;
 
 }
