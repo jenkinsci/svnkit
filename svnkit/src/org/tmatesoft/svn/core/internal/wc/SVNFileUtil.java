@@ -386,7 +386,7 @@ public class SVNFileUtil {
                 }
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logInfo(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
             return false;
         }
         return true;
@@ -407,7 +407,7 @@ public class SVNFileUtil {
                 });
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logInfo(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
         }
     }
 
@@ -566,7 +566,7 @@ public class SVNFileUtil {
                     LN_COMMAND, "-s", linkName, link.getAbsolutePath()
             });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logInfo(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
         }
         return SVNFileType.getType(link) == SVNFileType.SYMLINK;
     }
@@ -607,7 +607,7 @@ public class SVNFileUtil {
                     LS_COMMAND, "-ld", link.getAbsolutePath()
             });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logInfo(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
         }
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
             return null;
@@ -720,7 +720,7 @@ public class SVNFileUtil {
         try {
             Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logInfo(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
         }
     }
 
@@ -991,7 +991,7 @@ public class SVNFileUtil {
                 line = execCommand(commandLine);
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logInfo(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
         }
         if (line == null || line.indexOf(' ') < 0) {
             return false;
@@ -1305,9 +1305,9 @@ public class SVNFileUtil {
             }
             return handleOutput ? null : result.toString().trim();
         } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logInfo(e);
+            SVNDebugLog.getDefaultLog().logFine(e);
         } catch (InterruptedException e) {
-            SVNDebugLog.getDefaultLog().logInfo(e);
+            SVNDebugLog.getDefaultLog().logFine(e);
         } finally {
             closeFile(is);
         }
@@ -1425,8 +1425,8 @@ public class SVNFileUtil {
                 // a Properties object and get the variable from that
                 return getEnvironment().getProperty(name);
             } catch (Throwable e1) {
-                SVNDebugLog.getDefaultLog().logInfo(e);
-                SVNDebugLog.getDefaultLog().logInfo(e1);
+                SVNDebugLog.getDefaultLog().logFine(e);
+                SVNDebugLog.getDefaultLog().logFine(e1);
                 return null;
             }
         }

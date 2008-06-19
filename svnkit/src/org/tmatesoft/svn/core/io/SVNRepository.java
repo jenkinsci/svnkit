@@ -2073,7 +2073,7 @@ public abstract class SVNRepository {
             synchronized(this) {
                 if (Thread.currentThread() == myLocker) {
                     if (!force) {
-                        getDebugLog().logInfo(new Exception());
+                        getDebugLog().logFine(new Exception());
                         throw new Error("SVNRepository methods are not reenterable");
                     } 
                     myLockCount++;

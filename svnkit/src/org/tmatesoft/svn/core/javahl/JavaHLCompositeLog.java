@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.tmatesoft.svn.util.ISVNDebugLog;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 
@@ -40,17 +39,17 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
         myLoggers.remove(debugLog);        
     }
 
-    public void logInfo(String message) {
+    public void logError(String message) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logInfo(message);
+            log.logError(message);
         }
     }
 
-    public void logInfo(Throwable th) {
+    public void logError(Throwable th) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logInfo(th);
+            log.logFine(th);
         }
     }
 

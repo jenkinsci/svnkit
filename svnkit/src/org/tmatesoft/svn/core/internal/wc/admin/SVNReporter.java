@@ -123,15 +123,15 @@ public class SVNReporter implements ISVNReporterBaton {
             try {
                 reporter.abortReport();
             } catch (SVNException inner) {
-                myLog.logInfo(inner);
+                myLog.logFine(inner);
             }
             throw e;
         } catch (Throwable th) {
-            myLog.logInfo(th);
+            myLog.logFine(th);
             try {
                 reporter.abortReport();
             } catch (SVNException e) {
-                myLog.logInfo(e);
+                myLog.logFine(e);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {0}", th.getMessage());
             SVNErrorManager.error(err, th);

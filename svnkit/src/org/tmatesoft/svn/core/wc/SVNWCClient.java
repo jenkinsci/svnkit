@@ -445,8 +445,8 @@ public class SVNWCClient extends SVNBasicClient {
             } else if (!SVNAdminArea.isSafeCleanup()) {
                 throw e;
             }
-            SVNDebugLog.getLog(SVNLogType.WC).logInfo("CLEANUP FAILED for " + path);
-            SVNDebugLog.getLog(SVNLogType.WC).logInfo(e);
+            SVNDebugLog.getLog(SVNLogType.WC).logFine("CLEANUP FAILED for " + path);
+            SVNDebugLog.getLog(SVNLogType.WC).logFine(e);
         } finally {
             wcAccess.close();
             sleepForTimeStamp();
@@ -1513,7 +1513,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNEntry entry = wcAccess.getEntry(path, false);
                     if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
                         if (depth != SVNDepth.INFINITY) {
-                            getDebugLog().logInfo("Forcing revert on path '" + path + "' to recurse");
+                            getDebugLog().logFine("Forcing revert on path '" + path + "' to recurse");
                             depth = SVNDepth.INFINITY;
                             wcAccess.close();
                             info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);

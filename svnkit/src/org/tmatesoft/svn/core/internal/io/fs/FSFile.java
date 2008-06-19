@@ -255,7 +255,7 @@ public class FSFile {
             }
             int colonIndex = line.indexOf(':');
             if (colonIndex <= 0 || line.length() <= colonIndex + 2) {
-                SVNDebugLog.getDefaultLog().logInfo(line);
+                SVNDebugLog.getDefaultLog().logFine(line);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Found malformed header in revision file");
                 SVNErrorManager.error(err);

@@ -521,8 +521,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     }
                 }
                 if (propName == null || !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
-                    SVNDebugLog.getLog(SVNLogType.WC).logInfo("attempt to write invalid entry property: " + propName + "=" + propValue);
-                    SVNDebugLog.getLog(SVNLogType.WC).logInfo(new Exception());
+                    SVNDebugLog.getLog(SVNLogType.WC).logFine("attempt to write invalid entry property: " + propName + "=" + propValue);
+                    SVNDebugLog.getLog(SVNLogType.WC).logFine(new Exception());
                     continue;
                 }
                 propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
@@ -846,7 +846,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             try {
                 removeFromRevisionControl(getThisDirName(), true, false);
             } catch (SVNException svne) {
-                SVNDebugLog.getLog(SVNLogType.WC).logInfo(svne);
+                SVNDebugLog.getLog(SVNLogType.WC).logFine(svne);
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
                     throw svne;
                 }

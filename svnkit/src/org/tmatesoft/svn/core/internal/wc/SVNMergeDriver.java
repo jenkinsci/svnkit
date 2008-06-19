@@ -2058,7 +2058,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 	continue;
                 }
                 merges.put(skippedPath, new SVNMergeRangeList(new SVNMergeRange[0]));
-                SVNDebugLog.getLog(SVNLogType.WC).logInfo("empty merge range set for skipped path: " + skippedPath);
             }
         }
         
@@ -2073,7 +2072,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     childMergeRange.setInheritable(true);
                     childRangeList = new SVNMergeRangeList(childMergeRange);
                     merges.put(mergedPath, childRangeList);
-                    SVNDebugLog.getLog(SVNLogType.WC).logInfo("non-empty merge range set for path: " + mergedPath);
                 }
             }
         }
@@ -2153,7 +2151,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND) {
                     throw svne;
                 }
-                SVNDebugLog.getLog(SVNLogType.WC).logInfo(svne);
+                SVNDebugLog.getLog(SVNLogType.WC).logFine(svne);
             }
         }
     }

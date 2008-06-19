@@ -34,13 +34,13 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
         myLogType = logType != null ? logType : SVNLogType.DEFAULT;
     }
     
-    public void logInfo(String message) {
+    public void logError(String message) {
         if (getLogger().isLoggable(Level.INFO) && message != null) {
             getLogger().log(Level.INFO, getMessage(message));
         }
     }
 
-    public void logInfo(Throwable th) {
+    public void logError(Throwable th) {
         if (getLogger().isLoggable(Level.INFO) && th != null) {
             getLogger().log(Level.INFO, getMessage(th.getMessage()), th);
         }

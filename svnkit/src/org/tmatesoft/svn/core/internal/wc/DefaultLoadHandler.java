@@ -47,7 +47,6 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -238,7 +237,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
 
     public void closeNode() throws SVNException {
         myCurrentNodeBaton = null;
-        SVNDebugLog.getDefaultLog().logInfo(" done.\n");
     }
 
     public void applyTextDelta() throws SVNException {
@@ -409,7 +407,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
             }
             myCurrentRevisionBaton.getCommitter().makeCopy(copyRoot, nodeBaton.myCopyFromPath, nodeBaton.myPath, true);
-            SVNDebugLog.getDefaultLog().logInfo("COPIED...");
         }
     }
     
