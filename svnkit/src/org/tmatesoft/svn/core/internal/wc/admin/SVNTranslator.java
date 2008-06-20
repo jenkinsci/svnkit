@@ -93,9 +93,7 @@ public class SVNTranslator {
             return;
         }
         if (special) {
-            if (dst.exists()) {
-                dst.delete();
-            }
+            dst.delete();
             if (SVNFileUtil.isWindows) {
                 SVNFileUtil.copyFile(src, dst, true);
             } else if (expand) {

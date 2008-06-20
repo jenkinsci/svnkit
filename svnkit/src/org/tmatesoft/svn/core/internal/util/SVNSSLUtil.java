@@ -12,8 +12,11 @@
 package org.tmatesoft.svn.core.internal.util;
 
 import java.security.MessageDigest;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
 
 /**
@@ -45,6 +48,50 @@ public class SVNSSLUtil {
         return prompt;
 
     }
+
+    public static int getServerCertificateFailures(X509Certificate cert, String realHostName) {
+        int mask = 8;
+        Date time = new Date(System.currentTimeMillis());
+        if (time.before(cert.getNotBefore())) {
+            mask |= 1;
+        }
+        if (time.after(cert.getNotAfter())) {
+            mask |= 2;
+        }
+        String certHostName = cert.getSubjectDN().getName();
+        int index = certHostName.indexOf("CN=") + 3;
+        if (index >= 0) {
+            certHostName = certHostName.substring(index);
+            if (certHostName.indexOf(' ') >= 0) {
+                certHostName = certHostName.substring(0, certHostName.indexOf(' '));
+            }
+            if (certHostName.indexOf(',') >= 0) {
+                certHostName = certHostName.substring(0, certHostName.indexOf(','));
+            }
+        }
+        if (!realHostName.equals(certHostName)) {
+            try {
+                Collection altNames = cert.getSubjectAlternativeNames();
+                for (Iterator names = altNames.iterator(); names.hasNext();) {
+                    Object nameList = names.next();
+                    if (nameList instanceof Collection && ((Collection) nameList).size() >= 2) {
+                        Object[] name = ((Collection) nameList).toArray();
+                        Object type = name[0];
+                        Object host = name[1];
+                        if (type instanceof Integer && host instanceof String) {
+                            if (((Integer) type).intValue() == 2 && host.equals(realHostName)) {
+                                return mask;
+                            }
+                        }
+                    }
+                }
+            } catch (CertificateParsingException e) {
+            }
+            mask |= 4;
+        }
+        return mask;
+    }
+
     
     private static String getFingerprint(X509Certificate cert) {
         StringBuffer s = new StringBuffer();
@@ -82,32 +129,6 @@ public class SVNSSLUtil {
       info.append('\n');
       info.append(" - Fingerprint: ");
       info.append(getFingerprint(cert));
-  }
-
-  private static int getServerCertificateFailures(X509Certificate cert, String realHostName) {
-      int mask = 8;
-      Date time = new Date(System.currentTimeMillis());
-      if (time.before(cert.getNotBefore())) {
-          mask |= 1;
-      }
-      if (time.after(cert.getNotAfter())) {
-          mask |= 2;
-      }
-      String hostName = cert.getSubjectDN().getName();
-      int index = hostName.indexOf("CN=") + 3;
-      if (index >= 0) {
-          hostName = hostName.substring(index);
-          if (hostName.indexOf(' ') >= 0) {
-              hostName = hostName.substring(0, hostName.indexOf(' '));
-          }
-          if (hostName.indexOf(',') >= 0) {
-              hostName = hostName.substring(0, hostName.indexOf(','));
-          }
-      }
-      if (realHostName != null && !realHostName.equals(hostName)) {
-          mask |= 4;
-      }
-      return mask;
   }
 
 }
