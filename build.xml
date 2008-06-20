@@ -694,6 +694,11 @@
     			<include name="**/*.lck"/>
     	    </fileset>
     	</delete>
+        <copy file="${python.test.home}/python-tests-log.xml"
+              tofile="build/logs/python-tests-log.xml"
+              failonerror="false"
+              overwrite="true"
+        />
     </target>
 	
 	<target name="zip-logs" if="agent.name">
