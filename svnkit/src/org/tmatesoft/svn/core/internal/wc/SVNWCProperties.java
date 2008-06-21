@@ -201,7 +201,7 @@ public class SVNWCProperties {
                 if (tmpFile2 != null) {
                     tmpFile2.delete();
                 }
-                if (tmpFile2 != null) {
+                if (tmpFile1 != null) {
                     tmpFile1.delete();
                 }
                 SVNFileUtil.closeFile(os);

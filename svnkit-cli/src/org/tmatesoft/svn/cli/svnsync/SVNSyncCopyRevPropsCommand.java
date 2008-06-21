@@ -78,6 +78,8 @@ public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand implements ISVNAd
                         "''{0}'' is not a valid revision range", revString);
                 SVNErrorManager.error(err);
             }
+            startRevision = revisions[0];
+            endRevision = revisions[1];
             
             if (startRevision == SVNRevision.HEAD) {
                 startRevisionNumber = -1;
