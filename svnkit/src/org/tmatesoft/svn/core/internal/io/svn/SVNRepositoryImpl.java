@@ -1178,8 +1178,11 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             authenticate();
             SVNDirEntry entry = null;
             List items = read("(?l)", null, false);
+            if (items == null || items.isEmpty()) {
+                return null;
+            }
             items = (List) items.get(0);
-            if (items != null) {
+            if (items != null && !items.isEmpty()) {
                 SVNURL repositoryRoot = getRepositoryRoot(false);
                 List values = SVNReader.parseTuple("wnsr(?s)(?s)", items, null);
                 SVNNodeKind kind = SVNNodeKind.parseKind(SVNReader.getString(values, 0));
