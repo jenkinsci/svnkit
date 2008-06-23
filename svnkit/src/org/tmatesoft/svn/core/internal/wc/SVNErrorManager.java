@@ -26,13 +26,13 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNErrorManager {
 
     public static void cancel(String message) throws SVNCancelException {
-        SVNDebugLog.getDefaultLog().logFine(message);
+        SVNDebugLog.getDefaultLog().logFiner(message);
         throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, message));
     }
 
     public static void authenticationFailed(String message, Object messageObject) throws SVNAuthenticationException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject);
-        SVNDebugLog.getDefaultLog().logFine(err.getMessage());
+        SVNDebugLog.getDefaultLog().logFiner(err.getMessage());
         throw new SVNAuthenticationException(err);
     }
 
@@ -45,7 +45,7 @@ public class SVNErrorManager {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
         if (log) {
-            SVNDebugLog.getDefaultLog().logFine(err.getFullMessage());
+            SVNDebugLog.getDefaultLog().logFiner(err.getFullMessage());
         }
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
@@ -60,7 +60,7 @@ public class SVNErrorManager {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
-        SVNDebugLog.getDefaultLog().logFine(err.getMessage());
+        SVNDebugLog.getDefaultLog().logFiner(err.getMessage());
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {
@@ -77,7 +77,7 @@ public class SVNErrorManager {
             error(err1);
         }
         err1.setChildErrorMessage(err2);
-        SVNDebugLog.getDefaultLog().logFine(err1.getMessage());
+        SVNDebugLog.getDefaultLog().logFiner(err1.getMessage());
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err1);
         } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {
@@ -93,7 +93,7 @@ public class SVNErrorManager {
             error(err1, cause);
         }
         err1.setChildErrorMessage(err2);
-        SVNDebugLog.getDefaultLog().logFine(err1.getMessage());
+        SVNDebugLog.getDefaultLog().logFiner(err1.getMessage());
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err1);
         } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {
