@@ -819,9 +819,6 @@ public class SVNCopyClient extends SVNBasicClient {
         if (makeParents) {
             CopyPair pair = (CopyPair) copyPairs.get(0);
             String relativeDir = SVNPathUtil.getPathAsChild(topURL, SVNPathUtil.removeTail(pair.myDst));
-            if (relativeDir == null) {
-                relativeDir = SVNPathUtil.getPathAsChild(topURL, pair.myDst);
-            }
             if (relativeDir != null) {
                 relativeDir = SVNEncodingUtil.uriDecode(relativeDir);
                 SVNNodeKind kind = topRepos.checkPath(relativeDir, -1);
