@@ -1050,8 +1050,14 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient client = getSVNDiffClient();
         Collection mergeSrcURLs = null;
         try {
-            mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
-                JavaHLObjectFactory.getSVNRevision(pegRevision));
+            if (isURL(path)) {
+                SVNURL url = SVNURL.parseURIEncoded(path);
+                mergeSrcURLs = client.suggestMergeSources(url,
+                        JavaHLObjectFactory.getSVNRevision(pegRevision));
+            } else {
+                mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
+                    JavaHLObjectFactory.getSVNRevision(pegRevision));
+            }
             if (mergeSrcURLs != null) {
                 String[] stringURLs = new String[mergeSrcURLs.size()];
                 int i = 0;
