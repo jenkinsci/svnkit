@@ -502,6 +502,8 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void setConflictResolver(ConflictResolverCallback listener) {
         myConflictResolverCallback = listener;
+        mySVNConflictHandler = null;
+        updateClientManager();
     }
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
