@@ -263,7 +263,9 @@ public class SVNBasicClient implements ISVNEventHandler {
             	repos = createRepository(url, path, null, pegRevision, pegRevision, null);
             	reposRoot = repos.getRepositoryRoot(true); 
             } finally {
-            	repos.closeSession();
+                if (repos != null) {
+                    repos.closeSession();
+                }
             }
         }
         
