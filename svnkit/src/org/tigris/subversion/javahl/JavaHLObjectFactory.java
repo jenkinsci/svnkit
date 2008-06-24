@@ -656,7 +656,10 @@ public class JavaHLObjectFactory {
             }
             return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, SVNPropertyValue.getPropertyAsString(value), value.getBytes());
         }
-        return new PropertyData((SVNClient) client, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
+        if (value.isString()) {
+            return new PropertyData((SVNClient) client, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
+        }
+        return new PropertyData((SVNClient) client, path, name, SVNPropertyValue.getPropertyAsString(value), value.getBytes());
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {
