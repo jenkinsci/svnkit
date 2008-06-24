@@ -903,6 +903,17 @@ public class SVNClientImpl implements SVNClientInterface {
     public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes, Map revprops) throws ClientException {
         SVNCommitClient commitClient = getSVNCommitClient();
         try {
+            if (myMessageHandler != null) {
+                commitClient.setCommitHandler(new ISVNCommitHandler() {
+                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
+                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
+                        return myMessageHandler.getLogMessage(items);
+                    }
+                    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+                        return revisionProperties == null ? new SVNProperties() : revisionProperties;
+                    }                    
+                });
+            }
             SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
             commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, revisionProperties, !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
         } catch (SVNException e) {
