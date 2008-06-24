@@ -6,14 +6,14 @@
 	<classpathentry kind="src" output="doc/examples/bin" path="doc/examples/src"/>
 	<classpathentry kind="src" output="svnkit-eclipse/bin" path="svnkit-eclipse/org.tmatesoft.svnkit/src"/>
 	<classpathentry kind="src" output="svnkit-test/bin" path="svnkit-test/src"/>
-	<classpathentry excluding="**/SVNAdmin.java|**/SVNClient.java|org/tigris/subversion/javahl/tests/" kind="src" output="contrib/javahl/bin" path="contrib/javahl/src"/>
+	<classpathentry excluding="**/Path.java|**/SVNAdmin.java|**/SVNClient.java" kind="src" output="contrib/javahl/bin" path="contrib/javahl/src"/>
 	<classpathentry kind="src" output="contrib/sequence/bin" path="contrib/sequence/src"/>
 	<classpathentry kind="src" output="contrib/sequence/bin" path="contrib/sequence/src-test"/>
 	<classpathentry kind="lib" path="contrib/junit/junit.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="contrib/servlet-api/servlet-api.jar" sourcepath="contrib/servlet-api/servlet-api-2.3src.zip"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
-	<classpathentry exported="true" kind="lib" path="contrib/jna/jna.jar" sourcepath="contrib/jna/jna-src.zip"/>
+	<classpathentry kind="lib" path="contrib/jna/jna.jar" sourcepath="contrib/jna/jna-src.zip"/>
 	<classpathentry kind="lib" path="contrib/trilead/trilead.jar" sourcepath="contrib/trilead/trileadsrc.zip"/>
 	<classpathentry kind="output" path="svnkit/bin"/>
 </classpath>
