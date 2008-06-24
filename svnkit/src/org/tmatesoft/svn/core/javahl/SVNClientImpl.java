@@ -437,7 +437,13 @@ public class SVNClientImpl implements SVNClientInterface {
     private void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergeInfo, String[] revisionProperties, long limit, ISVNLogEntryHandler logEntryHandler) throws ClientException {
         SVNLogClient client = getSVNLogClient();
         try {
+            if (revisionEnd == null) {
+                revisionEnd = Revision.getInstance(1); 
+            }
             if (isURL(path)) {
+                if (revisionStart == null) {
+                    revisionStart = Revision.HEAD; 
+                }
                 client.doLog(
                         SVNURL.parseURIEncoded(path), new String[]{""},
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
@@ -445,6 +451,9 @@ public class SVNClientImpl implements SVNClientInterface {
                         JavaHLObjectFactory.getSVNRevision(revisionEnd),
                         stopOnCopy, discoverPath, includeMergeInfo, limit, revisionProperties, logEntryHandler);
             } else {
+                if (revisionStart == null) {
+                    revisionStart = Revision.BASE; 
+                }
                 client.doLog(
                         new File[]{new File(path).getAbsoluteFile()},
                         JavaHLObjectFactory.getSVNRevision(revisionStart),
