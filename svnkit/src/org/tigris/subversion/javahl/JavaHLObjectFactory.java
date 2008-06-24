@@ -526,9 +526,11 @@ public class JavaHLObjectFactory {
                 int stateFlag = 0;
                 if (sc.isDeleted()) {
                     stateFlag += CommitItemStateFlags.Delete;
-                } else if (sc.isAdded()) {
+                }
+                if (sc.isAdded()) {
                     stateFlag += CommitItemStateFlags.Add;
-                } else if (sc.isContentsModified()) {
+                } 
+                if (sc.isContentsModified()) {
                     stateFlag += CommitItemStateFlags.TextMods;
                 }
                 if (sc.isPropertiesModified()) {
