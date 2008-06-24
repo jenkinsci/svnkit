@@ -118,7 +118,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 start = target.getPegRevision();
             }
             if (end == SVNRevision.UNDEFINED) {
-                end = SVNRevision.create(1);
+                end = SVNRevision.create(0);
             }
         }
         
