@@ -705,7 +705,7 @@ class DAVRepository extends SVNRepository {
             } catch (SVNException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "DAV request failed; it's possible that the repository's " +
                         "pre-rev-propchange hook either failed or is non-existent");
-                SVNErrorManager.error(err, e.getErrorMessage());                
+                SVNErrorManager.error(err, e.getErrorMessage(), e);                
             }
         } finally {
             closeConnection();
