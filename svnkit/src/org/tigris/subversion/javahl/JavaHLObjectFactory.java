@@ -513,7 +513,7 @@ public class JavaHLObjectFactory {
         handler.singleMessage(cp, logEntry.getRevision(), revisionPropertiesMap, logEntry.hasChildren());
     }
 
-    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
+    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables, boolean isImport) {
         if(commitables == null){
             return null;
         }
@@ -537,8 +537,14 @@ public class JavaHLObjectFactory {
                 if(sc.isCopied()){
                     stateFlag += CommitItemStateFlags.IsCopy;
                 }
-                items[i] = new CommitItem(sc.getPath(), getNodeKind(sc.getKind()), stateFlag, 
-                        sc.getURL() != null ? sc.getURL().toString() : null, 
+                String url = isImport ? null : (sc.getURL() != null ? sc.getURL().toString() : null);
+                String path = sc.getFile() != null ? sc.getFile().getAbsolutePath() : null;
+                if (path == null) {
+                    path = sc.getPath();
+                } else {
+                    path = path.replace(File.separatorChar, '/');
+                }
+                items[i] = new CommitItem(path, isImport ? 0 : getNodeKind(sc.getKind()), stateFlag, url, 
                         sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber()
                 );
             }

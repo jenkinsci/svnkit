@@ -650,7 +650,7 @@ public class SVNClientImpl implements SVNClientInterface {
             if (myMessageHandler != null) {
                 client.setCommitHandler(new ISVNCommitHandler() {
                     public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
-                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
+                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables, false);
                         return myMessageHandler.getLogMessage(items);
                     }
 
@@ -691,7 +691,7 @@ public class SVNClientImpl implements SVNClientInterface {
             if (myMessageHandler != null) {
                 client.setCommitHandler(new ISVNCommitHandler() {
                     public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
-                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
+                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables, false);
                         return myMessageHandler.getLogMessage(items);
                     }
 
@@ -915,7 +915,7 @@ public class SVNClientImpl implements SVNClientInterface {
             if (myMessageHandler != null) {
                 commitClient.setCommitHandler(new ISVNCommitHandler() {
                     public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
-                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
+                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables, true);
                         return myMessageHandler.getLogMessage(items);
                     }
                     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
@@ -1051,7 +1051,7 @@ public class SVNClientImpl implements SVNClientInterface {
         Collection mergeSrcURLs = null;
         try {
             mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
-                    JavaHLObjectFactory.getSVNRevision(pegRevision));
+                JavaHLObjectFactory.getSVNRevision(pegRevision));
             if (mergeSrcURLs != null) {
                 String[] stringURLs = new String[mergeSrcURLs.size()];
                 int i = 0;
