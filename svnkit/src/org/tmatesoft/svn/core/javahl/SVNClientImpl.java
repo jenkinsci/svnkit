@@ -1437,8 +1437,11 @@ public class SVNClientImpl implements SVNClientInterface {
         ISVNAnnotateHandler handler = new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
                 StringBuffer result = new StringBuffer();
-                result.append(Long.toString(revision));
-                result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
+                String revStr = revision >= 0 ? SVNFormatUtil.formatString(Long.toString(revision), 6, false) : "     -";
+                String authorStr = author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -";
+                result.append(revStr);
+                result.append(' ');
+                result.append(authorStr);
                 result.append(' ');
                 result.append(line);
                 try {
