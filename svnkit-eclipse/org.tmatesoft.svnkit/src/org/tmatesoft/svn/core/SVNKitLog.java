@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IStatus;
@@ -68,27 +69,19 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 	}
 
     public void logError(String message) {
-        if (isInfoEnabled()) {
-            myLog.log(createStatus(IStatus.INFO, message, null));
-        }
+        log(message, Level.INFO);
     }
 
     public void logError(Throwable th) {
-        if (isInfoEnabled()) {
-            myLog.log(createStatus(IStatus.INFO, th != null ? th.getMessage() : "", th));
-        }
+        log(th, Level.INFO);
     }
 
     public void logSevere(String message) {
-        if (isErrorEnabled()) {
-            myLog.log(createStatus(IStatus.ERROR, message, null));
-        }
+        log(message, Level.SEVERE);
     }
 
     public void logSevere(Throwable th) {
-        if (isErrorEnabled()) {
-            myLog.log(createStatus(IStatus.ERROR, th != null ? th.getMessage() : "", th));
-        }
+        log(th, Level.SEVERE);
     }
 
     public void log(String message, byte[] data) {
@@ -115,6 +108,26 @@ public class SVNKitLog extends SVNDebugLogAdapter {
         return os;
     }
 
+    public void log(Throwable th, Level logLevel) {
+        if (th != null) {
+            if (logLevel == Level.INFO && isInfoEnabled()) {
+                myLog.log(createStatus(IStatus.INFO, th.getMessage(), th));
+            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+                myLog.log(createStatus(IStatus.ERROR, th.getMessage(), th));
+            }
+        }
+    }
+
+    public void log(String message, Level logLevel) {
+        if (message != null) {
+            if (logLevel == Level.INFO && isInfoEnabled()) {
+                myLog.log(createStatus(IStatus.INFO, message, null));
+            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+                myLog.log(createStatus(IStatus.ERROR, message, null));
+            }
+        }
+    }
+
     public void logFine(Throwable th) {
     }
 
@@ -132,4 +145,5 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 
     public void logFinest(String message) {
     }
+
 }

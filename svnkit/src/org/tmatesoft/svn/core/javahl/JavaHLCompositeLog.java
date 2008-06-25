@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.javahl;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
@@ -40,31 +41,19 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
     }
 
     public void logError(String message) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logError(message);
-        }
+        log(message, Level.INFO);
     }
 
     public void logError(Throwable th) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFine(th);
-        }
+        log(th, Level.INFO);
     }
 
     public void logSevere(String message) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logSevere(message);
-        }
+        log(message, Level.SEVERE);
     }
 
     public void logSevere(Throwable th) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logSevere(th);
-        }
+        log(th, Level.SEVERE);
     }
 
     public void log(String message, byte[] data) {
@@ -75,44 +64,41 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
     }
 
     public void logFine(Throwable th) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFine(th);
-        }
+        log(th, Level.FINE);
     }
 
     public void logFine(String message) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFine(message);
-        }
+        log(message, Level.FINE);
     }
 
     public void logFiner(Throwable th) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFiner(th);
-        }
+        log(th, Level.FINER);
     }
 
     public void logFiner(String message) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFiner(message);
-        }
+        log(message, Level.FINER);
     }
 
     public void logFinest(Throwable th) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFinest(th);
-        }
+        log(th, Level.FINEST);
     }
 
     public void logFinest(String message) {
+        log(message, Level.FINEST);
+    }
+
+    public void log(Throwable th, Level logLevel) {
         for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.logFinest(message);
+            log.log(th, logLevel);
         }
     }
+
+    public void log(String message, Level logLevel) {
+        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
+            log.log(message, logLevel);
+        }
+    }
+
 }

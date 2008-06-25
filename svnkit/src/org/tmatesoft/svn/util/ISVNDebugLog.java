@@ -13,6 +13,7 @@ package org.tmatesoft.svn.util;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 
 
 /**
@@ -40,6 +41,10 @@ public interface ISVNDebugLog {
     public void logFinest(Throwable th);
 
     public void logFinest(String message);
+
+    public void log(Throwable th, Level logLevel);
+    
+    public void log(String message, Level logLevel);
     
     public void log(String message, byte[] data);
 
