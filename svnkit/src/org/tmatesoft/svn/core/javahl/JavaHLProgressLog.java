@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.javahl;
 
 
+import java.util.logging.Level;
+
 import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.ProgressEvent;
 import org.tigris.subversion.javahl.ProgressListener;
@@ -70,5 +72,11 @@ public class JavaHLProgressLog extends SVNDebugLogAdapter {
     }
 
     public void logFinest(String message) {
+    }
+
+    public void log(Throwable th, Level logLevel) {
+    }
+
+    public void log(String message, Level logLevel) {
     }
 }

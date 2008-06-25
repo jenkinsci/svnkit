@@ -35,62 +35,54 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
     }
     
     public void logError(String message) {
-        if (getLogger().isLoggable(Level.INFO) && message != null) {
-            getLogger().log(Level.INFO, getMessage(message));
-        }
+        log(message, Level.INFO);
     }
 
     public void logError(Throwable th) {
-        if (getLogger().isLoggable(Level.INFO) && th != null) {
-            getLogger().log(Level.INFO, getMessage(th.getMessage()), th);
-        }
+        log(th, Level.INFO);
     }
 
     public void logSevere(String message) {
-        if (getLogger().isLoggable(Level.SEVERE) && message != null) {
-            getLogger().log(Level.SEVERE, getMessage(message));
-        }
+        log(message, Level.SEVERE);
     }
 
     public void logSevere(Throwable th) {
-        if (getLogger().isLoggable(Level.SEVERE) && th != null) {
-            getLogger().log(Level.SEVERE, getMessage(th.getMessage()), th);
-        }
+        log(th, Level.SEVERE);
     }
 
     public void logFine(Throwable th) {
-        if (getLogger().isLoggable(Level.FINE) && th != null) {
-            getLogger().log(Level.FINE, getMessage(th.getMessage()), th);
-        }
+        log(th, Level.FINE);
     }
 
     public void logFine(String message) {
-        if (getLogger().isLoggable(Level.FINE) && message != null) {
-            getLogger().log(Level.FINE, getMessage(message));
-        }
+        log(message, Level.FINE);
     }
 
     public void logFiner(Throwable th) {
-        if (getLogger().isLoggable(Level.FINER) && th != null) {
-            getLogger().log(Level.FINER, getMessage(th.getMessage()), th);
-        }
+        log(th, Level.FINER);
     }
 
     public void logFiner(String message) {
-        if (getLogger().isLoggable(Level.FINER) && message != null) {
-            getLogger().log(Level.FINER, getMessage(message));
-        }
+        log(message, Level.FINER);
     }
 
     public void logFinest(Throwable th) {
-        if (getLogger().isLoggable(Level.FINEST) && th != null) {
-            getLogger().log(Level.FINEST, getMessage(th.getMessage()), th);
-        }
+        log(th, Level.FINEST);
     }
 
     public void logFinest(String message) {
-        if (getLogger().isLoggable(Level.FINEST) && message != null) {
-            getLogger().log(Level.FINEST, getMessage(message));
+        log(message, Level.FINEST);
+    }
+
+    public void log(Throwable th, Level logLevel) {
+        if (getLogger().isLoggable(logLevel) && th != null) {
+            getLogger().log(logLevel, getMessage(th.getMessage()), th);
+        }
+    }
+
+    public void log(String message, Level logLevel) {
+        if (getLogger().isLoggable(logLevel) && message != null) {
+            getLogger().log(logLevel, getMessage(message));
         }
     }
     
@@ -128,4 +120,5 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
     private String getMessage(String originalMessage) {
         return myLogType.getShortName() + ": " + originalMessage;
     }
+
 }
