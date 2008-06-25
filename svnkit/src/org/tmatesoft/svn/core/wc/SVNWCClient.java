@@ -2756,7 +2756,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(this);
         try {
             info = wcAccess.openAnchor(directory, false, -1);
-            setWCFormat(info, info.getAnchor(), format);
+            setWCFormat(info, info.getTarget(), format);
         } finally {
             wcAccess.close();
         }
