@@ -416,6 +416,23 @@ public class SVNFileUtil {
         }
     }
 
+    public static void setSGID(File dir) {
+        if (isWindows || isOpenVMS ||
+                dir == null || !dir.exists() || !dir.isDirectory()) {
+            return;
+        }
+        
+        if (SVNJNAUtil.setSGID(dir)) {
+            return;
+        }
+        
+        try {
+            execCommand(new String[] { CHMOD_COMMAND, "g+s", dir.getAbsolutePath() });
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().logFinest(th);
+        }
+    }
+
     public static File resolveSymlinkToFile(File file) {
         File targetFile = file;
         while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {

@@ -46,6 +46,7 @@ public class FSHotCopier {
                 createDBLogsLock(dstReposLocksDir);
                 File dstDBDir = new File(dstPath, FSFS.DB_DIR);
                 dstDBDir.mkdirs();
+                SVNFileUtil.setSGID(dstDBDir);
                 FSFS dstOwner = new FSFS(dstPath);
                 String fsType = srcOwner.getFSType(); 
                 hotCopy(srcOwner, dstOwner);
