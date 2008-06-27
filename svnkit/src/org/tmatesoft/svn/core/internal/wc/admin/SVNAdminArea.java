@@ -1305,8 +1305,15 @@ public abstract class SVNAdminArea {
     }
 
     private static void markLogProcessed(File logFile) throws SVNException {
-        SVNFileUtil.deleteFile(logFile);
-        SVNFileUtil.createEmptyFile(logFile);
+        SVNFileUtil.setReadonly(logFile, false);
+        OutputStream os = null;
+        try {
+            os = SVNFileUtil.openFileForWriting(logFile);
+        } finally {
+            if (os != null) {
+                SVNFileUtil.closeFile(os);
+            }
+        }
     }
 
     private boolean compareAndVerify(File text, File baseFile, boolean compareTextBase, boolean checksum) throws SVNException {
