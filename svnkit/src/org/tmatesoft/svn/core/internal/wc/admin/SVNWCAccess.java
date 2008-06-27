@@ -16,6 +16,7 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -252,14 +253,14 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
     
     public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, int depth) throws SVNException {
-        return open(path, writeLock, stealLock, true, depth);
+        return open(path, writeLock, stealLock, true, depth, Level.FINE);
     }
 
-    public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, boolean upgradeFormat, int depth) throws SVNException {
+    public SVNAdminArea open(File path, boolean writeLock, boolean stealLock, boolean upgradeFormat, int depth, Level logLevel) throws SVNException {
         Map tmp = new SVNHashMap();
         SVNAdminArea area;
         try {
-            area = doOpen(path, writeLock, stealLock, upgradeFormat, depth, tmp);
+            area = doOpen(path, writeLock, stealLock, upgradeFormat, depth, tmp, logLevel);
         } finally {
             for(Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
                 Object childPath = paths.next();
@@ -269,26 +270,30 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return area;
     }
-        
-    public SVNAdminArea probeOpen(File path, boolean writeLock, int depth) throws SVNException {
-        File dir = probe(path);
+
+	public SVNAdminArea probeOpen(File path, boolean writeLock, int depth) throws SVNException {
+		return probeOpen(path, writeLock, depth, Level.FINE);
+	}
+
+    public SVNAdminArea probeOpen(File path, boolean writeLock, int depth, Level logLevel) throws SVNException {
+        File dir = probe(path, logLevel);
         if (dir == null) {
             // we tried to open root which is not wc.
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, logLevel);
         }
         if (!path.equals(dir)) {
             depth = 0;
         }
         SVNAdminArea adminArea = null;
         try {
-            adminArea = open(dir, writeLock, false, depth);
+            adminArea = open(dir, writeLock, false, true, depth, logLevel);
         } catch (SVNException svne) {
             SVNFileType childKind = SVNFileType.getType(path);
             SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
             if (!path.equals(dir) && childKind == SVNFileType.DIRECTORY && errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, logLevel);
             } else {
                 throw svne;
             }
@@ -334,7 +339,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
     }
     
-    private SVNAdminArea doOpen(File path, boolean writeLock, boolean stealLock, boolean upgradeFormat, int depth, Map tmp) throws SVNException {
+    private SVNAdminArea doOpen(File path, boolean writeLock, boolean stealLock, boolean upgradeFormat, int depth, Map tmp, Level logLevel) throws SVNException {
         // no support for 'under consturction here' - it will go to adminAreaFactory.
         tmp = tmp == null ? new SVNHashMap() : tmp; 
         if (myAdminAreas != null) {
@@ -347,7 +352,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             myAdminAreas = new SVNHashMap();
         }
         
-        SVNAdminArea area = SVNAdminAreaFactory.open(path);
+        SVNAdminArea area = SVNAdminAreaFactory.open(path, logLevel);
         area.setWCAccess(this);
 
         if (writeLock) {
@@ -377,7 +382,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 File childPath = new File(path, entry.getName());
                 try {
                     // this method will put created area into our map.
-                    doOpen(childPath, writeLock, stealLock, upgradeFormat, depth, tmp);
+                    doOpen(childPath, writeLock, stealLock, upgradeFormat, depth, tmp, logLevel);
                 } catch (SVNException e) {
                     if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_NOT_DIRECTORY) {
                         doClose(tmp, false);
@@ -420,7 +425,7 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
 
     public SVNAdminArea probeRetrieve(File path) throws SVNException {
-        File dir = probe(path);
+        File dir = probe(path, Level.FINE);
         if (dir == null) {
             // we tried to open root which is not wc.
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
@@ -463,7 +468,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             if (parentArea == null) {
                 tmpAccess = new SVNWCAccess(null);
                 try {
-                    parentArea = tmpAccess.probeOpen(parent, false, 0);
+                    parentArea = tmpAccess.probeOpen(parent, false, 0, Level.FINEST);
                 } catch (SVNException svne) {
                     return true;
                 }
@@ -641,11 +646,11 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
     }
 
-    private File probe(File path) throws SVNException {
+    private File probe(File path, Level logLevel) throws SVNException {
         int wcFormat = -1;
         SVNFileType type = SVNFileType.getType(path);
         if (type == SVNFileType.DIRECTORY) {
-            wcFormat = SVNAdminAreaFactory.checkWC(path, true);
+            wcFormat = SVNAdminAreaFactory.checkWC(path, true, logLevel);
         } else {
             wcFormat = 0;
         }

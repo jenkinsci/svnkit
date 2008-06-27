@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -264,7 +265,7 @@ public class SVNWCUtil {
         }
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
-            wcAccess.open(dir, false, 0);
+	        wcAccess.open(dir, false, false, false, 0, Level.FINEST);
         } catch (SVNException e) {
             return false;
         } finally {
@@ -293,8 +294,8 @@ public class SVNWCUtil {
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
-            wcAccess.open(versionedDir, false, 0);
-            return wcAccess.isWCRoot(versionedDir);
+	        wcAccess.open(versionedDir, false, false, false, 0, Level.FINEST);
+	        return wcAccess.isWCRoot(versionedDir);
         } catch (SVNException e) {
             return false;
         } finally {

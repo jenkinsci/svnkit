@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -57,7 +58,7 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         return WC_FORMAT;
     }
 
-    protected int doCheckWC(File path) throws SVNException {
+    protected int doCheckWC(File path, Level logLevel) throws SVNException {
         File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
         File entriesFile = new File(adminDir, "entries");
         int formatVersion = -1;
@@ -66,7 +67,7 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         String line = null;
     
         try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile, logLevel), "UTF-8"));
             line = reader.readLine();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
@@ -108,7 +109,7 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         String line = null;
     
         try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile, Level.FINEST), "UTF-8"));
             line = reader.readLine();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
@@ -116,7 +117,7 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
             err.setChildErrorMessage(svne.getErrorMessage());
-            SVNErrorManager.error(err, svne);
+            SVNErrorManager.error(err, svne, Level.FINEST);
         } finally {
             SVNFileUtil.closeFile(reader);
         }
@@ -125,7 +126,7 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Reading ''{0}''", entriesFile);
             SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
             err1.setChildErrorMessage(err);
-            SVNErrorManager.error(err1);
+            SVNErrorManager.error(err1, Level.FINEST);
         }
         
         try {
@@ -134,7 +135,7 @@ class SVNAdminArea14Factory extends SVNAdminAreaFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", entriesFile);
             SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
             err1.setChildErrorMessage(err);
-            SVNErrorManager.error(err1);
+            SVNErrorManager.error(err1, Level.FINEST);
         }
         return formatVersion;
     }
