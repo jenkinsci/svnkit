@@ -203,14 +203,22 @@ public class SVNFileUtil {
         if (file != null && file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
+        
+        IOException ioError = null;
         try {
             created = file != null ? file.createNewFile() : false;
         } catch (IOException e) {
             created = false;
+            ioError = e;
         }
         if (!created) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Cannot create new file ''{0}''", file);
+            SVNErrorMessage err = null;
+            if (ioError != null) {
+                err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new file ''{0}'': {1}", 
+                        new Object[] { file, ioError.getMessage() });
+            } else {
+                err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new file ''{0}''", file);
+            }
             SVNErrorManager.error(err, Level.FINE);
         }
     }
