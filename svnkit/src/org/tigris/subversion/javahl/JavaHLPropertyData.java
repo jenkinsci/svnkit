@@ -39,7 +39,7 @@ public class JavaHLPropertyData extends PropertyData {
         if (myClientImpl != null) {
             myClientImpl.propertySet(getPath(), getName(), newValue, recurse);
         } else {
-            super.remove(recurse);
+            super.setValue(newValue, recurse);
         }
     }
 
@@ -47,7 +47,7 @@ public class JavaHLPropertyData extends PropertyData {
         if (myClientImpl != null) {
             myClientImpl.propertySet(getPath(), getName(), newValue, recurse);
         } else {
-            super.remove(recurse);
+            super.setValue(newValue, recurse);
         }
     }
 }

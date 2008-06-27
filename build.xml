@@ -43,7 +43,7 @@
         <javac debug="true" destdir="contrib/javahl/bin" srcdir="contrib/javahl/src">
             <exclude name="**/SVNClient.java" />
             <exclude name="**/SVNAdmin.java" />
-            <exclude name="org/tigris/subversion/javahl/tests/**" />
+            <exclude name="**/Path.java" />
         </javac>
         <javac debug="true" destdir="contrib/sequence/bin" srcdir="contrib/sequence/src" />
         <javac debug="true"
@@ -153,6 +153,7 @@
             <fileset dir="svnkit/bin">
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
+                <exclude name="org/tigris/subversion/javahl/Path**" />
             </fileset>        	
             <fileset dir="svnkit/src">
                 <include name="org/tmatesoft/svn/core/internal/io/svn/sasl/*.class" />
@@ -184,6 +185,7 @@
                 <exclude name="org/tigris/subversion/javahl/SVNClient$*.class" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin.class" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin$*.class" />
+                <exclude name="org/tigris/subversion/javahl/Path.class" />
             </fileset>
             <fileset dir="contrib/javahl">
                 <include name="JAVAHL-LICENSE" />
@@ -238,6 +240,7 @@
             <fileset dir="contrib/javahl/src">
             	<exclude name="org/tigris/subversion/javahl/SVNAdmin.java"/>
             	<exclude name="org/tigris/subversion/javahl/SVNClient.java"/>
+                <exclude name="org/tigris/subversion/javahl/Path.java"/>
             </fileset>
             <fileset dir="contrib/sequence/src" />
             <fileset dir="${basedir}" >
@@ -428,6 +431,7 @@
 			<fileset dir="contrib/javahl/bin">
                 <exclude name="org/tigris/subversion/javahl/SVNClient**" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
+                <exclude name="org/tigris/subversion/javahl/Path**" />
 			</fileset>
 			<fileset dir="contrib/sequence/bin">
 				<include name="**"/>
@@ -467,6 +471,7 @@
 				<exclude name=".svn/**"/>
                 <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
+                <exclude name="org/tigris/subversion/javahl/Path.java" />
 			</fileset>
 			<fileset dir="contrib/sequence/src">
 				<exclude name=".svn"/>

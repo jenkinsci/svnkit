@@ -436,7 +436,13 @@ public class SVNClientImpl implements SVNClientInterface {
     private void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergeInfo, String[] revisionProperties, long limit, ISVNLogEntryHandler logEntryHandler) throws ClientException {
         SVNLogClient client = getSVNLogClient();
         try {
+            if (revisionEnd == null) {
+                revisionEnd = Revision.getInstance(1); 
+            }
             if (isURL(path)) {
+                if (revisionStart == null) {
+                    revisionStart = Revision.HEAD; 
+                }
                 client.doLog(
                         SVNURL.parseURIEncoded(path), new String[]{""},
                         JavaHLObjectFactory.getSVNRevision(pegRevision),
@@ -444,6 +450,9 @@ public class SVNClientImpl implements SVNClientInterface {
                         JavaHLObjectFactory.getSVNRevision(revisionEnd),
                         stopOnCopy, discoverPath, includeMergeInfo, limit, revisionProperties, logEntryHandler);
             } else {
+                if (revisionStart == null) {
+                    revisionStart = Revision.BASE; 
+                }
                 client.doLog(
                         new File[]{new File(path).getAbsoluteFile()},
                         JavaHLObjectFactory.getSVNRevision(revisionStart),
@@ -492,6 +501,8 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void setConflictResolver(ConflictResolverCallback listener) {
         myConflictResolverCallback = listener;
+        mySVNConflictHandler = null;
+        updateClientManager();
     }
 
     public void remove(String[] path, String message, boolean force) throws ClientException {
@@ -515,10 +526,14 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             try {
                 SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+                client.setCommitHandler(createCommitMessageHandler(false));
                 client.doDelete(urls, message, revisionProperties);
             } catch (SVNException e) {
                 throwException(e);
             } finally {
+                if (client != null) {
+                    client.setCommitHandler(null);
+                }
                 resetLog();
             }
         } else {
@@ -637,19 +652,7 @@ public class SVNClientImpl implements SVNClientInterface {
             files[i] = new File(path[i]).getAbsoluteFile();
         }
         try {
-            if (myMessageHandler != null) {
-                client.setCommitHandler(new ISVNCommitHandler() {
-                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
-                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
-                        return myMessageHandler.getLogMessage(items);
-                    }
-
-                    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                        return revisionProperties == null ? new SVNProperties() : revisionProperties;
-                    }
-                    
-                });
-            }
+            client.setCommitHandler(createCommitMessageHandler(false));
             SVNDepth svnDepth = SVNDepth.fromID(depth);
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
             SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
@@ -657,6 +660,9 @@ public class SVNClientImpl implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         } finally {
+            if (client != null) {
+                client.setCommitHandler(null);
+            }
             resetLog();
         }
         return -1;
@@ -678,19 +684,7 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNCommitPacket[] packets = null;
         SVNCommitInfo[] commitResults = null;
         try {
-            if (myMessageHandler != null) {
-                client.setCommitHandler(new ISVNCommitHandler() {
-                    public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
-                        CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables);
-                        return myMessageHandler.getLogMessage(items);
-                    }
-
-                    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
-                        return revisionProperties == null ? new SVNProperties() : revisionProperties;
-                    }
-                    
-                });
-            }
+            client.setCommitHandler(createCommitMessageHandler(false));
             SVNDepth svnDepth = SVNDepth.fromID(depth);    
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
             packets = client.doCollectCommitItems(files, noUnlock, !recurse, svnDepth, atomicCommit, changlelists);
@@ -698,6 +692,9 @@ public class SVNClientImpl implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         } finally {
+            if (client != null) {
+                client.setCommitHandler(null);
+            }
             resetLog();
         }
         if (commitResults != null && commitResults.length > 0) {
@@ -789,6 +786,7 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(destPath)) {
                 SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+                client.setCommitHandler(createCommitMessageHandler(false));
                 client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, revisionProperties);
             } else {
                 client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild);
@@ -796,6 +794,9 @@ public class SVNClientImpl implements SVNClientInterface {
         } catch (SVNException e) {
             throwException(e);
         } finally {
+            if (client != null) {
+                client.setCommitHandler(null);
+            }
             resetLog();
         }
     }
@@ -824,10 +825,16 @@ public class SVNClientImpl implements SVNClientInterface {
         if (svnURLs.length > 0) {
             try {
                 SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+                client.setCommitHandler(createCommitMessageHandler(true));
                 client.doMkDir(svnURLs, message, revisionProperties, makeParents);
             } catch (SVNException e) {
                 throwException(e);
+            } finally {
+                if (client != null) {
+                    client.setCommitHandler(null);
+                }
             }
+            
         }
         if (files.length > 0) {
             for (int i = 0; i < files.length; i++) {
@@ -904,11 +911,15 @@ public class SVNClientImpl implements SVNClientInterface {
     public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes, Map revprops) throws ClientException {
         SVNCommitClient commitClient = getSVNCommitClient();
         try {
+            commitClient.setCommitHandler(createCommitMessageHandler(true));
             SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
             commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, revisionProperties, !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
         } catch (SVNException e) {
             throwException(e);
         } finally {
+            if (commitClient != null) {
+                commitClient.setCommitHandler(null);
+            }
             resetLog();
         }
     }
@@ -1031,8 +1042,14 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient client = getSVNDiffClient();
         Collection mergeSrcURLs = null;
         try {
-            mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
+            if (isURL(path)) {
+                SVNURL url = SVNURL.parseURIEncoded(path);
+                mergeSrcURLs = client.suggestMergeSources(url,
+                        JavaHLObjectFactory.getSVNRevision(pegRevision));
+            } else {
+                mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
                     JavaHLObjectFactory.getSVNRevision(pegRevision));
+            }
             if (mergeSrcURLs != null) {
                 String[] stringURLs = new String[mergeSrcURLs.size()];
                 int i = 0;
@@ -1186,11 +1203,15 @@ public class SVNClientImpl implements SVNClientInterface {
        if (isURL(path)) {
            try {
                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
+               client.setCommitHandler(createCommitMessageHandler(false));
                client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD,
                         "", revisionProperties, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
            } catch (SVNException e) {
                throwException(e);
            } finally {
+               if (client != null) {
+                   client.setCommitHandler(null);
+               }
                resetLog();
            }
        } else {
@@ -1419,8 +1440,11 @@ public class SVNClientImpl implements SVNClientInterface {
         ISVNAnnotateHandler handler = new ISVNAnnotateHandler() {
             public void handleLine(Date date, long revision, String author, String line) {
                 StringBuffer result = new StringBuffer();
-                result.append(Long.toString(revision));
-                result.append(author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -");
+                String revStr = revision >= 0 ? SVNFormatUtil.formatString(Long.toString(revision), 6, false) : "     -";
+                String authorStr = author != null ? SVNFormatUtil.formatString(author, 10, false) : "         -";
+                result.append(revStr);
+                result.append(' ');
+                result.append(authorStr);
                 result.append(' ');
                 result.append(line);
                 try {
@@ -1796,6 +1820,21 @@ public class SVNClientImpl implements SVNClientInterface {
     protected CommitMessage getCommitMessage() {
         return myMessageHandler;
     }
+    
+    protected ISVNCommitHandler createCommitMessageHandler(final boolean isImport) {
+        if (myMessageHandler != null) {
+            return new ISVNCommitHandler() {
+                public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
+                    CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables, isImport);
+                    return myMessageHandler.getLogMessage(items);
+                }
+                public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+                    return revisionProperties == null ? new SVNProperties() : revisionProperties;
+                }                    
+            };
+        }
+        return null;
+    }
 
     protected void throwException(SVNException e) throws ClientException {
         JavaHLObjectFactory.throwException(e, this);
@@ -1955,7 +1994,10 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
-        differ.getDiffGenerator().setBasePath(new File(relativeToDir).getAbsoluteFile());
+        if (relativeToDir != null) {
+            File base = new File(relativeToDir).getAbsoluteFile();
+            differ.getDiffGenerator().setBasePath(base);
+        }
         differ.setOptions(getOptions());
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(revision1);
         SVNRevision rev2 = JavaHLObjectFactory.getSVNRevision(revision2);
@@ -1997,7 +2039,10 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNDiffClient differ = getSVNDiffClient();
         differ.getDiffGenerator().setDiffDeleted(!noDiffDeleted);
         differ.getDiffGenerator().setForcedBinaryDiff(force);
-        differ.getDiffGenerator().setBasePath(new File(relativeToDir).getAbsoluteFile());
+        if (relativeToDir != null) {
+            File base = new File(relativeToDir).getAbsoluteFile();
+            differ.getDiffGenerator().setBasePath(base);
+        }
         differ.setOptions(getOptions());
         SVNRevision peg = JavaHLObjectFactory.getSVNRevision(pegRevision);
         SVNRevision rev1 = JavaHLObjectFactory.getSVNRevision(startRevision);

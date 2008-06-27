@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -65,6 +66,14 @@ public class JavaHLObjectFactory {
     private static final Map ACTION_CONVERSION_MAP = new SVNHashMap();
     private static final Map LOCK_CONVERSION_MAP = new SVNHashMap();
     private static final Map CONFLICT_REASON_CONVERSATION_MAP = new SVNHashMap();
+    
+    private static final Comparator CHANGE_PATH_COMPARATOR = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            ChangePath cp1 = (ChangePath) o1;
+            ChangePath cp2 = (ChangePath) o2;
+            return SVNPathUtil.PATH_COMPARATOR.compare(cp1.getPath(), cp2.getPath());
+        }
+    };
 
     static{
         STATUS_CONVERSION_MAP.put(SVNStatusType.STATUS_ADDED, new Integer(StatusKind.added));
@@ -294,7 +303,7 @@ public class JavaHLObjectFactory {
             return null;
         }
         return new SVNConflictResult(getSVNConflictChoice(conflictResult.getChoice()),
-                new File(conflictResult.getMergedPath()).getAbsoluteFile());
+                conflictResult.getMergedPath() != null ? new File(conflictResult.getMergedPath()).getAbsoluteFile() : null);
     }
 
     public static int getConflictAction(SVNConflictAction conflictAction){
@@ -431,6 +440,8 @@ public class JavaHLObjectFactory {
                 }
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
+            // sort by paths.
+            Arrays.sort(cp, CHANGE_PATH_COMPARATOR);
         }
         long time = 0;
         if (logEntry.getDate() != null) {
@@ -513,7 +524,7 @@ public class JavaHLObjectFactory {
         handler.singleMessage(cp, logEntry.getRevision(), revisionPropertiesMap, logEntry.hasChildren());
     }
 
-    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables) {
+    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables, boolean isImport) {
         if(commitables == null){
             return null;
         }
@@ -526,9 +537,11 @@ public class JavaHLObjectFactory {
                 int stateFlag = 0;
                 if (sc.isDeleted()) {
                     stateFlag += CommitItemStateFlags.Delete;
-                } else if (sc.isAdded()) {
+                }
+                if (sc.isAdded()) {
                     stateFlag += CommitItemStateFlags.Add;
-                } else if (sc.isContentsModified()) {
+                } 
+                if (sc.isContentsModified()) {
                     stateFlag += CommitItemStateFlags.TextMods;
                 }
                 if (sc.isPropertiesModified()) {
@@ -537,8 +550,14 @@ public class JavaHLObjectFactory {
                 if(sc.isCopied()){
                     stateFlag += CommitItemStateFlags.IsCopy;
                 }
-                items[i] = new CommitItem(sc.getPath(), getNodeKind(sc.getKind()), stateFlag, 
-                        sc.getURL() != null ? sc.getURL().toString() : null, 
+                String url = isImport ? null : (sc.getURL() != null ? sc.getURL().toString() : null);
+                String path = sc.getFile() != null ? sc.getFile().getAbsolutePath() : null;
+                if (path == null) {
+                    path = sc.getPath();
+                } else {
+                    path = path.replace(File.separatorChar, '/');
+                }
+                items[i] = new CommitItem(path, isImport ? 0 : getNodeKind(sc.getKind()), stateFlag, url, 
                         sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber()
                 );
             }
@@ -648,7 +667,10 @@ public class JavaHLObjectFactory {
             }
             return new JavaHLPropertyData((SVNClientImpl) client, null, path, name, SVNPropertyValue.getPropertyAsString(value), value.getBytes());
         }
-        return new PropertyData((SVNClient) client, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
+        if (value.isString()) {
+            return new PropertyData((SVNClient) client, path, name, value.getString(), SVNPropertyValue.getPropertyAsBytes(value));
+        }
+        return new PropertyData((SVNClient) client, path, name, SVNPropertyValue.getPropertyAsString(value), value.getBytes());
     }
 
     public static NotifyInformation createNotifyInformation(SVNEvent event, String path) {

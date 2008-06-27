@@ -32,7 +32,26 @@ public class SVNProperties {
         if (map == null) {
             return new SVNProperties();
         }
-        return new SVNProperties(map);
+        Map propertiesMap = new SVNHashMap();
+        for(Iterator names = map.keySet().iterator(); names.hasNext();) {
+            Object n = names.next();
+            if (!(n instanceof String)) {
+                continue;
+            }
+            Object value = map.get(n);
+            SVNPropertyValue v = null;
+            if (value instanceof String) {
+                v = SVNPropertyValue.create((String) value);
+            } else if (value instanceof byte[]) {
+                v = SVNPropertyValue.create(n.toString(), (byte[]) value);
+            } else if (value instanceof SVNPropertyValue) {
+                v = (SVNPropertyValue) value;
+            }
+            if (v != null) {
+                propertiesMap.put(n, v);
+            }
+        }
+        return new SVNProperties(propertiesMap);
     }
 
     public SVNProperties() {
