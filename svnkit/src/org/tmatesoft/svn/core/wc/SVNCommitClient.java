@@ -730,11 +730,11 @@ public class SVNCommitClient extends SVNBasicClient {
 
                     try {
                         if (item.getKind() == SVNNodeKind.DIR) {
-                            dir = wcAccess.retrieve(item.getFile());
                             target = "";
+                            dir = wcAccess.retrieve(item.getFile());
                         } else {
-                            dir = wcAccess.retrieve(item.getFile().getParentFile());
                             target = SVNPathUtil.tail(path);
+                            dir = wcAccess.retrieve(item.getFile().getParentFile());
                         }
                     } catch (SVNException e) {
                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
