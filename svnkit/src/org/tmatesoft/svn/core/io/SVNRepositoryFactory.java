@@ -490,6 +490,8 @@ public abstract class SVNRepositoryFactory {
             SVNWCProperties props = new SVNWCProperties(rev0File, null);
             String date = SVNDate.formatDate(new Date(System.currentTimeMillis()), true);
             props.setPropertyValue(SVNRevisionProperty.DATE, date);
+        
+            setSGID(new File(path, FSFS.DB_DIR));
         } finally {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);
@@ -595,6 +597,17 @@ public abstract class SVNRepositoryFactory {
                 } finally {
                     SVNFileUtil.deleteFile(tmpChild);
                 }
+            }
+        }
+    }
+    
+    private static void setSGID(File dbDir) {
+        SVNFileUtil.setSGID(dbDir);
+        File[] dirContents = dbDir.listFiles();
+        for(int i = 0; i < dirContents.length; i++) {
+            File child = dirContents[i];
+            if (child.isDirectory()) {
+                setSGID(child);
             }
         }
     }

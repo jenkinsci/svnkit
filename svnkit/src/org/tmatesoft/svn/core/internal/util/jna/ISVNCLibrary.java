@@ -29,6 +29,10 @@ interface ISVNCLibrary extends Library {
 
     public int lstat(String path, Pointer stat);
 
+    public int __xstat64(int ver, String path, Pointer stat);
+
+    public int stat(String path, Pointer stat);
+
     public int symlink(String targetPath, String linkPath);
     
     public int getuid();

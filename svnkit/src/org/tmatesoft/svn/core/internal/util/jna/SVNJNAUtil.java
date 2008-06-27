@@ -74,6 +74,13 @@ public class SVNJNAUtil {
         return false;
     }
 
+    public static boolean setSGID(File file) {
+        if (isJNAPresent()) {
+            return SVNLinuxUtil.setSGID(file);
+        }
+        return false;
+    }
+
     public static boolean createSymlink(File file, String linkName) {
         if (isJNAPresent()) {
             return SVNLinuxUtil.createSymlink(file, linkName);
