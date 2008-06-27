@@ -11,12 +11,15 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
@@ -142,6 +145,30 @@ public class SVNCommitPacket {
             }
         }
         return -1;
+    }
+    
+    File getBaseFile() {
+        SVNWCAccess wcAccess = null;
+        String basePath = null;
+        for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
+            SVNCommitItem commitItem = myCommitItems[i];
+            SVNWCAccess itemAccess = commitItem.getWCAccess();
+            if (wcAccess == null) {
+                wcAccess = itemAccess;
+            } else if (wcAccess != itemAccess) {
+                return null;
+            }
+            String itemFullPath = commitItem.getFile().getAbsolutePath().replace(File.separatorChar, '/');
+            if (commitItem.getKind() == SVNNodeKind.FILE) {
+                itemFullPath = SVNPathUtil.removeTail(itemFullPath);
+            }
+            if (basePath != null) {
+                basePath = SVNPathUtil.getCommonPathAncestor(basePath, itemFullPath);
+            } else {
+                basePath = itemFullPath;
+            }
+        }
+        return new File(basePath);
     }
 
     Map getLockTokens() {

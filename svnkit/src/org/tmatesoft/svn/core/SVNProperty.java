@@ -223,6 +223,10 @@ public class SVNProperty {
      */
     public static final String WC_URL = SVN_WC_PREFIX + "ra_dav:version-url";
     /**
+     * An <span class="javastring">"svn:wc:ra_dav:activity-url"</span> SVN untweakable metaproperty.
+     */
+    public static final String ACTIVITY_URL = SVN_WC_PREFIX + "ra_dav:activity-url";
+    /**
      * An <span class="javastring">"svn:entry:lock-token"</span> SVN untweakable metaproperty.
      */
     public static final String LOCK_TOKEN = SVN_ENTRY_PREFIX + "lock-token";

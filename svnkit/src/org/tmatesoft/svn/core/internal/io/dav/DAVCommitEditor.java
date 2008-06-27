@@ -410,7 +410,7 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
     private String createActivity() throws SVNException {
-        String activity = myConnection.doMakeActivity();
+        String activity = myConnection.doMakeActivity(myCommitMediator);
         // checkout head...
         String path = SVNEncodingUtil.uriEncode(myLocation.getPath());
         String vcc = DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.VERSION_CONTROLLED_CONFIGURATION);

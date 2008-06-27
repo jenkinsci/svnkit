@@ -11,15 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -37,13 +38,20 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
     private Collection myTmpFiles;
     private Map myWCPropsMap;
     private Map myCommitItems;
+    private File myBaseFile;
+    private SVNWCAccess myBaseAccess;
 
     public SVNCommitMediator(Map commitItems) {
         myTmpFiles = new ArrayList();
         myWCPropsMap = new SVNHashMap();
         myCommitItems = commitItems;
     }
-
+    
+    public void setBaseFile(SVNWCAccess baseAccess, File baseFile) {
+        myBaseFile = baseFile;
+        myBaseAccess = baseAccess;
+    }
+ 
     public SVNProperties getWCProperties(SVNCommitItem item) {
         return (SVNProperties) myWCPropsMap.get(item);
     }
@@ -55,6 +63,23 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
     public SVNPropertyValue getWorkspaceProperty(String path, String name) throws SVNException {
         SVNCommitItem item = (SVNCommitItem) myCommitItems.get(path);
         if (item == null) {
+            // get using base file!
+            if (myBaseFile != null) {
+                File file = new File(myBaseFile, path);
+                try {
+                    SVNAdminArea dir = myBaseAccess.probeTry(file, false, 0);
+                    String entry = "";
+                    if (!file.equals(dir.getRoot())) {
+                        entry = file.getName();
+                    }
+                    SVNVersionedProperties props = dir.getWCProperties(entry);
+                    if (props != null) {
+                        return props.getPropertyValue(name);
+                    }
+                } catch (SVNException e) {
+                    return null;
+                } 
+            }
             return null;
         }
         SVNAdminArea dir;
@@ -68,7 +93,10 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
             target = SVNPathUtil.tail(item.getPath());
         }
         SVNVersionedProperties wcProps = dir.getWCProperties(target);
-        return wcProps.getPropertyValue(name);
+        if (wcProps != null) {
+            return wcProps.getPropertyValue(name);
+        }
+        return null;    
     }
 
     public void setWorkspaceProperty(String path, String name, SVNPropertyValue value)
