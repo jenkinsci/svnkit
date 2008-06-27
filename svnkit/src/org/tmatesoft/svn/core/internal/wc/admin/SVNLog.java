@@ -179,15 +179,6 @@ public abstract class SVNLog {
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.URL), newURL);
         }
         
-/*        if (copyFromURL != null) {
-            attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), Boolean.TRUE.toString());
-            attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), copyFromURL);
-            attributes.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION), Long.toString(copyFromRevision));
-        }
-        if (isAdded) {
-            attributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_ADD);
-        }
-*/        
         logChangedEntryProperties(name, attributes);
     }
 
@@ -221,7 +212,9 @@ public abstract class SVNLog {
                 String attrName = command.getStringValue(SVNLog.NAME_ATTR);
                 if (attrName == null && !SVNLog.UPGRADE_FORMAT.equals(name)) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                    SVNErrorMessage err = SVNErrorMessage.create(code, "Log entry missing 'name' attribute (entry ''{0}'' for directory ''{1}'')", new Object[]{name, myAdminArea.getRoot()});
+                    SVNErrorMessage err = SVNErrorMessage.create(code, 
+                            "Log entry missing ''name'' attribute (entry ''{0}'' for directory ''{1}'')", 
+                            new Object[] { name, myAdminArea.getRoot() });
                     SVNErrorManager.error(err);
                 }
                 if (runner != null) {
