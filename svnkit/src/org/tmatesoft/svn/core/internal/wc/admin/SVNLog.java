@@ -162,7 +162,6 @@ public abstract class SVNLog {
                     command.remove(SVNLog.PROPERTY_VALUE_ATTR);
                 }
                 addCommand(SVNLog.MODIFY_WC_PROPERTY, command, false);
-                command.clear();
             }
         }
     }
