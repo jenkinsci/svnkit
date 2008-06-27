@@ -25,6 +25,7 @@ import java.nio.charset.MalformedInputException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -131,19 +132,22 @@ public class FSFile {
             buffer = new StringBuffer();
         }
         boolean endOfLineMet = false;
+        boolean lineStart = true;
         try {
             while (!endOfLineMet) {
                 allocateReadBuffer(160);
                 while(myReadLineBuffer.hasRemaining()) {
                     int b = read();
                     if (b < 0) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Can''t read length line from file {0}", getFile());
-                        SVNErrorManager.error(err);
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, 
+                                "Can''t read length line from file {0}", getFile());
+                        SVNErrorManager.error(err, lineStart ? Level.FINEST : Level.FINE);
                     } else if (b == '\n') {
                         endOfLineMet = true;
                         break;
                     }
                     myReadLineBuffer.put((byte) (b & 0XFF));
+	                lineStart = false;
                 }
                 myReadLineBuffer.flip();
                 buffer.append(myDecoder.decode(myReadLineBuffer).toString());

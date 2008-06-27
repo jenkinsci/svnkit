@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeSet;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -64,7 +65,11 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         return ourSelector != null ? ourSelector : ourDefaultSelector;
     }
     
-    public static int checkWC(File path, boolean useSelector) throws SVNException {
+	public static int checkWC(File path, boolean useSelector) throws SVNException {
+		return checkWC(path, useSelector, Level.FINE);
+	}
+
+    public static int checkWC(File path, boolean useSelector, Level logLevel) throws SVNException {
         Collection enabledFactories = ourFactories;
         if (useSelector) {
             enabledFactories = getSelector().getEnabledFactories(path, enabledFactories, false);
@@ -74,7 +79,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
             try {
-                version = factory.doCheckWC(path);
+                version = factory.doCheckWC(path, logLevel);
                 if (version == 0) {
                     return version;
                 }
@@ -99,7 +104,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         throw error;
     }
     
-    public static SVNAdminArea open(File path) throws SVNException {
+    public static SVNAdminArea open(File path, Level logLevel) throws SVNException {
         SVNErrorMessage error = null;
         int version = -1;
         Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
@@ -131,7 +136,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (error == null) {
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
         }
-        SVNErrorManager.error(error);
+        SVNErrorManager.error(error, logLevel);
         return null;
     }
 
@@ -266,7 +271,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
 
     protected abstract void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException;
 
-    protected abstract int doCheckWC(File path) throws SVNException;
+    protected abstract int doCheckWC(File path, Level logLevel) throws SVNException;
 
     protected static void registerFactory(SVNAdminAreaFactory factory) {
         if (factory != null) {

@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -2822,7 +2823,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         // re-open this area for writing now!
         area.getWCAccess().closeAdminArea(area.getRoot());
-        area = area.getWCAccess().open(area.getRoot(), true, false, false, 0);
+        area = area.getWCAccess().open(area.getRoot(), true, false, false, 0, Level.FINE);
         SVNAdminArea newArea = SVNAdminAreaFactory.changeWCFormat(area, format);
         
         for(Iterator entries = newArea.entries(false); entries.hasNext();) {
