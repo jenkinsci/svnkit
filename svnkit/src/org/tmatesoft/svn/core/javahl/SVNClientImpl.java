@@ -120,6 +120,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -710,7 +711,7 @@ public class SVNClientImpl implements SVNClientInterface {
     }
 
     public void copy(String srcPath, String destPath, String message, Revision revision) throws ClientException {
-        copy(new CopySource[]{new CopySource(srcPath, revision, Revision.HEAD)}, destPath, message, true, false, null);
+        copy(new CopySource[]{new CopySource(srcPath, revision, null)}, destPath, message, true, false, null);
     }
 
     public void copy(CopySource[] sources, String destPath, String message, boolean copyAsChild, boolean makeParents, Map revprops) throws ClientException {
@@ -2072,7 +2073,11 @@ public class SVNClientImpl implements SVNClientInterface {
         ISVNDiffStatusHandler handler = new ISVNDiffStatusHandler() {
             public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException {
                 if (receiver != null) {
-                    receiver.onSummary(JavaHLObjectFactory.createDiffSummary(diffStatus));
+                    if (diffStatus != null && (diffStatus.isPropertiesModified() || 
+                            (diffStatus.getModificationType() != SVNStatusType.STATUS_NORMAL &&
+                             diffStatus.getModificationType() != SVNStatusType.STATUS_NONE))) {
+                        receiver.onSummary(JavaHLObjectFactory.createDiffSummary(diffStatus));
+                    }
                 }
             }
         };
@@ -2109,8 +2114,12 @@ public class SVNClientImpl implements SVNClientInterface {
 
         ISVNDiffStatusHandler handler = new ISVNDiffStatusHandler() {
             public void handleDiffStatus(SVNDiffStatus diffStatus) throws SVNException {
-                if (diffStatus != null) {
-                    receiver.onSummary(JavaHLObjectFactory.createDiffSummary(diffStatus));
+                if (diffStatus != null && receiver != null) {
+                    if (diffStatus.isPropertiesModified() || 
+                            (diffStatus.getModificationType() != SVNStatusType.STATUS_NORMAL &&
+                             diffStatus.getModificationType() != SVNStatusType.STATUS_NONE)) {
+                        receiver.onSummary(JavaHLObjectFactory.createDiffSummary(diffStatus));
+                    }
                 }
             }
         };
