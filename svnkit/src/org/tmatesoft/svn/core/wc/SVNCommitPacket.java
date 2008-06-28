@@ -18,8 +18,6 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
@@ -145,33 +143,6 @@ public class SVNCommitPacket {
             }
         }
         return -1;
-    }
-    
-    File getBaseFile() {
-        SVNWCAccess wcAccess = null;
-        for (int i = 0; myCommitItems != null && i < myCommitItems.length; i++) {
-            SVNCommitItem commitItem = myCommitItems[i];
-            SVNWCAccess itemAccess = commitItem.getWCAccess();
-            if (wcAccess == null) {
-                wcAccess = itemAccess;
-            } else if (wcAccess != itemAccess) {
-                return null;
-            }
-        }
-        if (wcAccess != null) {
-            String basePath = null;
-            SVNAdminArea[] areas = wcAccess.getAdminAreas();
-            for (int i = 0; i < areas.length; i++) {
-                String dirPath = areas[i].getRoot().getAbsolutePath().replace(File.separatorChar, '/');
-                if (basePath == null) {
-                    basePath = dirPath;
-                } else {
-                    basePath = SVNPathUtil.getCommonPathAncestor(basePath, dirPath);
-                }
-            }
-            return new File(basePath);
-        }
-        return null;
     }
 
     Map getLockTokens() {
