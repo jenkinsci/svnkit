@@ -702,7 +702,6 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNRepository repository = createRepository(baseURL, firstItem.getFile(), 
                         firstItem.getWCAccess(), true);
                 SVNCommitMediator mediator = new SVNCommitMediator(commitables);
-                mediator.setBaseURL(baseURL);
                 
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
