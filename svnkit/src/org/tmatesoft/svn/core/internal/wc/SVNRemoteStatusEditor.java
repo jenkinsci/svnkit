@@ -90,10 +90,15 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         }
         
         if (dir.getEntry(name, false) != null) {
-            tweakStatusHash(myDirectoryInfo, null, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null);
+            tweakStatusHash(myDirectoryInfo, null, file, SVNStatusType.STATUS_DELETED, SVNStatusType.STATUS_NONE, null, SVNRevision.create(revision));
+            // set entry node kind
+            SVNStatus status = (SVNStatus) myDirectoryInfo.myChildrenStatuses.get(file);
+            if (status != null) {
+                status.setRemoteStatus(null, null, null, dir.getEntry(name, false).getKind());
+            }
         }
         if (myDirectoryInfo.myParent != null && !hasTarget()) {
-            tweakStatusHash(myDirectoryInfo.myParent, myDirectoryInfo, myDirectoryInfo.myPath, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, null);
+            tweakStatusHash(myDirectoryInfo.myParent, myDirectoryInfo, myDirectoryInfo.myPath, SVNStatusType.STATUS_MODIFIED, SVNStatusType.STATUS_NONE, null, null);
         } else if (!hasTarget() && myDirectoryInfo.myParent == null) {
             myDirectoryInfo.myIsContentsChanged = true;
         }
@@ -130,7 +135,8 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
 
     public void closeDir() throws SVNException {
         DirectoryInfo parent = myDirectoryInfo.myParent;
-        if (myDirectoryInfo.myIsAdded || myDirectoryInfo.myIsPropertiesChanged || myDirectoryInfo.myIsContentsChanged) {
+        if (myDirectoryInfo.myIsAdded || myDirectoryInfo.myIsPropertiesChanged || myDirectoryInfo.myIsContentsChanged 
+                || (myDirectoryInfo.myRemoteRevision != null && myDirectoryInfo.myRemoteRevision != SVNRevision.UNDEFINED)) {
             SVNStatusType contentsStatus;
             SVNStatusType propertiesStatus;
             if (myDirectoryInfo.myIsAdded) {
@@ -141,7 +147,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 propertiesStatus = myDirectoryInfo.myIsPropertiesChanged ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NONE;
             }
             if (parent != null) {
-                tweakStatusHash(parent, myDirectoryInfo, myDirectoryInfo.myPath, contentsStatus, propertiesStatus, null);
+                tweakStatusHash(parent, myDirectoryInfo, myDirectoryInfo.myPath, contentsStatus, propertiesStatus, null, null);
             }
         }
         if (parent != null && myDirectoryInfo.myDepth != SVNDepth.EXCLUDE) {
@@ -303,7 +309,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         status.setRemoteStatus(fileInfo.myURL, text, props, lock, fileInfo.myRemoteKind, fileInfo.myRemoteRevision, fileInfo.myRemoteDate, fileInfo.myRemoteAuthor);
     }
 
-    private void tweakStatusHash(DirectoryInfo dirInfo, DirectoryInfo childDir, File path, SVNStatusType text, SVNStatusType props, SVNLock lock) throws SVNException {
+    private void tweakStatusHash(DirectoryInfo dirInfo, DirectoryInfo childDir, File path, SVNStatusType text, SVNStatusType props, SVNLock lock, SVNRevision revision) throws SVNException {
         Map hash = dirInfo.myChildrenStatuses;
         SVNStatus status = (SVNStatus) hash.get(path);
         if (status == null) {
@@ -317,8 +323,10 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             text = SVNStatusType.STATUS_REPLACED;
         }
         if (text == SVNStatusType.STATUS_DELETED) {
-            // remote kind is NONE because entry is deleted in repository.
-            status.setRemoteStatus(dirInfo.myURL, text, props, lock, SVNNodeKind.NONE, null, null, null);
+            if (revision == SVNRevision.UNDEFINED) {
+                revision = dirInfo.myRemoteRevision;
+            }
+            status.setRemoteStatus(dirInfo.myURL, text, props, lock, SVNNodeKind.NONE, revision, null, null);
         } else if (childDir == null) {
             status.setRemoteStatus(dirInfo.myURL, text, props, lock, dirInfo.myRemoteKind, dirInfo.myRemoteRevision, dirInfo.myRemoteDate, dirInfo.myRemoteAuthor);
         } else {
