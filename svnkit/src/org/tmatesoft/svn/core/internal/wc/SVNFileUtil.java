@@ -1110,16 +1110,12 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
-        if (!file.getParentFile().exists()) {
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
         if (file.isFile() && !file.canWrite()) {
             // force writable.
-            if (append) {
-                setReadonly(file, false);
-            } else {
-                deleteFile(file);
-            }
+            setReadonly(file, false);
         }
         try {
             return new BufferedOutputStream(createFileOutputStream(file, append));
@@ -1160,7 +1156,7 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
-        if (!file.getParentFile().exists()) {
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
         RandomAccessFile raFile = null;
@@ -1190,19 +1186,11 @@ public class SVNFileUtil {
         if (file == null) {
             return null;
         }
-        if (!file.isFile() || !file.canRead()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Cannot read from ''{0}'': path refers to a directory or read access is denied", file);
-            SVNErrorManager.error(err, logLevel);
-        }
-        if (!file.exists()) {
-            return DUMMY_IN;
-        }
         try {
             return new BufferedInputStream(createFileInputStream(file));
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Cannot read from ''{0}'': {1}", new Object[] { file, e.getLocalizedMessage() });
+                    "Cannot read from ''{0}'': {1}", new Object[] { file, e.getMessage() });
             SVNErrorManager.error(err, e, logLevel);
         }
         return null;
