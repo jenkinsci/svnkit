@@ -784,7 +784,7 @@ public class DAVRepository extends SVNRepository {
         try {
             openConnection();
             Map translatedLocks = null;
-            if (locks != null) {
+            if (locks != null && !locks.isEmpty()) {
                 translatedLocks = new SVNHashMap();
                 myConnection.fetchRepositoryRoot(this);
                 String root = myRepositoryRoot.getPath();
