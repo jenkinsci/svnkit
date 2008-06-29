@@ -231,6 +231,9 @@ public class JavaHLObjectFactory {
         long reposDate = status.getRemoteDate() != null ? status.getRemoteDate().getTime() * 1000 : -1;
         String reposAuthor = status.getRemoteAuthor();
         int reposKind = getNodeKind(status.getRemoteKind());
+        if (status.getRemoteKind() == null) {
+            reposKind = NodeKind.none;
+        }
         
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
                 repositoryTextStatus, repositoryPropStatus, locked, copied, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
