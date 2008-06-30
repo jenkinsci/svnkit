@@ -1924,8 +1924,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
 	}
 
-    public void getChangelists(String rootPath, String[] changelists, int depth, 
-            final ChangelistCallback callback) throws ClientException {
+    public void getChangelists(String rootPath, String[] changelists, int depth, final ChangelistCallback callback) throws ClientException {
         if (changelists == null) {
             return;
         }
@@ -1933,7 +1932,8 @@ public class SVNClientImpl implements SVNClientInterface {
         ISVNChangelistHandler handler = new ISVNChangelistHandler() {
             public void handle(File path, String changelistName) {
                 if (callback != null) {
-                    callback.doChangelist(path.getAbsolutePath(), changelistName);
+                    String filePath = path.getAbsolutePath().replace(File.separatorChar, '/');
+                    callback.doChangelist(filePath, changelistName);
                 }
             }
         };
