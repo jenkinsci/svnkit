@@ -156,7 +156,7 @@ public class SVNStatusUtil {
             special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         }
         if (entry == null) {
-            SVNStatus status = new SVNStatus(null, file, SVNNodeKind.NONE,
+            SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,
                     null, null, SVNStatusType.STATUS_NONE,  SVNStatusType.STATUS_NONE, 
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,

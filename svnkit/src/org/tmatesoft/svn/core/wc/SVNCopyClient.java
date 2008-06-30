@@ -578,14 +578,14 @@ public class SVNCopyClient extends SVNBasicClient {
                 for (int i = 0; i < newDirs.size(); i++) {
                     String newDirURL = (String) newDirs.get(i);
                     SVNURL url = SVNURL.parseURIEncoded(newDirURL);
-                    SVNCommitItem item = new SVNCommitItem(null, url, null, null, null, null, true, false, false, false, false, false);
+                    SVNCommitItem item = new SVNCommitItem(null, url, null, SVNNodeKind.NONE, null, null, true, false, false, false, false, false);
                     commitItems.add(item);
                 }
             }
             for (int i = 0; i < copyPairs.size(); i++) {
                 CopyPair pair = (CopyPair) copyPairs.get(i);
                 SVNURL url = SVNURL.parseURIEncoded(pair.myDst);
-                SVNCommitItem item = new SVNCommitItem(null, url, null, null, null, null, true, false, false, 
+                SVNCommitItem item = new SVNCommitItem(null, url, null, SVNNodeKind.NONE, null, null, true, false, false, 
                         false, false, false);
                 commitItems.add(item);
             }
@@ -721,7 +721,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 for (int i = 0; i < newDirs.size(); i++) {
                     String newDirURL = (String) newDirs.get(i);
                     SVNURL url = SVNURL.parseURIEncoded(newDirURL);
-                    SVNCommitItem item = new SVNCommitItem(null, url, null, null, null, null, true, false, false, false, false, false);
+                    SVNCommitItem item = new SVNCommitItem(null, url, null, SVNNodeKind.NONE, null, null, true, false, false, false, false, false);
                     commitItems.add(item);
                 }
             }            
@@ -893,7 +893,7 @@ public class SVNCopyClient extends SVNBasicClient {
             for (Iterator newDirsIter = newDirs.iterator(); newDirsIter.hasNext();) {
                 String dirPath = (String) newDirsIter.next();
                 SVNURL itemURL = SVNURL.parseURIEncoded(SVNPathUtil.append(topURL, dirPath));
-                SVNCommitItem item = new SVNCommitItem(null, itemURL, null, null, null, null, true, false, false, false, false, false);
+                SVNCommitItem item = new SVNCommitItem(null, itemURL, null, SVNNodeKind.NONE, null, null, true, false, false, false, false, false);
                 commitItems.add(item);
             }            
         }
@@ -901,12 +901,12 @@ public class SVNCopyClient extends SVNBasicClient {
         for (Iterator infos = pathInfos.iterator(); infos.hasNext();) {
             CopyPathInfo info = (CopyPathInfo) infos.next();
             SVNURL itemURL = SVNURL.parseURIEncoded(SVNPathUtil.append(topURL, info.myDstPath));
-            SVNCommitItem item = new SVNCommitItem(null, itemURL, null, null, null, null, true, false, false, false, false, false);
+            SVNCommitItem item = new SVNCommitItem(null, itemURL, null, SVNNodeKind.NONE, null, null, true, false, false, false, false, false);
             commitItems.add(item);
             pathsMap.put(info.myDstPath, info);
             if (isMove && !info.isResurrection) {
                 itemURL = SVNURL.parseURIEncoded(SVNPathUtil.append(topURL, info.mySourcePath));
-                item = new SVNCommitItem(null, itemURL, null, null, null, null, false, true, false, false, false, false);
+                item = new SVNCommitItem(null, itemURL, null, SVNNodeKind.NONE, null, null, false, true, false, false, false, false);
                 commitItems.add(item);
                 pathsMap.put(info.mySourcePath, info);
             }
