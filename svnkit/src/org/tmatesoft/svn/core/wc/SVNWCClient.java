@@ -2761,6 +2761,7 @@ public class SVNWCClient extends SVNBasicClient {
         } finally {
             wcAccess.close();
         }
+        
         if (!isIgnoreExternals() && info != null) {
             Collection processedDirs = new HashSet();
             Map externals = info.getOldExternals();
@@ -2771,22 +2772,26 @@ public class SVNWCClient extends SVNBasicClient {
                 if (value == null) {
                     continue;
                 }
+
                 SVNExternal[] externalDefs = SVNExternal.parseExternals("", value);
                 for (int i = 0; i < externalDefs.length; i++) {
                     String externalPath = externalDefs[i].getPath();
                     File externalDir = new File(info.getAnchor().getRoot(), SVNPathUtil.append(path, externalPath));
                     if (processedDirs.add(externalDir)) {
-                        try {
-                            doSetWCFormat(externalDir, format);
-                        } catch (SVNException e) {
-                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                continue;
+                        if (externalDir.exists()) {
+                            try {
+                                doSetWCFormat(externalDir, format);
+                            } catch (SVNException e) {
+                                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                                    continue;
+                                }
+                                throw e;
                             }
-                            throw e;
                         }
                     }
                 }
             }
+            
             externals = info.getNewExternals();
             for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
@@ -2796,13 +2801,15 @@ public class SVNWCClient extends SVNBasicClient {
                     String externalPath = externalDefs[i].getPath();
                     File externalDir = new File(info.getAnchor().getRoot(), SVNPathUtil.append(path, externalPath));
                     if (processedDirs.add(externalDir)) {
-                        try {
-                            doSetWCFormat(externalDir, format);
-                        } catch (SVNException e) {
-                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                continue;
+                        if (externalDir.exists()) {
+                            try {
+                                doSetWCFormat(externalDir, format);
+                            } catch (SVNException e) {
+                                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                                    continue;
+                                }
+                                throw e;
                             }
-                            throw e;
                         }
                     }
                 }
