@@ -138,8 +138,15 @@ public class DAVUtil {
             if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
                 repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID).getString());
             }
+            if (props.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH) != null && repos != null) {
+                String relativePath = props.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH).getString();
+                relativePath = SVNEncodingUtil.uriEncode(relativePath);
+                String rootPath = fullPath.substring(0, fullPath.length() - relativePath.length());
+                repos.setRepositoryRoot(repos.getLocation().setPath(rootPath, true));
+            }
             props.setLoppedPath(loppedPath);
         } 
+        
         return props;
     }
     

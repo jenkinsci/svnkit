@@ -464,7 +464,6 @@ class HTTPConnection implements IHTTPConnection {
                 }
 
                 myLastValidAuth = null;
-                close();
                 
                 ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 if (authManager == null) {

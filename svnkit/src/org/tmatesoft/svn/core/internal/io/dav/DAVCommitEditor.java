@@ -415,12 +415,12 @@ class DAVCommitEditor implements ISVNEditor {
         String path = SVNEncodingUtil.uriEncode(myLocation.getPath());
         String vcc = DAVUtil.getPropertyValue(myConnection, path, null, DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         
-        // TODO implement retry line in native subversion.
         HTTPStatus status = null;
         for (int i = 0; i < 5; i++) {
             String head = DAVUtil.getPropertyValue(myConnection, vcc, null, DAVElement.CHECKED_IN);
             try {
                 status = myConnection.doCheckout(activity, null, head, false);
+                break;
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.APMOD_BAD_BASELINE || i == 4) {
                     throw svne;
@@ -432,9 +432,6 @@ class DAVCommitEditor implements ISVNEditor {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The CHECKOUT response did not contain a 'Location:' header");
             SVNErrorManager.error(err);
         }
-        // proppatch log message.
-//        logMessage = logMessage == null ? "" : logMessage;
-//        StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, SVNRevisionProperty.LOG, logMessage);
         if (myRevProps != null && myRevProps.size() > 0) {
             StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, myRevProps);
             SVNErrorMessage context = null;//SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "applying log message to {0}", path);
