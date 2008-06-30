@@ -527,16 +527,16 @@ public class JavaHLObjectFactory {
         handler.singleMessage(cp, logEntry.getRevision(), revisionPropertiesMap, logEntry.hasChildren());
     }
 
-    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables, boolean isImport) {
-        if(commitables == null){
+    public static CommitItem[] getCommitItems(SVNCommitItem[] commitables, boolean isImport, boolean isURLsOnly) {
+        if (commitables == null) {
             return null;
         }
         CommitItem[] items = new CommitItem[commitables.length];
         for (int i = 0; i < items.length; i++) {
             SVNCommitItem sc = commitables[i];
-            if(sc == null){
+            if(sc == null) {
                 items[i] = null;
-            }else{
+            } else {
                 int stateFlag = 0;
                 if (sc.isDeleted()) {
                     stateFlag += CommitItemStateFlags.Delete;
@@ -553,16 +553,17 @@ public class JavaHLObjectFactory {
                 if(sc.isCopied()){
                     stateFlag += CommitItemStateFlags.IsCopy;
                 }
-                String url = isImport ? null : (sc.getURL() != null ? sc.getURL().toString() : null);
-                String path = sc.getFile() != null ? sc.getFile().getAbsolutePath() : null;
-                if (path == null) {
-                    path = sc.getPath();
-                } else {
+                String url = sc.getURL() != null ? sc.getURL().toString() : null;
+                String path = isURLsOnly ? null : sc.getFile() != null ? sc.getFile().getAbsolutePath() : null;
+                if (path != null) {
                     path = path.replace(File.separatorChar, '/');
+                } 
+                if (path != null && isImport) {
+                    url = null;
                 }
-                items[i] = new CommitItem(path, isImport ? 0 : getNodeKind(sc.getKind()), stateFlag, url, 
-                        sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber()
-                );
+                int kind = isImport ? NodeKind.none : getNodeKind(sc.getKind());
+                items[i] = new CommitItem(path, kind, stateFlag, url, 
+                        sc.getCopyFromURL() != null ? sc.getCopyFromURL().toString() : null, sc.getRevision().getNumber());
             }
         }
         return items;

@@ -23,6 +23,43 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.tigris.subversion.javahl.BlameCallback;
+import org.tigris.subversion.javahl.BlameCallback2;
+import org.tigris.subversion.javahl.ChangelistCallback;
+import org.tigris.subversion.javahl.ClientException;
+import org.tigris.subversion.javahl.CommitItem;
+import org.tigris.subversion.javahl.CommitMessage;
+import org.tigris.subversion.javahl.ConflictDescriptor;
+import org.tigris.subversion.javahl.ConflictResolverCallback;
+import org.tigris.subversion.javahl.ConflictResult;
+import org.tigris.subversion.javahl.CopySource;
+import org.tigris.subversion.javahl.DiffSummaryReceiver;
+import org.tigris.subversion.javahl.DirEntry;
+import org.tigris.subversion.javahl.Info;
+import org.tigris.subversion.javahl.Info2;
+import org.tigris.subversion.javahl.InfoCallback;
+import org.tigris.subversion.javahl.JavaHLObjectFactory;
+import org.tigris.subversion.javahl.ListCallback;
+import org.tigris.subversion.javahl.LogMessage;
+import org.tigris.subversion.javahl.LogMessageCallback;
+import org.tigris.subversion.javahl.Mergeinfo;
+import org.tigris.subversion.javahl.MergeinfoLogKind;
+import org.tigris.subversion.javahl.Notify;
+import org.tigris.subversion.javahl.Notify2;
+import org.tigris.subversion.javahl.NotifyInformation;
+import org.tigris.subversion.javahl.ProgressListener;
+import org.tigris.subversion.javahl.PromptUserPassword;
+import org.tigris.subversion.javahl.PropertyData;
+import org.tigris.subversion.javahl.ProplistCallback;
+import org.tigris.subversion.javahl.Revision;
+import org.tigris.subversion.javahl.RevisionKind;
+import org.tigris.subversion.javahl.RevisionRange;
+import org.tigris.subversion.javahl.SVNClient;
+import org.tigris.subversion.javahl.SVNClientInterface;
+import org.tigris.subversion.javahl.SVNClientLogLevel;
+import org.tigris.subversion.javahl.Status;
+import org.tigris.subversion.javahl.StatusCallback;
+import org.tigris.subversion.javahl.SubversionException;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -90,44 +127,6 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
-
-import org.tigris.subversion.javahl.BlameCallback;
-import org.tigris.subversion.javahl.BlameCallback2;
-import org.tigris.subversion.javahl.ChangelistCallback;
-import org.tigris.subversion.javahl.ClientException;
-import org.tigris.subversion.javahl.CommitItem;
-import org.tigris.subversion.javahl.CommitMessage;
-import org.tigris.subversion.javahl.ConflictDescriptor;
-import org.tigris.subversion.javahl.ConflictResolverCallback;
-import org.tigris.subversion.javahl.ConflictResult;
-import org.tigris.subversion.javahl.CopySource;
-import org.tigris.subversion.javahl.DiffSummaryReceiver;
-import org.tigris.subversion.javahl.DirEntry;
-import org.tigris.subversion.javahl.Info;
-import org.tigris.subversion.javahl.Info2;
-import org.tigris.subversion.javahl.InfoCallback;
-import org.tigris.subversion.javahl.JavaHLObjectFactory;
-import org.tigris.subversion.javahl.ListCallback;
-import org.tigris.subversion.javahl.LogMessage;
-import org.tigris.subversion.javahl.LogMessageCallback;
-import org.tigris.subversion.javahl.Mergeinfo;
-import org.tigris.subversion.javahl.MergeinfoLogKind;
-import org.tigris.subversion.javahl.Notify;
-import org.tigris.subversion.javahl.Notify2;
-import org.tigris.subversion.javahl.NotifyInformation;
-import org.tigris.subversion.javahl.ProgressListener;
-import org.tigris.subversion.javahl.PromptUserPassword;
-import org.tigris.subversion.javahl.PropertyData;
-import org.tigris.subversion.javahl.ProplistCallback;
-import org.tigris.subversion.javahl.Revision;
-import org.tigris.subversion.javahl.RevisionKind;
-import org.tigris.subversion.javahl.RevisionRange;
-import org.tigris.subversion.javahl.SVNClient;
-import org.tigris.subversion.javahl.SVNClientInterface;
-import org.tigris.subversion.javahl.SVNClientLogLevel;
-import org.tigris.subversion.javahl.Status;
-import org.tigris.subversion.javahl.StatusCallback;
-import org.tigris.subversion.javahl.SubversionException;
 
 
 /**
@@ -528,7 +527,7 @@ public class SVNClientImpl implements SVNClientInterface {
             }
             try {
                 SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
-                client.setCommitHandler(createCommitMessageHandler(false));
+                client.setCommitHandler(createCommitMessageHandler(true));
                 client.doDelete(urls, message, revisionProperties);
             } catch (SVNException e) {
                 throwException(e);
@@ -654,7 +653,7 @@ public class SVNClientImpl implements SVNClientInterface {
             files[i] = new File(path[i]).getAbsoluteFile();
         }
         try {
-            client.setCommitHandler(createCommitMessageHandler(false));
+            client.setCommitHandler(createCommitMessageHandler(false, false));
             SVNDepth svnDepth = SVNDepth.fromID(depth);
             boolean recurse = SVNDepth.recurseFromDepth(svnDepth);
             SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
@@ -786,7 +785,8 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(destPath)) {
                 SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
-                client.setCommitHandler(createCommitMessageHandler(false));
+                boolean isURLs = sources.length > 0 && sources[0].isURL();
+                client.setCommitHandler(createCommitMessageHandler(isURLs));
                 client.doCopy(sources, SVNURL.parseURIEncoded(destPath), isMove, makeParents, !copyAsChild, message, revisionProperties);
             } else {
                 client.doCopy(sources, new File(destPath).getAbsoluteFile(), isMove, makeParents, !copyAsChild);
@@ -825,7 +825,7 @@ public class SVNClientImpl implements SVNClientInterface {
         if (svnURLs.length > 0) {
             try {
                 SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
-                client.setCommitHandler(createCommitMessageHandler(true));
+                client.setCommitHandler(createCommitMessageHandler(true, true));
                 client.doMkDir(svnURLs, message, revisionProperties, makeParents);
             } catch (SVNException e) {
                 throwException(e);
@@ -911,7 +911,7 @@ public class SVNClientImpl implements SVNClientInterface {
     public void doImport(String path, String url, String message, int depth, boolean noIgnore, boolean ignoreUnknownNodeTypes, Map revprops) throws ClientException {
         SVNCommitClient commitClient = getSVNCommitClient();
         try {
-            commitClient.setCommitHandler(createCommitMessageHandler(true));
+            commitClient.setCommitHandler(createCommitMessageHandler(false, true));
             SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
             commitClient.doImport(new File(path), SVNURL.parseURIEncoded(url), message, revisionProperties, !noIgnore, ignoreUnknownNodeTypes, JavaHLObjectFactory.getSVNDepth(depth));
         } catch (SVNException e) {
@@ -1203,7 +1203,7 @@ public class SVNClientImpl implements SVNClientInterface {
        if (isURL(path)) {
            try {
                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
-               client.setCommitHandler(createCommitMessageHandler(false));
+               client.setCommitHandler(createCommitMessageHandler(true));
                client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD,
                         "", revisionProperties, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
            } catch (SVNException e) {
@@ -1821,11 +1821,15 @@ public class SVNClientImpl implements SVNClientInterface {
         return myMessageHandler;
     }
     
-    protected ISVNCommitHandler createCommitMessageHandler(final boolean isImport) {
+    protected ISVNCommitHandler createCommitMessageHandler(final boolean isURLsOnly) {
+        return createCommitMessageHandler(isURLsOnly, false);        
+    }
+    
+    protected ISVNCommitHandler createCommitMessageHandler(final boolean isURLsOnly, final boolean isImport) {
         if (myMessageHandler != null) {
             return new ISVNCommitHandler() {
                 public String getCommitMessage(String cmessage, SVNCommitItem[] commitables) {
-                    CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables, isImport);
+                    CommitItem[] items = JavaHLObjectFactory.getCommitItems(commitables, isImport, isURLsOnly);
                     return myMessageHandler.getLogMessage(items);
                 }
                 public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
