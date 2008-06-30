@@ -13,13 +13,13 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -43,7 +43,7 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
         myWCPropsMap = new SVNHashMap();
         myCommitItems = commitItems;
     }
-
+ 
     public SVNProperties getWCProperties(SVNCommitItem item) {
         return (SVNProperties) myWCPropsMap.get(item);
     }
@@ -68,7 +68,10 @@ public class SVNCommitMediator implements ISVNWorkspaceMediator {
             target = SVNPathUtil.tail(item.getPath());
         }
         SVNVersionedProperties wcProps = dir.getWCProperties(target);
-        return wcProps.getPropertyValue(name);
+        if (wcProps != null) {
+            return wcProps.getPropertyValue(name);
+        }
+        return null;    
     }
 
     public void setWorkspaceProperty(String path, String name, SVNPropertyValue value)

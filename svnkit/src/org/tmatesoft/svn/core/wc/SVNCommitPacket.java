@@ -11,12 +11,13 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**

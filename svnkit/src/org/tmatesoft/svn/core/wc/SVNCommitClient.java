@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -37,8 +36,10 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -50,7 +51,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -702,6 +702,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 SVNRepository repository = createRepository(baseURL, firstItem.getFile(), 
                         firstItem.getWCAccess(), true);
                 SVNCommitMediator mediator = new SVNCommitMediator(commitables);
+                
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
                 commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
@@ -719,7 +720,6 @@ public class SVNCommitClient extends SVNBasicClient {
                     SVNCommitItem item = (SVNCommitItem) commitables.get(url);
                     explicitCommitPaths.add(item.getPath());
                 }
-                
                 for (Iterator urls = commitables.keySet().iterator(); urls.hasNext();) {
                     String url = (String) urls.next();
                     SVNCommitItem item = (SVNCommitItem) commitables.get(url);

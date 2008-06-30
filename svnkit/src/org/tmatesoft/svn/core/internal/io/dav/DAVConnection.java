@@ -25,6 +25,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVGetLocksHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLockHandler;
@@ -37,9 +39,11 @@ import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.xml.sax.helpers.DefaultHandler;
@@ -273,15 +277,31 @@ public class DAVConnection {
         }
     }
     
-    public String doMakeActivity() throws SVNException {
-        String locationPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
-        String url = getActivityCollectionURL(locationPath, false) + generateUUID();
-        HTTPStatus status = myHttpConnection.request("MKACTIVITY", url, null, (StringBuffer) null, 201, 404, null, null);
-        if (status.getCode() == 404) {
-            url = getActivityCollectionURL(locationPath, true) + generateUUID();
-            status = myHttpConnection.request("MKACTIVITY", url, null, (StringBuffer) null, 201, 0, null, null);
+    public String doMakeActivity(ISVNWorkspaceMediator mediator) throws SVNException {
+        String url = null;
+        if (mediator != null) {
+            SVNPropertyValue property = mediator.getWorkspaceProperty("", SVNProperty.ACTIVITY_URL);
+            if (property != null && property.isString()) {
+                url = property.getString();
+            }
         }
-        return url;
+        String locationPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
+        if (url == null) {
+            url = getActivityCollectionURL(locationPath, false);
+        }
+        String activityURL = SVNPathUtil.append(url, generateUUID());
+        HTTPStatus status = myHttpConnection.request("MKACTIVITY", activityURL, null, (StringBuffer) null, 201, 404, null, null);
+        
+        if (status.getCode() == 404) {
+            url = getActivityCollectionURL(locationPath, true);
+            activityURL = SVNPathUtil.append(url, generateUUID());
+            status = myHttpConnection.request("MKACTIVITY", activityURL, null, (StringBuffer) null, 201, 0, null, null);
+        }
+        
+        if (url != null && mediator != null) {
+            mediator.setWorkspaceProperty("", SVNProperty.ACTIVITY_URL, SVNPropertyValue.create(url));
+        }
+        return activityURL;
     }
     
     public HTTPStatus doDelete(String path) throws SVNException {

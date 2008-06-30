@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -84,7 +85,7 @@ class DAVResource {
         }
         if (!force) {
             if (myMediator != null) {
-                SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url");
+                SVNPropertyValue value = myMediator.getWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL);
                 myVURL = value == null ? null : value.getString();
                 if (myVURL != null) {
                     return;
@@ -116,7 +117,7 @@ class DAVResource {
             throw e;
         }
         if (myMediator != null) {
-            myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), "svn:wc:ra_dav:version-url", SVNPropertyValue.create(myURL));            
+            myMediator.setWorkspaceProperty(SVNEncodingUtil.uriDecode(myPath), SVNProperty.WC_URL, SVNPropertyValue.create(myURL));            
         }
     }
 
