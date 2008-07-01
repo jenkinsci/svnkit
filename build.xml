@@ -554,6 +554,11 @@
                 <exclude name="**/bin/**" />
                 <exclude name="bin/**" />
             </zipfileset>
+            <zipfileset dir="svnkit-dav" prefix="svnkit-src-${build.number}/svnkit-dav">
+                <exclude name="**/.svn" />
+                <exclude name="**/bin/**" />
+                <exclude name="bin/**" />
+            </zipfileset>
             <zipfileset dir="svnkit-eclipse" prefix="svnkit-src-${build.number}/svnkit-eclipse">
                 <exclude name="**/.svn" />
                 <exclude name="**/bin/**" />
