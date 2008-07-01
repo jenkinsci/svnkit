@@ -1,3 +1,8 @@
+== version 1.2.0-beta2
+
++ JavaHL compatiblity bugfixes
++ DAV protocol performance improvements
+
 == version 1.2.0-beta
 
 + Subversion 1.5.0 features support
