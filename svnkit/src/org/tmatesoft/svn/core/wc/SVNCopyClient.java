@@ -1389,7 +1389,9 @@ public class SVNCopyClient extends SVNBasicClient {
                     dstAccess = srcAccess;
                 } else {
                     String srcParentPath = srcParent.getAbsolutePath().replace(File.separatorChar, '/');
+                    srcParentPath = SVNPathUtil.validateFilePath(srcParentPath);
                     String dstParentPath = dstParent.getAbsolutePath().replace(File.separatorChar, '/');
+                    dstParentPath = SVNPathUtil.validateFilePath(dstParentPath);
                     if (srcType == SVNFileType.DIRECTORY && 
                             SVNPathUtil.isAncestor(srcParentPath, dstParentPath)) {
                         dstAccess = srcAccess;
