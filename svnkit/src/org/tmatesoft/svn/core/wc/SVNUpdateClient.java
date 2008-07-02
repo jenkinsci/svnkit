@@ -102,6 +102,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNUpdateClient extends SVNBasicClient {
 
+    private ISVNExternalsHandler myExternalsHandler;
+
     /**
      * Constructs and initializes an <b>SVNUpdateClient</b> object
      * with the specified run-time configuration and authentication 
@@ -131,6 +133,17 @@ public class SVNUpdateClient extends SVNBasicClient {
 
     public SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
+    }
+    
+    public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
+        myExternalsHandler = externalsHandler;
+    }
+
+    public ISVNExternalsHandler getExternalsHandler() {
+        if (myExternalsHandler == null) {
+            myExternalsHandler = ISVNExternalsHandler.DEFAULT;
+        }
+        return myExternalsHandler;
     }
     
     /**
@@ -1096,21 +1109,35 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (externalDiff.oldExternal != null && !externalDiff.isExport) {
             oldURL = externalDiff.oldExternal.resolveURL(externalDiff.rootURL, externalDiff.ownerURL);
         }
+        SVNRevision externalRevision = SVNRevision.UNDEFINED;
+        SVNRevision externalPegRevision = SVNRevision.UNDEFINED;
         if (externalDiff.newExternal != null) {
             newURL = externalDiff.newExternal.resolveURL(externalDiff.rootURL, externalDiff.ownerURL);
+            externalRevision = externalDiff.newExternal.getRevision();
+            externalPegRevision = externalDiff.newExternal.getPegRevision();
         }
         if (oldURL == null && newURL == null) {
             return;
         }
+
+        SVNRevision[] revs = getExternalsHandler().handleExternal(target, newURL, externalRevision, externalPegRevision);
+        if (revs == null) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null);
+            dispatchEvent(event);
+            return;
+        }
+        externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
+        externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
+        
         try {
             setEventPathPrefix("path");
             if (oldURL == null) {
                 target.getParentFile().mkdirs();
                 dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 if (externalDiff.isExport) {
-                    doExport(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), null, true, SVNDepth.INFINITY); 
+                    doExport(newURL, target, externalPegRevision, externalRevision, null, true, SVNDepth.INFINITY); 
                 } else {
-                    doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                    doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                 }
             } else if (newURL == null) {
                 SVNWCAccess wcAccess = createWCAccess();
@@ -1151,7 +1178,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     
                     if (entry != null && entry.getURL() != null) {
                         if (newURL.toString().equals(url)) {
-                            doUpdate(target, externalDiff.newExternal.getRevision(), SVNDepth.UNKNOWN, true, false);
+                            doUpdate(target, externalRevision, SVNDepth.UNKNOWN, true, false);
                             return;
                         } else if (entry.getRepositoryRoot() != null) {
                             if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), newURL.toString())) {
@@ -1164,26 +1191,26 @@ public class SVNUpdateClient extends SVNBasicClient {
                                             svne.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_INVALID_RELOCATION) {
                                         deleteExternal(target);
                                         target.mkdirs();
-                                        doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                                        doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                                         return;
                                     } 
                                     throw svne;
                                 }
                             }
-                            doSwitch(target, newURL, externalDiff.newExternal.getPegRevision(), 
-                                    externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false, true);
+                            doSwitch(target, newURL, externalPegRevision, 
+                                    externalRevision, SVNDepth.INFINITY, false, true);
                             return;
                         }
                     }
                     deleteExternal(target);
                     target.mkdirs();
-                    doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                    doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                     return;
                 } 
                 if (fileType != SVNFileType.DIRECTORY) {
                     target.mkdirs();
                 }
-                doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, true);
+                doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, true);
             }
         } catch (SVNCancelException cancel) {
             throw cancel;
@@ -1196,11 +1223,16 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    protected SVNRevision getExternalRevision(File file, SVNURL newURL) {
-        if (file == null || newURL == null) {
-            return SVNRevision.HEAD;
-        }
-        return SVNRevision.HEAD;
+    /**
+     * @param path path of the external
+     * @param externalURL URL of the external
+     * @param revision default revision to checkout from or to update to
+     * @param pegRevision default peg revision to use for checkout our update
+     * 
+     * @return array of SVNRevision in form {revision, pegRevision} 
+     */
+    protected SVNRevision[] getExternalRevisions(File path, SVNURL externalURL, SVNRevision revision, SVNRevision pegRevision) {
+        return new SVNRevision[] {revision, pegRevision};
     }
 
     private void deleteExternal(File external) throws SVNException {
