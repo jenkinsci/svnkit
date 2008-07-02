@@ -1123,10 +1123,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             textStatus = SVNStatusType.CHANGED;
             // there is a text to replace the working copy with.
             if (!isLocallyModified && !isReplaced) {
-                command.put(SVNLog.NAME_ATTR, tmpBasePath);
-                command.put(SVNLog.DEST_ATTR, name);
-                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                command.clear();
+                if (fileEntry == null || !fileEntry.isScheduledForDeletion()) {
+                    command.put(SVNLog.NAME_ATTR, tmpBasePath);
+                    command.put(SVNLog.DEST_ATTR, name);
+                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                    command.clear();
+                }
             } else {
                 SVNFileType kind = SVNFileType.getType(workingFile);
                 if (kind == SVNFileType.NONE && !fileInfo.addedWithHistory) {
@@ -1217,7 +1219,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 // only if wc file exists (may be locally deleted), otherwise no
                 // need to retranslate...
                 String tmpPath = SVNAdminUtil.getTextBasePath(name, true);
-                    command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNLog.DEST_ATTR, tmpPath);
                 log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
                 command.clear();
