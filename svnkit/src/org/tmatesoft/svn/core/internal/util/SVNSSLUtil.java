@@ -111,15 +111,17 @@ public class SVNSSLUtil {
       if (!realHostName.equals(certHostName)) {
           try {
               Collection altNames = cert.getSubjectAlternativeNames();
-              for (Iterator names = altNames.iterator(); names.hasNext();) {
-                  Object nameList = names.next();
-                  if (nameList instanceof Collection && ((Collection) nameList).size() >= 2) {
-                      Object[] name = ((Collection) nameList).toArray();
-                      Object type = name[0];
-                      Object host = name[1];
-                      if (type instanceof Integer && host instanceof String) {
-                          if (((Integer) type).intValue() == 2 && host.equals(realHostName)) {
-                              return mask;
+              if(altNames != null) {
+                  for (Iterator names = altNames.iterator(); names.hasNext();) {
+                      Object nameList = names.next();
+                      if (nameList instanceof Collection && ((Collection) nameList).size() >= 2) {
+                          Object[] name = ((Collection) nameList).toArray();
+                          Object type = name[0];
+                          Object host = name[1];
+                          if (type instanceof Integer && host instanceof String) {
+                              if (((Integer) type).intValue() == 2 && host.equals(realHostName)) {
+                                  return mask;
+                              }
                           }
                       }
                   }
