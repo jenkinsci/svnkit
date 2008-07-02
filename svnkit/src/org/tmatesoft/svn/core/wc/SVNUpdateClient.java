@@ -1223,18 +1223,6 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    /**
-     * @param path path of the external
-     * @param externalURL URL of the external
-     * @param revision default revision to checkout from or to update to
-     * @param pegRevision default peg revision to use for checkout our update
-     * 
-     * @return array of SVNRevision in form {revision, pegRevision} 
-     */
-    protected SVNRevision[] getExternalRevisions(File path, SVNURL externalURL, SVNRevision revision, SVNRevision pegRevision) {
-        return new SVNRevision[] {revision, pegRevision};
-    }
-
     private void deleteExternal(File external) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminArea adminArea = wcAccess.open(external, true, SVNWCAccess.INFINITE_DEPTH);
