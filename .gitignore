@@ -2,6 +2,7 @@
 /bin
 /build
 contrib/javahl/bin
+contrib/javahl/bin-test
 contrib/sequence/bin
 contrib/sequence/bin-test
 doc/examples/bin
