@@ -621,21 +621,22 @@
 
     <target name="test-javahl" depends="init-environment,build-library,compile-tests">
         <property name="javahl.test.home" value="${basedir}/build/javahl" />
+    	<mkdir dir="${basedir}/build/javahl"/>
+    	
         <junit fork="true" dir="${javahl.test.home}" >
             <classpath>
                 <pathelement location="contrib/junit/junit.jar" />
                 <pathelement location="contrib/trilead/trilead.jar"/>
+                <pathelement location="contrib/jna/jna.jar"/>
                 <pathelement path="svnkit/bin"/>
                 <pathelement path="svnkit/src" />
+                <pathelement path="contrib/sequence/bin" />
                 <pathelement path="contrib/javahl/bin" />
                 <pathelement path="contrib/javahl/bin-test" />
             </classpath>
-
-            <formatter type="plain" />
-
             <test name="org.tigris.subversion.javahl.BasicTests" />
             <test name="org.tigris.subversion.javahl.SVNAdminTests" />
-        </junit>
+        </junit>    	
     </target>
 	
 	<target name="init-test-properties" unless="python.test.properties">
