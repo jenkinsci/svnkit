@@ -115,7 +115,7 @@ public class SVNStatusEditor {
         myRepositoryLocks = repositoryLocks;
     }
     
-    protected void getDirStatus(SVNEntry parentEntry, SVNAdminArea dir, String entryName, 
+    protected void getDirStatus(SVNEntry parentEntry, SVNAdminArea dir, String entryName,
             SVNDepth depth, boolean getAll, boolean noIgnore, Collection ignorePatterns, boolean skipThisDir,
             ISVNStatusHandler handler) throws SVNException {
         myWCAccess.checkCancelled();
@@ -144,12 +144,9 @@ public class SVNStatusEditor {
                 SVNNodeKind fileKind = SVNFileType.getNodeKind(fileType);
                 handleDirEntry(dir, entryName, dirEntry, entry, 
                         fileKind, special, depth, getAll, noIgnore, handler);
-            } else {
+            } else if (file != null) {
                 if (ignorePatterns == null) {
                     ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
-                }
-                if (file == null) {
-                    file = new File(dir.getRoot(), entryName);
                 }
                 sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
             }
@@ -296,7 +293,7 @@ public class SVNStatusEditor {
             if (isExternal) {
                 status.setContentsStatus(SVNStatusType.STATUS_EXTERNAL);
             }
-            if (handler != null && noIgnore || !isIgnored || isExternal || status.getRemoteLock() != null) {
+            if (handler != null && (noIgnore || !isIgnored || isExternal || status.getRemoteLock() != null)) {
                 handler.handleStatus(status);
             }
         }
