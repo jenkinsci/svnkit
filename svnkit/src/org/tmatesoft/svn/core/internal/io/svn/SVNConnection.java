@@ -171,7 +171,7 @@ public class SVNConnection {
         }
         
         myAuthenticator = null;
-        if (mechs.contains("ANONYMOUS") || mechs.contains("EXTERNAL")) {
+        if (mechs.contains("EXTERNAL")) {
             myAuthenticator = new SVNPlainAuthenticator(this);
             myAuthenticator.authenticate(mechs, myRealm, repository);
         } else {
