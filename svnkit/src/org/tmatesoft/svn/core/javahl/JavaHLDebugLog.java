@@ -86,6 +86,7 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
     private Logger getLogger() {
         if (myLogger == null) {
             myLogger = Logger.getLogger(JAVAHL_LOGGER_NAME);
+            myLogger.setUseParentHandlers(false);
             myLogger.setLevel(Level.ALL);
             resetLogHandlers();
         }
