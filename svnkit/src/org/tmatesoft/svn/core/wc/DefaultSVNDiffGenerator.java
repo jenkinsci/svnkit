@@ -21,6 +21,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -181,23 +182,23 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         if (path == null) {
             path = "";
         }
-        if (path.indexOf("://") > 0) {
+        if (SVNPathUtil.isURL(path)) {
             return path;
         }
         // treat as file path.
         String basePath = myBasePath.getAbsolutePath().replace(File.separatorChar, '/');
+        path = path.replace(File.separatorChar, '/');
         if (path.equals(basePath)) {
             return ".";
         }
-        if (path.startsWith(basePath + "/")) {
-            path = path.substring(basePath.length() + 1);
-            if (path.startsWith("./")) {
-                path = path.substring("./".length());
-            }
-        } else if (path.startsWith("/")) {
+        String relativePath = SVNPathUtil.getPathAsChild(basePath, path);
+        if (relativePath == null) {
             createBadRelativePathError(path);
         }
-        return path;
+        if (relativePath.startsWith("./")) {
+            relativePath = relativePath.substring("./".length());
+        }
+        return relativePath;
     }
 
     public void setForcedBinaryDiff(boolean forced) {
