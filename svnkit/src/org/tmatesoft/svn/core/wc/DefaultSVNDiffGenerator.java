@@ -20,9 +20,6 @@ import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -36,11 +33,13 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
@@ -187,7 +186,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         // treat as file path.
         String basePath = myBasePath.getAbsolutePath().replace(File.separatorChar, '/');
-        path = path.replace(File.separatorChar, '/');
+        path = new File(path).getAbsolutePath().replace(File.separatorChar, '/');
         if (path.equals(basePath)) {
             return ".";
         }
