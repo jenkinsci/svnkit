@@ -1132,7 +1132,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         try {
             setEventPathPrefix("path");
             if (oldURL == null) {
-                target.getParentFile().mkdirs();
+                target.mkdirs();
                 dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 if (externalDiff.isExport) {
                     doExport(newURL, target, externalPegRevision, externalRevision, null, true, SVNDepth.INFINITY); 
@@ -1159,7 +1159,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                     throw error;
                 }
             } else if (externalDiff.isUpdateUnchanged || !externalDiff.compareExternals(oldURL, newURL)) {
-                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 SVNFileType fileType = SVNFileType.getType(target);
                 boolean empty = false;
                 if (fileType == SVNFileType.DIRECTORY) {
@@ -1170,6 +1169,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
                 
                 if (fileType == SVNFileType.DIRECTORY && !empty) {
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                     SVNWCAccess wcAccess = createWCAccess();
                     SVNAdminArea area = wcAccess.open(target, true, 0);
                     SVNEntry entry = area.getEntry(area.getThisDirName(), false);
@@ -1204,12 +1204,14 @@ public class SVNUpdateClient extends SVNBasicClient {
                     }
                     deleteExternal(target);
                     target.mkdirs();
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                     doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                     return;
                 } 
                 if (fileType != SVNFileType.DIRECTORY) {
                     target.mkdirs();
                 }
+                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, true);
             }
         } catch (SVNCancelException cancel) {
