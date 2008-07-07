@@ -104,6 +104,12 @@ doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
 svnkit-cli/scripts/jsvndumpfilter -text
 svnkit-cli/scripts/jsvndumpfilter.bat -text
+svnkit-cli/src/org/tmatesoft/svn/cli/SVN.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/SVNAdmin.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/SVNDumpFilter.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/SVNLook.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/SVNSync.java -text
+svnkit-cli/src/org/tmatesoft/svn/cli/SVNVersion.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/DefaultSVNCommandLineDiffGenerator.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNCommandLineConflictHandler.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNConflictAcceptPolicy.java -text
