@@ -16,64 +16,114 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 
+import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.osgi.framework.Bundle;
-import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class SVNKitLog extends SVNDebugLogAdapter {
-	
-	private static final String DEBUG_FINE = "/debug/fine";
-	private static final String DEBUG_INFO = "/debug/info";
-	private static final String DEBUG_ERROR = "/debug/error";
 
-	private boolean myIsFineEnabled;
-	private boolean myIsInfoEnabled;
-	private boolean myIsErrorEnabled;
-	
-	private ILog myLog;
-	private String myPluginID;
+    private static final String DEBUG_FINE = "/debug/fine";
+    private static final String DEBUG_INFO = "/debug/info";
+    private static final String DEBUG_WARNING = "/debug/warning";
+    private static final String DEBUG_ERROR = "/debug/error";
 
-	public SVNKitLog(Bundle bundle, boolean enabled) {		
-		myLog = Platform.getLog(bundle);
-		myPluginID = bundle.getSymbolicName();
+    private boolean myIsFineEnabled;
+    private boolean myIsInfoEnabled;
+    private boolean myIsWarningEnabled;
+    private boolean myIsErrorEnabled;
 
-		// enabled even when not in debug mode
-		myIsErrorEnabled = Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_ERROR));
+    private ILog myLog;
+    private String myPluginID;
 
-		// debug mode have to be enabled
-		myIsFineEnabled = enabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_FINE));
-		myIsInfoEnabled = enabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_INFO));
-	}
+    public SVNKitLog(Bundle bundle, boolean debugEnabled, boolean traceEnabled) {
+        myLog = Platform.getLog(bundle);
+        myPluginID = bundle.getSymbolicName();
 
-	public boolean isFineEnabled() {
-		return myIsFineEnabled;
-	}
+        if (traceEnabled) {
+            // enable tracing even when not in debug mode
+            myIsErrorEnabled = true;
+            myIsWarningEnabled = true;
+            myIsInfoEnabled = true;
+            myIsErrorEnabled = true;
+        } else {
+            // enabled even when not in debug mode
+            myIsErrorEnabled = Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_ERROR));
 
-	public boolean isInfoEnabled() {
-		return myIsInfoEnabled;
-	}
+            // debug mode have to be enabled
+            myIsWarningEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_WARNING));
+            myIsInfoEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_INFO));
+            myIsFineEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_FINE));
+        }
+    }
 
-	public boolean isErrorEnabled() {
-		return myIsErrorEnabled;
-	}
+    public boolean isFineEnabled() {
+        return myIsFineEnabled;
+    }
 
-	private Status createStatus(int severity, String message, Throwable th) {
-		return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
-	}
+    public boolean isInfoEnabled() {
+        return myIsInfoEnabled;
+    }
 
-    public void logError(String message) {
+    public boolean isWarningEnabled() {
+        return myIsWarningEnabled;
+    }
+
+    public boolean isErrorEnabled() {
+        return myIsErrorEnabled;
+    }
+
+    public InputStream createLogStream(InputStream is) {
+        if (isFineEnabled()) {
+            return super.createLogStream(is);
+        }
+        return is;
+    }
+
+    public OutputStream createLogStream(OutputStream os) {
+        if (isFineEnabled()) {
+            return super.createLogStream(os);
+        }
+        return os;
+    }
+
+    public void logFinest(Throwable th) {
+        log(th, Level.FINEST);
+    }
+
+    public void logFinest(String message) {
+        log(message, Level.FINEST);
+    }
+
+    public void logFiner(Throwable th) {
+        log(th, Level.FINE);
+    }
+
+    public void logFiner(String message) {
+        log(message, Level.FINE);
+    }
+
+    public void logFine(Throwable th) {
+        log(th, Level.INFO);
+    }
+
+    public void logFine(String message) {
         log(message, Level.INFO);
     }
 
+    public void logError(String message) {
+        log(message, Level.WARNING);
+    }
+
     public void logError(Throwable th) {
-        log(th, Level.INFO);
+        log(th, Level.WARNING);
     }
 
     public void logSevere(String message) {
@@ -94,25 +144,15 @@ public class SVNKitLog extends SVNDebugLogAdapter {
         }
     }
 
-    public InputStream createLogStream(InputStream is) {
-        if (isFineEnabled()) {
-            return super.createLogStream(is);
-        }
-        return is;
-    }
-
-    public OutputStream createLogStream(OutputStream os) {
-        if (isFineEnabled()) {
-            return super.createLogStream(os);
-        }
-        return os;
-    }
-
     public void log(Throwable th, Level logLevel) {
         if (th != null) {
-            if (logLevel == Level.INFO && isInfoEnabled()) {
+            if (logLevel.intValue() <= Level.FINEST.intValue() && isFineEnabled()) {
+                myLog.log(createStatus(IStatus.OK, th.getMessage(), th));
+            } else if (logLevel.intValue() <= Level.INFO.intValue() && isInfoEnabled()) {
                 myLog.log(createStatus(IStatus.INFO, th.getMessage(), th));
-            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+            } else if (logLevel.intValue() <= Level.WARNING.intValue() && isWarningEnabled()) {
+                myLog.log(createStatus(IStatus.WARNING, th.getMessage(), th));
+            } else if (logLevel.intValue() <= Level.SEVERE.intValue() && isErrorEnabled()) {
                 myLog.log(createStatus(IStatus.ERROR, th.getMessage(), th));
             }
         }
@@ -120,30 +160,19 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 
     public void log(String message, Level logLevel) {
         if (message != null) {
-            if (logLevel == Level.INFO && isInfoEnabled()) {
+            if (logLevel.intValue() <= Level.FINEST.intValue() && isFineEnabled()) {
+                myLog.log(createStatus(IStatus.OK, message, null));
+            } else if (logLevel.intValue() <= Level.INFO.intValue() && isInfoEnabled()) {
                 myLog.log(createStatus(IStatus.INFO, message, null));
-            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+            } else if (logLevel.intValue() <= Level.WARNING.intValue() && isWarningEnabled()) {
+                myLog.log(createStatus(IStatus.WARNING, message, null));
+            } else if (logLevel.intValue() <= Level.SEVERE.intValue() && isErrorEnabled()) {
                 myLog.log(createStatus(IStatus.ERROR, message, null));
             }
         }
     }
 
-    public void logFine(Throwable th) {
+    private Status createStatus(int severity, String message, Throwable th) {
+        return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
     }
-
-    public void logFine(String message) {
-    }
-
-    public void logFiner(Throwable th) {
-    }
-
-    public void logFiner(String message) {
-    }
-
-    public void logFinest(Throwable th) {
-    }
-
-    public void logFinest(String message) {
-    }
-
 }
