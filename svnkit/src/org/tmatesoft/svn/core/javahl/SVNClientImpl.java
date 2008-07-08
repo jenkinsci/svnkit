@@ -127,6 +127,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.Version;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -238,6 +239,8 @@ public class SVNClientImpl implements SVNClientInterface {
         if (myDebugLog == null) {
             myDebugLog = new JavaHLCompositeLog();
             myDebugLog.addLogger(SVNDebugLog.getDefaultLog());
+            myDebugLog.addLogger(SVNDebugLog.getLog(SVNLogType.NETWORK));
+            myDebugLog.addLogger(SVNDebugLog.getLog(SVNLogType.WC));
             myDebugLog.addLogger(JavaHLDebugLog.getInstance());
         }
         return myDebugLog;
