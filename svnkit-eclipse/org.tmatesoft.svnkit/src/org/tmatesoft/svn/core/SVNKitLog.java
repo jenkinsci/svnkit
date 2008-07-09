@@ -146,13 +146,13 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 
     public void log(Throwable th, Level logLevel) {
         if (th != null) {
-            if (logLevel.intValue() <= Level.FINEST.intValue() && isFineEnabled()) {
+            if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
                 myLog.log(createStatus(IStatus.OK, th.getMessage(), th));
-            } else if (logLevel.intValue() <= Level.INFO.intValue() && isInfoEnabled()) {
+            } else if (logLevel == Level.INFO && isInfoEnabled()) {
                 myLog.log(createStatus(IStatus.INFO, th.getMessage(), th));
-            } else if (logLevel.intValue() <= Level.WARNING.intValue() && isWarningEnabled()) {
+            } else if (logLevel == Level.WARNING && isWarningEnabled()) {
                 myLog.log(createStatus(IStatus.WARNING, th.getMessage(), th));
-            } else if (logLevel.intValue() <= Level.SEVERE.intValue() && isErrorEnabled()) {
+            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
                 myLog.log(createStatus(IStatus.ERROR, th.getMessage(), th));
             }
         }
@@ -160,13 +160,13 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 
     public void log(String message, Level logLevel) {
         if (message != null) {
-            if (logLevel.intValue() <= Level.FINEST.intValue() && isFineEnabled()) {
+            if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
                 myLog.log(createStatus(IStatus.OK, message, null));
-            } else if (logLevel.intValue() <= Level.INFO.intValue() && isInfoEnabled()) {
+            } else if (logLevel == Level.INFO && isInfoEnabled()) {
                 myLog.log(createStatus(IStatus.INFO, message, null));
-            } else if (logLevel.intValue() <= Level.WARNING.intValue() && isWarningEnabled()) {
+            } else if (logLevel == Level.WARNING && isWarningEnabled()) {
                 myLog.log(createStatus(IStatus.WARNING, message, null));
-            } else if (logLevel.intValue() <= Level.SEVERE.intValue() && isErrorEnabled()) {
+            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
                 myLog.log(createStatus(IStatus.ERROR, message, null));
             }
         }
