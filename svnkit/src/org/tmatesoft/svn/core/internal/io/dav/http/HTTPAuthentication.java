@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,6 +28,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.1
@@ -185,7 +187,22 @@ abstract class HTTPAuthentication {
             } else if ("NTLM".equalsIgnoreCase(method)) {
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (source.length() == 0) {
-                    ntlmAuth = new HTTPNTLMAuthentication(charset);
+                    try {
+                        Class nativeNTLMAuthClass = HTTPNTLMAuthentication.class.getClassLoader().loadClass("sun.net.www.protocol.http.HTTPNativeNTLMAuthentication");
+                        if (nativeNTLMAuthClass != null) {
+                            Constructor constructor = nativeNTLMAuthClass.getConstructor(new Class[] { String.class });
+                            if (constructor != null) {
+                                ntlmAuth = (HTTPNTLMAuthentication) constructor.newInstance(new Object[] { charset });
+                                ntlmAuth.parseChallenge(source);
+                            }
+                        }
+                    } catch (Throwable th) {
+                        SVNDebugLog.getDefaultLog().logFine(th.getMessage());
+                    }
+
+                    if (ntlmAuth == null) {
+                        ntlmAuth = new HTTPNTLMAuthentication(charset);
+                    }
                     ntlmAuth.setType1State();
                 } else {
                     ntlmAuth = (HTTPNTLMAuthentication)prevResponse;
@@ -198,7 +215,8 @@ abstract class HTTPAuthentication {
         }
 
         if (auth == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", authHeader); 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "HTTP authorization method ''{0}'' is not supported", authHeader); 
             SVNErrorManager.error(err);
         }
         

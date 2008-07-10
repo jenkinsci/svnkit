@@ -55,7 +55,8 @@ class SVNWin32Util {
         }
         synchronized (library) {
             try {
-                int rc = library.SetFileAttributesW(new WString(file.getAbsolutePath()), new NativeLong(ISVNKernel32Library.FILE_ATTRIBUTE_HIDDEN));
+                int rc = library.SetFileAttributesW(new WString(file.getAbsolutePath()), 
+                        new NativeLong(ISVNKernel32Library.FILE_ATTRIBUTE_HIDDEN));
                 return rc != 0;
             } catch (Throwable th) {
             }

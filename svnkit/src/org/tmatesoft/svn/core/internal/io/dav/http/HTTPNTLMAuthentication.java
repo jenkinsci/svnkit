@@ -46,8 +46,8 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     private static final String PROTOCOL_NAME = "NTLMSSP";
     private static final int LM_RESPONSE_LENGTH = 24;
     private static final int UNINITIATED = 0;
-    private static final int TYPE1 = 1;
-    private static final int TYPE3 = 3;
+    protected static final int TYPE1 = 1;
+    protected static final int TYPE3 = 3;
     private static byte[] ourMagicBytes = {
         (byte) 0x4B, (byte) 0x47, (byte) 0x53, (byte) 0x21, 
         (byte) 0x40, (byte) 0x23, (byte) 0x24, (byte) 0x25
@@ -121,12 +121,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         ourTargetInfoTypes.put(new Integer(4), "DNS Domain Name");
     }
     
-    private int myState;
+    protected int myState;
+    private String myCharset;
     private byte[] myResponse;
     private int myPosition; 
     private byte[] myNonce;
     private boolean myIsNegotiateLocalCall;
-    private String myCharset;
     
     protected HTTPNTLMAuthentication (String charset) {
         myState = UNINITIATED;
@@ -184,16 +184,19 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     
     public void parseChallenge(String challenge) throws SVNException {
         if (challenge == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: expected challenge");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                    "NTLM HTTP auth: expected challenge");
             SVNErrorManager.error(err);
         }
+        
         byte[] challengeBase64Bytes = HTTPAuthentication.getBytes(challenge, DEFAULT_CHARSET);
         byte[] resultBuffer = new byte[challengeBase64Bytes.length];
         int resultLength = 0;
         try {
             resultLength = SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes, myCharset)), resultBuffer);
         } catch (UnsupportedEncodingException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: " + e.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                    "NTLM HTTP auth: " + e.getMessage());
             SVNErrorManager.error(err);
         }
         
@@ -370,19 +373,10 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         return l;
     }
 
-    private long toLong(byte[] num){
-        long l = 0;
-        for (int i = 0; i < 4 ; i++) {
-            long b = num[i] & 0xff;
-            b = b << i*8;
-            l |=  b;
-        }
-        return l;
-    }
-    
     public String authenticate() throws SVNException {
         if (myState != TYPE1 && myState != TYPE3) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unsupported message type in HTTP NTLM authentication");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                    "Unsupported message type in HTTP NTLM authentication");
             SVNErrorManager.error(err);
         }
         
@@ -715,6 +709,24 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         return "NTLM " + getResponse();
     }
 
+    public String getAuthenticationScheme(){
+        return "NTLM";
+    }
+    
+    public boolean isNative() {
+        return false;
+    }
+    
+    private long toLong(byte[] num){
+        long l = 0;
+        for (int i = 0; i < 4 ; i++) {
+            long b = num[i] & 0xff;
+            b = b << i*8;
+            l |=  b;
+        }
+        return l;
+    }
+
     private boolean isUpperCase() {
         String upperCase = System.getProperty(NTLM_CASE_CONVERTION_PROPERTY, System.getProperty(OLD_NTLM_CASE_CONVERTION_PROPERTY, "true"));
         return Boolean.valueOf(upperCase).booleanValue();
@@ -864,10 +876,6 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             key[i] = (byte) (key[i] << 1);
         }
         return key;
-    }
-
-    public String getAuthenticationScheme(){
-        return "NTLM";
     }
 
 }
