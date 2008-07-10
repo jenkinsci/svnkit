@@ -12,18 +12,20 @@
 package org.tmatesoft.svn.core.javahl;
 
 import java.io.File;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.FileHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.StreamHandler;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 
 import org.tigris.subversion.javahl.JavaHLObjectFactory;
@@ -47,15 +49,17 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         return ourInstance;
     }
 
-    public void enableLogging(int logLevel, File logPath, Formatter formatter) throws SVNException {
+    public synchronized void enableLogging(int logLevel, File logPath, Formatter formatter) throws SVNException {
         logPath = logPath.getAbsoluteFile();
         if (logLevel == SVNClientLogLevel.NoLog) {
             if (logPath == null) {
                 resetLogHandlers();
             } else {
                 Handler handler = (Handler) myHandlers.remove(logPath);
-                handler.close();
-                getLogger().removeHandler(handler);
+                if (handler != null) {
+                    handler.close();
+                    getLogger().removeHandler(handler);
+                }
             }
             return;
         }
@@ -63,14 +67,17 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         Level level = JavaHLObjectFactory.getLoggingLevel(logLevel);
         Handler handler = (Handler) myHandlers.get(logPath);
         if (handler == null) {
-            OutputStream logStream = SVNFileUtil.openFileForWriting(logPath);
-            handler = new StreamHandler(logStream, formatter);
+            try {
+                handler = new FileHandler(logPath.getAbsolutePath(), true);
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), e);
+            }
+            myHandlers.put(logPath, handler);            
         }
-        myHandlers.put(logPath, handler);
         handler.setFormatter(formatter);
         handler.setLevel(level);
         getLogger().addHandler(handler);
-    }
+    }   
 
     private void resetLogHandlers() {
         if (getLogger().getHandlers() == null) {
