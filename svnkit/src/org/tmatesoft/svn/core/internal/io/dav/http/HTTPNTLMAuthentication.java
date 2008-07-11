@@ -193,7 +193,8 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         byte[] resultBuffer = new byte[challengeBase64Bytes.length];
         int resultLength = 0;
         try {
-            resultLength = SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes, myCharset)), resultBuffer);
+            resultLength = SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes, myCharset)), 
+                    resultBuffer);
         } catch (UnsupportedEncodingException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
                     "NTLM HTTP auth: " + e.getMessage());
@@ -208,10 +209,13 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         long type = toLong(typeBytes); 
         
         if (!PROTOCOL_NAME.equalsIgnoreCase(proto)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: incorrect signature ''(0}''", proto);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                    "NTLM HTTP auth: incorrect signature ''(0}''", proto);
             SVNErrorManager.error(err);
         } else if (type != 2) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: expected type 2 message instead of ''(0, number, integer}''", new Long(type));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                    "NTLM HTTP auth: expected type 2 message instead of ''(0, number, integer}''", 
+                    new Long(type));
             SVNErrorManager.error(err);
         }
         
@@ -380,23 +384,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             SVNErrorManager.error(err);
         }
         
-        String login = getUserName();
-        String domain = null;
-        String username = null;
-
-        int slashInd = login != null ? login.indexOf('\\') : -1; 
-        if (slashInd != -1) {
-            domain = login.substring(0, slashInd);
-            int lastInd = slashInd + 1;
-            while (lastInd < login.length() && login.charAt(lastInd) == '\\') {
-                lastInd++;
-            }
-            username = login.substring(lastInd);
-        } else {
+        String username = getUserName();
+        String domain = getDomain();
+        if (domain == null) {
             domain = "";
-            username = login;
         }
-
+        
         String hostName = null;
         try {
             InetAddress localhost = InetAddress.getLocalHost();
@@ -715,6 +708,32 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     
     public boolean isNative() {
         return false;
+    }
+    
+    public String getUserName() {
+        String login = super.getUserName();
+        String userName = null;
+        int slashInd = login != null ? login.indexOf('\\') : -1; 
+        if (slashInd != -1) {
+            int lastInd = slashInd + 1;
+            while (lastInd < login.length() && login.charAt(lastInd) == '\\') {
+                lastInd++;
+            }
+            userName = login.substring(lastInd);
+        } else {
+            userName = login;
+        }
+        return userName;
+    }
+
+    public String getDomain() {
+        String login = getUserName();
+        String domain = null;
+        int slashInd = login != null ? login.indexOf('\\') : -1; 
+        if (slashInd != -1) {
+            domain = login.substring(0, slashInd);
+        } 
+        return domain;
     }
     
     private long toLong(byte[] num){

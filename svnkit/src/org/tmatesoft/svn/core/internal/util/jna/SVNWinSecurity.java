@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.util.jna.ISVNSecurityLibrary.SEC_WINNT_AU
 import org.tmatesoft.svn.core.internal.util.jna.ISVNSecurityLibrary.SecBuffer;
 import org.tmatesoft.svn.core.internal.util.jna.ISVNSecurityLibrary.SecBufferDesc;
 import org.tmatesoft.svn.core.internal.util.jna.ISVNSecurityLibrary.SecHandle;
+import org.tmatesoft.svn.core.internal.util.jna.ISVNSecurityLibrary.TimeStamp;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 import com.sun.jna.Memory;
@@ -33,6 +34,10 @@ import com.sun.jna.WString;
  */
 public class SVNWinSecurity {
 
+    public static boolean isNativeLibraryAvailable() {
+        return JNALibraryLoader.getSecurityLibrary() != null;
+    }
+    
     public static SVNNTSecurityParameters getSecurityParams(String userName, String password, 
             String ntDomain) {
         SecHandle crdHandle = getCredentialsHandle(userName, password, ntDomain);
@@ -86,17 +91,17 @@ public class SVNWinSecurity {
             newContext = pContext;
         }
         
-        byte[] outBuffer = new byte[512]; 
         SecBuffer outSecBuffer = new SecBuffer();
         outSecBuffer.cbBuffer = new NativeLong(512);
         outSecBuffer.BufferType = new NativeLong(ISVNSecurityLibrary.SECBUFFER_TOKEN);
-        outSecBuffer.pvBuffer = outBuffer;
+        outSecBuffer.pvBuffer = new Memory(512);
         outSecBuffer.write();
         
         SecBufferDesc outBufferDescription = new SecBufferDesc();
         outBufferDescription.ulVersion = new NativeLong(0);
         outBufferDescription.cBuffers = new NativeLong(1);
         outBufferDescription.pBuffers = outSecBuffer.getPointer();
+
         outBufferDescription.write();
         
         SecBufferDesc inBufferDescription = null;
@@ -105,7 +110,8 @@ public class SVNWinSecurity {
             inSecBuffer = new SecBuffer();
             inSecBuffer.cbBuffer = new NativeLong(lastToken.length);
             inSecBuffer.BufferType = new NativeLong(ISVNSecurityLibrary.SECBUFFER_TOKEN);
-            inSecBuffer.pvBuffer = lastToken; 
+            inSecBuffer.pvBuffer = new Memory(lastToken.length);
+            inSecBuffer.pvBuffer.write(0, lastToken, 0, lastToken.length);
             inSecBuffer.write();
                 
             inBufferDescription = new SecBufferDesc();
@@ -116,18 +122,23 @@ public class SVNWinSecurity {
         }
         
         Pointer contextAttributes = new Memory(NativeLong.SIZE);
-        ISVNSecurityLibrary.TimeStamp ltime = new ISVNSecurityLibrary.TimeStamp();
+        TimeStamp ltime = new TimeStamp();
         ltime.HighPart = new NativeLong(0);
         ltime.LowPart = new NativeLong(0);
         ltime.write();
         
         int securityStatus = library.InitializeSecurityContextW(params.myCrdHandle.getPointer(), 
-                pContext != null ? pContext.getPointer() : Pointer.NULL, null, new NativeLong(0), new NativeLong(0), 
-                new NativeLong(ISVNSecurityLibrary.SECURITY_NATIVE_DREP), 
-                lastToken != null ? inBufferDescription.getPointer() : Pointer.NULL, 
-                        new NativeLong(0), newContext.getPointer(), 
-                        outBufferDescription.getPointer(), contextAttributes, 
-                        ltime.getPointer());
+                pContext != null ? pContext.getPointer() : Pointer.NULL, 
+                        null, 
+                        new NativeLong(0), 
+                        new NativeLong(0), 
+                        new NativeLong(ISVNSecurityLibrary.SECURITY_NATIVE_DREP), 
+                        lastToken != null ? inBufferDescription.getPointer() : Pointer.NULL, 
+                                new NativeLong(0), 
+                                newContext.getPointer(), 
+                                outBufferDescription.getPointer(), 
+                                contextAttributes, 
+                                ltime.getPointer());
 
         if (securityStatus < 0) {
             endSequence(params, outBufferDescription);
@@ -151,9 +162,8 @@ public class SVNWinSecurity {
         byte[] result = null;
         outBufferDescription.read();
         outSecBuffer.read();
-        if (outSecBuffer.cbBuffer.longValue() > 0) {
-            result = new byte[outSecBuffer.cbBuffer.intValue()];
-            System.arraycopy(outSecBuffer.cbBuffer, 0, result, 0, result.length);
+        if (outSecBuffer.cbBuffer.intValue() > 0) {
+            result = outSecBuffer.pvBuffer.getByteArray(0, outSecBuffer.cbBuffer.intValue());
             if (lastToken != null) {
                 endSequence(params, outBufferDescription);
             }

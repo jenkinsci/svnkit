@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +27,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @version 1.1.1
@@ -103,9 +101,11 @@ abstract class HTTPAuthentication {
         myPassword = password;
     }
     
-    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse, String charset) throws SVNException {
+    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, 
+            HTTPAuthentication prevResponse, String charset) throws SVNException {
         if (authHeaderValues == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Missing HTTP authorization method"); 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Missing HTTP authorization method"); 
             SVNErrorManager.error(err);
         }
 
@@ -187,19 +187,10 @@ abstract class HTTPAuthentication {
             } else if ("NTLM".equalsIgnoreCase(method)) {
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (source.length() == 0) {
-                    try {
-                        Class nativeNTLMAuthClass = HTTPNTLMAuthentication.class.getClassLoader().loadClass("sun.net.www.protocol.http.HTTPNativeNTLMAuthentication");
-                        if (nativeNTLMAuthClass != null) {
-                            Constructor constructor = nativeNTLMAuthClass.getConstructor(new Class[] { String.class });
-                            if (constructor != null) {
-                                ntlmAuth = (HTTPNTLMAuthentication) constructor.newInstance(new Object[] { charset });
-                                ntlmAuth.parseChallenge(source);
-                            }
-                        }
-                    } catch (Throwable th) {
-                        SVNDebugLog.getDefaultLog().logFine(th.getMessage());
+                    ntlmAuth = HTTPNativeNTLMAuthentication.newInstance(charset);
+                    if (ntlmAuth != null) {
+                        ntlmAuth.parseChallenge(null);
                     }
-
                     if (ntlmAuth == null) {
                         ntlmAuth = new HTTPNTLMAuthentication(charset);
                     }

@@ -28,9 +28,9 @@ public interface ISVNSecurityLibrary extends StdCallLibrary {
     public static int SECPKG_CRED_OUTBOUND = 0x00000002;
     public static int SECURITY_NATIVE_DREP = 0x00000010;
     public static int SECBUFFER_TOKEN = 2;
-    public static long SEC_I_CONTINUE_NEEDED = 0x00090312L;
-    public static long SEC_I_COMPLETE_NEEDED = 0x00090313L;
-    public static long SEC_I_COMPLETE_AND_CONTINUE = 0x00090314L;
+    public static int SEC_I_CONTINUE_NEEDED = 0x00090312;
+    public static int SEC_I_COMPLETE_NEEDED = 0x00090313;
+    public static int SEC_I_COMPLETE_AND_CONTINUE = 0x00090314;
     
     public static class SecHandle extends Structure {
         public NativeLong dwLower;
@@ -51,7 +51,7 @@ public interface ISVNSecurityLibrary extends StdCallLibrary {
     public static class SecBuffer extends Structure {
         public NativeLong cbBuffer;
         public NativeLong BufferType;
-        public byte[] pvBuffer;
+        public Pointer pvBuffer;
     }
     
     public static class SEC_WINNT_AUTH_IDENTITY extends Structure {
@@ -73,7 +73,7 @@ public interface ISVNSecurityLibrary extends StdCallLibrary {
     public int FreeContextBuffer(Pointer pvContextBuffer);
     
     public int InitializeSecurityContextW(Pointer phCredential, Pointer phContext, 
-            String pszTargetName, NativeLong fContextReq, NativeLong Reserved1, 
+            WString pszTargetName, NativeLong fContextReq, NativeLong Reserved1, 
             NativeLong TargetDataRep, Pointer pInput, NativeLong Reserved2, Pointer phNewContext,
             Pointer pOutput, Pointer pfContextAttr, Pointer ptsExpiry);
     

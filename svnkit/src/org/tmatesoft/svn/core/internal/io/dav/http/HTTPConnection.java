@@ -287,7 +287,8 @@ class HTTPConnection implements IHTTPConnection {
         request.setResponseStream(dst);
         
         SVNErrorMessage err = null;
-
+        boolean authIsRequired = false;
+        boolean proxyAuthIsRequired = false;
         while (true) {
             HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
@@ -304,7 +305,7 @@ class HTTPConnection implements IHTTPConnection {
                     request.reset();
                     request.setProxied(myIsProxied);
                     request.setSecured(myIsSecured);                    
-                    if (myProxyAuthentication != null) {
+                    if (proxyAuthIsRequired && myProxyAuthentication != null) {
                         if (proxyAuthResponse == null) {
                             request.initCredentials(myProxyAuthentication, method, path);
                             proxyAuthResponse = myProxyAuthentication.authenticate();
@@ -312,7 +313,7 @@ class HTTPConnection implements IHTTPConnection {
                         request.setProxyAuthentication(proxyAuthResponse);
                     }
                     
-                    if (myChallengeCredentials != null) {
+                    if (authIsRequired && myChallengeCredentials != null) {
                         if (httpAuthResponse == null) {
                             request.initCredentials(myChallengeCredentials, method, path);
                             httpAuthResponse = myChallengeCredentials.authenticate();
@@ -395,6 +396,7 @@ class HTTPConnection implements IHTTPConnection {
                 close();
                 err = request.getErrorMessage();
             } else if (myIsProxied && status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                proxyAuthIsRequired = true;
                 Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
@@ -422,6 +424,7 @@ class HTTPConnection implements IHTTPConnection {
 
                 break;
             } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                authIsRequired = true;
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
@@ -535,7 +538,11 @@ class HTTPConnection implements IHTTPConnection {
                 err = request.getErrorMessage();
             } else if (request.getErrorMessage() != null) {
                 err = request.getErrorMessage();
+            } else {
+                proxyAuthIsRequired = false;
+                authIsRequired = false;
             }
+            
             if (err != null) {
                 break;
             }
