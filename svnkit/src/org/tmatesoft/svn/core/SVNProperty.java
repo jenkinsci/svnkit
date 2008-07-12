@@ -26,6 +26,8 @@ public class SVNProperty {
      * An <span class="javastring">"svn:"</span> prefix.
      */
     public static final String SVN_PREFIX = "svn:";
+    
+    public static final String SVNKIT_PREFIX = "svnkit:";
     /**
      * An <span class="javastring">"svn:wc:"</span> prefix.
      */
@@ -284,7 +286,7 @@ public class SVNProperty {
 
     public static final byte[] EOL_CR_BYTES = {'\r'};
 
-    public static final String CHARSET = SVN_PREFIX + "charset";
+    public static final String CHARSET = SVNKIT_PREFIX + "charset";
 
     public static final String NATIVE = "native";
     
