@@ -32,7 +32,6 @@ public abstract class SVNAuthenticator {
     private SVNConnection myConnection;
     private OutputStream myConnectionOutputStream;
     private InputStream myConnectionInputStream;
-    private boolean myHasTried;
     private SVNErrorMessage myLastError;
 
     protected SVNAuthenticator(SVNConnection connection) throws SVNException {
@@ -60,15 +59,7 @@ public abstract class SVNAuthenticator {
     protected SVNConnection getConnection() {
         return myConnection;
     }
-    
-    protected void onAuthAttempt() {
-        myHasTried = true;
-    }
-    
-    public boolean hasTried() {
-        return myHasTried;
-    }
-    
+
     protected SVNErrorMessage getLastError() {
         return myLastError;
     }

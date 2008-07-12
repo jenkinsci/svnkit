@@ -166,29 +166,13 @@ public class SVNConnection {
         myRealm = SVNReader.getString(items, 1);
         
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
-        if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && mechs.contains("CRAM-MD5")) {
+        if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && 
+                (mechs.contains("CRAM-MD5") || mechs.contains("DIGEST-MD5"))) {
             mechs.remove("ANONYMOUS");
         }
         
-        myAuthenticator = null;
-        if (mechs.contains("EXTERNAL")) {
-            myAuthenticator = new SVNPlainAuthenticator(this);
-            myAuthenticator.authenticate(mechs, myRealm, repository);
-        } else {
-            myAuthenticator = createSASLAuthenticator();
-            try {
-                myAuthenticator.authenticate(mechs, myRealm, repository);
-            } catch (SVNException e) {
-                if (!myAuthenticator.hasTried()) {
-                    // SASL error on initialization, could retry.
-                    myAuthenticator = new SVNPlainAuthenticator(this);
-                    myAuthenticator.authenticate(mechs, myRealm, repository);
-                } else {
-                    throw e;
-                }
-                
-            }
-        }
+        myAuthenticator = createSASLAuthenticator();
+        myAuthenticator.authenticate(mechs, myRealm, repository);
         receiveRepositoryCredentials(repository);
     }
     
