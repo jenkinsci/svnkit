@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  */
 public class SVNPlainAuthenticator extends SVNAuthenticator {
 
-    protected SVNPlainAuthenticator(SVNConnection connection) throws SVNException {
+    public SVNPlainAuthenticator(SVNConnection connection) throws SVNException {
         super(connection);
     }
 
@@ -42,14 +42,13 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
         if (authManager != null && authManager.isAuthenticationForced() && mechs.contains("ANONYMOUS") && mechs.contains("CRAM-MD5")) {
             mechs.remove("ANONYMOUS");
         }
-        onAuthAttempt();
         SVNURL location = repos.getLocation();
         SVNPasswordAuthentication auth = null;
         if (repos.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
             getConnection().write("(w(s))", new Object[]{"EXTERNAL", repos.getExternalUserName()});
             failureReason = readAuthResponse();
         } else if (mechs.contains("ANONYMOUS")) {
-            getConnection().write("(w())", new Object[]{"ANONYMOUS"});
+            getConnection().write("(w(s))", new Object[]{"ANONYMOUS", ""});
             failureReason = readAuthResponse();
         } else if (mechs.contains("CRAM-MD5")) {
             while (true) {
@@ -127,7 +126,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
             return null;
         } else if (SVNAuthenticator.FAILURE.equals(SVNReader.getString(items, 0))) {
             return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication error from server: {0}", SVNReader.getString(items, 1));
-        }
+        } 
         return SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
     }
 
