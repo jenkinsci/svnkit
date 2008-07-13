@@ -46,6 +46,7 @@ public abstract class FSRoot {
     }
 
     public FSRevisionNode getRevisionNode(String path) throws SVNException {
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
         FSRevisionNode node = fetchRevNodeFromCache(path);
         if (node == null) {
             FSParentPath parentPath = openPath(path, true, false);
@@ -68,7 +69,7 @@ public abstract class FSRoot {
             SVNErrorManager.error(err);
         }
         
-        String canonPath = path;
+        String canonPath = SVNPathUtil.canonicalizeAbsolutePath(path);
         FSRevisionNode here = getRootRevisionNode();
         String pathSoFar = "/";
 

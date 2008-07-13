@@ -61,10 +61,8 @@ public class FSRevisionRoot extends FSRoot {
         if (kind == SVNNodeKind.NONE) {
             SVNErrorManager.error(FSErrors.errorNotFound(this, path));
         }
-        return new FSNodeHistory(new SVNLocationEntry(getRevision(), path), 
-                                 false, 
-                                 new SVNLocationEntry(SVNRepository.INVALID_REVISION, null),
-                                 getOwner());
+        return new FSNodeHistory(new SVNLocationEntry(getRevision(), SVNPathUtil.canonicalizeAbsolutePath(path)), 
+                false, new SVNLocationEntry(SVNRepository.INVALID_REVISION, null), getOwner());
     }
 
     public FSClosestCopy getClosestCopy(String path) throws SVNException {
@@ -138,6 +136,7 @@ public class FSRevisionRoot extends FSRoot {
     }
 
     public long getNodeOriginRevision(String path) throws SVNException {
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
         FSRevisionNode node = getRevisionNode(path);
         String nodeID = node.getId().getNodeID();
         FSFS fsfs = getOwner();

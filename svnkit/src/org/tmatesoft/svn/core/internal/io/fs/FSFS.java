@@ -999,6 +999,8 @@ public class FSFS {
     }
     
     public SVNLock getLock(String repositoryPath, boolean haveWriteLock) throws SVNException {
+        repositoryPath = SVNPathUtil.canonicalizeAbsolutePath(repositoryPath);
+        
         SVNLock lock = fetchLockFromDigestFile(null, repositoryPath, null);
         
         if (lock == null) {
@@ -1150,6 +1152,7 @@ public class FSFS {
     }
 
     public String getDigestFromRepositoryPath(String repositoryPath) throws SVNException {
+        repositoryPath = SVNPathUtil.canonicalizeAbsolutePath(repositoryPath);
         MessageDigest digestFromPath = null;
         try {
             digestFromPath = MessageDigest.getInstance("MD5");
@@ -1165,6 +1168,8 @@ public class FSFS {
     }
 
     public void unlockPath(String path, String token, String username, boolean breakLock, boolean enableHooks) throws SVNException {
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
+        
         String[] paths = {path};
 
         if (!breakLock && username == null) {
@@ -1199,6 +1204,8 @@ public class FSFS {
     }
 
     public SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock) throws SVNException {
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
+        
         String[] paths = { path };
         
         if (username == null) {
