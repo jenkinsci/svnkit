@@ -15,7 +15,6 @@ package org.tmatesoft.svn.core;
 import java.util.Date;
 
 
-
 /**
  * The <b>SVNDirEntry</b> class is a representation of a versioned 
  * directory entry.
@@ -27,19 +26,57 @@ import java.util.Date;
  * commit log message for the last changed revision. <b>SVNDirEntry</b> also knows 
  * if the entry has any properties. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see 	ISVNDirEntryHandler
  */
 public class SVNDirEntry implements Comparable {
-
+    
+    /**
+     * It is sometimes convenient to indicate which parts of an entry
+     * you are actually interested in, so that calculating and sending
+     * the data corresponding to the other fields can be avoided.  These values
+     * can be used for that purpose.
+    */
+    
+    /**
+     * Represents entry kind (if it is a file or a directory).
+     */
     public static final int DIRENT_KIND = 0x00001;
+    
+    /**
+     * Represents file size (if the entry is a file).
+     */
     public static final int DIRENT_SIZE = 0x00002;
+    
+    /**
+     * Contains the information whether the entry has any properties.
+     */
     public static final int DIRENT_HAS_PROPERTIES = 0x00004;
+    
+    /**
+     * Represents the last revision when the entry was changed.
+     */
     public static final int DIRENT_CREATED_REVISION = 0x00008;
+    
+    /**
+     * Represents the time of the last changed revision.
+     */
     public static final int DIRENT_TIME = 0x00010;
+    
+    /**
+     * Represents the author of the last changed revision.
+     */
     public static final int DIRENT_LAST_AUTHOR = 0x00020;
+    
+    /**
+     * Represents commit log message for the last changed revision.
+     */
     public static final int DIRENT_COMMIT_MESSAGE = 0x00040;
+    
+    /**
+     * Represents a combination of all the entry fields.
+     */
     public static final int DIRENT_ALL = ~0;
 
     private String myName;
@@ -212,7 +249,7 @@ public class SVNDirEntry implements Comparable {
      * 
      * <p>
      * This method is guaranteed to return a non-<span class="javakeyword">null</span> path only 
-     * for {@link org.tmatesoft.svn.core.wc.SVNLogClient#doList(java.io.File, org.tmatesoft.svn.core.wc.SVNRevision, org.tmatesoft.svn.core.wc.SVNRevision, boolean, SVNDepth, ISVNDirEntryHandler) list} 
+     * for {@link org.tmatesoft.svn.core.wc.SVNLogClient#doList(java.io.File, org.tmatesoft.svn.core.wc.SVNRevision, org.tmatesoft.svn.core.wc.SVNRevision, boolean, SVNDepth, int, ISVNDirEntryHandler) list} 
      * operations. It always returns a path relative to the target location which a list 
      * operation is launched on. When listing a directory the relative path for the target 
      * directory itself is <code>""</code>, for its children - just their names, for deeper 

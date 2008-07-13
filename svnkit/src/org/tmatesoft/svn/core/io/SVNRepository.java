@@ -30,6 +30,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -2006,7 +2007,22 @@ public abstract class SVNRepository {
      * @throws SVNException  if some i/o error has occurred
      */
     public abstract void closeSession();
-    
+  
+    /**
+     * Returns <code>true</code> if the repository has specified <code>capability</code>.
+     * 
+     * This method may need to establish connection with the repository if information on capabilities 
+     * has not been received yet from the repository.
+     * 
+     * @param capability one of {@link SVNCapability}
+     * @return boolean if the repository has specified capability
+     * 
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+     * 
+     * @since SVNKit 1.2.0, SVN 1.5.0
+     * @see   SVNCapability
+     */
     public abstract boolean hasCapability(SVNCapability capability) throws SVNException;
 
     /**
