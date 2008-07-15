@@ -566,7 +566,8 @@ public class PythonTests {
         }
         
         String config = new String(contents);
-        config = config.replaceAll("%root%", props.getProperty("apache.root"));
+        String root = props.getProperty("apache.root");
+        config = config.replaceAll("%root%", root);
         config = config.replaceAll("%port%", port + "");
         String path = getRepositoryRoot(props);
         config = config.replaceAll("%repository.root%", path);
@@ -577,6 +578,8 @@ public class PythonTests {
         config = config.replaceAll("%python.tests%", pythonTests);
         String apacheOptions = props.getProperty("apache.options", "");
         config = config.replaceAll("%apache.options%", apacheOptions);
+        String apacheModules = props.getProperty("apache.svn.modules", root + "/modules");
+        config = config.replaceAll("%apache.svn.modules%", apacheModules);
         
         FileOutputStream os = new FileOutputStream(destination);
         os.write(config.getBytes());
