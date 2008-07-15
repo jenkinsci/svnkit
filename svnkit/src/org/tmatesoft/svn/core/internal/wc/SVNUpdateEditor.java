@@ -193,7 +193,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(name), kind, null, 
                 SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_DELETE, null, null, null);
         event.setPreviousRevision(previousRevision);
-        event.setURL(url);
+        event.setPreviousURL(url);
         myWCAccess.handleEvent(event);
     }
 
@@ -324,7 +324,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     SVNNodeKind.DIR, null, myTargetRevision, myCurrentDirectory.isExisted ? 
                             SVNEventAction.UPDATE_EXISTS : SVNEventAction.UPDATE_ADD, null, null, null);
             event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
-            event.setURL(entry.getSVNURL());
+            event.setPreviousURL(entry.getSVNURL());
+            event.setURL(myCurrentDirectory.URL != null ? SVNURL.parseURIEncoded(myCurrentDirectory.URL) : null);
             myWCAccess.handleEvent(event);
         }
     }
@@ -503,7 +504,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
                 SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getRoot(), SVNNodeKind.DIR, null, myTargetRevision, SVNStatusType.UNKNOWN, propStatus, null, action, null, null, null);
                 event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
-	            event.setURL(myCurrentDirectory.URL != null ? SVNURL.parseURIEncoded(myCurrentDirectory.URL) : null); 
+	            event.setURL(myCurrentDirectory.URL != null ? SVNURL.parseURIEncoded(myCurrentDirectory.URL) : null);
                 myWCAccess.handleEvent(event);
             }
         }
@@ -1314,7 +1315,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
             SVNEvent event = SVNEventFactory.createSVNEvent(adminArea.getFile(fileInfo.Name), SVNNodeKind.FILE,  null, myTargetRevision, textStatus, propStatus, lockStatus, action, null, null, null);
             event.setPreviousRevision(previousRevision);
-	        event.setURL(previousURL);
+	        event.setPreviousURL(previousURL);
+	        event.setURL(fileInfo.URL != null ? SVNURL.parseURIEncoded(fileInfo.URL) : null);
             myWCAccess.handleEvent(event);
         }
     }
