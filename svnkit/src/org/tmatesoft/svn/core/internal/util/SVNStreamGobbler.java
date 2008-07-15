@@ -24,9 +24,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @author  TMate Software Ltd.
  */
 public class SVNStreamGobbler extends Thread {
-    InputStreamReader is;
-    StringBuffer result;
-    IOException error;
+
+    private InputStreamReader is;
+    private final StringBuffer result = new StringBuffer();
+    private IOException error;
+    private boolean myIsEOF;
     private boolean myIsClosed;
 
     public SVNStreamGobbler(InputStream is) {
@@ -34,14 +36,6 @@ public class SVNStreamGobbler extends Thread {
             this.is = new InputStreamReader(is, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             this.is = new InputStreamReader(is);
-        }
-        result = new StringBuffer();
-    }
-    
-    public void close() {
-        synchronized (result) {
-            myIsClosed = true;
-            SVNFileUtil.closeFile(is);
         }
     }
 
@@ -64,9 +58,28 @@ public class SVNStreamGobbler extends Thread {
                     break;
                 }
             }
-            if (!myIsClosed) {
-                SVNFileUtil.closeFile(is);
+            myIsEOF = true;
+            result.notifyAll();
+        }
+    }
+
+    public void waitFor() {
+        synchronized (result) {
+            while (!myIsEOF) {
+                try {
+                    result.wait();
+                } catch (InterruptedException e) {                    
+                }
             }
+        }
+    }
+
+    public void close() {
+        synchronized (result) {
+            myIsEOF = true;
+            result.notifyAll();
+            myIsClosed = true;
+            SVNFileUtil.closeFile(is);
         }
     }
 
