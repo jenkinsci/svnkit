@@ -76,7 +76,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
     private SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions, 
             boolean depthIsSticky, SVNDepth depth, String[] preservedExtensions, String targetURL, 
-            String rootURL, ISVNFileFetcher fileFetcher) {
+            String rootURL, ISVNFileFetcher fileFetcher) throws SVNException {
         myAdminInfo = info;
         myWCAccess = info.getWCAccess();
         myIsUnversionedObstructionsAllowed = allowUnversionedObstructions;
@@ -1344,7 +1344,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     private SVNDirectoryInfo createDirectoryInfo(SVNDirectoryInfo parent, String path, 
-            boolean added) {
+            boolean added) throws SVNException {
         SVNDirectoryInfo info = new SVNDirectoryInfo(path);
         info.Parent = parent;
         info.IsAdded = added;

@@ -50,6 +50,10 @@ public class SVNPathUtil {
         }
     };
 
+    public static boolean isCanonical(String path) {
+        return (path != null && path.equals(canonicalizePath(path)));
+    }
+    
     public static void checkPathIsValid(String path) throws SVNException {
         for (int i = 0; i < path.length(); i++) {
             char ch = path.charAt(i);
@@ -204,9 +208,22 @@ public class SVNPathUtil {
         return canonicalizedPath.toString();
     }
     
-    public static String append(String f, String s) {
+    public static String append(String f, String s) throws SVNException {
         f = f == null ? "" : f;
         s = s == null ? "" : s;
+        
+        if (!isCanonical(f)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed in  SVNPathUtil.append(): path ''{0}'' is not canonical", f);
+            SVNErrorManager.error(err);
+        }
+
+        if (!isCanonical(s)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed in SVNPathUtil.append(): path ''{0}'' is not canonical", s);
+            SVNErrorManager.error(err);
+        }
+        
         int l1 = f.length();
         int l2 = s.length();
         char[] r = new char[l1 + l2 + 2];
@@ -244,7 +261,13 @@ public class SVNPathUtil {
         return true;
     }
 
-    public static String head(String path) {
+    public static String head(String path) throws SVNException {
+        if (!isCanonical(path)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed in SVNPathUtil.head(): path ''{0}'' is not canonical", path);
+            SVNErrorManager.error(err);
+        }
+        
         for (int i = 0; i < path.length(); i++) {
             if (path.charAt(i) == '/') {
                 return path.substring(0, i);
@@ -253,7 +276,13 @@ public class SVNPathUtil {
         return path;
     }
 
-    public static String removeHead(String path) {
+    public static String removeHead(String path) throws SVNException {
+        if (!isCanonical(path)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed in SVNPathUtil.removeHead(): path ''{0}'' is not canonical", path);
+            SVNErrorManager.error(err);
+        }
+        
         for (int i = 0; i < path.length(); i++) {
             if (path.charAt(i) == '/') {
                 int ind = i;
@@ -269,7 +298,13 @@ public class SVNPathUtil {
         return "";
     }
 
-    public static String tail(String path) {
+    public static String tail(String path) throws SVNException {
+        if (!isCanonical(path)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed in SVNPathUtil.tail(): path ''{0}'' is not canonical", path);
+            SVNErrorManager.error(err);
+        }
+        
         int index = path.length() - 1;
         if (index >= 0 && index < path.length() && path.charAt(index) == '/') {
             index--;
@@ -282,7 +317,13 @@ public class SVNPathUtil {
         return path;
     }
 
-    public static String removeTail(String path) {
+    public static String removeTail(String path) throws SVNException {
+        if (!isCanonical(path)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed in SVNPathUtil.removeTail(): path ''{0}'' is not canonical", path);
+            SVNErrorManager.error(err);
+        }
+        
         int index = path.length() - 1;
         while (index >= 0) {
             if (path.charAt(index) == '/') {

@@ -134,7 +134,7 @@ public class SVNFileUtil {
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
     }
     
-    public static File getParentFile(File file) {
+    public static File getParentFile(File file) throws SVNException {
         String path = file.getAbsolutePath();
         path = path.replace(File.separatorChar, '/');
         path = SVNPathUtil.canonicalizePath(path);

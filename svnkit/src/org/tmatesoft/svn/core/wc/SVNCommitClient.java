@@ -1214,7 +1214,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return true;
     }
 
-    private static boolean hasProcessedParents(Collection paths, String path) {
+    private static boolean hasProcessedParents(Collection paths, String path) throws SVNException {
         path = SVNPathUtil.removeTail(path);
         if (paths.contains(path)) {
             return true;

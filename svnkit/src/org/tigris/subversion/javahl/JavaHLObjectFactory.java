@@ -578,7 +578,7 @@ public class JavaHLObjectFactory {
                 svnLock.getExpirationDate() != null ? svnLock.getExpirationDate().getTime() * 1000 : 0);
     }
 
-    public static Info createInfo(SVNInfo info) {
+    public static Info createInfo(SVNInfo info) throws SVNException {
         if(info == null){
             return null;
         }

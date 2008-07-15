@@ -117,7 +117,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         }
     }
     
-    protected void printInfo(SVNInfo info) {
+    protected void printInfo(SVNInfo info) throws SVNException {
         StringBuffer buffer = new StringBuffer();
         String path = null;
         if (info.getFile() != null) {

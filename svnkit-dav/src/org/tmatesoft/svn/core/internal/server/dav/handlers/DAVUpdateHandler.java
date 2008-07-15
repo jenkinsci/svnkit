@@ -369,7 +369,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         setEntryStartEmpty(false);
     }
 
-    private String getRealPath(String path) {
+    private String getRealPath(String path) throws SVNException {
         path = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(getAnchor(), path));
         if (getPathMap().isEmpty()) {
             return path;

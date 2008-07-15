@@ -1455,7 +1455,7 @@ public class FSFS {
         return rootPath;
     }
 
-    public static String findRepositoryRoot(String host, String path) {
+    public static String findRepositoryRoot(String host, String path) throws SVNException {
         if (path == null) {
             path = "";
         }

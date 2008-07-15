@@ -93,7 +93,7 @@ public class FSParentPath {
         return SVNPathUtil.getAbsolutePath(SVNPathUtil.append(pathSoFar, getEntryName()));
     }
     
-    public String getRelativePath(FSParentPath ancestor) {
+    public String getRelativePath(FSParentPath ancestor) throws SVNException {
         String pathSoFar = "";
         FSParentPath thisNode = this;
         while (thisNode != ancestor) {
