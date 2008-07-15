@@ -455,7 +455,7 @@ public class SVNNodeEditor implements ISVNEditor {
         return new SVNLocationEntry(-1, "/");
     }
 
-    private Node addOrOpen(String path, char action, SVNNodeKind kind, Node parent, String copyFromPath, long copyFromRevision) throws SVNException {
+    private Node addOrOpen(String path, char action, SVNNodeKind kind, Node parent, String copyFromPath, long copyFromRevision) {
         if (parent.myChildren == null) {
             parent.myChildren = new LinkedList();
         }

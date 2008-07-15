@@ -568,7 +568,7 @@ public class SVNDiffEditor implements ISVNEditor {
         return info;
     }
 
-    private SVNFileInfo createFileInfo(SVNDirectoryInfo parent, String path, boolean added) throws SVNException {
+    private SVNFileInfo createFileInfo(SVNDirectoryInfo parent, String path, boolean added) {
         SVNFileInfo info = new SVNFileInfo();
         info.myPath = path;
         info.myIsAdded = added;

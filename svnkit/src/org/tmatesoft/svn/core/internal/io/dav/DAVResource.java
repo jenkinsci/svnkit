@@ -41,11 +41,11 @@ class DAVResource {
     private SVNProperties myProperties;
     private boolean myIsAdded;
 
-    public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision) throws SVNException {
+    public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision) {
         this(mediator, connection, path, revision, false);
     }
     
-    public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision, boolean isCopy) throws SVNException {
+    public DAVResource(ISVNWorkspaceMediator mediator, DAVConnection connection, String path, long revision, boolean isCopy) {
         myPath = path;
         myMediator = mediator;
         String locationPath = SVNEncodingUtil.uriEncode(connection.getLocation().getPath());

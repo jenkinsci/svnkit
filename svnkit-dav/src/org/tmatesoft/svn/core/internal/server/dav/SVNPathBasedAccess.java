@@ -186,7 +186,7 @@ public class SVNPathBasedAccess {
         return myRules;
     }
 
-    public boolean checkAccess(String repository, String path, String user, int access) throws SVNException {
+    public boolean checkAccess(String repository, String path, String user, int access) {
         RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(repository);
         if (repositoryAccess == null) {
             repositoryAccess = (SVNPathBasedAccess.RepositoryAccess) getRules().get(ANONYMOUS_REPOSITORY);
@@ -494,7 +494,7 @@ public class SVNPathBasedAccess {
             }
         }
 
-        private boolean checkPathAccess(String path, String user, int requestedAccess) throws SVNException {
+        private boolean checkPathAccess(String path, String user, int requestedAccess) {
             boolean accessGranted = false;
             if (path == null || path.length() == 0 || "/".equals(path)) {
                 if (myGlobalAccess != null) {

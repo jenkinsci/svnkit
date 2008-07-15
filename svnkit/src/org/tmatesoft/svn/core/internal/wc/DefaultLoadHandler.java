@@ -497,7 +497,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         return mergeInfo;
     }
     
-    private Map prefixMergeInfoPaths(Map mergeInfo) throws SVNException {
+    private Map prefixMergeInfoPaths(Map mergeInfo) {
         Map prefixedMergeInfo = new TreeMap();
         for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
             String mergeSource = (String) mergeInfoIter.next();

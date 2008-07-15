@@ -454,7 +454,7 @@ public class SVNTranslator {
         return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
     }
 
-    public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) throws SVNException {
+    public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
         if (keywords == null) {
             return Collections.EMPTY_MAP;
         }

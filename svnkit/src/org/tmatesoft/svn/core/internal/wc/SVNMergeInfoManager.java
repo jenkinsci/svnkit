@@ -160,7 +160,7 @@ public class SVNMergeInfoManager {
         return mergeInfo;
     }
     
-    private Map appendToMergedFroms(Map mergeInfo, String pathComponent) throws SVNException {
+    private Map appendToMergedFroms(Map mergeInfo, String pathComponent) {
         Map result = new TreeMap(); 
         for (Iterator pathsIter = mergeInfo.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();

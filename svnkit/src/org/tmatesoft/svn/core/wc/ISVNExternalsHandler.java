@@ -23,9 +23,11 @@ import org.tmatesoft.svn.core.SVNURL;
 public interface ISVNExternalsHandler {
     
     public static final ISVNExternalsHandler DEFAULT = new ISVNExternalsHandler() {
-        public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, SVNRevision externalPegRevision) {
-            return new SVNRevision[] {externalRevision, externalPegRevision};
+        public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, 
+                SVNRevision externalPegRevision, String externalsDefinition, SVNRevision externalsWorkingRevision) {
+            return new SVNRevision[] { externalRevision, externalPegRevision };
         }
+
     };
     
     /**
@@ -37,5 +39,7 @@ public interface ISVNExternalsHandler {
      * @return array of SVNRevision in form {revision, pegRevision} or null to skip processing 
      * of this external.
      */
-    public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, SVNRevision externalPegRevision);
+    public SVNRevision[] handleExternal(File externalPath, SVNURL externalURL, SVNRevision externalRevision, 
+            SVNRevision externalPegRevision, String externalsDefinition, SVNRevision externalsWorkingRevision);
+
 }

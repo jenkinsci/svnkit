@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -63,7 +62,7 @@ public class SVNCopySource {
         return myURL != null;
     }
     
-    public String getName() throws SVNException {
+    public String getName() {
         if (isURL()) {
             return SVNPathUtil.tail(myURL.getPath());
         } 

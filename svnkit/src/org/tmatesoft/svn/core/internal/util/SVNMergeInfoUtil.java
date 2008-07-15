@@ -77,7 +77,7 @@ public class SVNMergeInfoUtil {
 	    return adjustedMergeInfoCatalog;
 	}
 	
-    public static Map adjustMergeInfoSourcePaths(Map mergeInfo, String walkPath, Map wcMergeInfo) throws SVNException {
+    public static Map adjustMergeInfoSourcePaths(Map mergeInfo, String walkPath, Map wcMergeInfo) {
         mergeInfo = mergeInfo == null ? new TreeMap() : mergeInfo;
 		for (Iterator paths = wcMergeInfo.keySet().iterator(); paths.hasNext();) {
             String srcMergePath = (String) paths.next();
@@ -263,7 +263,7 @@ public class SVNMergeInfoUtil {
         return result;
     }
 
-    public static boolean shouldElideMergeInfo(Map parentMergeInfo, Map childMergeInfo, String pathSuffix) throws SVNException {
+    public static boolean shouldElideMergeInfo(Map parentMergeInfo, Map childMergeInfo, String pathSuffix) {
         boolean elides = false;
         if (childMergeInfo != null) {
             if (childMergeInfo.isEmpty()) {

@@ -387,7 +387,7 @@ public class FSCommitEditor implements ISVNEditor {
         return info;
     }
 
-    private void releaseLocks() throws SVNException {
+    private void releaseLocks() {
         if (myPathsToLockTokens != null) {
             for (Iterator paths = myPathsToLockTokens.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();

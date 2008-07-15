@@ -114,6 +114,8 @@ public class SVNCopyClient extends SVNBasicClient {
 
     private ISVNCommitHandler myCommitHandler;
     private ISVNCommitParameters myCommitParameters;
+    private ISVNExternalsHandler myExternalsHandler;
+
     /**
      * Constructs and initializes an <b>SVNCopyClient</b> object
      * with the specified run-time configuration and authentication 
@@ -145,7 +147,6 @@ public class SVNCopyClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
     
-
     /**
      * Sets an implementation of <b>ISVNCommitHandler</b> to 
      * the commit handler that will be used during commit operations to handle 
@@ -213,6 +214,17 @@ public class SVNCopyClient extends SVNBasicClient {
             myCommitParameters = new DefaultSVNCommitParameters();
         }
        return myCommitParameters;
+    }
+
+    public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
+        myExternalsHandler = externalsHandler;
+    }
+
+    public ISVNExternalsHandler getExternalsHandler() {
+        if (myExternalsHandler == null) {
+            myExternalsHandler = ISVNExternalsHandler.DEFAULT;
+        }
+        return myExternalsHandler;
     }
 
     public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, 
@@ -655,10 +667,6 @@ public class SVNCopyClient extends SVNBasicClient {
                         newExternals.clear();
                         for (int k = 0; k < externals.length; k++) {
                             if (!externals[k].isRevisionExplicit()) {
-                                if (!introduceVirtualExternalChange) {
-                                    introduceVirtualExternalChange = true;
-                                }
-                                
                                 File externalWC = new File(localPath, externals[k].getPath());
                                 SVNEntry externalEntry = null;
                                 try {
@@ -677,11 +685,25 @@ public class SVNCopyClient extends SVNBasicClient {
                                 }
                                 
                                 long externalCurrentRevision = externalEntry.getRevision();
-                                SVNExternal newExternal = new SVNExternal(externals[k].getPath(), 
-                                        externals[k].getUnresolvedUrl(), externals[k].getPegRevision(), 
-                                        SVNRevision.create(externalCurrentRevision), true, 
-                                        externals[k].isPegRevisionExplicit(), externals[k].isNewFormat());
-                                newExternals.add(newExternal.toString());
+                                SVNRevision externalsWCRevision = SVNRevision.create(externalCurrentRevision);
+                                SVNRevision[] revs = getExternalsHandler().handleExternal(externalWC, 
+                                        externals[k].resolveURL(repos.getRepositoryRoot(true), 
+                                                externalEntry.getSVNURL()), externals[k].getRevision(), 
+                                                externals[k].getPegRevision(), externals[k].getRawValue(), 
+                                                externalsWCRevision);
+                                if (revs == null) {
+                                    newExternals.add(externals[k].getRawValue());
+                                } else {
+                                    SVNExternal newExternal = new SVNExternal(externals[k].getPath(), 
+                                            externals[k].getUnresolvedUrl(), externals[k].getPegRevision(), 
+                                            externalsWCRevision, true, externals[k].isPegRevisionExplicit(), 
+                                            externals[k].isNewFormat());
+                                    newExternals.add(newExternal.toString()); 
+
+                                    if (!introduceVirtualExternalChange) {
+                                        introduceVirtualExternalChange = true;
+                                    }
+                                }
                             } else {
                                 newExternals.add(externals[k].getRawValue());
                             }
