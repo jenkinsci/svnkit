@@ -137,7 +137,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * To authenticate a user over network <b>SVNRepository</b> drivers use
  * <b>ISVNAuthenticationManager</b> auth drivers.
  * 
- * @version     1.1.1
+ * @version     1.2.0
  * @author      TMate Software Ltd.
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
@@ -267,7 +267,8 @@ public abstract class SVNRepository {
      *                            this driver to test a connection - try to access a 
      *                            repository 
      * @return  the UUID of a repository
-     * @throws SVNException
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      */
     public String getRepositoryUUID(boolean forceConnection) throws SVNException {
         if (forceConnection && myRepositoryUUID == null) {
@@ -297,12 +298,16 @@ public abstract class SVNRepository {
      * If this driver object is switched to a different repository location during
      * runtime (probably to an absolutely different repository, see {@link #setLocation(SVNURL, boolean) setLocation()}), 
      * the root directory location may be changed. 
+     
+     * This method may need to establish connection with the repository 
+     * if the information on the repository's root location has not been received yet from the repository.
      * 
      * @param   forceConnection   if <span class="javakeyword">true</span> then forces
      *                            this driver to test a connection - try to access a 
      *                            repository 
      * @return                    the repository root directory location url
-     * @throws  SVNException
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      * @see                       #testConnection()
      */
     public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
@@ -565,6 +570,32 @@ public abstract class SVNRepository {
     /**
      * Fetches the contents and/or properties of a directory located at the specified path
      * in a particular revision. 
+     * <p>
+     * This method is the same as {@link #getDir(String, long, SVNProperties, int, ISVNDirEntryHandler)} 
+     * with <code>entryFields</code> parameter set to <code>DIRENT_ALL</code>.
+     * 
+     * @param  path 		a directory path   
+     * @param  revision 	a directory revision 
+     * @param  properties 	a directory properties receiver map
+     * @param  handler 		a handler to process directory entries
+     * @return 				the revision of the directory
+     * @throws SVNException	in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>revision</code>
+     * 						<li><code>path</code> is not a directory
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see 				#getDir(String, long, boolean, Collection)
+     * @see                 #getDir(String, long, SVNProperties, int, Collection)
+     * @see                 org.tmatesoft.svn.core.SVNDirEntry
+     */
+    public abstract long getDir(String path, long revision, SVNProperties properties, ISVNDirEntryHandler handler) throws SVNException;
+    
+    /**
+     * Fetches the contents and/or properties of a directory located at the specified path
+     * in a particular revision with the possibility to specify fields of the entry to fetch. 
      * 
      * <p>
      * If <code>handler</code> arg is not <span class="javakeyword">null</span> it 
@@ -588,24 +619,24 @@ public abstract class SVNRepository {
      * <b>NOTE:</b> you may not invoke operation methods of this <b>SVNRepository</b>
      * object from within the provided <code>handler</code>.
      * 
-     * @param  path 		a directory path   
-     * @param  revision 	a directory revision 
-     * @param  properties 	a directory properties receiver map
-     * @param  handler 		a handler to process directory entries
-     * @return 				the revision of the directory
-     * @throws SVNException	in the following cases:
+     * @param  path         a directory path   
+     * @param  revision     a directory revision 
+     * @param  properties   a directory properties receiver map
+     * @param  entryFields  a combination of fields for the entry
+     * @param  handler      a handler to process directory entries
+     * @return              the revision of the directory
+     * @throws SVNException in the following cases:
      *                      <ul>
      *                      <li><code>path</code> not found in the specified <code>revision</code>
-     * 						<li><code>path</code> is not a directory
+     *                      <li><code>path</code> is not a directory
      *                      <li>a failure occured while connecting to a repository 
      *                      <li>the user authentication failed 
      *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                      </ul>
-     * @see 				#getDir(String, long, Map, Collection)
      * @see                 #getDir(String, long, boolean, Collection)
+     * @see                 #getDir(String, long, SVNProperties, int, Collection)
      * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
-    public abstract long getDir(String path, long revision, SVNProperties properties, ISVNDirEntryHandler handler) throws SVNException;
 
     public abstract long getDir(String path, long revision, SVNProperties properties, int entryFields, ISVNDirEntryHandler handler) throws SVNException; 
 
@@ -999,7 +1030,9 @@ public abstract class SVNRepository {
      * Fetches the contents and properties of a directory located at the specified path
      * in a particular revision. Information of each directory 
      * entry is represented by a single <b>SVNDirEntry</b> object.
-     *
+     * <p>
+     * This method is the same as {@link #getDir(String, long, SVNProperties, int, Collection)} with 
+     * <code>entryFields</code> parameter set to <code>DIRENT_ALL</code>.
      * <p>
      * The <code>path</code> arg can be both relative to the location of 
      * this driver and absolute to the repository root (starts with <code>"/"</code>).
@@ -1021,7 +1054,7 @@ public abstract class SVNRepository {
      *                      <li>the user authentication failed 
      *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                      </ul>
-     * @see                 #getDir(String, long, Map, ISVNDirEntryHandler)
+     * @see                 #getDir(String, long, SVNProperties, int, Collection)
      * @see                 #getDir(String, long, boolean, Collection)
      * @see                 org.tmatesoft.svn.core.SVNDirEntry
      */
@@ -1029,6 +1062,37 @@ public abstract class SVNRepository {
         return getDir(path, revision, properties, SVNDirEntry.DIRENT_ALL, dirEntries);
     }
 
+    /**
+     * Fetches the contents and properties of a directory located at the specified path
+     * in a particular revision with the possibility to specify fields of the entry to fetch.
+     * Information of each directory entry is represented by a single <b>SVNDirEntry</b> object.
+     *
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * @param  path         a directory path   
+     * @param  revision     a revision number 
+     * @param  properties   if not <span class="javakeyword">null</span> then all
+     *                      directory properties (including non-tweakable ones)
+     *                      will be put into this map (where keys are property names
+     *                      and mappings are property values)
+     * @param  entryFields  a combination of fields for the entry
+     * @param  dirEntries   if not <span class="javakeyword">null</span> then this
+     *                      collection receives fetched dir entries (<b>SVNDirEntry</b> objects)
+     * @return              a collection containing fetched directory entries (<b>SVNDirEntry</b> objects)
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li><code>path</code> not found in the specified <code>revision</code>
+     *                      <li><code>path</code> is not a directory
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #getDir(String, long, SVNProperties, int, Collection)
+     * @see                 #getDir(String, long, boolean, Collection)
+     * @see                 org.tmatesoft.svn.core.SVNDirEntry
+     */
     public Collection getDir(String path, long revision, SVNProperties properties, int entryFields, Collection dirEntries) throws SVNException {
         final Collection result = dirEntries != null ? dirEntries : new LinkedList();
         ISVNDirEntryHandler handler;
@@ -1070,8 +1134,8 @@ public abstract class SVNRepository {
      *                                 <li>the user authentication failed 
      *                                 (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                                 </ul>
-     * @see                            #getDir(String, long, Map, ISVNDirEntryHandler)
-     * @see                            #getDir(String, long, Map, Collection)
+     * @see                            #getDir(String, long, SVNProperties, ISVNDirEntryHandler)
+     * @see                            #getDir(String, long, SVNProperties, Collection)
      * @see                            org.tmatesoft.svn.core.SVNDirEntry
      */
     public abstract SVNDirEntry getDir(String path, long revision, boolean includeCommitMessages, Collection entries) throws SVNException;
@@ -1668,7 +1732,8 @@ public abstract class SVNRepository {
      * @param  sendDeltas      controls whether text and property changes are to be
      *                         sent
      * @param  editor          a commit editor to receive changes 
-     * @throws SVNException
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      * @since  1.1, new in SVN 1.4
      */
     public abstract void replay(long lowRevision, long revision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
@@ -2003,8 +2068,6 @@ public abstract class SVNRepository {
      * this object.    
      * If this driver object keeps a single connection for 
      * all the data i/o, this method helps to reset the connection.
-     * 
-     * @throws SVNException  if some i/o error has occurred
      */
     public abstract void closeSession();
   
@@ -2162,7 +2225,8 @@ public abstract class SVNRepository {
      * @param  relativePath a path relative to the location to which
      *                      this <b>SVNRepository</b> is set
      * @return              a path relative to the repository root
-     * @throws SVNException             
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems            
      */
     public String getRepositoryPath(String relativePath) throws SVNException {
         if (relativePath == null) {
@@ -2187,7 +2251,8 @@ public abstract class SVNRepository {
      * @param  relativeOrRepositoryPath a relative path within the
      *                                  repository 
      * @return                          a path relative to the host
-     * @throws SVNException
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      */
     public String getFullPath(String relativeOrRepositoryPath) throws SVNException {
         if (relativeOrRepositoryPath == null) {
