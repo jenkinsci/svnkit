@@ -87,7 +87,8 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 try {
                     if (tryAuthentication()) {
                         if (myAuthenticationManager != null && myAuthentication != null) {
-                            myAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realm, null, myAuthentication);
+                            String realmName = getFullRealmName(repository.getLocation(), realm);
+                            myAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realmName, null, myAuthentication);
                         }
                         failed = false;
                         setLastError(null);
@@ -103,7 +104,8 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                         error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED);
                         setLastError(error);
                     }
-                    myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realm, getLastError(), myAuthentication);
+                    String realmName = getFullRealmName(repository.getLocation(), realm);
+                    myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
                 }
                 dispose();
                 myClient = createSaslClient(mechs, realm, repository.getLocation());
@@ -220,7 +222,6 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         
         String[] mechsArray = (String[]) mechs.toArray(new String[mechs.size()]);
         SaslClient client = null;
-        SVNException error = null;
         for (int i = 0; i < mechsArray.length; i++) {
             String mech = mechsArray[i];
             try {
@@ -238,10 +239,11 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     if (myAuthenticationManager == null) {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm));
                     }
+                    String realmName = getFullRealmName(location, realm);
                     if (myAuthentication != null) {
-                        myAuthentication = myAuthenticationManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
+                        myAuthentication = myAuthenticationManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realmName, location);
                     } else {
-                        myAuthentication = myAuthenticationManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, location);
+                        myAuthentication = myAuthenticationManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realmName, location);
                     }
                     if (myAuthentication == null) {
                         if (getLastError() != null) {
@@ -256,7 +258,6 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 }
                 client = clientFactory.createSaslClient(new String[] {mech}, null, "svn", location.getHost(), props, new SVNCallbackHandler(realm, auth));
                 if (client != null) {
-                    error = null;
                     break;
                 }
                 myAuthentication = null;
@@ -268,6 +269,13 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
             }
         }
         return client;
+    }
+    
+    private static String getFullRealmName(SVNURL location, String realm) {
+        if (location == null || realm == null) {
+            return realm;
+        } 
+        return "<" + location.getProtocol() + "://" + location.getHost() + ":" + location.getPort() + "> " + realm;
     }
     
     private static String toBase64(byte[] src) {
