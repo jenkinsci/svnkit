@@ -1106,8 +1106,10 @@ public class SVNUpdateClient extends SVNBasicClient {
         File target = new File(externalDiff.owner, targetDir);
         SVNURL oldURL = null;
         SVNURL newURL = null;
+        String externalDefinition = null;
         if (externalDiff.oldExternal != null && !externalDiff.isExport) {
             oldURL = externalDiff.oldExternal.resolveURL(externalDiff.rootURL, externalDiff.ownerURL);
+            externalDefinition = externalDiff.oldExternal.getRawValue(); 
         }
         SVNRevision externalRevision = SVNRevision.UNDEFINED;
         SVNRevision externalPegRevision = SVNRevision.UNDEFINED;
@@ -1115,12 +1117,14 @@ public class SVNUpdateClient extends SVNBasicClient {
             newURL = externalDiff.newExternal.resolveURL(externalDiff.rootURL, externalDiff.ownerURL);
             externalRevision = externalDiff.newExternal.getRevision();
             externalPegRevision = externalDiff.newExternal.getPegRevision();
+            externalDefinition = externalDiff.newExternal.getRawValue();
         }
         if (oldURL == null && newURL == null) {
             return;
         }
 
-        SVNRevision[] revs = getExternalsHandler().handleExternal(target, newURL, externalRevision, externalPegRevision);
+        SVNRevision[] revs = getExternalsHandler().handleExternal(target, newURL, externalRevision, 
+                externalPegRevision, externalDefinition, SVNRevision.UNDEFINED);
         if (revs == null) {
             SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null);
             dispatchEvent(event);
