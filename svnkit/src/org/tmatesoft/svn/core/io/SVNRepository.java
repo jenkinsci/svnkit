@@ -1732,7 +1732,8 @@ public abstract class SVNRepository {
      * @param  sendDeltas      controls whether text and property changes are to be
      *                         sent
      * @param  editor          a commit editor to receive changes 
-     * @throws SVNException
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      * @since  1.1, new in SVN 1.4
      */
     public abstract void replay(long lowRevision, long revision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
@@ -2067,8 +2068,6 @@ public abstract class SVNRepository {
      * this object.    
      * If this driver object keeps a single connection for 
      * all the data i/o, this method helps to reset the connection.
-     * 
-     * @throws SVNException  if some i/o error has occurred
      */
     public abstract void closeSession();
   
@@ -2226,7 +2225,8 @@ public abstract class SVNRepository {
      * @param  relativePath a path relative to the location to which
      *                      this <b>SVNRepository</b> is set
      * @return              a path relative to the repository root
-     * @throws SVNException             
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems            
      */
     public String getRepositoryPath(String relativePath) throws SVNException {
         if (relativePath == null) {
@@ -2251,7 +2251,8 @@ public abstract class SVNRepository {
      * @param  relativeOrRepositoryPath a relative path within the
      *                                  repository 
      * @return                          a path relative to the host
-     * @throws SVNException
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      */
     public String getFullPath(String relativeOrRepositoryPath) throws SVNException {
         if (relativeOrRepositoryPath == null) {
