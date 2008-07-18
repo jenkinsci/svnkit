@@ -141,9 +141,13 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * @author      TMate Software Ltd.
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
- * @see         <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
+ * @see         <a href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public abstract class SVNRepository {
+    
+    /**
+     * Is used as an initialization value in cases, when revision is not defined, often represents HEAD revision
+     */
     public static final long INVALID_REVISION = -1;
         
     protected String myRepositoryUUID;
@@ -686,6 +690,50 @@ public abstract class SVNRepository {
         return getFileRevisions(path, startRevision, endRevision, false, handler);
     }
 
+    /**
+     * Retrieves interesting file revisions for the specified file with possibility to include merged revisions. 
+     * 
+     * <p>
+     * A file revision is represented by an <b>SVNFileRevision</b> object. Each
+     * file revision is handled by the file revision handler provided. 
+     * The iteration will begin at the first such revision starting from the 
+     * <code>startRevision</code> and so on - up to the <code>endRevision</code>.
+     * If <code>includeMergedRevisions</code> is <code>true</code>, then revisions which 
+     * were result of a merge will be included as well.
+     * If the method succeeds, the provided <code>handler</code> will have
+     * been invoked at least once.
+     * 
+     * <p>
+     * For the first interesting revision the file contents  
+     * will be provided to the <code>handler</code> as a text delta against an empty file.  
+     * For the following revisions, the delta will be against the fulltext contents of the 
+     * previous revision.
+     *
+     * <p>
+     * The <code>path</code> arg can be both relative to the location of 
+     * this driver and absolute to the repository root (starts with <code>"/"</code>).
+     * 
+     * <p>
+     * <b>NOTES:</b> 
+     * <ul>
+     * <li>you may not invoke methods of this <b>SVNRepository</b>
+     *     object from within the provided <code>handler</code>
+     * <li>this functionality is not available in pre-1.1 servers
+     * </ul>
+     * 
+     * @param  path                     a file path 
+     * @param  startRevision            a revision to start from 
+     * @param  endRevision              a revision to stop at
+     * @param  includeMergedRevisions   if is <code>true</code>, merged revisions will be returned as well
+     * @param  handler                  a handler that processes file revisions passed  
+     * @return                          the number of retrieved file revisions  
+     * @throws SVNException             if a failure occured while connecting to a repository 
+     *                                  or the user's authentication failed (see 
+     *                                  {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     * @see                             #getFileRevisions(String, Collection, long, long)
+     * @see                             SVNFileRevision
+     * @since                           SVNKit 1.2.0, SVN 1.5.0
+     */  
     public int getFileRevisions(String path, long startRevision, long endRevision, 
             boolean includeMergedRevisions, ISVNFileRevisionHandler handler) throws SVNException {
         if (includeMergedRevisions) {
@@ -931,7 +979,7 @@ public abstract class SVNRepository {
     }
 
     /**
-     * @since 1.2, SVN 1.5
+     * @since SVNKit 1.2.0, SVN 1.5.0
      */
     public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
             ISVNLocationSegmentHandler handler) throws SVNException {
@@ -1394,7 +1442,7 @@ public abstract class SVNRepository {
     public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
 
     /**
-     * @deprecated
+     * @deprecated use {@link #diff(SVNURL, long, long, String, boolean, boolean, boolean, ISVNReporterBaton, ISVNEditor)} instead
      */
     public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         diff(url, targetRevision, revision, target, ignoreAncestry, recursive, true, reporter, editor);
@@ -1464,7 +1512,7 @@ public abstract class SVNRepository {
      *                          <li>the user authentication failed 
      *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                          </ul>
-     * @deprecated              use {@link #diff(SVNURL, long, long, String, boolean, boolean, ISVNReporterBaton, ISVNEditor)} instead 
+     * @deprecated              use {@link #diff(SVNURL, long, long, String, boolean, boolean, boolean, ISVNReporterBaton, ISVNEditor)} instead
      * @see                     ISVNReporterBaton
      * @see                     ISVNReporter
      * @see                     ISVNEditor
