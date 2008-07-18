@@ -13,12 +13,12 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.OutputStream;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
@@ -31,17 +31,17 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNCancellableEditor implements ISVNEditor {
 
     private ISVNEditor myDelegate;
-    private ISVNEventHandler myCancel;
+    private ISVNCanceller myCancel;
     private ISVNDebugLog myLog;
     
-    public static ISVNEditor newInstance(ISVNEditor editor, ISVNEventHandler cancel, ISVNDebugLog log) {
+    public static ISVNEditor newInstance(ISVNEditor editor, ISVNCanceller cancel, ISVNDebugLog log) {
         if (cancel != null) {
             return new SVNCancellableEditor(editor, cancel, log);
         }
         return editor;
     }
     
-    private SVNCancellableEditor(ISVNEditor delegate, ISVNEventHandler cancel, ISVNDebugLog log) {
+    private SVNCancellableEditor(ISVNEditor delegate, ISVNCanceller cancel, ISVNDebugLog log) {
         myDelegate = delegate;
         myCancel = cancel;
         myLog = log == null ? SVNDebugLog.getDefaultLog() : log;
