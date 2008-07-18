@@ -100,22 +100,6 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         return myLogger;
     }
 
-    public void logError(String message) {
-        log(message, Level.INFO);
-    }
-
-    public void logError(Throwable th) {
-        log(th, Level.INFO);
-    }
-
-    public void logSevere(String message) {
-        log(message, Level.SEVERE);
-    }
-
-    public void logSevere(Throwable th) {
-        log(th, Level.SEVERE);
-    }
-
     public void log(String message, byte[] data) {
         if (getLogger().isLoggable(Level.FINEST)) {
             try {
@@ -124,30 +108,6 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
                 getLogger().log(Level.FINEST, message + "\n" + new String(data));
             }
         }
-    }
-
-    public void logFine(Throwable th) {
-        log(th, Level.FINE);
-    }
-
-    public void logFine(String message) {
-        log(message, Level.FINE);
-    }
-
-    public void logFiner(Throwable th) {
-        log(th, Level.FINER);
-    }
-
-    public void logFiner(String message) {
-        log(message, Level.FINER);
-    }
-
-    public void logFinest(Throwable th) {
-        log(th, Level.FINEST);
-    }
-
-    public void logFinest(String message) {
-        log(message, Level.FINEST);
     }
 
     public void log(Throwable th, Level logLevel) {

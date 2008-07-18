@@ -13,6 +13,7 @@ package org.tmatesoft.svn.util;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
@@ -23,6 +24,46 @@ import org.tmatesoft.svn.core.internal.util.SVNLogStream;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
+
+    public void logError(String message) {
+        log(message, Level.INFO);
+    }
+
+    public void logError(Throwable th) {
+        log(th, Level.INFO);
+    }
+
+    public void logSevere(String message) {
+        log(message, Level.SEVERE);
+    }
+
+    public void logSevere(Throwable th) {
+        log(th, Level.SEVERE);
+    }
+
+    public void logFine(Throwable th) {
+        log(th, Level.FINE);
+    }
+
+    public void logFine(String message) {
+        log(message, Level.FINE);
+    }
+
+    public void logFiner(Throwable th) {
+        log(th, Level.FINER);
+    }
+
+    public void logFiner(String message) {
+        log(message, Level.FINER);
+    }
+
+    public void logFinest(Throwable th) {
+        log(th, Level.FINEST);
+    }
+
+    public void logFinest(String message) {
+        log(message, Level.FINEST);
+    }
 
     public void flushStream(Object stream) {
         if (stream instanceof SVNLogInputStream) {
