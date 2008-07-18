@@ -36,12 +36,14 @@ public class SVNAdminAreaInfo {
     private Map myOldExternals;
     private Map myDepths;
     private Set myIncompleteEntries;
+    private boolean myIsEnableIncompleteTrick;
 
     public SVNAdminAreaInfo(SVNWCAccess access, SVNAdminArea anchor, SVNAdminArea target, String targetName) {
         myAccess = access;
         myAnchor = anchor;
         myTarget = target;
         myTargetName = targetName;
+        myIsEnableIncompleteTrick = false;
     }
     
     public SVNAdminArea getAnchor() {
@@ -114,6 +116,9 @@ public class SVNAdminAreaInfo {
     }
     
     public void addIncompleteEntry(String path) {
+        if (!myIsEnableIncompleteTrick) {
+            return;
+        }
         if (myIncompleteEntries == null) {
             myIncompleteEntries = new HashSet();
         }
@@ -121,6 +126,9 @@ public class SVNAdminAreaInfo {
     }
     
     public boolean isIncomplete(String path) {
+        if (!myIsEnableIncompleteTrick) {
+            return false;
+        }
         return myIncompleteEntries != null && myIncompleteEntries.contains(path);
     }
 }
