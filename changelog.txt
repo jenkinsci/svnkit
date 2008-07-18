@@ -1,3 +1,8 @@
+== version 1.2.0-beta3
+
++ SASL authentication support improved.
++ Other bugfixes.
+
 == version 1.2.0-beta2
 
 + JavaHL compatiblity bugfixes
