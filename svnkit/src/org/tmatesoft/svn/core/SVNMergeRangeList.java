@@ -426,13 +426,11 @@ public class SVNMergeRangeList {
                 if (range1.getStartRevision() < range2.getStartRevision()) {
                     SVNMergeRange tmpRange = null;
                     if (remove) {
-                        tmpRange = new SVNMergeRange(range1.getStartRevision(), 
-                                                     range2.getStartRevision(),
-                                                     range1.isInheritable());    
+                        tmpRange = new SVNMergeRange(range1.getStartRevision(), range2.getStartRevision(),
+                                range1.isInheritable());    
                     } else {
-                        tmpRange = new SVNMergeRange(range2.getStartRevision(), 
-                                                     range1.getEndRevision(), 
-                                                     range1.isInheritable());                        
+                        tmpRange = new SVNMergeRange(range2.getStartRevision(),
+                                Math.min(range1.getEndRevision(), range2.getEndRevision()), range1.isInheritable());                        
                     }
 
                     lastRange = combineWithLastRange(ranges, lastRange, tmpRange, true, considerInheritance);
@@ -440,9 +438,8 @@ public class SVNMergeRangeList {
                 
                 if (range1.getEndRevision() > range2.getEndRevision()) {
                     if (!remove) {
-                        SVNMergeRange tmpRange = new SVNMergeRange(range1.getStartRevision(), 
-                                                                   range2.getEndRevision(), 
-                                                                   range1.isInheritable());
+                        SVNMergeRange tmpRange = new SVNMergeRange(Math.max(range1.getStartRevision(), 
+                                range2.getStartRevision()), range2.getEndRevision(), range1.isInheritable());
                         lastRange = combineWithLastRange(ranges, lastRange, tmpRange, true, considerInheritance);
                     }
                     whiteBoardElement.setStartRevision(range2.getEndRevision());
