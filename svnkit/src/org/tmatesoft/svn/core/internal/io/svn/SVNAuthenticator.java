@@ -12,12 +12,15 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
  * @version 1.1.1
@@ -33,11 +36,22 @@ public abstract class SVNAuthenticator {
     private OutputStream myConnectionOutputStream;
     private InputStream myConnectionInputStream;
     private SVNErrorMessage myLastError;
+    private InputStream myPlainInputStream;
+    private OutputStream myPlainOutputStream;
 
     protected SVNAuthenticator(SVNConnection connection) throws SVNException {
         myConnection = connection;
+        // these are logged streams.
         myConnectionInputStream = connection.getInputStream();
         myConnectionOutputStream = connection.getOutputStream();
+        // plain streams.
+        try {
+            myPlainInputStream = connection.getConnector().getInputStream();
+            myPlainOutputStream = connection.getConnector().getOutputStream();
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err);
+        }
     }
     
     protected void setOutputStream(OutputStream os) {
@@ -54,6 +68,14 @@ public abstract class SVNAuthenticator {
 
     protected OutputStream getConnectionOutputStream() {
         return myConnectionOutputStream;
+    }
+    
+    protected InputStream getPlainInputStream() {
+        return myPlainInputStream;
+    }
+
+    protected OutputStream getPlainOutputStream() {
+        return myPlainOutputStream;
     }
     
     protected SVNConnection getConnection() {

@@ -50,6 +50,7 @@ public class SVNConnection {
     private InputStream myLoggingInputStream;
     private Set myCapabilities;
     private byte[] myHandshakeBuffer = new byte[8192];
+    private SVNAuthenticator myEncryptor;
     
     private static final String EDIT_PIPELINE = "edit-pipeline";
     private static final String SVNDIFF1 = "svndiff1";
@@ -59,7 +60,6 @@ public class SVNConnection {
     private static final String DEPTH = "depth";
     private static final String LOG_REVPROPS = "log-revprops";
 //    private static final String PARTIAL_REPLAY = "partial-replay";
-    private SVNAuthenticator myAuthenticator;
 
     public SVNConnection(ISVNConnector connector, SVNRepositoryImpl repository) {
         myConnector = connector;
@@ -158,11 +158,6 @@ public class SVNConnection {
         if (mechs == null || mechs.size() == 0) {
             return;
         }
-        if (myAuthenticator != null) {
-            myAuthenticator.dispose();
-            myAuthenticator = null;
-        }
-
         myRealm = SVNReader.getString(items, 1);
         
         ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
@@ -170,9 +165,8 @@ public class SVNConnection {
                 (mechs.contains("CRAM-MD5") || mechs.contains("DIGEST-MD5"))) {
             mechs.remove("ANONYMOUS");
         }
-        
-        myAuthenticator = createSASLAuthenticator();
-        myAuthenticator.authenticate(mechs, myRealm, repository);
+        SVNAuthenticator authenticator = createSASLAuthenticator();
+        authenticator.authenticate(mechs, myRealm, repository);
         receiveRepositoryCredentials(repository);
     }
     
@@ -236,11 +230,19 @@ public class SVNConnection {
             }
         }
     }
+    
+    public void setEncrypted(SVNAuthenticator encryptor) {
+        myEncryptor = encryptor;
+    }
+    
+    public boolean isEncrypted() {
+        return myEncryptor != null;
+    }
 
     public void close() throws SVNException {
-        if (myAuthenticator != null) {
-            myAuthenticator.dispose();
-            myAuthenticator = null;
+        if (myEncryptor != null) {
+            myEncryptor.dispose();
+            myEncryptor = null;
         }
         myInputStream = null;
         myLoggingInputStream = null;
@@ -389,10 +391,21 @@ public class SVNConnection {
     }
     
     void setOutputStream(OutputStream os) {
+        if (myOutputStream != null) {
+            myRepository.getDebugLog().flushStream(myOutputStream);
+        }
         myOutputStream = os;
     }
 
     void setInputStream(InputStream is) {
+        if (myLoggingInputStream != null) {
+            myRepository.getDebugLog().flushStream(myLoggingInputStream);
+        }
         myInputStream = is;
+        myLoggingInputStream = is;
+    }
+
+    ISVNConnector getConnector() {
+        return myConnector;
     }
 }
