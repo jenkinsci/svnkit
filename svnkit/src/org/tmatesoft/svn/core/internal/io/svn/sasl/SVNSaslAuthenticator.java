@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.io.svn.sasl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -92,7 +94,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                         }
                         failed = false;
                         setLastError(null);
-                        setEncryption();
+                        setEncryption(repository);
                         break;
                     }
                 } catch (SaslException e) {
@@ -193,7 +195,11 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         
     }
     
-    protected void setEncryption() {
+    protected void setEncryption(SVNRepositoryImpl repository) {
+        if (getConnection().isEncrypted()) {
+            dispose();
+            return;
+        }
         String qop = (String) myClient.getNegotiatedProperty(Sasl.QOP);
         String buffSizeStr = (String) myClient.getNegotiatedProperty(Sasl.MAX_BUFFER);
         
@@ -207,8 +213,15 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 }
                 buffSize = Math.min(8192, buffSize);
             }
-            setOutputStream(new SaslOutputStream(myClient, buffSize, getConnectionOutputStream()));
-            setInputStream(new SaslInputStream(myClient, buffSize, getConnectionInputStream()));
+            OutputStream os = new SaslOutputStream(myClient, buffSize, getPlainOutputStream());
+            os = repository.getDebugLog().createLogStream(os);
+            setOutputStream(os);
+            InputStream is = new SaslInputStream(myClient, buffSize, getPlainInputStream());
+            is = repository.getDebugLog().createLogStream(is);
+            setInputStream(is);
+            getConnection().setEncrypted(this);
+        } else {
+            dispose();
         }
     }
     
