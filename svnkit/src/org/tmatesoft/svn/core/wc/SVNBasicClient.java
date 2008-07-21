@@ -228,7 +228,7 @@ public class SVNBasicClient implements ISVNEventHandler {
      */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
-            return SVNDebugLog.getLog(SVNLogType.WC);
+            return SVNDebugLog.getDefaultLog();
         }
         return myDebugLog;
     }
@@ -328,7 +328,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             } catch (SVNException e) {
                 throw e;
             } catch (Throwable th) {
-                SVNDebugLog.getLog(SVNLogType.WC).logSevere(th);
+                SVNDebugLog.getDefaultLog().logSevere(SVNLogType.WC, th);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "Error while dispatching event: {0}", new Object[] { th.getMessage() }, 
                         SVNErrorMessage.TYPE_ERROR, th);

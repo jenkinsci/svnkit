@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -94,7 +95,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             addAttribute(PATH_ATTR, path == null || path.length() == 9 ? "." : path);
             openTag(LIST_TAG);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
         }
     }
 
@@ -115,7 +116,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             myDirEntries = null;
             closeTag(LIST_TAG);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
         }
     }
     

@@ -2267,7 +2267,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ENTRY_NOT_FOUND) {
                     throw svne;
                 }
-                SVNDebugLog.getLog(SVNLogType.WC).logFine(svne);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, svne);
             }
         }
     }

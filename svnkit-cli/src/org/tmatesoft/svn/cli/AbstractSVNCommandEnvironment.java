@@ -133,7 +133,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         try {
             myCommand.run();
         } catch (SVNException e) {
-            SVNDebugLog.getLog(SVNLogType.CLIENT).logSevere(e);
+            SVNDebugLog.getDefaultLog().logSevere(SVNLogType.CLIENT, e);
             SVNErrorMessage err = e.getErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.CL_INSUFFICIENT_ARGS || err.getErrorCode() == SVNErrorCode.CL_ARG_PARSING_ERROR) {
                 err = err.wrap("Try ''{0} help'' for more info", getProgramName());

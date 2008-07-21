@@ -83,7 +83,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                         break;
                     } catch (SVNAuthenticationException e) {
-                        SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
                         authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
                         authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                         connection = null;
@@ -141,7 +141,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         connection.closeSession(mySession);
                         continue;
                     }
-                    repository.getDebugLog().logFine(e);
+                    repository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                     close(repository);
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});
                     SVNErrorManager.error(err, e);
@@ -159,13 +159,15 @@ public class SVNSSHConnector implements ISVNConnector {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
             SVNSSHSession.lock(Thread.currentThread());
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                    Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
             try {
                 if (myConnection != null) {
                     if (myConnection.closeSession(mySession)) {
                         // no sessions left in connection, close it.
                         //  SVNSSHSession will make sure that connection is disposed if necessary.
-                        SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                                Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
                         SVNSSHSession.closeConnection(myConnection);
                         myConnection = null;
                     }
@@ -201,7 +203,8 @@ public class SVNSSHConnector implements ISVNConnector {
         } catch (IOException e) {
             // any failure here means that channel is stale.
             // session will be closed then.
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                    Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
             return true;
         }
         return false;

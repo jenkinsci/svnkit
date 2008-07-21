@@ -687,7 +687,8 @@ public class SVNCommitUtil {
         if (commitAddition) {
             SVNFileType addedFileType = SVNFileType.getType(path);
             if (addedFileType == SVNFileType.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' is scheduled for addition, but is missing", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, 
+                        "''{0}'' is scheduled for addition, but is missing", path);
                 SVNErrorManager.error(err);
             }
             SVNVersionedProperties props = dir.getProperties(entry.getName());

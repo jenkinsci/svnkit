@@ -129,7 +129,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, long timeout, boolean keepConnection) {
         myAuthManager = authManager;
         myTunnelProvider = tunnelProvider;
-        myDebugLog = SVNDebugLog.getLog(SVNLogType.WC);
+        myDebugLog = SVNDebugLog.getDefaultLog();
         myTimeout = timeout > 0 ? timeout : DEFAULT_IDLE_TIMEOUT;
         myIsKeepConnection = keepConnection;
         myTimeout = timeout;
@@ -369,7 +369,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     }
 
     public void setDebugLog(ISVNDebugLog log) {
-        myDebugLog = log == null ? SVNDebugLog.getLog(SVNLogType.WC) : log;
+        myDebugLog = log == null ? SVNDebugLog.getDefaultLog() : log;
         Map pool = getPool();
         for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();
@@ -398,7 +398,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
                     }
                 }
             } catch (Throwable th) {
-                SVNDebugLog.getLog(SVNLogType.WC).logSevere(th);
+                SVNDebugLog.getDefaultLog().logSevere(SVNLogType.WC, th);
                 if (!scheduled && myTimer != null) {
                     myTimer.schedule(new TimeoutTask(), 10000);
                     scheduled = true;

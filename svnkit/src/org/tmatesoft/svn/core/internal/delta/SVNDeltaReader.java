@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Reads diff windows from stream and feeds them to the ISVNDeltaConsumer instance.
@@ -126,7 +127,7 @@ public class SVNDeltaReader {
                     instructionsLength = deflate(instructionsLength, out);
                     newDataLength = deflate(newDataLength, out);
                 } catch (IOException e) {
-                    SVNDebugLog.getDefaultLog().logSevere(e);
+                    SVNDebugLog.getDefaultLog().logSevere(SVNLogType.DEFAULT, e);
                 }
                 byte[] bytes = out.toByteArray();
                 ByteBuffer decompressed = ByteBuffer.wrap(bytes);

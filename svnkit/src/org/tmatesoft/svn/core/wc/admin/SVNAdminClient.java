@@ -69,6 +69,7 @@ import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNAdminClient</b> class provides methods that brings repository-side functionality
@@ -652,7 +653,7 @@ public class SVNAdminClient extends SVNBasicClient {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
             fsfs.purgeTxn(txnName);
-            SVNDebugLog.getDefaultLog().logFine("Transaction '" + txnName + "' removed.\n");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Transaction '" + txnName + "' removed.\n");
             if (myEventHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);
                 myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);

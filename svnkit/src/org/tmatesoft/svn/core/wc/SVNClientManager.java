@@ -22,7 +22,6 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNClientManager</b> class is used to manage <b>SVN</b>*<b>Client</b> 
@@ -647,7 +646,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
      */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
-            return SVNDebugLog.getLog(SVNLogType.WC);
+            return SVNDebugLog.getDefaultLog();
         }
         return myDebugLog;
     }

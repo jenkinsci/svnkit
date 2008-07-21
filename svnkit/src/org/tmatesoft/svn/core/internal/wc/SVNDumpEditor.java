@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -232,7 +233,8 @@ public class SVNDumpEditor implements ISVNEditor {
                         mustDumpProps = true;
                     } else {
                         if (cmpRev < myOldestDumpedRevision) {
-                            SVNDebugLog.getDefaultLog().logFine("WARNING: Referencing data in revision " + cmpRev + 
+                            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, 
+                                    "WARNING: Referencing data in revision " + cmpRev + 
                                     ", which is older than the oldest\nWARNING: dumped revision (" + 
                                     myOldestDumpedRevision + 
                                     ").  Loading this dump into an empty repository\nWARNING: will fail.\n");

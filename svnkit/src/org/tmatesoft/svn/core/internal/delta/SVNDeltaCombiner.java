@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffInstruction;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -99,7 +100,7 @@ public class SVNDeltaCombiner {
         try {
             file.read(myReadWindowBuffer);
         } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logSevere(e);
+            SVNDebugLog.getDefaultLog().logSevere(SVNLogType.DEFAULT, e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
             SVNErrorManager.error(err, e);
         }
@@ -290,7 +291,8 @@ public class SVNDeltaCombiner {
                     }
                     tgt_off += range.limit - range.offset;
                 }
-                SVNDebugLog.assertCondition(tgt_off == targetOffset + instruction.length, "assert #1");
+                SVNDebugLog.assertCondition(SVNLogType.DEFAULT, tgt_off == targetOffset + instruction.length, 
+                        "assert #1");
                 rangeIndexTree.insert(offset, limit, targetOffset);
                 rangeIndexTree.disposeList(listHead);
             }
@@ -326,7 +328,8 @@ public class SVNDeltaCombiner {
             
             int fix_offset = offset > off0 ? offset - off0 : 0;
             int fix_limit = off1 > limit ? off1 - limit : 0;
-            SVNDebugLog.assertCondition(fix_offset + fix_limit < instruction.length, "assert #7");
+            SVNDebugLog.assertCondition(SVNLogType.DEFAULT, fix_offset + fix_limit < instruction.length, 
+                    "assert #7");
             
             if (instruction.type != SVNDiffInstruction.COPY_FROM_TARGET) {
                 int oldOffset = instruction.offset;
@@ -344,7 +347,7 @@ public class SVNDeltaCombiner {
                 instruction.offset = oldOffset;
                 instruction.length = oldLength;
             } else {
-                SVNDebugLog.assertCondition(instruction.offset < off0, "assert #8");
+                SVNDebugLog.assertCondition(SVNLogType.DEFAULT, instruction.offset < off0, "assert #8");
                 if (instruction.offset + instruction.length - fix_limit <= off0) {
                     copySourceInstructions(instruction.offset + fix_offset, 
                                            instruction.offset + instruction.length - fix_limit, 
@@ -352,7 +355,7 @@ public class SVNDeltaCombiner {
                 } else {
                     int patternLength = off0 - instruction.offset;
                     int patternOverlap = fix_offset % patternLength;
-                    SVNDebugLog.assertCondition(patternLength > patternOverlap, "assert #9");
+                    SVNDebugLog.assertCondition(SVNLogType.DEFAULT, patternLength > patternOverlap, "assert #9");
                     int fix_off = fix_offset;
                     int tgt_off = targetOffset;
                     
@@ -364,7 +367,8 @@ public class SVNDeltaCombiner {
                         tgt_off += length;
                         fix_off += length;
                     }
-                    SVNDebugLog.assertCondition(fix_off + fix_limit <= instruction.length, "assert #A");
+                    SVNDebugLog.assertCondition(SVNLogType.DEFAULT, fix_off + fix_limit <= instruction.length, 
+                            "assert #A");
                     if (patternOverlap > 0 && fix_off + fix_limit < instruction.length) {
                         int length = Math.min(instruction.length - fix_offset - fix_limit, patternOverlap);
                         copySourceInstructions(instruction.offset, 
@@ -373,7 +377,8 @@ public class SVNDeltaCombiner {
                         tgt_off += length;
                         fix_off += length;
                     }
-                    SVNDebugLog.assertCondition(fix_off + fix_limit <= instruction.length, "assert #B");
+                    SVNDebugLog.assertCondition(SVNLogType.DEFAULT, fix_off + fix_limit <= instruction.length, 
+                            "assert #B");
                     if (fix_off + fix_limit < instruction.length) {
                         myInstructionTemplate.type = SVNDiffInstruction.COPY_FROM_TARGET;
                         myInstructionTemplate.length = instruction.length - fix_off - fix_limit;
@@ -408,7 +413,8 @@ public class SVNDeltaCombiner {
         int hi = offsets.length - 1;
         int op = (lo + hi)/2;
         
-        SVNDebugLog.assertCondition(offset < offsets.offsets[offsets.length - 1], "assert #2");
+        SVNDebugLog.assertCondition(SVNLogType.DEFAULT, offset < offsets.offsets[offsets.length - 1], 
+                "assert #2");
         
         for (; lo < hi; op = (lo + hi)/2 ) {
             int thisOffset = offsets.offsets[op];
@@ -424,7 +430,7 @@ public class SVNDeltaCombiner {
                 break;
             }
         }
-        SVNDebugLog.assertCondition(offsets.offsets[op] <= offset && offset < offsets.offsets[op + 1], "assert #3");
+        SVNDebugLog.assertCondition(SVNLogType.DEFAULT, offsets.offsets[op] <= offset && offset < offsets.offsets[op + 1], "assert #3");
         return op;
     }
     

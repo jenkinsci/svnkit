@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -259,7 +260,7 @@ public class FSFile {
             }
             int colonIndex = line.indexOf(':');
             if (colonIndex <= 0 || line.length() <= colonIndex + 2) {
-                SVNDebugLog.getDefaultLog().logFine(line);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, line);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Found malformed header in revision file");
                 SVNErrorManager.error(err);

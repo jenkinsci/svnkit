@@ -81,13 +81,13 @@ public class SVNPlainConnector implements ISVNConnector {
     
     public boolean isStale() {
         try {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("checking whether connection is stale.");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "checking whether connection is stale.");
             boolean result = mySocket != null && SVNSocketFactory.isSocketStale(mySocket);
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("connection is stale: " + result);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "connection is stale: " + result);
             return result;
         } catch (IOException e) {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("failure during stale check");
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "failure during stale check");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             return true;
         }
     }

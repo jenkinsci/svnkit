@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -107,7 +108,7 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
         try {
             sendToHandler(info);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getMessage());
             SVNErrorManager.error(err, e);
         }

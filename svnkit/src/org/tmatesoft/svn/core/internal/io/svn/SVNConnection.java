@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -181,7 +182,7 @@ public class SVNConnection {
                 }
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(th.getMessage());
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th.getMessage());
         }
         return new SVNPlainAuthenticator(this);
     }
@@ -370,7 +371,8 @@ public class SVNConnection {
     OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
-                myOutputStream = myRepository.getDebugLog().createLogStream(myConnector.getOutputStream());
+                myOutputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, 
+                        myConnector.getOutputStream());
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
             }
@@ -381,7 +383,8 @@ public class SVNConnection {
     InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
-                myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
+                myInputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, 
+                        new BufferedInputStream(myConnector.getInputStream()));
                 myLoggingInputStream = myInputStream;
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);

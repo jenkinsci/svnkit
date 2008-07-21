@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -722,8 +723,8 @@ public class JavaHLObjectFactory {
             code = e.getErrorMessage().getErrorCode().getCode();
         }
         ClientException ec = new ClientException(e.getMessage(), null, code);
-        svnClient.getDebugLog().logFine(ec);
-        svnClient.getDebugLog().logFine(e);
+        svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, ec);
+        svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, e);
         throw ec;
     }
 

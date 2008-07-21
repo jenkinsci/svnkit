@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -123,15 +124,15 @@ public class SVNReporter implements ISVNReporterBaton {
             try {
                 reporter.abortReport();
             } catch (SVNException inner) {
-                myLog.logFine(inner);
+                myLog.logFine(SVNLogType.WC, inner);
             }
             throw e;
         } catch (Throwable th) {
-            myLog.logFine(th);
+            myLog.logFine(SVNLogType.WC, th);
             try {
                 reporter.abortReport();
             } catch (SVNException e) {
-                myLog.logFine(e);
+                myLog.logFine(SVNLogType.WC, e);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {0}", th.getMessage());
             SVNErrorManager.error(err, th);

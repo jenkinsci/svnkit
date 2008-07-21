@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.SVNClientLogLevel;
@@ -100,25 +101,30 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
         return myLogger;
     }
 
-    public void log(String message, byte[] data) {
+    public void log(SVNLogType logType, String message, byte[] data) {
         if (getLogger().isLoggable(Level.FINEST)) {
             try {
-                getLogger().log(Level.FINEST, message + "\n" + new String(data, "UTF-8"));
+                getLogger().log(Level.FINEST, getMessage(message + "\n" + new String(data, "UTF-8")));
             } catch (UnsupportedEncodingException e) {
-                getLogger().log(Level.FINEST, message + "\n" + new String(data));
+                getLogger().log(Level.FINEST, getMessage(message + "\n" + new String(data)));
             }
         }
     }
 
-    public void log(Throwable th, Level logLevel) {
+    public void log(SVNLogType logType, Throwable th, Level logLevel) {
         if (getLogger().isLoggable(logLevel) && th != null) {
-            getLogger().log(logLevel, th.getMessage(), th);
+            getLogger().log(logLevel, getMessage(th.getMessage()), th);
         }
     }
 
-    public void log(String message, Level logLevel) {
+    public void log(SVNLogType logType, String message, Level logLevel) {
         if (getLogger().isLoggable(logLevel) && message != null) {
-            getLogger().log(logLevel, message);
+            getLogger().log(logLevel, getMessage(message));
         }
     }
+    
+    private String getMessage(String originalMessage) {
+        return "JAVAHL" + ": " + originalMessage;
+    }
+
 }

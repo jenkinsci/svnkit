@@ -1458,8 +1458,8 @@ public abstract class SVNAdminArea {
         File logFile = adminArea.getAdminFile("log");
         SVNFileType type = SVNFileType.getType(logFile);
         if (type == SVNFileType.FILE) {
-            SVNDebugLog.getLog(SVNLogType.WC).logFine("Changing working copy format failed: found a log file at '" + 
-                    logFile + "'");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, 
+                    "Changing working copy format failed: found a log file at '" + logFile + "'");
             return adminArea;
         }
 

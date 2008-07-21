@@ -239,8 +239,6 @@ public class SVNClientImpl implements SVNClientInterface {
         if (myDebugLog == null) {
             myDebugLog = new JavaHLCompositeLog();
             myDebugLog.addLogger(SVNDebugLog.getDefaultLog());
-            myDebugLog.addLogger(SVNDebugLog.getLog(SVNLogType.NETWORK));
-            myDebugLog.addLogger(SVNDebugLog.getLog(SVNLogType.WC));
             myDebugLog.addLogger(JavaHLDebugLog.getInstance());
         }
         return myDebugLog;
@@ -1685,9 +1683,10 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public static void enableLogging(int logLevel, String logFilePath) {
         try {
-            JavaHLDebugLog.getInstance().enableLogging(logLevel, new File(logFilePath), new DefaultSVNDebugFormatter());
+            JavaHLDebugLog.getInstance().enableLogging(logLevel, new File(logFilePath), 
+                    new DefaultSVNDebugFormatter());
         } catch (SVNException e) {
-            JavaHLDebugLog.getInstance().logSevere(e);
+            JavaHLDebugLog.getInstance().logSevere(SVNLogType.DEFAULT, e);
         }
     }
 

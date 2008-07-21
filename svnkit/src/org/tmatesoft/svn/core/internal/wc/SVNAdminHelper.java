@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -227,13 +228,14 @@ public class SVNAdminHelper {
     }
     
     public static void generateIncompleteDataError() throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(new Exception());
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Premature end of content data in dumpstream");
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, new Exception());
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, 
+                "Premature end of content data in dumpstream");
         SVNErrorManager.error(err);
     }
 
     public static void generateStreamMalformedError() throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(new Exception());
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, new Exception());
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dumpstream data appears to be malformed");
         SVNErrorManager.error(err);
     }
