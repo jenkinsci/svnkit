@@ -300,7 +300,7 @@ public class SVNCommandUtil {
         help.append("\n");
         if (!command.getSupportedOptions().isEmpty()) {
             if (!command.getValidOptions().isEmpty()) {
-                help.append("\nValid Options:\n");
+                help.append("\nValid options:\n");
                 for (Iterator options = command.getValidOptions().iterator(); options.hasNext();) {
                     AbstractSVNOption option = (AbstractSVNOption) options.next();
                     help.append("  ");
@@ -323,7 +323,7 @@ public class SVNCommandUtil {
             }
 
             if (!command.getGlobalOptions().isEmpty()) {
-                help.append("\nGlobal Options:\n");
+                help.append("\nGlobal options:\n");
                 for (Iterator options = command.getGlobalOptions().iterator(); options.hasNext();) {
                     AbstractSVNOption option = (AbstractSVNOption) options.next();
                     help.append("  ");
@@ -389,7 +389,9 @@ public class SVNCommandUtil {
         }
 
         help.append("\n\n");
-        help.append(footer);
+        if (footer != null) {
+            help.append(footer);            
+        }
         return help.toString();
     }
  
