@@ -290,7 +290,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         SVNProperties newProps = new SVNProperties(originalProperties);
         for (Iterator propChangesIter = diff.nameSet().iterator(); propChangesIter.hasNext();) {
             String propName = (String) propChangesIter.next();
-            if (!myMergeDriver.myIsSameRepository && SVNProperty.isWorkingCopyProperty(propName)) {
+            if (SVNProperty.isWorkingCopyProperty(propName)) {
                 continue;
             }
             SVNPropertyValue propValue = diff.getSVNPropertyValue(propName);
