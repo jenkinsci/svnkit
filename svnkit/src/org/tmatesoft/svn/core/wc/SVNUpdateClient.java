@@ -103,6 +103,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNUpdateClient extends SVNBasicClient {
 
     private ISVNExternalsHandler myExternalsHandler;
+    private boolean myIsUpdateLocksOnDemand;
 
     /**
      * Constructs and initializes an <b>SVNUpdateClient</b> object
@@ -218,7 +219,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNAdminAreaInfo adminInfo = null;
         int admOpenDepth = getLevelsToLockFromDepth(depth);
         try {
-            adminInfo = wcAccess.openAnchor(file, true, admOpenDepth);
+            adminInfo = wcAccess.openAnchor(file, !myIsUpdateLocksOnDemand, admOpenDepth);
             SVNAdminArea anchorArea = adminInfo.getAnchor();
 
             SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
@@ -248,11 +249,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             };
             
-            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, 
-                    force, depthIsSticky, depth, preservedExts, fileFetcher); 
+            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, force, depthIsSticky, depth, preservedExts, fileFetcher, myIsUpdateLocksOnDemand); 
                 
-            repos.update(revNumber, target, depth, true, reporter, 
-                    SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            repos.update(revNumber, target, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
             long targetRevision = SVNRepository.INVALID_REVISION;
             if (editor instanceof SVNUpdateEditor) {
@@ -275,6 +274,14 @@ public class SVNUpdateClient extends SVNBasicClient {
             wcAccess.close();
             sleepForTimeStamp();
         }
+    }
+    
+    public void setUpdateLocksOnDemand(boolean locksOnDemand) {
+        myIsUpdateLocksOnDemand = locksOnDemand;
+    }
+    
+    public boolean isUpdateLocksOnDemand() {
+        return myIsUpdateLocksOnDemand;
     }
 
     /**
@@ -362,7 +369,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), force, depthIsSticky, 
-                    depth, preservedExts, null);
+                    depth, preservedExts, null, false);
             //new SVNUpdateEditor(info, url.toString(), force, depth, preservedExts, null);
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));

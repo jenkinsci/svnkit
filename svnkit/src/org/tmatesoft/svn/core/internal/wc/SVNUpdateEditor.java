@@ -73,10 +73,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     private SVNDepth myRequestedDepth;
     private String[] myExtensionPatterns;
     private ISVNFileFetcher myFileFetcher;
+    
+    private boolean myIsLockOnDemand;
 
     private SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions, 
             boolean depthIsSticky, SVNDepth depth, String[] preservedExtensions, String targetURL, 
-            String rootURL, ISVNFileFetcher fileFetcher) {
+            String rootURL, ISVNFileFetcher fileFetcher, boolean lockOnDemand) {
         myAdminInfo = info;
         myWCAccess = info.getWCAccess();
         myIsUnversionedObstructionsAllowed = allowUnversionedObstructions;
@@ -90,6 +92,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myFileFetcher = fileFetcher;
         myTargetURL = targetURL;
         myRootURL = rootURL;
+        myIsLockOnDemand = lockOnDemand;
+        
         if (myTarget != null) {
             myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
@@ -171,7 +175,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNErrorManager.error(err, svne);
         }
 
-        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
+        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {            
             SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
             try {
                 childArea.removeFromRevisionControl(childArea.getThisDirName(), true, true);
@@ -523,7 +527,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
         if (!myIsTargetDeleted) {
             File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot(); 
-            SVNWCManager.updateCleanup(targetFile, myWCAccess, mySwitchURL, myRootURL, myTargetRevision, true, mySkippedPaths, myRequestedDepth);
+            SVNWCManager.updateCleanup(targetFile, myWCAccess, mySwitchURL, myRootURL, myTargetRevision, true, mySkippedPaths, myRequestedDepth, myIsLockOnDemand);
         }
         return null;
     }
@@ -1399,7 +1403,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
     public static ISVNEditor createUpdateEditor(SVNAdminAreaInfo info, String switchURL, 
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, 
-            String[] preservedExtensions, ISVNFileFetcher fileFetcher) throws SVNException {
+            String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
@@ -1414,9 +1418,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
         }
 
-        ISVNEditor editor = new SVNUpdateEditor(info, switchURL, allowUnversionedObstructions, 
-                depthIsSticky, depth, preservedExtensions, entry != null ? entry.getURL() : null, 
-                        entry != null ? entry.getRepositoryRoot() : null, fileFetcher);
+        ISVNEditor editor = 
+            new SVNUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, 
+                    entry != null ? entry.getURL() : null, entry != null ? entry.getRepositoryRoot() : null, fileFetcher, lockOnDemand);
         info.getTarget().closeEntries();
 
         if (depthIsSticky) {
@@ -1520,7 +1524,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         public SVNAdminArea getAdminArea() throws SVNException {
             String path = getPath();
             File file = new File(myAdminInfo.getAnchor().getRoot(), path);
-            return myAdminInfo.getWCAccess().retrieve(file);
+            SVNAdminArea area = myAdminInfo.getWCAccess().retrieve(file);
+            if (myIsLockOnDemand && area != null && !area.isLocked()) {
+                area.lock(true);
+            }
+            return area;
         }
 
         public SVNLog getLog() throws SVNException {
