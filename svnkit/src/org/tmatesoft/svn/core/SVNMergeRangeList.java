@@ -35,6 +35,10 @@ public class SVNMergeRangeList {
 
     private SVNMergeRange[] myRanges;
     
+    public SVNMergeRangeList(long start, long end, boolean inheritable) {
+        this(new SVNMergeRange(start, end, inheritable));
+    }
+    
     public SVNMergeRangeList(SVNMergeRange range) {
     	this(new SVNMergeRange[] { range });
     }
@@ -54,6 +58,13 @@ public class SVNMergeRangeList {
 			list.add(range);
 		}
     	return list;
+    }
+    
+    public void pushRange(long start, long end, boolean inheritable) {
+        SVNMergeRange[] ranges = new SVNMergeRange[myRanges.length + 1];
+        ranges[ranges.length - 1] = new SVNMergeRange(start, end, inheritable);
+        System.arraycopy(myRanges, 0, ranges, 0, myRanges.length);
+        myRanges = ranges;
     }
     
     public int getSize() {
@@ -117,23 +128,6 @@ public class SVNMergeRangeList {
         }
         return SVNMergeRangeList.fromCollection(resultRanges);
     }
-    
-/*    public SVNMergeRangeList combineRanges() {
-        Collection combinedRanges = new LinkedList();
-        SVNMergeRange lastRange = null;
-        for (int k = 0; k < myRanges.length; k++) {
-            SVNMergeRange nextRange = myRanges[k];
-            SVNMergeRange combinedRange = lastRange == null ? nextRange : lastRange.combine(nextRange, false); 
-            if (combinedRange != lastRange) {
-                lastRange = combinedRange;
-                combinedRanges.add(lastRange);
-            }
-        }
-        SVNMergeRange[] ranges = (SVNMergeRange[]) combinedRanges.toArray(new SVNMergeRange[combinedRanges.size()]);
-        Arrays.sort(ranges);
-        return new SVNMergeRangeList(ranges);
-    }
-*/
     
     public String toString() {
         String output = "";
@@ -393,8 +387,7 @@ public class SVNMergeRangeList {
         return isCompacted;
     }
     
-    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, 
-            boolean considerInheritance) {
+    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, boolean considerInheritance) {
         Collection ranges = new LinkedList();
         SVNMergeRange lastRange = null;
         SVNMergeRange range1 = null;
