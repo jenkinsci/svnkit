@@ -543,7 +543,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     myRepository1.setLocation(oldSessionURL, false);
                 }
             }
+            
             SVNMergeRange[] rangesToMerge = rangeListToMerge.getRanges();
+            
             for (int i = 0; i < rangesToMerge.length; i++) {
                 SVNMergeRange nextRange = rangesToMerge[i];
                 boolean headerSent = false;
@@ -559,10 +561,20 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 String mimeType2;
                 String mimeType1;
                 SVNStatusType[] mergeResult;
+                
+                SVNRepository repos1 = myRepository1;
+                SVNRepository repos2 = myRepository2;
+                if (honorMergeInfo && !url1.equals(url2)) {
+                    if (!isRollBack && nextRange.getStartRevision() != revision1) {
+                        repos1 = repos2;
+                    } else if (isRollBack && nextRange.getEndRevision() != revision2) {
+                        repos2 = repos1;
+                    }
+                }
 
                 try {
-                    f1 = loadFile(myRepository1, nextRange.getStartRevision(), props1, adminArea);
-                    f2 = loadFile(myRepository2, nextRange.getEndRevision(), props2, adminArea);
+                    f1 = loadFile(repos1, nextRange.getStartRevision(), props1, adminArea);
+                    f2 = loadFile(repos2, nextRange.getEndRevision(), props2, adminArea);
 
                     mimeType1 = props1.getStringValue(SVNProperty.MIME_TYPE);
                     mimeType2 = props2.getStringValue(SVNProperty.MIME_TYPE);
