@@ -224,8 +224,11 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      */
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
     }
-    
-    public boolean isAuthenticationForced() {
+
+	public void acknowledgeTrustManager(TrustManager manager) {
+	}
+
+	public boolean isAuthenticationForced() {
         return myIsAuthenticationForced;
     }
     
