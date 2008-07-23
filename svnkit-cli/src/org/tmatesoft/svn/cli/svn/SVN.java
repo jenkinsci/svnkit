@@ -112,7 +112,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.RELOCATE);
         SVNCommandLine.registerOption(SVNOption.AUTOPROPS);
         SVNCommandLine.registerOption(SVNOption.NO_AUTOPROPS);
-        SVNCommandLine.registerOption(SVNOption.KEEP_CHANGELIST);
+        SVNCommandLine.registerOption(SVNOption.KEEP_CHANGELISTS);
         SVNCommandLine.registerOption(SVNOption.PARENTS);
         SVNCommandLine.registerOption(SVNOption.KEEP_LOCAL);
         SVNCommandLine.registerOption(SVNOption.ACCEPT);
