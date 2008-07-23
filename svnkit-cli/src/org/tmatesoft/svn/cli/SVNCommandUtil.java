@@ -280,7 +280,7 @@ public class SVNCommandUtil {
         return count;
     }
 
-    public static String getCommandHelp(AbstractSVNCommand command) {
+    public static String getCommandHelp(AbstractSVNCommand command, String programName) {
         StringBuffer help = new StringBuffer();
         help.append(command.getName());
         if (command.getAliases().length > 0) {
@@ -297,8 +297,8 @@ public class SVNCommandUtil {
             help.append(": ");
         }
         help.append(command.getDescription());
-        help.append("\n");
         if (!command.getSupportedOptions().isEmpty()) {
+            help.append("\n");            
             if (!command.getValidOptions().isEmpty()) {
                 help.append("\nValid options:\n");
                 for (Iterator options = command.getValidOptions().iterator(); options.hasNext();) {
@@ -314,10 +314,11 @@ public class SVNCommandUtil {
                     if (!option.isUnary()) {
                         optionDesc += " ARG";
                     }
-                
-                    help.append(SVNFormatUtil.formatString(optionDesc, 24, true));
+
+                    int chars = optionDesc.length() < 24 ? 24 : optionDesc.length();
+                    help.append(SVNFormatUtil.formatString(optionDesc, chars, true));
                     help.append(" : ");
-                    help.append(option.getDescription(command));
+                    help.append(option.getDescription(command, programName));
                     help.append("\n");
                 }
             }
@@ -340,7 +341,7 @@ public class SVNCommandUtil {
                 
                     help.append(SVNFormatUtil.formatString(optionDesc, 24, true));
                     help.append(" : ");
-                    help.append(option.getDescription(command));
+                    help.append(option.getDescription(command, programName));
                     help.append("\n");
                 }
             }

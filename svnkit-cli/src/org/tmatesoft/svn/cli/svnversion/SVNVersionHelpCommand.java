@@ -52,7 +52,7 @@ public class SVNVersionHelpCommand extends AbstractSVNCommand {
 
     public void run() throws SVNException {
         if (getSVNVersionEnvironment().isHelp()) {
-            String help = SVNCommandUtil.getCommandHelp(AbstractSVNCommand.getCommand(""));
+            String help = SVNCommandUtil.getCommandHelp(AbstractSVNCommand.getCommand(""), getEnvironment().getProgramName());
             getEnvironment().getOut().println(help);
         } else if (getSVNVersionEnvironment().isVersion()) {
             String help = SVNCommandUtil.getVersion(getEnvironment(), false);
