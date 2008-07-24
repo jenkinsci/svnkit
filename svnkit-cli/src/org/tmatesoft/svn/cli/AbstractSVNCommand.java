@@ -31,7 +31,15 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractSVNCommand {
-    
+
+    private static final Comparator DEFAULT_COMMAND_COMPARATOR = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            AbstractSVNCommand c1 = (AbstractSVNCommand) o1;
+            AbstractSVNCommand c2 = (AbstractSVNCommand) o2;
+            return c1.getName().compareTo(c2.getName());
+        }
+    };
+
     private static Map ourCommands = new SVNHashMap();
 
     private String myName;
@@ -39,7 +47,7 @@ public abstract class AbstractSVNCommand {
     private Collection myOptions;
     private AbstractSVNCommandEnvironment myEnvironment;
     private Collection myValidOptions;
-    
+
     public static void registerCommand(AbstractSVNCommand command) {
         ourCommands.put(command.getName(), command);
         for (int i = 0; i < command.getAliases().length; i++) {
@@ -50,15 +58,10 @@ public abstract class AbstractSVNCommand {
     public static AbstractSVNCommand getCommand(String nameOrAlias) {
         return (AbstractSVNCommand) ourCommands.get(nameOrAlias);
     }
-    
-    public static Iterator availableCommands() {
-        TreeSet sortedList = new TreeSet(new Comparator() {
-            public int compare(Object o1, Object o2) {
-                AbstractSVNCommand c1 = (AbstractSVNCommand) o1;
-                AbstractSVNCommand c2 = (AbstractSVNCommand) o2;
-                return c1.getName().compareTo(c2.getName());
-            }
-        });
+
+    public static Iterator availableCommands(Comparator comparator) {
+        comparator = comparator == null ? DEFAULT_COMMAND_COMPARATOR : comparator;
+        TreeSet sortedList = new TreeSet(comparator);
         sortedList.addAll(ourCommands.values());
         return sortedList.iterator();
     }

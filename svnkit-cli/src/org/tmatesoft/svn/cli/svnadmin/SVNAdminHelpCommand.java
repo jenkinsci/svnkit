@@ -55,7 +55,7 @@ public class SVNAdminHelpCommand extends SVNAdminCommand {
                     continue;
                 }
                 getEnvironment().getProgramName();
-                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName());
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName(), true);
                 getEnvironment().getOut().println(help);
             }
         } else if (getSVNAdminEnvironment().isVersion()) {
@@ -65,7 +65,7 @@ public class SVNAdminHelpCommand extends SVNAdminCommand {
                 getEnvironment().getOut().println(VERSION_HELP_FOOTER);
             }
         } else if (getEnvironment().getArguments().isEmpty()) {
-            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null);
+            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null, null);
             getEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {getEnvironment().getProgramName()});

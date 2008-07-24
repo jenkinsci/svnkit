@@ -20,6 +20,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.Iterator;
+import java.util.Comparator;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -280,7 +281,7 @@ public class SVNCommandUtil {
         return count;
     }
 
-    public static String getCommandHelp(AbstractSVNCommand command, String programName) {
+    public static String getCommandHelp(AbstractSVNCommand command, String programName, boolean printOptionAlias) {
         StringBuffer help = new StringBuffer();
         help.append(command.getName());
         if (command.getAliases().length > 0) {
@@ -305,7 +306,7 @@ public class SVNCommandUtil {
                     AbstractSVNOption option = (AbstractSVNOption) options.next();
                     help.append("  ");
                     String optionDesc = null;
-                    if (option.getAlias() != null) {
+                    if (option.getAlias() != null && printOptionAlias) {
                         optionDesc = "-" + option.getAlias() + " [--" + option.getName() + "]";
                     } else {
                         optionDesc = "--" + option.getName();
@@ -366,14 +367,15 @@ public class SVNCommandUtil {
     
     }
 
-    public static String getGenericHelp(String programName, String header, String footer) {
+    public static String getGenericHelp(String programName, String header, String footer, Comparator commandComparator) {
         StringBuffer help = new StringBuffer();
         if (header != null) {
             String version = Version.getMajorVersion() + "." + Version.getMinorVersion() + "." + Version.getMicroVersion();
             header = MessageFormat.format(header, new Object[] {programName, version});
             help.append(header);
         }
-        for (Iterator commands = AbstractSVNCommand.availableCommands(); commands.hasNext();) {
+
+        for (Iterator commands = AbstractSVNCommand.availableCommands(commandComparator); commands.hasNext();) {
             AbstractSVNCommand command = (AbstractSVNCommand) commands.next();
             help.append("\n   ");
             help.append(command.getName());

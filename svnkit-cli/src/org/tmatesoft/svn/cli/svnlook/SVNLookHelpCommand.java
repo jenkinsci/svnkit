@@ -28,6 +28,9 @@ public class SVNLookHelpCommand extends SVNLookCommand {
 
     private static final String GENERIC_HELP_HEADER = 
         "general usage: {0} SUBCOMMAND REPOS_PATH  [ARGS & OPTIONS ...]\n" +
+        "Note: any subcommand which takes the ''--revision'' and ''--transaction''\n" +
+        "      options will, if invoked without one of those options, act on\n" +
+        "      the repository''s youngest revision.\n" +
         "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
         "Type ''{0} --version'' to see the program version and FS modules.\n" +
         "\n" + 
@@ -54,7 +57,7 @@ public class SVNLookHelpCommand extends SVNLookCommand {
                     getEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
-                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName());
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName(), true);
                 getEnvironment().getOut().println(help);
             }
         } else if (getSVNLookEnvironment().isVersion()) {
@@ -62,7 +65,7 @@ public class SVNLookHelpCommand extends SVNLookCommand {
             getEnvironment().getOut().println(version);
             getEnvironment().getOut().println(VERSION_HELP_FOOTER);
         } else if (getEnvironment().getArguments().isEmpty()) {
-            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null);
+            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null, null);
             getEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {getEnvironment().getProgramName()});
