@@ -1,3 +1,7 @@
+== version 1.2.0-beta4
+
++ Bugfixes
+
 == version 1.2.0-beta3
 
 + SASL authentication support improved.
