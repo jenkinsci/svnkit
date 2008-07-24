@@ -74,9 +74,9 @@ public class SVNErrorManager {
         }
         SVNDebugLog.getDefaultLog().log(err.getMessage(), logLevel);
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
-            throw new SVNCancelException(err);
+            throw new SVNCancelException(err,cause);
         } else if (err.getErrorCode().isAuthentication()) {
-            throw new SVNAuthenticationException(err);
+            throw new SVNAuthenticationException(err,cause);
         } else {
             throw new SVNException(err, cause);
         }

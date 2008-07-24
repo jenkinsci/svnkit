@@ -756,9 +756,11 @@ public class DAVRepository extends SVNRepository {
             path = info.baseline;
             DAVProppatchHandler handler = new DAVProppatchHandler();
             SVNErrorMessage requestError = null;
+            SVNException e = null;
             try {
                 myConnection.doProppatch(null, path, request, handler, null);
-            } catch (SVNException e) {
+            } catch (SVNException x) {
+                e = x;
                 requestError = e.getErrorMessage();                
             }
             if (requestError != null || handler.getError() != null){
@@ -769,7 +771,7 @@ public class DAVRepository extends SVNRepository {
                 }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "DAV request failed; it's possible that the repository's " +
                         "pre-revprop-change hook either failed or is non-existent");
-                SVNErrorManager.error(err, requestError);
+                SVNErrorManager.error(err, requestError, e);
             }
         } finally {
             closeConnection();
