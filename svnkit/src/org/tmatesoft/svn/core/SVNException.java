@@ -42,20 +42,33 @@ public class SVNException extends Exception {
      * @param cause        the real cause of the error
      */
     public SVNException(SVNErrorMessage errorMessage, Throwable cause) {
-        super(cause);
-        if (cause instanceof SVNException) {
-            SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
-            SVNErrorMessage parent = errorMessage;
-            while(parent.hasChildErrorMessage()) {
-                parent = parent.getChildErrorMessage();
-            }
-            if (parent != childMessages) {
-                parent.setChildErrorMessage(childMessages);
-            }
-        }
+        super(findCause(errorMessage,cause));
+//      this can create cyclic reference among messages, if cause already contains errorMessage as a child
+//        if (cause instanceof SVNException) {
+//            SVNErrorMessage childMessages = ((SVNException) cause).getErrorMessage();
+//            SVNErrorMessage parent = errorMessage;
+//            while(parent.hasChildErrorMessage()) {
+//                parent = parent.getChildErrorMessage();
+//            }
+//            if (parent != childMessages) {
+//                parent.setChildErrorMessage(childMessages);
+//            }
+//        }
+
         myErrorMessage = errorMessage;
     }
-    
+
+    private static Throwable findCause(SVNErrorMessage errorMessage, Throwable cause) {
+        if(cause!=null) return cause;
+
+        // SVNErrorMessage has its own chaining mechanism, so if no 'cause' is given, try to pick up
+        // the nearset exception from there, so that printStackTrace() would print the root cause.
+        for( SVNErrorMessage e = errorMessage; e!=null; e=e.getChildErrorMessage() )
+            if(e.getCause()!=null)
+                return e.getCause();
+        return null;
+    }
+
     /**
      * Returns an error message provided to this exception object.
      * 

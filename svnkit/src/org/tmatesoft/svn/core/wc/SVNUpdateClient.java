@@ -1106,7 +1106,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             setEventPathPrefix("path");
             if (oldURL == null) {
                 target.getParentFile().mkdirs();
-                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
                 if (externalDiff.isExport) {
                     doExport(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), null, true, SVNDepth.INFINITY); 
                 } else {
@@ -1132,7 +1132,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     throw error;
                 }
             } else if (externalDiff.isUpdateUnchanged || !externalDiff.compareExternals(oldURL, newURL)) {
-                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
                 SVNFileType fileType = SVNFileType.getType(target);
                 boolean empty = false;
                 if (fileType == SVNFileType.DIRECTORY) {

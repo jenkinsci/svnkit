@@ -152,7 +152,7 @@ public class DAVConnection {
         } catch (SVNException e) {
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
-                SVNErrorManager.error(err, e.getErrorMessage());
+                SVNErrorManager.error(err, e.getErrorMessage(), e);
             } else if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
                 return new SVNLock[0];
             }

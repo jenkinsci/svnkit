@@ -4,9 +4,9 @@
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
  <modelVersion>4.0.0</modelVersion>
- <groupId>org.tmatesoft</groupId>
+ <groupId>org.jvnet.hudson.svnkit</groupId>
  <artifactId>svnkit</artifactId>
- <version>%svnkit.version%</version>
+ <version>1.2.0-hudson-1</version>
  <name>SVNKit</name>
  <description>The only pure Java Subversion library in the world, formerly known as JavaSVN</description>
  <url>http://svnkit.com/</url>
@@ -24,9 +24,9 @@
  </distributionManagement>
  <dependencies>
    <dependency>
-     <groupId>com.trilead.ssh</groupId>
+     <groupId>org.jvnet.hudson</groupId>
      <artifactId>trilead-ssh2</artifactId>
-     <version>build212</version>
+     <version>build212-hudson-1</version>
    </dependency>
  </dependencies>
 </project> 

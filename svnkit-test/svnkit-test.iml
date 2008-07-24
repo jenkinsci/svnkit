@@ -30,5 +30,10 @@
     <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntryProperties />
   </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="2" />
+    </Base>
+  </component>
 </module>
 

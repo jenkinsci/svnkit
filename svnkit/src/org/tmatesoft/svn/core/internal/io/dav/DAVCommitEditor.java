@@ -167,7 +167,10 @@ class DAVCommitEditor implements ISVNEditor {
                     } catch (SVNException inner) {
                     }
                     if (err != null) {
-                        SVNErrorManager.error(err);
+                        // SVNErrorManager.error(err);
+                        // this happens if you try to add the same directory twice
+                        // (yet if you do addDir then openDir, that still fails)
+                        return;
                     }
                 }
                 throw e;
@@ -472,3 +475,4 @@ class DAVCommitEditor implements ISVNEditor {
     }
     
 }
+
