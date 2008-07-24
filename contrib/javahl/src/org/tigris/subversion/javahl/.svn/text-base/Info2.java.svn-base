@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2005 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2005,2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,7 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
 
 import java.util.Date;
@@ -24,96 +25,150 @@ import java.util.Date;
  * about items in the repository or working copy
  * @since 1.2
  */
-public class Info2
+public class Info2 implements java.io.Serializable
 {
+    // Update the serialVersionUID when there is a incompatible change
+    // made to this class.  See any of the following, depending upon
+    // the Java release.
+    // http://java.sun.com/j2se/1.3/docs/guide/serialization/spec/version.doc7.html
+    // http://java.sun.com/j2se/1.4/pdf/serial-spec.pdf
+    // http://java.sun.com/j2se/1.5.0/docs/guide/serialization/spec/version.html#6678
+    // http://java.sun.com/javase/6/docs/platform/serialization/spec/version.html#6678
+    private static final long serialVersionUID = 1L;
+
     /**
      * the path of the item
      */
     private String path;
+
     /**
      * the url of the item
      */
     private String url;
+
     /**
      * the revision of the item
      */
     private long rev;
+
     /**
      * the item kinds (see NodeKind)
      */
     private int kind;
+
     /**
      * the root URL of the repository
      */
     private String reposRootUrl;
+
     /**
      * the UUID of the repository
      */
     private String reposUUID;
+
     /**
      * the revision of the last change
      */
     private long lastChangedRev;
+
     /**
      * the date of the last change in ns
      */
     private long lastChangedDate;
+
     /**
      * the author of the last change
      */
     private String lastChangedAuthor;
+
     /**
      * the information about any lock (may be null)
      */
     private Lock lock;
+
     /**
      * the flag if the remaining fields are set
      */
     private boolean hasWcInfo;
+
     /**
      * the scheduled operation at next commit (see ScheduleKind)
      */
     private int schedule;
+
     /**
      * if the item was copied, the source url
      */
     private String copyFromUrl;
+
     /**
      * if the item was copied, the source rev
      */
     private long copyFromRev;
+
     /**
      * the last time the item was changed in ns
      */
     private long textTime;
+
     /**
      * the last time the properties of the items were changed in ns
      */
     private long propTime;
+
     /**
      * the checksum of the item
      */
     private String checksum;
+
     /**
      * if the item is in conflict, the filename of the base version file
      */
     private String conflictOld;
+
     /**
      * if the item is in conflict, the filename of the last repository version
      * file
      */
     private String conflictNew;
+
     /**
-     * if the item is in conflict, the filename of the working copy version file
+     * if the item is in conflict, the filename of the working copy
+     * version file
      */
     private String conflictWrk;
+
     /**
      * the property reject file
      */
     private String prejfile;
 
     /**
-     * constructor to build the object by native code. See fields for parameters
+     * The name of the changelist.
+     * @since 1.5
+     */
+    private String changelistName;
+
+    /**
+     * The size of the file after being translated into its local
+     * representation, or <code>-1</code> if unknown.  Not applicable
+     * for directories.
+     * @since 1.5
+     */
+    private long workingSize;
+
+    /**
+     * The size of the file in the repository (untranslated,
+     * e.g. without adjustment of line endings and keyword
+     * expansion). Only applicable for file -- not directory -- URLs.
+     * For working copy paths, size will be <code>-1</code>.
+     * @since New in 1.5.
+     */
+    private long reposSize;
+
+    /**
+     * constructor to build the object by native code. See fields for
+     * parameters
      * @param path
      * @param url
      * @param rev
@@ -141,7 +196,8 @@ public class Info2
           String lastChangedAuthor, Lock lock, boolean hasWcInfo, int schedule,
           String copyFromUrl, long copyFromRev, long textTime, long propTime,
           String checksum, String conflictOld, String conflictNew,
-          String conflictWrk, String prejfile)
+          String conflictWrk, String prejfile, String changelistName,
+          long workingSize, long reposSize)
     {
         this.path = path;
         this.url = url;
@@ -164,6 +220,9 @@ public class Info2
         this.conflictNew = conflictNew;
         this.conflictWrk = conflictWrk;
         this.prejfile = prejfile;
+        this.changelistName = changelistName;
+        this.workingSize = workingSize;
+        this.reposSize = reposSize;
     }
 
     /**
@@ -227,7 +286,7 @@ public class Info2
      */
     public Date getLastChangedDate()
     {
-        if(lastChangedDate == 0)
+        if (lastChangedDate == 0)
             return null;
         else
             return new Date(lastChangedDate/1000);
@@ -286,7 +345,7 @@ public class Info2
      */
     public Date getTextTime()
     {
-        if(textTime == 0)
+        if (textTime == 0)
             return null;
         else
             return new Date(textTime/1000);
@@ -297,7 +356,7 @@ public class Info2
      */
     public Date getPropTime()
     {
-        if(propTime == 0)
+        if (propTime == 0)
             return null;
         else
             return new Date(propTime/1000);
@@ -343,5 +402,45 @@ public class Info2
     public String getPrejfile()
     {
         return prejfile;
+    }
+
+    /**
+     * @return The name of the changelist.
+     * @since 1.5
+     */
+    public String getChangelistName()
+    {
+        return changelistName;
+    }
+
+    /**
+     * @return The size of the file after being translated into its
+     * local representation, or <code>-1</code> if unknown.  Not
+     * applicable for directories.
+     * @since 1.5
+     */
+    public long getWorkingSize()
+    {
+        return workingSize;
+    }
+
+    /**
+     * @return The size of the file in the repository (untranslated,
+     * e.g. without adjustment of line endings and keyword
+     * expansion). Only applicable for file -- not directory -- URLs.
+     * For working copy paths, size will be <code>-1</code>.
+     * @since New in 1.5.
+     */
+    public long getReposSize()
+    {
+        return reposSize;
+    }
+
+    /**
+     * @return A string representation of this info.
+     */
+    public String toString()
+    {
+        return getUrl();
     }
 }

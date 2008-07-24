@@ -15,6 +15,7 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
 
 /**
@@ -37,20 +38,21 @@ public final class NodeKind
     /**
      * mapping for the constants to text
      */
-	private static final String[] statusNames =
-	{
-		"none",
-		"file",
-		"dir ",
-		"unknown",
-	};
+    private static final String[] statusNames =
+    {
+        "none",
+        "file",
+        "dir ",
+        "unknown",
+    };
+
     /**
      * Returns the textual representation for a NodeKind
      * @param kind  kind of node
      * @return english text
      */
-	public static final String getNodeKindName(int kind)
-	{
-		return statusNames[kind];
-	}
+    public static final String getNodeKindName(int kind)
+    {
+        return statusNames[kind];
+    }
 }

@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2005 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2005,2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,73 +15,109 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
+
+import java.util.EventObject;
+
 /**
- * this class contains all the information passed by the onNotify2 method of
- * the Notify2 class. This is used notify the SVNClientInterfacce users all
- * relevant events.
+ * The event passed to the {@link Notify2#onNotify(NotifyInformation)}
+ * API to notify {@link SVNClientInterface} of relevant events.
+ *
  * @since 1.2
  */
-public class NotifyInformation
+public class NotifyInformation extends EventObject
 {
+    // Update the serialVersionUID when there is a incompatible change
+    // made to this class.  See any of the following, depending upon
+    // the Java release.
+    // http://java.sun.com/j2se/1.3/docs/guide/serialization/spec/version.doc7.html
+    // http://java.sun.com/j2se/1.4/pdf/serial-spec.pdf
+    // http://java.sun.com/j2se/1.5.0/docs/guide/serialization/spec/version.html#6678
+    // http://java.sun.com/javase/6/docs/platform/serialization/spec/version.html#6678
+    private static final long serialVersionUID = 1L;
+
     /**
-     * the path of the item, which is the source of the event.
-     */
-    private String path;
-    /**
-     * the action, which triggered this event (See NotifyAction).
+     * The {@link NotifyAction} which triggered this event.
      */
     private int action;
+
     /**
-     * the kind of the item (See NodeKind).
+     * The {@link NodeKind} of the item.
      */
     private int kind;
+
     /**
-     * the mime type of the item.
+     * The MIME type of the item.
      */
     private String mimeType;
+
     /**
-     * any lock for the item
+     * Any lock for the item.
      */
     private Lock lock;
+
     /**
-     * any error message for the item
+     * Any error message for the item.
      */
     private String errMsg;
+
     /**
-     * the state of the content of the item (See NotifyStatus).
+     * The {@link NotifyStatus} of the content of the item.
      */
     private int contentState;
+
     /**
-     * the state of the properties of the item (See NotifyStatus).
+     * The {@link NotifyStatus} of the properties of the item.
      */
     private int propState;
+
     /**
-     * the state of the lock of the item (See LockStatus).
+     * The {@link LockStatus} of the lock of the item.
      */
     private int lockState;
+
     /**
-     * the revision of the item.
+     * The revision of the item.
      */
     private long revision;
 
     /**
-     * This constructor is to be used by the native code. For the parameter
-     * see the matching members
-     * @param path
-     * @param action
-     * @param kind
-     * @param mimeType
-     * @param lock
-     * @param errMsg
-     * @param contentState
-     * @param propState
-     * @param lockState
-     * @param revision
+     * The name of the changelist.
+     * @since 1.5
      */
-    NotifyInformation(String path, int action, int kind, String mimeType, Lock lock, String errMsg, int contentState, int propState, int lockState, long revision)
+    private String changelistName;
+
+    /**
+     * The range of the merge just beginning to occur.
+     * @since 1.5
+     */
+    private RevisionRange mergeRange;
+
+    /**
+     * This constructor is to be used by the native code.
+     *
+     * @param path The path of the item, which is the source of the event.
+     * @param action The {@link NotifyAction} which triggered this event.
+     * @param kind The {@link NodeKind} of the item.
+     * @param mimeType The MIME type of the item.
+     * @param lock Any lock for the item.
+     * @param errMsg Any error message for the item.
+     * @param contentState The {@link NotifyStatus} of the content of
+     * the item.
+     * @param propState The {@link NotifyStatus} of the properties of
+     * the item.
+     * @param lockState The {@link LockStatus} of the lock of the item.
+     * @param revision The revision of the item.
+     * @param changelistName The name of the changelist.
+     * @param mergeRange The range of the merge just beginning to occur.
+     */
+    NotifyInformation(String path, int action, int kind, String mimeType,
+                      Lock lock, String errMsg, int contentState,
+                      int propState, int lockState, long revision,
+                      String changelistName, RevisionRange mergeRange)
     {
-        this.path = path;
+        super(path);
         this.action = action;
         this.kind = kind;
         this.mimeType = mimeType;
@@ -91,18 +127,20 @@ public class NotifyInformation
         this.propState = propState;
         this.lockState = lockState;
         this.revision = revision;
+        this.changelistName = changelistName;
+        this.mergeRange = mergeRange;
     }
 
     /**
-     * return the path of the item, which is the source of the event.
+     * @return The path of the item, which is the source of the event.
      */
     public String getPath()
     {
-        return path;
+        return (String) super.source;
     }
 
     /**
-     * return the action, which triggered this event (See NotifyAction).
+     * @return The {@link NotifyAction} which triggered this event.
      */
     public int getAction()
     {
@@ -110,7 +148,7 @@ public class NotifyInformation
     }
 
     /**
-     * return the kind of the item (See NodeKind).
+     * @return The {@link NodeKind} of the item.
      */
     public int getKind()
     {
@@ -118,7 +156,7 @@ public class NotifyInformation
     }
 
     /**
-     * return the mime type of the item.
+     * @return The MIME type of the item.
      */
     public String getMimeType()
     {
@@ -126,7 +164,7 @@ public class NotifyInformation
     }
 
     /**
-     * return any lock for the item
+     * @return Any lock for the item.
      */
     public Lock getLock()
     {
@@ -134,7 +172,7 @@ public class NotifyInformation
     }
 
     /**
-     * return any error message for the item
+     * @return Any error message for the item.
      */
     public String getErrMsg()
     {
@@ -142,7 +180,7 @@ public class NotifyInformation
     }
 
     /**
-     * return the state of the content of the item (See NotifyStatus).
+     * @return The {@link NotifyStatus} of the content of the item.
      */
     public int getContentState()
     {
@@ -150,7 +188,7 @@ public class NotifyInformation
     }
 
     /**
-     * return the state of the properties of the item (See NotifyStatus).
+     * @return The {@link NotifyStatus} of the properties of the item.
      */
     public int getPropState()
     {
@@ -158,7 +196,7 @@ public class NotifyInformation
     }
 
     /**
-     * return the state of the lock of the item (See LockStatus).
+     * @return The {@link LockStatus} of the lock of the item.
      */
     public int getLockState()
     {
@@ -166,10 +204,28 @@ public class NotifyInformation
     }
 
     /**
-     * return the revision of the item.
+     * @return The revision of the item.
      */
     public long getRevision()
     {
         return revision;
+    }
+
+    /**
+     * @return The name of the changelist.
+     * @since 1.5
+     */
+    public String getChangelistName()
+    {
+        return changelistName;
+    }
+
+    /**
+     * @return The range of the merge just beginning to occur.
+     * @since 1.5
+     */
+    public RevisionRange getMergeRange()
+    {
+        return mergeRange;
     }
 }

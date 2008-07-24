@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2005 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2005,2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,42 +13,59 @@
  * individuals.  For exact contribution history, see the revision
  * history and logs, available at http://subversion.tigris.org/.
  * ====================================================================
- * 
+ *
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
 
 import java.util.Date;
+
 /**
- * class to describe a lock. It is return by the lock operation
+ * Class to describe a lock.  It is returned by the lock operation.
  * @since 1.2
  */
-public class Lock
+public class Lock implements java.io.Serializable
 {
+    // Update the serialVersionUID when there is a incompatible change
+    // made to this class.  See any of the following, depending upon
+    // the Java release.
+    // http://java.sun.com/j2se/1.3/docs/guide/serialization/spec/version.doc7.html
+    // http://java.sun.com/j2se/1.4/pdf/serial-spec.pdf
+    // http://java.sun.com/j2se/1.5.0/docs/guide/serialization/spec/version.html#6678
+    // http://java.sun.com/javase/6/docs/platform/serialization/spec/version.html#6678
+    private static final long serialVersionUID = 1L;
+
     /**
      * the owner of the lock
      */
     private String owner;
+
     /**
      * the path of the locked item
      */
     private String path;
+
     /**
      * the token provided during the lock operation
      */
     private String token;
+
     /**
      * the comment provided during the lock operation
      */
     private String comment;
+
     /**
      * the date when the lock was created
      */
     private long creationDate;
+
     /**
      * the date when the lock will expire
      */
     private long expirationDate;
+
     /**
      * this constructor should only called from JNI code
      * @param owner             the owner of the lock
@@ -68,6 +85,7 @@ public class Lock
         this.creationDate = creationDate;
         this.expirationDate = expirationDate;
     }
+
     /**
      * @return the owner of the lock
      */
@@ -105,7 +123,7 @@ public class Lock
      */
     public Date getCreationDate()
     {
-        if(creationDate == 0)
+        if (creationDate == 0)
             return null;
         else
             return new Date(creationDate/1000);
@@ -116,7 +134,7 @@ public class Lock
      */
     public Date getExpirationDate()
     {
-        if(expirationDate == 0)
+        if (expirationDate == 0)
             return null;
         else
             return new Date(expirationDate/1000);

@@ -1,7 +1,7 @@
 8
 
 dir
-32289
+32295
 http://svn.collab.net/repos/svn/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl
 http://svn.collab.net/repos/svn
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 869c0581e2af52745e40c4eaf2ef175b
 2008-05-21T21:32:23.141615Z
 31343
@@ -45,7 +45,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 9ba1afd28602b1faebc7d2410f5ccc10
 2007-10-17T16:40:09.040798Z
 27249
@@ -58,7 +58,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 0ebe662f0fe795081faab36403fdd53d
 2007-04-23T20:06:34.539930Z
 24722
@@ -68,14 +68,14 @@ has-props
 NotifyAction.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NotifyAction.java
 
 
-2008-07-24T04:49:42.000000Z
-c8568db0fa31422ec5e57ca49397649c
-2005-03-28T09:00:37.569257Z
-13719
-pmayweg
+
+2008-07-24T23:06:06.000000Z
+4099670fd9d9f24ea43db276c10c10c0
+2008-04-18T14:57:04.054786Z
+30682
+hwright
 has-props
 
 Mergeinfo.java
@@ -84,7 +84,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 7b4113bc6a724085926a68c0c7b1424e
 2008-04-07T19:02:27.705395Z
 30419
@@ -94,14 +94,14 @@ has-props
 NotifyStatus.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NotifyStatus.java
 
 
-2008-07-24T04:49:42.000000Z
-47a334e4f36fc1da67357f604b32c788
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+3ce46efc658f00652541390c2134b8aa
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 BlameCallback2.java
@@ -110,7 +110,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 26eb7fb14cb1916ab99a1ab8a188b7e0
 2007-10-10T20:32:38.826622Z
 27091
@@ -120,104 +120,118 @@ has-props
 Version.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Version.java
 
 
-2008-07-24T04:49:43.000000Z
-0ce8dc9305ca887afa2ede223eb075d1
-2005-12-03T01:03:28.147846Z
-17607
+
+2008-07-24T23:06:06.000000Z
+937d7c99e95f24d64d6b28fbceb86079
+2007-05-15T18:57:49.894449Z
+25028
 dlr
+has-props
 
 LogMessage.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/LogMessage.java
 
 
-2008-07-24T04:49:42.000000Z
-f9dd5b1b5c90862108f4484d2eb2d6b9
-2004-11-14T22:48:41.785081Z
-11903
+
+2008-07-24T23:06:06.000000Z
+47188e315a3b0279085a9ae89b92d737
+2007-04-27T00:59:35.573045Z
+24805
 dlr
 has-props
 
 CommitMessage.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/CommitMessage.java
 
 
-2008-07-24T04:49:42.000000Z
-e6515a85c84107162200d553c53f1fc3
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+ef1693dfcbefb4facafa67a7febe7fc5
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 SVNClientLogLevel.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClientLogLevel.java
 
 
-2008-07-24T04:49:42.000000Z
-a05772dc6126c65dfd4fe27ad616c390
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+917602955d4c48e5db32c6ec75094145
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 ChangePath.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/ChangePath.java
 
 
-2008-07-24T04:49:42.000000Z
-480bb1ea0935d4a29e8c7ad7119de804
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+7157968fb5b8a464b83d0c2a9da28d70
+2007-04-23T21:44:55.916859Z
+24735
+blair
 has-props
 
 RevisionKind.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/RevisionKind.java
 
 
-2008-07-24T04:49:42.000000Z
-7e7cdc8cef702991526f35a1dc27ccd3
-2004-08-05T19:08:50.507193Z
-10493
-breser
-has-props
-
-SVNClient.java
-file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClient.java
-
-
-2008-07-24T04:49:42.000000Z
-a461f25cdc523a3b863f2f915b5cff20
-2006-12-23T08:51:35.487252Z
-22784
-dlr
+2008-07-24T23:06:06.000000Z
+e4550d54d12f9c62efe6602a4f814ad4
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 SVNClientSynchronized.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClientSynchronized.java
 
 
-2008-07-24T04:49:42.000000Z
-6951213e0202c5cc819665de3e838260
-2007-03-29T16:29:16.818852Z
-24252
-dlr
+
+2008-07-24T23:06:06.000000Z
+8d184e640eff134e15ecee58f1e9f55f
+2008-05-21T21:38:42.951617Z
+31344
+cmpilato
+has-props
+
+SVNClient.java
+file
+
+
+
+
+2008-07-24T23:06:06.000000Z
+9ee641caefd24786c9e82cf24274b86b
+2008-05-24T03:09:08.632172Z
+31414
+hwright
+has-props
+
+CommitItem.java
+file
+
+
+
+
+2008-07-24T23:06:06.000000Z
+29597ba29ecdfe347c829616f270a86e
+2007-04-23T21:44:55.916859Z
+24735
+blair
 has-props
 
 ErrorCodes.java
@@ -226,24 +240,11 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 e65b5dd33c407a3cf697afd7686385d1
 2008-01-25T22:38:17.239875Z
 29049
 glasser
-has-props
-
-CommitItem.java
-file
-
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/CommitItem.java
-
-
-2008-07-24T04:49:42.000000Z
-1f9e5359dff63dea20223c86b8084e44
-2004-08-05T19:08:50.507193Z
-10493
-breser
 has-props
 
 InfoCallback.java
@@ -252,7 +253,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 c50440d40ca3eb96224e51ca7a10d583
 2007-04-23T17:40:47.726441Z
 24716
@@ -265,7 +266,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 e74d419cd5d2997634b0b6bac2c321eb
 2007-04-23T17:40:47.726441Z
 24716
@@ -275,13 +276,13 @@ has-props
 Info2.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Info2.java
 
 
-2008-07-24T04:49:42.000000Z
-5d70c0f2b62d5c5349d0073a1869c558
-2005-04-14T22:11:32.490466Z
-14226
+
+2008-07-24T23:06:06.000000Z
+2dc3cd9f4f794e0ed5825d127588e249
+2007-07-05T23:59:30.750825Z
+25665
 dlr
 has-props
 
@@ -291,7 +292,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 ebe0e8d0aa68c8792ef27ca2bce4ac49
 2007-10-10T21:06:54.847558Z
 27093
@@ -301,27 +302,27 @@ has-props
 SVNAdmin.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNAdmin.java
 
 
-2008-07-24T04:49:42.000000Z
-be5401863d469207e53dce09fdeea989
-2005-12-19T23:24:53.112164Z
-17860
-kfogel
+
+2008-07-24T23:06:06.000000Z
+af8ee1ef817cae6ebf2e1aaa17e1dbe7
+2007-10-22T05:46:52.998075Z
+27303
+dlr
 has-props
 
 NativeResources.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NativeResources.java
 
 
-2008-07-24T04:49:42.000000Z
-ac9f6a8e1c8ecb9968e67f99a5d7e7e0
-2005-12-02T23:27:44.341838Z
-17604
-dlr
+
+2008-07-24T23:06:06.000000Z
+b84d9100cc9288b594be936c3ddaea41
+2007-05-31T17:59:20.244330Z
+25238
+blair
 has-props
 
 MergeinfoLogKind.java
@@ -330,7 +331,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 61e8a85b8115d707f6feaf7b9aa01e51
 2008-04-05T19:06:57.658098Z
 30350
@@ -343,7 +344,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 cf135f513c4a90bc78ab9b6432cd210f
 2007-10-05T20:56:20.189617Z
 26960
@@ -353,66 +354,40 @@ has-props
 NodeKind.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NodeKind.java
 
 
-2008-07-24T04:49:42.000000Z
-eb109481f56b99907273faffbcb1bfac
-2004-08-07T07:24:15.168771Z
-10517
-pmayweg
+
+2008-07-24T23:06:06.000000Z
+e095552a0d4e9ef324da271008a7880d
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 Info.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Info.java
 
 
-2008-07-24T04:49:42.000000Z
-72adaeb0ecfa035ed0339590f2847273
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+8591c009a23fa6fe3f1f413fcf227d98
+2007-04-23T21:44:55.916859Z
+24735
+blair
 has-props
 
 Revision.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Revision.java
-
-
-2008-07-24T04:49:42.000000Z
-463e97a61123249db176a5f017c82b72
-2005-03-28T09:00:37.569257Z
-13719
-pmayweg
-has-props
-
-ConflictDescriptor.java
-file
 
 
 
-
-2008-07-24T05:01:19.000000Z
-813e85e0ff007fc0a35f6b823c48cb52
-2007-10-24T23:15:10.526540Z
-27361
+2008-07-24T23:06:06.000000Z
+b0d71d6ea07cb676caac1b1b04aadde0
+2007-08-23T02:16:55.044396Z
+26259
 dlr
-has-props
-
-ConflictResolverCallback.java
-file
-
-
-
-
-2008-07-24T05:01:19.000000Z
-7eb5fd828a9ee3ff80dc15e7138e4bd0
-2007-10-17T17:42:26.073908Z
-27251
-hwright
 has-props
 
 ConflictResult.java
@@ -421,23 +396,49 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 d78ceb1c961caa21bc9a69bb637e0195
 2008-03-07T06:30:08.546649Z
 29766
 kfogel
 
+ConflictResolverCallback.java
+file
+
+
+
+
+2008-07-24T23:06:06.000000Z
+7eb5fd828a9ee3ff80dc15e7138e4bd0
+2007-10-17T17:42:26.073908Z
+27251
+hwright
+has-props
+
+ConflictDescriptor.java
+file
+
+
+
+
+2008-07-24T23:06:06.000000Z
+813e85e0ff007fc0a35f6b823c48cb52
+2007-10-24T23:15:10.526540Z
+27361
+dlr
+has-props
+
 SVNOutputStream.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNOutputStream.java
 
 
-2008-07-24T04:49:42.000000Z
-4107f685f43e961229d8270a521aca71
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+aa07983169cecce7c257400ad5906ebe
+2007-04-23T20:12:49.656170Z
+24723
+blair
 has-props
 
 SubversionException.java
@@ -446,7 +447,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 d44aba1b46cf9353991b0689508d1655
 2007-07-06T19:43:29.779829Z
 25672
@@ -456,14 +457,14 @@ has-props
 PropertyData.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PropertyData.java
 
 
-2008-07-24T04:49:42.000000Z
-1ca6c161533ce6062ab35c056e391033
-2005-03-28T09:00:37.569257Z
-13719
-pmayweg
+
+2008-07-24T23:06:06.000000Z
+ba86aea7053fa43667e250e5fbefa784
+2007-04-23T20:22:56.496637Z
+24725
+blair
 has-props
 
 BlameCallbackImpl.java
@@ -472,7 +473,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 e87210be4d2f2ba833cba9c6d59daf98
 2007-08-18T18:58:57.857286Z
 26166
@@ -485,7 +486,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 8db9bd3e094288724dd55de04311770f
 2008-05-25T03:03:24.421074Z
 31439
@@ -495,92 +496,92 @@ has-props
 OutputInterface.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/OutputInterface.java
 
 
-2008-07-24T04:49:42.000000Z
-5361726a13b132f911e55a7a7c5da16f
-2004-08-05T19:08:50.507193Z
-10493
-breser
-has-props
-
-CommitItemStateFlags.java
-file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/CommitItemStateFlags.java
-
-
-2008-07-24T04:49:42.000000Z
-c57b850eb0fd1f41bf282abc018b49f3
-2005-03-28T09:00:37.569257Z
-13719
-pmayweg
+2008-07-24T23:06:06.000000Z
+2df18f8e46c27c794a701a16c4614273
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 PromptUserPassword2.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PromptUserPassword2.java
 
 
-2008-07-24T04:49:42.000000Z
-63cb7bb0a8088313c3153fc3e9740929
-2005-08-25T22:31:49.334574Z
-15917
-dlr
+
+2008-07-24T23:06:06.000000Z
+1f164adf84eeafab6fae4a1ef4c2e079
+2007-04-23T17:40:47.726441Z
+24716
+blair
+has-props
+
+CommitItemStateFlags.java
+file
+
+
+
+
+2008-07-24T23:06:06.000000Z
+24335bd5b515af6b2530128e4885395a
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 SVNClientInterface.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClientInterface.java
 
 
-2008-07-24T04:49:42.000000Z
-76d1d75d1967f4a1c1f5346ef83c4828
-2006-07-18T19:27:06.057428Z
-20726
-dlr
+
+2008-07-24T23:06:06.000000Z
+e5a16281e64d728ebf2ef679a05c5083
+2008-05-21T21:38:42.951617Z
+31344
+cmpilato
 has-props
 
 Lock.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Lock.java
 
 
-2008-07-24T04:49:42.000000Z
-6ec07b1dd9bcd64af0e504d5e12d574b
-2005-04-14T22:11:32.490466Z
-14226
-dlr
+
+2008-07-24T23:06:06.000000Z
+44c5342a2d7952d12ab12612d1a219e9
+2007-04-23T21:44:55.916859Z
+24735
+blair
 has-props
 
 StatusKind.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/StatusKind.java
 
 
-2008-07-24T04:49:43.000000Z
-f17a5aa5ed75dbf133649c4c3f9b1324
-2005-09-05T22:06:27.857787Z
-16071
-julianfoad
+
+2008-07-24T23:06:06.000000Z
+294f5823b19ceee4311d556a47a1cb47
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 JNIError.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/JNIError.java
 
 
-2008-07-24T04:49:42.000000Z
-f48d87c45ad61f2987ad212811c00ebc
-2004-06-12T13:01:25.912985Z
-9973
-pmayweg
+
+2008-07-24T23:06:06.000000Z
+e411e59bbb00d2f2e35d7c2a0d463b87
+2007-04-23T20:06:34.539930Z
+24722
+blair
 has-props
 
 CopySource.java
@@ -589,7 +590,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 5076301dcbbe32915fa0861e2d90203d
 2007-04-23T21:44:55.916859Z
 24735
@@ -599,14 +600,14 @@ has-props
 BlameCallback.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/BlameCallback.java
 
 
-2008-07-24T04:49:42.000000Z
-b703ec14563d02c905dee2dbcfcd38fc
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+ef4b29e5619aae23e70f3c92f7f8a83a
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 StatusCallback.java
@@ -615,7 +616,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 6485fa4311c99683c1cf8b5d2e87cae8
 2007-04-23T17:40:47.726441Z
 24716
@@ -625,53 +626,53 @@ has-props
 DirEntry.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/DirEntry.java
 
 
-2008-07-24T04:49:42.000000Z
-231581a05e04b3693abb5a167cdb9a87
-2005-03-02T05:42:46.980569Z
-13228
-jerenkrantz
-has-props
-
-SVNInputStream.java
-file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNInputStream.java
-
-
-2008-07-24T04:49:42.000000Z
-9987ccd51bbbdb270acc39d8e6329cf0
-2004-08-05T19:08:50.507193Z
-10493
-breser
+2008-07-24T23:06:06.000000Z
+526922eb3dcf220749db9b6ef04079e0
+2007-04-23T21:44:55.916859Z
+24735
+blair
 has-props
 
 ScheduleKind.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/ScheduleKind.java
 
 
-2008-07-24T04:49:43.000000Z
-ef91b041c071223505c92e9f494f587f
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+d24d67f31233e3f57d6bcdf10e0315a9
+2007-04-23T17:40:47.726441Z
+24716
+blair
+has-props
+
+SVNInputStream.java
+file
+
+
+
+
+2008-07-24T23:06:06.000000Z
+840a05819adaf631c701f4ffdd781201
+2007-04-23T20:12:49.656170Z
+24723
+blair
 has-props
 
 PromptUserPassword.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PromptUserPassword.java
 
 
-2008-07-24T04:49:42.000000Z
-5d32f873702ea9fc4982dc04a3a02b9d
-2005-08-25T22:31:49.334574Z
-15917
-dlr
+
+2008-07-24T23:06:06.000000Z
+37d2d32d3b801e0ebcc98a6f22812fdb
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 ProgressEvent.java
@@ -680,7 +681,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 9c0d0b7a805a2a5c4303eb8c8e685dbe
 2007-10-10T20:32:38.826622Z
 27091
@@ -690,14 +691,14 @@ has-props
 Notify.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Notify.java
 
 
-2008-07-24T04:49:42.000000Z
-3402332d0e7f3f3e47c5d13d41d4ec0d
-2005-04-06T18:36:40.202384Z
-13983
-dlr
+
+2008-07-24T23:06:06.000000Z
+1884864e2136150632a072691b0a0116
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 ProgressListener.java
@@ -706,7 +707,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 33a362cd0fa4ede6a41606161d085e3a
 2007-10-10T20:32:38.826622Z
 27091
@@ -719,7 +720,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 d39bdc06f973eaffcd1cca60b8166758
 2007-04-23T21:44:55.916859Z
 24735
@@ -732,7 +733,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 2d700d6f5a1123066383af03ec584704
 2007-04-23T17:40:47.726441Z
 24716
@@ -742,53 +743,53 @@ has-props
 NotifyInformation.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NotifyInformation.java
 
 
-2008-07-24T04:49:42.000000Z
-7858c27de01347d7e30fba6934c8e372
-2005-04-14T22:11:32.490466Z
-14226
-dlr
+
+2008-07-24T23:06:06.000000Z
+fac33c4efdc2cf4ff77e04254253ee56
+2007-10-10T20:32:38.826622Z
+27091
+hwright
 has-props
 
 InputInterface.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/InputInterface.java
 
 
-2008-07-24T04:49:42.000000Z
-6c7c620fc202e3b157c4c3c207ac25f9
-2004-08-05T19:08:50.507193Z
-10493
-breser
+
+2008-07-24T23:06:06.000000Z
+5032a4bf3cddc7c28a21736d25a53af5
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 Status.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Status.java
 
 
-2008-07-24T04:49:43.000000Z
-2cc5063606675495178b726e87fd7526
-2005-11-01T16:48:24.805820Z
-17127
-dlr
+
+2008-07-24T23:06:06.000000Z
+4164321c2f9bd6a6c8d2f1c620e65321
+2007-08-26T01:04:48.332331Z
+26317
+hwright
 has-props
 
 PromptUserPassword3.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PromptUserPassword3.java
 
 
-2008-07-24T04:49:42.000000Z
-930fb8aaae98b252736bc8c72ef1fb43
-2005-08-25T22:31:49.334574Z
-15917
-dlr
+
+2008-07-24T23:06:06.000000Z
+b987e01497fff6695cf804850279958b
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 DiffSummary.java
@@ -797,7 +798,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 a88ad91e1b926f3044444d99209ea67a
 2007-10-10T20:32:38.826622Z
 27091
@@ -810,7 +811,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 85c0ec69adf61abe0e7c78bae2ce8038
 2007-10-10T20:32:38.826622Z
 27091
@@ -820,52 +821,53 @@ has-props
 Notify2.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Notify2.java
 
 
-2008-07-24T04:49:42.000000Z
-932eb5122a357f6fee9552116dbb55c0
-2005-04-14T22:11:32.490466Z
-14226
-dlr
+
+2008-07-24T23:06:06.000000Z
+34017f8cb0c002189459dbf4824578a1
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 LockStatus.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/LockStatus.java
 
 
-2008-07-24T04:49:42.000000Z
-0368aa11f06643cd8afc5a68a5f88f5d
-2005-04-14T22:11:32.490466Z
-14226
-dlr
+
+2008-07-24T23:06:06.000000Z
+1fd4e091e569ba14061df52821f40b88
+2007-04-23T17:40:47.726441Z
+24716
+blair
 has-props
 
 Path.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Path.java
 
 
-2008-07-24T04:49:42.000000Z
-d14939dd0ef1bf0aaedebbe54433b447
-2006-03-22T23:13:54.097927Z
-18990
-dlr
+
+2008-07-24T23:06:06.000000Z
+caa5a5990fa5b2052e442414ef1311cd
+2007-04-23T17:40:47.726441Z
+24716
+blair
+has-props
 
 ClientException.java
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/ClientException.java
 
 
-2008-07-24T04:49:42.000000Z
-91e2038d59eb424824e16e548b6bfdd9
-2004-02-15T14:20:30.953522Z
-8652
-pmayweg
+
+2008-07-24T23:06:06.000000Z
+b35aa60c1085dd0cab6f461c4f7db241
+2007-10-01T18:19:45.126488Z
+26875
+dlr
 has-props
 
 ChangelistCallback.java
@@ -874,7 +876,7 @@ file
 
 
 
-2008-07-24T05:01:19.000000Z
+2008-07-24T23:06:06.000000Z
 3cb025f358ae4f26f755fa1860ab4c30
 2007-12-23T02:38:19.787893Z
 28640
