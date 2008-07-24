@@ -31,7 +31,7 @@ public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
         "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
         "Type ''{0} --version'' to see the program version.\n" +
         "\n" + 
-        "Available subcommands:\n";
+        "Available subcommands:";
 
     public SVNDumpFilterHelpCommand() {
         super("help", new String[] {"?", "h"});
@@ -50,7 +50,7 @@ public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
                     getEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
-                String help = SVNCommandUtil.getCommandHelp(command);
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName());
                 getEnvironment().getOut().println(help);
             }
         } else if (getSVNDumpFilterEnvironment().isVersion()) {

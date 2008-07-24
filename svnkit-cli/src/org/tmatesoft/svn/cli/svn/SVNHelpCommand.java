@@ -38,7 +38,7 @@ public class SVNHelpCommand extends SVNCommand {
         "on the directories.  If no arguments are supplied to such a\n" +
         "command, it recurses on the current directory (inclusive) by default.\n" +
         "\n" +
-        "Available subcommands:\n";
+        "Available subcommands:";
     
     private static final String GENERIC_HELP_FOOTER =             
         "SVNKit is a pure Java (TM) version of Subversion - a tool for version control.\n" +
@@ -76,7 +76,7 @@ public class SVNHelpCommand extends SVNCommand {
                     getSVNEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
-                String help = SVNCommandUtil.getCommandHelp(command);
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName());
                 getSVNEnvironment().getOut().println(help);
             }
         } else if (getSVNEnvironment().isVersion()) {

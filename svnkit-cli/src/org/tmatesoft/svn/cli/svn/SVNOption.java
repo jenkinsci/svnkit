@@ -64,7 +64,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption RELOCATE = new SVNOption("relocate");
     public static final SVNOption AUTOPROPS = new SVNOption("auto-props");
     public static final SVNOption NO_AUTOPROPS = new SVNOption("no-auto-props");
-    public static final SVNOption KEEP_CHANGELIST = new SVNOption("keep-changelist");
+    public static final SVNOption KEEP_CHANGELISTS = new SVNOption("keep-changelists");
     public static final SVNOption PARENTS = new SVNOption("parents");
     public static final SVNOption KEEP_LOCAL = new SVNOption("keep-local");
     public static final SVNOption ACCEPT = new SVNOption("accept", false);
