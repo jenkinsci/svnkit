@@ -1189,7 +1189,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             throw cancel;
         } catch (SVNException e) {
             SVNDebugLog.getLog(SVNLogType.WC).logFine(e); 
-            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, e.getErrorMessage(), null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, e.getErrorMessage(), null).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal);
             dispatchEvent(event);
         } finally {
             setEventPathPrefix(null);
