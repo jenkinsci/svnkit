@@ -76,7 +76,7 @@ public class SVNHelpCommand extends SVNCommand {
                     getSVNEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
-                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName());
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName(), true);
                 getSVNEnvironment().getOut().println(help);
             }
         } else if (getSVNEnvironment().isVersion()) {
@@ -86,7 +86,7 @@ public class SVNHelpCommand extends SVNCommand {
                 getEnvironment().getOut().println(VERSION_HELP_FOOTER);
             }
         } else if (getSVNEnvironment().getArguments().isEmpty()) {
-            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, GENERIC_HELP_FOOTER);
+            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, GENERIC_HELP_FOOTER, null);
             getSVNEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {getSVNEnvironment().getProgramName()});
