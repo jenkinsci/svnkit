@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,17 +13,23 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
@@ -59,6 +65,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 public class SVNMoveClient extends SVNBasicClient {
 
     private SVNWCClient myWCClient;
+    private SVNCopyClient myCopyClient;
     /**
      * Constructs and initializes an <b>SVNMoveClient</b> object
      * with the specified run-time configuration and authentication 
@@ -85,11 +92,13 @@ public class SVNMoveClient extends SVNBasicClient {
     public SVNMoveClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
         myWCClient = new SVNWCClient(authManager, options);
+        myCopyClient = new SVNCopyClient(authManager, options);
     }
 
     public SVNMoveClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
         myWCClient = new SVNWCClient(repositoryPool, options);
+        myCopyClient = new SVNCopyClient(repositoryPool, options);
     }
     
     /**
@@ -191,8 +200,8 @@ public class SVNMoveClient extends SVNBasicClient {
                     wcAccess.close();
                     if (srcEntry.getKind() == dstEntry.getKind() && srcEntry.getSchedule() == null && srcEntry.isFile()) {
                         // make normal move to keep history (R+).
-                        SVNCopyClient copyClient = new SVNCopyClient((ISVNAuthenticationManager) null, null);
-                        copyClient.doCopy(src, SVNRevision.WORKING, dst, true, true);
+                        SVNCopySource source = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
+                        myCopyClient.doCopy(new SVNCopySource[]{source}, dst, true, false, true);
                         return;
                     }
                     // attempt replace.
@@ -737,13 +746,21 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNErrorManager.error(err);
         }
 
+        SVNURL srcRepoRoot = null;
+        SVNURL dstRepoRoot = null;
+        boolean versionedDst = false;
+
         SVNWCAccess dstAccess = createWCAccess();
         try {
             dstAccess.probeOpen(dst, false, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
             if (dstEntry != null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
-                SVNErrorManager.error(err);                
+                if (!dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is not scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
+                    SVNErrorManager.error(err);
+                }
+                versionedDst = true;
+                dstRepoRoot = dstEntry.getRepositoryRootURL();
             }
         } finally {
             dstAccess.close();
@@ -760,6 +777,9 @@ public class SVNMoveClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", src);
                 SVNErrorManager.error(err);
             }
+
+            srcRepoRoot = srcEntry.getRepositoryRootURL();
+
             if (srcEntry.isCopied() && !srcEntry.isScheduledForAddition()) {
                 cfURL = getCopyFromURL(src.getParentFile(), SVNEncodingUtil.uriEncode(src.getName()));
                 cfRevision = getCopyFromRevision(src.getParentFile());
@@ -776,10 +796,10 @@ public class SVNMoveClient extends SVNBasicClient {
         } finally {
             srcAccess.close();
         }
-        if (move) {
-            myWCClient.doDelete(src, true, false);
-        }
-        if (added) {
+        if (added && !versionedDst) {
+            if (move) {
+                myWCClient.doDelete(src, true, false);
+            }
             myWCClient.doAdd(dst, true, false, false, false, false);            
             return;
         }
@@ -789,34 +809,73 @@ public class SVNMoveClient extends SVNBasicClient {
         try {
             SVNAdminArea dstArea = dstAccess.probeOpen(dst, true, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-            if (dstEntry != null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", dst);
+            if (dstEntry != null && !dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
+                SVNErrorManager.error(err);
+            }
+            if (srcRepoRoot != null && dstRepoRoot != null && !dstRepoRoot.equals(srcRepoRoot)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: paths belong to different repositories", opName);
                 SVNErrorManager.error(err);                
             }
             
             SVNAdminArea srcArea = srcAccess.probeOpen(src, false, 0);
             SVNVersionedProperties srcProps = srcArea.getProperties(src.getName());
+            SVNVersionedProperties srcBaseProps = srcArea.getBaseProperties(src.getName());
             SVNVersionedProperties dstProps = dstArea.getProperties(dst.getName());
-
+            SVNVersionedProperties dstBaseProps  = dstArea.getBaseProperties(dst.getName());
+            dstProps.removeAll();
+            dstBaseProps.removeAll();
             srcProps.copyTo(dstProps);
-
+            srcBaseProps.copyTo(dstBaseProps);
+            
             dstEntry = dstArea.addEntry(dst.getName());
             dstEntry.setCopyFromURL(cfURL);
             dstEntry.setCopyFromRevision(cfRevision);
             dstEntry.setCopied(true);
             dstEntry.setKind(SVNNodeKind.FILE);
-            dstEntry.scheduleForAddition();
-            
+
+            File baseSrc = srcArea.getBaseFile(src.getName(), false);
+            File baseDst = dstArea.getBaseFile(dst.getName(), false);
+            SVNFileUtil.copyFile(baseSrc, baseDst, false);
+
+            boolean[] extend = new boolean[]{false};
+            Map mergeInfo = myCopyClient.fetchMergeInfoForPropagation(src, extend, srcAccess);
+            Map wcMergeInfo = null;
+            if (extend[0]) {
+                wcMergeInfo = SVNPropertiesManager.parseMergeInfo(dst, dstEntry, false);
+                if (wcMergeInfo != null && mergeInfo != null) {
+                    wcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(wcMergeInfo, mergeInfo);
+                } else if (wcMergeInfo == null) {
+                    wcMergeInfo = mergeInfo;
+                }
+            }
+            SVNPropertyValue prop = null;
+            if (wcMergeInfo != null) {
+                prop = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo));
+            } 
+            dstProps.setPropertyValue(SVNProperty.MERGE_INFO, prop);
+
+            if (dstEntry.isScheduledForDeletion()) {
+                dstEntry.unschedule();
+                dstEntry.scheduleForReplacement();                
+            } else if (!dstEntry.isScheduledForReplacement()) {
+                dstEntry.unschedule();
+                dstEntry.scheduleForAddition();
+            }
+
             dstArea.saveEntries(false);
             SVNLog log = dstArea.getLog();
             dstArea.saveVersionedProperties(log, true);
             log.save();
             dstArea.runLogs();
+
         } finally {
             srcAccess.close();
             dstAccess.close();
         }
-        
+        if (move) {
+            myWCClient.doDelete(src, true, false);
+        }
     }
 
     private static boolean isVersionedFile(File file) {

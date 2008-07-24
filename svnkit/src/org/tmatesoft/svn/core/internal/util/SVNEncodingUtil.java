@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,8 +13,8 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
-import java.util.HashMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -256,7 +256,7 @@ public class SVNEncodingUtil {
         return true;
     }
 
-    private static final Map XML_UNESCAPE_MAP = new HashMap();
+    private static final Map XML_UNESCAPE_MAP = new SVNHashMap();
 
     static {
         XML_UNESCAPE_MAP.put("&amp;", "&");
@@ -300,11 +300,16 @@ public class SVNEncodingUtil {
         byte[] bytes = str.getBytes(); // native encoding
         StringBuffer result = createStringBuffer(str, 0);
         for (int i = 0; i < bytes.length; i++) {
-            if (bytes[i] >= 0) {
+            if (!isASCIIControlChar((char) bytes[i]) || bytes[i] == '\r' 
+                || bytes[i] == '\n' || bytes[i] == '\t') {
                 result.append((char) bytes[i]);
             } else {
                 result.append("?\\");
-                result.append((256 - (-bytes[i]))); // get positive code (256 - b).
+                int code = bytes[i] & 0xFF;
+                if (code < 100) {
+                    result.append('0');
+                }
+                result.append(code);
             }
         }
         return result.toString();

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,11 +18,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -63,6 +64,8 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
     private static final String CREATED_TAG = "created";
     private static final String EXPIRES_TAG = "expires";
     private static final String LOCK_TAG = "lock";
+    private static final String DEPTH_TAG = "depth";
+    private static final String CHANGELIST_TAG = "changelist";
     
     private File myTargetPath;
 
@@ -104,7 +107,7 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
         try {
             sendToHandler(info);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getMessage());
             SVNErrorManager.error(err, e);
         }
@@ -141,6 +144,9 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
                 schedule = "normal";
             }
             addTag(SCHEDULE_TAG, schedule);
+            if (info.getDepth() != null) {
+                addTag(DEPTH_TAG, info.getDepth().getName());
+            }
             if (info.getCopyFromURL() != null) {
                 addTag(COPY_FROM_URL_TAG, info.getCopyFromURL().toString());
             }
@@ -148,13 +154,16 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
                 addTag(COPY_FROM_REVISION_TAG, info.getCopyFromRevision().toString());
             }
             if (info.getTextTime() != null) {
-                addTag(TEXT_TIME_TAG, SVNTimeUtil.formatDate(info.getTextTime()));
+                addTag(TEXT_TIME_TAG, SVNDate.formatDate(info.getTextTime()));
             }
             if (info.getPropTime() != null) {
-                addTag(PROP_TIME_TAG, SVNTimeUtil.formatDate(info.getPropTime()));
+                addTag(PROP_TIME_TAG, SVNDate.formatDate(info.getPropTime()));
             }
             if (info.getChecksum() != null) {
                 addTag(CHECKSUM_TAG, info.getChecksum());
+            }
+            if (info.getChangelistName() != null) {
+                addTag(CHANGELIST_TAG, info.getChangelistName());
             }
             closeTag(WC_INFO_TAG);
         }
@@ -166,7 +175,7 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
             openTag(COMMIT_TAG);
             addTag(AUTHOR_TAG, info.getAuthor());
             if (info.getCommittedDate() != null) {
-                addTag(DATE_TAG, SVNTimeUtil.formatDate(info.getCommittedDate()));
+                addTag(DATE_TAG, SVNDate.formatDate(info.getCommittedDate()));
             }
             closeTag(COMMIT_TAG);
         }
@@ -202,10 +211,10 @@ public class SVNXMLInfoHandler extends AbstractXMLHandler implements ISVNInfoHan
                 addTag(COMMENT_TAG, lock.getComment());
             }
             if (lock.getCreationDate() != null) {
-                addTag(CREATED_TAG, SVNTimeUtil.formatDate(lock.getCreationDate()));
+                addTag(CREATED_TAG, SVNDate.formatDate(lock.getCreationDate()));
             }
             if (lock.getExpirationDate() != null) {
-                addTag(EXPIRES_TAG, SVNTimeUtil.formatDate(lock.getExpirationDate()));
+                addTag(EXPIRES_TAG, SVNDate.formatDate(lock.getExpirationDate()));
             }
             closeTag(LOCK_TAG);
         }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 
 /**
  * This is a default implementation for <b>ISVNCommitHandler</b>.
@@ -47,6 +48,10 @@ public class DefaultSVNCommitHandler implements ISVNCommitHandler {
     public String getCommitMessage(String message, SVNCommitItem[] commitables)
             throws SVNException {
         return message == null ? "" : message;
+    }
+
+    public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
+        return revisionProperties == null ? new SVNProperties() : revisionProperties;
     }
 
 }

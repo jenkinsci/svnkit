@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -300,8 +301,9 @@ public class Export {
          * 
          * When property has to be deleted value will be 'null'. 
          */
-        public void changeDirProperty(String name, String value) throws SVNException {
-        }
+
+        public void changeDirProperty(String name, SVNPropertyValue property) throws SVNException {
+		}
 
         /*
          * Called when a new file has to be created.
@@ -343,8 +345,9 @@ public class Export {
          * may inspect 'svn:eol-style' or 'svn:mime-type' property values to 
          * transfor file contents propertly after receiving.
          */
-        public void changeFileProperty(String path, String name, String value) throws SVNException {
-        }        
+
+        public void changeFileProperty(String path, String name, SVNPropertyValue property) throws SVNException {
+		}
 
         /*
          * Called before sending 'delta' for a file. Delta may include instructions
@@ -424,6 +427,7 @@ public class Export {
          */
         public void abortEdit() throws SVNException {
         }
+
     }
 
     /*

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,9 +12,12 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 
 /**
@@ -56,6 +59,7 @@ public class SVNCommitItem {
     private String myPath;
     private SVNWCAccess myWCAccess;
     private SVNRevision myCopyFromRevision;
+    private Map myOutgoingProperties;
     
     /**
      * Constructs and initializes an <b>SVNCommitItem</b> object.
@@ -235,6 +239,7 @@ public class SVNCommitItem {
      * 
      * @return the item's relevant path
      */
+    // TODO get rid of this. always use getURL or getFile instead.
     public String getPath() {
         return myPath;
     }
@@ -250,14 +255,32 @@ public class SVNCommitItem {
     
     /**
      * This method is not intended for users (from an API point of view).
-     * 
-     * @return wc access object
      */
     public SVNWCAccess getWCAccess() {
         return myWCAccess;
     }
 
+    /**
+     * This method is not intended for users (from an API point of view).
+     */
+    public Map getOutgoingProperties() {
+        return myOutgoingProperties;
+    }
+    
     void setWCAccess(SVNWCAccess wcAccess) {
         myWCAccess = wcAccess;
+    }
+    
+    void setProperty(String propertyName, SVNPropertyValue propertyValue) {
+        myIsPropertiesModified = true;
+        Map props = getProperties();
+        props.put(propertyName, propertyValue);
+    }
+    
+    private Map getProperties() {
+        if (myOutgoingProperties == null) {
+            myOutgoingProperties = new SVNHashMap();
+        }
+        return myOutgoingProperties;
     }
 }

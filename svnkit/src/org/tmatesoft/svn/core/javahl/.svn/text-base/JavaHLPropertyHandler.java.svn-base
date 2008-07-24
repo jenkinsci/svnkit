@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -38,17 +38,17 @@ class JavaHLPropertyHandler implements ISVNPropertyHandler{
     }
 
     public void handleProperty(File path, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, path.getAbsolutePath(), property.getName(), property.getValue(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, path.getAbsolutePath(), property.getName(), property.getValue());
         myAllData.add(myData);
     }
 
     public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, url.toString(), property.getName(), property.getValue(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, url.toString(), property.getName(),property.getValue());
         myAllData.add(myData);
     }
 
     public void handleProperty(long revision, SVNPropertyData property) throws SVNException {
-        myData = JavaHLObjectFactory.createPropertyData(myOwner, null, property.getName(), property.getValue(), property.getValue().getBytes());
+        myData = JavaHLObjectFactory.createPropertyData(myOwner, null, property.getName(), property.getValue());
         myAllData.add(myData);
     }
     

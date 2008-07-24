@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -126,6 +126,7 @@ public class SVNStatus {
     private Date myLocalContentsDate;
     private Date myLocalPropertiesDate;
     private SVNEntry myEntry;
+    private String myChangelistName;
 
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -168,7 +169,8 @@ public class SVNStatus {
             boolean isCopied, boolean isSwitched, File conflictNewFile,
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
-            SVNLock remoteLock, SVNLock localLock, Map entryProperties) {
+            SVNLock remoteLock, SVNLock localLock, Map entryProperties,
+            String changelistName) {
         myURL = url;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;
@@ -198,6 +200,7 @@ public class SVNStatus {
         myLocalLock = localLock;
         myPropRejectFile = projRejectFile;
         myEntryProperties = entryProperties;
+        myChangelistName = changelistName;
     }
     
     /**
@@ -626,5 +629,9 @@ public class SVNStatus {
      */
     public SVNEntry getEntry() {
         return myEntry;
+    }
+
+    public String getChangelistName() {
+        return myChangelistName;
     }
 }

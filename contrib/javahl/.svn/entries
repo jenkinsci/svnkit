@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/contrib/javahl
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/contrib/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2007-12-24T13:54:46.899418Z
-3727
+2008-06-19T16:53:07.882238Z
+4367
 alex
 has-props
 
@@ -45,10 +45,10 @@ file
 
 
 
-2008-07-24T04:49:42.000000Z
-c44a8fe87047ab37d7a9127076075001
-2007-07-11T17:09:57.288849Z
-3214
-alex
+2008-07-24T04:58:24.000000Z
+67427007c8cb0b5342c399e7e116cd3e
+2008-04-14T13:19:58.057202Z
+4160
+semen
 has-props
 

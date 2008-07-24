@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -127,10 +128,10 @@ public class SVNConcurrentCommitTest {
         public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         }
 
-        public void changeDirProperty(String name, String value) throws SVNException {
+        public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         }
 
-        public void changeFileProperty(String path, String name, String value) throws SVNException {
+        public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         }
 
         public void closeDir() throws SVNException {

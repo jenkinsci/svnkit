@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit-test/python
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-test/python
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2007-12-24T13:54:46.899418Z
-3727
+2008-06-19T16:53:07.882238Z
+4367
 alex
 has-props
 
@@ -25,7 +25,4 @@ svn:externals
 
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
-
-patch
-dir
 

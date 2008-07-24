@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,8 +13,6 @@ package org.tmatesoft.svn.core;
 
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.Collection;
-import java.util.HashSet;
 
 
 /**
@@ -143,7 +141,7 @@ public class SVNErrorMessage implements Serializable {
      * @return            a new error message
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, int type) {
-        return new SVNErrorMessage(code, message, EMPTY_ARRAY, null, type);
+        return create(code, message, null, type, null);
     }
     
     /**
@@ -178,10 +176,29 @@ public class SVNErrorMessage implements Serializable {
      * @return            a new error message
      */
     public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type) {
-        return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message, 
-                objects == null ? EMPTY_ARRAY : objects, null, type);
+        return create(code, message, objects, type, null);
     }
-    
+
+	/**
+	 * Creates an error message given an error code, description, an error type
+	 * (whether it's a warning or an error) and may be related objects to be
+	 * formatted with the error description and an optional cause.
+	 * To format the provided <code>objects</code> 
+	 * with the <code>message</code>, you should use valid format patterns parsable for
+	 * {@link MessageFormat}.
+	 *
+	 * @param  code       an error code
+	 * @param  message    an error description
+	 * @param  objects    an array of objects related to the error <code>message</code>
+	 * @param  type       an error type
+	 * @param  cause     cause of the error
+	 * @return            a new error message
+	 */
+	public static SVNErrorMessage create(SVNErrorCode code, String message, Object[] objects, int type, Throwable cause) {
+	    return new SVNErrorMessage(code == null ? SVNErrorCode.BASE : code, message == null ? "" : message,
+	            objects == null ? EMPTY_ARRAY : objects, cause, type);
+	}
+
     protected SVNErrorMessage(SVNErrorCode code, String message, Object[] relatedObjects, Throwable th, int type) {
         myErrorCode = code;
         if (message != null && message.startsWith("svn: ")) {
@@ -232,16 +249,12 @@ public class SVNErrorMessage implements Serializable {
     public String getFullMessage() {
         SVNErrorMessage err = this;            
         StringBuffer buffer = new StringBuffer();
-        Collection messages = new HashSet();
         while (err != null) {
             buffer.append(err.getMessage());
-            messages.add(err);
-            SVNErrorMessage child = err.getChildErrorMessage();
-            if (child == null || messages.contains(child)) {
-                break;
+            if (err.hasChildErrorMessage()) {
+                buffer.append('\n');
             }
-            buffer.append('\n');
-            err = child;
+            err = err.getChildErrorMessage();
         }
         return buffer.toString();
     }
@@ -331,15 +344,6 @@ public class SVNErrorMessage implements Serializable {
      * @param childMessage a child error message
      */
     public void setChildErrorMessage(SVNErrorMessage childMessage) {
-	    SVNErrorMessage tempMessage = childMessage;
-	    while (tempMessage != null) {
-		    if (tempMessage == this) {
-			    return;
-		    }
-
-		    tempMessage = tempMessage.getChildErrorMessage();
-	    }
-
         myChildErrorMessage = childMessage;
     }
     
@@ -373,7 +377,7 @@ public class SVNErrorMessage implements Serializable {
         parentError.setChildErrorMessage(this);
         return parentError;
     }
-    
+
     public SVNErrorMessage wrap(String parentMessage, Object[] relatedObjects){
         SVNErrorMessage parentError = SVNErrorMessage.create(this.getErrorCode(), parentMessage, relatedObjects);
         parentError.setChildErrorMessage(this);
@@ -383,10 +387,42 @@ public class SVNErrorMessage implements Serializable {
     /**
      * Returns true if this message is a warning message, not error one.
      * 
-     * @return true or false
+     * @return <span class="javakeyword">true</span> if this error message 
+     *         is of type {@link #TYPE_WARNING}} and <span class="javakeyword">false</span>
+     *         otherwise
      */
     public boolean isWarning() {
         return myType == TYPE_WARNING;
     }
     
+    /**
+     * Sets the type of this error message.
+     * 
+     * <p>
+     * <code>type</code> must be either {@link #TYPE_ERROR} or {@link #TYPE_WARNING}.
+     * This method is intended for inner (within internals) purposes only and 
+     * must not be used by API users.
+     * 
+     * @return <span class="javakeyword">true</span> if the type of this 
+     *          error message is changed, <span class="javakeyword">false</span> if 
+     *          the type passed is not recognized and thus ignored
+     */
+    public boolean setType(int type) {
+        if (type == TYPE_ERROR) {
+            myType = TYPE_ERROR;
+            return true;
+        } else if (type == TYPE_WARNING) {
+            myType = TYPE_WARNING;
+            return true;
+        }
+        return false;
+    }
+    
+    public SVNErrorMessage getRootErrorMessage() {
+        SVNErrorMessage err = this;
+        while (err.myChildErrorMessage != null) {
+            err = err.myChildErrorMessage;
+        }
+        return err;
+    }
 }

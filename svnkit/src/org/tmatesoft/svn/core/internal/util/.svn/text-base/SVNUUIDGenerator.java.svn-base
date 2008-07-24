@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,16 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import java.util.Random;
-import java.util.Arrays;
 import java.rmi.server.UID;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Random;
 
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 
 /**
@@ -61,6 +61,10 @@ public class SVNUUIDGenerator {
         return currentTime + ourFudgeFactor;
     }
 
+    public static String generateUUIDString() throws SVNException {
+        return formatUUID(generateUUID());
+    }
+    
     public static synchronized byte[] generateUUID() throws SVNException {
         if (ourUUIDStateNode[0] == 0) {
             initState();

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,9 +32,14 @@ class SVNClientImplVersion extends org.tigris.subversion.javahl.Version {
     public int getPatch() {
         return SVNClientImpl.versionMicro();
     }
+    
+    public long getRevisionNumber() {
+        return SVNClientImpl.versionRevisionNumber();
+    }
 
     public String toString() {
-        return "SVNKit v" + getMajor() + "." + getMinor() + "." + getPatch();
+        String revision = getRevisionNumber() < 0 ? "SNAPSHOT" : Long.toString(getRevisionNumber());
+        return "SVNKit v" + getMajor() + "." + getMinor() + "." + getPatch() + "." + revision;
     }
 
     public static Version getInstance() {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,9 +14,6 @@ package org.tmatesoft.svn.core.javahl;
 import java.io.File;
 import java.security.cert.X509Certificate;
 
-import org.tigris.subversion.javahl.PromptUserPassword;
-import org.tigris.subversion.javahl.PromptUserPassword2;
-import org.tigris.subversion.javahl.PromptUserPassword3;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -28,33 +25,25 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
+import org.tigris.subversion.javahl.PromptUserPassword;
+import org.tigris.subversion.javahl.PromptUserPassword2;
+import org.tigris.subversion.javahl.PromptUserPassword3;
+
 /**
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     
-    private static final int RETRY_COUNT = 3;
     private static final String ADAPTER_DEFAULT_PROMPT_CLASS = 
         "org.tigris.subversion.svnclientadapter.javahl.AbstractJhlClientAdapter$DefaultPromptUserPassword";
     private PromptUserPassword myPrompt;
-    private int myRetryCount = RETRY_COUNT;
     
     public JavaHLAuthenticationProvider(PromptUserPassword prompt){
         myPrompt = prompt;
     }
 
     public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-        if (previousAuth != null) {
-            myRetryCount--;
-            if (myRetryCount == 0) {
-                myRetryCount = RETRY_COUNT;
-                return null;
-            }
-        } else {
-            myRetryCount = RETRY_COUNT;
-        }
-
         if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPasswordSSH) {
             PromptUserPasswordSSH prompt4 = (PromptUserPasswordSSH) myPrompt;
             String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);

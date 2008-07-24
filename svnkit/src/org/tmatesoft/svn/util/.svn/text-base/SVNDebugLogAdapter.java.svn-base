@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,22 +22,7 @@ import org.tmatesoft.svn.core.internal.util.SVNLogStream;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-public class SVNDebugLogAdapter implements ISVNDebugLog {
-
-    public void info(String message) {
-    }
-
-    public void error(String message) {
-    }
-
-    public void info(Throwable th) {
-    }
-
-    public void error(Throwable th) {
-    }
-
-    public void log(String message, byte[] data) {
-    }
+public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
 
     public void flushStream(Object stream) {
         if (stream instanceof SVNLogInputStream) {
@@ -64,4 +49,5 @@ public class SVNDebugLogAdapter implements ISVNDebugLog {
     public OutputStream createOutputLogStream() {
         return new SVNLogStream(this, true);
     }
+
 }

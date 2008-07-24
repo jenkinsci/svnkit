@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,19 +17,27 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.MalformedInputException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -54,9 +62,10 @@ public class FSFile {
         myFile = file;
         myPosition = 0;
         myBufferPosition = 0;
-        myBuffer = ByteBuffer.allocate(4096);
-        myReadLineBuffer = ByteBuffer.allocate(4096);
+        myBuffer = ByteBuffer.allocate(1024);
+        myReadLineBuffer = ByteBuffer.allocate(1024);
         myDecoder = Charset.forName("UTF-8").newDecoder();
+        myDecoder = myDecoder.onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
     }
     
     public void seek(long position) {
@@ -87,19 +96,13 @@ public class FSFile {
         return digest;
     }
     
-    public int readInt() throws SVNException {
+    public int readInt() throws SVNException, NumberFormatException {
         String line = readLine(80);
         if (line == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", myFile);
             SVNErrorManager.error(err);
         }
-        try {
-            return Integer.parseInt(line);
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", myFile);
-            SVNErrorManager.error(err);
-        }
-        return -1;
+        return Integer.parseInt(line);
     }
     
     public String readLine(int limit) throws SVNException {
@@ -129,19 +132,22 @@ public class FSFile {
             buffer = new StringBuffer();
         }
         boolean endOfLineMet = false;
+        boolean lineStart = true;
         try {
             while (!endOfLineMet) {
                 allocateReadBuffer(160);
                 while(myReadLineBuffer.hasRemaining()) {
                     int b = read();
                     if (b < 0) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Can''t read length line from file {0}", getFile());
-                        SVNErrorManager.error(err);
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, 
+                                "Can''t read length line from file {0}", getFile());
+                        SVNErrorManager.error(err, lineStart ? Level.FINEST : Level.FINE);
                     } else if (b == '\n') {
                         endOfLineMet = true;
                         break;
                     }
                     myReadLineBuffer.put((byte) (b & 0XFF));
+	                lineStart = false;
                 }
                 myReadLineBuffer.flip();
                 buffer.append(myDecoder.decode(myReadLineBuffer).toString());
@@ -153,8 +159,8 @@ public class FSFile {
         return buffer.toString();
     }
 
-    public Map readProperties(boolean allowEOF) throws SVNException {
-        Map map = new HashMap();
+    public SVNProperties readProperties(boolean allowEOF, boolean allowBinaryValues) throws SVNException {
+        SVNProperties properties = new SVNProperties();
         String line = null;
         try {
             while(true) {
@@ -201,7 +207,7 @@ public class FSFile {
                     key = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
                 }
                 if (kind == 'D') {
-                    map.put(key, null);
+                    properties.put(key, (SVNPropertyValue) null);
                     continue;
                 }
                 line = readLine(160);
@@ -223,40 +229,43 @@ public class FSFile {
                 read(myReadLineBuffer);
                 myReadLineBuffer.flip();
                 myReadLineBuffer.limit(myReadLineBuffer.limit() - 1);
-                String value = null;
                 pos = myReadLineBuffer.position();
                 limit = myReadLineBuffer.limit();
                 try {
-                    value = myDecoder.decode(myReadLineBuffer).toString();
-                } catch (MalformedInputException mfi) {
-                    value = new String(myReadLineBuffer.array(), myReadLineBuffer.arrayOffset() + pos, limit - pos);
+                    properties.put(key, myDecoder.decode(myReadLineBuffer).toString());
+                } catch (CharacterCodingException cce) {
+                    if (allowBinaryValues){
+                        properties.put(key, myReadLineBuffer.array());                                                
+                    } else {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "File ''{0}'' contains unexpected binary property value", getFile());
+                        SVNErrorManager.error(error, cce);
+                    }
                 }
-                map.put(key, value);
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
             SVNErrorManager.error(err, e);
         }
-        return map;
+        return properties;
     }
     
     public Map readHeader() throws SVNException {
-        Map map = new HashMap();
+        Map map = new SVNHashMap();
         String line;
         while(true) {
             line = readLine(1024);
             if ("".equals(line)) {
                 break;
             }
-            if (line == null) {
-                
-            }
             int colonIndex = line.indexOf(':');
             if (colonIndex <= 0 || line.length() <= colonIndex + 2) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Found malformed header in revision file");
+                SVNDebugLog.getDefaultLog().logFine(line);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                        "Found malformed header in revision file");
                 SVNErrorManager.error(err);
             } else if (line.charAt(colonIndex + 1) != ' ') {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Found malformed header in revision file");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
+                        "Found malformed header in revision file");
                 SVNErrorManager.error(err);
             }
             String key = line.substring(0, colonIndex);
@@ -366,13 +375,13 @@ public class FSFile {
     
     private FileChannel getChannel() throws IOException {
         if (myChannel == null) {
-            myInputStream = new FileInputStream(myFile);
+            myInputStream = SVNFileUtil.createFileInputStream(myFile);
             myChannel = myInputStream.getChannel();
         }
         return myChannel;
     }
     
-    public PathInfo readPathInfoFromReportFile() throws IOException {
+    public PathInfo readPathInfoFromReportFile() throws IOException, SVNException {
         int firstByte = read();
         if (firstByte == -1 || firstByte == '-') {
             return null;
@@ -380,9 +389,28 @@ public class FSFile {
         String path = readStringFromReportFile();
         String linkPath = read() == '+' ? readStringFromReportFile() : null;
         long revision = readRevisionFromReportFile();
-        boolean startEmpty = read() == '+' ? true : false;
+        SVNDepth depth = SVNDepth.INFINITY;
+        if (read() == '+') {
+            int id = readNumberFromReportFile();
+            switch(id) {
+                case 0:
+                    depth = SVNDepth.EMPTY;
+                    break;
+                case 1:
+                    depth = SVNDepth.FILES;
+                    break;
+                case 2:
+                    depth = SVNDepth.IMMEDIATES;
+                    break;
+                default: {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_REVISION_REPORT, "Invalid depth ({0}) for path ''{1}''", new Object[]{new Integer(id), path});
+                    SVNErrorManager.error(err);
+                }
+            }
+        }
+        boolean startEmpty = read() == '+';
         String lockToken = read() == '+' ? readStringFromReportFile() : null;
-        return new PathInfo(path, linkPath, lockToken, revision, startEmpty);
+        return new PathInfo(path, linkPath, lockToken, revision, depth, startEmpty);
     }
 
     private String readStringFromReportFile() throws IOException {
@@ -408,7 +436,7 @@ public class FSFile {
         if (read() == '+') {
             return readNumberFromReportFile();
         }
-        return FSRepository.SVN_INVALID_REVNUM;
+        return SVNRepository.INVALID_REVISION;
     }
     
 }

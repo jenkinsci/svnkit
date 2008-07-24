@@ -66,7 +66,7 @@ public abstract class SVNAbstractTunnelConnector implements ISVNConnector {
                 repository.getDebugLog().flushStream(myOutputStream);
                 SVNFileUtil.closeFile(myOutputStream);
             }
-            SVNFileUtil.destroyProcess(myProcess);
+            myProcess.destroy();
             myInputStream = null;
             myOutputStream = null;
             myProcess = null;

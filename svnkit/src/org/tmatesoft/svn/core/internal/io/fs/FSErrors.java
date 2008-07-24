@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,7 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNNodeKind;
 
 /**
  * @version 1.1.1
@@ -40,7 +41,7 @@ public class FSErrors {
 
     public static SVNErrorMessage errorNotMutable(long revision, String path, FSFS owner) {
         File fsDir = owner.getDBRoot();
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "File is not mutable: filesystem ''{0}'', revision {1,number,integer}, path ''{2}''", new Object[] {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "File is not mutable: filesystem ''{0}'', revision {1}, path ''{2}''", new Object[] {
                 fsDir, new Long(revision), path
         });
         return err;
@@ -55,7 +56,7 @@ public class FSErrors {
             });
         } else {
             FSRevisionRoot revRoot = (FSRevisionRoot) root;
-            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision {0,number,integer}, path ''{1}''", new Object[] {
+            err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found: revision {0}, path ''{1}''", new Object[] {
                     new Long(revRoot.getRevision()), path
             });
         }
@@ -78,10 +79,19 @@ public class FSErrors {
         return err;
     }
 
-    public static SVNErrorMessage errorOutOfDate(String path, String txnId) {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_TXN_OUT_OF_DATE, "Out of date: ''{0}'' in transaction ''{1}''", new Object[] {
-                path, txnId
-        });
+    public static SVNErrorMessage errorOutOfDate(String path, SVNNodeKind kind) {
+        if ("/".equals(path)) {
+            path = "";
+        }
+        
+        SVNErrorMessage err = null;
+        if (kind == SVNNodeKind.DIR) {
+            err = SVNErrorMessage.create(SVNErrorCode.FS_TXN_OUT_OF_DATE, 
+                    "Directory ''{0}'' is out of date", path); 
+        } else {
+            err = SVNErrorMessage.create(SVNErrorCode.FS_TXN_OUT_OF_DATE, 
+                    "File ''{0}'' is out of date", path);
+        }
         return err;
     }
 

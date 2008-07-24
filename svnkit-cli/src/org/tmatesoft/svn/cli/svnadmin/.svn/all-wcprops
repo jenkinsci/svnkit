@@ -1,0 +1,131 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin
+END
+SVNAdminCreateCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminCreateCommand.java
+END
+SVNAdminVerifyCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminVerifyCommand.java
+END
+SVNAdminCommandEnvironment.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminCommandEnvironment.java
+END
+SVNAdminListTransactionsCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminListTransactionsCommand.java
+END
+SVNAdminDumpCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminDumpCommand.java
+END
+SVNAdminRecoverCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminRecoverCommand.java
+END
+options.properties
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/options.properties
+END
+SVNAdminListLocksCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminListLocksCommand.java
+END
+SVNAdminOption.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminOption.java
+END
+SVNAdminSetRevPropCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminSetRevPropCommand.java
+END
+commands.properties
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/commands.properties
+END
+SVNAdminCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminCommand.java
+END
+SVNAdminLoadCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminLoadCommand.java
+END
+SVNAdmin.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdmin.java
+END
+SVNAdminSetUUIDCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminSetUUIDCommand.java
+END
+SVNAdminHotCopyCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminHotCopyCommand.java
+END
+SVNAdminRemoveTransactionsCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminRemoveTransactionsCommand.java
+END
+SVNAdminUpgradeCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminUpgradeCommand.java
+END
+SVNAdminHelpCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminHelpCommand.java
+END
+SVNAdminRemoveLocksCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminRemoveLocksCommand.java
+END
+SVNAdminSetLogCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin/SVNAdminSetLogCommand.java
+END

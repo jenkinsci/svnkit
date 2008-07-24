@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 
 
 
@@ -59,7 +63,7 @@ public class SVNSubstitutor {
         myKeywordBufferLength = 0;
     }
     
-    public ByteBuffer translateChunk(ByteBuffer src, ByteBuffer dst) {
+    public ByteBuffer translateChunk(ByteBuffer src, ByteBuffer dst) throws SVNException {
         if (src != null) {
             while(src.hasRemaining()) {
                 byte p = src.get(src.position());
@@ -291,10 +295,12 @@ public class SVNSubstitutor {
     
     private static ByteBuffer substituteEOL(ByteBuffer dst, 
             byte[] eol, int eolLength, byte[] lastEOL, int[] lastEOLLength, byte[] nextEOL, int nextEOLLength, 
-            boolean repair) {
+            boolean repair) throws SVNException {
         if (lastEOLLength[0] > 0) {
             if (!repair && (lastEOLLength[0] != nextEOLLength || !Arrays.equals(lastEOL, nextEOL))) {
                 // inconsistent EOLs.
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_INCONSISTENT_EOL);
+                SVNErrorManager.error(err);
             }
         } else {
             lastEOLLength[0] = nextEOLLength;

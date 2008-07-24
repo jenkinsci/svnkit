@@ -1,5 +1,8 @@
 handlers = java.util.logging.FileHandler
 svnkit.level=FINEST
+svnkit-network.level=FINEST
+svnkit-wc.level=FINEST
+svnkit-cli.level=FINEST
 
 java.util.logging.FileHandler.pattern = %ant.dir%/build/logs/java.log
 java.util.logging.FileHandler.limit = 0

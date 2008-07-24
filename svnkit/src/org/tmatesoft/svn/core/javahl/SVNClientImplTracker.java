@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,8 +14,7 @@ package org.tmatesoft.svn.core.javahl;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Iterator;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 
@@ -26,7 +25,7 @@ import java.util.Map;
 public class SVNClientImplTracker implements Runnable {
     
     private static ReferenceQueue ourQueue;
-    private static Map ourReferences = new HashMap();
+    private static Map ourReferences = new SVNHashMap();
 
     public static void registerClient(SVNClientImpl client) {
         synchronized (SVNClientImplTracker.class) {
@@ -45,20 +44,6 @@ public class SVNClientImplTracker implements Runnable {
             }
         }
         
-    }
-    
-    public static void deregisterClient(SVNClientImpl impl) {
-        synchronized (ourReferences) {
-            for (Iterator clients = ourReferences.values().iterator(); clients.hasNext();) {
-                // get all clients already registered from the current thread.
-                // but there could be a lot of them?
-                // call tracker on client dispose!
-                Object client = clients.next();
-                if (impl == client) {
-                    clients.remove();
-                }
-            }
-        }
     }
 
     public void run() {

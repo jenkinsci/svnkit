@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,15 +11,17 @@
  */
 package org.tmatesoft.svn.core.wc.xml;
 
+import java.io.File;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -43,9 +45,10 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
     public static final String LINE_NUMBER_TAG = "line-number";
     public static final String TARGET_TAG = "target";
     public static final String BLAME_TAG = "blame";
+    public static final String MERGED_TAG = "merged";
     
     private long myLineNumber;
-    
+    private boolean myIsUseMergeHistory;
     /**
      * Creates a new annotation handler.
      * 
@@ -64,7 +67,13 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
      * @param log            a debug logger
      */
     public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log) {
+        this(contentHandler, log, false);
+    }
+
+    public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log, 
+                                 boolean isUseMergeHistory) {
         super(contentHandler, log);
+        myIsUseMergeHistory = isUseMergeHistory;
     }
 
     protected String getHeaderName() {
@@ -83,7 +92,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
             addAttribute(PATH_ATTR, pathOrURL);
             openTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
     
@@ -96,7 +105,7 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         try {
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
 
@@ -108,16 +117,54 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
                 addAttribute(REVISION_ATTR, revision + "");
                 openTag(COMMIT_TAG);
                 addTag(AUTHOR_TAG, author);
-                addTag(DATE_TAG, SVNTimeUtil.formatDate(date));
+                addTag(DATE_TAG, SVNDate.formatDate(date));
                 closeTag(COMMIT_TAG);
             }
             closeTag(ENTRY_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
             SVNErrorManager.error(err, e);
         } finally {
             myLineNumber++;
         }
+    }
+
+    public void handleLine(Date date, long revision, String author, String line, 
+                           Date mergedDate, long mergedRevision, String mergedAuthor, 
+                           String mergedPath, int lineNumber) throws SVNException {
+        try {
+            addAttribute(LINE_NUMBER_TAG, ++lineNumber + "");
+            openTag(ENTRY_TAG);
+            if (revision >= 0) {
+                addAttribute(REVISION_ATTR, revision + "");
+                openTag(COMMIT_TAG);
+                addTag(AUTHOR_TAG, author);
+                addTag(DATE_TAG, SVNDate.formatDate(date));
+                closeTag(COMMIT_TAG);
+            }
+            if (myIsUseMergeHistory && mergedRevision >= 0) {
+                addAttribute(PATH_ATTR, mergedPath);
+                openTag(MERGED_TAG);
+                addAttribute(REVISION_ATTR, mergedRevision + "");
+                openTag(COMMIT_TAG);
+                addTag(AUTHOR_TAG, mergedAuthor);
+                addTag(DATE_TAG, SVNDate.formatDate(mergedDate));
+                closeTag(COMMIT_TAG);
+                closeTag(MERGED_TAG);
+            }
+            closeTag(ENTRY_TAG);
+        } catch (SAXException e) {
+            getDebugLog().logSevere(e);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e);
+        } 
+    }
+
+    public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
+        return false;
+    }
+
+    public void handleEOF() {
     }
 }

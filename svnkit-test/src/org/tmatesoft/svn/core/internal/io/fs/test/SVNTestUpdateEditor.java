@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,13 +12,14 @@
 package org.tmatesoft.svn.core.internal.io.fs.test;
 
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -37,7 +38,7 @@ public class SVNTestUpdateEditor implements ISVNEditor {
 
     public SVNTestUpdateEditor(SVNRepository repository, Map items) {
         myRepository = repository;
-        myItems = items == null ? new HashMap() : items;
+        myItems = items == null ? new SVNHashMap() : items;
         myDirsStack = new Stack();
         myNumberOfChanges = 0;
     }
@@ -85,7 +86,7 @@ public class SVNTestUpdateEditor implements ISVNEditor {
         myDirsStack.push(item);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         SVNItem curDir = (SVNItem) myDirsStack.peek();
         String absPath = curDir.getRepositoryPath();
         curDir.changeProperty(name, value);
@@ -114,7 +115,7 @@ public class SVNTestUpdateEditor implements ISVNEditor {
         myItems.put(absPath, item);
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         String absPath = myRepository.getRepositoryPath(path);
         SVNItem fileItem = (SVNItem) myItems.get(absPath);
         fileItem.changeProperty(name, value);

@@ -1,245 +1,161 @@
 K 25
 svn:wc:ra_dav:version-url
-V 101
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl
+V 96
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl
 END
-SVNOutputStream.java
+ConflictDescriptor.java
 K 25
 svn:wc:ra_dav:version-url
-V 122
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNOutputStream.java
+V 120
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ConflictDescriptor.java
 END
-NotifyAction.java
-K 25
-svn:wc:ra_dav:version-url
-V 119
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NotifyAction.java
-END
-NotifyStatus.java
-K 25
-svn:wc:ra_dav:version-url
-V 119
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NotifyStatus.java
-END
-PropertyData.java
-K 25
-svn:wc:ra_dav:version-url
-V 119
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PropertyData.java
-END
-OutputInterface.java
-K 25
-svn:wc:ra_dav:version-url
-V 122
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/OutputInterface.java
-END
-PromptUserPassword2.java
+ConflictResolverCallback.java
 K 25
 svn:wc:ra_dav:version-url
 V 126
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PromptUserPassword2.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ConflictResolverCallback.java
 END
-CommitItemStateFlags.java
-K 25
-svn:wc:ra_dav:version-url
-V 127
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/CommitItemStateFlags.java
-END
-Version.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Version.java
-END
-SVNClientInterface.java
-K 25
-svn:wc:ra_dav:version-url
-V 125
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClientInterface.java
-END
-LogMessage.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/LogMessage.java
-END
-Lock.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Lock.java
-END
-StatusKind.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/StatusKind.java
-END
-JNIError.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/JNIError.java
-END
-BlameCallback.java
-K 25
-svn:wc:ra_dav:version-url
-V 120
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/BlameCallback.java
-END
-CommitMessage.java
-K 25
-svn:wc:ra_dav:version-url
-V 120
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/CommitMessage.java
-END
-SVNClientLogLevel.java
-K 25
-svn:wc:ra_dav:version-url
-V 124
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClientLogLevel.java
-END
-DirEntry.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/DirEntry.java
-END
-ChangePath.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/ChangePath.java
-END
-SVNInputStream.java
-K 25
-svn:wc:ra_dav:version-url
-V 121
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNInputStream.java
-END
-ScheduleKind.java
-K 25
-svn:wc:ra_dav:version-url
-V 119
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/ScheduleKind.java
-END
-PromptUserPassword.java
-K 25
-svn:wc:ra_dav:version-url
-V 125
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PromptUserPassword.java
-END
-RevisionKind.java
-K 25
-svn:wc:ra_dav:version-url
-V 119
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/RevisionKind.java
-END
-SVNClient.java
+ConflictResult.java
 K 25
 svn:wc:ra_dav:version-url
 V 116
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClient.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ConflictResult.java
 END
-SVNClientSynchronized.java
+StatusCallback.java
 K 25
 svn:wc:ra_dav:version-url
-V 128
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNClientSynchronized.java
+V 116
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/StatusCallback.java
 END
-CommitItem.java
+LogMessageCallback.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/LogMessageCallback.java
+END
+Depth.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/Depth.java
+END
+NativeException.java
 K 25
 svn:wc:ra_dav:version-url
 V 117
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/CommitItem.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/NativeException.java
 END
-Notify.java
+ProgressEvent.java
 K 25
 svn:wc:ra_dav:version-url
-V 113
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Notify.java
+V 115
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ProgressEvent.java
 END
-Info2.java
+ErrorCodes.java
 K 25
 svn:wc:ra_dav:version-url
 V 112
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Info2.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ErrorCodes.java
 END
-NotifyInformation.java
-K 25
-svn:wc:ra_dav:version-url
-V 124
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NotifyInformation.java
-END
-SVNAdmin.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/SVNAdmin.java
-END
-InputInterface.java
-K 25
-svn:wc:ra_dav:version-url
-V 121
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/InputInterface.java
-END
-NativeResources.java
-K 25
-svn:wc:ra_dav:version-url
-V 122
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NativeResources.java
-END
-Status.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Status.java
-END
-PromptUserPassword3.java
-K 25
-svn:wc:ra_dav:version-url
-V 126
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/PromptUserPassword3.java
-END
-Notify2.java
+InfoCallback.java
 K 25
 svn:wc:ra_dav:version-url
 V 114
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Notify2.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/InfoCallback.java
 END
-Info.java
+ProgressListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ProgressListener.java
+END
+DiffSummaryReceiver.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/DiffSummaryReceiver.java
+END
+Mergeinfo.java
 K 25
 svn:wc:ra_dav:version-url
 V 111
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Info.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/Mergeinfo.java
 END
-NodeKind.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/NodeKind.java
-END
-Path.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Path.java
-END
-LockStatus.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/LockStatus.java
-END
-ClientException.java
+ProplistCallbackImpl.java
 K 25
 svn:wc:ra_dav:version-url
 V 122
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/ClientException.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ProplistCallbackImpl.java
 END
-Revision.java
+RevisionRange.java
 K 25
 svn:wc:ra_dav:version-url
 V 115
-/repos/svn/!svn/ver/28590/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris/subversion/javahl/Revision.java
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/RevisionRange.java
+END
+SubversionException.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/SubversionException.java
+END
+package.html
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/package.html
+END
+LogDate.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/LogDate.java
+END
+BlameCallback2.java
+K 25
+svn:wc:ra_dav:version-url
+V 116
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/BlameCallback2.java
+END
+BlameCallbackImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 119
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/BlameCallbackImpl.java
+END
+MergeinfoLogKind.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/MergeinfoLogKind.java
+END
+DiffSummary.java
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/DiffSummary.java
+END
+ListCallback.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ListCallback.java
+END
+ProplistCallback.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ProplistCallback.java
+END
+CopySource.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/CopySource.java
+END
+ChangelistCallback.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/svn/!svn/ver/31785/tags/1.5.0/subversion/bindings/javahl/src/org/tigris/subversion/javahl/ChangelistCallback.java
 END

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,14 +13,12 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-
 
 
 /**
@@ -36,8 +34,8 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     
     private static final SVNStatusType[] EMPTY_STATUS = {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
 
-    public SVNDiffCallback(SVNAdminAreaInfo info, ISVNDiffGenerator generator, long rev1, long rev2, OutputStream result) {
-        super(info);
+    public SVNDiffCallback(SVNAdminArea adminArea, ISVNDiffGenerator generator, long rev1, long rev2, OutputStream result) {
+        super(adminArea);
         myGenerator = generator;
         myResult = result;
         myRevision1 = rev1;
@@ -51,6 +49,10 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     public boolean isDiffUnversioned() {
         return myGenerator.isDiffUnversioned();
     }
+    
+    public boolean isDiffCopiedAsAdded() {
+        return myGenerator.isDiffCopied();
+    }
 
     public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
         myGenerator.displayAddedDirectory(getDisplayPath(path), getRevision(myRevision1), getRevision(revision));
@@ -62,7 +64,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return SVNStatusType.UNKNOWN;
     }
 
-    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
+    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         if (file2 != null) {
             myGenerator.displayFileDiff(getDisplayPath(path), null, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, myResult);
         }
@@ -72,7 +74,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return EMPTY_STATUS;
     }
 
-    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, Map originalProperties, Map diff) throws SVNException {
+    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         if (file1 != null) {
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, myResult);
         }
@@ -82,17 +84,17 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return EMPTY_STATUS;
     }
 
-    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, Map originalProperties) throws SVNException {
+    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
         if (file1 != null) {
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(myRevision1), getRevision(myRevision2), mimeType1, mimeType2, myResult);
         }
         return SVNStatusType.UNKNOWN;
     }
 
-    public SVNStatusType propertiesChanged(String path, Map originalProperties, Map diff) throws SVNException {
-        originalProperties = originalProperties == null ? new HashMap() : originalProperties;
-        diff = diff == null ? new HashMap() : diff;
-        Map regularDiff = new HashMap();
+    public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+        originalProperties = originalProperties == null ? new SVNProperties() : originalProperties;
+        diff = diff == null ? new SVNProperties() : diff;
+        SVNProperties regularDiff = new SVNProperties();
         categorizeProperties(diff, regularDiff, null, null);
         if (diff.isEmpty()) {
             return SVNStatusType.UNKNOWN;

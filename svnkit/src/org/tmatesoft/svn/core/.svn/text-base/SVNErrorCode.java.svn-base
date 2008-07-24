@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,8 +15,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
 /**
@@ -38,7 +39,7 @@ public class SVNErrorCode implements Serializable {
     private int myCategory;
     private int myCode;
     
-    private static final Map ourErrorCodes = new HashMap();
+    private static final Map ourErrorCodes = new SVNHashMap();
     
     /**
      * Gets an error code object given its unique error code number. 
@@ -177,7 +178,16 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode BAD_URL = new SVNErrorCode(BAD_CATEGORY, 2, "Bogus URL");
     public static final SVNErrorCode BAD_DATE = new SVNErrorCode(BAD_CATEGORY, 3, "Bogus date");
     public static final SVNErrorCode BAD_MIME_TYPE = new SVNErrorCode(BAD_CATEGORY, 4, "Bogus mime-type");
+    public static final SVNErrorCode BAD_PROPERTY_VALUE = new SVNErrorCode(BAD_CATEGORY, 5, "Wrong or unexpected property value");
     public static final SVNErrorCode BAD_VERSION_FILE_FORMAT = new SVNErrorCode(BAD_CATEGORY, 6, "Version file format not correct");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode BAD_RELATIVE_PATH = new SVNErrorCode(BAD_CATEGORY, 7, "Path is not an immediate child of the specified directory");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode BAD_UUID = new SVNErrorCode(BAD_CATEGORY, 8, "Bogus UUID");
     
     public static final SVNErrorCode XML_ATTRIB_NOT_FOUND = new SVNErrorCode(XML_CATEGORY, 0, "No such XML tag attribute");
     public static final SVNErrorCode XML_MISSING_ANCESTRY = new SVNErrorCode(XML_CATEGORY, 1, "<delta-pkg> is missing ancestry");
@@ -232,6 +242,23 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode WC_INVALID_SCHEDULE = new SVNErrorCode(WC_CATEGORY, 23, "Invalid schedule");
     public static final SVNErrorCode WC_INVALID_RELOCATION = new SVNErrorCode(WC_CATEGORY, 24, "Invalid relocation");
     public static final SVNErrorCode WC_INVALID_SWITCH = new SVNErrorCode(WC_CATEGORY, 25, "Invalid switch");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_MISMATCHED_CHANGELIST = new SVNErrorCode(WC_CATEGORY, 26, "Changelist doesn't match");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_CONFLICT_RESOLVER_FAILURE = new SVNErrorCode(WC_CATEGORY, 27, "Conflict resolution failed");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_COPYFROM_PATH_NOT_FOUND = new SVNErrorCode(WC_CATEGORY, 28, "Failed to locate 'copyfrom' path in working copy");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode WC_CHANGELIST_MOVE = new SVNErrorCode(WC_CATEGORY, 29, "Moving a path from one changelist to another");
+    
     
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
@@ -277,6 +304,9 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode FS_LOCK_EXPIRED = new SVNErrorCode(FS_CATEGORY, 41, "Lock has expired");
     public static final SVNErrorCode FS_OUT_OF_DATE = new SVNErrorCode(FS_CATEGORY, 42, "Item is out of date");
     public static final SVNErrorCode FS_UNSUPPORTED_FORMAT = new SVNErrorCode(FS_CATEGORY, 43, "Unsupported FS format");
+    public static final SVNErrorCode FS_REP_BEING_WRITTEN = new SVNErrorCode(FS_CATEGORY, 44, "Representation is being written");
+    public static final SVNErrorCode FS_TXN_NAME_TOO_LONG = new SVNErrorCode(FS_CATEGORY, 45, "The generated transaction name is too long");
+    public static final SVNErrorCode FS_NO_SUCH_NODE_ORIGIN = new SVNErrorCode(FS_CATEGORY, 46, "Filesystem has no such node origin record");
     
     public static final SVNErrorCode REPOS_LOCKED = new SVNErrorCode(REPOS_CATEGORY, 0, "The repository is locked, perhaps for db recovery");
     public static final SVNErrorCode REPOS_HOOK_FAILURE = new SVNErrorCode(REPOS_CATEGORY, 1, "A repository hook failed");
@@ -297,6 +327,14 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode RA_NO_REPOS_UUID = new SVNErrorCode(RA_CATEGORY, 5, "Repository has no UUID");
     public static final SVNErrorCode RA_UNSUPPORTED_ABI_VERSION = new SVNErrorCode(RA_CATEGORY, 6, "Unsupported RA plugin ABI version");
     public static final SVNErrorCode RA_NOT_LOCKED = new SVNErrorCode(RA_CATEGORY, 7, "Path is not locked");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode RA_PARTIAL_REPLAY_NOT_SUPPORTED = new SVNErrorCode(RA_CATEGORY, 8, "Server can only replay from the root of a repository");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode RA_UUID_MISMATCH = new SVNErrorCode(RA_CATEGORY, 9, "Repository UUID does not match expected UUID");
     
     public static final SVNErrorCode RA_DAV_SOCK_INIT = new SVNErrorCode(RA_DAV_CATEGORY, 0, "RA layer failed to init socket layer");
     public static final SVNErrorCode RA_DAV_CREATING_REQUEST = new SVNErrorCode(RA_DAV_CATEGORY, 1, "RA layer failed to create HTTP request");
@@ -324,7 +362,7 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode AUTHN_CREDS_UNAVAILABLE = new SVNErrorCode(AUTHN_CATEGORY, 0, "Credential data unavailable");
     public static final SVNErrorCode AUTHN_NO_PROVIDER = new SVNErrorCode(AUTHN_CATEGORY, 1, "No authentication provider available");
     public static final SVNErrorCode AUTHN_PROVIDERS_EXHAUSTED = new SVNErrorCode(AUTHN_CATEGORY, 2, "All authentication providers exhausted");
-    public static final SVNErrorCode AUTHN_CREDS_NOT_SAVED = new SVNErrorCode(AUTHN_CATEGORY, 3, "All authentication providers exhausted");
+    public static final SVNErrorCode AUTHN_CREDS_NOT_SAVED = new SVNErrorCode(AUTHN_CATEGORY, 3, "Credentials not saved");
     
     public static final SVNErrorCode AUTHZ_ROOT_UNREADABLE = new SVNErrorCode(AUTHZ_CATEGORY, 0, "Read access denied for root of edit");
     public static final SVNErrorCode AUTHZ_UNREADABLE = new SVNErrorCode(AUTHZ_CATEGORY, 1, "Item is not readable");
@@ -358,6 +396,21 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode CLIENT_PROPERTY_NAME = new SVNErrorCode(CLIENT_CATEGORY, 11, "Bad property name");
     public static final SVNErrorCode CLIENT_UNRELATED_RESOURCES = new SVNErrorCode(CLIENT_CATEGORY, 12, "Two versioned resources are unrelated");
     public static final SVNErrorCode CLIENT_MISSING_LOCK_TOKEN = new SVNErrorCode(CLIENT_CATEGORY, 13, "Path has no lock token");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CLIENT_MULTIPLE_SOURCES_DISALLOWED = new SVNErrorCode(CLIENT_CATEGORY, 14, 
+            "Operation does not support multiple sources");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CLIENT_NO_VERSIONED_PARENT = new SVNErrorCode(CLIENT_CATEGORY, 15, 
+            "No versioned parent directories");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CLIENT_NOT_READY_TO_MERGE = new SVNErrorCode(CLIENT_CATEGORY, 16, 
+            "Working copy and merge source not ready for reintegration");
     
     public static final SVNErrorCode BASE = new SVNErrorCode(MISC_CATEGORY, 0, "A problem occurred; see later errors for details");
     public static final SVNErrorCode PLUGIN_LOAD_FAILURE = new SVNErrorCode(MISC_CATEGORY, 1, "Failure loading plugin");    
@@ -379,7 +432,31 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode PROPERTY_NOT_FOUND = new SVNErrorCode(MISC_CATEGORY, 17, "Property not found");
     public static final SVNErrorCode NO_AUTH_FILE_PATH = new SVNErrorCode(MISC_CATEGORY, 18, "No auth file path available");
     public static final SVNErrorCode VERSION_MISMATCH = new SVNErrorCode(MISC_CATEGORY, 19, "Incompatible library version");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode MERGE_INFO_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 20, "Merge info parse error");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CEASE_INVOCATION = new SVNErrorCode(MISC_CATEGORY, 21, "Cease invocation of this API");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode REVISION_NUMBER_PARSE_ERROR = new SVNErrorCode(MISC_CATEGORY, 22, "Revision number parse error");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode ITER_BREAK = new SVNErrorCode(MISC_CATEGORY, 23, "Iteration terminated before completion");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode UNKNOWN_CHANGELIST = new SVNErrorCode(MISC_CATEGORY, 24, "Unknown changelist");
     
+    public static final SVNErrorCode RESERVED_FILENAME_SPECIFIED = new SVNErrorCode(MISC_CATEGORY, 25, "Reserved directory name in command line arguments");
+
+    public static final SVNErrorCode UNKNOWN_CAPABILITY = new SVNErrorCode(MISC_CATEGORY, 26, "Inquiry about unknown capability");
+
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
     public static final SVNErrorCode CL_INSUFFICIENT_ARGS = new SVNErrorCode(CL_CATEGORY, 1, "Not enough args provided");
     public static final SVNErrorCode CL_MUTUALLY_EXCLUSIVE_ARGS = new SVNErrorCode(CL_CATEGORY, 2, "Mutually exclusive arguments specified");
@@ -390,4 +467,9 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode CL_NO_EXTERNAL_EDITOR = new SVNErrorCode(CL_CATEGORY, 7, "No external editor available");
     public static final SVNErrorCode CL_BAD_LOG_MESSAGE = new SVNErrorCode(CL_CATEGORY, 8, "Something is wrong with the log message's contents");
     public static final SVNErrorCode CL_UNNECESSARY_LOG_MESSAGE = new SVNErrorCode(CL_CATEGORY, 9, "A log message was given where none was necessary");
+    /**
+     * @since SVN 1.5
+     */
+    public static final SVNErrorCode CL_NO_EXTERNAL_MERGE_TOOL = new SVNErrorCode(CL_CATEGORY, 10, "No external merge tool available");
+
 }

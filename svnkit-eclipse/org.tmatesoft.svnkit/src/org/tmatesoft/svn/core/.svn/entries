@@ -2,14 +2,14 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-06-25T20:08:32.078789Z
+4427
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-a85679fc8e1977ca913b941adab64ff0
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:24.000000Z
+b457d6261ebb9d30b6cd6d6f89f9b594
+2008-06-25T20:08:32.078789Z
+4427
+sa
 has-props
 
 internal
@@ -48,10 +48,10 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-27d341bf11760af410bf1defb3ea3554
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:24.000000Z
+eb788535bc0761b35e8e52dc33c80147
+2008-01-23T16:42:39.168436Z
+3785
 alex
 has-props
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,12 +16,13 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -96,7 +97,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             addAttribute(PATH_ATTR, path.getPath());
             openTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
 
@@ -104,7 +105,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         try {
             sendToHandler(status);
         } catch (SAXException th) {
-            getDebugLog().error(th);
+            getDebugLog().logSevere(th);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, th.getLocalizedMessage());
             SVNErrorManager.error(err, th);
         }
@@ -126,7 +127,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             }
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().error(e);
+            getDebugLog().logSevere(e);
         }
     }
     
@@ -153,7 +154,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             openTag(COMMIT_TAG);
             addTag(AUTHOR_TAG, status.getAuthor());
             if (status.getCommittedDate() != null) {
-                addTag(DATE_TAG, SVNTimeUtil.formatDate(status.getCommittedDate()));
+                addTag(DATE_TAG, SVNDate.formatDate(status.getCommittedDate()));
             }
             closeTag(COMMIT_TAG);
         }
@@ -162,7 +163,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             addTag(TOKEN_TAG, status.getLocalLock().getID());
             addTag(OWNER_TAG, status.getLocalLock().getOwner());
             addTag(COMMENT_TAG, status.getLocalLock().getComment());
-            addTag(CREATED_TAG, SVNTimeUtil.formatDate(status.getLocalLock().getCreationDate()));
+            addTag(CREATED_TAG, SVNDate.formatDate(status.getLocalLock().getCreationDate()));
             closeTag(LOCK_TAG);
         }
         closeTag(WC_STATUS_TAG);
@@ -177,9 +178,9 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
                 addTag(TOKEN_TAG, status.getRemoteLock().getID());
                 addTag(OWNER_TAG, status.getRemoteLock().getOwner());
                 addTag(COMMENT_TAG, status.getRemoteLock().getComment());
-                addTag(CREATED_TAG, SVNTimeUtil.formatDate(status.getRemoteLock().getCreationDate()));
+                addTag(CREATED_TAG, SVNDate.formatDate(status.getRemoteLock().getCreationDate()));
                 if (status.getRemoteLock().getExpirationDate() != null) {
-                    addTag(EXPIRES_TAG, SVNTimeUtil.formatDate(status.getRemoteLock().getExpirationDate()));
+                    addTag(EXPIRES_TAG, SVNDate.formatDate(status.getRemoteLock().getExpirationDate()));
                 }
                 closeTag(LOCK_TAG);
             }

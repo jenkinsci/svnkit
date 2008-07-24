@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
@@ -24,7 +23,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
@@ -32,9 +34,10 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 
 /**
@@ -43,12 +46,47 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  */
 public class SVNAdminHelper {
     
-    public static FSFS openRepository(File reposRootPath) throws SVNException {
+    public static int writeRevisionProperties(SVNRepository toRepository, long revision, SVNProperties revProps) throws SVNException {
+        int filteredCount = 0;
+        for (Iterator propNamesIter = revProps.nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            SVNPropertyValue propValue = revProps.getSVNPropertyValue(propName);
+            if (propName.startsWith(SVNProperty.SVN_SYNC_PREFIX)) {
+                filteredCount++;
+            } else {
+                toRepository.setRevisionPropertyValue(revision, propName, propValue);
+            }
+        }
+        return filteredCount;
+    }
+
+    public static void removePropertiesNotInSource(SVNRepository repository, long revision, 
+            SVNProperties sourceProps, SVNProperties targetProps) throws SVNException {
+        for (Iterator propNamesIter = targetProps.nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            if (sourceProps.getSVNPropertyValue(propName) == null) {
+                repository.setRevisionPropertyValue(revision, propName, null);
+            }
+        }
+    }
+
+    public static FSFS openRepository(File reposRootPath, boolean openFS) throws SVNException {
         FSFS fsfs = new FSFS(reposRootPath);
-        fsfs.open();
+        if (openFS) {
+            fsfs.open();
+        } else {
+            fsfs.openRoot();
+            fsfs.getFSType();
+        }
         return fsfs;
     }
-    
+
+    public static FSFS openRepositoryForRecovery(File reposRootPath) throws SVNException {
+        FSFS fsfs = new FSFS(reposRootPath);
+        fsfs.openForRecovery();
+        return fsfs;
+    }
+
     public static long getRevisionNumber(SVNRevision revision, long youngestRevision, FSFS fsfs) throws SVNException {
         long revNumber = -1;
         if (revision.getNumber() >= 0) {
@@ -63,15 +101,15 @@ public class SVNAdminHelper {
         }
         
         if (revNumber > youngestRevision) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revisions must not be greater than the youngest revision ({0,number,integer})", new Long(youngestRevision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revisions must not be greater than the youngest revision ({0})", new Long(youngestRevision));
             SVNErrorManager.error(err);
         }
         return revNumber;
     }
     
-    public static void writeProperties(Map props, Map oldProps, OutputStream dumpStream) throws SVNException {
+    public static void writeProperties(SVNProperties props, SVNProperties oldProps, OutputStream dumpStream) throws SVNException {
         LinkedList propNames = new LinkedList();
-        for(Iterator names = props.keySet().iterator(); names.hasNext();) {
+        for(Iterator names = props.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
             if (SVNRevisionProperty.LOG.equals(propName)) {
                   propNames.addFirst(propName);
@@ -89,25 +127,24 @@ public class SVNAdminHelper {
         
         for(Iterator names = propNames.iterator(); names.hasNext();) {
             String propName = (String) names.next();
-            String propValue = (String) props.get(propName); 
+            SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
             if (oldProps != null) {
-                String oldValue = (String) oldProps.get(propName);
+                SVNPropertyValue oldValue = oldProps.getSVNPropertyValue(propName);
                 if (oldValue != null && oldValue.equals(propValue)) {
                     continue;
                 }
             }
             
-            SVNProperties.appendProperty(propName, propValue, dumpStream);
+            SVNWCProperties.appendProperty(propName, propValue, dumpStream);
         }
         
         if (oldProps != null) {
-            for(Iterator names = oldProps.keySet().iterator(); names.hasNext();) {
+            for(Iterator names = oldProps.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                if (props.containsKey(propName)) {
+                if (props.containsName(propName)) {
                     continue;
                 }
-                SVNProperties.appendPropertyDeleted(propName, dumpStream);
-                
+                SVNWCProperties.appendPropertyDeleted(propName, dumpStream);
             }            
         }
         
@@ -120,17 +157,20 @@ public class SVNAdminHelper {
         }
     }
     
-    public static void deltifyDir(FSFS fsfs, FSRevisionRoot srcRoot, String srcParentDir, String srcEntry, FSRevisionRoot tgtRoot, String tgtFullPath, ISVNEditor editor) throws SVNException {
+    public static void deltifyDir(FSFS fsfs, FSRevisionRoot srcRoot, String srcParentDir, 
+                                  String srcEntry, FSRevisionRoot tgtRoot, String tgtFullPath, 
+                                  ISVNEditor editor) throws SVNException {
         if (srcParentDir == null) {
             generateNotADirError("source parent", srcParentDir);
         }
         
         if (tgtFullPath == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid target path");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, 
+                                                         "Invalid target path");
             SVNErrorManager.error(err);
         }
         
-        String srcFullPath = SVNPathUtil.concatToAbs(srcParentDir, srcEntry);
+        String srcFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcParentDir, srcEntry));
         SVNNodeKind tgtKind = tgtRoot.checkNodeKind(tgtFullPath); 
         SVNNodeKind srcKind = srcRoot.checkNodeKind(srcFullPath);
         
@@ -187,11 +227,13 @@ public class SVNAdminHelper {
     }
     
     public static void generateIncompleteDataError() throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(new Exception());
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Premature end of content data in dumpstream");
         SVNErrorManager.error(err);
     }
 
     public static void generateStreamMalformedError() throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(new Exception());
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dumpstream data appears to be malformed");
         SVNErrorManager.error(err);
     }
@@ -214,7 +256,8 @@ public class SVNAdminHelper {
         return read - 1;
     }
 
-    private static void addFileOrDir(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, FSRevisionRoot tgtRoot, String tgtPath, String editPath, SVNNodeKind tgtKind) throws SVNException {
+    private static void addFileOrDir(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, 
+            FSRevisionRoot tgtRoot, String tgtPath, String editPath, SVNNodeKind tgtKind) throws SVNException {
         if (tgtKind == SVNNodeKind.DIR) {
             editor.addDir(editPath, null, -1);
             deltifyDirs(fsfs, editor, srcRoot, tgtRoot, null, tgtPath, editPath);
@@ -277,12 +320,12 @@ public class SVNAdminHelper {
             FSEntry tgtEntry = (FSEntry) targetEntries.get(name);
             
             SVNNodeKind tgtKind = tgtEntry.getType();
-            String targetFullPath = SVNPathUtil.concatToAbs(tgtPath, tgtEntry.getName());
-            String editFullPath = SVNPathUtil.concatToAbs(editPath, tgtEntry.getName());
+            String targetFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(tgtPath, tgtEntry.getName()));
+            String editFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(editPath, tgtEntry.getName()));
             
             if (sourceEntries != null && sourceEntries.containsKey(name)) {
                 FSEntry srcEntry = (FSEntry) sourceEntries.get(name);
-                String sourceFullPath = SVNPathUtil.concatToAbs(srcPath, tgtEntry.getName());
+                String sourceFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcPath, tgtEntry.getName()));
                 SVNNodeKind srcKind = srcEntry.getType();
                 
                 int distance = srcEntry.getId().compareTo(tgtEntry.getId());
@@ -302,7 +345,7 @@ public class SVNAdminHelper {
             for (Iterator srcEntries = sourceEntries.keySet().iterator(); srcEntries.hasNext();) {
                 String name = (String) srcEntries.next();
                 FSEntry entry = (FSEntry) sourceEntries.get(name);
-                String editFullPath = SVNPathUtil.concatToAbs(editPath, entry.getName());
+                String editFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(editPath, entry.getName()));
                 editor.deleteEntry(editFullPath, -1);
             }
         }
@@ -311,7 +354,7 @@ public class SVNAdminHelper {
     private static void deltifyProperties(FSFS fsfs, ISVNEditor editor, FSRevisionRoot srcRoot, FSRevisionRoot tgtRoot, String srcPath, String tgtPath, String editPath, boolean isDir) throws SVNException {
         FSRevisionNode targetNode = tgtRoot.getRevisionNode(tgtPath);
 
-        Map sourceProps = null;
+        SVNProperties sourceProps = null;
         if (srcPath != null) {
             FSRevisionNode sourceNode = srcRoot.getRevisionNode(srcPath);
             boolean propsChanged = !FSRepositoryUtil.arePropertiesEqual(sourceNode, targetNode);
@@ -320,15 +363,15 @@ public class SVNAdminHelper {
             }
             sourceProps = sourceNode.getProperties(fsfs);
         } else {
-            sourceProps = new HashMap();
+            sourceProps = new SVNProperties();
         }
 
-        Map targetProps = targetNode.getProperties(fsfs);
-        Map propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
-        Object[] names = propsDiffs.keySet().toArray();
+        SVNProperties targetProps = targetNode.getProperties(fsfs);
+        SVNProperties propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
+        Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            String propValue = (String) propsDiffs.get(propName);
+            SVNPropertyValue propValue = propsDiffs.getSVNPropertyValue(propName);
             if (isDir) {
                 editor.changeDirProperty(propName, propValue);
             } else {
@@ -342,21 +385,22 @@ public class SVNAdminHelper {
         SVNErrorManager.error(err);
     }
     
-    public static final String DUMPFILE_MAGIC_HEADER           = "SVN-fs-dump-format-version";
-    public static final String DUMPFILE_CONTENT_LENGTH         = "Content-length";
-    public static final String DUMPFILE_NODE_ACTION            = "Node-action";
-    public static final String DUMPFILE_NODE_COPYFROM_PATH     = "Node-copyfrom-path";
-    public static final String DUMPFILE_NODE_COPYFROM_REVISION = "Node-copyfrom-rev";
-    public static final String DUMPFILE_NODE_KIND              = "Node-kind";
-    public static final String DUMPFILE_NODE_PATH              = "Node-path";
-    public static final String DUMPFILE_PROP_CONTENT_LENGTH    = "Prop-content-length";
-    public static final String DUMPFILE_PROP_DELTA             = "Prop-delta";
-    public static final String DUMPFILE_REVISION_NUMBER        = "Revision-number";
-    public static final String DUMPFILE_TEXT_CONTENT_LENGTH    = "Text-content-length";
-    public static final String DUMPFILE_TEXT_DELTA             = "Text-delta";
-    public static final String DUMPFILE_UUID                   = "UUID";
-    public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM  = "Text-content-md5";    
-    public static final int STREAM_CHUNK_SIZE                  = 16384;
+    public static final String DUMPFILE_MAGIC_HEADER               = "SVN-fs-dump-format-version";
+    public static final String DUMPFILE_CONTENT_LENGTH             = "Content-length";
+    public static final String DUMPFILE_NODE_ACTION                = "Node-action";
+    public static final String DUMPFILE_NODE_COPYFROM_PATH         = "Node-copyfrom-path";
+    public static final String DUMPFILE_NODE_COPYFROM_REVISION     = "Node-copyfrom-rev";
+    public static final String DUMPFILE_NODE_KIND                  = "Node-kind";
+    public static final String DUMPFILE_NODE_PATH                  = "Node-path";
+    public static final String DUMPFILE_PROP_CONTENT_LENGTH        = "Prop-content-length";
+    public static final String DUMPFILE_PROP_DELTA                 = "Prop-delta";
+    public static final String DUMPFILE_REVISION_NUMBER            = "Revision-number";
+    public static final String DUMPFILE_TEXT_CONTENT_LENGTH        = "Text-content-length";
+    public static final String DUMPFILE_TEXT_DELTA                 = "Text-delta";
+    public static final String DUMPFILE_UUID                       = "UUID";
+    public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM      = "Text-content-md5";    
+    public static final String DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM  = "Text-copy-source-md5";    
+    public static final String DUMPFILE_TEXT_DELTA_BASE_CHECKSUM   = "Text-delta-base-md5";    
     public static final int DUMPFILE_FORMAT_VERSION            = 3;
 
     public static final int NODE_ACTION_ADD     = 1;

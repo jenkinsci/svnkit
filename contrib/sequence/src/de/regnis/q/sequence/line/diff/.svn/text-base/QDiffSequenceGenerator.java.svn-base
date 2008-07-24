@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2000-2008 SyntEvo GmbH, info@syntevo.com
+ * All rights reserved.
  *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://svnkit.com/license.html
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * This software is licensed as described in the file SEQUENCE-LICENSE,
+ * which you should have received as part of this distribution. Use is
+ * subject to license terms.
  * ====================================================================
  */
 
@@ -52,9 +51,13 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 	}
 
 	public void generateTextDiff(InputStream left, InputStream right, String encoding, Writer output) throws IOException {
-		final QSequenceLineResult result;
+        generateTextDiff(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), encoding, output);
+	}
+
+    public void generateTextDiff(QSequenceLineRAData left, QSequenceLineRAData right, String encoding, Writer output) throws IOException {
+        final QSequenceLineResult result;
 		try {
-			result = QSequenceLineMedia.createBlocks(QSequenceLineRAByteData.create(left), QSequenceLineRAByteData.create(right), getSimplifier());
+			result = QSequenceLineMedia.createBlocks(left, right, getSimplifier());
 		}
 		catch (QSequenceException ex) {
 			throw new IOException(ex.getMessage());
@@ -82,9 +85,24 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 		finally {
 			result.close();
 		}
+    }
+
+    public void generateTextDiff(RandomAccessFile left, RandomAccessFile right, String encoding, Writer output) throws IOException {
+        QSequenceLineRAData leftData = null, rightData = null;
+        if (left == null) {
+            leftData = new QSequenceLineRAByteData(new byte[0]);
+        } else {
+            leftData = new QSequenceLineRAFileData(left);
+        }
+        if (right == null) {
+            rightData = new QSequenceLineRAByteData(new byte[0]);
+        } else {
+            rightData = new QSequenceLineRAFileData(right);
+        }
+        generateTextDiff(leftData, rightData, encoding, output);
 	}
 
-	// Accessing ==============================================================
+    // Accessing ==============================================================
 
 	protected Map getProperties() {
 		return myProperties;
@@ -162,7 +180,9 @@ public abstract class QDiffSequenceGenerator implements QDiffGenerator {
 		for (Iterator blocks = blocksList.iterator(); blocks.hasNext();) {
 			QSequenceDifferenceBlock currentBlock = (QSequenceDifferenceBlock)blocks.next();
 			if (lastBlock != null) {
-				if (currentBlock.getLeftFrom() - 1 - lastBlock.getLeftTo() > gutter && currentBlock.getRightFrom() - 1 - lastBlock.getRightTo() > gutter) {
+				final int leftDifference = currentBlock.getLeftFrom() - 1 - lastBlock.getLeftTo();
+				final int rightDifference = currentBlock.getRightFrom() - 1 - lastBlock.getRightTo();
+				if (leftDifference > 2 * gutter && rightDifference > 2 * gutter) {
 					combinedBlocks.add(currentList);
 					currentList = new LinkedList();
 				}

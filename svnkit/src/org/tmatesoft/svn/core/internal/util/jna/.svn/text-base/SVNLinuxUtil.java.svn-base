@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -265,6 +265,48 @@ class SVNLinuxUtil {
         return false;
     }
 
+    public static boolean setSGID(File file) {
+        if (file == null || ourSharedMemory == null) {
+            return false;
+        }
+        String path = file.getAbsolutePath();
+        if (path.endsWith("/") && path.length() > 1) {
+            path = path.substring(0, path.length() - 1);
+        }
+        try {
+            ISVNCLibrary cLibrary = JNALibraryLoader.getCLibrary();
+            if (cLibrary == null) {
+                return false;
+            }
+            synchronized (ourSharedMemory) {
+                ourSharedMemory.clear();
+                int rc;
+                synchronized (cLibrary) {
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                            cLibrary.stat(path, ourSharedMemory) : 
+                            cLibrary.__xstat64(0, path, ourSharedMemory);
+                }
+                if (rc < 0) {
+                    return false;
+                }
+                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
+                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+                int access = mode & 07777;
+                int mask = 02000;
+                if ((access & mask) != 0) {
+                    return false;
+                }
+                synchronized (cLibrary) {
+                    rc = cLibrary.chmod(path, mask | access);
+                }
+                return rc < 0 ? false : true;
+            }
+        } catch (Throwable th) {
+            //
+        }
+        return false;
+    }
+
     public static boolean createSymlink(File file, String linkName) {
         if (file == null || linkName == null || ourSharedMemory == null) {
             return false;
@@ -288,4 +330,5 @@ class SVNLinuxUtil {
         }
         return false;
     }
+    
 }

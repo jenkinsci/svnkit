@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
 
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IStatus;
@@ -67,28 +68,20 @@ public class SVNKitLog extends SVNDebugLogAdapter {
 		return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
 	}
 
-    public void info(String message) {
-        if (isInfoEnabled()) {
-            myLog.log(createStatus(IStatus.INFO, message, null));
-        }
+    public void logError(String message) {
+        log(message, Level.INFO);
     }
 
-    public void info(Throwable th) {
-        if (isInfoEnabled()) {
-            myLog.log(createStatus(IStatus.INFO, th != null ? th.getMessage() : "", th));
-        }
+    public void logError(Throwable th) {
+        log(th, Level.INFO);
     }
 
-    public void error(String message) {
-        if (isErrorEnabled()) {
-            myLog.log(createStatus(IStatus.ERROR, message, null));
-        }
+    public void logSevere(String message) {
+        log(message, Level.SEVERE);
     }
 
-    public void error(Throwable th) {
-        if (isErrorEnabled()) {
-            myLog.log(createStatus(IStatus.ERROR, th != null ? th.getMessage() : "", th));
-        }
+    public void logSevere(Throwable th) {
+        log(th, Level.SEVERE);
     }
 
     public void log(String message, byte[] data) {
@@ -114,4 +107,43 @@ public class SVNKitLog extends SVNDebugLogAdapter {
         }
         return os;
     }
+
+    public void log(Throwable th, Level logLevel) {
+        if (th != null) {
+            if (logLevel == Level.INFO && isInfoEnabled()) {
+                myLog.log(createStatus(IStatus.INFO, th.getMessage(), th));
+            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+                myLog.log(createStatus(IStatus.ERROR, th.getMessage(), th));
+            }
+        }
+    }
+
+    public void log(String message, Level logLevel) {
+        if (message != null) {
+            if (logLevel == Level.INFO && isInfoEnabled()) {
+                myLog.log(createStatus(IStatus.INFO, message, null));
+            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+                myLog.log(createStatus(IStatus.ERROR, message, null));
+            }
+        }
+    }
+
+    public void logFine(Throwable th) {
+    }
+
+    public void logFine(String message) {
+    }
+
+    public void logFiner(Throwable th) {
+    }
+
+    public void logFiner(String message) {
+    }
+
+    public void logFinest(Throwable th) {
+    }
+
+    public void logFinest(String message) {
+    }
+
 }

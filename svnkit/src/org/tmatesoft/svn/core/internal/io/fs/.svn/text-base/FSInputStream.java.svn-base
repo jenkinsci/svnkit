@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -241,7 +241,7 @@ public class FSInputStream extends InputStream {
         return null;
     }
 
-    private static FSRepresentationState readRepresentationLine(FSFile file) throws SVNException {
+    public static FSRepresentationState readRepresentationLine(FSFile file) throws SVNException {
         try {
             String line = file.readLine(160);
             FSRepresentationState repState = new FSRepresentationState();
@@ -306,8 +306,7 @@ public class FSInputStream extends InputStream {
         }
     }
 
-    private static class FSRepresentationState {
-
+    public static class FSRepresentationState {
         FSFile myFile;
         /* The starting offset for the raw svndiff/plaintext data minus header. */
         long myStart;

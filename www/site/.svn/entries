@@ -1,0 +1,79 @@
+8
+
+dir
+4575
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/www/site
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2008-01-26T00:35:39.093024Z
+3800
+alex
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+.project
+file
+
+
+
+
+2008-07-24T04:58:18.000000Z
+47b2d2daf5fda82b50ec497d07476ab8
+2008-01-26T00:35:39.093024Z
+3800
+alex
+
+index.html
+file
+
+
+
+
+2008-07-24T04:58:18.000000Z
+c1bb9f999225cae61bc4130a915c3ce3
+2008-01-26T00:35:39.093024Z
+3800
+alex
+
+styles.css
+file
+
+
+
+
+2008-07-24T04:58:18.000000Z
+2a7f025ec1141a39944307d4059ec589
+2008-01-26T00:35:39.093024Z
+3800
+alex
+
+img
+dir
+
+licensing.html
+file
+
+
+
+
+2008-07-24T04:58:18.000000Z
+e3540a660fca095d1d3ae88b135ccee5
+2008-01-26T00:35:39.093024Z
+3800
+alex
+

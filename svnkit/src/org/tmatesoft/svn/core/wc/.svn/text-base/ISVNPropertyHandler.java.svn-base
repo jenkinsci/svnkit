@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -60,6 +60,7 @@ public interface ISVNPropertyHandler {
 
         public void handleProperty(long revision, SVNPropertyData property) {
         }
+
     };
     
     /**
@@ -71,7 +72,7 @@ public interface ISVNPropertyHandler {
      * @throws SVNException
      */
     public void handleProperty(File path, SVNPropertyData property) throws SVNException;
-    
+
     /**
      * Handles remote item's properies (located in a repository).  
      * Not called for revision properties.
@@ -81,7 +82,7 @@ public interface ISVNPropertyHandler {
      * @throws SVNException
      */
     public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException;
-    
+
     /**
      * Handles a revision property. <b>SVNWCClient</b>'s methods operating on
      * revision properties call this method to handle properties.

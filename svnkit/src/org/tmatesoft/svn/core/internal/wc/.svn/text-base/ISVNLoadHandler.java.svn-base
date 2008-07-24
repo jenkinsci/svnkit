@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 
 
@@ -25,14 +25,6 @@ import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
  */
 public interface ISVNLoadHandler {
     
-    public void setUsePreCommitHook(boolean use);
-    
-    public void setUsePostCommitHook(boolean use);
-    
-    public void setParentDir(String parentDir);
-
-    public void setUUIDAction(SVNUUIDAction action);
-
     public void closeRevision() throws SVNException;
     
     public void openRevision(Map headers) throws SVNException;
@@ -45,16 +37,16 @@ public interface ISVNLoadHandler {
     
     public void removeNodeProperties() throws SVNException;
 
-    public void setNodeProperty(String propertyName, String propertyValue) throws SVNException;
-
-    public void setRevisionProperty(String propertyName, String propertyValue) throws SVNException;
+    public void setRevisionProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException;
 
     public void applyTextDelta() throws SVNException;
 
     public void setFullText() throws SVNException;
 
-    public int parsePropertyBlock(InputStream dumpStream, int contentLength, boolean isNode) throws SVNException;
+    public void parseTextBlock(InputStream dumpStream, long contentLength, boolean isDelta) throws SVNException;
 
-    public void parseTextBlock(InputStream dumpStream, int contentLength, boolean isDelta) throws SVNException;
+    public void deleteNodeProperty(String propertyName) throws SVNException;
+
+    public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException;
 
 }

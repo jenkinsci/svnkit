@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -41,6 +42,13 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
         myHandler = handler;
+    }
+    
+    public void reset(long baseRevision) {
+        myWrappedEditor = null;
+        myCommitInfo = null;
+        myIsRootOpened = false;
+        myBaseRevision = baseRevision;
     }
     
     public void abortEdit() throws SVNException {
@@ -70,13 +78,13 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         getWrappedEditor().addFile(path, copyFromPath, copyFromRevision);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
             getWrappedEditor().changeDirProperty(name, value);
         }
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
             getWrappedEditor().changeFileProperty(path, name, value);
         }
@@ -93,7 +101,8 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         }
         myCommitInfo = wrappedEditor.closeEdit();
         if (myHandler != null) {
-            SVNLogEntry logEntry = new SVNLogEntry(null, myCommitInfo.getNewRevision(), myCommitInfo.getAuthor(), myCommitInfo.getDate(), null);
+            SVNLogEntry logEntry = new SVNLogEntry(null, myCommitInfo.getNewRevision(), 
+                    myCommitInfo.getAuthor(), myCommitInfo.getDate(), null);
             myHandler.handleLogEntry(logEntry);
         }
         return myCommitInfo;

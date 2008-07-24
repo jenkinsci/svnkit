@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.io.fs.test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -23,11 +22,14 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
@@ -69,7 +71,7 @@ public class SVNRepositoryReplicationTest {
 
     public static void main(String[] args) {
         if (args.length < 4) {
-            SVNDebugLog.getDefaultLog().info("Expected input values: 1. source repository url. 2. destination repository url. 3. source working copy dir. 4. destination working copy dir. [5.] top revision to copy up to");
+            SVNDebugLog.getDefaultLog().logFine("Expected input values: 1. source repository url. 2. destination repository url. 3. source working copy dir. 4. destination working copy dir. [5.] top revision to copy up to");
             System.exit(1);
         }
 
@@ -89,7 +91,7 @@ public class SVNRepositoryReplicationTest {
         String targetWC = args.length > 8 ? args[8] : null;
 
         if (useWC && (sourceWC == null || targetWC == null)) {
-            SVNDebugLog.getDefaultLog().info("Both WC root dirs (source and target) must be specified");
+            SVNDebugLog.getDefaultLog().logFine("Both WC root dirs (source and target) must be specified");
             System.exit(1);
         }
 
@@ -110,9 +112,9 @@ public class SVNRepositoryReplicationTest {
 
             SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
             long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev);
-            SVNDebugLog.getDefaultLog().info("Number of processed revisions: " + processedRevs);
+            SVNDebugLog.getDefaultLog().logFine("Number of processed revisions: " + processedRevs);
             // compare history logs
-            SVNDebugLog.getDefaultLog().info("Comparing full history...");
+            SVNDebugLog.getDefaultLog().logFine("Comparing full history...");
             compareHistory(src, dst);
 
             long startComparisonRev = args.length > 4 ? Long.parseLong(args[4]) : 1;
@@ -123,23 +125,23 @@ public class SVNRepositoryReplicationTest {
             passed = useWC ? compareRepositoriesWithWC(srcURL, dstURL, startComparisonRev, endComparisonRev, new File(sourceWC), new File(targetWC)) : compareRepositoriesWithoutWC(src, dst,
                     startComparisonRev, endComparisonRev);
         } catch (SVNException svne) {
-            SVNDebugLog.getDefaultLog().info("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
+            SVNDebugLog.getDefaultLog().logFine("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
             System.out.println(svne.getErrorMessage().getMessage());
             System.exit(1);
         }
         if (passed) {
-            SVNDebugLog.getDefaultLog().info("Repositories comparing test PASSED");
+            SVNDebugLog.getDefaultLog().logFine("Repositories comparing test PASSED");
         } else {
-            SVNDebugLog.getDefaultLog().info("Repositories comparing test FAILED");
+            SVNDebugLog.getDefaultLog().logFine("Repositories comparing test FAILED");
             System.exit(1);
         }
     }
 
     public static boolean compareRepositoriesWithoutWC(SVNRepository srcRepos, SVNRepository dstRepos, long start, long end) throws SVNException {
-        Map srcItems = new HashMap();
-        Map dstItems = new HashMap();
+        Map srcItems = new SVNHashMap();
+        Map dstItems = new SVNHashMap();
         for (long i = start; i <= end; i++) {
-            SVNDebugLog.getDefaultLog().info("Checking revision #" + i);
+            SVNDebugLog.getDefaultLog().logFine("Checking revision #" + i);
             if (!compareRevisionProps(srcRepos.getLocation(), dstRepos.getLocation(), i)) {
                 return false;
             }
@@ -174,31 +176,31 @@ public class SVNRepositoryReplicationTest {
             }, dstEditor);
 
             if (srcEditor.getNumberOfChanges() != dstEditor.getNumberOfChanges()) {
-                SVNDebugLog.getDefaultLog().info("Different number of changes in revision " + i);
+                SVNDebugLog.getDefaultLog().logFine("Different number of changes in revision " + i);
                 return false;
             }
 
             if (srcItems.size() != dstItems.size()) {
-                SVNDebugLog.getDefaultLog().info("Different number of changed items in revision " + i);
+                SVNDebugLog.getDefaultLog().logFine("Different number of changed items in revision " + i);
                 return false;
             }
 
             for (Iterator itemsIter = srcItems.keySet().iterator(); itemsIter.hasNext();) {
                 String itemPath = (String) itemsIter.next();
                 if (dstItems.get(itemPath) == null) {
-                    SVNDebugLog.getDefaultLog().info("No item '" + itemPath + "' in '" + dstRepos.getLocation() + "' repository in revision " + i);
+                    SVNDebugLog.getDefaultLog().logFine("No item '" + itemPath + "' in '" + dstRepos.getLocation() + "' repository in revision " + i);
                     return false;
                 }
                 SVNItem srcItem = (SVNItem) srcItems.get(itemPath);
                 SVNItem dstItem = (SVNItem) dstItems.get(itemPath);
                 if (srcItem.getKind() == SVNNodeKind.DIR) {
                     if (!checkDirItems(srcItem, dstItem)) {
-                        SVNDebugLog.getDefaultLog().info("Unequal dir items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
+                        SVNDebugLog.getDefaultLog().logFine("Unequal dir items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
                         return false;
                     }
                 } else {
                     if (!checkFileItems(srcItem, dstItem)) {
-                        SVNDebugLog.getDefaultLog().info("Unequal file items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
+                        SVNDebugLog.getDefaultLog().logFine("Unequal file items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
                         return false;
                     }
                 }
@@ -240,7 +242,7 @@ public class SVNRepositoryReplicationTest {
         return true;
     }
 
-    private static boolean checkItemProps(Map props1, Map props2) {
+    private static boolean checkItemProps(SVNProperties props1, SVNProperties props2) {
         if (props1 == null && props2 == null) {
             return true;
         }
@@ -249,16 +251,16 @@ public class SVNRepositoryReplicationTest {
             return false;
         }
 
-        for (Iterator propsIter = props1.keySet().iterator(); propsIter.hasNext();) {
+        for (Iterator propsIter = props1.nameSet().iterator(); propsIter.hasNext();) {
             String propName = (String) propsIter.next();
-            if (props2.get(propName) == null) {
+            if (props2.getSVNPropertyValue(propName) == null) {
                 return false;
             }
             if (propName.equals(SVNProperty.UUID)) {
                 continue;
             }
-            String propVal1 = (String) props1.get(propName);
-            String propVal2 = (String) props2.get(propName);
+            SVNPropertyValue propVal1 = props1.getSVNPropertyValue(propName);
+            SVNPropertyValue propVal2 = props2.getSVNPropertyValue(propName);
             if (!propVal1.equals(propVal2)) {
                 return false;
             }
@@ -282,8 +284,8 @@ public class SVNRepositoryReplicationTest {
         SVNUpdateClient updateClient = manager.getUpdateClient();
         updateClient.setIgnoreExternals(true);
 
-        Map events1 = new HashMap();
-        Map events2 = new HashMap();
+        Map events1 = new SVNHashMap();
+        Map events2 = new SVNHashMap();
         long i = start;
         if (!compareRevisionProps(srcURL, dstURL, i)) {
             return false;
@@ -350,24 +352,21 @@ public class SVNRepositoryReplicationTest {
     private static boolean compareRevisionProps(SVNURL srcURL, SVNURL dstURL, long revision) throws SVNException {
         SVNRepository srcRep = SVNRepositoryFactory.create(srcURL);
         SVNRepository dstRep = SVNRepositoryFactory.create(dstURL);
-        Map srcRevProps = new HashMap();
-        Map dstRevProps = new HashMap();
+        SVNProperties srcRevProps = new SVNProperties();
+        SVNProperties dstRevProps = new SVNProperties();
         srcRep.getRevisionProperties(revision, srcRevProps);
         dstRep.getRevisionProperties(revision, dstRevProps);
-        if (!compareProps(srcRevProps, dstRevProps)) {
-            return false;
-        }
-        return true;
+        return compareProps(srcRevProps, dstRevProps);
     }
 
-    private static boolean compareProps(Map props1, Map props2) {
+    private static boolean compareProps(SVNProperties props1, SVNProperties props2) {
         if (props1.size() != props2.size()) {
             return false;
         }
-        for (Iterator names = props1.keySet().iterator(); names.hasNext();) {
+        for (Iterator names = props1.nameSet().iterator(); names.hasNext();) {
             String propName = (String) names.next();
-            String propValue = (String) props1.get(propName);
-            String propValue2 = (String) props2.get(propName);
+            String propValue = props1.getStringValue(propName);
+            String propValue2 = props2.getStringValue(propName);
             if (propValue2 == null || !propValue2.equals(propValue)) {
                 return false;
             }
@@ -390,16 +389,13 @@ public class SVNRepositoryReplicationTest {
         if (!isRoot && !dir1.getName().equals(dir2.getName())) {
             return false;
         }
-        Map props1 = new HashMap();
-        Map props2 = new HashMap();
+        SVNProperties props1 = new SVNProperties();
+        SVNProperties props2 = new SVNProperties();
         ISVNPropertyHandler handler1 = new PropertyHandler(props1);
         ISVNPropertyHandler handler2 = new PropertyHandler(props2);
         wcClient.doGetProperty(dir1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
         wcClient.doGetProperty(dir2, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler2);
-        if (!compareProps(props1, props2)) {
-            return false;
-        }
-        return true;
+        return compareProps(props1, props2);
     }
 
     private static boolean compareFiles(File file1, File file2) throws SVNException {
@@ -416,8 +412,8 @@ public class SVNRepositoryReplicationTest {
         if (!file1.getName().equals(file2.getName())) {
             return false;
         }
-        Map props1 = new HashMap();
-        Map props2 = new HashMap();
+        SVNProperties props1 = new SVNProperties();
+        SVNProperties props2 = new SVNProperties();
         ISVNPropertyHandler handler1 = new PropertyHandler(props1);
         ISVNPropertyHandler handler2 = new PropertyHandler(props2);
         wcClient.doGetProperty(file1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
@@ -427,10 +423,7 @@ public class SVNRepositoryReplicationTest {
         }
         String checksum1 = file1Info.getChecksum();// SVNFileUtil.computeChecksum(file1);
         String checksum2 = file2Info.getChecksum();// SVNFileUtil.computeChecksum(file2);
-        if (!checksum1.equals(checksum2)) {
-            return false;
-        }
-        return true;
+        return checksum1.equals(checksum2);
     }
 
     public static boolean compareHistory(SVNRepository src, SVNRepository dst) throws SVNException {

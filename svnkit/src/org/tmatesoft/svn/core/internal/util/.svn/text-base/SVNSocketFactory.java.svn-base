@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,73 +31,54 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.auth.ISVNSSLManager;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-
 /**
  * <code>SVNSocketFactory</code> is a utility class that represents a custom
  * socket factory which provides creating either a plain socket or a secure one
  * to encrypt data transmitted over network.
- * 
+ *
  * <p>
  * The created socket then used by the inner engine of <b><i>SVNKit</i></b>
  * library to communicate with a Subversion repository.
- * 
+ *
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
 public class SVNSocketFactory {
-    
-    private static final int ourConnectTimeout;
-    
-    static {
-        String timeoutStr = System.getProperty("svnkit.tcp.connectTimeout", "0");
-        int timeout = 0;
-        try {
-            timeout = Integer.parseInt(timeoutStr);
-            if (timeout < 0) {
-                timeout = 0;
-            }
-        } catch (NumberFormatException nfe) {
-            timeout = 0;
-        }
-        ourConnectTimeout = timeout;
-    }
-    
-    public static Socket createPlainSocket(String host, int port) throws IOException {
+
+    private static boolean ourIsSocketStaleCheck = false;
+
+    public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout) throws IOException {
         InetAddress address = createAddres(host);
-        Socket socket = new Socket() ;
-        socket.connect(new InetSocketAddress(address, port), ourConnectTimeout);
+        Socket socket = new Socket();
+        socket.connect(new InetSocketAddress(address, port), connectTimeout);
         socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
         socket.setSoLinger(true, 0);
+        socket.setSoTimeout(readTimeout);
         return socket;
     }
 
-    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port) throws IOException, SVNException {
-        InetSocketAddress address = new InetSocketAddress(createAddres(host), port); 
-
-        manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
-        Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket();
-        sslSocket.connect(address, ourConnectTimeout);
+    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout) throws IOException {
+        InetAddress address = createAddres(host);
+        Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
+        sslSocket.connect(new InetSocketAddress(address, port), connectTimeout);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
+        sslSocket.setSoTimeout(readTimeout);
         ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
     }
 
-    public static Socket createSSLSocket(ISVNSSLManager manager, String host, int port, Socket socket) throws IOException, SVNException {
-        manager = manager == null ? DEFAULT_SSL_MANAGER : manager;
-        Socket sslSocket = manager.getSSLContext().getSocketFactory().createSocket(socket, host, port, true);
+    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, Socket socket, int readTimeout) throws IOException {
+        Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket(socket, host, port, true);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
         sslSocket.setSoLinger(true, 0);
+        sslSocket.setSoTimeout(readTimeout);
         ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
     }
@@ -105,8 +86,7 @@ public class SVNSocketFactory {
     private static InetAddress createAddres(String hostName) throws UnknownHostException {
         byte[] bytes = new byte[4];
         int index = 0;
-        for (StringTokenizer tokens = new StringTokenizer(hostName, "."); tokens
-                .hasMoreTokens();) {
+        for (StringTokenizer tokens = new StringTokenizer(hostName, "."); tokens.hasMoreTokens();) {
             String token = tokens.nextToken();
             try {
                 byte b = (byte) Integer.parseInt(token);
@@ -128,44 +108,19 @@ public class SVNSocketFactory {
         return InetAddress.getByName(hostName);
     }
     
-    private static final ISVNSSLManager DEFAULT_SSL_MANAGER = new ISVNSSLManager() {
-        public SSLContext getSSLContext() throws IOException {
-            SSLContext context = null;
-            try {
-                context = SSLContext.getInstance("SSL");
-                context.init(new KeyManager[] {}, new TrustManager[] {new X509TrustManager() {
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                    public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-                    }
-                    public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-                    }
-                    
-                }}, null);
-            } catch (NoSuchAlgorithmException e) {
-                throw new IOException(e.getMessage());                
-            } catch (KeyManagementException e) {
-                throw new IOException(e.getMessage());                
-            }
-            return context;
-        }
-        public void acknowledgeSSLContext(boolean accepted, SVNErrorMessage errorMessage) {
-        }
-        public boolean isClientCertPromptRequired() {
-            return false;
-        }
-        public void setClientAuthentication(SVNSSLAuthentication sslAuthentication) {
-        }
-        public SVNSSLAuthentication getClientAuthentication() {
-            return null;
-        }
-        public Throwable getClientCertLoadingError() {
-            return null;
-        }
-    };
+    public static void setSocketStaleCheckEnabled(boolean enabled) {
+        ourIsSocketStaleCheck = enabled;
+    }
+
+    public static boolean isSocketStaleCheckEnabled() {
+        return ourIsSocketStaleCheck;
+    }
 
     public static boolean isSocketStale(Socket socket) throws IOException {
+        if (!isSocketStaleCheckEnabled()) {
+            return socket == null || socket.isClosed() || !socket.isConnected();
+        }
+        
         boolean isStale = true;
         if (socket != null) {
             isStale = false;
@@ -195,4 +150,37 @@ public class SVNSocketFactory {
         }
         return isStale;
     }
+
+	private static SSLContext createSSLContext(KeyManager[] keyManagers, TrustManager trustManager) throws IOException {
+		if (trustManager == null) {
+			trustManager = new X509TrustManager() {
+				public X509Certificate[] getAcceptedIssuers() {
+					return null;
+				}
+
+				public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+				}
+
+				public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+				}
+			};
+		}
+
+		if (keyManagers == null) {
+			keyManagers = new KeyManager[0];
+		}
+
+		final TrustManager[] trustManagers = new TrustManager[] {trustManager};
+		try {
+			final SSLContext context = SSLContext.getInstance("SSLv3");
+			context.init(keyManagers, trustManagers, null);
+			return context;
+		}
+		catch (NoSuchAlgorithmException e) {
+			throw new IOException(e.getMessage());
+		}
+		catch (KeyManagementException e) {
+			throw new IOException(e.getMessage());
+		}
+	}
 }

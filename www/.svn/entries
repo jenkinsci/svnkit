@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/www
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/www
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
+2008-01-26T00:35:39.093024Z
+3800
 alex
 
 
@@ -41,16 +41,19 @@ alex
 feed
 dir
 
+site
+dir
+
 license.html
 file
 
 
 
 
-2008-07-24T04:57:12.000000Z
-c73d9c84e4826565c1176ae8cef8a5ab
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:18.000000Z
+9056406b37db350ffdc80eb5ec969ea9
+2008-01-23T16:42:39.168436Z
+3785
 alex
 
 download
@@ -65,10 +68,10 @@ file
 
 
 
-2008-07-24T04:57:12.000000Z
-b11602bdd7a591b99571f60faf0a8bc7
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:18.000000Z
+898354e43ced73bd6b23911e75907242
+2007-03-28T18:29:03.055870Z
+3009
 alex
 
 licensing

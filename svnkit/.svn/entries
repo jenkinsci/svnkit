@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-04-09T15:49:04.505953Z
-4141
+2008-07-01T14:40:34.792425Z
+4471
 alex
 has-props
 
@@ -26,9 +26,6 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
-cli
-dir
-
 src
 dir
 
@@ -38,10 +35,10 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-140d6e06135dcadedd395e2859f98011
-2008-01-07T17:27:36.062234Z
-3747
-alex
+2008-07-24T04:58:47.000000Z
+5633d63d85819faccbfd548cc918d378
+2008-06-11T14:40:58.084670Z
+4326
+semen
 has-props
 

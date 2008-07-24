@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,19 +11,19 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
-import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNErrorCode;
 
 /**
  * @version 1.1.1
@@ -31,70 +31,146 @@ import org.tmatesoft.svn.core.SVNErrorCode;
  */
 public class FSWriteLock {
 
-    private static final Map ourThreadLocksCache = new HashMap();
+    private static final Map ourThreadDBLocksCache = new SVNHashMap();
+    private static final Map ourThreadRepositoryLocksCache = new SVNHashMap();
+    private static final Map ourThreadLogLocksCache = new SVNHashMap();
 
-    private RandomAccessFile myLockFile;
+    private static final int DB_LOCK = 1;
+    private static final int LOGS_LOCK = 2;
+    private static final int REPOS_LOCK = 3;
+    
+    private File myLockFile;
+    private RandomAccessFile myLockRAFile;
     private FileLock myLock;
+    private String myToken;
+    private int myLockType;
+    private boolean myIsShared;
     private int myReferencesCount = 0;
-    private FSFS myFSFS;
-    private String myUUID;
 
-    private FSWriteLock(String uuid, FSFS owner) {
-        myUUID = uuid;
-        myFSFS = owner;
+    private FSWriteLock(String token, File lockFile, int lockType, boolean shared) {
+        myToken = token;
+        myLockFile = lockFile;
+        myLockType = lockType;
+        myIsShared = shared;
     }
 
-    public static synchronized FSWriteLock getWriteLock(FSFS owner) throws SVNException {
+    public static synchronized FSWriteLock getWriteLockForDB(FSFS owner) throws SVNException {
         String uuid = owner.getUUID();
-        FSWriteLock lock = (FSWriteLock) ourThreadLocksCache.get(uuid);
-
+        FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
         if (lock == null) {
-            lock = new FSWriteLock(uuid, owner);
-            ourThreadLocksCache.put(uuid, lock);
+            lock = new FSWriteLock(uuid, owner.getWriteLockFile(), DB_LOCK, false);
+            ourThreadDBLocksCache.put(uuid, lock);
+        }
+        lock.myReferencesCount++;
+        return lock;
+    }
+
+    public static synchronized FSWriteLock getWriteLockForCurrentTxn(String token, FSFS owner) throws SVNException {
+        if (token == null || token.length() == 0){
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect lock token for current transaction"));
+        }
+        String uuid = owner.getUUID() + token;
+        FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
+        if (lock == null) {
+            lock = new FSWriteLock(uuid, owner.getTransactionCurrentLockFile(), DB_LOCK, false);
+            ourThreadDBLocksCache.put(uuid, lock);
+        }
+        lock.myReferencesCount++;
+        return lock;
+    }
+
+    public static synchronized FSWriteLock getWriteLockForTxn(String txnID, FSFS owner) throws SVNException {
+        if (txnID == null || txnID.length() == 0){
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect txn id while locking"));
+        }
+        String uuid = owner.getUUID() + txnID;
+        FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
+        if (lock == null) {
+            lock = new FSWriteLock(uuid, owner.getTransactionProtoRevLockFile(txnID), DB_LOCK, false);
+            ourThreadDBLocksCache.put(uuid, lock);
+        }
+        lock.myReferencesCount++;
+        return lock;
+    }
+
+    public static synchronized FSWriteLock getDBLogsLock(FSFS owner, boolean exclusive) throws SVNException {
+        String uuid = owner.getUUID();
+        FSWriteLock lock = (FSWriteLock) ourThreadLogLocksCache.get(uuid);
+        if (lock == null) {
+            lock = new FSWriteLock(uuid, owner.getDBLogsLockFile(), LOGS_LOCK, !exclusive);
+            ourThreadLogLocksCache.put(uuid, lock);
         }
         lock.myReferencesCount++;
         return lock;
     }
 
     public synchronized void lock() throws SVNException {
-        File writeLockFile = myFSFS.getWriteLockFile();
-
+        boolean errorOccured = false;
+        Exception childError = null;
+        if (myLock != null) {
+            errorOccured = true;
+        }
         try {
-            SVNFileType type = SVNFileType.getType(writeLockFile);
+            SVNFileType type = SVNFileType.getType(myLockFile);
             if (type == SVNFileType.UNKNOWN || type == SVNFileType.NONE) {
-                SVNFileUtil.createEmptyFile(writeLockFile);
+                SVNFileUtil.createEmptyFile(myLockFile);
             }
-
-            myLockFile = new RandomAccessFile(writeLockFile, "rw");
-            myLock = myLockFile.getChannel().lock();
+            myLockRAFile = new RandomAccessFile(myLockFile, "rw");
+            myLock = myLockRAFile.getChannel().lock(0L, Long.MAX_VALUE, myIsShared);
         } catch (IOException ioe) {
             unlock();
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't get exclusive lock on file ''{0}'': {1}", new Object[] {
-                    writeLockFile, ioe.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, ioe);
+            errorOccured = true;
+            childError = ioe;
+        }
+        if (errorOccured) {
+            String msg = childError == null ? "file already locked" : childError.getLocalizedMessage();
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                    "Can't get exclusive lock on file ''{0}'': {1}", new Object[]{myLockFile, msg});
+            SVNErrorManager.error(err, childError);
         }
     }
 
-    public static synchronized void realease(FSWriteLock lock) {
+    public static synchronized void release(FSWriteLock lock) {
         if (lock == null) {
             return;
         }
         if ((--lock.myReferencesCount) == 0) {
-            ourThreadLocksCache.remove(lock.myUUID);
+            if (lock.myLockType == DB_LOCK) {
+                ourThreadDBLocksCache.remove(lock.myToken);
+            } else if (lock.myLockType == REPOS_LOCK) {
+                ourThreadRepositoryLocksCache.remove(lock.myToken);
+            } else if (lock.myLockType == LOGS_LOCK) {
+                ourThreadLogLocksCache.remove(lock.myToken);
+            }
         }
     }
 
-    public synchronized void unlock() {
+    public synchronized void unlock() throws SVNException {
         if (myLock != null) {
             try {
                 myLock.release();
             } catch (IOException ioex) {
-                //
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                        "Unexpected error while releasing file lock on ''{0}''", myLockFile);
+                SVNErrorManager.error(error, ioex);
             }
             myLock = null;
         }
-        SVNFileUtil.closeFile(myLockFile);
-        myLockFile = null;
+        SVNFileUtil.closeFile(myLockRAFile);
+    }
+
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("{[");
+        buffer.append("File:");
+        buffer.append(myLockFile);
+        buffer.append("][");
+        buffer.append("RefCount:");
+        buffer.append(myReferencesCount);
+        buffer.append("][");
+        buffer.append("Token:");
+        buffer.append(myToken);
+        buffer.append("]}");
+        return buffer.toString();
     }
 }

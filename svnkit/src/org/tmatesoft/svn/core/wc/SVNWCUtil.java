@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -21,7 +22,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -132,7 +133,7 @@ public class SVNWCUtil {
      *         configuration driver interface
      */
     public static ISVNAuthenticationManager createDefaultAuthenticationManager(File configDir, String userName, String password) {
-        ISVNOptions options = createDefaultOptions(configDir, true);
+        DefaultSVNOptions options = createDefaultOptions(configDir, true);
         boolean store = options.isAuthStorageEnabled();
         return createDefaultAuthenticationManager(configDir, userName, password, store);
     }
@@ -228,7 +229,7 @@ public class SVNWCUtil {
      * @return a default implementation of the run-time configuration options
      *         driver interface
      */
-    public static ISVNOptions createDefaultOptions(File dir, boolean readonly) {
+    public static DefaultSVNOptions createDefaultOptions(File dir, boolean readonly) {
         return new DefaultSVNOptions(dir, readonly);
     }
 
@@ -245,7 +246,7 @@ public class SVNWCUtil {
      *         driver interface
      * @see #getDefaultConfigurationDirectory()
      */
-    public static ISVNOptions createDefaultOptions(boolean readonly) {
+    public static DefaultSVNOptions createDefaultOptions(boolean readonly) {
         return new DefaultSVNOptions(null, readonly);
     }
 
@@ -264,7 +265,7 @@ public class SVNWCUtil {
         }
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
-            wcAccess.open(dir, false, 0);
+	        wcAccess.open(dir, false, false, false, 0, Level.FINEST);
         } catch (SVNException e) {
             return false;
         } finally {
@@ -293,8 +294,8 @@ public class SVNWCUtil {
     public static boolean isWorkingCopyRoot(final File versionedDir) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
-            wcAccess.open(versionedDir, false, 0);
-            return wcAccess.isWCRoot(versionedDir);
+	        wcAccess.open(versionedDir, false, false, false, 0, Level.FINEST);
+	        return wcAccess.isWCRoot(versionedDir);
         } catch (SVNException e) {
             return false;
         } finally {
@@ -375,10 +376,11 @@ public class SVNWCUtil {
                 try {
                     SVNAdminArea dir = parentAccess.open(parent, false, 0);
                     SVNVersionedProperties props = dir.getProperties(dir.getThisDirName());
-                    SVNExternalInfo[] externals = SVNWCAccess.parseExternals("", props.getPropertyValue(SVNProperty.EXTERNALS));
+	                final String externalsProperty = props.getStringPropertyValue(SVNProperty.EXTERNALS);
+	                SVNExternal[] externals = externalsProperty != null ? SVNExternal.parseExternals(dir.getRoot().getAbsolutePath(), externalsProperty) : new SVNExternal[0];
                     // now externals could point to our dir.
                     for (int i = 0; i < externals.length; i++) {
-                        SVNExternalInfo external = externals[i];
+                        SVNExternal external = externals[i];
                         File externalFile = new File(parent, external.getPath());
                         if (externalFile.equals(versionedDir)) {
                             return parentRoot;

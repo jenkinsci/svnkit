@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,12 +13,14 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.util.SVNStreamGobbler;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -62,7 +64,188 @@ public class FSHooks {
         return ourIsHooksEnabled.booleanValue();
     }
 
-    public static File getHookFile(File reposRootDir, String hookName) throws SVNException {
+    public static void runPreLockHook(File reposRootDir, String path, String username) throws SVNException {
+        runLockHook(reposRootDir, SVN_REPOS_HOOK_PRE_LOCK, path, username, null);
+    }
+
+    public static void runPostLockHook(File reposRootDir, String[] paths, String username) throws SVNException {
+        StringBuffer pathsStr = new StringBuffer();
+        for (int i = 0; i < paths.length; i++) {
+            pathsStr.append(paths[i]);
+            pathsStr.append("\n");
+        }
+        runLockHook(reposRootDir, SVN_REPOS_HOOK_POST_LOCK, null, username, pathsStr.toString());
+    }
+
+    public static void runPreUnlockHook(File reposRootDir, String path, String username) throws SVNException {
+        runLockHook(reposRootDir, SVN_REPOS_HOOK_PRE_UNLOCK, path, username, null);
+    }
+
+    public static void runPostUnlockHook(File reposRootDir, String[] paths, String username) throws SVNException {
+        StringBuffer pathsStr = new StringBuffer();
+        for (int i = 0; i < paths.length; i++) {
+            pathsStr.append(paths[i]);
+            pathsStr.append("\n");
+        }
+        runLockHook(reposRootDir, SVN_REPOS_HOOK_POST_UNLOCK, null, username, pathsStr.toString());
+    }
+
+    private static void runLockHook(File reposRootDir, String hookName, String path, String username, String paths) throws SVNException {
+        username = username == null ? "" : username;
+        path = path == null ? "" : path;
+        byte[] bytes = null;
+        try {
+            bytes = paths == null ? null : paths.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            bytes = paths.getBytes();
+        }
+        runHook(reposRootDir, hookName, new String[] {path, username}, bytes);
+    }
+
+    public static void runPreRevPropChangeHook(File reposRootDir, String propName, byte[] propNewValue, String author, long revision, String action) throws SVNException {
+        runChangeRevPropHook(reposRootDir, SVN_REPOS_HOOK_PRE_REVPROP_CHANGE, propName, propNewValue, author, revision, action, true);
+    }
+
+    public static void runPostRevPropChangeHook(File reposRootDir, String propName, byte[] propOldValue, String author, long revision, String action) throws SVNException {
+        runChangeRevPropHook(reposRootDir, SVN_REPOS_HOOK_POST_REVPROP_CHANGE, propName, propOldValue, author, revision, action, false);
+    }
+    
+    private static void runChangeRevPropHook(File reposRootDir, String hookName, String propName, byte[] propValue, String author, long revision, String action, boolean isPre) throws SVNException {
+        File hookFile = getHookFile(reposRootDir, hookName);
+        if (hookFile == null) {
+            if (isPre) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_DISABLED_FEATURE,
+                        "Repository has not been enabled to accept revision propchanges;\nask the administrator to create a pre-revprop-change hook");
+                SVNErrorManager.error(err);
+            }
+            return;
+        } 
+        author = author == null ? "" : author;
+        runHook(reposRootDir, hookName, new String[] {String.valueOf(revision), author, propName, action}, propValue);
+    }
+
+    public static void runStartCommitHook(File reposRootDir, String author, List capabilities) throws SVNException {
+        author = author == null ? "" : author;
+        String capsString = getCapabilitiesAsString(capabilities);
+        String[] args = capsString == null ? new String[] { author } : new String[] { author, capsString }; 
+        runHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, args, null);
+    }
+
+    public static void runPreCommitHook(File reposRootDir, String txnName) throws SVNException {
+        runHook(reposRootDir, SVN_REPOS_HOOK_PRE_COMMIT, new String[] {txnName}, null);
+    }
+
+    public static void runPostCommitHook(File reposRootDir, long committedRevision) throws SVNException {
+        runHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, new String[] {String.valueOf(committedRevision)}, null);
+    }
+
+    private static void runHook(File reposRootDir, String hookName, String[] args, byte[] input) throws SVNException {
+        File hookFile = getHookFile(reposRootDir, hookName);
+        if (hookFile == null) {
+            return;
+        }
+        if (args == null) {
+            args = new String[0];
+        }
+        Process hookProc = null;
+        String reposPath = reposRootDir.getAbsolutePath().replace(File.separatorChar, '/');
+        String executableName = hookFile.getName().toLowerCase();
+        boolean useCmd = (executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows;
+        String[] cmd = useCmd ? new String[4 + args.length] : new String[2 + args.length];
+        int i = 0;
+        if (useCmd) {
+            cmd[0] = "cmd";
+            cmd[1] = "/C";
+            i = 2;
+        }
+        cmd[i] = hookFile.getAbsolutePath();
+        i++;
+        cmd[i] = reposPath;
+        i++;
+        for(int j = 0; j < args.length; j++) {
+            cmd[i + j] = args[j];
+        }
+        try {
+            hookProc = Runtime.getRuntime().exec(cmd);
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
+                    hookFile, ioe.getLocalizedMessage()
+            });
+            SVNErrorManager.error(err, ioe);
+        }
+        feedHook(hookFile, hookName, hookProc, input);
+    }
+
+
+    private static void feedHook(File hook, String hookName, Process hookProcess, byte[] stdInValue) throws SVNException {
+        if (hookProcess == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
+            SVNErrorManager.error(err);
+        }
+
+        SVNStreamGobbler inputGobbler = new SVNStreamGobbler(hookProcess.getInputStream());
+        SVNStreamGobbler errorGobbler = new SVNStreamGobbler(hookProcess.getErrorStream());
+        inputGobbler.start();
+        errorGobbler.start();
+
+        if (stdInValue != null) {
+            OutputStream osToStdIn = hookProcess.getOutputStream();
+            try {
+                for (int i = 0; i < stdInValue.length; i += 1024) {
+                    osToStdIn.write(stdInValue, i, Math.min(1024, stdInValue.length - i));
+                    osToStdIn.flush();
+                }
+            } catch (IOException ioe) {
+                // 
+            } finally {
+                SVNFileUtil.closeFile(osToStdIn);
+            }
+        }
+
+        int rc = -1;
+        try {
+            rc = hookProcess.waitFor();
+        } catch (InterruptedException ie) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
+                    hook, ie.getLocalizedMessage()
+            });
+            SVNErrorManager.error(err, ie);
+        } finally {
+            errorGobbler.close();
+            inputGobbler.close();
+            hookProcess.destroy();
+        }
+
+        if (rc == 0 ) {
+            if (errorGobbler.getError() != null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook succeeded, but error output could not be read", hookName);
+                SVNErrorManager.error(err, errorGobbler.getError());
+            }
+        } else {
+            String actionName = null;
+            if (SVN_REPOS_HOOK_START_COMMIT.equals(hookName) || SVN_REPOS_HOOK_PRE_COMMIT.equals(hookName)) {
+                actionName = "Commit";
+            } else if (SVN_REPOS_HOOK_PRE_REVPROP_CHANGE.equals(hookName)) {
+                actionName = "Revprop change";
+            } else if (SVN_REPOS_HOOK_PRE_LOCK.equals(hookName)) {
+                actionName = "Lock";
+            } else if (SVN_REPOS_HOOK_PRE_UNLOCK.equals(hookName)) {
+                actionName = "Unlock";
+            }
+            String stdErrMessage = errorGobbler.getError() != null ? "[Error output could not be read.]" : errorGobbler.getResult();
+            String errorMessage = actionName != null ? 
+                    actionName + " blocked by {0} hook (exit code {1})" : "{0} hook failed (exit code {1})";
+            if (stdErrMessage != null && stdErrMessage.length() > 0) {
+                errorMessage += " with output:\n" + stdErrMessage;
+            } else {
+                errorMessage += " with no output.";
+            }
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, errorMessage, new Object[] {hookName, new Integer(rc)});
+            SVNErrorManager.error(err);
+        }
+    }
+
+    private static File getHookFile(File reposRootDir, String hookName) throws SVNException {
         if (!isHooksEnabled()) {
             return null;
         }
@@ -95,253 +278,22 @@ public class FSHooks {
         return null;
     }
 
-    public static File getHooksDir(File reposRootDir) {
+    private static File getHooksDir(File reposRootDir) {
         return new File(reposRootDir, SVN_REPOS_HOOKS_DIR);
     }
-
-    public static void runPreLockHook(File reposRootDir, String path, String username) throws SVNException {
-        runLockHook(reposRootDir, SVN_REPOS_HOOK_PRE_LOCK, path, username, null);
-    }
-
-    public static void runPostLockHook(File reposRootDir, String[] paths, String username) throws SVNException {
-        StringBuffer pathsStr = new StringBuffer();
-        for (int i = 0; i < paths.length; i++) {
-            pathsStr.append(paths[i]);
-            pathsStr.append("\n");
+    
+    private static String getCapabilitiesAsString(List capabilities) {
+        if (capabilities == null || capabilities.isEmpty()) {
+            return "";
         }
-        runLockHook(reposRootDir, SVN_REPOS_HOOK_POST_LOCK, null, username, pathsStr.toString());
-    }
-
-    public static void runPreUnlockHook(File reposRootDir, String path, String username) throws SVNException {
-        runLockHook(reposRootDir, SVN_REPOS_HOOK_PRE_UNLOCK, path, username, null);
-    }
-
-    public static void runPostUnlockHook(File reposRootDir, String[] paths, String username) throws SVNException {
-        StringBuffer pathsStr = new StringBuffer();
-        for (int i = 0; i < paths.length; i++) {
-            pathsStr.append(paths[i]);
-            pathsStr.append("\n");
-        }
-        runLockHook(reposRootDir, SVN_REPOS_HOOK_POST_UNLOCK, null, username, pathsStr.toString());
-    }
-
-    private static void runLockHook(File reposRootDir, String hookName, String path, String username, String paths) throws SVNException {
-        File hookFile = getHookFile(reposRootDir, hookName);
-        if (hookFile == null) {
-            return;
-        }
-        username = username == null ? "" : username;
-        Process hookProc = null;
-        String reposPath = reposRootDir.getAbsolutePath().replace(File.separatorChar, '/');
-        try {
-            String executableName = hookFile.getName().toLowerCase();
-            if ((executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows) {
-                String cmd = "cmd /C \"" + "\"" + hookFile.getAbsolutePath() + "\" " + "\"" + reposPath + "\" " + (path != null ? "\"" + path + "\" " : "") + "\"" + username + "\"";
-                hookProc = Runtime.getRuntime().exec(cmd);
-            } else {
-                if (path != null) {
-                    String[] cmd = {
-                            hookFile.getAbsolutePath(), reposPath, path, !"".equals(username) ? username : "\"\""
-                    };
-                    hookProc = Runtime.getRuntime().exec(cmd);
-                } else {
-                    String[] cmd = {
-                            hookFile.getAbsolutePath(), reposPath, !"".equals(username) ? username : "\"\""
-                    };
-                    hookProc = Runtime.getRuntime().exec(cmd);
-                }
-            }
-        } catch (IOException ioe) {
-            SVNFileUtil.destroyProcess(hookProc);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
-                    hookFile, ioe.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, ioe);
-        }
-        runHook(hookFile, hookName, hookProc, paths, path != null);
-    }
-
-    public static void runPreRevPropChangeHook(File reposRootDir, String propName, String propNewValue, String author, long revision, String action) throws SVNException {
-        runChangeRevPropHook(reposRootDir, SVN_REPOS_HOOK_PRE_REVPROP_CHANGE, propName, propNewValue, author, revision, action, true);
-    }
-
-    public static void runPostRevPropChangeHook(File reposRootDir, String propName, String propOldValue, String author, long revision, String action) throws SVNException {
-        runChangeRevPropHook(reposRootDir, SVN_REPOS_HOOK_POST_REVPROP_CHANGE, propName, propOldValue, author, revision, action, false);
-    }
-
-    public static void runStartCommitHook(File reposRootDir, String author) throws SVNException {
-        author = author == null ? "" : author;
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_START_COMMIT, author, true);
-    }
-
-    public static void runPreCommitHook(File reposRootDir, String txnName) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_PRE_COMMIT, txnName, true);
-    }
-
-    public static void runPostCommitHook(File reposRootDir, long committedRevision) throws SVNException {
-        runCommitHook(reposRootDir, SVN_REPOS_HOOK_POST_COMMIT, String.valueOf(committedRevision), true);
-    }
-
-    private static void runCommitHook(File reposRootDir, String hookName, String secondArg, boolean readErrorStream) throws SVNException {
-        File hookFile = getHookFile(reposRootDir, hookName);
-        if (hookFile == null) {
-            return;
-        }
-        Process hookProc = null;
-        String reposPath = reposRootDir.getAbsolutePath().replace(File.separatorChar, '/');
-        try {
-            String executableName = hookFile.getName().toLowerCase();
-            if ((executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows) {
-                String cmd = "cmd /C \"" + "\"" + hookFile.getAbsolutePath() + "\" " + "\"" + reposPath + "\" " + "\"" + secondArg + "\"";
-                hookProc = Runtime.getRuntime().exec(cmd);
-            } else {
-                String[] cmd = {
-                        hookFile.getAbsolutePath(), reposPath, secondArg != null && !"".equals(secondArg) ? secondArg : "\"\""
-                };
-                hookProc = Runtime.getRuntime().exec(cmd);
-            }
-        } catch (IOException ioe) {
-            SVNFileUtil.destroyProcess(hookProc);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
-                    hookFile, ioe.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, ioe);
-        }
-        runHook(hookFile, hookName, hookProc, null, readErrorStream);
-    }
-
-    public static void runChangeRevPropHook(File reposRootDir, String hookName, String propName, String propValue, String author, long revision, String action, boolean isPre) throws SVNException {
-        File hookFile = getHookFile(reposRootDir, hookName);
-        if (hookFile == null && isPre) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_DISABLED_FEATURE,
-                    "Repository has not been enabled to accept revision propchanges;\nask the administrator to create a pre-revprop-change hook");
-            SVNErrorManager.error(err);
-        } else if (hookFile == null) {
-            return;
-        }
-        author = author == null ? "" : author;
-        Process hookProc = null;
-        String reposPath = reposRootDir.getAbsolutePath().replace(File.separatorChar, '/');
-        try {
-            String executableName = hookFile.getName().toLowerCase();
-            if ((executableName.endsWith(".bat") || executableName.endsWith(".cmd")) && SVNFileUtil.isWindows) {
-                String cmd = "cmd /C \"" + "\"" + hookFile.getAbsolutePath() + "\" " + "\"" + reposPath + "\" " + String.valueOf(revision) + " " + "\"" + author + "\" " + "\"" + propName + "\" "
-                        + action + "\"";
-                hookProc = Runtime.getRuntime().exec(cmd);
-            } else {
-                String[] cmd = {
-                        hookFile.getAbsolutePath(), reposPath, String.valueOf(revision), !"".equals(author) ? author : "\"\"", propName, action
-                };
-                hookProc = Runtime.getRuntime().exec(cmd);
-            }
-        } catch (IOException ioe) {
-            SVNFileUtil.destroyProcess(hookProc);
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
-                    hookFile, ioe.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, ioe);
-        }
-        runHook(hookFile, hookName, hookProc, propValue, isPre);
-    }
-
-    private static void runHook(File hook, String hookName, Process hookProcess, String stdInValue, boolean readErrorStream) throws SVNException {
-        if (hookProcess == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
-            SVNErrorManager.error(err);
-        }
-        if (stdInValue != null) {
-            OutputStream osToStdIn = hookProcess.getOutputStream();
-            try {
-                byte[] bytes = stdInValue.getBytes("UTF-8");
-                for (int i = 0; i < bytes.length; i += 1024) {
-                    osToStdIn.write(bytes, i, Math.min(1024, bytes.length - i));
-                    osToStdIn.flush();
-                }
-            } catch (IOException ioe) {
-                // 
-            } finally {
-                SVNFileUtil.closeFile(osToStdIn);
+        StringBuffer buffer = new StringBuffer();
+        for (int i = 0; i < capabilities.size(); i++) {
+            Object cap = capabilities.get(i); 
+            buffer.append(cap);
+            if (i < capabilities.size() - 1) {
+                buffer.append(":");
             }
         }
-
-        StreamGobbler inputGobbler = new StreamGobbler(hookProcess.getInputStream());
-        StreamGobbler errorGobbler = new StreamGobbler(hookProcess.getErrorStream());
-        inputGobbler.start();
-        errorGobbler.start();
-
-        int rc = -1;
-        try {
-            rc = hookProcess.waitFor();
-        } catch (InterruptedException ie) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
-                    hook, ie.getLocalizedMessage()
-            });
-            SVNErrorManager.error(err, ie);
-        } finally {
-            errorGobbler.close();
-            inputGobbler.close();
-            SVNFileUtil.destroyProcess(hookProcess);
-        }
-
-        if (errorGobbler.getError() != null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, errorGobbler.getError().getLocalizedMessage());
-            SVNErrorManager.error(err, errorGobbler.getError());
-        }
-
-        if (rc != 0) {
-            if (!readErrorStream) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook failed; no error output available", hookName);
-                SVNErrorManager.error(err);
-            } else {
-                String errString = errorGobbler.getResult();
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook failed with error output:\n{1}", new Object[] {
-                        hookName, errString
-                });
-                SVNErrorManager.error(err);
-            }
-        }
-    }
-
-    private static class StreamGobbler extends Thread {
-
-        InputStream is;
-        StringBuffer result;
-        IOException error;
-        private boolean myIsClosed;
-
-        StreamGobbler(InputStream is) {
-            this.is = is;
-            result = new StringBuffer();
-        }
-        
-        public void close() {
-            myIsClosed = true;
-            SVNFileUtil.closeFile(is);
-        }
-
-        public void run() {
-            try {
-                int r;
-                while ((r = is.read()) >= 0) {
-                    result.append((char) (r & 0xFF));
-                }
-            } catch (IOException ioe) {
-                if (!myIsClosed) {
-                    error = ioe;
-                }
-            } finally {
-                if (!myIsClosed) {
-                    SVNFileUtil.closeFile(is);
-                }
-            }
-        }
-
-        public String getResult() {
-            return result.toString();
-        }
-
-        public IOException getError() {
-            return error;
-        }
+        return buffer.toString();
     }
 }

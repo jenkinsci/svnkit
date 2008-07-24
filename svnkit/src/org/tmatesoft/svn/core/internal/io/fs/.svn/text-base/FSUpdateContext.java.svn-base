@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,28 +14,31 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.util.SVNDebugLog;
+
 
 /**
  * @version 1.1.1
@@ -49,12 +52,13 @@ public class FSUpdateContext {
     private FSFile myReportIS;
     private ISVNEditor myEditor;
     private long myTargetRevision;
-    private boolean isRecursive;
+    private SVNDepth myDepth;
     private PathInfo myCurrentPathInfo;
     private boolean ignoreAncestry;
     private boolean sendTextDeltas;
     private String myTargetPath;
     private boolean isSwitch;
+    private boolean mySendCopyFromArgs;
     private FSRevisionRoot myTargetRoot;
     private LinkedList myRootsCache;
     private FSFS myFSFS;
@@ -62,22 +66,25 @@ public class FSUpdateContext {
     private SVNDeltaGenerator myDeltaGenerator;
     private SVNDeltaCombiner myDeltaCombiner;
 
-    public FSUpdateContext(FSRepository repository, FSFS owner, long revision, File reportFile, String target, String targetPath, boolean isSwitch, boolean recursive, boolean ignoreAncestry,
-            boolean textDeltas, ISVNEditor editor) {
+    public FSUpdateContext(FSRepository repository, FSFS owner, long revision, File reportFile, 
+            String target, String targetPath, boolean isSwitch, SVNDepth depth, 
+            boolean ignoreAncestry, boolean textDeltas, boolean sendCopyFromArgs, 
+            ISVNEditor editor) {
         myRepository = repository;
         myFSFS = owner;
         myTargetRevision = revision;
         myReportFile = reportFile;
         myTarget = target;
         myEditor = editor;
-        isRecursive = recursive;
+        myDepth = depth;
         this.ignoreAncestry = ignoreAncestry;
         sendTextDeltas = textDeltas;
         myTargetPath = targetPath;
         this.isSwitch = isSwitch;
+        mySendCopyFromArgs = sendCopyFromArgs;
     }
 
-    public void reset(FSRepository repository, FSFS owner, long revision, File reportFile, String target, String targetPath, boolean isSwitch, boolean recursive, boolean ignoreAncestry,
+    public void reset(FSRepository repository, FSFS owner, long revision, File reportFile, String target, String targetPath, boolean isSwitch, SVNDepth depth, boolean ignoreAncestry,
             boolean textDeltas, ISVNEditor editor) throws SVNException {
         dispose();
         myRepository = repository;
@@ -86,7 +93,7 @@ public class FSUpdateContext {
         myReportFile = reportFile;
         myTarget = target;
         myEditor = editor;
-        isRecursive = recursive;
+        myDepth = depth;
         this.ignoreAncestry = ignoreAncestry;
         sendTextDeltas = textDeltas;
         myTargetPath = targetPath;
@@ -146,19 +153,14 @@ public class FSUpdateContext {
         return myEditor;
     }
 
-    private boolean isRecursive() {
-        return isRecursive;
-    }
-
     private long getTargetRevision() {
         return myTargetRevision;
     }
 
-    private PathInfo getNextPathInfo() throws IOException {
+    private PathInfo getNextPathInfo() throws IOException, SVNException {
         if (myReportIS == null) {
             myReportIS = new FSFile(myReportFile);
         }
-
         myCurrentPathInfo = myReportIS.readPathInfoFromReportFile();
         return myCurrentPathInfo;
     }
@@ -167,7 +169,7 @@ public class FSUpdateContext {
         return myCurrentPathInfo;
     }
 
-    private FSRevisionRoot getTargetRoot() {
+    private FSRevisionRoot getTargetRoot() throws SVNException {
         if (myTargetRoot == null) {
             myTargetRoot = myFSFS.createRevisionRoot(myTargetRevision);
         }
@@ -181,7 +183,7 @@ public class FSUpdateContext {
         return myRootsCache;
     }
 
-    private FSRevisionRoot getSourceRoot(long revision) {
+    private FSRevisionRoot getSourceRoot(long revision) throws SVNException {
         LinkedList cache = getRootsCache();
         FSRevisionRoot root = null;
         int i = 0;
@@ -263,7 +265,7 @@ public class FSUpdateContext {
         getEditor().targetRevision(getTargetRevision());
 
         String fullTargetPath = getReportTargetPath();
-        String fullSourcePath = SVNPathUtil.concatToAbs(myRepository.getRepositoryPath(""), getReportTarget());
+        String fullSourcePath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRepository.getRepositoryPath(""), getReportTarget()));
         FSEntry targetEntry = fakeDirEntry(fullTargetPath, getTargetRoot());
         FSRevisionRoot srcRoot = getSourceRoot(sourceRevision);
         FSEntry sourceEntry = fakeDirEntry(fullSourcePath, srcRoot);
@@ -272,7 +274,11 @@ public class FSUpdateContext {
             fullSourcePath = null;
         }
 
-        if ("".equals(getReportTarget()) && (sourceEntry == null || sourceEntry.getType() != SVNNodeKind.DIR || targetEntry == null || targetEntry.getType() != SVNNodeKind.DIR)) {
+        if ("".equals(getReportTarget()) && targetEntry == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Target path does not exist");
+            SVNErrorManager.error(err);
+        } else if ("".equals(getReportTarget()) && (sourceEntry == null || sourceEntry.getType() != SVNNodeKind.DIR || 
+                targetEntry.getType() != SVNNodeKind.DIR)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Cannot replace a directory from within");
             SVNErrorManager.error(err);
         }
@@ -288,96 +294,138 @@ public class FSUpdateContext {
         getEditor().openRoot(sourceRevision);
 
         if ("".equals(getReportTarget())) {
-            diffDirs(sourceRevision, fullSourcePath, fullTargetPath, "", info.isStartEmpty());
+            diffDirs(sourceRevision, fullSourcePath, fullTargetPath, "", info.isStartEmpty(), info.getDepth(), myDepth);
         } else {
-            updateEntry(sourceRevision, fullSourcePath, sourceEntry, fullTargetPath, targetEntry, getReportTarget(), info, true);
+            updateEntry(sourceRevision, fullSourcePath, sourceEntry, fullTargetPath, targetEntry, getReportTarget(), info, info.getDepth(), myDepth);
         }
 
         getEditor().closeDir();
         getEditor().closeEdit();
     }
 
-    private void diffDirs(long sourceRevision, String sourcePath, String targetPath, String editPath, boolean startEmpty) throws SVNException {
+    private void diffDirs(long sourceRevision, String sourcePath, String targetPath, String editPath, boolean startEmpty, SVNDepth wcDepth, SVNDepth requestedDepth) throws SVNException {
         diffProplists(sourceRevision, startEmpty == true ? null : sourcePath, editPath, targetPath, null, true);
         Map sourceEntries = null;
         
-        if (sourcePath != null && !startEmpty) {
-            FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
-            FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
-            sourceEntries = new HashMap(sourceNode.getDirEntries(myFSFS));
-        }
-        FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
-
-        Map targetEntries = new HashMap(targetNode.getDirEntries(myFSFS));
-
-        while (true) {
-            Object[] nextInfo = fetchPathInfo(editPath);
-            String entryName = (String) nextInfo[0];
-            if (entryName == null) {
-                break;
+        if (requestedDepth.compareTo(SVNDepth.EMPTY) > 0 || 
+                requestedDepth == SVNDepth.UNKNOWN) {
+            
+            if (sourcePath != null && !startEmpty) {
+                FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
+                FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
+                sourceEntries = new SVNHashMap(sourceNode.getDirEntries(myFSFS));
             }
-            PathInfo pathInfo = (PathInfo) nextInfo[1];
-            if (pathInfo != null && FSRepository.isInvalidRevision(pathInfo.getRevision())) {
+            FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
+
+            Map targetEntries = new SVNHashMap(targetNode.getDirEntries(myFSFS));
+
+            while (true) {
+                Object[] nextInfo = fetchPathInfo(editPath);
+                String entryName = (String) nextInfo[0];
+                if (entryName == null) {
+                    break;
+                }
+                PathInfo pathInfo = (PathInfo) nextInfo[1];
+                if (pathInfo != null && FSRepository.isInvalidRevision(pathInfo.getRevision())) {
+                    if (sourceEntries != null) {
+                        sourceEntries.remove(entryName);
+                    }
+                    continue;
+                }
+
+                String entryEditPath = SVNPathUtil.append(editPath, entryName);
+                String entryTargetPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, entryName));
+                FSEntry targetEntry = (FSEntry) targetEntries.get(entryName);
+                String entrySourcePath = sourcePath != null ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(sourcePath, entryName)) : null;
+                FSEntry sourceEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(entryName) : null;
+                
+                if (requestedDepth != SVNDepth.FILES || ((targetEntry == null || 
+                        targetEntry.getType() != SVNNodeKind.DIR) && (sourceEntry == null ||
+                                sourceEntry.getType() != SVNNodeKind.DIR))) {
+                    updateEntry(sourceRevision, entrySourcePath, sourceEntry, 
+                                entryTargetPath, targetEntry, entryEditPath, 
+                                pathInfo, pathInfo != null ? pathInfo.getDepth() : 
+                                getDepthBelow(wcDepth), getDepthBelow(requestedDepth));
+                }
+                
+                targetEntries.remove(entryName);
                 if (sourceEntries != null) {
                     sourceEntries.remove(entryName);
                 }
-                continue;
             }
-
-            String entryEditPath = SVNPathUtil.append(editPath, entryName);
-            String entryTargetPath = SVNPathUtil.concatToAbs(targetPath, entryName);
-            FSEntry targetEntry = (FSEntry) targetEntries.get(entryName);
-            String entrySourcePath = sourcePath != null ? SVNPathUtil.concatToAbs(sourcePath, entryName) : null;
-            FSEntry sourceEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(entryName) : null;
-            updateEntry(sourceRevision, entrySourcePath, sourceEntry, entryTargetPath, targetEntry, entryEditPath, pathInfo, isRecursive());
-            targetEntries.remove(entryName);
 
             if (sourceEntries != null) {
-                sourceEntries.remove(entryName);
-            }
-        }
-
-        if (sourceEntries != null) {
-            FSEntry[] srcEntries = (FSEntry[]) new ArrayList(sourceEntries.values()).toArray(new FSEntry[sourceEntries.size()]);
-            Arrays.sort(srcEntries);
-            for (int i = 0; i < srcEntries.length; i++) {
-                FSEntry srcEntry = srcEntries[i];
-                if (targetEntries.get(srcEntry.getName()) == null) {
-                    String entryEditPath = SVNPathUtil.append(editPath, srcEntry.getName());
-                    if (isRecursive() || srcEntry.getType() != SVNNodeKind.DIR) {
-                        getEditor().deleteEntry(entryEditPath, FSRepository.SVN_INVALID_REVNUM);
+                FSEntry[] srcEntries = (FSEntry[]) new ArrayList(sourceEntries.values()).toArray(new FSEntry[sourceEntries.size()]);
+                for (int i = 0; i < srcEntries.length; i++) {
+                    FSEntry srcEntry = srcEntries[i];
+                    if (targetEntries.get(srcEntry.getName()) == null) {
+                        if (srcEntry.getType() == SVNNodeKind.FILE && 
+                                wcDepth.compareTo(SVNDepth.FILES) < 0) {
+                            continue;
+                        }
+                        if (srcEntry.getType() == SVNNodeKind.DIR &&
+                                (wcDepth.compareTo(SVNDepth.IMMEDIATES) < 0 || 
+                                        requestedDepth == SVNDepth.FILES)) {
+                            continue;
+                        }
+                        String entryEditPath = SVNPathUtil.append(editPath, srcEntry.getName());
+                        long deletedRev = myFSFS.getDeletedRevision(SVNPathUtil.append(targetPath, 
+                                                                    srcEntry.getName()), 
+                                                                    sourceRevision, 
+                                                                    getTargetRevision());
+                        getEditor().deleteEntry(entryEditPath, deletedRev);
                     }
                 }
             }
-        }
 
-        FSEntry[] tgtEntries = (FSEntry[]) new ArrayList(targetEntries.values()).toArray(new FSEntry[targetEntries.size()]);
-        final Map srcMap = sourceEntries;
-        Arrays.sort(tgtEntries, new Comparator() {
-            public int compare(Object o1, Object o2) {
-                FSEntry e1 = (FSEntry) o1;
-                FSEntry e2 = (FSEntry) o2;
-                if (srcMap != null) {
-                    boolean has1Src = srcMap.containsKey(e1.getName()); 
-                    boolean has2Src = srcMap.containsKey(e2.getName());
-                    if (has1Src != has2Src) {
-                        return has1Src ? 1 : -1;
+            for (Iterator tgts = targetEntries.values().iterator(); tgts.hasNext();) {
+                FSEntry tgtEntry = (FSEntry) tgts.next();
+                FSEntry srcEntry = null;
+                String entrySourcePath = null;
+                if (!isDepthUpgrade(wcDepth, requestedDepth, tgtEntry.getType())) {
+                    if (tgtEntry.getType() == SVNNodeKind.FILE && 
+                        requestedDepth == SVNDepth.UNKNOWN &&
+                        wcDepth.compareTo(SVNDepth.FILES) < 0) {
+                        continue;
                     }
+                    if (tgtEntry.getType() == SVNNodeKind.DIR && 
+                        (wcDepth.compareTo(SVNDepth.IMMEDIATES) < 0 || 
+                        requestedDepth == SVNDepth.FILES)) {
+                        continue;
+                    }
+                    srcEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(tgtEntry.getName()) : null;                    
+                    entrySourcePath = srcEntry != null ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(sourcePath, tgtEntry.getName())) : null;
                 }
-                return e1.compareTo(e2);
-            }
-        });
 
-        for (int i = 0; i < tgtEntries.length; i++) {
-            FSEntry tgtEntry = tgtEntries[i];
-            String entryEditPath = SVNPathUtil.append(editPath, tgtEntry.getName());
-            String entryTargetPath = SVNPathUtil.concatToAbs(targetPath, tgtEntry.getName());
-            FSEntry srcEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(tgtEntry.getName()) : null;
-            String entrySourcePath = srcEntry != null ? SVNPathUtil.concatToAbs(sourcePath, tgtEntry.getName()) : null;
-            updateEntry(sourceRevision, entrySourcePath, srcEntry, entryTargetPath, tgtEntry, entryEditPath, null, isRecursive());
+                String entryEditPath = SVNPathUtil.append(editPath, tgtEntry.getName());
+                String entryTargetPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, tgtEntry.getName()));
+                updateEntry(sourceRevision, entrySourcePath, srcEntry, entryTargetPath, 
+                            tgtEntry, entryEditPath, null, getDepthBelow(wcDepth), 
+                            getDepthBelow(requestedDepth));
+            }
         }
     }
 
+    private boolean isDepthUpgrade(SVNDepth wcDepth, SVNDepth requestedDepth, SVNNodeKind kind) {
+        if (requestedDepth == SVNDepth.UNKNOWN || 
+                wcDepth == SVNDepth.IMMEDIATES) {
+            return false;
+        }
+        int compareResult = requestedDepth.compareTo(wcDepth);
+        if (compareResult <= 0) {
+            return false;
+        }
+        
+        if (kind == SVNNodeKind.FILE && wcDepth == SVNDepth.FILES) {
+            return false;
+        }
+        if (kind == SVNNodeKind.DIR && wcDepth == SVNDepth.EMPTY &&
+                requestedDepth == SVNDepth.FILES) {
+            return false;
+        }
+        return true;
+    }
+    
     private void diffFiles(long sourceRevision, String sourcePath, String targetPath, String editPath, String lockToken) throws SVNException {
         diffProplists(sourceRevision, sourcePath, editPath, targetPath, lockToken, false);
         String sourceHexDigest = null;
@@ -387,7 +435,8 @@ public class FSUpdateContext {
 
             boolean changed = false;
             if (isIgnoreAncestry()) {
-                changed = checkFilesDifferent(sourceRoot, sourcePath, getTargetRoot(), targetPath);
+                changed = FSRepositoryUtil.checkFilesDifferent(sourceRoot, sourcePath, getTargetRoot(), 
+                        targetPath, myDeltaCombiner);
             } else {
                 changed = FSRepositoryUtil.areFileContentsChanged(sourceRoot, sourcePath, getTargetRoot(), targetPath);
             }
@@ -397,76 +446,15 @@ public class FSUpdateContext {
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
             sourceHexDigest = sourceNode.getFileChecksum();
         }
-
-        getEditor().applyTextDelta(editPath, sourceHexDigest);
-
-        if (isSendTextDeltas()) {
-            InputStream sourceStream = null;
-            InputStream targetStream = null;
-            try {
-                if (sourceRoot != null && sourcePath != null) {
-                    sourceStream = sourceRoot.getFileStreamForPath(myDeltaCombiner, sourcePath);
-                } else {
-                    sourceStream = FSInputStream.createDeltaStream(myDeltaCombiner, (FSRevisionNode) null, myFSFS);
-                }
-                //TODO: not sure whether we can use the same combiner here
-                targetStream = getTargetRoot().getFileStreamForPath(myDeltaCombiner, targetPath);
-                myDeltaGenerator.sendDelta(editPath, sourceStream, 0, targetStream, getEditor(), false);
-            } finally {
-                SVNFileUtil.closeFile(sourceStream);
-                SVNFileUtil.closeFile(targetStream);
-            }
-        } else {
-            getEditor().textDeltaEnd(editPath);
-        }
+        
+        FSRepositoryUtil.sendTextDelta(getEditor(), editPath, sourcePath, sourceHexDigest, 
+                sourceRoot, targetPath, getTargetRoot(), isSendTextDeltas(), myDeltaCombiner, 
+                myDeltaGenerator, myFSFS);
     }
 
-    private boolean checkFilesDifferent(FSRoot root1, String path1, FSRoot root2, String path2) throws SVNException {
-        boolean changed = FSRepositoryUtil.areFileContentsChanged(root1, path1, root2, path2);
-        if (!changed) {
-            return false;
-        }
-
-        FSRevisionNode revNode1 = root1.getRevisionNode(path1);
-        FSRevisionNode revNode2 = root2.getRevisionNode(path2);
-        if (revNode1.getFileLength() != revNode2.getFileLength()) {
-            return true;
-        }
-
-        if (!revNode1.getFileChecksum().equals(revNode2.getFileChecksum())) {
-            return true;
-        }
-
-        InputStream file1IS = null;
-        InputStream file2IS = null;
-        try {
-            file1IS = root1.getFileStreamForPath(myDeltaCombiner, path1);
-            file2IS = root2.getFileStreamForPath(myDeltaCombiner, path2);
-
-            int r1 = -1;
-            int r2 = -1;
-            while (true) {
-                r1 = file1IS.read();
-                r2 = file2IS.read();
-                if (r1 != r2) {
-                    return true;
-                }
-                if (r1 == -1) {// we've finished - files do not differ
-                    break;
-                }
-            }
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
-        } finally {
-            SVNFileUtil.closeFile(file1IS);
-            SVNFileUtil.closeFile(file2IS);
-        }
-        return false;
-    }
-
-    private void updateEntry(long sourceRevision, String sourcePath, FSEntry sourceEntry, String targetPath, FSEntry targetEntry, String editPath, PathInfo pathInfo, boolean recursive)
-            throws SVNException {
+    private void updateEntry(long sourceRevision, String sourcePath, FSEntry sourceEntry, 
+            String targetPath, FSEntry targetEntry, String editPath, PathInfo pathInfo, 
+            SVNDepth wcDepth, SVNDepth requestedDepth) throws SVNException {
         if (pathInfo != null && pathInfo.getLinkPath() != null && !isSwitch()) {
             targetPath = pathInfo.getLinkPath();
             targetEntry = fakeDirEntry(targetPath, getTargetRoot());
@@ -487,15 +475,13 @@ public class FSUpdateContext {
             SVNErrorManager.error(err);
         }
 
-        if (!recursive && ((sourceEntry != null && sourceEntry.getType() == SVNNodeKind.DIR) || (targetEntry != null && targetEntry.getType() == SVNNodeKind.DIR))) {
-            skipPathInfo(editPath);
-            return;
-        }
         boolean related = false;
-
         if (sourceEntry != null && targetEntry != null && sourceEntry.getType() == targetEntry.getType()) {
             int distance = sourceEntry.getId().compareTo(targetEntry.getId());
-            if (distance == 0 && !PathInfo.isRelevant(getCurrentPathInfo(), editPath) && (pathInfo == null || (!pathInfo.isStartEmpty() && pathInfo.getLockToken() == null))) {
+            if (distance == 0 && !PathInfo.isRelevant(getCurrentPathInfo(), editPath) && 
+                    (pathInfo == null || 
+                            (!pathInfo.isStartEmpty() && pathInfo.getLockToken() == null)) && 
+                            (requestedDepth.compareTo(wcDepth) <= 0 || targetEntry.getType() == SVNNodeKind.FILE)) {
                 return;
             } else if (distance != -1 || isIgnoreAncestry()) {
                 related = true;
@@ -503,7 +489,8 @@ public class FSUpdateContext {
         }
 
         if (sourceEntry != null && !related) {
-            getEditor().deleteEntry(editPath, FSRepository.SVN_INVALID_REVNUM);
+            long deletedRev = myFSFS.getDeletedRevision(targetPath, sourceRevision, getTargetRevision());
+            getEditor().deleteEntry(editPath, deletedRev);
             sourcePath = null;
         }
 
@@ -516,44 +503,73 @@ public class FSUpdateContext {
             if (related) {
                 getEditor().openDir(editPath, sourceRevision);
             } else {
-                getEditor().addDir(editPath, null, FSRepository.SVN_INVALID_REVNUM);
+                getEditor().addDir(editPath, null, SVNRepository.INVALID_REVISION);
             }
-            diffDirs(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.isStartEmpty() : false);
+            diffDirs(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.isStartEmpty() : false, wcDepth, requestedDepth);
             getEditor().closeDir();
         } else {
-            SVNDebugLog.getDefaultLog().info("processing file: " + editPath);
             if (related) {
                 getEditor().openFile(editPath, sourceRevision);
+                diffFiles(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.getLockToken() : null);
             } else {
-                getEditor().addFile(editPath, null, FSRepository.SVN_INVALID_REVNUM);
+                SVNLocationEntry copyFromFile = addFileSmartly(editPath, targetPath);
+                String copyFromPath = copyFromFile.getPath();
+                long copyFromRevision = copyFromFile.getRevision();
+                if (copyFromPath == null) {
+                    diffFiles(sourceRevision, sourcePath, targetPath, editPath, 
+                            pathInfo != null ? pathInfo.getLockToken() : null);
+                } else {
+                    diffFiles(copyFromRevision, copyFromPath, targetPath, editPath, 
+                            pathInfo != null ? pathInfo.getLockToken() : null);
+                }
             }
-            diffFiles(sourceRevision, sourcePath, targetPath, editPath, pathInfo != null ? pathInfo.getLockToken() : null);
             FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
             String targetHexDigest = targetNode.getFileChecksum();
             getEditor().closeFile(editPath, targetHexDigest);
         }
     }
 
+    private SVNLocationEntry addFileSmartly(String editPath, String originalPath) throws SVNException {
+        String copyFromPath = null;
+        long copyFromRevision = SVNRepository.INVALID_REVISION;
+        if (mySendCopyFromArgs) {
+            FSClosestCopy closestCopy = getTargetRoot().getClosestCopy(originalPath);
+            if (closestCopy != null) {
+                FSRevisionRoot closestCopyRoot = closestCopy.getRevisionRoot();
+                String closestCopyPath = closestCopy.getPath();
+                if (originalPath.equals(closestCopyPath)) {
+                    FSRevisionNode closestCopyFromNode = closestCopyRoot.getRevisionNode(
+                            closestCopyPath);
+                    copyFromPath = closestCopyFromNode.getCopyFromPath();
+                    copyFromRevision = closestCopyFromNode.getCopyFromRevision();
+                }
+            }
+        }
+        myEditor.addFile(editPath, copyFromPath, copyFromRevision);
+        return new SVNLocationEntry(copyFromRevision, copyFromPath);
+    }
+    
     private void diffProplists(long sourceRevision, String sourcePath, String editPath, String targetPath, String lockToken, boolean isDir) throws SVNException {
         FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
         long createdRevision = targetNode.getCreatedRevision();
 
         if (FSRepository.isValidRevision(createdRevision)) {
-            Map entryProps = myFSFS.compoundMetaProperties(createdRevision);
-            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, (String) entryProps.get(SVNProperty.COMMITTED_REVISION), isDir);
-            String committedDate = (String) entryProps.get(SVNProperty.COMMITTED_DATE);
+            SVNProperties entryProps = myFSFS.compoundMetaProperties(createdRevision);
+            SVNPropertyValue committedRevision = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_REVISION);
+            changeProperty(editPath, SVNProperty.COMMITTED_REVISION, committedRevision, isDir);
+            SVNPropertyValue committedDate = entryProps.getSVNPropertyValue(SVNProperty.COMMITTED_DATE);
 
             if (committedDate != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.COMMITTED_DATE, committedDate, isDir);
             }
 
-            String lastAuthor = (String) entryProps.get(SVNProperty.LAST_AUTHOR);
+            SVNPropertyValue lastAuthor = entryProps.getSVNPropertyValue(SVNProperty.LAST_AUTHOR);
 
             if (lastAuthor != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.LAST_AUTHOR, lastAuthor, isDir);
             }
 
-            String uuid = (String) entryProps.get(SVNProperty.UUID);
+            SVNPropertyValue uuid = entryProps.getSVNPropertyValue(SVNProperty.UUID);
 
             if (uuid != null || sourcePath != null) {
                 changeProperty(editPath, SVNProperty.UUID, uuid, isDir);
@@ -563,11 +579,11 @@ public class FSUpdateContext {
         if (lockToken != null) {
             SVNLock lock = myFSFS.getLockHelper(targetPath, false);
             if (lock == null || !lockToken.equals(lock.getID())) {
-                changeProperty(editPath, SVNProperty.LOCK_TOKEN, null, isDir);
+                changeProperty(editPath, SVNProperty.LOCK_TOKEN,  null, isDir);
             }
         }
 
-        Map sourceProps = null;
+        SVNProperties sourceProps = null;
         if (sourcePath != null) {
             FSRevisionRoot sourceRoot = getSourceRoot(sourceRevision);
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
@@ -577,18 +593,22 @@ public class FSUpdateContext {
             }
             sourceProps = sourceNode.getProperties(myFSFS);
         } else {
-            sourceProps = new HashMap();
+            sourceProps = new SVNProperties();
         }
 
-        Map targetProps = targetNode.getProperties(myFSFS);
-        Map propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
-        Object[] names = propsDiffs.keySet().toArray();
+        SVNProperties targetProps = targetNode.getProperties(myFSFS);
+        SVNProperties propsDiffs = FSRepositoryUtil.getPropsDiffs(sourceProps, targetProps);
+        Object[] names = propsDiffs.nameSet().toArray();
         for (int i = 0; i < names.length; i++) {
             String propName = (String) names[i];
-            changeProperty(editPath, propName, (String) propsDiffs.get(propName), isDir);
+            changeProperty(editPath, propName, propsDiffs.getSVNPropertyValue(propName), isDir);
         }
     }
 
+    private SVNDepth getDepthBelow(SVNDepth depth) {
+        return depth == SVNDepth.IMMEDIATES ? SVNDepth.EMPTY : depth;
+    }
+    
     private Object[] fetchPathInfo(String prefix) throws SVNException {
         Object[] result = new Object[2];
         PathInfo pathInfo = getCurrentPathInfo();
@@ -614,7 +634,7 @@ public class FSUpdateContext {
         return result;
     }
 
-    private void changeProperty(String path, String name, String value, boolean isDir) throws SVNException {
+    private void changeProperty(String path, String name, SVNPropertyValue value, boolean isDir) throws SVNException {
         if (isDir) {
             getEditor().changeDirProperty(name, value);
         } else {
@@ -655,18 +675,25 @@ public class FSUpdateContext {
         }
     }
     
-    public void writePathInfoToReportFile(String path, String linkPath, String lockToken, long revision, boolean startEmpty) throws SVNException {
+    public void writePathInfoToReportFile(String path, String linkPath, String lockToken, long revision, boolean startEmpty, SVNDepth depth) throws SVNException {
+        if (depth == null || depth == SVNDepth.UNKNOWN) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Unsupported report depth ''{0}''", depth != null ? depth.getName() : "null");
+            SVNErrorManager.error(err);
+        }
         String anchorRelativePath = SVNPathUtil.append(getReportTarget(), path);
         String revisionRep = FSRepository.isValidRevision(revision) ? "+" + String.valueOf(revision) + ":" : "-";
+        String depthRep = "-";
+        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
+            depthRep = "+" + depth.getId() + ":";
+        } 
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
             writeSingleString(anchorRelativePath, baos);
             writeSingleString(linkPath, baos);
             baos.write(revisionRep.getBytes("UTF-8"));
+            baos.write(depthRep.getBytes("UTF-8"));
             baos.write(startEmpty ? '+' : '-');
             writeSingleString(lockToken, baos);
-
             OutputStream reportOS = getReportFileForWriting();
             reportOS.write(baos.toByteArray());
         } catch (IOException ioe) {

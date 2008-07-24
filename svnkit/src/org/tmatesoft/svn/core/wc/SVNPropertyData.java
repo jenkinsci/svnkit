@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * <b>SVNPropertyData</b> is a wrapper for both versioned and unversioned
@@ -28,7 +29,7 @@ import org.tmatesoft.svn.core.SVNProperty;
  */
 public class SVNPropertyData {
 
-    private String myValue;
+    private SVNPropertyValue myValue;
 
     private String myName;
     
@@ -39,11 +40,12 @@ public class SVNPropertyData {
      * @param name  a property name
      * @param data  a property value
      */
-    public SVNPropertyData(String name, String data) {
+    public SVNPropertyData(String name, SVNPropertyValue data, ISVNOptions options) {
         myName = name;
         myValue = data;
-        if (myValue != null && SVNProperty.isSVNProperty(myName)) {
-            myValue = myValue.replaceAll("\n", System.getProperty("line.separator"));
+        if (myValue != null && SVNProperty.isSVNProperty(myName) && myValue.isString()) {
+            String nativeEOL = options == null ? System.getProperty("line.separator") : new String(options.getNativeEOL());
+            myValue = SVNPropertyValue.create(myValue.getString().replaceAll("\n", nativeEOL));
         }
     }
     
@@ -63,7 +65,7 @@ public class SVNPropertyData {
      *  
      * @return  a property value
      */
-    public String getValue() {
+    public SVNPropertyValue getValue() {
         return myValue;
     }
 

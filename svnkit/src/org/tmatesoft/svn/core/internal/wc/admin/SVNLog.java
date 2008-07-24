@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,16 +11,20 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -30,6 +34,8 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNLog {
+    public static final String DELETE_CHANGELIST = "delete-changelist";
+
     public static final String DELETE_ENTRY = "delete-entry";
 
     public static final String MODIFY_ENTRY = "modify-entry";
@@ -56,6 +62,8 @@ public abstract class SVNLog {
 
     public static final String MAYBE_READONLY = "maybe-readonly";
 
+    public static final String MAYBE_EXECUTABLE = "maybe-executable";
+    
     public static final String SET_TIMESTAMP = "set-timestamp";
 
     public static final String COMMIT = "committed";
@@ -76,6 +84,8 @@ public abstract class SVNLog {
 
     public static final String FORMAT_ATTR = "format";
 
+    public static final String FORCE_ATTR = "force";
+
     public static final String ATTR1 = "arg1";
     public static final String ATTR2 = "arg2";
     public static final String ATTR3 = "arg3";
@@ -84,6 +94,7 @@ public abstract class SVNLog {
     public static final String ATTR6 = "arg6";
 
     public static final String WC_TIMESTAMP = "working";
+    public static final String WC_WORKING_SIZE = "working";
 
     protected Collection myCache;
     protected SVNAdminArea myAdminArea;
@@ -100,11 +111,11 @@ public abstract class SVNLog {
         myAdminArea = adminArea;
     }
     
-    public void addCommand(String name, Map attributes, boolean save) throws SVNException {
+    public void addCommand(String name, SVNProperties attributes, boolean save) throws SVNException {
         if (myCache == null) {
             myCache = new ArrayList();
         }
-        attributes = new HashMap(attributes);
+        attributes = new SVNProperties(attributes);
         attributes.put("", name);
         myCache.add(attributes);
         if (save) {
@@ -112,21 +123,18 @@ public abstract class SVNLog {
         }
     }
 
-    public SVNStatusType logChangedEntryProperties(String name, Map modifiedEntryProps) throws SVNException {
+    public SVNStatusType logChangedEntryProperties(String name, SVNProperties modifiedEntryProps) throws SVNException {
         SVNStatusType status = SVNStatusType.LOCK_UNCHANGED;
         if (modifiedEntryProps != null) {
-            Map command = new HashMap();
+            SVNProperties command = new SVNProperties();
             command.put(SVNLog.NAME_ATTR, name);
-            for (Iterator names = modifiedEntryProps.keySet().iterator(); names.hasNext();) {
+            for (Iterator names = modifiedEntryProps.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String propValue = (String) modifiedEntryProps.get(propName);
-                String longPropName = propName;
-                if (!(SVNProperty.CACHABLE_PROPS.equals(propName) || SVNProperty.PRESENT_PROPS.equals(propName) ||
-                        SVNProperty.HAS_PROPS.equals(propName) || SVNProperty.HAS_PROP_MODS.equals(propName))) {
-                    longPropName = SVNProperty.SVN_ENTRY_PREFIX + propName;
-                }
+                SVNPropertyValue propValue = modifiedEntryProps.getSVNPropertyValue(propName);
+                String longPropName = !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX) ? SVNProperty.SVN_ENTRY_PREFIX + propName : propName;
+
                 if (SVNProperty.LOCK_TOKEN.equals(longPropName)) {
-                    Map deleteLockCommand = new HashMap();
+                    SVNProperties deleteLockCommand = new SVNProperties();
                     deleteLockCommand.put(SVNLog.NAME_ATTR, name);
                     addCommand(SVNLog.DELETE_LOCK, deleteLockCommand, false);
                     status = SVNStatusType.LOCK_UNLOCKED;
@@ -140,13 +148,13 @@ public abstract class SVNLog {
         return status;
     }
 
-    public void logChangedWCProperties(String name, Map modifiedWCProps) throws SVNException {
+    public void logChangedWCProperties(String name, SVNProperties modifiedWCProps) throws SVNException {
         if (modifiedWCProps != null) {
-            Map command = new HashMap();
+            SVNProperties command = new SVNProperties();
             command.put(SVNLog.NAME_ATTR, name);
-            for (Iterator names = modifiedWCProps.keySet().iterator(); names.hasNext();) {
+            for (Iterator names = modifiedWCProps.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                String propValue = (String) modifiedWCProps.get(propName);
+                SVNPropertyValue propValue = modifiedWCProps.getSVNPropertyValue(propName);
                 command.put(SVNLog.PROPERTY_NAME_ATTR, propName);
                 if (propValue != null) {
                     command.put(SVNLog.PROPERTY_VALUE_ATTR, propValue);
@@ -154,8 +162,38 @@ public abstract class SVNLog {
                     command.remove(SVNLog.PROPERTY_VALUE_ATTR);
                 }
                 addCommand(SVNLog.MODIFY_WC_PROPERTY, command, false);
-                command.clear();
             }
+        }
+    }
+
+    public void logTweakEntry(String name, String newURL, long newRevision) throws SVNException {
+        SVNProperties attributes = new SVNProperties();
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), SVNProperty.KIND_FILE);
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(newRevision));
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.DELETED), Boolean.FALSE.toString());
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.FALSE.toString());
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), Long.toString(SVNProperty.WORKING_SIZE_UNKNOWN));
+        attributes.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNDate.NULL.format());
+        if (newURL != null) {
+            attributes.put(SVNProperty.shortPropertyName(SVNProperty.URL), newURL);
+        }
+        
+        logChangedEntryProperties(name, attributes);
+    }
+
+    public void logRemoveRevertFile(String name, SVNAdminArea adminArea, boolean isProp) throws SVNException {
+        String revertPath = null;
+        if (isProp) {
+            revertPath = SVNAdminUtil.getPropRevertPath(name, SVNNodeKind.FILE, false);
+        } else {
+            revertPath = SVNAdminUtil.getTextRevertPath(name, false);
+        }
+        File revertFile = adminArea.getFile(revertPath);
+        if (revertFile.isFile()) {
+            SVNProperties command = new SVNProperties();
+            command.put(SVNLog.NAME_ATTR, revertPath);
+            addCommand(SVNLog.DELETE, command, false);
+            command.clear();
         }
     }
 
@@ -168,12 +206,14 @@ public abstract class SVNLog {
         try {
             int count = 0;
             for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
-                Map command = (Map) cmds.next();
-                String name = (String) command.get("");
-                String attrName = (String) command.get(SVNLog.NAME_ATTR);
+                SVNProperties command = (SVNProperties) cmds.next();
+                String name = command.getStringValue("");
+                String attrName = command.getStringValue(SVNLog.NAME_ATTR);
                 if (attrName == null && !SVNLog.UPGRADE_FORMAT.equals(name)) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                    SVNErrorMessage err = SVNErrorMessage.create(code, "Log entry missing 'name' attribute (entry ''{0}'' for directory ''{1}'')", new Object[]{name, myAdminArea.getRoot()});
+                    SVNErrorMessage err = SVNErrorMessage.create(code, 
+                            "Log entry missing ''name'' attribute (entry ''{0}'' for directory ''{1}'')", 
+                            new Object[] { name, myAdminArea.getRoot() });
                     SVNErrorManager.error(err);
                 }
                 if (runner != null) {
@@ -185,9 +225,9 @@ public abstract class SVNLog {
             // save failed command and unexecuted commands back to the log file.
             myCache = null;
             for (Iterator cmds = commands.iterator(); cmds.hasNext();) {
-                Map command = (Map) cmds.next();
-                String name = (String) command.remove("");
-                addCommand(name, command, false);
+                SVNProperties command = (SVNProperties) cmds.next();
+                SVNPropertyValue name = command.remove("");
+                addCommand(name.getString(), command, false);
             }
             save();
             throw e;

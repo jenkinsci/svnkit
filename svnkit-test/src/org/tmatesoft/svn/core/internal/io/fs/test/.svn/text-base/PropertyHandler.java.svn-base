@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,9 +12,9 @@
 package org.tmatesoft.svn.core.internal.io.fs.test;
 
 import java.io.File;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
@@ -25,9 +25,9 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
  */
 public class PropertyHandler implements ISVNPropertyHandler {
 
-    Map myProps;
+    SVNProperties myProps;
 
-    public PropertyHandler(Map props) {
+    public PropertyHandler(SVNProperties props) {
         myProps = props;
     }
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,7 +23,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -48,7 +48,7 @@ public class SVNConfigFile {
     }
 
     public Map getProperties(String groupName) {
-        Map map = new HashMap();
+        Map map = new SVNHashMap();
         load();
         boolean groupMatched = false;
         for (int i = 0; i < myLines.length; i++) {

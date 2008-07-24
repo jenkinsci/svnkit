@@ -1,12 +1,11 @@
 /*
  * ====================================================================
- * Copyright (c) 2004 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2000-2008 SyntEvo GmbH, info@syntevo.com
+ * All rights reserved.
  *
- * This software is licensed as described in the file COPYING, which
- * you should have received as part of this distribution.  The terms
- * are also available at http://svnkit.com/license.html
- * If newer versions of this license are posted there, you may use a
- * newer version instead, at your option.
+ * This software is licensed as described in the file SEQUENCE-LICENSE,
+ * which you should have received as part of this distribution. Use is
+ * subject to license terms.
  * ====================================================================
  */
 
@@ -57,7 +56,17 @@ public final class QDiffManager {
 		generator.generateTextDiff(left, right, encoding, output);
 	}
 
-	public static void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output, QDiffGenerator generator) throws IOException {
+    public static void generateTextDiff(RandomAccessFile left, RandomAccessFile right, String encoding, Writer output, QDiffGenerator generator) throws IOException {
+		if (generator == null || output == null) {
+			throw new NullPointerException("null argument is not accepted by SVNDiffManager.generateDiff()");
+		}
+		if (encoding == null) {
+			encoding = System.getProperty("file.encoding", "US-ASCII");
+		}
+		generator.generateTextDiff(left, right, encoding, output);
+	}
+
+    public static void generateBinaryDiff(InputStream left, InputStream right, String encoding, Writer output, QDiffGenerator generator) throws IOException {
 		if (generator == null || left == null || right == null || output == null) {
 			throw new NullPointerException("null argument is not accepted by SVNDiffManager.generateDiff()");
 		}

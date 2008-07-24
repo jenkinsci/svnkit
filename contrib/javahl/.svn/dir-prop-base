@@ -1,10 +1,7 @@
 K 13
 svn:externals
-V 87
-src http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/
-
-
-
+V 79
+src http://svn.collab.net/repos/svn/tags/1.5.0/subversion/bindings/javahl/src/
 
 K 10
 svn:ignore

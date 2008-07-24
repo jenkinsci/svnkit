@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -54,12 +54,8 @@ public class FSParentPath {
         myRevNode = newRevNode;
     }
 
-    public String getNameEntry() {
+    public String getEntryName() {
         return myEntryName;
-    }
-
-    public void setNameEntry(String newNameEntry) {
-        myEntryName = newNameEntry;
     }
 
     public FSParentPath getParent() {
@@ -94,7 +90,17 @@ public class FSParentPath {
         if (myParent != null) {
             pathSoFar = myParent.getAbsPath();
         }
-        return getNameEntry() != null ? SVNPathUtil.concatToAbs(pathSoFar, getNameEntry()) : pathSoFar;
+        return SVNPathUtil.getAbsolutePath(SVNPathUtil.append(pathSoFar, getEntryName()));
+    }
+    
+    public String getRelativePath(FSParentPath ancestor) {
+        String pathSoFar = "";
+        FSParentPath thisNode = this;
+        while (thisNode != ancestor) {
+            pathSoFar = SVNPathUtil.append(thisNode.getEntryName(), pathSoFar);
+            thisNode = thisNode.getParent();
+        }
+        return pathSoFar;
     }
 
 }

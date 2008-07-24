@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,6 +12,9 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 
 
@@ -24,7 +27,7 @@ public class SVNFileListUtil {
     /**
      * This method is a replacement for file.list(), which composes decomposed file names (e.g. umlauts in file names on the Mac).
      */
-    public static String[] list(File directory) {
+    private static String[] list(File directory) {
         if (!SVNFileUtil.isOSX) {
             return directory.list();
         }
@@ -77,7 +80,17 @@ public class SVNFileListUtil {
             }
             return processed;
         }
-        return directory.listFiles();
+
+	    final File[] files = directory.listFiles();
+	    return files != null ? sort(files) : null;
+    }
+    
+    private static File[] sort(File[] files) {
+        Map map = new SVNHashMap();
+        for (int i = 0; i < files.length; i++) {
+            map.put(files[i].getName(), files[i]);
+        }
+        return (File[]) map.values().toArray(new File[map.size()]);
     }
 
     

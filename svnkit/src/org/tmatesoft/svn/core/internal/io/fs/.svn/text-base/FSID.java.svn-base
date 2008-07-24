@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.Serializable;
+
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
  * @version 1.1.1
@@ -30,7 +32,7 @@ public class FSID implements Serializable {
     }
 
     public static FSID createTxnId(String nodeId, String copyId, String txnId) {
-        return new FSID(nodeId, txnId, copyId, FSRepository.SVN_INVALID_REVNUM, -1);
+        return new FSID(nodeId, txnId, copyId, SVNRepository.INVALID_REVISION, -1);
     }
 
     public static FSID createRevId(String nodeId, String copyId, long revision, long offset) {

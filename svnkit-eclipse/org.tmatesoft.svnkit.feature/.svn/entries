@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit-eclipse/org.tmatesoft.svnkit.feature
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-eclipse/org.tmatesoft.svnkit.feature
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
+2008-04-16T23:34:24.961458Z
+4172
 alex
 
 
@@ -34,8 +34,8 @@ file
 
 2008-07-24T04:49:43.000000Z
 a1eddcf6b338e507bac17e437825c74f
-2008-01-31T17:15:19.994189Z
-3814
+2008-04-16T23:34:24.961458Z
+4172
 alex
 has-props
 
@@ -45,10 +45,10 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-afd68c05afc4d850821eddd4c69e765e
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:24.000000Z
+9c99c6735f39b26f9486b46ed05b6353
+2008-04-16T23:34:24.961458Z
+4172
 alex
 has-props
 

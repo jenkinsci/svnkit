@@ -2,14 +2,14 @@
 
 dir
 32289
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/bindings/java/javahl/src/org/tigris
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/bindings/javahl/src/org/tigris
 http://svn.collab.net/repos/svn
 
 
 
-2007-03-29T16:29:16.818852Z
-24252
-dlr
+2008-05-25T03:03:24.421074Z
+31439
+hwright
 
 
 svn:special svn:externals svn:needs-lock

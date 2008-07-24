@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -72,7 +72,6 @@ public class SVNFileType {
     public static boolean isSymlinkSupportEnabled() {
         return detectSymlinks;
     }
-
 
     public static SVNFileType getType(File file) {
         if (file == null) {
@@ -151,7 +150,7 @@ public class SVNFileType {
                     SVNFileUtil.LS_COMMAND, "-ld", file.getAbsolutePath()
             });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().info(th);
+            SVNDebugLog.getDefaultLog().logFine(th);
         }
         return line != null && line.startsWith("l");
     }

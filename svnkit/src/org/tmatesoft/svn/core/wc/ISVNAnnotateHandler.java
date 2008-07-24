@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -52,20 +54,53 @@ import org.tmatesoft.svn.core.SVNException;
  * @see     SVNLogClient
  */
 public interface ISVNAnnotateHandler {
+    
 	/**
-	 * Handles per line annotation information - that is information about 
+     * @deprecated use {@link #handleLine(Date, long, String, String, Date, long, String, String, int)}
+     *             instead 
+	 */
+    public void handleLine(Date date, long revision, String author, String line) throws SVNException;
+
+    /**
+     * Handles per line annotation information - that is information about 
      * who last committed (changed) this line, the revision and timestamp when it was last 
      * committed. 
-	 * 
-	 * @param date		the time moment when changes to <code>line</code> were commited
-	 * 					to the repository		
-	 * @param revision	the revision the changes were commited to
-	 * @param author	the person who did those changes
-	 * @param line		a text line of the target file (on which 
-     *                  {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
-     *                  was invoked)
+     * 
+     * @param date          the time moment when changes to <code>line</code> were commited
+     *                      to the repository       
+     * @param revision      the revision the changes were commited to
+     * @param author        the person who did those changes
+     * @param line          a text line of the target file (on which 
+     *                      {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
+     *                      was invoked)
+     * @param mergedDate    date when merge changes occurred
+     * @param megedRevision revision in which merge changes occurred
+     * @param mergedAuthor  author of merge
+     * @param mergedPath      
      * @throws SVNException  
-	 */
-	public void handleLine(Date date, long revision, String author, String line) throws SVNException;
+     */
+    public void handleLine(Date date, long revision, String author, String line, 
+                           Date mergedDate, long mergedRevision, String mergedAuthor, 
+                           String mergedPath, int lineNumber) throws SVNException;
+    
+    /**
+     * When non-null OutputStream is returned by this method, caller will write 
+     * contents of the file at revision specified to it. Caller will call {@link OutputStream#close()} 
+     * after file contents is written.
 
+     * @param date          the time moment when changes to <code>line</code> were commited
+     *                      to the repository       
+     * @param revision      the revision the changes were commited to
+     * @param author        the person who did those changes
+     * @param contents      temporary file with contents. This file shouldn't be used 
+     *                      as persistent reference as it will be overwritten after this method exits
+     *                      and eventually deleted.
+     *                       
+     * @return OutputStream to which contents of the file have to be written or null if no contents is needed. 
+     * 
+     * @throws SVNException  
+     */
+    public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException;
+
+    public void handleEOF();
 }

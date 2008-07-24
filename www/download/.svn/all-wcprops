@@ -1,47 +1,17 @@
 K 25
 svn:wc:ra_dav:version-url
-V 51
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download
-END
-rss2.php
-K 25
-svn:wc:ra_dav:version-url
-V 60
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/rss2.php
-END
-test-results.php
-K 25
-svn:wc:ra_dav:version-url
-V 68
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/test-results.php
-END
-PythonTests.xsl
-K 25
-svn:wc:ra_dav:version-url
-V 67
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/PythonTests.xsl
+V 57
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/download
 END
 library.php
 K 25
 svn:wc:ra_dav:version-url
-V 63
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/library.php
-END
-.htaccess
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/.htaccess
+V 69
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/download/library.php
 END
 index.php
 K 25
 svn:wc:ra_dav:version-url
-V 61
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/index.php
-END
-rss.php
-K 25
-svn:wc:ra_dav:version-url
-V 59
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/download/rss.php
+V 67
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/download/index.php
 END

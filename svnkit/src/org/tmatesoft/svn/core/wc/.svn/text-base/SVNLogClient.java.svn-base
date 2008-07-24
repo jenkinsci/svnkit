@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,31 +12,43 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNAnnotationGenerator;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -174,14 +186,21 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException
      * @since                 1.1
      */
-    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
+        doAnnotate(path, pegRevision, startRevision, endRevision, force, false, handler, null);
+    }
+
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, boolean includeMergedRevisions, 
+                           ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = pegRevision;
         }
-        SVNRepository repos = createRepository(null, path, pegRevision, endRevision);
+        SVNRepository repos = createRepository(null, path, null, pegRevision, endRevision, null);
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
@@ -192,9 +211,10 @@ public class SVNLogClient extends SVNBasicClient {
         if (!tmpFile.isDirectory()) {
             tmpFile = SVNFileUtil.createTempDirectory("annotate");
         }
-        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, force, handler, null);
+        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, force, handler, 
+                   inputEncoding, includeMergedRevisions);
     }
-    
+
     /**
      * Obtains annotation information for each file text line from a repository
      * and passes it to a provided annotation handler. 
@@ -273,29 +293,61 @@ public class SVNLogClient extends SVNBasicClient {
      * @throws SVNException
      * @since                 1.1
      */
-	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-	    if (startRevision == null || !startRevision.isValid()) {
-	        startRevision = SVNRevision.create(1);
-	    }
+	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, 
+                           String inputEncoding) throws SVNException {
+	    doAnnotate(url, pegRevision, startRevision, endRevision, force, false, 
+                   handler, inputEncoding);
+	}
+
+    public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, 
+                           SVNRevision endRevision, boolean force, boolean includeMergedRevisions, 
+                           ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+        if (startRevision == null || !startRevision.isValid()) {
+            startRevision = SVNRevision.create(1);
+        }
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = pegRevision;
         }
-	    SVNRepository repos = createRepository(url, null, pegRevision, endRevision);
-	    long endRev = getRevisionNumber(endRevision, repos, null);
-	    long startRev = getRevisionNumber(startRevision, repos, null);
-	    if (endRev < startRev) {
-	        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
-	    }
-	    File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-	    doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, force, handler, inputEncoding);
-	}
-
-    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, boolean force, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, force, getDiffOptions(), this);
+        SVNRepository repos = createRepository(url, null, null, pegRevision, endRevision, null);
+        long endRev = getRevisionNumber(endRevision, repos, null);
+        long startRev = getRevisionNumber(startRevision, repos, null);
+        if (endRev < startRev) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                                                         "Start revision must precede end revision"));
+        }
+        File tmpFile = SVNFileUtil.createTempDirectory("annotate");
+        doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, force, 
+                   handler, inputEncoding, includeMergedRevisions);
+    
+    }
+    
+    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, 
+                            long endRev, boolean force, ISVNAnnotateHandler handler, 
+                            String inputEncoding, boolean includeMergedRevisions) throws SVNException {
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
+                                                                      force, includeMergedRevisions,
+                                                                      getDiffOptions(), inputEncoding, handler, this);
+        
+        
+        // always spool HTTP response for non-standard annotation handlers.
+        boolean useSpool = handler != null && !handler.getClass().getName().startsWith("org.tmatesoft.svn.");
+        boolean oldSpool = false;
+        
+        if (useSpool && repos instanceof DAVRepository) {
+            oldSpool = ((DAVRepository) repos).isSpoolResponse();
+            ((DAVRepository) repos).setSpoolResponse(true);
+        }
         try {
-            repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, endRev, generator);
-            generator.reportAnnotations(handler, inputEncoding);
+            repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
+                                   endRev, includeMergedRevisions, generator);
+            if (!generator.isLastRevisionReported()) {
+                generator.reportAnnotations(handler, inputEncoding);
+            }
         } finally {
+            if (useSpool && repos instanceof DAVRepository) {
+                ((DAVRepository) repos).setSpoolResponse(oldSpool);
+            }
             generator.dispose();
             SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);
         }
@@ -358,6 +410,108 @@ public class SVNLogClient extends SVNBasicClient {
         doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler);
     }
     
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, SVNRevision pegRevision,
+                      boolean stopOnCopy, boolean reportPaths, boolean includeMergedRevisions, 
+                      long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
+        if (paths == null || paths.length == 0 || handler == null) {
+            return;
+        }
+        
+        if (startRevision.isValid() && !endRevision.isValid()) {
+            endRevision = startRevision;
+        } else if (!startRevision.isValid()) {
+            if (!pegRevision.isValid()) {
+                startRevision = SVNRevision.BASE;
+            } else {
+                startRevision = pegRevision;
+            }
+            if (!endRevision.isValid()) {
+                endRevision = SVNRevision.create(0);
+            }
+        }
+
+        ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
+            public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+                checkCancelled();
+                handler.handleLogEntry(logEntry);
+            }
+        };
+        
+        SVNURL[] urls = new SVNURL[paths.length];
+        SVNWCAccess wcAccess = createWCAccess();
+        Collection wcPaths = new ArrayList();
+        for (int i = 0; i < paths.length; i++) {
+            checkCancelled();
+            File path = paths[i];
+            wcPaths.add(path.getAbsolutePath().replace(File.separatorChar, '/'));
+            SVNAdminArea area = wcAccess.probeOpen(path, false, 0); 
+            SVNEntry entry = wcAccess.getVersionedEntry(path, false); 
+            if (entry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
+                        "Entry ''{0}'' has no URL", path);
+                SVNErrorManager.error(err);
+            }
+            urls[i] = entry.getSVNURL();
+            if (area != null) {
+                wcAccess.closeAdminArea(area.getRoot());
+            }
+        }
+        if (urls.length == 0) {
+            return;
+        }
+        String[] wcPathsArray = (String[]) wcPaths.toArray(new String[wcPaths.size()]);
+        String rootWCPath = SVNPathUtil.condencePaths(wcPathsArray, null, true);
+        Collection targets = new TreeSet();
+        SVNURL baseURL = SVNURLUtil.condenceURLs(urls, targets, true);
+        if (baseURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
+                    "target log paths belong to different repositories");
+            SVNErrorManager.error(err);
+        }
+        if (targets.isEmpty()) {
+            targets.add("");
+        }
+        SVNRevision rev = SVNRevision.UNDEFINED;
+        if (startRevision.getNumber() >= 0 && endRevision.getNumber() >= 0) {
+            rev = startRevision.getNumber() > endRevision.getNumber() ? startRevision : endRevision;
+        } else if (startRevision.getDate() != null && endRevision.getDate() != null) {
+            rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
+        } 
+        SVNRepository repos = null;
+        if (rootWCPath != null && (pegRevision == SVNRevision.BASE ||
+                pegRevision == SVNRevision.WORKING ||
+                pegRevision == SVNRevision.PREVIOUS ||
+                pegRevision == SVNRevision.COMMITTED)) {
+            // open and use wc to create repository.
+            File root = new File(rootWCPath);
+            SVNAdminArea area = wcAccess.probeOpen(root, false, 0);
+            repos = createRepository(null, root, area, pegRevision, rev, null);
+            if (area != null) {
+                wcAccess.closeAdminArea(area.getRoot());
+            }
+        } else {
+            repos = createRepository(baseURL, null, null, pegRevision, rev, null);
+        }
+        String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
+        for (int i = 0; i < targetPaths.length; i++) {
+            targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
+        }
+        if (startRevision.isLocal() || endRevision.isLocal()) {
+            for (int i = 0; i < paths.length; i++) {
+                checkCancelled();
+                long startRev = getRevisionNumber(startRevision, repos, paths[i]);
+                long endRev = getRevisionNumber(endRevision, repos, paths[i]);
+                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+                          includeMergedRevisions, revisionProperties, wrappingHandler);
+            }
+        } else {
+            long startRev = getRevisionNumber(startRevision, repos, null);
+            long endRev = getRevisionNumber(endRevision, repos, null);
+            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+                      includeMergedRevisions, revisionProperties, wrappingHandler);
+        }
+    }
+    
     /**
      * Gets commit log messages with other revision specific 
      * information from a repository (using Working Copy paths to get 
@@ -408,82 +562,11 @@ public class SVNLogClient extends SVNBasicClient {
      *                         different repositories
      *                         </ul>
      */
-    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
-        if (paths == null || paths.length == 0) {
-            return;
-        }
-        if (startRevision.isValid() && !endRevision.isValid()) {
-            endRevision = startRevision;
-        } else if (!startRevision.isValid()) {
-            if (!pegRevision.isValid()) {
-                startRevision = SVNRevision.BASE;
-            } else {
-                startRevision = pegRevision;
-            }
-            if (!endRevision.isValid()) {
-                endRevision = SVNRevision.create(0);
-            }
-        }
-        ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
-            public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-                checkCancelled();
-                handler.handleLogEntry(logEntry);
-            }
-        };
-        SVNURL[] urls = new SVNURL[paths.length];
-        SVNWCAccess wcAccess = createWCAccess();
-        for (int i = 0; i < paths.length; i++) {
-            checkCancelled();
-            File path = paths[i];
-            wcAccess.probeOpen(path, false, 0); 
-            SVNEntry entry = wcAccess.getEntry(path, false); 
-            if (entry == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-                SVNErrorManager.error(err);
-            }   
-            if (entry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
-            }
-            urls[i] = entry.getSVNURL();
-            wcAccess.closeAdminArea(path);
-        }
-        if (urls.length == 0) {
-            return;
-        }
-        Collection targets = new TreeSet();
-        SVNURL baseURL = SVNURLUtil.condenceURLs(urls, targets, true);
-        if (baseURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "target log paths belong to different repositories");
-            SVNErrorManager.error(err);
-        }
-        if (targets.isEmpty()) {
-            targets.add("");
-        }
-        SVNRevision rev = SVNRevision.UNDEFINED;
-        if (startRevision.getNumber() >= 0 && endRevision.getNumber() >= 0) {
-            rev = startRevision.getNumber() > endRevision.getNumber() ? startRevision : endRevision;
-        } else if (startRevision.getDate() != null && endRevision.getDate() != null) {
-            rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
-        } 
-        SVNRepository repos = rev.isValid() ? //!startRevision.isLocal() && !pegRevision.isLocal() ?
-                createRepository(baseURL, null, pegRevision, rev) : createRepository(baseURL, true);
-        String[] targetPaths = (String[]) targets.toArray(new String[targets.size()]);
-        for (int i = 0; i < targetPaths.length; i++) {
-            targetPaths[i] = SVNEncodingUtil.uriDecode(targetPaths[i]);
-        }
-        if (startRevision.isLocal() || endRevision.isLocal()) {
-            for (int i = 0; i < paths.length; i++) {
-                checkCancelled();
-                long startRev = getRevisionNumber(startRevision, repos, paths[i]);
-                long endRev = getRevisionNumber(endRevision, repos, paths[i]);
-                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, wrappingHandler);
-            }
-        } else {
-            long startRev = getRevisionNumber(startRevision, repos, null);
-            long endRev = getRevisionNumber(endRevision, repos, null);
-            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, wrappingHandler);
-        }
+    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, 
+            SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, 
+            final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, reportPaths, 
+              false, limit, null, handler);
     }
     
     /**
@@ -533,6 +616,14 @@ public class SVNLogClient extends SVNBasicClient {
      * @since                  1.1, new in Subversion 1.4
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, 
+              reportPaths, false, limit, null, handler);
+    }
+    
+    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, 
+                      SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, 
+                      boolean reportPaths, boolean includeMergeInfo, long limit, 
+                      String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
         } else if (!startRevision.isValid()) {
@@ -559,13 +650,35 @@ public class SVNLogClient extends SVNBasicClient {
             rev = startRevision.getDate().compareTo(endRevision.getDate()) > 0 ? startRevision : endRevision;
         } 
         SVNRepository repos = rev.isValid() ? 
-                createRepository(url, null, pegRevision, rev) : createRepository(url, true);
+                createRepository(url, null, null, pegRevision, rev, null) : createRepository(url, null, null, true);
         checkCancelled();
         long startRev = getRevisionNumber(startRevision, repos, null);
         checkCancelled();
         long endRev = getRevisionNumber(endRevision, repos, null);
         checkCancelled();
-        repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, wrappingHandler);
+        repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+                  includeMergeInfo, revisionProperties, wrappingHandler);
+    }
+    
+    public SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
+        long[] pegRev = { SVNRepository.INVALID_REVISION };
+        SVNRepository repos = createRepository(url, path, null, revision, revision, pegRev);
+        SVNLocationEntry copyFromEntry = null;
+        String targetPath = getPathRelativeToRoot(path, url, null, null, repos);
+        CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
+            try {
+                repos.log(new String[] { "" }, pegRev[0], 1, true, true, 0, false, new String[0], receiver);
+                copyFromEntry = receiver.getCopyFromLocation();
+            } catch (SVNException e) {
+                SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
+                if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
+                    return new SVNLocationEntry(SVNRepository.INVALID_REVISION, null);
+                }
+                throw e;
+            }
+
+        return copyFromEntry == null ? new SVNLocationEntry(SVNRepository.INVALID_REVISION, null) 
+                                     : copyFromEntry;
     }
     
     /**
@@ -592,12 +705,16 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                   #doList(SVNURL, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)  
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+        doList(path, pegRevision, revision, fetchLocks, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
+    }
+    
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;
         }
-        SVNRepository repos = createRepository(null, path, pegRevision, revision);
+        SVNRepository repos = createRepository(null, path, null, pegRevision, revision, null);
         long rev = getRevisionNumber(revision, repos, path);
-        doList(repos, rev, handler, fetchLocks, recursive);
+        doList(repos, rev, handler, fetchLocks, depth, entryFields);
     }
 
     /**
@@ -650,12 +767,16 @@ public class SVNLogClient extends SVNBasicClient {
      * @see                   #doList(File, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)   
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+        doList(url, pegRevision, revision, fetchLocks, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
+    }
+    
+    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
         long[] pegRev = new long[] {-1};
-        SVNRepository repos = createRepository(url, null, pegRevision, revision, pegRev);
+        SVNRepository repos = createRepository(url, null, null, pegRevision, revision, pegRev);
         if (pegRev[0] < 0) {
             pegRev[0] = getRevisionNumber(revision, repos, null);
         }
-        doList(repos, pegRev[0], handler, fetchLocks, recursive);
+        doList(repos, pegRev[0], handler, fetchLocks, depth, entryFields);
     }
 
     /**
@@ -683,8 +804,64 @@ public class SVNLogClient extends SVNBasicClient {
         doList(url, pegRevision, revision, false, recursive, handler);
     }
 
-    private void doList(SVNRepository repos, long rev, final ISVNDirEntryHandler handler, boolean fetchLocks, boolean recursive) throws SVNException {
-        final Map locksMap = new HashMap();
+    private void doList(SVNRepository repos, long rev, final ISVNDirEntryHandler handler, boolean fetchLocks, SVNDepth depth, int entryFields) throws SVNException {
+        SVNURL url = repos.getLocation();
+        SVNURL reposRoot = repos.getRepositoryRoot(false);
+        SVNDirEntry entry = null;
+        SVNException error = null;
+        try {
+            entry = repos.info("", rev); 
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                error = svne;
+            } else {
+                throw svne;
+            }
+        }
+        
+        if (error != null) {
+            SVNNodeKind kind = repos.checkPath("", rev);
+            if (kind != SVNNodeKind.NONE) {
+                if (!url.equals(reposRoot)) {
+                    String name = SVNPathUtil.tail(repos.getLocation().getPath());
+                    repos.setLocation(repos.getLocation().removePathTail(), false);
+                    Collection dirEntries = repos.getDir("", rev, null, entryFields, (Collection) null);
+                    repos.setLocation(url, false);
+                    
+                    for (Iterator ents = dirEntries.iterator(); ents.hasNext();) {
+                        SVNDirEntry dirEntry = (SVNDirEntry) ents.next();
+                        if (name.equals(dirEntry.getName())) {
+                            entry = dirEntry;
+                            break;
+                        }
+                    }
+                    if (entry != null) {
+                        entry.setRelativePath(kind == SVNNodeKind.FILE ? name : "");
+                    }
+                } else {
+                    SVNProperties props = new SVNProperties();
+                    repos.getDir("", rev, props, entryFields, (Collection) null);
+                    SVNProperties revProps = repos.getRevisionProperties(rev, null);
+                    String author = revProps.getStringValue(SVNRevisionProperty.AUTHOR);
+                    String dateStr = revProps.getStringValue(SVNRevisionProperty.DATE);
+                    Date datestamp = null;
+                    if (dateStr != null) {
+                        datestamp = SVNDate.parseDateString(dateStr);
+                    }
+                    entry = new SVNDirEntry(url, reposRoot, "", kind, 0, !props.isEmpty(), rev, datestamp, author);
+                    entry.setRelativePath("");
+                }
+            }
+        } else if (entry != null) {
+            entry.setRelativePath(entry.getKind() == SVNNodeKind.DIR ? "" : entry.getName());
+        }
+        
+        if (entry == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' non-existent in that revision", url);
+            SVNErrorManager.error(err);
+        }
+        
+        final Map locksMap = new SVNHashMap();
         if (fetchLocks) {
             SVNLock[] locks = new SVNLock[0];
             try {
@@ -703,50 +880,85 @@ public class SVNLogClient extends SVNBasicClient {
                 }
             }
         }
+        
         ISVNDirEntryHandler nestedHandler = new ISVNDirEntryHandler() {
             public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
                 dirEntry.setLock((SVNLock) locksMap.get(dirEntry.getURL()));
                 handler.handleDirEntry(dirEntry);
             }
         };
-        if (repos.checkPath("", rev) == SVNNodeKind.FILE) {
-            String name = SVNPathUtil.tail(repos.getLocation().getPath());
-            SVNURL fileULR = repos.getLocation();
-            repos.setLocation(repos.getLocation().removePathTail(), false);
-            Collection dirEntries = repos.getDir("", rev, null, (Collection) null);
 
-            SVNDirEntry fileEntry = null;
-            for (Iterator ents = dirEntries.iterator(); ents.hasNext();) {
-                SVNDirEntry dirEntry = (SVNDirEntry) ents.next();
-                if (name.equals(dirEntry.getName())) {
-                    fileEntry = dirEntry;
-                    break;
-                }
-            }
-            if (fileEntry != null) {
-                fileEntry.setRelativePath(name);
-                nestedHandler.handleDirEntry(fileEntry);
-            } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' non-existent in that revision", fileULR);
-                SVNErrorManager.error(err);
-            }
-        } else {
-            list(repos, "", rev, recursive, nestedHandler);
+        nestedHandler.handleDirEntry(entry);
+        if (entry.getKind() == SVNNodeKind.DIR && (depth == SVNDepth.FILES || 
+                depth == SVNDepth.IMMEDIATES ||
+                depth == SVNDepth.INFINITY)) {
+            list(repos, "", rev, depth, entryFields, nestedHandler);
         }
     }
 
-    private static void list(SVNRepository repository, String path, long rev, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
+    private static void list(SVNRepository repository, String path, long rev, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
+        if (depth == SVNDepth.EMPTY) {
+            return;
+        }
         Collection entries = new TreeSet();
-        entries = repository.getDir(path, rev, null, entries);
+        entries = repository.getDir(path, rev, null, entryFields, entries);
 
         for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
             SVNDirEntry entry = (SVNDirEntry) iterator.next();
             String childPath = SVNPathUtil.append(path, entry.getName());
             entry.setRelativePath(childPath);
-            handler.handleDirEntry(entry);
-            if (entry.getKind() == SVNNodeKind.DIR && entry.getDate() != null && recursive) {
-                list(repository, childPath, rev, recursive, handler);
+            if (entry.getKind() == SVNNodeKind.FILE || depth == SVNDepth.IMMEDIATES ||
+                depth == SVNDepth.INFINITY) {
+                handler.handleDirEntry(entry);
             }
+            if (entry.getKind() == SVNNodeKind.DIR && entry.getDate() != null && depth == SVNDepth.INFINITY) {
+                list(repository, childPath, rev, depth, entryFields, handler);
+            }
+        }
+    }
+    
+    private static class CopyFromReceiver implements ISVNLogEntryHandler {
+        private String myTargetPath;
+        private SVNLocationEntry myCopyFromLocation;
+        
+        public CopyFromReceiver(String targetPath) {
+            myTargetPath = targetPath;
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            if (myCopyFromLocation != null) {
+                return;
+            }
+            
+            Map changedPaths = logEntry.getChangedPaths();
+            if (changedPaths != null && !changedPaths.isEmpty()) {
+                TreeMap sortedChangedPaths = new TreeMap(Collections.reverseOrder());
+                sortedChangedPaths.putAll(changedPaths);
+                for (Iterator changedPathsIter = sortedChangedPaths.keySet().iterator(); changedPathsIter.hasNext();) {
+                    String changedPath = (String) changedPathsIter.next();
+                    SVNLogEntryPath logEntryPath = (SVNLogEntryPath) sortedChangedPaths.get(changedPath);
+                    if (logEntryPath.getCopyPath() != null && 
+                        SVNRevision.isValidRevisionNumber(logEntryPath.getCopyRevision()) && 
+                        SVNPathUtil.isAncestor(changedPath, myTargetPath)) {
+                        String copyFromPath = null;
+                        if (changedPath.equals(myTargetPath)) {
+                            copyFromPath = logEntryPath.getCopyPath();
+                        } else {
+                            String relPath = myTargetPath.substring(changedPath.length());
+                            if (relPath.startsWith("/")) {
+                                relPath = relPath.substring(1);
+                            }
+                            copyFromPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(logEntryPath.getCopyPath(), relPath));
+                        }
+                        myCopyFromLocation = new SVNLocationEntry(logEntryPath.getCopyRevision(), copyFromPath);
+                        break;
+                    }
+                }
+            }
+        } 
+
+        public SVNLocationEntry getCopyFromLocation() {
+            return myCopyFromLocation;
         }
     }
 

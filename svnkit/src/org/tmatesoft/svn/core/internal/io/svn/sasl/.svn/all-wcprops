@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
+END
+SaslOutputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.java
+END
+SaslInputStream.class
+K 25
+svn:wc:ra_dav:version-url
+V 121
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class
+END
+SaslOutputStream.class
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class
+END
+SVNSaslAuthenticator.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.java
+END
+SVNSaslAuthenticator.class
+K 25
+svn:wc:ra_dav:version-url
+V 126
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class
+END
+SVNSaslAuthenticator$SVNCallbackHandler.class
+K 25
+svn:wc:ra_dav:version-url
+V 145
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNCallbackHandler.class
+END
+SaslInputStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 120
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.java
+END

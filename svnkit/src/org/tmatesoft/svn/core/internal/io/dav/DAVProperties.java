@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
  * @version 1.1.1
@@ -20,7 +22,7 @@ import java.util.Map;
  */
 public class DAVProperties {
     
-    private Map myProperties = new HashMap();        
+    private Map myProperties = new SVNHashMap();
     private boolean myIsCollection;
     private String myURL;
     private String myLoppedPath;
@@ -38,8 +40,8 @@ public class DAVProperties {
         return myProperties;
     }
     
-    public String getPropertyValue(DAVElement name) {
-        return (String) myProperties.get(name);
+    public SVNPropertyValue getPropertyValue(DAVElement name) {
+        return (SVNPropertyValue) myProperties.get(name);
     }
     
     public void setLoppedPath(String loppedPath) {
@@ -50,7 +52,7 @@ public class DAVProperties {
         return myLoppedPath;
     }
     
-    public void setProperty(DAVElement name, String value) {
+    public void setProperty(DAVElement name, SVNPropertyValue value) {
         myProperties.put(name, value);
     }
     

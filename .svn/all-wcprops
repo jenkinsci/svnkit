@@ -1,41 +1,71 @@
 K 25
 svn:wc:ra_dav:version-url
-V 38
-/repos/svnkit/!svn/ver/4173/tags/1.1.7
+V 44
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2
+END
+.classpath
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/.classpath
+END
+.project
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/.project
 END
 changelog.txt
 K 25
 svn:wc:ra_dav:version-url
-V 52
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/changelog.txt
+V 58
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/changelog.txt
 END
 THIRD-PARTY.txt
 K 25
 svn:wc:ra_dav:version-url
-V 54
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/THIRD-PARTY.txt
+V 60
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/THIRD-PARTY.txt
 END
 svnkit.build.properties
 K 25
 svn:wc:ra_dav:version-url
-V 62
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/svnkit.build.properties
+V 68
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit.build.properties
+END
+svnkit.ipr
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit.ipr
+END
+COPYING
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/COPYING
+END
+pom.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/pom.xml
 END
 README.txt
 K 25
 svn:wc:ra_dav:version-url
-V 49
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/README.txt
+V 55
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/README.txt
 END
 plugin.xml
 K 25
 svn:wc:ra_dav:version-url
-V 49
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/plugin.xml
+V 55
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/plugin.xml
 END
 build.xml
 K 25
 svn:wc:ra_dav:version-url
-V 48
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/build.xml
+V 54
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/build.xml
 END

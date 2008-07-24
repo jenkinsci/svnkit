@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,7 +39,7 @@ public class JavaHLPropertyData extends PropertyData {
         if (myClientImpl != null) {
             myClientImpl.propertySet(getPath(), getName(), newValue, recurse);
         } else {
-            super.remove(recurse);
+            super.setValue(newValue, recurse);
         }
     }
 
@@ -47,7 +47,7 @@ public class JavaHLPropertyData extends PropertyData {
         if (myClientImpl != null) {
             myClientImpl.propertySet(getPath(), getName(), newValue, recurse);
         } else {
-            super.remove(recurse);
+            super.setValue(newValue, recurse);
         }
     }
 }

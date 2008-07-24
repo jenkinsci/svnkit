@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,12 +23,13 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 
 /*
  * This  is  a complex  example program that demonstrates how  you  can manage local
@@ -412,7 +413,7 @@ public class WorkingCopy {
          * 
          * SVNWCUtil is a utility class that creates a default options driver.
          */
-        ISVNOptions options = SVNWCUtil.createDefaultOptions(true);
+        DefaultSVNOptions options = SVNWCUtil.createDefaultOptions(true);
         
         /*
          * Creates an instance of SVNClientManager providing authentication
@@ -1078,16 +1079,14 @@ public class WorkingCopy {
      * commitMessage - a commit log message since URL->URL copying is immediately 
      * committed to a repository.
      */
-    private static SVNCommitInfo copy(SVNURL srcURL, SVNURL dstURL,
-            boolean isMove, String commitMessage) throws SVNException {
+    private static SVNCommitInfo copy(SVNURL srcURL, SVNURL dstURL, boolean isMove, String commitMessage) throws SVNException {
         /*
          * SVNRevision.HEAD means the latest revision.
          * Returns SVNCommitInfo containing information on the new revision committed 
          * (revision number, etc.) 
-         */
-        
-        return ourClientManager.getCopyClient().doCopy(srcURL,  SVNRevision.HEAD,
-                dstURL, isMove, commitMessage);
+         */        
+        return ourClientManager.getCopyClient().doCopy(new SVNCopySource[] {new SVNCopySource(SVNRevision.HEAD, SVNRevision.HEAD, srcURL)},
+                dstURL, isMove, true, false, commitMessage, null);
     }
     
     /*

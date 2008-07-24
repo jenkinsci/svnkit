@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -10,6 +10,8 @@
  * ====================================================================
  */
 package org.tmatesoft.svn.core.auth;
+
+import javax.net.ssl.TrustManager;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -104,29 +106,10 @@ public interface ISVNAuthenticationManager {
      * @throws SVNException   
      */
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException;
-    
-    /**
-     * Returns the SSL manager for secure interracting with a 
-     * repository.
-     * 
-     * <p>
-     * A default implementation of <b>ISVNAuthenticationManager</b> returns an 
-     * SSL manager that uses CA and user certificate files specified in the 
-     * standard <i>servers</i> file.
-     * 
-     * <p>     
-     * Even if the default manager's <b>getSSLManager()</b> method returns 
-     * <span class="javakeyword">null</span> for the given <code>url</code>, a secure 
-     * context will be created anymore, but, of course no user certificate files are provided 
-     * to a server as well as server's certificates are not checked.  
-     * 
-     * @param  url            a repository location to access 
-     * @return                an appropriate SSL manager
-     * @throws SVNException
-     */
-    public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException;
-    
-    /**
+
+	public TrustManager getTrustManager(SVNURL url) throws SVNException;		
+
+	/**
      * Retrieves the first user credential.
      * 
      * The scheme of retrieving credentials:
@@ -236,15 +219,6 @@ public interface ISVNAuthenticationManager {
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
     
     /**
-     * Sets a specific runtime authentication storage manager. This storage 
-     * manager will be asked by this auth manager for cached credentials as 
-     * well as used to cache new ones accepted recently.
-     * 
-     * @param storage a custom auth storage manager
-     */
-    public void setRuntimeStorage(ISVNAuthenticationStorage storage);
-    
-    /**
      * Checks whether client should send authentication credentials to 
      * a repository server not waiting for the server's challenge. 
      * 
@@ -257,28 +231,17 @@ public interface ISVNAuthenticationManager {
      * @return <span class="javakeyword">true</span> if authentication 
      *         credentials are forced to be sent;<span class="javakeyword">false</span> 
      *         when credentials are to be sent only in response to a server challenge    
-     * 
-     * @see    #setAuthenticationForced(boolean)
      */
     public boolean isAuthenticationForced();
 
-    /**
-     * Specifies the way how credentials are to be supplied to a 
-     * repository server.
-     * 
-     * @param forced  <span class="javakeyword">true</span> to force 
-     *                credentials sending; <span class="javakeyword">false</span> 
-     *                to put off sending credentials till a server challenge
-     * @see           #isAuthenticationForced()
-     */
-    public void setAuthenticationForced(boolean forced);
-    
     /**
      * Returns a connection timeout value.
      * 
      * @param   repository a repository access driver
      * @return             connection timeout value
-     * @since   1.1
+     * @since   1.2
      */
-    public long getHTTPTimeout(SVNRepository repository);
+    public int getReadTimeout(SVNRepository repository);
+    
+    public int getConnectTimeout(SVNRepository repository);
 }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,7 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
-import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -21,6 +21,12 @@ import java.text.ParseException;
  * @author  TMate Software Ltd.
  */
 class HTTPParser {
+    
+    private static ThreadLocal ourLocalReadBuffer = new ThreadLocal() {
+        protected Object initialValue() {
+            return new byte[8192];
+        }
+    };
     
     public static HTTPStatus parseStatus(InputStream is, String charset) throws IOException, ParseException {
         String line = null;
@@ -36,39 +42,38 @@ class HTTPParser {
         } while (line != null && (line.length() == 0 || line.trim().length() == 0 || !HTTPStatus.isHTTPStatusLine(line)));
         
         if (line == null) {
-            throw new ParseException("can not read HTTP status line", 0);
+            throw new EOFException("can not read HTTP status line");
         }
         return HTTPStatus.createHTTPStatus(line);
     }
     
     public static String readLine(InputStream is, String charset) throws IOException {
-        byte[] bytes = readPlainLine(is);
-        if (bytes == null) {
+        int length = readPlainLine(is);
+        if (length <= 0) {
             return null;
         }
-        int length = bytes.length;
-        if (length > 0 && bytes[length - 1] == '\n') {
+        byte[] buffer = (byte[]) ourLocalReadBuffer.get();
+        if (length > 0 && buffer[length - 1] == '\n') {
             length--;
-            if (length > 0 && bytes[length - 1] == '\r') {
+            if (length > 0 && buffer[length - 1] == '\r') {
                 length--;
             }
         }
-        return new String(bytes, 0, length, charset);
+        return new String(buffer, 0, length, charset);
     }
     
-    public static byte[] readPlainLine(InputStream is) throws IOException {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    private static int readPlainLine(InputStream is) throws IOException {
         int ch;
-        while ((ch = is.read()) >= 0) {
-            buf.write(ch);
+        int i = 0;
+        byte[] buffer = (byte[]) ourLocalReadBuffer.get();
+        while (i < buffer.length && (ch = is.read()) >= 0) {
+            buffer[i] = (byte) (ch & 0xFF);
             if (ch == '\n') {
                 break;
             }
+            i++;
         }
-        if (buf.size() == 0) {
-            return null;
-        }
-        return buf.toByteArray();
+        return i;
     }
 
     public static StringBuffer getCanonicalPath(String path, StringBuffer target) {

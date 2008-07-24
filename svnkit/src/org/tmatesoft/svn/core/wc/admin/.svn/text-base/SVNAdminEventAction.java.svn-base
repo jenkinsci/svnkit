@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -97,4 +97,25 @@ public class SVNAdminEventAction {
     public static final SVNAdminEventAction NOT_LOCKED = new SVNAdminEventAction(11);
 
     public static final SVNAdminEventAction LOCK_LISTED = new SVNAdminEventAction(12);
+    
+    public static final SVNAdminEventAction RECOVERY_STARTED = new SVNAdminEventAction(13);
+    
+    public static final SVNAdminEventAction UPGRADE = new SVNAdminEventAction(14);
+    
+    public static final SVNAdminEventAction REVISION_PROPERTIES_COPIED = new SVNAdminEventAction(15);
+
+    public static final SVNAdminEventAction DUMP_FILTER_REVISION_COMMITTED = new SVNAdminEventAction(16);
+
+    public static final SVNAdminEventAction DUMP_FILTER_REVISION_SKIPPED = new SVNAdminEventAction(17);
+
+    public static final SVNAdminEventAction DUMP_FILTER_TOTAL_REVISIONS_DROPPED = new SVNAdminEventAction(18);
+
+    public static final SVNAdminEventAction DUMP_FILTER_DROPPED_RENUMBERED_REVISION = new SVNAdminEventAction(19);
+
+    public static final SVNAdminEventAction DUMP_FILTER_RENUMBERED_REVISION = new SVNAdminEventAction(20);
+
+    public static final SVNAdminEventAction DUMP_FILTER_TOTAL_NODES_DROPPED = new SVNAdminEventAction(21);
+
+    public static final SVNAdminEventAction DUMP_FILTER_DROPPED_NODE = new SVNAdminEventAction(22);
+
 }

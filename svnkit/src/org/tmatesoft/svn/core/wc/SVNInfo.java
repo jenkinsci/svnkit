@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,12 +14,14 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 
 /**
@@ -95,7 +97,12 @@ public class SVNInfo {
     private File myConflictNewFile;
     private File myConflictWrkFile;
     private File myPropConflictFile;
-
+    private SVNDepth myDepth;
+    private String myChangelistName;
+    private SVNErrorMessage myError;
+    private long myWorkingSize;
+    private long myRepositorySize;
+    
     static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
             return null;
@@ -103,17 +110,14 @@ public class SVNInfo {
         SVNLock lock = null;
         if (entry.getLockToken() != null) {
             lock = new SVNLock(null, entry.getLockToken(),
-                    entry.getLockOwner(), entry.getLockComment(), SVNTimeUtil
-                            .parseDate(entry.getLockCreationDate()), null);
+                    entry.getLockOwner(), entry.getLockComment(), SVNDate.parseDate(entry.getLockCreationDate()), null);
         }
         return new SVNInfo(file, entry.getSVNURL(), entry.getRepositoryRootURL(), 
                 entry.getRevision(), entry.getKind(), entry.getUUID(), entry.getCommittedRevision(),
-                entry.getCommittedDate(), entry.getAuthor(), entry
-                        .getSchedule(), entry.getCopyFromSVNURL(), entry
-                        .getCopyFromRevision(), entry.getTextTime(), entry
-                        .getPropTime(), entry.getChecksum(), entry
-                        .getConflictOld(), entry.getConflictNew(), entry
-                        .getConflictWorking(), entry.getPropRejectFile(), lock);
+                entry.getCommittedDate(), entry.getAuthor(), entry.getSchedule(), 
+                entry.getCopyFromSVNURL(), entry.getCopyFromRevision(), entry.getTextTime(), entry.getPropTime(), entry.getChecksum(), 
+                entry.getConflictOld(), entry.getConflictNew(), entry.getConflictWorking(), entry.getPropRejectFile(), 
+                lock, entry.getDepth(), entry.getChangelistName(), entry.getWorkingSize());
     }
 
     static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
@@ -123,15 +127,25 @@ public class SVNInfo {
         }
         return new SVNInfo(path, url, revision, dirEntry.getKind(), uuid,
                 reposRootURL, dirEntry.getRevision(), dirEntry.getDate(),
-                dirEntry.getAuthor(), lock);
+                dirEntry.getAuthor(), lock, SVNDepth.UNKNOWN, dirEntry.getSize());
     }
 
+    static SVNInfo createInfo(File file, SVNErrorMessage error) {
+        return new SVNInfo(file, error);
+    }
+    
+    protected SVNInfo(File file, SVNErrorMessage error) {
+        myFile = file;
+        myError = error;
+    }
+    
     protected SVNInfo(File file, SVNURL url, SVNURL rootURL, long revision, SVNNodeKind kind,
             String uuid, long committedRevision, String committedDate,
             String author, String schedule, SVNURL copyFromURL,
             long copyFromRevision, String textTime, String propTime,
             String checksum, String conflictOld, String conflictNew,
-            String conflictWorking, String propRejectFile, SVNLock lock) {
+            String conflictWorking, String propRejectFile, SVNLock lock, 
+            SVNDepth depth, String changelistName, long wcSize) {
         myFile = file;
         myURL = url;
         myRevision = SVNRevision.create(revision);
@@ -140,20 +154,21 @@ public class SVNInfo {
         myRepositoryRootURL = rootURL;
 
         myCommittedRevision = SVNRevision.create(committedRevision);
-        myCommittedDate = committedDate != null ? SVNTimeUtil
+        myCommittedDate = committedDate != null ? SVNDate
                 .parseDate(committedDate) : null;
         myAuthor = author;
 
         mySchedule = schedule;
         myChecksum = checksum;
-        myTextTime = textTime != null ? SVNTimeUtil.parseDate(textTime) : null;
-        myPropTime = propTime != null ? SVNTimeUtil.parseDate(propTime) : null;
+        myTextTime = textTime != null ? SVNDate.parseDate(textTime) : null;
+        myPropTime = propTime != null ? SVNDate.parseDate(propTime) : null;
 
         myCopyFromURL = copyFromURL;
         myCopyFromRevision = SVNRevision.create(copyFromRevision);
 
         myLock = lock;
-
+        myChangelistName = changelistName;
+        
         if (file != null) {
             if (conflictOld != null) {
                 myConflictOldFile = new File(file.getParentFile(), conflictOld);
@@ -172,11 +187,15 @@ public class SVNInfo {
         }
 
         myIsRemote = false;
+        myDepth = depth;
+        myWorkingSize = wcSize;
+        myRepositorySize = -1;
     }
 
     protected SVNInfo(String path, SVNURL url, SVNRevision revision,
             SVNNodeKind kind, String uuid, SVNURL reposRootURL,
-            long comittedRevision, Date date, String author, SVNLock lock) {
+            long comittedRevision, Date date, String author, SVNLock lock, 
+            SVNDepth depth, long size) {
         myIsRemote = true;
         myURL = url;
         myRevision = revision;
@@ -190,6 +209,9 @@ public class SVNInfo {
 
         myLock = lock;
         myPath = path;
+        myDepth = depth;
+        myRepositorySize = size;
+        myWorkingSize = -1;
     }
     
     /**
@@ -448,6 +470,26 @@ public class SVNInfo {
      */
     public SVNURL getURL() {
         return myURL;
+    }
+
+    public SVNDepth getDepth() {
+        return myDepth;
+    }
+
+    public String getChangelistName() {
+        return myChangelistName;
+    }
+
+    public long getWorkingSize() {
+        return myWorkingSize;
+    }
+
+    public long getRepositorySize() {
+        return myRepositorySize;
+    }
+
+    public SVNErrorMessage getError() {
+        return myError;
     }
 
 }

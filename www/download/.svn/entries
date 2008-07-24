@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/www/download
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/www/download
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
+2007-03-15T15:02:04.241225Z
+2977
 alex
 has-props
 
@@ -68,10 +68,10 @@ file
 
 
 
-2008-07-24T04:57:08.000000Z
-58e19df2834471b9ac88cb19567da913
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:18.000000Z
+03e7c23387017b0926e103ec6ec6d00c
+2007-03-15T15:02:04.241225Z
+2977
 alex
 
 .htaccess
@@ -92,10 +92,10 @@ file
 
 
 
-2008-07-24T04:57:08.000000Z
-7c41dba8991f50d58fab3f1b57d9a399
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:18.000000Z
+cdfdc7346095a1351dd86aa90ad70036
+2007-03-15T15:02:04.241225Z
+2977
 alex
 
 rss.php

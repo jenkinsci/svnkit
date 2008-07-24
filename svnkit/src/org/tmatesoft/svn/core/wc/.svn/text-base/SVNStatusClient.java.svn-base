@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,23 +12,23 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternalInfo;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
@@ -38,9 +38,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
@@ -205,9 +205,18 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
+        return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
+                collectParentExternals, handler, null);
+    }
+    
+    public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, 
+            boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler, 
+            final Collection changeLists) throws SVNException {
         if (handler == null) {
             return -1;
         }
+
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
         SVNWCAccess wcAccess = createWCAccess();
         SVNStatusEditor editor = null;
         final boolean[] deletedInRepository = new boolean[] {false};
@@ -216,28 +225,39 @@ public class SVNStatusClient extends SVNBasicClient {
                 if (deletedInRepository[0] && status.getEntry() != null) {
                     status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
                 } 
+                if (!SVNWCAccess.matchesChangeList(changeLists, status.getEntry())) {
+                    return;
+                }
                 handler.handleStatus(status);
             }
         };
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path, false, recursive ? -1 : 1);
-            Map externals = null;
-            if (collectParentExternals) {
-                // prefetch externals from parent dirs, and pass it to the editor.
-                externals = collectParentExternals(path, info.getAnchor().getRoot());
-            }
-            if (remote) {
-                SVNEntry entry = wcAccess.getEntry(info.getAnchor().getRoot(), false);
-                if (entry == null) {
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' is not under version control", path);
-                    SVNErrorManager.error(error);
+            SVNAdminAreaInfo info = null;
+            try {
+                SVNAdminArea anchor = wcAccess.open(path, false, SVNDepth.recurseFromDepth(depth) ? -1 : 1);
+                info = new SVNAdminAreaInfo(wcAccess, anchor, anchor, "");
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                    info = wcAccess.openAnchor(path, false, SVNDepth.recurseFromDepth(depth) ? -1 : 1);
+                } else {
+                    throw svne;
                 }
+            }
+            SVNEntry entry = null;
+//            Map externals = null;
+//            if (collectParentExternals) {
+//                // prefetch externals from parent dirs, and pass it to the editor.
+//                externals = collectParentExternals(path, info.getAnchor().getRoot());
+//            }
+            if (remote) {
+                SVNAdminArea anchor = info.getAnchor();
+                entry = wcAccess.getVersionedEntry(anchor.getRoot(), false);
                 if (entry.getURL() == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getAnchor().getRoot());
                     SVNErrorManager.error(error);
                 }
                 SVNURL url = entry.getSVNURL();
-                SVNRepository repository = createRepository(url, true);
+                SVNRepository repository = createRepository(url, anchor.getRoot(), wcAccess, true);
                 long rev;
                 if (revision == SVNRevision.HEAD) {
                     rev = -1;
@@ -250,57 +270,71 @@ public class SVNStatusClient extends SVNBasicClient {
                     if (!entry.isScheduledForAddition()) {
                         deletedInRepository[0] = true;
                     }
-                    editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, realHandler);
-                    editor.setExternals(externals);
+                    editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, 
+                            realHandler);
+//                    editor.setExternals(externals);
                     checkCancelled();
                     editor.closeEdit();
                 } else {
-                    editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, realHandler);
-                    editor.setExternals(externals);
+                    editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, 
+                            depth, realHandler);
+//                    editor.setExternals(externals);
                     // session is closed in SVNStatusReporter.
-                    SVNRepository locksRepos = createRepository(url, false);                    
+                    SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
                     checkCancelled();
-                    SVNReporter reporter = new SVNReporter(info, path, false, recursive, getDebugLog());
+                    boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+                    SVNReporter reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, 
+                            getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-                    repository.status(rev, target, recursive, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
+                    repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
                 }
                 if (getEventDispatcher() != null) {
-                    SVNEvent event = SVNEventFactory.createStatusCompletedEvent(info, editor.getTargetRevision());
+                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null);
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
-                editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, recursive, handler);
-                editor.setExternals(externals);
+                editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, handler);
+//                editor.setExternals(externals);
                 editor.closeEdit();
             }         
-            if (!isIgnoreExternals() && recursive) {
-                externals = editor.getExternals();
-                for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
-                    String externalPath = (String) paths.next();
-                    File externalFile = info.getAnchor().getFile(externalPath);
-                    if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
-                        continue;
-                    }
-                    try {
-                        int format = SVNAdminAreaFactory.checkWC(externalFile, true);
-                        if (format == 0) {
-                            // something unversioned instead of external.
+            if (!isIgnoreExternals() && (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
+                // iterate over externals that were collected in SVNAdminAreaInfo.
+                Map externalsMap = info.getNewExternals();
+                for (Iterator paths = externalsMap.keySet().iterator(); paths.hasNext();) {
+                    String ownerPath = (String) paths.next();
+                    String externalValue = (String) externalsMap.get(ownerPath);
+                    SVNExternal[] externals = SVNExternal.parseExternals(ownerPath, externalValue);
+                    
+                    for (int i = 0; i < externals.length; i++) {
+                        SVNExternal external = externals[i];
+                        String externalPath = SVNPathUtil.append(ownerPath, external.getPath());
+                        File externalFile = info.getAnchor().getFile(externalPath);
+                        if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
                             continue;
                         }
-                    } catch (SVNException e) {
-                        continue;
-                    }
-                    handleEvent(SVNEventFactory.createStatusExternalEvent(info, externalPath), ISVNEventHandler.UNKNOWN);
-                    setEventPathPrefix(externalPath);
-                    try {
-                        doStatus(externalFile, recursive, remote, reportAll, includeIgnored, false, handler);
-                    } catch (SVNException e) {
-                        if (e instanceof SVNCancelException) {
-                            throw e;
+                        try {
+                            int format = SVNAdminAreaFactory.checkWC(externalFile, true);
+                            if (format == 0) {
+                                // something unversioned instead of external.
+                                continue;
+                            }
+                        } catch (SVNException e) {
+                            continue;
                         }
-                    } finally {
-                        setEventPathPrefix(null);
+                        handleEvent(SVNEventFactory.createSVNEvent(externalFile, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null), 
+                                    ISVNEventHandler.UNKNOWN);
+                        setEventPathPrefix(externalPath);
+                        try {
+                            doStatus(externalFile, SVNRevision.HEAD, depth, remote, reportAll, includeIgnored, 
+                                    false, handler, null);
+                        } catch (SVNException e) {
+                            if (e instanceof SVNCancelException) {
+                                throw e;
+                            }
+                        } finally {
+                            setEventPathPrefix(null);
+                        }
                     }
                 }
             }
@@ -361,9 +395,9 @@ public class SVNStatusClient extends SVNBasicClient {
         doStatus(absPath, false, remote, true, true, collectParentExternals, handler);
         return result[0];
     }
-
+/*
     private Map collectParentExternals(File path, File root) throws SVNException {
-        Map externals = new HashMap();
+        Map externals = new SVNMap();
         SVNFileType type = SVNFileType.getType(path);
         if (type != SVNFileType.DIRECTORY) {
             return externals;
@@ -385,12 +419,12 @@ public class SVNStatusClient extends SVNBasicClient {
                 SVNVersionedProperties properties = area.getProperties("");
                 String external = properties.getPropertyValue(SVNProperty.EXTERNALS);
                 if (externals != null) {
-                    SVNExternalInfo[] infos = SVNWCAccess.parseExternals("", external);
+                    SVNExternal[] infos = SVNExternal.parseExternals(area.getRoot().getAbsolutePath(), external);
                     for (int i = 0; i < infos.length; i++) {
                         // info's path is relative to path, we should make it relative to the root,
                         // and only if it is child of the root.
                         File ext = new File(path, infos[i].getPath());
-                        if (SVNPathUtil.isChildOf(target, ext)) {
+                        if (SVNPathUtil.isAncestor(target.getAbsolutePath(), ext.getAbsolutePath())) {
                             // put into the map - path relative to root is a key.
                             String extPath = ext.getAbsolutePath().replace(File.separatorChar, '/');
                             String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
@@ -405,5 +439,5 @@ public class SVNStatusClient extends SVNBasicClient {
         }
         return externals;
     }
-
+*/
 }

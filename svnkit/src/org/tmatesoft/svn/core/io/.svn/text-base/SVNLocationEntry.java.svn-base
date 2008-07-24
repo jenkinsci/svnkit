@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,6 +11,9 @@
  */
 
 package org.tmatesoft.svn.core.io;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * The <b>SVNLocationEntry</b> represents a mapping of a path to its 
@@ -25,6 +28,8 @@ public class SVNLocationEntry {
     
     private long myRevision;
     private String myPath;
+    private boolean myIsResultOfMerge;
+    private Map myMergedMergeInfo;
     
     /**
      * Constructs an <b>SVNLocationEntry</b> object.
@@ -34,10 +39,16 @@ public class SVNLocationEntry {
      *                  the <code>revision</code>
      */
     public SVNLocationEntry(long revision, String path) {
+        this(revision, path, false, null);
+    }
+
+    public SVNLocationEntry(long revision, String path, boolean isResultOfMerge, Map mergedMergeInfo) {
         myRevision = revision;
         myPath = path;
+        myIsResultOfMerge = isResultOfMerge;
+        myMergedMergeInfo = mergedMergeInfo != null ? Collections.unmodifiableMap(mergedMergeInfo) : null;
     }
-    
+
     /**
      * Gets the path.
      * 
@@ -54,5 +65,13 @@ public class SVNLocationEntry {
      */
     public long getRevision() {
         return myRevision;
+    }
+
+    public boolean isResultOfMerge() {
+        return myIsResultOfMerge;
+    }
+    
+    public Map getMergedMergeInfo() {
+        return myMergedMergeInfo;
     }
 }

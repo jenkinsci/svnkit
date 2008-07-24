@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -28,6 +31,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession.SSHConnectionInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import com.trilead.ssh2.Session;
 import com.trilead.ssh2.StreamGobbler;
@@ -71,7 +75,7 @@ public class SVNSSHConnector implements ISVNConnector {
             try {
                 while (authentication != null) {
                     try {
-                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication);
+                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository));
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
                             SVNErrorManager.error(err);
@@ -79,7 +83,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                         break;
                     } catch (SVNAuthenticationException e) {
-                        SVNDebugLog.getDefaultLog().info(e);
+                        SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
                         authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
                         authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                         connection = null;
@@ -121,6 +125,15 @@ public class SVNSSHConnector implements ISVNConnector {
                     new StreamGobbler(mySession.getStderr());
                     myConnection = connection;
                     return;
+                } catch (SocketTimeoutException e) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
+                    SVNErrorManager.error(err, e);
+                } catch (UnknownHostException e) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
+                    SVNErrorManager.error(err, e);
+                } catch (ConnectException e) {
+	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
+                    SVNErrorManager.error(err, e);
                 } catch (IOException e) {
                     reconnect--;
                     if (reconnect >= 0) {
@@ -128,7 +141,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         connection.closeSession(mySession);
                         continue;
                     }
-                    repository.getDebugLog().info(e);
+                    repository.getDebugLog().logFine(e);
                     close(repository);
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});
                     SVNErrorManager.error(err, e);
@@ -146,13 +159,13 @@ public class SVNSSHConnector implements ISVNConnector {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
             SVNSSHSession.lock(Thread.currentThread());
-            SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
             try {
                 if (myConnection != null) {
                     if (myConnection.closeSession(mySession)) {
                         // no sessions left in connection, close it.
                         //  SVNSSHSession will make sure that connection is disposed if necessary.
-                        SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
+                        SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
                         SVNSSHSession.closeConnection(myConnection);
                         myConnection = null;
                     }
@@ -188,7 +201,7 @@ public class SVNSSHConnector implements ISVNConnector {
         } catch (IOException e) {
             // any failure here means that channel is stale.
             // session will be closed then.
-            SVNDebugLog.getDefaultLog().info(Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
             return true;
         }
         return false;

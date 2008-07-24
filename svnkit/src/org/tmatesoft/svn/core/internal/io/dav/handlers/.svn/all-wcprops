@@ -1,0 +1,107 @@
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
+END
+DAVGetLocksHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVGetLocksHandler.java
+END
+DAVMergeInfoHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVMergeInfoHandler.java
+END
+DAVLocationSegmentsHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVLocationSegmentsHandler.java
+END
+DAVLogHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVLogHandler.java
+END
+BasicDAVHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/BasicDAVHandler.java
+END
+DAVEditorHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVEditorHandler.java
+END
+DAVLockHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 123
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVLockHandler.java
+END
+DAVErrorHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVErrorHandler.java
+END
+DAVOptionsHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 126
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVOptionsHandler.java
+END
+DAVLocationsHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVLocationsHandler.java
+END
+BasicDAVDeltaHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/BasicDAVDeltaHandler.java
+END
+DAVReplayHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 125
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVReplayHandler.java
+END
+DAVPropertiesHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 129
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVPropertiesHandler.java
+END
+DAVDateRevisionHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVDateRevisionHandler.java
+END
+DAVFileRevisionHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 131
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVFileRevisionHandler.java
+END
+DAVMergeHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 124
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVMergeHandler.java
+END
+DAVProppatchHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 128
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers/DAVProppatchHandler.java
+END

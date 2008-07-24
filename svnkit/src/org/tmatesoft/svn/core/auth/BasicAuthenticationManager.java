@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.auth;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.ssl.TrustManager;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -48,9 +50,12 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private List myPasswordAuthentications;
     private List mySSHAuthentications;
     private List myUserNameAuthentications;
+    private List mySSLAuthentications;
+    
     private int mySSHIndex;
     private int myPasswordIndex;
     private int myUserNameIndex;
+    private int mySSLIndex;
 
     private String myProxyHost;
     private int myProxyPort;
@@ -107,8 +112,11 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         myPasswordAuthentications = new ArrayList();
         mySSHAuthentications = new ArrayList();
         myUserNameAuthentications = new ArrayList();
+        mySSLAuthentications = new ArrayList();
         myPasswordIndex = 0;
         mySSHIndex = 0;
+        mySSLIndex = 0;
+        myUserNameIndex = 0;
         for (int i = 0; authentications != null && i < authentications.length; i++) {
             SVNAuthentication auth = authentications[i];
             if (auth instanceof SVNPasswordAuthentication) {
@@ -117,6 +125,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
                 mySSHAuthentications.add(auth);                
             } else if (auth instanceof SVNUserNameAuthentication) {
                 myUserNameAuthentications.add(auth);                
+            } else if (auth instanceof SVNSSLAuthentication) {
+                mySSLAuthentications.add(auth);                
             }
         }
     }
@@ -146,6 +156,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameAuthentications.size() > 0) {
             myUserNameIndex = 0; 
             return (SVNAuthentication) myUserNameAuthentications.get(0);
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && mySSLAuthentications.size() > 0) {
+            mySSLIndex = 0; 
+            return (SVNAuthentication) mySSLAuthentications.get(0);
         }
         if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
@@ -168,6 +181,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameIndex + 1 < myUserNameAuthentications.size()) {
             myUserNameIndex++; 
             return (SVNAuthentication) myUserNameAuthentications.get(myUserNameIndex);
+        } else if (ISVNAuthenticationManager.SSL.equals(kind) && mySSLIndex + 1 < mySSLAuthentications.size()) {
+            mySSLIndex++; 
+            return (SVNAuthentication) mySSLAuthentications.get(mySSLIndex);
         } 
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;
@@ -192,19 +208,12 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
         return this;
     }
-    
-    /**
-     * Returns <span class="javakeyword">null</span>.
-     * 
-     * @param  url
-     * @return <span class="javakeyword">null</span>
-     * @throws SVNException
-     */
-    public ISVNSSLManager getSSLManager(SVNURL url) throws SVNException {
-        return null;
-    }
-    
-    /**
+
+	public TrustManager getTrustManager(SVNURL url) throws SVNException {
+		return null;
+	}
+
+	/**
      * Does nothing.
      * 
      * @param accepted
@@ -216,14 +225,6 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
     }
     
-    /**
-     * Does nothing.
-     * 
-     * @param storage
-     */
-    public void setRuntimeStorage(ISVNAuthenticationStorage storage) {
-    }
-
     public boolean isAuthenticationForced() {
         return myIsAuthenticationForced;
     }
@@ -257,8 +258,20 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
     }
 
-    public long getHTTPTimeout(SVNRepository repository) {
-        return 3600*1000;
+    public int getReadTimeout(SVNRepository repository) {
+        String protocol = repository.getLocation().getProtocol();
+        if ("http".equals(protocol) || "https".equals(protocol)) {
+            return 3600*1000;
+        }
+        return 0;
+    }
+
+    public int getConnectTimeout(SVNRepository repository) {
+        String protocol = repository.getLocation().getProtocol();
+        if ("http".equals(protocol) || "https".equals(protocol)) {
+            return 60*1000;
+        }
+        return 0; 
     }
 
 }

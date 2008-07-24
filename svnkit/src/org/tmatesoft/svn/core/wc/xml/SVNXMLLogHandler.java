@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc.xml;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -19,9 +20,10 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.internal.util.SVNTimeUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -47,6 +49,9 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
     public static final String LOGENTRY_TAG = "logentry";
     public static final String LOG_TAG = "log";
     
+    private boolean myIsOmitLogMessage;
+    private LinkedList myMergeStack;
+
     /**
      * Creates a new log handler.
      * 
@@ -85,6 +90,10 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
         }
     }
     
+    public void setOmitLogMessage(boolean omitLogMessage) {
+        myIsOmitLogMessage = omitLogMessage;
+    }
+    
     private void sendToHandler(SVNLogEntry logEntry) throws SAXException {
         if (logEntry.getRevision() == 0 && logEntry.getMessage() == null) {
             return;
@@ -95,7 +104,7 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
             addTag(AUTHOR_TAG, logEntry.getAuthor());
         }
         if (logEntry.getDate() != null && logEntry.getDate().getTime() != 0) {
-            addTag(DATE_TAG, SVNTimeUtil.formatDate(logEntry.getDate()));
+            addTag(DATE_TAG, SVNDate.formatDate(logEntry.getDate()));
         }
         if (logEntry.getChangedPaths() != null && !logEntry.getChangedPaths().isEmpty()) {
             openTag(PATHS_TAG);
@@ -111,10 +120,42 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
             }
             closeTag(PATHS_TAG);
         }
-        String message = logEntry.getMessage();
-        message = message == null ? "" : message;
-        addTag(MSG_TAG, message);
-        closeTag(LOGENTRY_TAG);
+        
+        if (!myIsOmitLogMessage) {
+            String message = logEntry.getMessage();
+            message = message == null ? "" : message;
+            addTag(MSG_TAG, message);
+        }
+        
+        if (myMergeStack != null && !myMergeStack.isEmpty()) {
+            MergeFrame frame = (MergeFrame) myMergeStack.getLast();
+            frame.myNumberOfChildrenRemaining--;
+        }
+        
+        //TODO: FIXME
+        if (logEntry.hasChildren()) {
+            MergeFrame frame = new MergeFrame();
+            //frame.myNumberOfChildrenRemaining = logEntry.getNumberOfChildren();
+            if (myMergeStack == null) {
+                myMergeStack = new LinkedList();
+            }
+            myMergeStack.addLast(frame);
+        } else {
+            while(myMergeStack != null && !myMergeStack.isEmpty()) {
+                MergeFrame frame = (MergeFrame) myMergeStack.getLast();
+                if (frame.myNumberOfChildrenRemaining == 0) {
+                    closeTag(LOGENTRY_TAG);
+                    myMergeStack.removeLast();
+                } else {
+                    break;
+                }
+            }
+            closeTag(LOGENTRY_TAG);
+        }
     }
     
+    private class MergeFrame {
+        private long myNumberOfChildrenRemaining;
+    }
+
 }

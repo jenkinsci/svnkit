@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,10 +11,10 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 
 
 /**
@@ -31,46 +31,10 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface ISVNMerger {
     
-    /**
-     * Generates deltas given the two text source files to be compared, applies
-     * the deltas against a local file and writes the merge result to the 
-     * given {@link java.io.OutputStream}.
-     * 
-     * @param  baseFile     the earliest file of the two to be compared to
-     *                      generate delta  
-     * @param  localFile    a local WC file against which the delta
-     *                      should be applied
-     * @param  latestFile   the latest file of the two to be compared to
-     *                      generate delta
-     * @param  dryRun       if <span class="javakeyword">true</span> - only 
-     *                      try to merge (to find out if an operation can succeed) 
-     *                      without actual merging
-     * @param  options      diff options to apply
-     * @param  out          an output stream where the result file contents
-     *                      should be written to
-     * @return              a result status of the operation; if success - 
-     *                      returns {@link SVNStatusType#MERGED}
-     * @throws SVNException
-     */
-    public SVNStatusType mergeText(File baseFile, File localFile, File latestFile, boolean dryRun, SVNDiffOptions options, OutputStream out) throws SVNException;
+    public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException;
+   
+	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
+			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff,
+			SVNAdminArea adminArea, SVNLog log, boolean baseMerge, boolean dryRun) throws SVNException;
 
-    /**
-     * Generates deltas given two binary files, applies
-     * the deltas against a local file and writes the merge result to the 
-     * given {@link java.io.OutputStream}.
-     * 
-     * @param  baseFile     the earliest file of the two to generate deltas  
-     * @param  localFile    a local WC file against which the deltas
-     *                      should be applied
-     * @param  latestFile   the latest file of the two to generate deltas
-     * @param  dryRun       if <span class="javakeyword">true</span> - only 
-     *                      try to merge (to find out if an operation can succeed) 
-     *                      without actual merging
-     * @param  out          an output stream where the result file contents
-     *                      should be written to
-     * @return              a result status of the operation; if success - 
-     *                      returns {@link SVNStatusType#MERGED}
-     * @throws SVNException
-     */
-    public SVNStatusType mergeBinary(File baseFile, File localFile, File latestFile, boolean dryRun, OutputStream out) throws SVNException;
 }

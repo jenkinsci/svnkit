@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -27,27 +28,64 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
 
     private Logger myLogger;
+    private SVNLogType myLogType;
 
-    public void info(String message) {
-        getLogger().log(Level.FINE, message);
+    public DefaultSVNDebugLogger(SVNLogType logType) {
+        myLogType = logType != null ? logType : SVNLogType.DEFAULT;
+    }
+    
+    public void logError(String message) {
+        log(message, Level.INFO);
     }
 
-    public void error(String message) {
-        getLogger().log(Level.SEVERE, message);
+    public void logError(Throwable th) {
+        log(th, Level.INFO);
     }
 
-    public void info(Throwable th) {
-        if (getLogger().isLoggable(Level.FINE)) {
-            getLogger().log(Level.FINE, th != null ? th.getMessage() : "", th);
+    public void logSevere(String message) {
+        log(message, Level.SEVERE);
+    }
+
+    public void logSevere(Throwable th) {
+        log(th, Level.SEVERE);
+    }
+
+    public void logFine(Throwable th) {
+        log(th, Level.FINE);
+    }
+
+    public void logFine(String message) {
+        log(message, Level.FINE);
+    }
+
+    public void logFiner(Throwable th) {
+        log(th, Level.FINER);
+    }
+
+    public void logFiner(String message) {
+        log(message, Level.FINER);
+    }
+
+    public void logFinest(Throwable th) {
+        log(th, Level.FINEST);
+    }
+
+    public void logFinest(String message) {
+        log(message, Level.FINEST);
+    }
+
+    public void log(Throwable th, Level logLevel) {
+        if (getLogger().isLoggable(logLevel) && th != null) {
+            getLogger().log(logLevel, getMessage(th.getMessage()), th);
         }
     }
 
-    public void error(Throwable th) {
-        if (getLogger().isLoggable(Level.SEVERE)) {
-            getLogger().log(Level.SEVERE, th != null ? th.getMessage() : "", th);
+    public void log(String message, Level logLevel) {
+        if (getLogger().isLoggable(logLevel) && message != null) {
+            getLogger().log(logLevel, getMessage(message));
         }
     }
-
+    
     public void log(String message, byte[] data) {
         if (getLogger().isLoggable(Level.FINEST)) {
             try {
@@ -74,8 +112,13 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
     
     private Logger getLogger() {
         if (myLogger == null) {
-            myLogger = Logger.getLogger("svnkit");
+            myLogger = Logger.getLogger(myLogType.getName());
         }
         return myLogger;
     }
+
+    private String getMessage(String originalMessage) {
+        return myLogType.getShortName() + ": " + originalMessage;
+    }
+
 }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,14 +11,16 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -32,7 +34,7 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     private ISVNReporter myReporter;
     private ISVNReporterBaton myBaton;
-    private String myRepositoryLocation;
+    private SVNURL myRepositoryLocation;
     private SVNRepository myRepository;
     private SVNURL myRepositoryRoot;
     private Map myLocks;
@@ -42,9 +44,9 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public SVNStatusReporter(SVNRepository repos, ISVNReporterBaton baton, SVNStatusEditor editor) {
         myBaton = baton;
         myRepository = repos;
-        myRepositoryLocation = repos.getLocation().toString();
+        myRepositoryLocation = repos.getLocation();
         myEditor = editor;
-        myLocks = new HashMap();
+        myLocks = new SVNHashMap();
     }
 
     public SVNLock getLock(SVNURL url) {
@@ -80,8 +82,8 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
     public void linkPath(SVNURL url, String path,
             String lockToken, long revison, boolean startEmpty)
             throws SVNException {
-        String rootURL = SVNPathUtil.getCommonURLAncestor(url.toString(), myRepositoryLocation);
-        if (rootURL.length() < myRepositoryLocation.length()) {
+        SVNURL rootURL = SVNURLUtil.getCommonURLAncestor(url, myRepositoryLocation);
+        if (SVNPathUtil.getPathAsChild(rootURL.getPath(), myRepositoryLocation.getPath()) != null) {
             myRepositoryLocation = rootURL;
         }
         myReporter.linkPath(url, path, lockToken, revison, startEmpty);
@@ -112,5 +114,17 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     public void abortReport() throws SVNException {
         myReporter.abortReport();
+    }
+
+    public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException {
+        SVNURL rootURL = SVNURLUtil.getCommonURLAncestor(url, myRepositoryLocation);
+        if (SVNPathUtil.getPathAsChild(rootURL.getPath(), myRepositoryLocation.getPath()) != null) {
+            myRepositoryLocation = rootURL;
+        }
+        myReporter.linkPath(url, path, lockToken, revison, depth, startEmpty);
+    }
+
+    public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
+        myReporter.setPath(path, lockToken, revision, depth, startEmpty);
     }
 }

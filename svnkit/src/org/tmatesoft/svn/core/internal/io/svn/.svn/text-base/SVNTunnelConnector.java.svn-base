@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -47,7 +47,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
             String username = repository.getLocation().getUserInfo();
             host = username + "@" + host;
         }
-        expandedTunnel = MessageFormat.format(TUNNEL_COMMAND, new String[] {expandedTunnel, host});
+        expandedTunnel = MessageFormat.format(TUNNEL_COMMAND, new Object[] {expandedTunnel, host});
         // 3. get and append --tunnel-user if needed.
         if (repository.getAuthenticationManager() != null) {
             SVNAuthentication auth = repository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.USERNAME, host, repository.getLocation());

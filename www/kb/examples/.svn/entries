@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/www/kb/examples
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/www/kb/examples
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
+2007-03-15T15:02:04.241225Z
+2977
 alex
 
 
@@ -35,10 +35,10 @@ file
 
 
 
-2008-07-24T04:57:12.000000Z
-f3bd858bb7e42a26331e9a3a296aad25
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:18.000000Z
+3e404d35d8422d5f3bdaa7d17b80d2ab
+2007-03-15T15:02:04.241225Z
+2977
 alex
 
 index.php
@@ -47,9 +47,9 @@ file
 
 
 
-2008-07-24T04:57:12.000000Z
-ad6b446cfc6cb393913b0388a728d67d
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:18.000000Z
+9dc0f23c6c4d1f337f3d5a99dd402c6a
+2007-03-15T15:02:04.241225Z
+2977
 alex
 

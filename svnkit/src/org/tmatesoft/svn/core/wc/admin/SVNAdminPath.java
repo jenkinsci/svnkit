@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -106,9 +106,10 @@ public class SVNAdminPath {
     }
 
     /**
-     * Returns a tree depth for this path.
-     * Repository root <code>"/"</code> starts 
-     * at depth 0. Depth is incremented with every 
+     * Returns a tree depth for this path which is relative to the depth of the 
+     * <code>SVNLookClient.doGetTree(...)</code> target path.
+     * Target path which is passed to <code>SVNLookClient.doGetTree(...)</code> starts 
+     * at depth 0. Then depth is incremented with every 
      * other segment of path.  
      * <p>
      * This information is relevant only for 

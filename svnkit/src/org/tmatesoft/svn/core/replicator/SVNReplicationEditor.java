@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -84,9 +86,9 @@ public class SVNReplicationEditor implements ISVNEditor {
     public SVNReplicationEditor(SVNRepository repository, ISVNEditor commitEditor, SVNLogEntry revision) {
         myRepos = repository;
         myCommitEditor = commitEditor;
-        myPathsToFileBatons = new HashMap();
+        myPathsToFileBatons = new SVNHashMap();
         myDirsStack = new Stack();
-        myCopiedPaths = new HashMap();
+        myCopiedPaths = new SVNHashMap();
         myChangedPaths = revision.getChangedPaths();
 
         for(Iterator paths = myChangedPaths.keySet().iterator(); paths.hasNext();){
@@ -122,7 +124,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 myChangedPaths.remove(absPath);
             }
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1,number,integer}", new Object[]{absPath, new Long(myPreviousRevision)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1}", new Object[]{absPath, new Long(myPreviousRevision)});
             SVNErrorManager.error(err);
         }
         myCommitEditor.deleteEntry(path, myPreviousRevision);
@@ -141,7 +143,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         SVNLogEntryPath changedPath = (SVNLogEntryPath) myChangedPaths.get(absPath);
         if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
             baton.myPropsAct = DECIDE;
-            HashMap props = new HashMap();
+            SVNProperties props = new SVNProperties();
             getSourceRepository().getDir(changedPath.getCopyPath(), changedPath.getCopyRevision(), props, (ISVNDirEntryHandler) null);
             baton.myProps = props;
             
@@ -172,7 +174,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.openDir(path, myPreviousRevision);
     }
 
-    public void changeDirProperty(String name, String value) throws SVNException {
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isRegularProperty(name)) {
             return;
         }
@@ -180,7 +182,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         if (baton.myPropsAct == ACCEPT) {
             myCommitEditor.changeDirProperty(name, value);
         } else if (baton.myPropsAct == DECIDE) {
-            String propVal = (String)baton.myProps.get(name);
+            SVNPropertyValue propVal = baton.myProps.getSVNPropertyValue(name);
             if (propVal != null && propVal.equals(value)) {
                 /*
                  * The properties seem to be the same as of the copy origin,
@@ -194,7 +196,6 @@ public class SVNReplicationEditor implements ISVNEditor {
              */
             baton.myPropsAct = ACCEPT;
             myCommitEditor.changeDirProperty(name, value);
-
         }
     }
 
@@ -216,7 +217,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         if (changedPath != null && (changedPath.getType() == SVNLogEntryPath.TYPE_ADDED || changedPath.getType() == SVNLogEntryPath.TYPE_REPLACED) && changedPath.getCopyPath() != null && changedPath.getCopyRevision() >= 0) {
             baton.myPropsAct = DECIDE;
             baton.myTextAct = ACCEPT;
-            Map props = new HashMap();
+            SVNProperties props = new SVNProperties();
             if (areFileContentsEqual(absPath, myTargetRevision, changedPath.getCopyPath(), changedPath.getCopyRevision(), props)) {
                 baton.myTextAct = IGNORE;
             }
@@ -242,7 +243,7 @@ public class SVNReplicationEditor implements ISVNEditor {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown error, can't get the copy origin of a file");
                 SVNErrorManager.error(err);
             }
-            Map props = new HashMap();
+            SVNProperties props = new SVNProperties();
             if (areFileContentsEqual(absPath, myTargetRevision, realPath.getCopyPath(), realPath.getCopyRevision(), props)) {
                 baton.myTextAct = IGNORE;
             }
@@ -286,15 +287,15 @@ public class SVNReplicationEditor implements ISVNEditor {
         return realPath;
     }
 
-    private boolean areFileContentsEqual(String path1, long rev1, String path2, long rev2, Map props2) throws SVNException {
-        Map props1 = new HashMap();
-        props2 = props2 == null ? new HashMap() : props2;
+    private boolean areFileContentsEqual(String path1, long rev1, String path2, long rev2, SVNProperties props2) throws SVNException {
+        SVNProperties props1 = new SVNProperties();
+        props2 = props2 == null ? new SVNProperties() : props2;
 
         SVNRepository repos = getSourceRepository();
         repos.getFile(path1, rev1, props1, null);
         repos.getFile(path2, rev2, props2, null);
-        String crc1 = (String) props1.get(SVNProperty.CHECKSUM);
-        String crc2 = (String) props2.get(SVNProperty.CHECKSUM);
+        String crc1 = props1.getStringValue(SVNProperty.CHECKSUM);
+        String crc2 = props2.getStringValue(SVNProperty.CHECKSUM);
         return crc1 != null && crc1.equals(crc2);
     }
 
@@ -328,7 +329,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
-    public void changeFileProperty(String path, String name, String value) throws SVNException {
+    public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isRegularProperty(name)) {
             return;
         }
@@ -336,7 +337,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         if (baton.myPropsAct == ACCEPT) {
             myCommitEditor.changeFileProperty(path, name, value);
         } else if (baton.myPropsAct == DECIDE) {
-            String propVal = (String)baton.myProps.get(name);
+            SVNPropertyValue propVal = baton.myProps.getSVNPropertyValue(name);
             if (propVal != null && propVal.equals(value)) {
                 /*
                  * The properties seem to be the same as of the copy origin,
@@ -456,7 +457,7 @@ public class SVNReplicationEditor implements ISVNEditor {
         private String myPath;
         private int myPropsAct;
         private int myTextAct;
-        private Map myProps;
+        private SVNProperties myProps;
     }
 }
 

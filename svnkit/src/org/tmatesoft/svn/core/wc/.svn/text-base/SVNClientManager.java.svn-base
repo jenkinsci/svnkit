@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -21,6 +22,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNClientManager</b> class is used to manage <b>SVN</b>*<b>Client</b> 
@@ -122,12 +124,15 @@ public class SVNClientManager implements ISVNRepositoryPool {
     private SVNStatusClient myStatusClient;
     private SVNUpdateClient myUpdateClient;
     private SVNWCClient myWCClient;
+    private SVNChangelistClient myChangelistClient;
     private SVNAdminClient myAdminClient;
     private SVNLookClient myLookClient;
     
     private ISVNEventHandler myEventHandler;
     private ISVNRepositoryPool myRepositoryPool;
     private ISVNDebugLog myDebugLog;
+
+    private boolean myIsIgnoreExternals;
 
     private SVNClientManager(ISVNOptions options, ISVNRepositoryPool repositoryPool) {
         myOptions = options;
@@ -209,7 +214,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * @param  password    a user password 
      * @return             a new <b>SVNClientManager</b> instance
      */
-    public static SVNClientManager newInstance(ISVNOptions options, String userName, String password) {
+    public static SVNClientManager newInstance(DefaultSVNOptions options, String userName, String password) {
         boolean storeAuth = options == null ? true : options.isAuthStorageEnabled();
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(null, userName, password, storeAuth);
         return new SVNClientManager(options, authManager);
@@ -269,6 +274,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myOptions;
     }
     
+
     /**
      * Sets an event handler to all <b>SVN</b>*<b>Client</b> objects 
      * created and kept by this <b>SVNClientManager</b>.
@@ -311,12 +317,58 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myWCClient != null) {
             myWCClient.setEventHandler(handler);
         }
+        if (myChangelistClient != null) {
+            myChangelistClient.setEventHandler(handler);
+        }
         if (myAdminClient != null) {
             myAdminClient.setEventHandler(handler);
         }
         if (myLookClient != null) {
             myLookClient.setEventHandler(handler);
         }
+    }
+    
+    /**
+     */
+    public void setIgnoreExternals(boolean isIgnoreExternals) {
+        myIsIgnoreExternals = isIgnoreExternals;
+        if (myCommitClient != null) {
+            myCommitClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myCopyClient != null) {
+            myCopyClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myDiffClient != null) {
+            myDiffClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myLogClient != null) {
+            myLogClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myMoveClient != null) {
+            myMoveClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myStatusClient != null) {
+            myStatusClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myUpdateClient != null) {
+            myUpdateClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myWCClient != null) {
+            myWCClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myChangelistClient != null) {
+            myChangelistClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myAdminClient != null) {
+            myAdminClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        if (myLookClient != null) {
+            myLookClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+    }
+    
+    public boolean isIgnoreExternals() {
+        return myIsIgnoreExternals;
     }
 
     public void setOptions(ISVNOptions options) {
@@ -370,6 +422,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myCommitClient = new SVNCommitClient(this, myOptions);
             myCommitClient.setEventHandler(myEventHandler);
             myCommitClient.setDebugLog(getDebugLog());
+            myCommitClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myCommitClient;
     }
@@ -391,6 +444,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myAdminClient = new SVNAdminClient(this, myOptions);
             myAdminClient.setEventHandler(myEventHandler);
             myAdminClient.setDebugLog(getDebugLog());
+            myAdminClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myAdminClient;
     }
@@ -412,6 +466,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myLookClient = new SVNLookClient(this, myOptions);
             myLookClient.setEventHandler(myEventHandler);
             myLookClient.setDebugLog(getDebugLog());
+            myLookClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myLookClient;
     }
@@ -433,6 +488,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myCopyClient = new SVNCopyClient(this, myOptions);
             myCopyClient.setEventHandler(myEventHandler);
             myCopyClient.setDebugLog(getDebugLog());
+            myCopyClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myCopyClient;
     }
@@ -454,6 +510,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myDiffClient = new SVNDiffClient(this, myOptions);
             myDiffClient.setEventHandler(myEventHandler);
             myDiffClient.setDebugLog(getDebugLog());
+            myDiffClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myDiffClient;
     }
@@ -475,6 +532,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myLogClient = new SVNLogClient(this, myOptions);
             myLogClient.setEventHandler(myEventHandler);
             myLogClient.setDebugLog(getDebugLog());
+            myLogClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myLogClient;
     }
@@ -496,6 +554,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myMoveClient = new SVNMoveClient(this, myOptions);
             myMoveClient.setEventHandler(myEventHandler);
             myMoveClient.setDebugLog(getDebugLog());
+            myMoveClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myMoveClient;
     }
@@ -517,6 +576,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myStatusClient = new SVNStatusClient(this, myOptions);
             myStatusClient.setEventHandler(myEventHandler);
             myStatusClient.setDebugLog(getDebugLog());
+            myStatusClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myStatusClient;
     }
@@ -538,6 +598,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myUpdateClient = new SVNUpdateClient(this, myOptions);
             myUpdateClient.setEventHandler(myEventHandler);
             myUpdateClient.setDebugLog(getDebugLog());
+            myUpdateClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myUpdateClient;
     }
@@ -559,8 +620,19 @@ public class SVNClientManager implements ISVNRepositoryPool {
             myWCClient = new SVNWCClient(this, myOptions);
             myWCClient.setEventHandler(myEventHandler);
             myWCClient.setDebugLog(getDebugLog());
+            myWCClient.setIgnoreExternals(myIsIgnoreExternals);
         }
         return myWCClient;
+    }
+    
+    public SVNChangelistClient getChangelistClient() {
+        if (myChangelistClient == null) {
+            myChangelistClient = new SVNChangelistClient(this, myOptions);
+            myChangelistClient.setEventHandler(myEventHandler);
+            myChangelistClient.setDebugLog(getDebugLog());
+            myChangelistClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        return myChangelistClient;
     }
     
     /**
@@ -575,7 +647,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
      */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
-            return SVNDebugLog.getDefaultLog();
+            return SVNDebugLog.getLog(SVNLogType.WC);
         }
         return myDebugLog;
     }
@@ -613,6 +685,9 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myWCClient != null) {
             myWCClient.setDebugLog(log);
         }
+        if (myChangelistClient != null) {
+            myChangelistClient.setDebugLog(log);
+        }
         if (myAdminClient != null) {
             myAdminClient.setDebugLog(log);
         }
@@ -634,5 +709,9 @@ public class SVNClientManager implements ISVNRepositoryPool {
         if (myRepositoryPool != null) {
             myRepositoryPool.setCanceller(canceller);
         }
+    }
+
+    public ISVNRepositoryPool getRepositoryPool() {
+        return myRepositoryPool;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -25,6 +27,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -44,10 +47,17 @@ public class SVNPlainConnector implements ISVNConnector {
         }
         SVNURL location = repository.getLocation();
         try {
-            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort());
-            mySocket.setSoTimeout(DEFAULT_SVN_TIMEOUT);
+            int connectTimeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getConnectTimeout(repository) : DEFAULT_SVN_TIMEOUT;
+            int readTimeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getReadTimeout(repository) : DEFAULT_SVN_TIMEOUT;
+            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout);
+        } catch (SocketTimeoutException e) {
+	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
+            SVNErrorManager.error(err, e);
         } catch (UnknownHostException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage());
+	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
+            SVNErrorManager.error(err, e);
+        } catch (ConnectException e) {
+	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
             SVNErrorManager.error(err, e);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
@@ -71,13 +81,13 @@ public class SVNPlainConnector implements ISVNConnector {
     
     public boolean isStale() {
         try {
-            SVNDebugLog.getDefaultLog().info("checking whether connection is stale.");
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("checking whether connection is stale.");
             boolean result = mySocket != null && SVNSocketFactory.isSocketStale(mySocket);
-            SVNDebugLog.getDefaultLog().info("connection is stale: " + result);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("connection is stale: " + result);
             return result;
         } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().info("failure during stale check");
-            SVNDebugLog.getDefaultLog().info(e);
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("failure during stale check");
+            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
             return true;
         }
     }

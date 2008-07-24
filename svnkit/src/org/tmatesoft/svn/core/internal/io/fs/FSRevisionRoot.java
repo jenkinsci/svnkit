@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,17 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -45,7 +42,7 @@ public class FSRevisionRoot extends FSRoot {
     }
 
     public Map getChangedPaths() throws SVNException {
-        FSFile file = getOwner().getRevisionFile(getRevision());
+        FSFile file = getOwner().getRevisionFSFile(getRevision());
         loadOffsets(file);
         try {
             file.seek(myChangesOffset);
@@ -58,10 +55,48 @@ public class FSRevisionRoot extends FSRoot {
     public FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException{
         return null;
     }
+    
+    public FSNodeHistory getNodeHistory(String path) throws SVNException {
+        SVNNodeKind kind = checkNodeKind(path);
+        if (kind == SVNNodeKind.NONE) {
+            SVNErrorManager.error(FSErrors.errorNotFound(this, path));
+        }
+        return new FSNodeHistory(new SVNLocationEntry(getRevision(), path), 
+                                 false, 
+                                 new SVNLocationEntry(SVNRepository.INVALID_REVISION, null),
+                                 getOwner());
+    }
+
+    public FSClosestCopy getClosestCopy(String path) throws SVNException {
+        FSParentPath parentPath = openPath(path, true, true);
+        SVNLocationEntry copyDstEntry = FSNodeHistory.findYoungestCopyroot(getOwner().getRepositoryRoot(), 
+                parentPath);
+        if (copyDstEntry == null || copyDstEntry.getRevision() == 0) {
+            return null;
+        }
+
+        FSRevisionRoot copyDstRoot = getOwner().createRevisionRoot(copyDstEntry.getRevision());
+        if (copyDstRoot.checkNodeKind(path) == SVNNodeKind.NONE) {
+            return null;
+        }
+        FSParentPath copyDstParentPath = copyDstRoot.openPath(path, true, true);
+        FSRevisionNode copyDstNode = copyDstParentPath.getRevNode();
+        if (!copyDstNode.getId().isRelated(parentPath.getRevNode().getId())) {
+            return null;
+        }
+
+        long createdRev = copyDstNode.getCreatedRevision();
+        if (createdRev == copyDstEntry.getRevision()) {
+            if (copyDstNode.getPredecessorId() == null) {
+                return null;
+            }
+        }
+        return new FSClosestCopy(copyDstRoot, copyDstEntry.getPath());
+    }
 
     public FSRevisionNode getRootRevisionNode() throws SVNException {
         if (myRootRevisionNode == null) {
-            FSFile file = getOwner().getRevisionFile(getRevision());
+            FSFile file = getOwner().getRevisionFSFile(getRevision());
             try {
                 loadOffsets(file);
                 file.seek(myRootOffset);
@@ -74,58 +109,92 @@ public class FSRevisionRoot extends FSRoot {
         return myRootRevisionNode;
     }
 
+    public SVNLocationEntry getPreviousLocation(String path, long[] appearedRevision) throws SVNException {
+        if (appearedRevision != null && appearedRevision.length > 0) {
+            appearedRevision[0] = SVNRepository.INVALID_REVISION;
+        }
+        FSClosestCopy closestCopy = getClosestCopy(path);
+        if (closestCopy == null) {
+            return null;
+        }
+        
+        FSRevisionRoot copyTargetRoot = closestCopy.getRevisionRoot();
+        String copyTargetPath = closestCopy.getPath();
+        FSRevisionNode copyFromNode = copyTargetRoot.getRevisionNode(copyTargetPath);
+        String copyFromPath = copyFromNode.getCopyFromPath();
+        long copyFromRevision = copyFromNode.getCopyFromRevision();
+        String remainder = "";
+        if (!path.equals(copyTargetPath)) {
+            remainder = path.substring(copyTargetPath.length());
+            if (remainder.startsWith("/")) {
+                remainder = remainder.substring(1);
+            }
+        }
+        String previousPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(copyFromPath, remainder));
+        if (appearedRevision != null && appearedRevision.length > 0) {
+            appearedRevision[0] = copyTargetRoot.getRevision();
+        }
+        return new SVNLocationEntry(copyFromRevision, previousPath);
+    }
+
+    public long getNodeOriginRevision(String path) throws SVNException {
+        FSRevisionNode node = getRevisionNode(path);
+        String nodeID = node.getId().getNodeID();
+        FSFS fsfs = getOwner();
+        if (nodeID.startsWith("_")) {
+            return SVNRepository.INVALID_REVISION;
+        }
+        
+        int dashIndex = nodeID.indexOf('-');
+        if (dashIndex != -1 && dashIndex != nodeID.length() - 1) {
+            return Long.parseLong(nodeID.substring(dashIndex + 1));
+        }
+        
+        String cachedOriginID = fsfs.getNodeOrigin(nodeID);
+        if (cachedOriginID != null) {
+            FSID id = FSID.fromString(cachedOriginID);
+            return id.getRevision();
+        }
+        
+        long lastRev = SVNRepository.INVALID_REVISION;
+        String lastPath = path; 
+        FSRevisionRoot curRoot = this;
+        while (true) {
+            if (FSRepository.isValidRevision(lastRev)) {
+                curRoot = fsfs.createRevisionRoot(lastRev);
+            }
+            
+            SVNLocationEntry previousLocation = curRoot.getPreviousLocation(lastPath, null);
+            if (previousLocation == null) {
+                break;
+            }
+            lastPath = previousLocation.getPath();
+            lastRev = previousLocation.getRevision();
+        }
+        
+        node = curRoot.getRevisionNode(lastPath);
+        FSID predID = node.getId();
+        while (predID != null) {
+            node = fsfs.getRevisionNode(predID);
+            predID = node.getPredecessorId();
+        }
+        
+        if (!nodeID.startsWith("_")) {
+            fsfs.setNodeOrigin(nodeID, node.getId());
+        }
+        
+        return node.getCreatedRevision();
+    }
+    
     private void loadOffsets(FSFile file) throws SVNException {
         if (myRootOffset >= 0) {
             return;
         }
-        ByteBuffer buffer = ByteBuffer.allocate(64);
-        file.seek(file.size() - 64);
-        try {
-            file.read(buffer);
-        } catch (IOException e) {
-        }
-        buffer.flip();
-        if (buffer.get(buffer.limit() - 1) != '\n') {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Revision file lacks trailing newline");
-            SVNErrorManager.error(err);
-        }
-        int spaceIndex = -1;
-        int eolIndex = -1;
-        for(int i = buffer.limit() - 2; i >=0; i--) {
-            byte b = buffer.get(i);
-            if (b == ' ' && spaceIndex < 0) {
-                spaceIndex = i;
-            } else if (b == '\n' && eolIndex < 0) {
-                eolIndex = i;
-                break;
-            }
-        }
-        if (eolIndex < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file longer than 64 characters");
-            SVNErrorManager.error(err);
-        }
-        if (spaceIndex < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file missing space");
-            SVNErrorManager.error(err);
-        }
-        CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-        try {
-            buffer.limit(buffer.limit() - 1);
-            buffer.position(spaceIndex + 1);
-            String line = decoder.decode(buffer).toString();
-            myChangesOffset = Long.parseLong(line);
-
-            buffer.limit(spaceIndex);
-            buffer.position(eolIndex + 1);
-            line = decoder.decode(buffer).toString();
-            myRootOffset = Long.parseLong(line); 
-        } catch (NumberFormatException nfe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file missing changes and root offsets");
-            SVNErrorManager.error(err, nfe);
-        } catch (CharacterCodingException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Final line in revision file missing changes and root offsets");
-            SVNErrorManager.error(err, e);
-        }
+        long[] rootOffset = { -1 };
+        long[] changesOffset = { -1 };
+        FSRepositoryUtil.loadRootChangesOffset(file, rootOffset, changesOffset);
+        myRootOffset = rootOffset[0];
+        myChangesOffset = changesOffset[0];
     }
 
 }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,10 +15,11 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +82,7 @@ public class SVNRevision {
      */
     public static final SVNRevision UNDEFINED = new SVNRevision("UNDEFINED", 30);
 
-    private static final Map ourValidRevisions = new HashMap();
+    private static final Map ourValidRevisions = new SVNHashMap();
 
     static {
         ourValidRevisions.put(HEAD.getName(), HEAD);
@@ -136,7 +137,9 @@ public class SVNRevision {
 
     private SVNRevision(Date date) {
         this(-1);
-        myDate = date;
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        calendar.setTime(date);
+        myDate = calendar.getTime();
         myID = 20;
     }
     

@@ -2,14 +2,14 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/doc/examples/src/org/tmatesoft/svn/examples/repository
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/doc/examples/src/org/tmatesoft/svn/examples/repository
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-01-27T19:14:22.740809Z
+3803
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-212bcadc03d60a9090ef13d3bd45a18c
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:24.000000Z
+4393bb17c07676defaf69d5386435a46
+2008-01-27T19:14:22.740809Z
+3803
+semen
 
 History.java
 file
@@ -44,11 +44,11 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-21368dd7fb0af6c1e4502657c3ffa59a
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:24.000000Z
+468623ca5c7af7792d99d4168eed8a33
+2007-01-09T05:54:45.383114Z
+2895
+sa
 
 DisplayFile.java
 file
@@ -56,10 +56,10 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-948f1f673b92155ccffdca6952537290
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:24.000000Z
+c1ad123e6873b4bb9122d3d3b67bbe6d
+2007-12-11T17:26:07.011958Z
+3710
 alex
 
 DisplayRepositoryTree.java
@@ -68,11 +68,11 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-720a5efaf25b53c99c97954cdad9c4f4
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:24.000000Z
+4a1aea28219499b183b03a0001b981d8
+2007-01-09T05:54:45.383114Z
+2895
+sa
 
 Commit.java
 file
@@ -80,11 +80,11 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-adadffa0098d4091aea046db3fab8acb
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:24.000000Z
+d5c9479bf72c204f92dab47d7530e3fe
+2007-01-09T05:54:45.383114Z
+2895
+sa
 
 Replicate.java
 file
@@ -92,10 +92,10 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-9b4ebdb754ba2d3b9209413bf734bca8
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:24.000000Z
+69f70ad70cce6fab095eb827ac3d5d29
+2008-01-27T19:14:22.740809Z
+3803
+semen
 has-props
 

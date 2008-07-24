@@ -2,13 +2,13 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/contrib/jna
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/contrib/jna
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-04-02T18:36:23.030446Z
-4102
+2008-04-02T18:38:00.119815Z
+4103
 alex
 
 
@@ -34,8 +34,8 @@ file
 
 2008-07-24T04:49:43.000000Z
 1dd5135f403ec5415992fd41d42f0e16
-2008-04-02T18:36:23.030446Z
-4102
+2008-04-02T18:38:00.119815Z
+4103
 alex
 has-props
 
@@ -47,8 +47,8 @@ file
 
 2008-07-24T04:49:43.000000Z
 b918ec4f85912074d53172618a205b7c
-2007-10-04T19:03:33.061122Z
-3521
+2007-10-11T15:36:00.683881Z
+3545
 alex
 has-props
 
@@ -60,8 +60,8 @@ file
 
 2008-07-24T04:49:43.000000Z
 cb77ccbd62412089d9878b33187b868a
-2008-04-02T18:36:23.030446Z
-4102
+2008-02-06T20:01:24.008946Z
+3826
 alex
 has-props
 

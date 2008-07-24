@@ -2,14 +2,14 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit/src/org/tmatesoft/svn/core/wc/xml
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/wc/xml
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-06-19T12:47:42.020106Z
+4357
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-ae0408f13ed5b9b1fcddf768a5a62a25
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+b0cf4a013e87a4f0fe61c874a6cdbce8
+2008-06-19T12:47:42.020106Z
+4357
+sa
 has-props
 
 schema
@@ -48,11 +48,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-25447ac22e1fdd5f19f896c9348fa328
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+2a897b80a40a67c946421406235b85ba
+2008-06-19T12:47:42.020106Z
+4357
+sa
 
 SVNXMLSerializer.java
 file
@@ -60,11 +60,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-f70395beb95bd3f13d18dbc200d2903b
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+099dd1e23ae39efba52bff15098c301f
+2007-11-14T17:29:00.809128Z
+3629
+semen
 has-props
 
 AbstractXMLHandler.java
@@ -73,11 +73,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-4cf8fa99be81c623eac03717a989a3c4
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+19e6371e577cd5e5fc3972ecba168581
+2007-11-14T17:29:00.809128Z
+3629
+semen
 has-props
 
 SVNXMLDirEntryHandler.java
@@ -86,11 +86,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-c4f7d8cae861d9169187ca7da93718b4
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+cea73f33e4473610589233577cd71184
+2008-06-19T12:47:42.020106Z
+4357
+sa
 has-props
 
 SVNXMLLogHandler.java
@@ -99,11 +99,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-85867b6c0cdeebe581a690e8018adb49
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+50906b166d4ac8ec73bf3672125e39b6
+2007-11-19T11:37:59.666694Z
+3654
+semen
 has-props
 
 SVNXMLStatusHandler.java
@@ -112,11 +112,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-532b450e9b328940297bca5b2f88d17c
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:46.000000Z
+bbc0269f74c9722ff3d7f152e8afdfc0
+2008-06-19T12:47:42.020106Z
+4357
+sa
 has-props
 
 dtd

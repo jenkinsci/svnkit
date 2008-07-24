@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -10,6 +10,8 @@
  * ====================================================================
  */
 package org.tmatesoft.svn.core.internal.wc;
+
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -26,27 +28,33 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNErrorManager {
 
     public static void cancel(String message) throws SVNCancelException {
-        SVNDebugLog.getDefaultLog().info(message);
+        cancel(message, Level.FINE);
+    }
+    
+    public static void cancel(String message, Level logLevel) throws SVNCancelException {
+        SVNDebugLog.getDefaultLog().log(message, logLevel);
         throw new SVNCancelException(SVNErrorMessage.create(SVNErrorCode.CANCELLED, message));
     }
 
     public static void authenticationFailed(String message, Object messageObject) throws SVNAuthenticationException {
+        authenticationFailed(message, messageObject, Level.FINE);
+    }
+    
+    public static void authenticationFailed(String message, Object messageObject, Level logLevel) throws SVNAuthenticationException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, message, messageObject);
-        SVNDebugLog.getDefaultLog().info(err.getMessage());
+        SVNDebugLog.getDefaultLog().log(err.getMessage(), logLevel);
         throw new SVNAuthenticationException(err);
     }
 
     public static void error(SVNErrorMessage err) throws SVNException {
-        error(err, true);
+        error(err, Level.FINE);
     }
     
-    public static void error(SVNErrorMessage err, boolean log) throws SVNException {
+    public static void error(SVNErrorMessage err, Level logLevel) throws SVNException {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
-        if (log) {
-            SVNDebugLog.getDefaultLog().info(err.getFullMessage());
-        }
+        SVNDebugLog.getDefaultLog().log(err.getFullMessage(), logLevel);
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {
@@ -55,12 +63,16 @@ public class SVNErrorManager {
             throw new SVNException(err);
         }
     }
-
+    
     public static void error(SVNErrorMessage err, Throwable cause) throws SVNException {
+        error(err, cause, Level.FINE);
+    }
+    
+    public static void error(SVNErrorMessage err, Throwable cause, Level logLevel) throws SVNException {
         if (err == null) {
             err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
         }
-        SVNDebugLog.getDefaultLog().info(err.getMessage());
+        SVNDebugLog.getDefaultLog().log(err.getMessage(), logLevel);
         if (err.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err);
         } else if (err.getErrorCode().isAuthentication()) {
@@ -71,13 +83,17 @@ public class SVNErrorManager {
     }
 
     public static void error(SVNErrorMessage err1, SVNErrorMessage err2) throws SVNException {
+        error(err1, err2, Level.FINE);
+    }
+    
+    public static void error(SVNErrorMessage err1, SVNErrorMessage err2, Level logLevel) throws SVNException {
         if (err1 == null) {
-            error(err2);
+            error(err2, logLevel);
         } else if (err2 == null) {
-            error(err1);
+            error(err1, logLevel);
         }
         err1.setChildErrorMessage(err2);
-        SVNDebugLog.getDefaultLog().info(err1.getMessage());
+        SVNDebugLog.getDefaultLog().log(err1.getMessage(), logLevel);
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err1);
         } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {
@@ -87,13 +103,17 @@ public class SVNErrorManager {
     }
 
     public static void error(SVNErrorMessage err1, SVNErrorMessage err2, Throwable cause) throws SVNException {
+        error(err1, err2, cause, Level.FINE);
+    }
+    
+    public static void error(SVNErrorMessage err1, SVNErrorMessage err2, Throwable cause, Level logLevel) throws SVNException {
         if (err1 == null) {
-            error(err2, cause);
+            error(err2, cause, logLevel);
         } else if (err2 == null) {
-            error(err1, cause);
+            error(err1, cause, logLevel);
         }
         err1.setChildErrorMessage(err2);
-        SVNDebugLog.getDefaultLog().info(err1.getMessage());
+        SVNDebugLog.getDefaultLog().log(err1.getMessage(), logLevel);
         if (err1.getErrorCode() == SVNErrorCode.CANCELLED || err2.getErrorCode() == SVNErrorCode.CANCELLED) {
             throw new SVNCancelException(err1);
         } else if (err1.getErrorCode().isAuthentication() || err2.getErrorCode().isAuthentication()) {

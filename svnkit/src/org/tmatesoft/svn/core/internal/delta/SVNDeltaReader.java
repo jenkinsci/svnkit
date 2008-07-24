@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -126,7 +126,7 @@ public class SVNDeltaReader {
                     instructionsLength = deflate(instructionsLength, out);
                     newDataLength = deflate(newDataLength, out);
                 } catch (IOException e) {
-                    SVNDebugLog.getDefaultLog().error(e);
+                    SVNDebugLog.getDefaultLog().logSevere(e);
                 }
                 byte[] bytes = out.toByteArray();
                 ByteBuffer decompressed = ByteBuffer.wrap(bytes);

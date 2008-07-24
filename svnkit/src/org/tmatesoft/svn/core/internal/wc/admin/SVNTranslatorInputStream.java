@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNSubstitutor;
 
 
@@ -56,10 +58,21 @@ public class SVNTranslatorInputStream extends InputStream {
         while(available < len) {
             int read = mySource.read(mySourceBuffer, 0, mySourceBuffer.length);
             if (read <= 0) {
-                myTranslatedBuffer = mySubstitutor.translateChunk(null, myTranslatedBuffer);
+                try {
+                    myTranslatedBuffer = mySubstitutor.translateChunk(null, myTranslatedBuffer);
+                } catch (SVNException svne) {
+                    IOExceptionWrapper wrappedException = new IOExceptionWrapper(svne);
+                    throw wrappedException;
+                }
                 break;
             }
-            myTranslatedBuffer = mySubstitutor.translateChunk(ByteBuffer.wrap(mySourceBuffer, 0, read), myTranslatedBuffer);
+            
+            try {
+                myTranslatedBuffer = mySubstitutor.translateChunk(ByteBuffer.wrap(mySourceBuffer, 0, read), myTranslatedBuffer);
+            } catch (SVNException svne) {
+                IOExceptionWrapper wrappedException = new IOExceptionWrapper(svne);
+                throw wrappedException;
+            }
             available = myTranslatedBuffer.position();
         }
         myTranslatedBuffer.flip();

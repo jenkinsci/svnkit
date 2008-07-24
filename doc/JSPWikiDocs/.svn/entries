@@ -2,7 +2,7 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/doc/JSPWikiDocs
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/doc/JSPWikiDocs
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -29,6 +29,9 @@ svn:special svn:externals svn:needs-lock
 Authentication
 dir
 
+SvnkitArchitecture
+dir
+
 SettingUpASubversionRepository.txt
 file
 
@@ -41,9 +44,6 @@ file
 2919
 sa
 has-props
-
-SvnkitArchitecture
-dir
 
 PrintingOutRepositoryHistory.txt
 file
@@ -83,19 +83,6 @@ has-props
 ReplicatingAnExistingRepository
 dir
 
-ManagingAWorkingCopy.txt
-file
-
-
-
-
-2008-07-24T04:49:43.000000Z
-bb7be57bee93d145306fd2c5dbe6ff09
-2007-01-26T19:26:17.328519Z
-2919
-sa
-has-props
-
 CommittingToARepository.txt
 file
 
@@ -109,14 +96,14 @@ file
 sa
 has-props
 
-LeftMenu.txt
+ManagingAWorkingCopy.txt
 file
 
 
 
 
 2008-07-24T04:49:43.000000Z
-7211931536883690f75dbce5e22d0487
+bb7be57bee93d145306fd2c5dbe6ff09
 2007-01-26T19:26:17.328519Z
 2919
 sa
@@ -130,6 +117,19 @@ file
 
 2008-07-24T04:49:43.000000Z
 19551afab2d85111379e2749d235a874
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+LeftMenu.txt
+file
+
+
+
+
+2008-07-24T04:49:43.000000Z
+7211931536883690f75dbce5e22d0487
 2007-01-26T19:26:17.328519Z
 2919
 sa

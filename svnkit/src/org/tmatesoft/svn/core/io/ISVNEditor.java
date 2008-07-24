@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * The <b>ISVNEditor</b> interface is used by <b>SVNRepository</b> to 
@@ -149,7 +150,8 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @throws SVNException
      * @see 					#openDir(String, long)
      */
-    public void changeDirProperty(String name, String value) throws SVNException;
+
+    public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException;
 
     /**
      * Closes the currently opened directory fixing all changes of its 
@@ -192,18 +194,9 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      * @throws SVNException
      */
     public void openFile(String path, long revision) throws SVNException;
-    
-    /**
-     * Changes the value of a property of an opened file.
-     * 
-     * @param  path			  a file path relative to the root       
-     *                        directory opened by {@link #openRoot(long) openRoot()}
-     * @param  name			  a file property name
-     * @param  value		  a new value for the property
-     * @throws SVNException
-     */
-    public void changeFileProperty(String path, String name, String value) throws SVNException;
-    
+
+    public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException;
+
     /**
      * Closes the opened file fixing all properties and/or contents changes. 
      * 

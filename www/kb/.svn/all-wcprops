@@ -1,167 +1,167 @@
 K 25
 svn:wc:ra_dav:version-url
-V 45
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb
-END
-mailinglist.html
-K 25
-svn:wc:ra_dav:version-url
-V 62
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/mailinglist.html
+V 51
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb
 END
 dev-guide-svnclient.html
 K 25
 svn:wc:ra_dav:version-url
-V 70
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-svnclient.html
+V 76
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-svnclient.html
+END
+mailinglist.html
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/mailinglist.html
 END
 dev-guide-general-options.html
 K 25
 svn:wc:ra_dav:version-url
-V 76
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-general-options.html
+V 82
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-general-options.html
 END
 user-guide-svnant.html
 K 25
 svn:wc:ra_dav:version-url
-V 68
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/user-guide-svnant.html
+V 74
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/user-guide-svnant.html
 END
 guide-commit-operation.html
 K 25
 svn:wc:ra_dav:version-url
-V 73
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/guide-commit-operation.html
+V 79
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/guide-commit-operation.html
 END
 ant.html
 K 25
 svn:wc:ra_dav:version-url
-V 54
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/ant.html
+V 60
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/ant.html
 END
 build-standalone.html
 K 25
 svn:wc:ra_dav:version-url
-V 67
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/build-standalone.html
-END
-user-guide-command-line-client.html
-K 25
-svn:wc:ra_dav:version-url
-V 81
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/user-guide-command-line-client.html
-END
-logging.html
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/logging.html
-END
-build-subclipse.html
-K 25
-svn:wc:ra_dav:version-url
-V 66
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/build-subclipse.html
+V 73
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/build-standalone.html
 END
 dev-guide-authentication.html
 K 25
 svn:wc:ra_dav:version-url
-V 75
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-authentication.html
+V 81
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-authentication.html
+END
+build-subclipse.html
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/build-subclipse.html
+END
+logging.html
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/logging.html
+END
+user-guide-command-line-client.html
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/user-guide-command-line-client.html
 END
 dev-guide-update-operation.html
 K 25
 svn:wc:ra_dav:version-url
-V 77
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-update-operation.html
+V 83
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-update-operation.html
 END
 guide-multithreaded-environment.html
 K 25
 svn:wc:ra_dav:version-url
-V 82
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/guide-multithreaded-environment.html
+V 88
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/guide-multithreaded-environment.html
 END
 user-guide-ant.html
 K 25
 svn:wc:ra_dav:version-url
-V 65
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/user-guide-ant.html
+V 71
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/user-guide-ant.html
 END
 dev-guide-authentication_ru.html
 K 25
 svn:wc:ra_dav:version-url
-V 78
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-authentication_ru.html
+V 84
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-authentication_ru.html
 END
 dev-guide-network-connection.html
 K 25
 svn:wc:ra_dav:version-url
-V 79
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-network-connection.html
+V 85
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-network-connection.html
 END
 dev-guide-commit-operation.html
 K 25
 svn:wc:ra_dav:version-url
-V 77
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-commit-operation.html
+V 83
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-commit-operation.html
 END
 plugin.html
 K 25
 svn:wc:ra_dav:version-url
-V 57
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/plugin.html
+V 63
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/plugin.html
 END
 user-guide-debug-logs.html
 K 25
 svn:wc:ra_dav:version-url
-V 72
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/user-guide-debug-logs.html
+V 78
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/user-guide-debug-logs.html
 END
 config-settings.html
 K 25
 svn:wc:ra_dav:version-url
-V 66
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/config-settings.html
+V 72
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/config-settings.html
 END
 dev-guide-multithreaded-environment.html
 K 25
 svn:wc:ra_dav:version-url
-V 86
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-multithreaded-environment.html
+V 92
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-multithreaded-environment.html
 END
 article-reporter-and-editor.html
 K 25
 svn:wc:ra_dav:version-url
-V 78
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/article-reporter-and-editor.html
+V 84
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/article-reporter-and-editor.html
 END
 index.html
 K 25
 svn:wc:ra_dav:version-url
-V 56
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/index.html
+V 62
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/index.html
 END
 dev-guide-setting-custom-logger.html
 K 25
 svn:wc:ra_dav:version-url
-V 82
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/dev-guide-setting-custom-logger.html
+V 88
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/dev-guide-setting-custom-logger.html
 END
 svnant.html
 K 25
 svn:wc:ra_dav:version-url
-V 57
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/svnant.html
+V 63
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/svnant.html
 END
 user-guide-javahl-replacement.html
 K 25
 svn:wc:ra_dav:version-url
-V 80
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/user-guide-javahl-replacement.html
+V 86
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/user-guide-javahl-replacement.html
 END
 user-guide-config-settings.html
 K 25
 svn:wc:ra_dav:version-url
-V 77
-/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/kb/user-guide-config-settings.html
+V 83
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/www/kb/user-guide-config-settings.html
 END

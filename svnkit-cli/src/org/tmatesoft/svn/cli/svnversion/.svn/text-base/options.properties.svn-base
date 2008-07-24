@@ -1,0 +1,4 @@
+no-newline=do not output the trailing newline
+committed=last changed rather than current revisions
+help=display this help
+version=show program version information

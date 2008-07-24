@@ -2,14 +2,14 @@
 
 dir
 4575
-http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit/src/org/tmatesoft/svn/core
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-04-09T15:49:04.505953Z
-4141
-alex
+2008-06-30T18:00:12.028742Z
+4466
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,12 +32,186 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-b2650a4661e2268634b52cd890e4ba25
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:47.000000Z
+1d7d8acf892e68aff4fcb159f6cea28c
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+SVNPropertyValue.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+19377f30831f6084c93af8d9fb73cabf
+2008-03-05T19:12:41.344522Z
+3916
+semen
+has-props
+
+auth
+dir
+
+SVNNodeKind.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+e69e5c5c359e490479a5078e95713406
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+SVNProperties.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+0465665e6130ee41f90f76188e21035b
+2008-06-27T14:43:13.816801Z
+4436
 alex
 has-props
+
+replicator
+dir
+
+SVNException.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+ce59e9647be656228f32c1a49c96fef7
+2008-01-09T17:13:07.583553Z
+3755
+alex
+has-props
+
+SVNErrorMessage.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+9ef838533eadfeae1687ab40ed45c986
+2008-01-09T17:13:07.583553Z
+3755
+alex
+has-props
+
+SVNAuthenticationException.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+3ee4886c30c2851901deeec765765906
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+SVNURL.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+68feec466d19789cd9919b58d4e53285
+2008-03-28T02:07:40.780210Z
+4072
+alex
+
+SVNRevisionProperty.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+b724e38fd13f21696d4ca6b6e05bcd69
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+SVNCancelException.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+98953fc4264a37f5df342e2174765282
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+internal
+dir
+
+ISVNDirEntryHandler.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+a3c331e115c565fd3787eb4be5cfe1eb
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+SVNMergeRangeList.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+145fd29d45ff40f837f749a90300c765
+2008-05-05T10:30:10.318291Z
+4234
+sa
+
+SVNMergeInfo.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+8eb0da1b1be15da10cbbbe481f3fa817
+2008-05-30T17:49:09.576963Z
+4283
+sa
+
+SVNMergeRange.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+bb4ff25279958cee995331c7ed8f2610
+2007-11-25T20:29:25.141573Z
+3678
+sa
 
 SVNLogEntryPath.java
 file
@@ -45,11 +219,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-ff34e76f242917b680fb47dd9fcc859f
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:47.000000Z
+faf41995da155acb74a4506a982f8495
+2007-01-09T05:54:45.383114Z
+2895
+sa
 has-props
 
 SVNAnnotationGenerator.java
@@ -58,11 +232,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-cb90a1176d16851be15c188081d0d5b5
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:47.000000Z
+9b198da75dfb80dc0fa44751da117906
+2008-06-05T12:34:21.270436Z
+4290
+semen
 has-props
 
 SVNErrorCode.java
@@ -71,11 +245,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-fa03f410eb73fe0c6b08269dc9178911
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:47.000000Z
+9a7ef5b1e4f28ff2beca20277b79473c
+2008-05-13T15:41:48.619188Z
+4243
+sa
 has-props
 
 SVNProperty.java
@@ -84,12 +258,24 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-ae3eeda1dfcbd320e792ffb7b585b286
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:47.000000Z
+b97e0953045cfdc83181d108f77e38d0
+2008-06-30T16:12:41.398204Z
+4459
 alex
 has-props
+
+SVNMergeInfoInheritance.java
+file
+
+
+
+
+2008-07-24T04:58:47.000000Z
+b33983aace5cbf9b5a12a74dd72caa43
+2008-01-10T16:49:23.399928Z
+3758
+sa
 
 package.html
 file
@@ -109,75 +295,14 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-31fa02862fba23fc0f4183e138af18dd
-2008-01-31T17:15:19.994189Z
-3814
-alex
-has-props
-
-auth
-dir
-
-SVNNodeKind.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-cf397ff9edc53d84c20802f3a1682d76
-2008-01-31T17:15:19.994189Z
-3814
-alex
-has-props
-
-replicator
-dir
-
-SVNException.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-a535cdae2a1185cb40b4091ad759c090
-2008-03-26T16:16:25.741747Z
-4056
-alex
+2008-07-24T04:58:47.000000Z
+d5934064a5c6e53c1c947e8a1dc4d87a
+2007-01-09T05:54:45.383114Z
+2895
+sa
 has-props
 
 javahl
-dir
-
-SVNErrorMessage.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-492d64e133887f73eb76c8a17803dad6
-2008-03-26T16:16:25.741747Z
-4056
-alex
-has-props
-
-SVNAuthenticationException.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-9c7fbfed2ef6dace1c2c19f2b321a24d
-2008-01-31T17:15:19.994189Z
-3814
-alex
-has-props
-
-io
 dir
 
 SVNDirEntry.java
@@ -186,12 +311,15 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-c623e18ac02c64ca29d6cb4c03b0550f
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:47.000000Z
+635968a8a936462dc428b3b15efb5e99
+2008-05-03T18:11:03.195405Z
+4232
+semen
 has-props
+
+io
+dir
 
 ISVNCanceller.java
 file
@@ -199,27 +327,15 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-8e67b917181a30a826b0b1661bf638be
-2008-01-31T17:15:19.994189Z
-3814
+2008-07-24T04:58:47.000000Z
+fc236601f0db9eb4e47d0690d661e4ac
+2007-05-24T14:23:16.557202Z
+3111
 alex
 has-props
 
 wc
 dir
-
-SVNURL.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-fab5fe72eb9167624ef3c7054132a048
-2008-01-31T17:15:19.994189Z
-3814
-alex
 
 SVNLogEntry.java
 file
@@ -227,24 +343,11 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-7a4f4697e9318a5c582d6d494bb51a0d
-2008-01-31T17:15:19.994189Z
-3814
-alex
-has-props
-
-SVNRevisionProperty.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-29c53e73cd98c93ec5b42f92ae10e56c
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:47.000000Z
+f44b2f75c3ee31ae42a1d0129dcab26e
+2008-03-03T17:44:17.020206Z
+3884
+sa
 has-props
 
 SVNCommitInfo.java
@@ -253,39 +356,22 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
-4a09538a9a6279bfe813dea8af5c2fe0
-2008-01-31T17:15:19.994189Z
-3814
-alex
+2008-07-24T04:58:47.000000Z
+abf4e629ce3e287c1998925e31e3e350
+2007-01-09T05:54:45.383114Z
+2895
+sa
 has-props
 
-SVNCancelException.java
+SVNDepth.java
 file
 
 
 
 
-2008-07-24T04:49:44.000000Z
-c0abfb8208abcf5219250982d9b920e8
-2008-01-31T17:15:19.994189Z
-3814
-alex
-has-props
-
-internal
-dir
-
-ISVNDirEntryHandler.java
-file
-
-
-
-
-2008-07-24T04:49:44.000000Z
-67b268625589daa4cc77c18f9e5acc5d
-2008-01-31T17:15:19.994189Z
-3814
-alex
-has-props
+2008-07-24T04:58:47.000000Z
+cdef3af071f5be284557871d10d28c8e
+2007-11-14T20:49:15.437330Z
+3632
+sa
 

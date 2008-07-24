@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,6 +30,8 @@ public class SVNAdminEvent {
     private File myTxnDir;
     private long myRevision;
     private long myOriginalRevision;
+    private long myDroppedRevisionsCount;
+    private int myDroppedNodesCount;
     private SVNAdminEventAction myAction;
     private String myPath;
     private String myMessage; 
@@ -107,6 +109,15 @@ public class SVNAdminEvent {
         myMessage = message;
         myAction = action;
         myLock = lock;
+    }
+
+    public SVNAdminEvent(SVNAdminEventAction action, String message) {
+        myAction = action;
+        myMessage = message;
+    }
+
+    public SVNAdminEvent(SVNAdminEventAction action) {
+        this(action, null);
     }
 
     /**
@@ -190,5 +201,21 @@ public class SVNAdminEvent {
 
     public SVNErrorMessage getError() {
         return myError;
+    }
+    
+    public void setDroppedRevisionsCount(long droppedRevisionsCount) {
+        myDroppedRevisionsCount = droppedRevisionsCount;
+    }
+    
+    public long getDroppedRevisionsCount() {
+        return myDroppedRevisionsCount;
+    }
+    
+    public int getDroppedNodesCount() {
+        return myDroppedNodesCount;
+    }
+    
+    public void setDroppedNodesCount(int droppedNodesCount) {
+        myDroppedNodesCount = droppedNodesCount;
     }
 }

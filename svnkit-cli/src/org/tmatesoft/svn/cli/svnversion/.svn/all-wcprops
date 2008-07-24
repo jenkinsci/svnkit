@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion
+END
+SVNVersionCommandEnvironment.java
+K 25
+svn:wc:ra_dav:version-url
+V 126
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/SVNVersionCommandEnvironment.java
+END
+SVNVersionHelpCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 119
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/SVNVersionHelpCommand.java
+END
+SVNVersionOption.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/SVNVersionOption.java
+END
+options.properties
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/options.properties
+END
+SVNVersionCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/SVNVersionCommand.java
+END
+SVNVersion.java
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/SVNVersion.java
+END
+commands.properties
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion/commands.properties
+END

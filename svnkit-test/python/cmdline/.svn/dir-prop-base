@@ -1,8 +1,9 @@
 K 10
 svn:ignore
-V 39
+V 52
 svn-test-work
 httpd-*
+.gdb_history
 *.pyc
 *.o
 *~

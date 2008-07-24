@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,15 +14,14 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-
 
 
 /**
@@ -31,12 +30,12 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public abstract class AbstractDiffCallback {
     
-    private SVNAdminAreaInfo myAdminInfo;
+    private SVNAdminArea myAdminArea;
     private File myBasePath;
     private Set myDeletedPaths;
     
-    protected AbstractDiffCallback(SVNAdminAreaInfo info) {
-        myAdminInfo = info;
+    protected AbstractDiffCallback(SVNAdminArea adminArea) {
+        myAdminArea = adminArea;
     }
     
     public void setBasePath(File path) {
@@ -44,56 +43,58 @@ public abstract class AbstractDiffCallback {
     }
     
     public abstract boolean isDiffUnversioned();
+
+    public abstract boolean isDiffCopiedAsAdded();
     
     public abstract File createTempDirectory() throws SVNException;
 
-    public abstract SVNStatusType propertiesChanged(String path, Map originalProperties, Map diff) throws SVNException;
+    public abstract SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException;
 
     public abstract SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            Map originalProperties, Map diff) throws SVNException;
+            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
     
     public abstract SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            Map originalProperties, Map diff) throws SVNException;
+            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
     
     public abstract SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, 
-            Map originalProperties) throws SVNException;
+            SVNProperties originalProperties) throws SVNException;
     
     public abstract SVNStatusType directoryAdded(String path, long revision) throws SVNException;
 
     public abstract SVNStatusType directoryDeleted(String path) throws SVNException;
     
     protected String getDisplayPath(String path) {
-        if (myAdminInfo == null) {
+        if (myAdminArea == null) {
             if (myBasePath != null) {
                 return new File(myBasePath, path).getAbsolutePath().replace(File.separatorChar, '/');
             }
             return path.replace(File.separatorChar, '/');
         }
-        return myAdminInfo.getAnchor().getFile(path).getAbsolutePath().replace(File.separatorChar, '/');
+        return myAdminArea.getFile(path).getAbsolutePath().replace(File.separatorChar, '/');
     }
     
-    protected void categorizeProperties(Map original, Map regular, Map entry, Map wc) {
+    protected void categorizeProperties(SVNProperties original, SVNProperties regular, SVNProperties entry, SVNProperties wc) {
         if (original == null) {
             return;
         }
-        for(Iterator propNames = original.keySet().iterator(); propNames.hasNext();) {
+        for(Iterator propNames = original.nameSet().iterator(); propNames.hasNext();) {
             String name = (String) propNames.next();
             if (SVNProperty.isRegularProperty(name) && regular != null) {
-                regular.put(name, original.get(name));
+                regular.put(name, original.getSVNPropertyValue(name));
             } else if (SVNProperty.isEntryProperty(name) && entry != null) {
-                entry.put(name, original.get(name));
+                entry.put(name, original.getSVNPropertyValue(name));
             } else if (SVNProperty.isWorkingCopyProperty(name) && wc != null) {
-                wc.put(name, original.get(name));
+                wc.put(name, original.getSVNPropertyValue(name));
             }
         }
     }
     
-    protected SVNAdminAreaInfo getAdminInfo() {
-        return myAdminInfo;        
+    protected SVNAdminArea getAdminArea() {
+        return myAdminArea;        
     }
     
     protected SVNWCAccess getWCAccess() {
-        return getAdminInfo().getWCAccess();
+        return getAdminArea().getWCAccess();
     }
     
     protected void addDeletedPath(String path) {
