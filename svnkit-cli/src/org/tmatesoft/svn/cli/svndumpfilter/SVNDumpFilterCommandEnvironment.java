@@ -154,7 +154,7 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
         } 
         if (commandName == null) {
             if (isVersion()) {
-                SVNDumpFilterCommand versionCommand = new SVNDumpFilterCommand("--version", null) {
+                SVNDumpFilterCommand versionCommand = new SVNDumpFilterCommand("--version", null, 0) {
                     protected Collection createSupportedOptions() {
                         LinkedList options = new LinkedList();
                         options.add(SVNDumpFilterOption.VERSION);

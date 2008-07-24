@@ -35,7 +35,7 @@ public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
         "Available subcommands:";
 
     public SVNDumpFilterHelpCommand() {
-        super("help", new String[] {"?", "h"});
+        super("help", new String[] {"?", "h"}, 1);
     }
     
     protected Collection createSupportedOptions() {
@@ -62,8 +62,12 @@ public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
                 public int compare(Object o1, Object o2) {
                     AbstractSVNCommand c1 = (AbstractSVNCommand) o1;
                     AbstractSVNCommand c2 = (AbstractSVNCommand) o2;
-                    if ("help".equalsIgnoreCase(c1.getName()) && !c1.getName().equals(c2.getName())) {
-                        return 1;
+                    if (c1 instanceof SVNDumpFilterCommand && c2 instanceof SVNDumpFilterCommand) {
+                        SVNDumpFilterCommand dumpFilterCommand1 = (SVNDumpFilterCommand) c1;
+                        SVNDumpFilterCommand dumpFilterCommand2 = (SVNDumpFilterCommand) c2;
+                        if (dumpFilterCommand1.getOutputPriority() != dumpFilterCommand2.getOutputPriority()) {
+                            return dumpFilterCommand1.getOutputPriority() < dumpFilterCommand2.getOutputPriority() ? -1 : 1;                            
+                        }
                     }
                     return c1.getName().compareTo(c2.getName());
                 }

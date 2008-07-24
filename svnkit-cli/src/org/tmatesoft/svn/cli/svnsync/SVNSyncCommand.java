@@ -23,8 +23,11 @@ import org.tmatesoft.svn.cli.AbstractSVNCommand;
  */
 public abstract class SVNSyncCommand extends AbstractSVNCommand {
 
-    public SVNSyncCommand(String name, String[] aliases) {
+    private int myOutputPriority;
+
+    public SVNSyncCommand(String name, String[] aliases, int outputPriority) {
         super(name, aliases);
+        myOutputPriority = outputPriority;
     }
 
     public Collection getGlobalOptions() {
@@ -39,4 +42,7 @@ public abstract class SVNSyncCommand extends AbstractSVNCommand {
         return (SVNSyncCommandEnvironment) getEnvironment();
     }
 
+    public int getOutputPriority() {
+        return myOutputPriority;
+    }
 }

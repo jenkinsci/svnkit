@@ -13,6 +13,7 @@ package org.tmatesoft.svn.cli.svnsync;
 
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -44,7 +45,7 @@ public class SVNSyncHelpCommand extends SVNSyncCommand {
         "  - handles 'file' scheme (only FSFS repositories are supported)\n";
 
     public SVNSyncHelpCommand() {
-        super("help", new String[] {"?", "h"});
+        super("help", new String[] {"?", "h"}, 1);
     }
     
     protected Collection createSupportedOptions() {
@@ -68,8 +69,24 @@ public class SVNSyncHelpCommand extends SVNSyncCommand {
             getEnvironment().getOut().println(version);
             getEnvironment().getOut().println(VERSION_HELP_FOOTER);
         } else if (getSVNSyncEnvironment().getArguments().isEmpty()) {
+
+            Comparator commandComparator = new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    AbstractSVNCommand c1 = (AbstractSVNCommand) o1;
+                    AbstractSVNCommand c2 = (AbstractSVNCommand) o2;
+                    if (c1 instanceof SVNSyncCommand && c2 instanceof SVNSyncCommand) {
+                        SVNSyncCommand syncCommand1 = (SVNSyncCommand) c1;
+                        SVNSyncCommand syncCommand2 = (SVNSyncCommand) c2;
+                        if (syncCommand1.getOutputPriority() != syncCommand2.getOutputPriority()) {
+                            return syncCommand1.getOutputPriority() < syncCommand2.getOutputPriority() ? -1 : 1;
+                        }
+                    }
+                    return c1.getName().compareTo(c2.getName());
+                }
+            };
+
             String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, 
-                    null, null);
+                    null, commandComparator);
             getSVNSyncEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] { 
