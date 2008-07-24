@@ -186,7 +186,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         } 
         if (commandName == null) {
             if (isVersion()) {
-                SVNSyncCommand versionCommand = new SVNSyncCommand("--version", null) {
+                SVNSyncCommand versionCommand = new SVNSyncCommand("--version", null, 0) {
                     protected Collection createSupportedOptions() {
                         LinkedList options = new LinkedList();
                         options.add(SVNSyncOption.VERSION);

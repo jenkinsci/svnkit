@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 public class SVNSyncInitializeCommand extends SVNSyncCommand implements ISVNAdminEventHandler {
 
     public SVNSyncInitializeCommand() {
-        super("initialize", new String[] { "init" });
+        super("initialize", new String[] { "init" }, 0);
     }
     
     protected Collection createSupportedOptions() {

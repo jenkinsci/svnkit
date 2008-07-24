@@ -27,7 +27,10 @@ import org.tmatesoft.svn.core.SVNException;
 public class SVNLookHelpCommand extends SVNLookCommand {
 
     private static final String GENERIC_HELP_HEADER = 
-        "general usage: {0} SUBCOMMAND REPOS_PATH  [ARGS & OPTIONS ...]\n" +
+        "general usage: {0} SUBCOMMAND REPOS_PATH [ARGS & OPTIONS ...]\n" +
+        "Note: any subcommand which takes the ''--revision'' and ''--transaction''\n" +
+        "      options will, if invoked without one of those options, act on\n" +
+        "      the repository''s youngest revision.\n" +
         "Note: any subcommand which takes the ''--revision'' and ''--transaction''\n" +
         "      options will, if invoked without one of those options, act on\n" +
         "      the repository''s youngest revision.\n" +

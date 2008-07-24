@@ -55,10 +55,10 @@ public class SVNSync extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNSyncOption.QUESTION);
         SVNCommandLine.registerOption(SVNSyncOption.VERSION);
         SVNCommandLine.registerOption(SVNSyncOption.CONFIG_DIR);
-        SVNCommandLine.registerOption(SVNSyncOption.SYNC_PASSWORD);
         SVNCommandLine.registerOption(SVNSyncOption.SYNC_USERNAME);
-        SVNCommandLine.registerOption(SVNSyncOption.SOURCE_PASSWORD);
+        SVNCommandLine.registerOption(SVNSyncOption.SYNC_PASSWORD);
         SVNCommandLine.registerOption(SVNSyncOption.SOURCE_USERNAME);
+        SVNCommandLine.registerOption(SVNSyncOption.SOURCE_PASSWORD);
         SVNCommandLine.registerOption(SVNSyncOption.USERNAME);
         SVNCommandLine.registerOption(SVNSyncOption.PASSWORD);
         SVNCommandLine.registerOption(SVNSyncOption.NO_AUTH_CACHE);

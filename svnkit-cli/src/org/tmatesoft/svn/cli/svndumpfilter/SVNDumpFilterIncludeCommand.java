@@ -32,7 +32,7 @@ public class SVNDumpFilterIncludeCommand extends SVNDumpFilterCommand implements
     private boolean myIsPrintFinalEOL;
 
     public SVNDumpFilterIncludeCommand() {
-        super("include", null);
+        super("include", null, 0);
     }
     
     public void run() throws SVNException {

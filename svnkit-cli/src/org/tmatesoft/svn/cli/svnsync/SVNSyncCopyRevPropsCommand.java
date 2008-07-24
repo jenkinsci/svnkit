@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
  */
 public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand implements ISVNAdminEventHandler {
     public SVNSyncCopyRevPropsCommand() {
-        super("copy-revprops", null);
+        super("copy-revprops", null, 1);
     }    
 
     protected Collection createSupportedOptions() {
