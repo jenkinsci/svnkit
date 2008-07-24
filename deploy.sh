@@ -6,7 +6,7 @@ version=1.2.0-beta-2-hudson-1
 
 # be sure to update pom.xml and svnkit.build.properties
 
-cmd=install:install-file
-#cmd=deploy:deploy-file
+#cmd=install:install-file
+cmd=deploy:deploy-file
 mvn $cmd -Dfile=build/lib/svnkit.jar -DrepositoryId=java.net2 -Durl=file:$(cygpath -wa ~m2repo) -DpomFile=pom.xml
 mvn $cmd -Dfile=build/lib/svnkitsrc.zip -DrepositoryId=java.net2 -Durl=file:$(cygpath -wa ~m2repo) -DpomFile=pom.xml -Dclassifier=sources
