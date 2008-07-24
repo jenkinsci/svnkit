@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/feed
+END
+rss_util.php
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/feed/rss_util.php
+END
+lgpl.txt
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/feed/lgpl.txt
+END
+feedcreator.class.php
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/feed/feedcreator.class.php
+END
+rss.php
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/repos/svnkit/!svn/ver/4142/tags/1.1.7/www/feed/rss.php
+END

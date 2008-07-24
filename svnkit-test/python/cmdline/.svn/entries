@@ -1,7 +1,7 @@
 8
 
 dir
-31731
+32289
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline
 http://svn.collab.net/repos/svn
 
@@ -279,17 +279,17 @@ e3f0b8fc50b82dd173c09bbddfe4c6aa
 julianfoad
 has-props
 
-blame_tests.py
+special_tests.py
 file
 
 
 
 
 2008-03-31T15:58:12.000000Z
-307ed4eee2c0d0fd4096af4080961bbd
-2006-07-03T09:18:49.123238Z
-20367
-lundblad
+e2fe8880ddfbcdb56c3dd165eb26adf8
+2007-10-30T20:10:45.500647Z
+27498
+glasser
 has-props
 
 prop_tests.py
@@ -305,30 +305,17 @@ file
 dlr
 has-props
 
-special_tests.py
+blame_tests.py
 file
 
 
 
 
 2008-03-31T15:58:12.000000Z
-e2fe8880ddfbcdb56c3dd165eb26adf8
-2007-10-30T20:10:45.500647Z
-27498
-glasser
-has-props
-
-export_tests.py
-file
-
-
-
-
-2008-03-31T15:58:12.000000Z
-1f725e19206c8873582a25045149fc04
-2007-03-26T17:03:33.737084Z
-24154
-hwright
+307ed4eee2c0d0fd4096af4080961bbd
+2006-07-03T09:18:49.123238Z
+20367
+lundblad
 has-props
 
 basic_tests.py
@@ -342,6 +329,19 @@ file
 2007-03-01T22:25:10.746413Z
 23542
 dlr
+has-props
+
+export_tests.py
+file
+
+
+
+
+2008-03-31T15:58:12.000000Z
+1f725e19206c8873582a25045149fc04
+2007-03-26T17:03:33.737084Z
+24154
+hwright
 has-props
 
 update_tests.py

@@ -1,7 +1,7 @@
 8
 
 dir
-4348
+4575
 http://svn.svnkit.com/repos/svnkit/tags/1.1.7/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-03-31T15:56:38.000000Z
+2008-07-24T04:49:43.000000Z
 a85679fc8e1977ca913b941adab64ff0
 2008-01-31T17:15:19.994189Z
 3814
@@ -48,7 +48,7 @@ file
 
 
 
-2008-03-31T15:56:38.000000Z
+2008-07-24T04:49:43.000000Z
 27d341bf11760af410bf1defb3ea3554
 2008-01-31T17:15:19.994189Z
 3814
