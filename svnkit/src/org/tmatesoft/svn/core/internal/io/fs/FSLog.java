@@ -28,14 +28,16 @@ import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
+import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -145,8 +147,7 @@ public class FSLog {
                         PathInfo info = histories[i];
                         currentPaths.add(info.myPath);
                     }
-                    mergeInfo = getMergedRevisionMergeInfo((String[]) currentPaths.toArray(new String[currentPaths.size()]), 
-                            currentRev);
+                    mergeInfo = getMergedRevisionMergeInfo((String[]) currentPaths.toArray(new String[currentPaths.size()]), currentRev);
                     hasChildren = !mergeInfo.isEmpty();
                 }
                 
@@ -334,49 +335,161 @@ public class FSLog {
         if (revision == 0) {
             return new TreeMap();
         }
-        
-        Map currentMergeInfo = getCombinedMergeInfo(paths, revision);  
-        Map previousMergeInfo = getCombinedMergeInfo(paths, revision - 1);
-        Map deleted = new TreeMap();
-        Map changed = new TreeMap();
-        SVNMergeInfoUtil.diffMergeInfo(deleted, changed, previousMergeInfo, currentMergeInfo, false);
-        changed = SVNMergeInfoUtil.mergeMergeInfos(changed, deleted);
-        return changed;
-    }
-    
-    private Map getCombinedMergeInfo(String[] paths, long revision) throws SVNException {
-        if (revision == 0) {
+        if (paths == null || paths.length == 0) {
             return new TreeMap();
         }
+        Map result = new SVNHashMap();
+        Map addedMergeInfoCatalog = new SVNHashMap();
+        Map deletedMergeInfoCatalog = new SVNHashMap();
         FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
-
-        List existingPaths = new LinkedList();
+        
+        collectChangedMergeInfo(addedMergeInfoCatalog, deletedMergeInfoCatalog, revision);
+        
         for (int i = 0; i < paths.length; i++) {
             String path = paths[i];
-            SVNNodeKind kind = root.checkNodeKind(path);
-            if (kind == SVNNodeKind.NONE) {
-                FSRevisionRoot revRoot = myFSFS.createRevisionRoot(revision + 1);
-                FSRevisionNode revNode = revRoot.getRevisionNode(path);
-                String copyPath = revNode.getCopyFromPath();
-                if (copyPath != null) {
-                    existingPaths.add(copyPath);
+            if (deletedMergeInfoCatalog.containsKey(path)) {
+                continue;
+            }
+            long[] appearedRevision = new long[] {-1};
+            SVNLocationEntry prevLocation = null;
+            try {
+                prevLocation = myFSFS.getPreviousLocation(path, revision, appearedRevision);                
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                    continue;
+                }
+                throw e;
+            }
+            String prevPath = null;
+            long prevRevision = -1;
+            if (!(prevLocation != null && prevLocation.getPath() != null && prevLocation.getRevision() >=0 && appearedRevision[0] == revision)) {
+                prevPath = path;
+                prevRevision = revision - 1;
+            } else if (prevLocation != null) {
+                prevPath = prevLocation.getPath();
+                prevRevision = prevLocation.getRevision();
+            }
+            
+            FSRevisionRoot prevRoot = myFSFS.createRevisionRoot(prevRevision);
+            String[] queryPaths = new String[] {prevPath};
+            Map catalog = null;
+            try {
+                catalog = getMergeInfoManager().getMergeInfo(queryPaths, prevRoot, SVNMergeInfoInheritance.INHERITED, false);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                    continue;
+                }
+                throw e;
+            }
+            SVNMergeInfo prevMergeinfo = (SVNMergeInfo) catalog.get(prevPath);
+            queryPaths = new String[] {path};
+            catalog = getMergeInfoManager().getMergeInfo(queryPaths, root, SVNMergeInfoInheritance.INHERITED, false);
+            SVNMergeInfo mergeInfo = (SVNMergeInfo) catalog.get(path);
+            
+            Map deleted = new SVNHashMap();
+            Map added = new SVNHashMap();
+            
+            SVNMergeInfoUtil.diffMergeInfo(deleted, added, 
+                    prevMergeinfo != null ? prevMergeinfo.getMergeSourcesToMergeLists() : null, mergeInfo != null ? mergeInfo.getMergeSourcesToMergeLists() : null, false);
+            
+            result = SVNMergeInfoUtil.mergeMergeInfos(result, SVNMergeInfoUtil.mergeMergeInfos(deleted, added));            
+        }
+        for(Iterator ps = addedMergeInfoCatalog.keySet().iterator(); ps.hasNext();) {
+            String changedPath = (String) ps.next();
+            Map addedMergeInfo = (Map) addedMergeInfoCatalog.get(changedPath);
+            for (int i = 0; i < paths.length; i++) {
+                String path = paths[i];
+                if (!SVNPathUtil.isAncestor(path, changedPath)) {
+                    continue;
+                }
+                Map deletedMergeInfo = (Map) deletedMergeInfoCatalog.get(changedPath);
+                result = SVNMergeInfoUtil.mergeMergeInfos(result, deletedMergeInfo);
+                result = SVNMergeInfoUtil.mergeMergeInfos(result, addedMergeInfo);
+                break;
+            }
+        }
+        return result;
+    }
+    
+    private void collectChangedMergeInfo(Map addedMergeInfo, Map deletedMergeInfo, long revision) throws SVNException {
+        if (revision == 0) {
+            return;
+        }
+        FSRevisionRoot root = myFSFS.createRevisionRoot(revision);
+        Map changedPaths = root.getChangedPaths();
+        if (changedPaths == null || changedPaths.isEmpty()) {
+            return;
+        }
+        for (Iterator paths = changedPaths.keySet().iterator(); paths.hasNext();) {
+            String changedPath = (String) paths.next();
+            FSPathChange change = (FSPathChange) changedPaths.get(changedPath);
+            if (!change.arePropertiesModified()) {
+                continue;
+            }
+            FSPathChangeKind changeKind = change.getChangeKind();
+            
+            String basePath = null;
+            long baseRevision = -1;
+            String mergeInfoValue = null;
+            String previousMergeInfoValue = null;
+            
+            if (changeKind == FSPathChangeKind.FS_PATH_CHANGE_ADD ||
+                    changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
+                String copyFromPath = change.getCopyPath();
+                long copyFromRev = change.getCopyRevision();
+                if (copyFromPath != null && copyFromRev >= 0) {
+                    basePath = copyFromPath;
+                    baseRevision = copyFromRev;
+                }
+            } else if (changeKind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY) {
+                long[] appearedRevision = new long[] {-1};
+                SVNLocationEntry prevLocation = myFSFS.getPreviousLocation(changedPath, revision, appearedRevision);
+                if (!(prevLocation != null && 
+                        prevLocation.getPath() != null && prevLocation.getRevision() >= 0 && appearedRevision[0] == prevLocation.getRevision())) {
+                    basePath = changedPath;
+                    baseRevision = revision - 1;
+                } else {
+                    basePath = prevLocation.getPath();
+                    baseRevision = prevLocation.getRevision();
                 }
             } else {
-                existingPaths.add(path);
+                continue;
+            }
+            if (basePath != null && baseRevision >= 0) {
+                FSRevisionRoot baseRoot = myFSFS.createRevisionRoot(baseRevision);
+                String[] queryPaths = new String[] {basePath};
+                Map baseCatalog = getMergeInfoManager().getMergeInfo(queryPaths, baseRoot, SVNMergeInfoInheritance.INHERITED, false);
+                SVNMergeInfo baseMergeInfo = (SVNMergeInfo) baseCatalog.get(basePath);
+                if (baseMergeInfo != null) {
+                    previousMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(baseMergeInfo.getMergeSourcesToMergeLists());
+                }
+            }
+            SVNProperties props = myFSFS.getProperties(root.getRevisionNode(changedPath));
+            if (props != null) {
+                mergeInfoValue = props.getStringValue(SVNProperty.MERGE_INFO);
+            }
+            
+            if ((previousMergeInfoValue != null && mergeInfoValue == null) ||
+                    (previousMergeInfoValue == null && mergeInfoValue != null) ||
+                    (previousMergeInfoValue != null && mergeInfoValue != null &&
+                            !previousMergeInfoValue.equals(mergeInfoValue))) {
+                Map mergeInfo = null;
+                Map previousMergeInfo = null;
+                if (mergeInfoValue != null) {
+                    mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoValue), null);
+                }
+                if (previousMergeInfoValue != null) {
+                    previousMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(previousMergeInfoValue), null);
+                }
+                Map added = new SVNHashMap();
+                Map deleted = new SVNHashMap();
+                SVNMergeInfoUtil.diffMergeInfo(deleted, added, previousMergeInfo, mergeInfo, false);
+                
+                addedMergeInfo.put(changedPath, added);
+                deletedMergeInfo.put(changedPath, deleted);
             }
         }
         
-        String[] queryPaths = (String[]) existingPaths.toArray(new String[existingPaths.size()]);
-        SVNMergeInfoManager mergeInfoManager = getMergeInfoManager(); 
-        Map treeMergeInfo = mergeInfoManager.getMergeInfo(queryPaths, root, SVNMergeInfoInheritance.INHERITED, 
-                true);
-        Map mergeInfoCatalog = new TreeMap();
-        for (Iterator mergeInfoIter = treeMergeInfo.values().iterator(); mergeInfoIter.hasNext();) {
-            SVNMergeInfo mergeInfo = (SVNMergeInfo) mergeInfoIter.next();
-            mergeInfoCatalog = SVNMergeInfoUtil.mergeMergeInfos(mergeInfoCatalog, 
-                    mergeInfo.getMergeSourcesToMergeLists());
-        }
-        return mergeInfoCatalog;
     }
 
     private LinkedList combineMergeInfoPathLists(Map mergeInfo) {
