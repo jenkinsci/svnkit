@@ -19,7 +19,7 @@ import java.util.Map;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -300,7 +300,7 @@ public class SVNSubstitutor {
             if (!repair && (lastEOLLength[0] != nextEOLLength || !Arrays.equals(lastEOL, nextEOL))) {
                 // inconsistent EOLs.
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_INCONSISTENT_EOL);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         } else {
             lastEOLLength[0] = nextEOLLength;

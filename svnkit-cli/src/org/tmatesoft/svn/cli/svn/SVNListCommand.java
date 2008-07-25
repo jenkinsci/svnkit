@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -60,13 +61,13 @@ public class SVNListCommand extends SVNXMLCommand implements ISVNDirEntryHandler
         }
         if (getSVNEnvironment().isXML()) {
             if (getSVNEnvironment().isVerbose()) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'verbose' option invalid in XML mode"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'verbose' option invalid in XML mode"), SVNLogType.CLIENT);
             }
             if (!getSVNEnvironment().isIncremental()) {
                 printXMLHeader("lists");
             }
         } else if (getSVNEnvironment().isIncremental()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"), SVNLogType.CLIENT);
         }
         
         SVNDepth depth = getSVNEnvironment().getDepth();

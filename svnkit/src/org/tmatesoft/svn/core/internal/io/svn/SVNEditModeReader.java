@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -88,7 +89,7 @@ public class SVNEditModeReader {
         Boolean tokenType = (Boolean) myTokens.get(token);
         if (tokenType == null || tokenType != Boolean.valueOf(isFile)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Invalid file or dir token during edit");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
     }
 
@@ -190,7 +191,7 @@ public class SVNEditModeReader {
             if (!myForReplay) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_SVN_UNKNOWN_CMD,
                         "Command 'finish-replay' invalid outside of replays");
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             }
             myDone = true;
             myAborted = false;
@@ -227,7 +228,7 @@ public class SVNEditModeReader {
                     myConnection.writeError(error.getChildErrorMessage());
                     break;
                 }
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             }
         }
 
@@ -240,7 +241,7 @@ public class SVNEditModeReader {
 
     private List readTuple(String template, boolean readMalformedData) throws SVNException {
         if (myConnection == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED), SVNLogType.NETWORK);
         }
         return myConnection.readTuple(template, readMalformedData);
     }

@@ -22,10 +22,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -53,10 +54,10 @@ public class SVNExportCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(new ArrayList(), true);
         if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         if (targets.size() > 2) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR), SVNLogType.CLIENT);
         }
         SVNPath from = new SVNPath((String) targets.get(0), true);
         SVNRevision pegRevision = from.getPegRevision();
@@ -91,7 +92,7 @@ public class SVNExportCommand extends SVNCommand {
             if (err != null && err.getErrorCode() == SVNErrorCode.WC_OBSTRUCTED_UPDATE) {
                 err = err.wrap("Destination directory exists; please remove the directory or use --force to overwrite");
             }
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
 

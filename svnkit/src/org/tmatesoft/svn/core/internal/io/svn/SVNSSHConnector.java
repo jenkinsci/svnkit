@@ -78,7 +78,7 @@ public class SVNSSHConnector implements ISVNConnector {
                         connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository));
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                         break;
@@ -90,15 +90,15 @@ public class SVNSSHConnector implements ISVNConnector {
                     }
                 }
                 if (authentication == null) {
-                    SVNErrorManager.cancel("authentication cancelled");
+                    SVNErrorManager.cancel("authentication cancelled", SVNLogType.NETWORK);
                 } else if (connection == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm), SVNLogType.NETWORK);
                 }
                 try {
                     mySession = connection.openSession();
                     SVNAuthentication author = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, repository.getLocation());
                     if (author == null) {
-                        SVNErrorManager.cancel("authentication cancelled");
+                        SVNErrorManager.cancel("authentication cancelled", SVNLogType.NETWORK);
                     }
                     String userName = author.getUserName();
                     if (userName == null || "".equals(userName.trim())) {
@@ -127,13 +127,13 @@ public class SVNSSHConnector implements ISVNConnector {
                     return;
                 } catch (SocketTimeoutException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 } catch (UnknownHostException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 } catch (ConnectException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 } catch (IOException e) {
                     reconnect--;
                     if (reconnect >= 0) {
@@ -144,7 +144,7 @@ public class SVNSSHConnector implements ISVNConnector {
                     repository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                     close(repository);
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 }
             } finally {
                 SVNSSHSession.unlock();

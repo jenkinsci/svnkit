@@ -19,8 +19,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.Iterator;
 import java.util.Comparator;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
 
 
@@ -71,12 +72,12 @@ public class SVNCommandUtil {
             if (mergeToolCommand.length() == 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL, 
                         "The SVN_MERGE environment variable is empty or consists solely of whitespace. Expected a shell command.");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL, 
                     "The environment variable SVN_MERGE and the merge-tool-cmd run-time configuration option were not set.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         String result = null;
@@ -98,7 +99,7 @@ public class SVNCommandUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
                     mergeToolCommand + " " + basePath + " " + repositoryPath + " " + localPath + " " + 
                     mergeResultPath +  "' failed.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
 
@@ -124,7 +125,7 @@ public class SVNCommandUtil {
         if (result == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
                     editorCommand + " " + path + "' failed.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     
@@ -137,7 +138,7 @@ public class SVNCommandUtil {
             os.write(existingValue);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -164,7 +165,7 @@ public class SVNCommandUtil {
             }
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             // now read from file.
             if (timestamp == tmpFile.lastModified()) {
@@ -184,7 +185,7 @@ public class SVNCommandUtil {
                 }
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             } finally {
                 SVNFileUtil.closeFile(is);
             }
@@ -215,12 +216,12 @@ public class SVNCommandUtil {
             }
         }
         if (reader.getError() != null) {
-            SVNErrorManager.error(reader.getError());
+            SVNErrorManager.error(reader.getError(), SVNLogType.CLIENT);
         }
         if (input == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Can't read stdin: End of file found");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
         } 
         return input;
     }
@@ -255,7 +256,7 @@ public class SVNCommandUtil {
                 "consists solely of whitespace. Expected a shell command.";
         }
         if (errorMessage != null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, errorMessage));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, errorMessage), SVNLogType.CLIENT);
         }
         return command;
     }

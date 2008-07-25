@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorInputStream;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -64,15 +65,15 @@ public class SVNPathBasedAccess {
         InputStream stream = null;
 
         try {
-            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(pathBasedAccessConfiguration), SVNProperty.EOL_LF_BYTES, true, null, false);
+            stream = new SVNTranslatorInputStream(SVNFileUtil.openFileForReading(pathBasedAccessConfiguration, SVNLogType.NETWORK), SVNProperty.EOL_LF_BYTES, true, null, false);
         } catch (SVNException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Failed to load the AuthzSVNAccessFile: ''{0}''", pathBasedAccessConfiguration.getAbsolutePath()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Failed to load the AuthzSVNAccessFile: ''{0}''", pathBasedAccessConfiguration.getAbsolutePath()), SVNLogType.NETWORK);
         }
 
         try {
             parse(stream);
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()), SVNLogType.NETWORK);
         }
 
         validate();
@@ -208,7 +209,7 @@ public class SVNPathBasedAccess {
                     if (getCurrentLineColumn() == 0) {
                         parseSectionName(is);
                     } else {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header must start in the first column.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header must start in the first column.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}), SVNLogType.NETWORK);
                     }
                     break;
                 case'#':
@@ -216,7 +217,7 @@ public class SVNPathBasedAccess {
                         skipToEndOfLine(is);
                         increaseCurrentLineNumber();
                     } else {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Comment must start in the first column.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Comment must start in the first column.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}), SVNLogType.NETWORK);
                     }
                     break;
                 case'\n':
@@ -227,9 +228,9 @@ public class SVNPathBasedAccess {
                     break;
                 default:
                     if (getSectionName().length() == 0) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header expected.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header expected.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}), SVNLogType.NETWORK);
                     } else if (getCurrentLineColumn() != 0) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Option expected.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Option expected.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}), SVNLogType.NETWORK);
                     } else {
                         parseOption(is, currentByte);
                     }
@@ -248,7 +249,7 @@ public class SVNPathBasedAccess {
             currentByte = getc(is);
         }
         if (currentByte != ']') {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header must end with ']'.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Section header must end with ']'.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}), SVNLogType.NETWORK);
         } else {
             currentByte = skipToEndOfLine(is);
             if (currentByte != -1) {
@@ -266,7 +267,7 @@ public class SVNPathBasedAccess {
             currentByte = getc(is);
         }
         if (currentByte != ':' && currentByte != '=') {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Option must end with ':' or '='.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "''{0}'' : ''{1}'' : Option must end with ':' or '='.", new Object[]{getConfigPath(), new Integer(getCurrentLineNumber())}), SVNLogType.NETWORK);
         } else {
             trimBuffer(getOption());
             currentByte = parseValue(is);
@@ -373,7 +374,7 @@ public class SVNPathBasedAccess {
     private void updateGroups() throws SVNException {
         String groupName = getOption().toString();
         if (getValue().length() == 0) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined", groupName));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined", groupName), SVNLogType.NETWORK);
         }
         String[] users = COMMA.split(getValue());
         getGroups().put(groupName, users);
@@ -382,7 +383,7 @@ public class SVNPathBasedAccess {
     private void updateAliases() throws SVNException {
         String alias = getOption().toString();
         if (getValue().length() == 0) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alies ''{0}'', which is undefined", alias));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alies ''{0}'', which is undefined", alias), SVNLogType.NETWORK);
         }
         getAliases().put(alias, getValue().toString());
     }
@@ -395,20 +396,20 @@ public class SVNPathBasedAccess {
 
         if (getOption().charAt(0) == '~') {
             if (getOption().charAt(1) == '~') {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Rule ''{0}'' has more than one inversion; double negatives are not permitted.", getOption()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Rule ''{0}'' has more than one inversion; double negatives are not permitted.", getOption()), SVNLogType.NETWORK);
             }
             if (getOption().charAt(1) == '*') {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Authz rules with match string '~*' are not allowed, because they never match anyone."));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Authz rules with match string '~*' are not allowed, because they never match anyone."), SVNLogType.NETWORK);
             }
         }
         if (getOption().charAt(0) == '$') {
             String token = getOption().substring(1);
             if (!"anonymous".equals(token) && !"authenticated".equals(token)) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Unrecognized authz token ''{0}''.", getOption()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Unrecognized authz token ''{0}''.", getOption()), SVNLogType.NETWORK);
             }
         }
         if (value.length() > 0 && !"r".equals(value) && !"rw".equals(value)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "The value ''{0}'' in rule ''{1}'' is not allowed in authz rules.", new Object[]{value, getOption()}));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "The value ''{0}'' in rule ''{1}'' is not allowed in authz rules.", new Object[]{value, getOption()}), SVNLogType.NETWORK);
         }
 
         RepositoryAccess repositoryAccess = (RepositoryAccess) getRules().get(repositoryName);
@@ -436,14 +437,14 @@ public class SVNPathBasedAccess {
     private void groupWalk(String group, Collection checkedGroups) throws SVNException {
         String[] users = (String[]) getGroups().get(group);
         if (users == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", group));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", group), SVNLogType.NETWORK);
         }
         for (int i = 0; i < users.length; i++) {
             users[i] = users[i].trim();
             if (users[i].startsWith("@")) {
                 String subGroup = users[i].substring("@".length());
                 if (checkedGroups.contains(subGroup)) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Circular dependency between groups ''{0}'' and ''{1}''", new Object[]{group, subGroup}));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Circular dependency between groups ''{0}'' and ''{1}''", new Object[]{group, subGroup}), SVNLogType.NETWORK);
                 }
                 checkedGroups.add(subGroup);
                 groupWalk(subGroup, checkedGroups);
@@ -451,7 +452,7 @@ public class SVNPathBasedAccess {
             } else if (users[i].startsWith("&")) {
                 String alias = users[i].substring("&".length());
                 if (!getAliases().keySet().contains(alias)) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", alias));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", alias), SVNLogType.NETWORK);
                 }
             }
         }
@@ -605,11 +606,11 @@ public class SVNPathBasedAccess {
                     String matchString = (String) iterator.next();
                     if (matchString.startsWith("@")) {
                         if (!getGroups().keySet().contains(matchString.substring("@".length()))) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", matchString));
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to group ''{0}'', which is undefined.", matchString), SVNLogType.NETWORK);
                         }
                     } else if (matchString.startsWith("&")) {
                         if (!getAliases().keySet().contains(matchString.substring("&".length()))) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", matchString));
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An authz rule refers to alias ''{0}'', which is undefined.", matchString), SVNLogType.NETWORK);
                         }
                     }
                 }

@@ -197,7 +197,7 @@ public class SVNDate extends Date {
             throw svne;
         } catch (Throwable th) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
         }
         return NULL;
     }
@@ -205,7 +205,7 @@ public class SVNDate extends Date {
     private static SVNDate parseDatestamp(String str) throws SVNException {
         if (str == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         int index = 0;

@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -85,13 +86,13 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
             if (myStartRevision != SVNRevision.UNDEFINED) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Multiple revision argument encountered; " +
                         "can't specify -r and c, or try '-r N:M' instead of '-r N -r M'");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             String revStr = optionValue.getValue();
             SVNRevision[] revisions = parseRevision(revStr);
             if (revisions == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error in revision argument ''{0}''", revStr);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             myStartRevision = revisions[0];
             myEndRevision = revisions[1];
@@ -172,7 +173,7 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
                 return "--version";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return commandName;
     }

@@ -21,11 +21,12 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -55,18 +56,18 @@ public class SVNMoveCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(null, true);
         if (targets.size() < 2) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED && 
                 getSVNEnvironment().getStartRevision() != SVNRevision.HEAD) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                    "Cannot specify revision (except HEAD) with move operation"));
+                    "Cannot specify revision (except HEAD) with move operation"), SVNLogType.CLIENT);
         }
         SVNPath dst = new SVNPath((String) targets.remove(targets.size() - 1));
         if (!dst.isURL()) {
             if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
-                "Local, non-commit operations do not take a log message or revision properties"));
+                "Local, non-commit operations do not take a log message or revision properties"), SVNLogType.CLIENT);
             }
         }
 
@@ -102,7 +103,7 @@ public class SVNMoveCommand extends SVNCommand {
             if (code == SVNErrorCode.UNVERSIONED_RESOURCE || code == SVNErrorCode.CLIENT_MODIFIED) {
                 err = err.wrap("Use --force to override this restriction");
             }
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
 

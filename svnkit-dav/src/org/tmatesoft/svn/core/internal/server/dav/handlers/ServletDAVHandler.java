@@ -41,6 +41,8 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -186,7 +188,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         DAVDepth result = DAVDepth.parseDepth(depth);
         if (result == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid depth ''{0}''", depth));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid depth ''{0}''", depth), SVNLogType.NETWORK);
         }
         return result;
     }
@@ -217,7 +219,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         try {
             return myRequest.getInputStream();
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e, SVNLogType.NETWORK);
         }
         return null;
     }
@@ -246,7 +248,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         try {
             return myResponse.getWriter();
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e, SVNLogType.NETWORK);
         }
         return null;
     }
@@ -255,7 +257,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         try {
             return myResponse.getOutputStream();
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e, SVNLogType.NETWORK);
         }
         return null;
     }
@@ -390,11 +392,11 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 reader.setEntityResolver(this);
                 reader.parse(new InputSource(getRequestInputStream()));
             } catch (ParserConfigurationException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             } catch (SAXException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             }
             getDAVRequest().init();
         }

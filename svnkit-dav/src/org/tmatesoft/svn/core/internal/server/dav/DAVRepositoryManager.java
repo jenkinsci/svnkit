@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -39,7 +40,7 @@ public class DAVRepositoryManager {
 
     public DAVRepositoryManager(DAVConfig config, HttpServletRequest request) throws SVNException {
         if (config == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE), SVNLogType.NETWORK);
         }
 
         myDAVConfig = config;
@@ -60,7 +61,7 @@ public class DAVRepositoryManager {
             if (DAVHandlerFactory.METHOD_MOVE.equals(request.getMethod()) || DAVHandlerFactory.METHOD_COPY.equals(request.getMethod())) {
                 String destinationURL = request.getHeader(DESTINATION_HEADER);
                 if (destinationURL == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Destination path missing"));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Destination path missing"), SVNLogType.NETWORK);
                 }
                 destinationPath = DAVPathUtil.standardize(getRepositoryRelativePath(SVNURL.parseURIEncoded(destinationURL)));
                 checkDestinationPath = true;
@@ -101,7 +102,7 @@ public class DAVRepositoryManager {
 
     private void checkAccess(String repository, String path, boolean checkDestinationPath, String destinationPath, String user, int access) throws SVNException {
         if (getDAVConfig().getSVNAccess() == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An error occured while loading configuration file."));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "An error occured while loading configuration file."), SVNLogType.NETWORK);
         }
         if (!getDAVConfig().isAnonymousAllowed() && user == null) {
             SVNErrorManager.authenticationFailed("Anonymous user is not allowed on resource", null);
@@ -112,7 +113,7 @@ public class DAVRepositoryManager {
                 if (user == null) {
                     SVNErrorManager.authenticationFailed("Forbidden for anonymous", null);
                 } else {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.NO_AUTH_FILE_PATH));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.NO_AUTH_FILE_PATH), SVNLogType.NETWORK);
                 }
             }
         }
@@ -123,7 +124,7 @@ public class DAVRepositoryManager {
                     if (user == null) {
                         SVNErrorManager.authenticationFailed("Forbidden for anonymous", null);
                     } else {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.NO_AUTH_FILE_PATH));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.NO_AUTH_FILE_PATH), SVNLogType.NETWORK);
                     }
                 }
             }
@@ -150,7 +151,7 @@ public class DAVRepositoryManager {
     public SVNURL convertHttpToFile(SVNURL url) throws SVNException {
         String uri = DAVPathUtil.addLeadingSlash(url.getPath());
         if (!uri.startsWith(getResourceContext())) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()), SVNLogType.NETWORK);
         }
         return SVNURL.parseURIEncoded(getResourceRepositoryRoot() + getRepositoryRelativePath(url));
     }
@@ -166,7 +167,7 @@ public class DAVRepositoryManager {
         if (uri.startsWith(getResourceContext())) {
             uri = uri.substring(getResourceContext().length());
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()), SVNLogType.NETWORK);
         }
         return uri;
     }
@@ -198,7 +199,7 @@ public class DAVRepositoryManager {
         }
 
         if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED), SVNLogType.NETWORK);
             //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.
         }
         return DAVPathUtil.removeHead(requestURI, true);

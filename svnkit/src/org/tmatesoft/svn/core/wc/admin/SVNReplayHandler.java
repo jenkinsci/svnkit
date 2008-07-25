@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.io.ISVNReplayHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -82,7 +83,7 @@ public class SVNReplayHandler implements ISVNReplayHandler {
                     "Commit created rev {0} but should have created {1}", new Object[] {
                     String.valueOf(mySyncEditor.getCommitInfo().getNewRevision()), String.valueOf(revision)
             });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         SVNProperties existingProperties = myTargetRepository.getRevisionProperties(revision, null);
         SVNProperties filtered = new SVNProperties();

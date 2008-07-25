@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -101,7 +102,7 @@ public class SVNCommandLine {
                 AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(optionName);
                 if (option == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid option: {0}", optionName);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 String value = null;                
                 if (!option.isUnary()) {
@@ -113,7 +114,7 @@ public class SVNCommandLine {
                     }
                     if (value == null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                 }                  
                 myArgumentIndex++;
@@ -128,7 +129,7 @@ public class SVNCommandLine {
         AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(optionName);
         if (option == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid option: {0}", optionName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         String value = null;                
         if (!option.isUnary()) {
@@ -145,7 +146,7 @@ public class SVNCommandLine {
             myArgumentIndex++;
             if (value == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
         if (myArgumentPosition >= argument.length()) {

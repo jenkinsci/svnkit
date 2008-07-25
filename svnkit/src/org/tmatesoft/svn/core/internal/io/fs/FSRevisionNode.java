@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -266,13 +267,13 @@ public class FSRevisionNode {
         String revNodeId = (String) headers.get(FSRevisionNode.HEADER_ID);
         if (revNodeId == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing id field in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         FSID revnodeID = FSID.fromString(revNodeId);
         if (revnodeID == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupted node-id in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         revNode.setId(revnodeID);
 
@@ -280,7 +281,7 @@ public class FSRevisionNode {
         SVNNodeKind nodeKind = SVNNodeKind.parseKind((String) headers.get(FSRevisionNode.HEADER_TYPE));
         if (nodeKind == SVNNodeKind.NONE || nodeKind == SVNNodeKind.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing kind field in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         revNode.setType(nodeKind);
 
@@ -295,7 +296,7 @@ public class FSRevisionNode {
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Corrupted count field in node-rev");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             revNode.setCount(cnt);
         }
@@ -316,7 +317,7 @@ public class FSRevisionNode {
         String cpath = (String) headers.get(FSRevisionNode.HEADER_CPATH);
         if (cpath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing cpath in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         revNode.setCreatedPath(cpath);
 
@@ -327,7 +328,7 @@ public class FSRevisionNode {
             if (predRevNodeId == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Corrupted predecessor node-id in node-rev");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             revNode.setPredecessorId(predRevNodeId);
         }
@@ -361,7 +362,7 @@ public class FSRevisionNode {
             } catch (NumberFormatException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Corrupted mergeinfo count in node-rev");
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.FSFS);
             }
         }
 
@@ -391,7 +392,7 @@ public class FSRevisionNode {
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         rep.setRevision(rev);
@@ -413,7 +414,7 @@ public class FSRevisionNode {
         delimiterInd = representation.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String repOffset = representation.substring(0, delimiterInd);
 
@@ -425,7 +426,7 @@ public class FSRevisionNode {
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         rep.setOffset(offset);
 
@@ -433,7 +434,7 @@ public class FSRevisionNode {
         delimiterInd = representation.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String repSize = representation.substring(0, delimiterInd);
 
@@ -445,7 +446,7 @@ public class FSRevisionNode {
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         rep.setSize(size);
 
@@ -453,7 +454,7 @@ public class FSRevisionNode {
         delimiterInd = representation.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String repExpandedSize = representation.substring(0, delimiterInd);
 
@@ -465,14 +466,14 @@ public class FSRevisionNode {
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         rep.setExpandedSize(expandedSize);
 
         String hexDigest = representation.substring(delimiterInd + 1);
         if (hexDigest.length() != 32 || SVNFileUtil.fromHexDigest(hexDigest) == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         rep.setHexDigest(hexDigest);
         if (isData) {
@@ -486,14 +487,14 @@ public class FSRevisionNode {
         if (copyfrom == null || copyfrom.length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Malformed copyfrom line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         int delimiterInd = copyfrom.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Malformed copyfrom line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         String copyfromRev = copyfrom.substring(0, delimiterInd);
@@ -505,7 +506,7 @@ public class FSRevisionNode {
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Malformed copyfrom line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         revNode.setCopyFromRevision(rev);
         revNode.setCopyFromPath(copyfromPath);
@@ -514,13 +515,13 @@ public class FSRevisionNode {
     private static void parseCopyRoot(String copyroot, FSRevisionNode revNode) throws SVNException {
         if (copyroot == null || copyroot.length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         int delimiterInd = copyroot.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         String copyrootRev = copyroot.substring(0, delimiterInd);
@@ -531,7 +532,7 @@ public class FSRevisionNode {
             rev = Long.parseLong(copyrootRev);
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed copyroot line in node-rev");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         revNode.setCopyRootRevision(rev);
         revNode.setCopyRootPath(copyrootPath);
@@ -540,7 +541,7 @@ public class FSRevisionNode {
     public FSRevisionNode getChildDirNode(String childName, FSFS fsfsOwner) throws SVNException {
         if (!SVNPathUtil.isSinglePathComponent(childName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_SINGLE_PATH_COMPONENT, "Attempted to open node with an illegal name ''{0}''", childName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         Map entries = getDirEntries(fsfsOwner);
@@ -548,7 +549,7 @@ public class FSRevisionNode {
 
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Attempted to open non-existent child node ''{0}''", childName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         return fsfsOwner.getRevisionNode(entry.getId());
@@ -557,7 +558,7 @@ public class FSRevisionNode {
     public Map getDirEntries(FSFS fsfsOwner) throws SVNException {
         if (getType() != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Can't get entries of non-directory");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         Map dirContents = getDirContents();
 
@@ -589,7 +590,7 @@ public class FSRevisionNode {
     public String getFileChecksum() throws SVNException {
         if (getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get checksum of a *non*-file node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return getTextRepresentation() != null ? getTextRepresentation().getHexDigest() : "";
     }
@@ -597,7 +598,7 @@ public class FSRevisionNode {
     public long getFileLength() throws SVNException {
         if (getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get length of a *non*-file node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return getTextRepresentation() != null ? getTextRepresentation().getExpandedSize() : 0;
     }

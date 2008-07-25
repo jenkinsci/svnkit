@@ -98,7 +98,7 @@ public class SVNConnection {
             r = getInputStream().read(bytes);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed: ''{0}''", e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (r >= 0) {
             for (int i = 0; i < r; i++) {
@@ -108,7 +108,7 @@ public class SVNConnection {
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
         return null;
     }
 
@@ -125,17 +125,17 @@ public class SVNConnection {
         Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server requires minimum version {0}", minVer));
+            		"Server requires minimum version {0}", minVer), SVNLogType.NETWORK);
         } else if (maxVer.longValue() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server requires maximum version {0}", maxVer));
+            		"Server requires maximum version {0}", maxVer), SVNLogType.NETWORK);
         }
 
         List capabilities = (List) items.get(3);
         addCapabilities(capabilities);
         if (!hasCapability(EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server does not support edit pipelining"));
+            		"Server does not support edit pipelining"), SVNLogType.NETWORK);
         }
         
         
@@ -199,7 +199,7 @@ public class SVNConnection {
             if (item.getKind() != SVNItem.WORD) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
                         "Capability entry is not a word"); 
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             myCapabilities.add(item.getWord());
         }
@@ -214,7 +214,7 @@ public class SVNConnection {
         if (creds != null && creds.size() >= 2 && creds.get(0) != null && creds.get(1) != null) {
             SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader.getString(creds, 1)) : null;
             if (rootURL != null && rootURL.toString().length() > repository.getLocation().toString().length()) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"), SVNLogType.NETWORK);
             }
             if (repository != null && repository.getRepositoryRoot(false) == null) {
                 repository.updateCredentials(SVNReader.getString(creds, 0), rootURL);
@@ -374,7 +374,7 @@ public class SVNConnection {
                 myOutputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, 
                         myConnector.getOutputStream());
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
             }
         }
         return myOutputStream;
@@ -387,7 +387,7 @@ public class SVNConnection {
                         new BufferedInputStream(myConnector.getInputStream()));
                 myLoggingInputStream = myInputStream;
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
             }
         }
         return myInputStream;

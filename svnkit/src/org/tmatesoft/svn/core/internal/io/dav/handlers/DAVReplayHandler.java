@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.Attributes;
 
@@ -65,7 +66,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
             String rev = attrs.getValue(REVISION_ATTR);
             if (rev == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing revision attr in target-revision element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 myEditor.targetRevision(Long.parseLong(rev));
             }
@@ -73,7 +74,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
             String rev = attrs.getValue(REVISION_ATTR);
             if (rev == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing revision attr in open-root element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 myEditor.openRoot(Long.parseLong(rev));
                 myPath = "";
@@ -84,10 +85,10 @@ public class DAVReplayHandler extends DAVEditorHandler {
             String rev = attrs.getValue(REVISION_ATTR);
             if (path == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing name attr in delete-entry element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else if (rev == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing rev attr in delete-entry element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 myEditor.deleteEntry(path, Long.parseLong(rev));
             }
@@ -97,7 +98,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
 
             if (path == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing name attr in " + (element == OPEN_DIRECTORY ? "open-directory" : "add-directory") + " element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 long revision = rev != null ? Long.parseLong(rev) : -1;
                 if (element == OPEN_DIRECTORY) {
@@ -115,7 +116,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
             String path = attrs.getValue(NAME_ATTR);
             if (path == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing name attr in " + (element == OPEN_FILE ? "open-file" : "add-file") + " element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
 
             if (element == ADD_FILE) {
@@ -133,7 +134,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
         } else if (element == APPLY_TEXT_DELTA) {
             if (myIsDirectory) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Got apply-textdelta element without preceding add-file or open-file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
 
             String checksum = attrs.getValue(CHECKSUM_ATTR);
@@ -146,7 +147,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
         } else if (element == CLOSE_FILE) {
             if (myIsDirectory) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Got close-file element without preceding add-file or open-file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 String checksum = attrs.getValue(CHECKSUM_ATTR);
                 myEditor.closeFile(myPath, checksum);
@@ -155,7 +156,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
         } else if (element == CLOSE_DIRECTORY) {
             if (!myIsDirectory) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Got close-directory element without ever opening a directory");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 myEditor.closeDir();
             }
@@ -163,7 +164,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
             String name = attrs.getValue(NAME_ATTR);
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing name attr in " + (element == CHANGE_FILE_PROPERTY ? "change-file-prop" : "change-dir-prop") + " element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
                 if (attrs.getValue(DEL_ATTR) != null) {
                     if (element == CHANGE_FILE_PROPERTY) {
@@ -185,7 +186,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
         } else if (element == CHANGE_FILE_PROPERTY || element == CHANGE_DIR_PROPERTY) {
             if (cdata != null && !"".equals(cdata.toString()) && myPropertyName == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Got cdata content for a prop delete");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myPropertyName != null) {
                 byte[] buffer = allocateBuffer(cdata.length());

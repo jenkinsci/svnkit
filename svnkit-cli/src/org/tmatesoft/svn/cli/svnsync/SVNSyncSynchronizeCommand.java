@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -59,18 +60,18 @@ public class SVNSyncSynchronizeCommand extends SVNSyncCommand implements ISVNAdm
         List targets = getEnvironment().combineTargets(null, false);
         if (targets.size() < 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (targets.size() > 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNPath toURL = new SVNPath((String) targets.get(0));
         if (!toURL.isURL()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Path ''{0}'' is not a URL", toURL.getTarget());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();

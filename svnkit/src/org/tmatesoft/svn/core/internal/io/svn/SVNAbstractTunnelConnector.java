@@ -36,7 +36,7 @@ public abstract class SVNAbstractTunnelConnector implements ISVNConnector {
             } catch (SVNException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Cannot create tunnel: ''{0}''", e.getMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         }
     }
 

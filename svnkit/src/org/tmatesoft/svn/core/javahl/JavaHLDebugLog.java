@@ -71,7 +71,7 @@ public class JavaHLDebugLog extends SVNDebugLogAdapter {
             try {
                 handler = new FileHandler(logPath.getAbsolutePath(), true);
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), e, SVNLogType.DEFAULT);
             }
             myHandlers.put(logPath, handler);            
         }

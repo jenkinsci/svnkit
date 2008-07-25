@@ -50,6 +50,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 /**
@@ -312,7 +314,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             setEntryLockToken(attrs.getValue(LOCK_TOKEN_ATTR));
             String revisionString = attrs.getValue(REVISION_ATTR);
             if (revisionString == null) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Missing XML attribute: rev"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Missing XML attribute: rev"), SVNLogType.NETWORK);
             }
             setEntryRevision(Long.parseLong(revisionString));
             setDepth(SVNDepth.fromString(attrs.getValue(DEPTH_ATTR)));
@@ -321,7 +323,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             }
         } else if (element != MISSING || parent != ServletDAVHandler.UPDATE_REPORT) {
             if (isInitialized()) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid XML elements order: entry elements should follow any other."));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid XML elements order: entry elements should follow any other."), SVNLogType.NETWORK);
             }
             getDAVRequest().startElement(parent, element, attrs);
         }

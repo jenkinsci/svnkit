@@ -126,7 +126,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     protected abstract void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException;
 
     protected void invalidXML() throws SVNException {
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"), SVNLogType.NETWORK);
 
     }
 

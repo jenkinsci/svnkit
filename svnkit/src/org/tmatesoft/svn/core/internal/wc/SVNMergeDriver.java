@@ -201,7 +201,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (url == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                 		"''{0}'' has no URL", srcPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         
             SVNURL wcReposRoot = getReposRoot(targetWCPath, null, SVNRevision.WORKING, adminArea, myWCAccess);
@@ -232,7 +232,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         if (!revision1.isValid() || !revision2.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
                     "Not all required revisions are specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         SVNRepository repository1 = null;
@@ -337,7 +337,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (url2 == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                         "''{0}'' has no URL", srcPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         
             SVNURL wcReposRoot = getReposRoot(targetWCPath, null, SVNRevision.WORKING, adminArea, myWCAccess);
@@ -354,7 +354,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
                             "''{0}'' must be from the same repository as ''{1}''", new Object[] { source,  
                             targetWCPath });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 
                 ensureWCReflectsRepositorySubTree(targetWCPath);
@@ -374,7 +374,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
                             "''{0}@{1}'' must be ancestrally related to ''{2}@{3}''", 
                             new Object[] { url1[0], new Long(rev1[0]), url2, new Long(rev2)});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 
                 if (rev1[0] > youngestAncestorRevision) {
@@ -408,12 +408,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             if (!sourcesAncestral) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
                         "Use of two URLs is not compatible with mergeinfo modification"); 
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             if (!sameRepository) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
                         "Merge from foreign repository is not compatible with mergeinfo modification");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (dryRun) {
                 return;
@@ -629,7 +629,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
         if (conflictedRange != null) {
             SVNErrorMessage error = makeMergeConflictError(targetWCPath, conflictedRange);
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.WC);
         }
     }
 
@@ -846,7 +846,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
         
         if (err != null) {
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 
@@ -1008,32 +1008,32 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	if (wcStatus.isSwitched()) {
     	    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE,
     	    "Cannot reintegrate into a working copy with a switched subtree");
-    	    SVNErrorManager.error(err);
+    	    SVNErrorManager.error(err, SVNLogType.WC);
     	}
 
     	if (wcStatus.isSparseCheckout()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE,
             "Cannot reintegrate into a working copy not entirely at infinite depth");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
     	}
     	
     	if (wcStatus.isModified()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE,
             "Cannot reintegrate into a working copy that has local modifications");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
     	}
     	
     	if (!SVNRevision.isValidRevisionNumber(wcStatus.getMinRevision()) || 
     	        !SVNRevision.isValidRevisionNumber(wcStatus.getMaxRevision())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE,
             "Cannot determine revision of working copy");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
     	}
     	
     	if (wcStatus.getMinRevision() != wcStatus.getMaxRevision()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE,
             "Cannot reintegrate into mixed-revision working copy; try updating first");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
     	}
     }
     
@@ -1046,7 +1046,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNMergeRange mergeRange = ranges[i];
                 if (mergeRange.getStartRevision() >= mergeRange.getEndRevision()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "range start >= end");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 
                 SVNDirEntry dirEntry = repository.info(path, mergeRange.getEndRevision());
@@ -1059,7 +1059,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
                     "At least one revision (r{0}) not yet merged from ''{1}''", 
                     new Object[] { new Long(dirEntry.getRevision()), fullURL });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
             }
         }
@@ -1115,7 +1115,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
                         "''{0}@{1}'' must be ancestrally related to ''{2}@{3}''", 
                         new Object[] { sourceURL, new Long(sourceRev), targetURL, new Long(targetRev) });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
             leftURL[0] = sourceReposRoot.appendPath(youngestCommonAncestorPath.startsWith("/") ? 
@@ -1140,7 +1140,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "merge aborted");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } else {
             SVNURL fullURL = repository.getLocation().appendPath(sourceReposRelPath.startsWith("/") ? 
                     sourceReposRelPath.substring(1) : sourceReposRelPath, false);
@@ -1150,7 +1150,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     "that have not been merged\n" + 
                     "into the reintegration target; " + 
                     "merge them first, then retry.", fullURL);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         return null;
     }
@@ -1158,16 +1158,16 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private boolean mergeRangeContainsRevision(SVNMergeRange range, long rev) throws SVNException {
         if (!SVNRevision.isValidRevisionNumber(range.getStartRevision())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "invalid start range revision");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (!SVNRevision.isValidRevisionNumber(range.getEndRevision())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "invalid end range revision");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (range.getStartRevision() == range.getEndRevision()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "start range revision is equal to end range revision");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (range.getStartRevision() < range.getEndRevision()) {
             return rev > range.getStartRevision() && rev <= range.getEndRevision();
@@ -1217,7 +1217,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 		} else if (!sameRepos) {
 		    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
 		            "Merge from foreign repository is not compatible with mergeinfo modification");
-		    SVNErrorManager.error(err);
+		    SVNErrorManager.error(err, SVNLogType.DEFAULT);
 		}
 		
 		if (sameRepos) {
@@ -1242,7 +1242,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	long pegRevNum = getRevisionNumber(pegRevision, youngestRevision, repository, source);
     	if (!SVNRevision.isValidRevisionNumber(pegRevNum)) {
     		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION);
-    		SVNErrorManager.error(err);
+    		SVNErrorManager.error(err, SVNLogType.DEFAULT);
     	}
     	
     	List mergeRanges = new ArrayList(rangesToMerge.size());
@@ -1254,7 +1254,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 			if (!rangeStart.isValid() || !rangeEnd.isValid()) {
 				SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
 						"Not all required revisions are specified");
-				SVNErrorManager.error(err);
+				SVNErrorManager.error(err, SVNLogType.DEFAULT);
 			}
 			
 			long rangeStartRev = getRevisionNumber(rangeStart, youngestRevision, repository, source); 
@@ -1442,7 +1442,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 start <= end) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "ASSERTION FAILED in SVNMergeDriver.getFullMergeInfo()");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         //get recorded merge info
@@ -2057,7 +2057,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         error.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     return;
                 }
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
         };
         
@@ -2291,7 +2291,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (startURL.equals(entry.getSVNURL())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
                             "Cannot reverse-merge a range from a path's own future history; try updating first");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
             } catch (SVNException svne) {
                 SVNErrorCode code = svne.getErrorMessage().getErrorCode();
@@ -2549,7 +2549,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "assertion failure in SVNMergeDriver.LogHandlerFilter.handleLogEntry: intersection list " +
                         "size is {0}", new Integer(intersection.getSize()));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             if (myRealHandler != null) {
                 myRealHandler.handleLogEntry(logEntry);

@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -199,7 +200,7 @@ public class DAVResourceURI {
         setVersioned(true);
         setBaseLined(true);
         if (SVNPathUtil.getSegmentsCount(parameter) == 1) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getRequestURI()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", getRequestURI()), SVNLogType.NETWORK);
         }
         setActivityID(DAVPathUtil.head(parameter));
         try {
@@ -207,7 +208,7 @@ public class DAVResourceURI {
             long revision = Long.parseLong(DAVPathUtil.dropLeadingSlash(revisionParameter));
             setRevision(revision);
         } catch (NumberFormatException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e), e, SVNLogType.NETWORK);
         }
     }
 
@@ -229,13 +230,13 @@ public class DAVResourceURI {
             try {
                 revision = Long.parseLong(parameter);
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e, SVNLogType.NETWORK);
             }
         } else {
             try {
                 revision = Long.parseLong(DAVPathUtil.head(parameter));
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e, SVNLogType.NETWORK);
             }
             parameterPath = DAVPathUtil.removeHead(parameter, false);
         }
@@ -249,7 +250,7 @@ public class DAVResourceURI {
         try {
             setRevision(Long.parseLong(parameter));
         } catch (NumberFormatException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e, SVNLogType.NETWORK);
         }
         setVersioned(true);
         setBaseLined(true);
@@ -263,14 +264,14 @@ public class DAVResourceURI {
             try {
                 setRevision(Long.parseLong(parameter));
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid URI ''{0}''", e.getMessage()), e, SVNLogType.NETWORK);
             }
             setPath("/");
         } else {
             try {
                 setRevision(Long.parseLong(DAVPathUtil.head(parameter)));
             } catch (NumberFormatException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, e.getMessage()), e, SVNLogType.NETWORK);
             }
             setPath(DAVPathUtil.removeHead(parameter, false));
         }
@@ -278,7 +279,7 @@ public class DAVResourceURI {
 
     private void parseVCC(String parameter, String label, boolean useCheckedIn) throws SVNException {
         if (!DEDAULT_VCC_NAME.equals(parameter)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid VCC name ''{0}''", parameter));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid VCC name ''{0}''", parameter), SVNLogType.NETWORK);
         }
         if (label == null && !useCheckedIn) {
             setType(DAVResourceType.PRIVATE);
@@ -291,7 +292,7 @@ public class DAVResourceURI {
                 try {
                     revision = Long.parseLong(label);
                 } catch (NumberFormatException e) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid label header ''{0}''", label));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Invalid label header ''{0}''", label), SVNLogType.NETWORK);
                 }
             }
             setType(DAVResourceType.VERSION);

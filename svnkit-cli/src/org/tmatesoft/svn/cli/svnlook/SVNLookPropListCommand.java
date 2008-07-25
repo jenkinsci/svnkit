@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -50,7 +51,7 @@ public class SVNLookPropListCommand extends SVNLookCommand {
         if (!environment.isRevProp() && environment.getFirstArgument() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                     "Missing repository path argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNLookClient client = environment.getClientManager().getLookClient();

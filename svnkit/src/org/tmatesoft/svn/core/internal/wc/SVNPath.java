@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -103,7 +104,7 @@ public class SVNPath {
                 return;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
     }
 
@@ -117,7 +118,7 @@ public class SVNPath {
                 }
                 if (SVNEncodingUtil.isASCIIControlChar(ch)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character '0x" + code + "' in path '" + path + "'");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
             }
         }

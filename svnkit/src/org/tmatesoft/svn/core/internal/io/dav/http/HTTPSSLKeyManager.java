@@ -49,7 +49,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			passphrase = clientCertPassword.toCharArray();
 		}
 		KeyStore keyStore = null;
-		final InputStream is = SVNFileUtil.openFileForReading(clientCertFile);
+		final InputStream is = SVNFileUtil.openFileForReading(clientCertFile, SVNLogType.NETWORK);
 		try {
 			keyStore = KeyStore.getInstance("PKCS12");
 			if (keyStore != null) {
@@ -244,7 +244,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			}
 
 			if (myAuthentication == null) {
-				SVNErrorManager.cancel("SSL authentication with client certificate cancelled");
+				SVNErrorManager.cancel("SSL authentication with client certificate cancelled", SVNLogType.NETWORK);
 			}
 
 			final KeyManager[] keyManagers;

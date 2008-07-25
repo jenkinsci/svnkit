@@ -76,7 +76,7 @@ public class SVNDeltaReader {
             if (myBuffer.get(0) != 'S' || myBuffer.get(1) != 'V' || myBuffer.get(2) != 'N' ||
                     (myBuffer.get(3) != '\0' && myBuffer.get(3) != '\1')) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW, "Svndiff has invalid header");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             myVersion = myBuffer.get(3);
             myBuffer.position(4);
@@ -111,7 +111,7 @@ public class SVNDeltaReader {
                     (sourceOffset < myLastSourceOffset || 
                      sourceOffset + sourceLength < myLastSourceOffset + myLastSourceLength)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW, "Svndiff has backwards-sliding source views");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             if (myBuffer.remaining() < instructionsLength + newDataLength) {
                 return;

@@ -11,12 +11,12 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.UnsupportedEncodingException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -63,12 +64,12 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (!SVNPropertiesManager.isValidPropertyName(propertyName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "''{0}'' is not a valid Subversion property name", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
         String encoding = null;
@@ -81,7 +82,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
             if (getSVNEnvironment().getEncoding() != null) {
                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                         "Bad encoding option: prop value not stored as UTF8");
-                SVNErrorManager.error(errorMessage);
+                SVNErrorManager.error(errorMessage, SVNLogType.CLIENT);
             }
         }
 
@@ -122,7 +123,7 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot specify revision for setting versioned property ''{0}''", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else {
             SVNDepth depth = getSVNEnvironment().getDepth();
             if (depth == SVNDepth.UNKNOWN) {
@@ -132,10 +133,10 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                 if (getSVNEnvironment().getFileData() == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS,
                             "Explicit target required (''{0}'' interpreted as prop value)", propertyValue);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Explicit target argument required");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
             

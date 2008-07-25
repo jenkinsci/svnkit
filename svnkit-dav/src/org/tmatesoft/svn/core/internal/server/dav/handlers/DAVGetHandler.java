@@ -29,9 +29,10 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
 
 /**
@@ -48,12 +49,12 @@ public class DAVGetHandler extends ServletDAVHandler {
         DAVResource resource = getRequestedDAVResource(true, false);
 
         if (!resource.exists()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Path ''{0}'' you requested not found", resource.getResourceURI().getPath()), SVNLogType.NETWORK);
         }
 
         if (resource.getResourceURI().getType() != DAVResourceType.REGULAR && resource.getResourceURI().getType() != DAVResourceType.VERSION
                 && resource.getResourceURI().getType() != DAVResourceType.WORKING) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Cannot GET this type of resource."));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Cannot GET this type of resource."), SVNLogType.NETWORK);
         }
 
         setDefaultResponseHeaders();
@@ -79,7 +80,7 @@ public class DAVGetHandler extends ServletDAVHandler {
             try {
                 getResponseWriter().write(responseBody);
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             }
         } else if (resource.getDeltaBase() != null) {
             //Here we should send SVN delta (for old clients)

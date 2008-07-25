@@ -1739,7 +1739,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 public void checkCancelled() throws SVNCancelException {
                     if (myCancelOperation) {
                         myCancelOperation = false;
-                        SVNErrorManager.cancel("operation cancelled");
+                        SVNErrorManager.cancel("operation cancelled", SVNLogType.NETWORK);
                     }
                 }
             };
@@ -1758,7 +1758,7 @@ public class SVNClientImpl implements SVNClientInterface {
                         try {
                             result = JavaHLObjectFactory.getSVNConflictResult(myConflictResolverCallback.resolve(descriptor));
                         } catch (SubversionException e) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e), e);
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e), e, SVNLogType.DEFAULT);
                         }
                     }
                     return result;
@@ -2069,7 +2069,7 @@ public class SVNClientImpl implements SVNClientInterface {
         File file = null;
         if (relativePath != null) {
             if (isURL(relativePath)) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Relative path ''{0}'' should not be URL", relativePath));                                
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Relative path ''{0}'' should not be URL", relativePath), SVNLogType.DEFAULT);
             }
             file = new File(relativePath).getAbsoluteFile();
         }

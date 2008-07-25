@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -214,7 +215,7 @@ public abstract class SVNLog {
                     SVNErrorMessage err = SVNErrorMessage.create(code, 
                             "Log entry missing ''name'' attribute (entry ''{0}'' for directory ''{1}'')", 
                             new Object[] { name, myAdminArea.getRoot() });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 if (runner != null) {
                     runner.runCommand(myAdminArea, name, command, ++count);

@@ -278,14 +278,14 @@ public class SVNAdminClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Cannot copy revprops for a revision ({0}) that has not been synchronized yet", 
                         String.valueOf(startRevision));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             if (endRevision > info.myLastMergedRevision) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Cannot copy revprops for a revision ({0}) that has not been synchronized yet", 
                         String.valueOf(endRevision));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             long step = startRevision > endRevision ? -1 : 1;
@@ -344,14 +344,14 @@ public class SVNAdminClient extends SVNBasicClient {
             if (latestRevision != 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Cannot initialize a repository with content in it");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             SVNPropertyValue fromURLProp = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
             if (fromURLProp != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Destination repository is already synchronizing from ''{0}''", fromURLProp);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             fromRepos = createRepository(fromURL, null, false);
@@ -367,7 +367,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 }
                 if (!supportsPartialReplay) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_PARTIAL_REPLAY_NOT_SUPPORTED);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL, 
@@ -484,7 +484,7 @@ public class SVNAdminClient extends SVNBasicClient {
                             "Revision being currently copied ({0}), last merged revision ({1}), and destination HEAD ({2}) are inconsistent; have you committed to the destination without using svnsync?",
                             new Object[] { String.valueOf(copyingRev), String.valueOf(lastMergedRevision), 
                             String.valueOf(toLatestRevision) });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 } else if (copyingRev == toLatestRevision) {
                     if (copyingRev > lastMergedRevision) {
                         copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
@@ -498,7 +498,7 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Destination HEAD ({0}) is not the last merged revision ({1}); have you committed to the destination without using svnsync?", 
                             new Object[] { String.valueOf(toLatestRevision), String.valueOf(lastMergedRevision) });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
 
@@ -653,7 +653,7 @@ public class SVNAdminClient extends SVNBasicClient {
             String txnName = transactions[i];
             fsfs.openTxn(txnName);
             fsfs.purgeTxn(txnName);
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Transaction '" + txnName + "' removed.\n");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Transaction '" + txnName + "' removed.\n");
             if (myEventHandler != null) {
                 SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);
                 myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
@@ -732,7 +732,7 @@ public class SVNAdminClient extends SVNBasicClient {
         
         if (lowerR > upperR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "First revision cannot be higher than second");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas);
@@ -836,7 +836,7 @@ public class SVNAdminClient extends SVNBasicClient {
             if (components.length != 5) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_UUID, "Malformed UUID ''{0}''", 
                         uuid);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         fsfs.setUUID(uuid);
@@ -962,14 +962,14 @@ public class SVNAdminClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, 
                     "Start revision {0} is greater than end revision {1}", new Object[] { String.valueOf(start), 
                     String.valueOf(end) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (end > youngestRevision) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, 
                     "End revision {0} is invalid (youngest revision is {1})", new Object[] { String.valueOf(end), 
                     String.valueOf(youngestRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (start == 0 && isIncremental) {
@@ -1049,7 +1049,7 @@ public class SVNAdminClient extends SVNBasicClient {
             propContents = new String(encodedProps.toByteArray(), "UTF-8");
         } catch (UnsupportedEncodingException uee) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, uee.getLocalizedMessage());
-            SVNErrorManager.error(err, uee);
+            SVNErrorManager.error(err, uee, SVNLogType.FSFS);
         }
         writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
         writeDumpData(dumpStream, SVNAdminHelper.DUMPFILE_CONTENT_LENGTH + ": " + propContents.length() + "\n\n");
@@ -1062,7 +1062,7 @@ public class SVNAdminClient extends SVNBasicClient {
             out.write(data.getBytes("UTF-8"));
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
     }
     
@@ -1129,7 +1129,7 @@ public class SVNAdminClient extends SVNBasicClient {
         if (fromURL == null || fromUUID == null || lastMergedRev == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Destination repository has not been initialized");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         SVNURL srcURL = SVNURL.parseURIDecoded(fromURL.getString());
@@ -1143,7 +1143,7 @@ public class SVNAdminClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Session is rooted at ''{0}'' but the repos root is ''{1}''", new SVNURL[] {
                     url, reposRoot
             });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -1153,7 +1153,7 @@ public class SVNAdminClient extends SVNBasicClient {
             hostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can't get local hostname");
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
 
         if (hostName.length() > 256) {
@@ -1187,7 +1187,7 @@ public class SVNAdminClient extends SVNBasicClient {
         if (childError != null) {
             err.setChildErrorMessage(childError);
         }
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
     }
 
     private void unlock(SVNRepository repos) throws SVNException {

@@ -25,10 +25,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -70,10 +71,10 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         if (item.isCopied()) {
             if (item.getCopyFromURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Commit item ''{0}'' has copy flag but no copyfrom URL", item.getFile());                    
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (item.getRevision().getNumber() < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Commit item ''{0}'' has copy flag but an invalid revision", item.getFile());                    
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         SVNEvent event = null;
@@ -207,7 +208,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 if (realChecksum != null && !realChecksum.equals(checksum)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
                             new Object[] {dir.getFile(name), realChecksum, checksum}); 
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
             editor.applyTextDelta(path, checksum);
@@ -220,14 +221,14 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             File baseFile = dir.getBaseFile(name, false);
             String newChecksum = null;
             try {
-                sourceIS = !item.isAdded() && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile) : SVNFileUtil.DUMMY_IN;
+                sourceIS = !item.isAdded() && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : SVNFileUtil.DUMMY_IN;
                 targetIS = SVNTranslator.getTranslatedStream(dir, name, true, false);
                 tmpBaseStream = SVNFileUtil.openFileForWriting(tmpFile);
                 CopyingStream localStream = new CopyingStream(tmpBaseStream, targetIS);
                 newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true);
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } finally {
                 SVNFileUtil.closeFile(sourceIS);
                 SVNFileUtil.closeFile(targetIS);

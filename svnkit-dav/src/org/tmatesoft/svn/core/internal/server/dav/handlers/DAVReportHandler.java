@@ -40,6 +40,8 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 /**
@@ -176,7 +178,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         try {
             getResponseWriter().write(string);
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
         }
     }
 
@@ -214,7 +216,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         try {
             diffWindow.writeTo(myDiffWindowWriter, isWriteTextDeltaHeader(), doCompress());
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
         } finally {
             setWriteTextDeltaHeader(false);
         }
@@ -225,7 +227,7 @@ public class DAVReportHandler extends ServletDAVHandler {
             try {
                 myDiffWindowWriter.flush();
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
             }
         }
         myDiffWindowWriter = null;

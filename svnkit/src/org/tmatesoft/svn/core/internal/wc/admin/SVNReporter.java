@@ -135,7 +135,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 myLog.logFine(SVNLogType.WC, e);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "WC report failed: {0}", th.getMessage());
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.WC);
         }
     }
 

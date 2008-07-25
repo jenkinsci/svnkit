@@ -169,7 +169,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             SVNOptionValue optionValue = (SVNOptionValue) options.next();
             if (!myCommand.isOptionSupported(optionValue.getOption())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Subcommand ''{0}'' doesn''t accept option ''{1}''", new Object[] {myCommand.getName(), optionValue.getName()});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
     }
@@ -179,7 +179,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         myCommand = AbstractSVNCommand.getCommand(myCommandName);
         if (myCommand == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Unknown command ''{0}''", myCommandName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     
@@ -230,11 +230,11 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
                     SVNEncodingUtil.assertURISafe(path);
                 } catch (SVNException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' is not properly URI-encoded");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 if (path.indexOf("/../") >= 0 || path.endsWith("/..")) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' contains '..' element");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 path = SVNPathUtil.canonicalizePath(path);
             } else {
@@ -283,7 +283,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -444,7 +444,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     public void checkCancelled() throws SVNCancelException {
         synchronized (AbstractSVNCommandEnvironment.class) {
             if (ourIsCancelled) {
-                SVNErrorManager.cancel("operation cancelled");
+                SVNErrorManager.cancel("operation cancelled", SVNLogType.CLIENT);
             }
         }
     }

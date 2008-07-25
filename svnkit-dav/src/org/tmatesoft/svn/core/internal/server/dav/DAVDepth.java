@@ -15,6 +15,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -56,7 +57,7 @@ public class DAVDepth {
 
     public static DAVDepth decreaseDepth(DAVDepth currentDepth) throws SVNException {
         if (currentDepth == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Depth is not specified."));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Depth is not specified."), SVNLogType.NETWORK);
         }
         if (currentDepth == DEPTH_ZERO || currentDepth == DEPTH_INFINITY) {
             return currentDepth;

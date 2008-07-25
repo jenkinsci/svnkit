@@ -108,7 +108,7 @@ public class SpoolFile {
             myCurrentSize = myCurrentFile.length();
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "ABOUT TO READ: " + myCurrentSize);
             try {
-                myCurrentInput = SVNFileUtil.openFileForReading(myCurrentFile);
+                myCurrentInput = SVNFileUtil.openFileForReading(myCurrentFile, SVNLogType.NETWORK);
             } catch (SVNException e) {
                 if (e.getCause() instanceof IOException) {
                     throw (IOException) e.getCause();

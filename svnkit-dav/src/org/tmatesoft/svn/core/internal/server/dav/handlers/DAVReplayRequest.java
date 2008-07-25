@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -79,10 +80,10 @@ public class DAVReplayRequest extends DAVRequest {
             }
         }
         if (!DAVResource.isValidRevision(getRevision())) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Request was missing the revision argument."));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Request was missing the revision argument."), SVNLogType.NETWORK);
         }
         if (!DAVResource.isValidRevision(getLowRevision())) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Request was missing the low-water-mark argument."));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Request was missing the low-water-mark argument."), SVNLogType.NETWORK);
         }
     }
 }

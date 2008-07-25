@@ -24,6 +24,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 
@@ -199,7 +201,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA,
                 "Missing attribute ''{0}'' on element {1}",
                 new Object[]{attr, element});
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
     }
 }
  

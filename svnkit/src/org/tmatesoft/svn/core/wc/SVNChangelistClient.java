@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -23,16 +22,18 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -90,7 +91,7 @@ public class SVNChangelistClient extends SVNBasicClient {
                 }
             
                 public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.WC);
                 }
             };
             
@@ -175,7 +176,7 @@ public class SVNChangelistClient extends SVNBasicClient {
         }
 
         public void handleError(File path, SVNErrorMessage error) throws SVNException {
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.WC);
         }
     }
 

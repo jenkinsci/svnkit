@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -66,7 +67,7 @@ public abstract class FSRoot {
     public FSParentPath openPath(String path, boolean lastEntryMustExist, boolean storeParents) throws SVNException {
         if (path == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "null path is not supported");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         String canonPath = SVNPathUtil.canonicalizeAbsolutePath(path);
@@ -98,7 +99,7 @@ public abstract class FSRoot {
                             if (!lastEntryMustExist && (next == null || "".equals(next))) {
                                 return new FSParentPath(null, entry, parentPath);
                             }
-                            SVNErrorManager.error(FSErrors.errorNotFound(this, path), svne);
+                            SVNErrorManager.error(FSErrors.errorNotFound(this, path), svne, SVNLogType.FSFS);
                         }
                         throw svne;
                     }
@@ -124,7 +125,7 @@ public abstract class FSRoot {
 
             if (child.getType() != SVNNodeKind.DIR) {
                 SVNErrorMessage err = FSErrors.errorNotDirectory(pathSoFar, getOwner());
-                SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path));
+                SVNErrorManager.error(err.wrap("Failure opening ''{0}''", path), SVNLogType.FSFS);
             }
             rest = next;
             here = child;
@@ -148,7 +149,7 @@ public abstract class FSRoot {
     public void putRevNodeToCache(String path, FSRevisionNode node) throws SVNException {
         if (!path.startsWith("/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (myRevNodesCache == null) {
             myRevNodesCache = new RevisionCache(100);
@@ -159,7 +160,7 @@ public abstract class FSRoot {
     public void removeRevNodeFromCache(String path) throws SVNException {
         if (!path.startsWith("/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (myRevNodesCache == null) {
             return;
@@ -173,7 +174,7 @@ public abstract class FSRoot {
         }
         if (!path.startsWith("/")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Invalid path ''{0}''", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return (FSRevisionNode) myRevNodesCache.fetch(path);
     }
@@ -194,17 +195,17 @@ public abstract class FSRoot {
 
             if ((change.getRevNodeId() == null) && (FSPathChangeKind.FS_PATH_CHANGE_RESET != change.getChangeKind())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Missing required node revision ID");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             if ((change.getRevNodeId() != null) && (!oldChange.getRevNodeId().equals(change.getRevNodeId())) && (oldChange.getChangeKind() != FSPathChangeKind.FS_PATH_CHANGE_DELETE)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: new node revision ID without delete");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             if (FSPathChangeKind.FS_PATH_CHANGE_DELETE == oldChange.getChangeKind()
                     && !(FSPathChangeKind.FS_PATH_CHANGE_REPLACE == change.getChangeKind() || FSPathChangeKind.FS_PATH_CHANGE_RESET == change.getChangeKind() || FSPathChangeKind.FS_PATH_CHANGE_ADD == change
                             .getChangeKind())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change ordering: non-add change on deleted path");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             if (FSPathChangeKind.FS_PATH_CHANGE_MODIFY == change.getChangeKind()) {
                 if (change.isTextModified()) {

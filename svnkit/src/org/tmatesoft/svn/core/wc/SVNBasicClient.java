@@ -303,7 +303,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_UUID_MISMATCH, 
                         "Repository UUID ''{0}'' doesn''t match expected UUID ''{1}''", 
                         new Object[] { reposUUID, uuid });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         
@@ -332,7 +332,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "Error while dispatching event: {0}", new Object[] { th.getMessage() }, 
                         SVNErrorMessage.TYPE_ERROR, th);
-                SVNErrorManager.error(err, th);
+                SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
             }
         }
     }
@@ -418,7 +418,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             File path) throws SVNException {
         if (repository == null && (revision == SVNRevision.HEAD || revision.getDate() != null)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_RA_ACCESS_REQUIRED);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (revision.getNumber() >= 0) {
             return revision.getNumber();
@@ -439,7 +439,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 revision == SVNRevision.BASE || revision == SVNRevision.PREVIOUS) {
             if (path == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNWCAccess wcAccess = createWCAccess();
             wcAccess.probeOpen(path, false, 0);
@@ -455,12 +455,12 @@ public class SVNBasicClient implements ISVNEventHandler {
             }
             if (entry.getCommittedRevision() < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Path ''{0}'' has no committed revision", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             return revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision();            
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Unrecognized revision type requested for ''{0}''", path != null ? path : (Object) repository.getLocation());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return -1;
     }
@@ -472,7 +472,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             if (pathURL == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                         "''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
 
@@ -741,7 +741,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
                     "URL ''{0}'' is not a child of repository root URL ''{1}''", new Object[] { url, 
                     reposRootURL});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         absPath = absPath.substring(reposRootPath.length());
         if (!absPath.startsWith("/")) {
@@ -753,7 +753,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, 
     		SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION), SVNLogType.DEFAULT);
         }
         long pegRevisionNumber = -1;
         long startRevisionNumber;
@@ -776,7 +776,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                     		"''{0}'' has no URL", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             } finally {
                 wcAccess.close();
@@ -840,13 +840,13 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (startPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Unable to find repository location for ''{0}'' in revision ''{1}''", new Object[] {source, new Long(startRevisionNumber)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (endPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "The location for ''{0}'' for revision {1} does not exist in the " +
                     "repository or refers to an unrelated object", new Object[] {source, new Long(endRevisionNumber)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
@@ -864,7 +864,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         final SVNNodeKind kind = repos.checkPath("", pegRevision);
         if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' doesn't exist at revision {1}", new Object[] {path, new Long(pegRevision)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         long logStart = pegRevision;
         logStart = Math.max(startRevision, logStart);
@@ -882,7 +882,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         
         if (pegPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' in revision {1} is an unrelated object", new Object[] {path, new Long(logStart)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         Map result = new SVNHashMap();
         result.put(new Long(startRevision), new SVNLocationEntry(-1, startPath));
@@ -923,7 +923,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 prevPath = path;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Missing changed-path information for ''{0}'' in revision {1}", new Object[] {path, new Long(logEntry.getRevision())});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }            
         }
         return prevPath;
@@ -984,7 +984,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                     "Entry for ''{0}'' has no URL", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return url;
     }

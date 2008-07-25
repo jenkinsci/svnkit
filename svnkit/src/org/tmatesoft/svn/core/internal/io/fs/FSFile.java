@@ -101,7 +101,7 @@ public class FSFile {
         String line = readLine(80);
         if (line == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", myFile);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return Integer.parseInt(line);
     }
@@ -113,7 +113,7 @@ public class FSFile {
                 int b = read();
                 if (b < 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, "Can''t read length line from file {0}", getFile());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 } else if (b == '\n') {
                     break;
                 }
@@ -123,7 +123,7 @@ public class FSFile {
             return myDecoder.decode(myReadLineBuffer).toString();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}: {1}", new Object[]{getFile(), e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
         return null;
     }
@@ -142,7 +142,7 @@ public class FSFile {
                     if (b < 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, 
                                 "Can''t read length line from file {0}", getFile());
-                        SVNErrorManager.error(err, lineStart ? Level.FINEST : Level.FINE);
+                        SVNErrorManager.error(err, lineStart ? Level.FINEST : Level.FINE, SVNLogType.FSFS);
                     } else if (b == '\n') {
                         endOfLineMet = true;
                         break;
@@ -155,7 +155,7 @@ public class FSFile {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Can''t read length line from file {0}: {1}", new Object[]{getFile(), e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
         return buffer.toString();
     }
@@ -172,7 +172,7 @@ public class FSFile {
                         break;
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.FSFS);
                 }
                 if (line == null || "".equals(line)) {
                     break;
@@ -183,17 +183,17 @@ public class FSFile {
                 int length = -1;
                 if ((kind != 'K' && kind != 'D') || line.length() < 3 || line.charAt(1) != ' ' || line.length() < 3) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 } 
                 try {
                     length = Integer.parseInt(line.substring(2));
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 if (length < 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 allocateReadBuffer(length + 1);
                 read(myReadLineBuffer);
@@ -214,17 +214,17 @@ public class FSFile {
                 line = readLine(160);
                 if (line == null || line.length() < 3 || line.charAt(0) != 'V' || line.charAt(1) != ' ') {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 try {
                     length = Integer.parseInt(line.substring(2));
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 if (length < 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 allocateReadBuffer(length + 1);
                 read(myReadLineBuffer);
@@ -239,13 +239,13 @@ public class FSFile {
                         properties.put(key, myReadLineBuffer.array());                                                
                     } else {
                         SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "File ''{0}'' contains unexpected binary property value", getFile());
-                        SVNErrorManager.error(error, cce);
+                        SVNErrorManager.error(error, cce, SVNLogType.FSFS);
                     }
                 }
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MALFORMED_FILE);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
         return properties;
     }
@@ -260,14 +260,14 @@ public class FSFile {
             }
             int colonIndex = line.indexOf(':');
             if (colonIndex <= 0 || line.length() <= colonIndex + 2) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, line);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, line);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Found malformed header in revision file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             } else if (line.charAt(colonIndex + 1) != ' ') {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                         "Found malformed header in revision file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             String key = line.substring(0, colonIndex);
             String value = line.substring(colonIndex + 2);
@@ -405,7 +405,7 @@ public class FSFile {
                     break;
                 default: {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_REVISION_REPORT, "Invalid depth ({0}) for path ''{1}''", new Object[]{new Integer(id), path});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
         }

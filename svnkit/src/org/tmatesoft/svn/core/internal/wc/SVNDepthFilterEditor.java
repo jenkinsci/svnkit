@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -198,7 +199,7 @@ public class SVNDepthFilterEditor implements ISVNEditor {
                 return true;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "depth should be a valid constant");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
             return false;
         }
         

@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -210,7 +211,7 @@ public class DAVUpdateRequest extends DAVRequest {
                 setDepth(SVNDepth.INFINITY);
             }
             if (getSrcURL() == null) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The request did not contain the '<src-path>' element.\nThis may indicate that your client is too old."));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The request did not contain the '<src-path>' element.\nThis may indicate that your client is too old."), SVNLogType.NETWORK);
             }
             if (!isSendAll()) {
                 setTextDeltas(false);

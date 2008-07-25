@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -103,7 +104,7 @@ public class DAVPathUtil {
 
     public static void testCanonical(String path) throws SVNException {
         if (path != null && !path.equals(SVNPathUtil.canonicalizePath(path))) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", path));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", path), SVNLogType.NETWORK);
         }
     }
 

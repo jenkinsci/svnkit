@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -174,7 +175,7 @@ public class FSFS {
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
                     "First line of ''{0}'' contains non-digit", formatFile.getFile());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         } finally {
             formatFile.close();
         }
@@ -186,7 +187,7 @@ public class FSFS {
                                   new Object[] {new Integer(REPOSITORY_FORMAT_LEGACY),
                                                 new Integer(REPOSITORY_FORMAT),
                                                 new Integer(format)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         myReposFormat = format;
         
@@ -205,7 +206,7 @@ public class FSFS {
         if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Can''t open file ''{0}''", dbCurrentFile);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -221,7 +222,7 @@ public class FSFS {
             if (!DB_TYPE.equals(myFSType)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNKNOWN_FS_TYPE, 
                         "Unsupported fs type ''{0}''", myFSType);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         return myFSType;
@@ -240,14 +241,14 @@ public class FSFS {
             } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.STREAM_UNEXPECTED_EOF) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
                         "Can''t read first line of format file ''{0}''", formatFile.getFile());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             } else {
                 throw svne;
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
                     "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         } finally {
             formatFile.close();
         }
@@ -362,7 +363,7 @@ public class FSFS {
                 SVNFileUtil.createFile(lockFile, PRE_12_COMPAT_UNNEEDED_FILE_CONTENTS, "US-ASCII");
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage().wrap("Creating db logs lock file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         return lockFile;
@@ -422,7 +423,7 @@ public class FSFS {
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                 "Can''t parse revision number in file ''{0}''", getCurrentFile()); 
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
         return -1;
     }
     
@@ -456,7 +457,7 @@ public class FSFS {
         if (!(format >= 1 && format <= DB_FORMAT)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "assertion failure in FSFS.writeFormat(): format == {0}", new Integer(format));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String contents = null;
         if (format >= LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT) {
@@ -479,7 +480,7 @@ public class FSFS {
                 os.write(contents.getBytes("US-ASCII"));
             } catch (IOException e) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.FSFS);
             } finally {
                 SVNFileUtil.closeFile(os);
             }
@@ -523,7 +524,7 @@ public class FSFS {
         SVNFileType kind = SVNFileType.getType(getTransactionDir(txnName));
         if (kind != SVNFileType.DIRECTORY) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_TRANSACTION, "No such transaction");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         FSTransactionRoot txnRoot = new FSTransactionRoot(this, txnName, -1, 0);
@@ -581,7 +582,7 @@ public class FSFS {
                 
                 if(!"PLAIN".equals(repHeader)){
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 
                 revisionFile.resetDigest();
@@ -592,7 +593,7 @@ public class FSFS {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
                             checksum, textRep.getHexDigest()
                     });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
 
                 return parsePlainRepresentation(rawEntries, false);
@@ -626,7 +627,7 @@ public class FSFS {
                 
                 if(!"PLAIN".equals(repHeader)){
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
 
                 revisionFile.resetDigest();
@@ -637,7 +638,7 @@ public class FSFS {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
                             checksum, propsRep.getHexDigest()
                     });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 return props;
             } finally {
@@ -662,20 +663,20 @@ public class FSFS {
         
         if (idsLine == null || idsLine.length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         int spaceInd = idsLine.indexOf(' ');
         if (spaceInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         idsLine = idsLine.substring(spaceInd + 1);
         spaceInd = idsLine.indexOf(' ');
         if (spaceInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Corrupt current file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String nodeID = idsLine.substring(0, spaceInd);
         String copyID = idsLine.substring(spaceInd + 1);
@@ -711,7 +712,7 @@ public class FSFS {
                     txnCurrentOS.write(nextTxnId.getBytes("UTF-8"));
                 } catch (IOException ioe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                    SVNErrorManager.error(err, ioe);
+                    SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
                 } finally {
                     SVNFileUtil.closeFile(txnCurrentOS);
                 }
@@ -792,7 +793,7 @@ public class FSFS {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Error writing repository UUID to ''{0}''", getUUIDFile());
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(uuidOS);
         }
@@ -810,7 +811,7 @@ public class FSFS {
         
         if (!revPropsFile.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return revPropsFile;
     }
@@ -834,7 +835,7 @@ public class FSFS {
             nextIdsFile.write(ids.getBytes("UTF-8"));
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(nextIdsFile);
         }
@@ -906,7 +907,7 @@ public class FSFS {
     public void createNewTxnNodeRevisionFromRevision(String txnID, FSRevisionNode sourceNode) throws SVNException {
         if (sourceNode.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Copying from transactions not allowed");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         FSRevisionNode revNode = FSRevisionNode.dumpRevisionNode(sourceNode);
         revNode.setPredecessorId(sourceNode.getId());
@@ -921,7 +922,7 @@ public class FSFS {
     public void putTxnRevisionNode(FSID id, FSRevisionNode revNode) throws SVNException {
         if (!id.isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Attempted to write to non-transaction");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         OutputStream revNodeFile = null;
         try {
@@ -929,7 +930,7 @@ public class FSFS {
             writeTxnNodeRevision(revNodeFile, revNode);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(revNodeFile);
         }
@@ -1004,7 +1005,7 @@ public class FSFS {
         SVNLock lock = fetchLockFromDigestFile(null, repositoryPath, null);
         
         if (lock == null) {
-            SVNErrorManager.error(FSErrors.errorNoSuchLock(repositoryPath, this));
+            SVNErrorManager.error(FSErrors.errorNoSuchLock(repositoryPath, this), SVNLogType.FSFS);
         }
         
         Date current = new Date(System.currentTimeMillis());
@@ -1013,7 +1014,7 @@ public class FSFS {
             if (haveWriteLock) {
                 deleteLock(lock);
             }
-            SVNErrorManager.error(FSErrors.errorLockExpired(lock.getID(), this));
+            SVNErrorManager.error(FSErrors.errorLockExpired(lock.getID(), this), SVNLogType.FSFS);
         }
         return lock;
     }
@@ -1098,7 +1099,7 @@ public class FSFS {
                 lockProps = reader.readProperties(false, true);
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage().wrap("Can't parse lock/entries hashfile ''{0}''", digestLockFile);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             } finally {
                 reader.close();
             }
@@ -1111,19 +1112,19 @@ public class FSFS {
         if (lockPath != null) {
             String lockToken = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.TOKEN_LOCK_KEY));
             if (lockToken == null) {
-                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
+                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this), SVNLogType.FSFS);
             }
             String lockOwner = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.OWNER_LOCK_KEY));
             if (lockOwner == null) {
-                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
+                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this), SVNLogType.FSFS);
             }
             String davComment = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.IS_DAV_COMMENT_LOCK_KEY));
             if (davComment == null) {
-                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
+                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this), SVNLogType.FSFS);
             }
             String creationTime = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.CREATION_DATE_LOCK_KEY));
             if (creationTime == null) {
-                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this));
+                SVNErrorManager.error(FSErrors.errorCorruptLockFile(lockPath, this), SVNLogType.FSFS);
             }
             Date creationDate = SVNDate.parseDateString(creationTime);
             String expirationTime = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.EXPIRATION_DATE_LOCK_KEY));
@@ -1159,10 +1160,10 @@ public class FSFS {
             digestFromPath.update(repositoryPath.getBytes("UTF-8"));
         } catch (NoSuchAlgorithmException nsae) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
-            SVNErrorManager.error(err, nsae);
+            SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
         return SVNFileUtil.toHexDigest(digestFromPath); 
     }
@@ -1174,7 +1175,7 @@ public class FSFS {
 
         if (!breakLock && username == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot unlock path ''{0}'', no authenticated username available", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (enableHooks) {
@@ -1198,7 +1199,7 @@ public class FSFS {
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_UNLOCK_HOOK_FAILED, "Unlock succeeded, but post-unlock hook failed");
                 err.setChildErrorMessage(svne.getErrorMessage());
-                SVNErrorManager.error(err, svne);
+                SVNErrorManager.error(err, svne, SVNLogType.FSFS);
             }
         }
     }
@@ -1210,7 +1211,7 @@ public class FSFS {
         
         if (username == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot lock path ''{0}'', no authenticated username available.", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         FSHooks.runPreLockHook(myRepositoryRoot, path, username);
@@ -1233,7 +1234,7 @@ public class FSFS {
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_LOCK_HOOK_FAILED, "Lock succeeded, but post-lock hook failed");
             err.setChildErrorMessage(svne.getErrorMessage());
-            SVNErrorManager.error(err, svne);
+            SVNErrorManager.error(err, svne, SVNLogType.FSFS);
         }
         return lock;
     }
@@ -1256,11 +1257,11 @@ public class FSFS {
     public long getDeletedRevision(String path, long startRev, long endRev) throws SVNException {
         if (FSRepository.isInvalidRevision(startRev)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid start revision {0}", new Long(startRev));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (FSRepository.isInvalidRevision(endRev)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid end revision {0}", new Long(endRev));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (startRev > endRev) {
             long tmpRev = endRev;
@@ -1389,7 +1390,7 @@ public class FSFS {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Node origin for ''{0}'' exists with a different value ({1}) than what we were about " +
                     "to store ({2})", new Object[] { nodeID, oldNodeRevID, nodeRevIDToStore });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         nodeOrigins.put(nodeID, nodeRevIDToStore);
@@ -1428,7 +1429,7 @@ public class FSFS {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
                                 "Format file ''{0}'' contains an unexpected non-digit", formatFile.getFile());
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     }
                     continue;
                 }
@@ -1437,7 +1438,7 @@ public class FSFS {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
                     "''{0}'' contains invalid filesystem format option ''{1}''", 
                     new Object[] {formatFile.getFile(), line});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -1511,7 +1512,7 @@ public class FSFS {
         
         if (!revisionFile.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return new FSFile(revisionFile);
     }
@@ -1572,7 +1573,7 @@ public class FSFS {
         if (FSRepository.isInvalidRevision(revision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
                     "Invalid revision number ''{0}''", new Long(revision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (revision <= myYoungestRevisionCache) {
@@ -1587,7 +1588,7 @@ public class FSFS {
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
                 "No such revision {0}", new Long(revision));
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
     }
     
     private SVNProperties getNodeOriginsFromFile(String nodeID) throws SVNException {
@@ -1603,13 +1604,13 @@ public class FSFS {
         SVNLock lock = getLock(path, true);
         if (!breakLock) {
             if (token == null || !token.equals(lock.getID())) {
-                SVNErrorManager.error(FSErrors.errorNoSuchLock(lock.getPath(), this));
+                SVNErrorManager.error(FSErrors.errorNoSuchLock(lock.getPath(), this), SVNLogType.FSFS);
             }
             if (username == null || "".equals(username)) {
-                SVNErrorManager.error(FSErrors.errorNoUser(this));
+                SVNErrorManager.error(FSErrors.errorNoUser(this), SVNLogType.FSFS);
             }
             if (!username.equals(lock.getOwner())) {
-                SVNErrorManager.error(FSErrors.errorLockOwnerMismatch(username, lock.getOwner(), this));
+                SVNErrorManager.error(FSErrors.errorLockOwnerMismatch(username, lock.getOwner(), this), SVNLogType.FSFS);
             }
         }
         deleteLock(lock);
@@ -1621,14 +1622,14 @@ public class FSFS {
         SVNNodeKind kind = root.checkNodeKind(path); 
 
         if (kind == SVNNodeKind.DIR) {
-            SVNErrorManager.error(FSErrors.errorNotFile(path, this));
+            SVNErrorManager.error(FSErrors.errorNotFile(path, this), SVNLogType.FSFS);
         } else if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' doesn't exist in HEAD revision", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (username == null || "".equals(username)) {
-            SVNErrorManager.error(FSErrors.errorNoUser(this));
+            SVNErrorManager.error(FSErrors.errorNoUser(this), SVNLogType.FSFS);
         }
 
         if (FSRepository.isValidRevision(currentRevision)) {
@@ -1636,11 +1637,11 @@ public class FSFS {
             long createdRev = node.getCreatedRevision();
             if (FSRepository.isInvalidRevision(createdRev)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Path ''{0}'' doesn't exist in HEAD revision", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             if (currentRevision < createdRev) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_OUT_OF_DATE, "Lock failed: newer version of ''{0}'' exists", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         
@@ -1648,7 +1649,7 @@ public class FSFS {
         
         if (existingLock != null) {
             if (!stealLock) {
-                SVNErrorManager.error(FSErrors.errorPathAlreadyLocked(existingLock.getPath(), existingLock.getOwner(), this));
+                SVNErrorManager.error(FSErrors.errorPathAlreadyLocked(existingLock.getPath(), existingLock.getOwner(), this), SVNLogType.FSFS);
             } else {
                 deleteLock(existingLock);
             }
@@ -1670,7 +1671,7 @@ public class FSFS {
     private void setLock(SVNLock lock) throws SVNException {
         if (lock == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: attempted to set a null lock");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String lastChild = "";
         String path = lock.getPath();
@@ -1717,7 +1718,7 @@ public class FSFS {
         if (!ensureDirExists(getDBLocksDir(), true)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "Can''t create a directory at ''{0}''", getDBLocksDir());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         File digestLockFile = getDigestFileFromRepositoryPath(repositoryPath);
@@ -1726,7 +1727,7 @@ public class FSFS {
 
         if (!ensureDirExists(lockDigestSubdir, true)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Can't create a directory at ''{0}''", lockDigestSubdir);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         SVNProperties props = new SVNProperties();
@@ -1759,7 +1760,7 @@ public class FSFS {
             SVNWCProperties.setProperties(props, digestLockFile, SVNFileUtil.createUniqueFile(digestLockFile.getParentFile(), digestLockFile.getName(), ".tmp", false), SVNWCProperties.SVN_HASH_TERMINATOR);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot write lock/entries hashfile ''{0}''", digestLockFile);
-            SVNErrorManager.error(err, svne);
+            SVNErrorManager.error(err, svne, SVNLogType.FSFS);
         }
     }
 
@@ -1790,7 +1791,7 @@ public class FSFS {
             FSEntry nextRepEntry = parseRepEntryValue(name, unparsedEntry);
             if (nextRepEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             representationMap.put(name, nextRepEntry);
         }
@@ -1821,7 +1822,7 @@ public class FSFS {
         String timeString = revisionProperties.getStringValue(SVNRevisionProperty.DATE);
         if (timeString == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Failed to find time on revision {0}", new Long(revision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return SVNDate.parseDateString(timeString);
     }

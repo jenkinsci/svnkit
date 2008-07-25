@@ -37,6 +37,8 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 
@@ -259,7 +261,7 @@ public class DAVProppatchHandler extends BasicDAVHandler {
                 }
             } catch (ParseException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED,
-                        "The response contains a non-conforming HTTP status line"));
+                        "The response contains a non-conforming HTTP status line"), SVNLogType.NETWORK);
 
             }
         } else if (element == DAVElement.PROPSTAT) {

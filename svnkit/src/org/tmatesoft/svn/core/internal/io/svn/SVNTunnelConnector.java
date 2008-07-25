@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -52,7 +53,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
         if (repository.getAuthenticationManager() != null) {
             SVNAuthentication auth = repository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.USERNAME, host, repository.getLocation());
             if (auth == null) {
-                SVNErrorManager.cancel("Authentication cancelled");
+                SVNErrorManager.cancel("Authentication cancelled", SVNLogType.NETWORK);
             }
             String userName = auth.getUserName();
             if (userName == null || "".equals(userName.trim())) {
@@ -71,7 +72,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
     private static String expandTunnelSpec(String name, String tunnelSpec) throws SVNException {
         if (tunnelSpec == null || tunnelSpec.trim().length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "No tunnel spec foound for ''{0}''", name);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         tunnelSpec = tunnelSpec.trim();
 

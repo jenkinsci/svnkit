@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -86,7 +87,7 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
             sendToHandler(logEntry);
         } catch (SAXException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         }
     }
     

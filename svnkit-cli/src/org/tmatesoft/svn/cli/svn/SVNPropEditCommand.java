@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -57,12 +58,12 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
         String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (!SVNPropertiesManager.isValidPropertyName(propertyName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "''{0}'' is not a valid Subversion property name", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
         Collection targets = new ArrayList();
@@ -94,12 +95,12 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot specify revision for editing versioned property ''{0}''", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else {
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS,
                         "Explicit target argument required", propertyName);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
@@ -109,7 +110,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
                                 "Local, non-commit operations do not take a log message or revision properties");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                     SVNPropertyData property = client.doGetProperty(target.getFile(), propertyName, SVNRevision.UNDEFINED, SVNRevision.WORKING, false);
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create("");

@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -60,7 +61,7 @@ public class SVNWCProperties {
             return target;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = SVNFileUtil.openFileForReading(getFile());
+        InputStream is = SVNFileUtil.openFileForReading(getFile(), SVNLogType.WC);
         try {
             while (readProperty('K', is, nameOS)) {
                 target.add(new String(nameOS.toByteArray(), "UTF-8"));
@@ -69,7 +70,7 @@ public class SVNWCProperties {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -82,7 +83,7 @@ public class SVNWCProperties {
             return result;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = SVNFileUtil.openFileForReading(getFile());
+        InputStream is = SVNFileUtil.openFileForReading(getFile(), SVNLogType.WC);
         try {
             while (readProperty('K', is, nameOS)) {
                 String name = new String(nameOS.toByteArray(), "UTF-8");
@@ -94,7 +95,7 @@ public class SVNWCProperties {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read properties file ''{0}'': {1}", new Object[] {getFile(), e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -137,7 +138,7 @@ public class SVNWCProperties {
                 properties.getPropertyValue(added, os);
                 SVNFileUtil.closeFile(os);
 
-                is = SVNFileUtil.openFileForReading(tmpFile);
+                is = SVNFileUtil.openFileForReading(tmpFile, SVNLogType.WC);
                 comparator.propertyAdded(added, is, (int) tmpFile.length());
                 equals = false;
                 SVNFileUtil.closeFile(is);
@@ -169,14 +170,14 @@ public class SVNWCProperties {
                 properties.getPropertyValue(changed, os);
                 os.close();
                 if (tmpFile2.length() != tmpFile1.length()) {
-                    is = SVNFileUtil.openFileForReading(tmpFile2);
+                    is = SVNFileUtil.openFileForReading(tmpFile2, SVNLogType.WC);
                     comparator.propertyChanged(changed, is, (int) tmpFile2
                             .length());
                     equals = false;
                     SVNFileUtil.closeFile(is);
                 } else {
-                    is1 = SVNFileUtil.openFileForReading(tmpFile1);
-                    is2 = SVNFileUtil.openFileForReading(tmpFile2);
+                    is1 = SVNFileUtil.openFileForReading(tmpFile1, SVNLogType.WC);
+                    is2 = SVNFileUtil.openFileForReading(tmpFile2, SVNLogType.WC);
                     boolean differs = false;
                     for (int i = 0; i < tmpFile1.length(); i++) {
                         if (is1.read() != is2.read()) {
@@ -187,7 +188,7 @@ public class SVNWCProperties {
                     SVNFileUtil.closeFile(is1);
                     SVNFileUtil.closeFile(is2);
                     if (differs) {
-                        is2 = SVNFileUtil.openFileForReading(tmpFile2);
+                        is2 = SVNFileUtil.openFileForReading(tmpFile2, SVNLogType.WC);
                         comparator.propertyChanged(changed, is2, (int) tmpFile2
                                 .length());
                         equals = false;
@@ -196,7 +197,7 @@ public class SVNWCProperties {
                 }
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.WC);
             } finally {
                 if (tmpFile2 != null) {
                     tmpFile2.delete();
@@ -238,7 +239,7 @@ public class SVNWCProperties {
             return null;
         }
         ByteArrayOutputStream nameOS = new ByteArrayOutputStream();
-        InputStream is = SVNFileUtil.openFileForReading(getFile());
+        InputStream is = SVNFileUtil.openFileForReading(getFile(), SVNLogType.WC);
         try {
             while (readProperty('K', is, nameOS)) {
                 String currentName = new String(nameOS.toByteArray(), "UTF-8");
@@ -251,7 +252,7 @@ public class SVNWCProperties {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(is);
         }
@@ -284,7 +285,7 @@ public class SVNWCProperties {
         try {
             tmpFile = SVNFileUtil.createUniqueFile(getFile().getParentFile(), getFile().getName(), ".tmp", true);
             if (!isEmpty()) {
-                src = SVNFileUtil.openFileForReading(getFile());
+                src = SVNFileUtil.openFileForReading(getFile(), SVNLogType.WC);
             }
             dst = SVNFileUtil.openFileForWriting(tmpFile);
             empty = !copyProperties(src, dst, name, is, length);
@@ -387,7 +388,7 @@ public class SVNWCProperties {
             }
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.WC);
         }
     }
     
@@ -403,7 +404,7 @@ public class SVNWCProperties {
             writeProperty(target, 'V', bytes);
         }catch(IOException ioe){    
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.WC);
         }
     }
     
@@ -415,7 +416,7 @@ public class SVNWCProperties {
             writeProperty(target, 'D', name.getBytes("UTF-8"));
         }catch(IOException ioe){    
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.WC);
         }
     }
     
@@ -456,7 +457,7 @@ public class SVNWCProperties {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         }
         return propCount > 0;
     }

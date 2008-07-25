@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -26,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -96,7 +96,7 @@ public class SVNWCAccess implements ISVNEventHandler {
                 throw e;
             } catch (Throwable th) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Error while dispatching event: {0}", th.getMessage());
-                SVNErrorManager.error(err, th);
+                SVNErrorManager.error(err, th, SVNLogType.WC);
             }
         }
     }
@@ -280,7 +280,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (dir == null) {
             // we tried to open root which is not wc.
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-            SVNErrorManager.error(err, logLevel);
+            SVNErrorManager.error(err, logLevel, SVNLogType.WC);
         }
         if (!path.equals(dir)) {
             depth = 0;
@@ -293,7 +293,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             SVNErrorCode errCode = svne.getErrorMessage().getErrorCode(); 
             if (!path.equals(dir) && childKind == SVNFileType.DIRECTORY && errCode == SVNErrorCode.WC_NOT_DIRECTORY) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-                SVNErrorManager.error(err, logLevel);
+                SVNErrorManager.error(err, logLevel, SVNLogType.WC);
             } else {
                 throw svne;
             }
@@ -346,7 +346,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             SVNAdminArea existing = (SVNAdminArea) myAdminAreas.get(path);
             if (myAdminAreas.containsKey(path) && existing != null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked", path);
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.WC);
             }
         } else {
             myAdminAreas = new SVNHashMap();
@@ -429,7 +429,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (dir == null) {
             // we tried to open root which is not wc.
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return retrieve(dir);
     }
@@ -451,7 +451,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, 
                 "Lock file ''{0}'' is not a regular file", lockFile);
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.WC);
         return false;
     }
     
@@ -483,7 +483,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             if (parentEntry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                         "''{0}'' has no ancestry information", parent);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             // what about switched paths?
@@ -530,7 +530,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
                     "''{0}'' is not under version control", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return entry;
 
@@ -582,10 +582,10 @@ public class SVNWCAccess implements ISVNEventHandler {
             if (subEntry != null) {
                 if (subEntry.getKind() == SVNNodeKind.DIR && type == SVNFileType.FILE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Expected ''{0}'' to be a directory but found a file", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (subEntry.getKind() == SVNNodeKind.FILE && type == SVNFileType.DIRECTORY) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Expected ''{0}'' to be a file but found a directory", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
             File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
@@ -595,16 +595,16 @@ public class SVNWCAccess implements ISVNEventHandler {
                 SVNErrorMessage childErr = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Directory ''{0}'' is missing", path);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Directory ''{0}'' is missing", path);
                 err.setChildErrorMessage(childErr);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (type == SVNFileType.DIRECTORY && wcType == SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Directory ''{0}'' containing working copy admin area is missing", adminDir);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (type == SVNFileType.DIRECTORY && wcType == SVNFileType.DIRECTORY) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Unable to lock ''{0}''", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is not locked", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return adminArea;
     }
@@ -659,7 +659,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (type != SVNFileType.DIRECTORY || wcFormat == 0) {
             if ("..".equals(path.getName()) || ".".equals(path.getName())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Path ''{0}'' ends in ''{1}'', which is unsupported for this operation", new Object[]{path, path.getName()});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             path = path.getParentFile();
         } 

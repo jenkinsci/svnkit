@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -66,7 +66,7 @@ public class SVNAdminUtil {
             os.write(README_TEXT);            
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -80,7 +80,7 @@ public class SVNAdminUtil {
             os.write(FORMAT_TEXT);            
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(os);
         }

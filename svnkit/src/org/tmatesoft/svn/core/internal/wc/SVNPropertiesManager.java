@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,6 +29,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -131,7 +132,7 @@ public class SVNPropertiesManager {
             return getWCProperty(access, path, propName);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
         return dir.getProperties(entry.getName()).getPropertyValue(propName);
@@ -143,7 +144,7 @@ public class SVNPropertiesManager {
             return setWCProperty(access, path, propName, propValue, true);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROP_KIND, "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         SVNEntry entry = access.getVersionedEntry(path, false);
         SVNAdminArea dir = entry.isDirectory() ? access.retrieve(path) : access.retrieve(path.getParentFile());
@@ -154,11 +155,11 @@ public class SVNPropertiesManager {
             propValue = validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
-                    InputStream is = SVNFileUtil.openFileForReading(path);
+                    InputStream is = SVNFileUtil.openFileForReading(path, SVNLogType.WC);
                     try {
                         SVNTranslator.copy(is, os);
                     } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), SVNLogType.DEFAULT);
                     } finally {
                         SVNFileUtil.closeFile(is);
                     }
@@ -298,7 +299,7 @@ public class SVNPropertiesManager {
                 if (error.getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                     return;
                 }
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.WC);
             }
         };
 
@@ -341,7 +342,7 @@ public class SVNPropertiesManager {
         if (name == null || name.length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property name is empty");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         if (!(Character.isLetter(name.charAt(0)) || name.charAt(0) == ':' || name.charAt(0) == '_')) {
@@ -399,7 +400,7 @@ public class SVNPropertiesManager {
             value = SVNPropertyValue.create(value.getString().trim());
             if (SVNTranslator.getEOL(value.getString(), options) == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL, "Unrecognized line ending style for ''{0}''", path);
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
             validateEOLProperty(path, fileContentFetcher);
         } else if (!force && SVNProperty.CHARSET.equals(name)) {
@@ -408,11 +409,11 @@ public class SVNPropertiesManager {
                 SVNTranslator.getCharset(value.getString(), path, options);
             } catch (SVNException e) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Charset ''{0}'' is not supported on this computer", value.getString());
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
             if (fileContentFetcher.fileIsBinary()) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", path);
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
         } else if (!force && SVNProperty.MIME_TYPE.equals(name)) {
             value = SVNPropertyValue.create(value.getString().trim());
@@ -449,7 +450,7 @@ public class SVNPropertiesManager {
             err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "''{0}'' is not a file or directory", path);
         }
         if (err != null) {
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
     }
 
@@ -464,7 +465,7 @@ public class SVNPropertiesManager {
             err = SVNErrorMessage.create(SVNErrorCode.BAD_MIME_TYPE, "MIME type ''{0}'' ends with non-alphanumeric character", value);
         }
         if (err != null) {
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
     }
 
@@ -481,20 +482,20 @@ public class SVNPropertiesManager {
             } catch (IOExceptionWrapper wrapper) {
                 handleInconsistentEOL(wrapper.getOriginalException(), path);
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.DEFAULT);
             }
         }
 
         if (fetcher.fileIsBinary()) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has binary mime type property", path);
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.WC);
         }
     }
 
     private static void handleInconsistentEOL(SVNException svne, String path) throws SVNException {
         if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has inconsistent newlines", path);
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.DEFAULT);
         } else {
             throw svne;
         }

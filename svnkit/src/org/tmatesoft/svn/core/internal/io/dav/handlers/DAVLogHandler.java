@@ -28,6 +28,8 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 
@@ -155,7 +157,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             if (myRevPropName == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA,
                         "Missing name attr in revprop element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
 
         } else if (element == HAS_CHILDREN) {
@@ -189,7 +191,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             if (myLimit > 0 && myCount > myLimit && myNestLevel == 0) {
                 myIsCompatibleMode = true;
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myLogEntryHandler != null) {
                 if (myPaths == null) {

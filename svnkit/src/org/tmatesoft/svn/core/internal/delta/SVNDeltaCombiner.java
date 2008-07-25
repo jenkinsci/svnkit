@@ -79,7 +79,7 @@ public class SVNDeltaCombiner {
             file.read(myReadWindowBuffer);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         }
         myReadWindowBuffer.flip();
         long sourceOffset = readLongOffset(myReadWindowBuffer);
@@ -89,7 +89,7 @@ public class SVNDeltaCombiner {
         int dataLength = readOffset(myReadWindowBuffer);
         if (sourceOffset < 0 || sourceLength < 0 || targetLength < 0 || instructionsLength < 0 || dataLength < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         position += myReadWindowBuffer.position();
         file.seek(position);
@@ -102,7 +102,7 @@ public class SVNDeltaCombiner {
         } catch (IOException e) {
             SVNDebugLog.getDefaultLog().logSevere(SVNLogType.DEFAULT, e);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         }
         myReadWindowBuffer.position(0);
         myReadWindowBuffer.limit(myReadWindowBuffer.capacity());
@@ -114,7 +114,7 @@ public class SVNDeltaCombiner {
                 dataLength = lenghts[1];
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
             }
         }
         SVNDiffWindow window = new SVNDiffWindow(sourceOffset, sourceLength, targetLength, instructionsLength, dataLength);
@@ -181,26 +181,26 @@ public class SVNDeltaCombiner {
             file.read(myReadWindowBuffer);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         }
         myReadWindowBuffer.flip();
         if (readLongOffset(myReadWindowBuffer) < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (readOffset(myReadWindowBuffer) < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (readOffset(myReadWindowBuffer) < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         int instructionsLength = readOffset(myReadWindowBuffer);
         int dataLength = readOffset(myReadWindowBuffer);
         if (instructionsLength < 0 || dataLength < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         position += myReadWindowBuffer.position();
         file.seek(position + dataLength + instructionsLength);

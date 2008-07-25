@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -136,14 +137,14 @@ public class FSLocationsFinder {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "End revision {0} must be less or equal to start revision {1}",
                     new Object[] { new Long(endRevision), new Long(startRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (pegRevision < startRevision) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "Peg revision {0} must be greater or equal to start revision {1}",
                     new Object[] { new Long(pegRevision), new Long(startRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!path.startsWith("/")) {

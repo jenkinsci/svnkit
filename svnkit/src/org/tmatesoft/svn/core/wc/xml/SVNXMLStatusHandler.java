@@ -108,7 +108,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
         } catch (SAXException th) {
             getDebugLog().logSevere(SVNLogType.DEFAULT, th);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, th.getLocalizedMessage());
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
         }
     }
     

@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -84,7 +85,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         try {
             getResponseWriter().write(responseBody);
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
         }
     }
 
@@ -112,7 +113,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             for (Iterator iterator = resource.getChildren(); iterator.hasNext();) {
                 DAVResource child = (DAVResource) iterator.next();
                 if (child == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Error while fetching child of ''{0}''", resource.getResourceURI().getPath()));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Error while fetching child of ''{0}''", resource.getResourceURI().getPath()), SVNLogType.NETWORK);
                 }
                 if (getPropfindRequest().isAllPropRequest()) {
                     properties.clear();
@@ -163,7 +164,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private void insertPropertyValue(DAVElement element, DAVResource resource, boolean addValue, StringBuffer xmlBuffer) throws SVNException {
         if (!resource.exists() && (element != DAVElement.VERSION_CONTROLLED_CONFIGURATION || element != DAVElement.BASELINE_RELATIVE_PATH)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Invalid path ''{0}''", resource.getResourceURI().getURI()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Invalid path ''{0}''", resource.getResourceURI().getURI()), SVNLogType.NETWORK);
         }
 
         String prefix = (String) SVNXMLUtil.PREFIX_MAP.get(element.getNamespace());
@@ -239,7 +240,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private Date getLastModifiedTime(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() == DAVResourceType.PRIVATE && resource.getResourceURI().getKind() == DAVResourceKind.VCC) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         long revision;
@@ -250,7 +251,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
                 || resource.getResourceURI().getType() == DAVResourceType.VERSION) {
             revision = resource.getCreatedRevision();
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         return resource.getRevisionDate(revision);
@@ -258,7 +259,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private String getBaselineCollectionProp(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() != DAVResourceType.VERSION || !resource.getResourceURI().isBaseLined()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), null);
@@ -266,11 +267,11 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private String getVersionNameProp(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() != DAVResourceType.VERSION && !resource.getResourceURI().isVersioned()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         if (resource.getResourceURI().getType() == DAVResourceType.PRIVATE && resource.getResourceURI().getKind() == DAVResourceKind.VCC) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         if (resource.getResourceURI().isBaseLined()) {
@@ -281,7 +282,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private String getContentLengthProp(DAVResource resource) throws SVNException {
         if (resource.isCollection() || resource.getResourceURI().isBaseLined()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         long fileSize = resource.getContentLength();
@@ -294,7 +295,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private String getCreatorDisplayNameProp(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() == DAVResourceType.PRIVATE && resource.getResourceURI().getKind() == DAVResourceKind.VCC) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
         }
         long revision;
         if (resource.getResourceURI().isBaseLined() && resource.getResourceURI().getType() == DAVResourceType.VERSION) {
@@ -304,7 +305,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
                 || resource.getResourceURI().getType() == DAVResourceType.VERSION) {
             revision = resource.getCreatedRevision();
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         return resource.getAuthor(revision);
@@ -312,7 +313,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private String getBaselineRelativePathProp(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() != DAVResourceType.REGULAR) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         //path must be relative
@@ -325,13 +326,13 @@ public class DAVPropfindHandler extends ServletDAVHandler {
                 || resource.getResourceURI().getType() == DAVResourceType.WORKING)) {
             return resource.getMD5Checksum();
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
         return null;
     }
 
     private String getETag(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() == DAVResourceType.PRIVATE && resource.getResourceURI().getKind() == DAVResourceKind.VCC) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         return resource.getETag();
@@ -346,7 +347,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.BASELINE, resource.getLatestRevision(), null);
 
         } else if (resource.getResourceURI().getType() != DAVResourceType.REGULAR) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         } else {
             return DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.VERSION, resource.getCreatedRevision(), resource.getResourceURI().getPath());
@@ -359,7 +360,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private String getVersionControlConfigurationProp(DAVResource resource) throws SVNException {
         if (resource.getResourceURI().getType() != DAVResourceType.REGULAR) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Failed to determine property"), SVNLogType.NETWORK);
             return null;
         }
         //Method doesn't use revision parameter at this moment
@@ -392,7 +393,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private DAVElement convertDeadPropertyToDAVElement(String property) throws SVNException {
         if (!SVNProperty.isRegularProperty(property)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unrecognized property prefix ''{0}''", property), SVNLogType.NETWORK);
         }
         String namespace = DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE;
         if (SVNProperty.isSVNProperty(property)) {
@@ -412,7 +413,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(namespace)) {
             return name;
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace), SVNLogType.NETWORK);
         return null;
     }
 }

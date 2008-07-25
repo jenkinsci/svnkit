@@ -17,6 +17,7 @@ import java.io.InputStream;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -62,7 +63,7 @@ public class HTTPBodyInputStream extends InputStream {
     private InputStream getDelegate() throws IOException {
         if (myDelegate == null) {
             try {
-                myDelegate = SVNFileUtil.openFileForReading(myFile);
+                myDelegate = SVNFileUtil.openFileForReading(myFile, SVNLogType.NETWORK);
             } catch (SVNException e) {
                 if (e.getCause() instanceof IOException) {
                     throw (IOException) e.getCause();

@@ -21,12 +21,13 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -52,7 +53,7 @@ public class SVNRevertCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
@@ -70,7 +71,7 @@ public class SVNRevertCommand extends SVNCommand {
                     if (isScheduledForAddition(target.getFile())) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, 
                                 "Cannot revert addition of current directory; please try again from the parent directory");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                 }
                 pathsList.add(target.getFile());
@@ -86,7 +87,7 @@ public class SVNRevertCommand extends SVNCommand {
             if (!depth.isRecursive() && err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 err = err.wrap("Try 'svn revert --recursive' instead?");
             }
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     

@@ -76,7 +76,7 @@ public class SVNSSHSession {
         try {
             if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "User name is required to establish SSH connection");
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             }
             int port = location.hasPort() ? location.getPort() : credentials.getPortNumber();
             if (port < 0) {
@@ -235,13 +235,13 @@ public class SVNSSHSession {
         if (privateKey != null && !isValidPrivateKey(privateKey, passphrase)) {
             if (password == null) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "File ''{0}'' is not valid OpenSSH DSA or RSA private key file", privateKeyFile);
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             } 
             privateKey = null;
         }
         if (privateKey == null && password == null) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.NETWORK);
         }
         
         Connection connection = new Connection(location.getHost(), port);
@@ -274,11 +274,11 @@ public class SVNSSHSession {
                 }
             } else {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Either password or private key should be provided to establish SSH connection");
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             }
             if (!authenticated) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSH server rejects provided credentials");
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             }
             return connection;
         } catch (IOException e) {
@@ -286,7 +286,7 @@ public class SVNSSHSession {
                 connection.close();
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {location.setPath("", false), e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         }
         return null;
     }

@@ -22,8 +22,8 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNRepositoryReplicator</b> class provides an ability to
@@ -157,18 +158,18 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
 
         if (dstLatestRevision != fromRevision - 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "The target repository''s latest revision must be ''{0}''", new Long(fromRevision - 1));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!src.getRepositoryRoot(true).equals(src.getLocation())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source repository location must be at repository root ({0}), not at {1}",
                     new Object[]{src.getRepositoryRoot(true), src.getLocation()});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (!dst.getRepositoryRoot(true).equals(dst.getLocation())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Target repository location must be at repository root ({0}), not at {1}",
                     new Object[]{dst.getRepositoryRoot(true), dst.getLocation()});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         long latestRev = src.getLatestRevision();
@@ -198,10 +199,10 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
 
             if (currentRevision[0] == null || currentRevision[0].getChangedPaths() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Revision ''{0}'' does not contain information on changed paths; probably access is denied", new Long(i));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             } else if (currentRevision[0].getDate() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Revision ''{0}'' does not contain commit date; probably access is denied", new Long(i));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             fireReplicatingEvent(currentRevision[0]);
@@ -234,7 +235,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
                 }
 
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, th.getMessage());
-                SVNErrorManager.error(err, th);
+                SVNErrorManager.error(err, th, SVNLogType.FSFS);
             }
 
             SVNCommitInfo commitInfo = bridgeEditor.getCommitInfo();

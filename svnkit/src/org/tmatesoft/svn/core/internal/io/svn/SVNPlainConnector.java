@@ -52,16 +52,16 @@ public class SVNPlainConnector implements ISVNConnector {
             mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout);
         } catch (SocketTimeoutException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         } catch (UnknownHostException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         } catch (ConnectException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         }
     }
 
@@ -70,7 +70,7 @@ public class SVNPlainConnector implements ISVNConnector {
             try {
                 mySocket.close();
             } catch (IOException ex) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ex.getMessage(), ex));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ex.getMessage(), ex), SVNLogType.NETWORK);
             } finally {
                 mySocket = null;
                 myInputStream = null;

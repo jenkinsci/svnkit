@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -59,7 +60,7 @@ public class SVNPathUtil {
             char ch = path.charAt(i);
             if (SVNEncodingUtil.isASCIIControlChar(ch)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[]{"0x" + SVNFormatUtil.getHexNumberFromByte((byte) ch), path});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
     }

@@ -157,7 +157,7 @@ class HTTPConnection implements IHTTPConnection {
                     SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
                     proxyAuth.acknowledgeProxyContext(false, err);
-                    SVNErrorManager.error(err, connectRequest.getErrorMessage());
+                    SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                 }
             } else {
                 myIsProxied = false;
@@ -337,7 +337,7 @@ class HTTPConnection implements IHTTPConnection {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, ssl);
                 close();
 	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
-		            SVNErrorManager.cancel(ssl.getCause().getMessage());
+		            SVNErrorManager.cancel(ssl.getCause().getMessage(), SVNLogType.NETWORK);
 	            }
                 SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ssl.getMessage() }, SVNErrorMessage.TYPE_ERROR, ssl);
 		            if (keyManager != null) {
@@ -354,7 +354,7 @@ class HTTPConnection implements IHTTPConnection {
                 } else if (e instanceof ConnectException) {
 	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
-                    SVNErrorManager.cancel(e.getMessage());
+                    SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 } else if (e instanceof SSLException) {                   
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 } else {
@@ -419,7 +419,7 @@ class HTTPConnection implements IHTTPConnection {
                         status.getError().setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                                 "Probably you are trying to lock file in repository that only allows anonymous access"));
                     }
-                    SVNErrorManager.error(status.getError());
+                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
                     return status;  
                 }
 
@@ -539,13 +539,13 @@ class HTTPConnection implements IHTTPConnection {
         close();
         if (err != null && err.getErrorCode().getCategory() != SVNErrorCode.RA_DAV_CATEGORY &&
             err.getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         // err2 is another default context...
 //        myRepository.getDebugLog().info(err.getMessage());
         myRepository.getDebugLog().logFine(SVNLogType.NETWORK, new Exception(err.getMessage()));
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
-        SVNErrorManager.error(err, err2);
+        SVNErrorManager.error(err, err2, SVNLogType.NETWORK);
         return null;
     }
 

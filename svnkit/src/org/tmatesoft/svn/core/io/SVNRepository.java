@@ -226,7 +226,7 @@ public abstract class SVNRepository {
                 return;
             } else if (!url.getProtocol().equals(myLocation.getProtocol())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "SVNRepository URL could not be changed from ''{0}'' to ''{1}''; create new SVNRepository instance instead", new Object[] {myLocation, url});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (forceReconnect) {
                 closeSession();
@@ -760,7 +760,7 @@ public abstract class SVNRepository {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "Retrieval of mergeinfo unsupported by ''{0}''", pathOrURL);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
     }
 
@@ -1723,10 +1723,10 @@ public abstract class SVNRepository {
         SVNNodeKind nodeKind = checkPath("", revision);
         if (nodeKind == SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' refers to a file, not a directory", getLocation());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } else if (nodeKind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' doesn't exist", getLocation());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         final SVNDepth reporterDepth = depth;
         update(revision, target, depth, false, new ISVNReporterBaton() {
@@ -1931,7 +1931,7 @@ public abstract class SVNRepository {
         if (hasSVNProperties(revProps)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "Standard properties can't be set explicitly as revision properties");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
         revProps = revProps == null ? new SVNProperties() : new SVNProperties(revProps);
@@ -2243,7 +2243,7 @@ public abstract class SVNRepository {
         if (!isValidRevision(revision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
                     "Invalid revision number ''{0}''", new Long(revision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
     }
     
@@ -2372,7 +2372,7 @@ public abstract class SVNRepository {
                     "  startRevision is {1}\n" +
                     "  endRevision is {2}", new Object[] { new Long(pegRevision), 
                     new Long(startRevision), new Long(endRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
         SVNNodeKind kind = checkPath(path, pegRevision);
@@ -2380,7 +2380,7 @@ public abstract class SVNRepository {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
                     "Path ''{0}'' doesn''t exist in revision {1}", 
                     new Object[] { reposAbsPath, new Long(pegRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
 
         LocationSegmentsLogHandler locationSegmentsLogHandler = new LocationSegmentsLogHandler(kind, reposAbsPath, 
@@ -2402,7 +2402,7 @@ public abstract class SVNRepository {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
                     "Path ''{0}'' doesn''t exist in revision {1}", 
                     new Object[] { reposAbsPath, new Long(pegRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (revisions == null || revisions.length == 0) {
             return 0;
@@ -2439,14 +2439,14 @@ public abstract class SVNRepository {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "Unable to find repository location for ''{0}'' in revision {1}", 
                     new Object[] { reposAbsPath, new Long(pegRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
         if (!reposAbsPath.equals(locationsLogHandler.myPegPath)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
                     "''{0}'' in revision {1} is an unrelated object",
                     new Object[] { reposAbsPath, new Long(youngest) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return locationsLogHandler.myProcessedRevisions.size();
     }
@@ -2460,7 +2460,7 @@ public abstract class SVNRepository {
         if (kind == SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "''{0}'' is not a file", 
                     reposAbsPath);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         FileRevisionsLogHandler logHandler = new FileRevisionsLogHandler(reposAbsPath);
         log(new String[] { "" }, endRevision, startRevision, true, false, 0, false, null, logHandler);
@@ -2491,8 +2491,8 @@ public abstract class SVNRepository {
             InputStream srcStream = null;
             InputStream tgtStream = null;
             try {
-                srcStream = lastFile != null ? SVNFileUtil.openFileForReading(lastFile) : SVNFileUtil.DUMMY_IN;
-                tgtStream = SVNFileUtil.openFileForReading(tmpFile);
+                srcStream = lastFile != null ? SVNFileUtil.openFileForReading(lastFile, SVNLogType.NETWORK) : SVNFileUtil.DUMMY_IN;
+                tgtStream = SVNFileUtil.openFileForReading(tmpFile, SVNLogType.NETWORK);
                 deltaGenerator.sendDelta(rev.myPath, srcStream, 0, tgtStream, handler, false);
             } finally {
                 SVNFileUtil.closeFile(srcStream);
@@ -2574,7 +2574,7 @@ public abstract class SVNRepository {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
                         "Missing changed-path information for ''{0}'' in revision {1}", 
                         new Object[] { path, new Long(revision) });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         }
        

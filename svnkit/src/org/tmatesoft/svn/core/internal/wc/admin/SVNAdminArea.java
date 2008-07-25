@@ -234,7 +234,7 @@ public abstract class SVNAdminArea {
         SVNEntry entry = getEntry(name, true);
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No such entry: ''{0}''", name);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (newURL != null && (entry.getURL() == null || !newURL.equals(entry.getURL()))) {
@@ -297,7 +297,7 @@ public abstract class SVNAdminArea {
         } else if (conflictChoice != SVNConflictChoice.MERGED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
                     "Invalid 'conflict_result' argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         if (autoResolveSource != null) {
@@ -481,7 +481,7 @@ public abstract class SVNAdminArea {
         String path = tmp ? "tmp/" : "";
         path += "text-base/" + name + ".svn-base";
         File baseFile = getAdminFile(path);
-        return SVNFileUtil.openFileForReading(baseFile);
+        return SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC);
     }
 
     public OutputStream getBaseFileForWriting(String name) throws SVNException {
@@ -518,7 +518,7 @@ public abstract class SVNAdminArea {
             };
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Your .svn/tmp directory may be missing or corrupt; run 'svn cleanup' and try again");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return null;
     }
@@ -599,7 +599,7 @@ public abstract class SVNAdminArea {
                 textModified = hasTextModifications(name, false);
                 if (reportInstantError && textModified) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD, "File ''{0}'' has local modifications", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
             SVNPropertiesManager.deleteWCProperties(this, name, false);
@@ -612,7 +612,7 @@ public abstract class SVNAdminArea {
             if (deleteWorkingFiles) {
                 if (textModified || (!wcSpecial && localSpecial)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (myCommitParameters == null || myCommitParameters.onFileDeletion(path)) {
                     SVNFileUtil.deleteFile(path);
                 }
@@ -675,7 +675,7 @@ public abstract class SVNAdminArea {
         }
         if (leftSomething && myCommitParameters == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LEFT_LOCAL_MOD);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 
@@ -694,7 +694,7 @@ public abstract class SVNAdminArea {
             }
           
             public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.WC);
             }
         };
         
@@ -714,23 +714,23 @@ public abstract class SVNAdminArea {
                 return;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is not under version control", name);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         SVNEntry thisDirEntry = getEntry(getThisDirName(), true);
         if (!getThisDirName().equals(entry.getName()) && thisDirEntry.isScheduledForDeletion()) {
             if (SVNProperty.SCHEDULE_ADD.equals(schedule)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t add ''{0}'' to deleted directory; try undeleting its parent directory first", name);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (SVNProperty.SCHEDULE_REPLACE.equals(schedule)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Can''t replace ''{0}'' in deleted directory; try undeleting its parent directory first", name);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
 
         if (entry.isAbsent() && SVNProperty.SCHEDULE_ADD.equals(schedule)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "''{0}'' is marked as absent, so it cannot be scheduled for addition", name);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (SVNProperty.SCHEDULE_ADD.equals(entry.getSchedule())) {
@@ -758,7 +758,7 @@ public abstract class SVNAdminArea {
         } else {
             if (SVNProperty.SCHEDULE_ADD.equals(schedule) && !entry.isDeleted()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_SCHEDULE_CONFLICT, "Entry ''{0}'' is already under version control", name);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (schedule == null) {
                 attributes.remove(SVNProperty.SCHEDULE);
             }
@@ -871,7 +871,7 @@ public abstract class SVNAdminArea {
         SVNEntry entry = getEntry(name, hidden);
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", getFile(name));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return entry;
     }
@@ -1298,7 +1298,7 @@ public abstract class SVNAdminArea {
     private void destroyAdminArea() throws SVNException {
         if (!isLocked()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Write-lock stolen in ''{0}''", getRoot());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNFileUtil.deleteAll(getAdminDirectory(), getWCAccess());
         getWCAccess().closeAdminArea(getRoot());
@@ -1336,8 +1336,8 @@ public abstract class SVNAdminArea {
             InputStream textStream = null;
             entry = getVersionedEntry(text.getName(), true);
             try {
-                baseStream = SVNFileUtil.openFileForReading(baseFile);
-                textStream = special ? null : SVNFileUtil.openFileForReading(text);
+                baseStream = SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC);
+                textStream = special ? null : SVNFileUtil.openFileForReading(text, SVNLogType.WC);
                 if (checksum) {
                     if (entry.getChecksum() != null) {
                         checksumStream = new SVNChecksumInputStream(baseStream);
@@ -1379,7 +1379,7 @@ public abstract class SVNAdminArea {
                     }
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             } finally {
                 SVNFileUtil.closeFile(baseStream);
@@ -1393,7 +1393,7 @@ public abstract class SVNAdminArea {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base: ''{0}''\n" +
                         "   expected: {1}\n" +
                         "     actual: {2}\n", new Object[] {baseFile, entry.getChecksum(), checksumStream.getDigest()});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         return false;
@@ -1403,15 +1403,15 @@ public abstract class SVNAdminArea {
         SVNEntry defaultEntry = (SVNEntry) entries.get("");
         if (defaultEntry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Missing default entry");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (defaultEntry.getRevision() < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_REVISION, "Default entry has no revision number");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (defaultEntry.getURL() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Default entry is missing no URL");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         for(Iterator names = entries.keySet().iterator(); names.hasNext();) {
             String name = (String) names.next();
@@ -1448,7 +1448,7 @@ public abstract class SVNAdminArea {
             os.write('\n');
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -1617,6 +1617,6 @@ public abstract class SVNAdminArea {
                 "   expected: {0}\n" +
                 "     actual: {1}",
                 new Object[] { new Integer(getFormatVersion()), new Integer(format) });
-        SVNErrorManager.error(err);        
+        SVNErrorManager.error(err, SVNLogType.WC);
     }
 }

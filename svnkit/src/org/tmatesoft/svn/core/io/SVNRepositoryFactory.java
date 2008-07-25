@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -32,14 +31,16 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
@@ -194,10 +195,10 @@ public abstract class SVNRepositoryFactory {
     	}
         if ("file".equalsIgnoreCase(url.getProtocol())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open an ra_local session to URL");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Unable to create SVNRepository object for ''{0}''", url);
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
         return null;
     }
 
@@ -309,7 +310,7 @@ public abstract class SVNRepositoryFactory {
                 if ( children != null && children.length != 0) {
                     if (!force) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     } else {
                         SVNFileUtil.deleteAll(path, true);
                     }
@@ -317,7 +318,7 @@ public abstract class SVNRepositoryFactory {
             } else {
                 if (!force) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 } else {
                     SVNFileUtil.deleteAll(path, true);
                 }
@@ -326,12 +327,12 @@ public abstract class SVNRepositoryFactory {
         //SVNFileUtil.deleteAll(path, true);
         if (!path.mkdirs() && !path.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         InputStream is = SVNRepositoryFactory.class.getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
         if (is == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar", true);
         OutputStream uuidOS = null; 
@@ -360,7 +361,7 @@ public abstract class SVNRepositoryFactory {
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
                                 new Object[] {hookFile, e.getLocalizedMessage()});
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
@@ -373,7 +374,7 @@ public abstract class SVNRepositoryFactory {
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
                                 new Object[] {hookFile, e.getLocalizedMessage()});
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
@@ -393,7 +394,7 @@ public abstract class SVNRepositoryFactory {
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
                 err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             
             int fsFormat = FSFS.DB_FORMAT;
@@ -407,7 +408,7 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository format to ''{0}''", reposFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
             }
                 
@@ -423,7 +424,7 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
             }
             
@@ -459,7 +460,7 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
             }
             
@@ -472,7 +473,7 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Can not write to ''{0}'' file: {1}", 
                             new Object[] { currentFile.getName(), e.getLocalizedMessage() });
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 }
             }
             
@@ -486,7 +487,7 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Can not write to ''{0}'' file: {1}", 
                             new Object[] { txnCurrentFile.getName(), e.getLocalizedMessage() });
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 }
             }
             
@@ -530,7 +531,7 @@ public abstract class SVNRepositoryFactory {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not copy repository template file to ''{0}''", dstFile);
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
@@ -539,7 +540,7 @@ public abstract class SVNRepositoryFactory {
 
     private static void extract(File srcFile, File dst) throws SVNException {
         JarInputStream jis = null;
-        InputStream is = SVNFileUtil.openFileForReading(srcFile);
+        InputStream is = SVNFileUtil.openFileForReading(srcFile, SVNLogType.NETWORK);
         byte[] buffer = new byte[16*1024];
         
         JarFile jarFile = null;
@@ -579,7 +580,7 @@ public abstract class SVNRepositoryFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not extract repository files from ''{0}'' to ''{1}''", 
                     new Object[] {srcFile, dst});
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } finally {
             SVNFileUtil.closeFile(jis);
             SVNFileUtil.closeFile(is);
