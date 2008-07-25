@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -163,12 +163,16 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 						<span class="javakeyword">false</span> - only items located immediately
      * 						in the directory itself
      * @return				the revision number to which <code>file</code> was updated to
-     * @throws SVNException 
+     * @throws SVNException
+     * @deprecated 
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
         return doUpdate(file, revision, recursive, false);
     }
     
+    /**
+     * @deprecated
+     */
     public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
         return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force, false);
     }    
@@ -208,6 +212,9 @@ public class SVNUpdateClient extends SVNBasicClient {
         return result;
     }
 
+    /**
+     * 
+     */
     public long doUpdate(File file, SVNRevision revision, SVNDepth depth, boolean force, boolean depthIsSticky) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (depth == SVNDepth.UNKNOWN) {
@@ -305,7 +312,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 						<span class="javakeyword">false</span> - only items located immediately
      * 						in the directory itself
      * @return				the revision number to which <code>file</code> was updated to
-     * @throws SVNException 
+     * @throws SVNException
+     * @deprecated 
      */
     public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
         return doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive);
@@ -331,11 +339,15 @@ public class SVNUpdateClient extends SVNBasicClient {
      *                      in the directory itself
      * @return              the revision number to which <code>file</code> was updated to
      * @throws SVNException
+     * @deprecated
      */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         return doSwitch(file, url, pegRevision, revision, recursive, false);
     }
     
+    /**
+     * @deprecated
+     */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
         return doSwitch(file, url, pegRevision, revision, SVNDepth.getInfinityOrFilesDepth(recursive), force, false);
     }    
@@ -420,12 +432,16 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException <code>url</code> refers to a file, not a directory; <code>dstPath</code>
      * 						already exists but it is a file, not a directory; <code>dstPath</code> already
      * 						exists and is a versioned directory but has a different URL (repository location
-     * 						against which the directory is controlled)  
+     * 						against which the directory is controlled)
+     * @deprecated  
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         return doCheckout(url, dstPath, pegRevision, revision, recursive, false);
     }
 
+    /**
+     * @deprecated
+     */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
         return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
     }
@@ -532,12 +548,15 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 							in the directory itself
      * @return					the revision number of the exported directory/file 
      * @throws SVNException
+     * @deprecated
      */
-    public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException {
+    public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, 
+            boolean force, boolean recursive) throws SVNException {
         return doExport(url, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
     }
     
-    public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
+    public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, 
+            boolean force, SVNDepth depth) throws SVNException {
         long[] revNum = { SVNRepository.INVALID_REVISION }; 
         SVNRepository repository = createRepository(url, null, null, pegRevision, revision, revNum);
         long exportedRevision = doRemoteExport(repository, revNum[0], dstPath, eolStyle, force, depth);
@@ -596,14 +615,15 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 							in the directory itself
      * @return					the revision number of the exported directory/file 
      * @throws SVNException
+     * @deprecated
      */
-    public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle,
-            final boolean force, boolean recursive) throws SVNException {
+    public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, 
+            String eolStyle, final boolean force, boolean recursive) throws SVNException {
         return doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
     }
     
-    public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle,
-            final boolean force, SVNDepth depth) throws SVNException {
+    public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, 
+            String eolStyle, final boolean force, SVNDepth depth) throws SVNException {
         long exportedRevision = -1;
         if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) {
             SVNRepository repository = createRepository(null, srcPath, null, pegRevision, revision, null);
@@ -850,9 +870,6 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 							a directory then the entire tree will be relocated, otherwise if 
      * 							<span class="javakeyword">false</span> - only <code>dst</code> itself
      * @throws SVNException
-     */
-    /* TODO(sd): "I don't see any reason to change this recurse parameter
-     * to a depth, but making a note to re-check this logic later."
      */
     public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
