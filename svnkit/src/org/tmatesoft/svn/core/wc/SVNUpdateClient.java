@@ -164,14 +164,14 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 						in the directory itself
      * @return				the revision number to which <code>file</code> was updated to
      * @throws SVNException
-     * @deprecated 
+     * @deprecated use {@link #doUpdate(File, SVNRevision, SVNDepth, boolean, boolean)} instead 
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
         return doUpdate(file, revision, recursive, false);
     }
     
     /**
-     * @deprecated
+     * @deprecated use {@link #doUpdate(File, SVNRevision, SVNDepth, boolean, boolean)} instead
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
         return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force, false);
@@ -313,7 +313,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 						in the directory itself
      * @return				the revision number to which <code>file</code> was updated to
      * @throws SVNException
-     * @deprecated 
+     * @deprecated use {@link #doSwitch(File, SVNURL, SVNRevision, SVNRevision, SVNDepth, boolean, boolean)} instead
      */
     public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
         return doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive);
@@ -339,14 +339,14 @@ public class SVNUpdateClient extends SVNBasicClient {
      *                      in the directory itself
      * @return              the revision number to which <code>file</code> was updated to
      * @throws SVNException
-     * @deprecated
+     * @deprecated use {@link #doSwitch(File, SVNURL, SVNRevision, SVNRevision, SVNDepth, boolean, boolean)} instead
      */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         return doSwitch(file, url, pegRevision, revision, recursive, false);
     }
     
     /**
-     * @deprecated
+     * @deprecated use {@link #doSwitch(File, SVNURL, SVNRevision, SVNRevision, SVNDepth, boolean, boolean)} instead 
      */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
         return doSwitch(file, url, pegRevision, revision, SVNDepth.getInfinityOrFilesDepth(recursive), force, false);
@@ -433,14 +433,14 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 						already exists but it is a file, not a directory; <code>dstPath</code> already
      * 						exists and is a versioned directory but has a different URL (repository location
      * 						against which the directory is controlled)
-     * @deprecated  
+     * @deprecated use {@link #doCheckout(SVNURL, File, SVNRevision, SVNRevision, SVNDepth, boolean)} instead  
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
         return doCheckout(url, dstPath, pegRevision, revision, recursive, false);
     }
 
     /**
-     * @deprecated
+     * @deprecated use {@link #doCheckout(SVNURL, File, SVNRevision, SVNRevision, SVNDepth, boolean)} instead
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
         return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
@@ -548,7 +548,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 							in the directory itself
      * @return					the revision number of the exported directory/file 
      * @throws SVNException
-     * @deprecated
+     * @deprecated use {@link #doExport(SVNURL, File, SVNRevision, SVNRevision, String, boolean, SVNDepth)}
      */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, 
             boolean force, boolean recursive) throws SVNException {
@@ -615,7 +615,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 							in the directory itself
      * @return					the revision number of the exported directory/file 
      * @throws SVNException
-     * @deprecated
+     * @deprecated use {@link #doExport(File, File, SVNRevision, SVNRevision, String, boolean, SVNDepth)}
      */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, 
             String eolStyle, final boolean force, boolean recursive) throws SVNException {

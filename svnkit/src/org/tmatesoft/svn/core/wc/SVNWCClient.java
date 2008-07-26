@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -236,7 +236,6 @@ public class SVNWCClient extends SVNBasicClient {
         myCommitHandler = handler;
     }
 
-
     protected ISVNAddParameters getAddParameters() {
         if (myAddParameters == null) {
             return DEFAULT_ADD_PARAMETERS;
@@ -273,7 +272,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                      </ul>
      * @see #doGetFileContents(SVNURL,SVNRevision,SVNRevision,boolean,OutputStream)
      */
-    public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+    public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, 
+            boolean expandKeywords, OutputStream dst) throws SVNException {
         if (dst == null) {
             return;
         }
@@ -356,7 +356,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                      </ul>
      * @see #doGetFileContents(File,SVNRevision,SVNRevision,boolean,OutputStream)
      */
-    public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+    public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, 
+            boolean expandKeywords, OutputStream dst) throws SVNException {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, null);
@@ -405,6 +406,23 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
+     * Cleans up a working copy.
+     * 
+     * This method is equivalent to a call to <code>doCleanup(path, false)</code>. 
+     * @param  path         a WC path to start a cleanup from
+     * @throws SVNException if one of the following is true:
+     *                      <ul>
+     *                      <li><code>path</code> does not exist
+     *                      <li><code>path</code>'s parent directory
+     *                      is not under version control
+     *                      </ul>
+     * @see #doCleanup(File, boolean)
+     */
+    public void doCleanup(File path) throws SVNException {
+        doCleanup(path, false);
+    }
+
+    /**
      * Recursively cleans up the working copy, removing locks and resuming
      * unfinished operations.
      * <p/>
@@ -421,10 +439,6 @@ public class SVNWCClient extends SVNBasicClient {
      *                      is not under version control
      *                      </ul>
      */
-    public void doCleanup(File path) throws SVNException {
-        doCleanup(path, false);
-    }
-
     public void doCleanup(File path, boolean deleteWCProperties) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType == SVNFileType.NONE) {
@@ -455,23 +469,44 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Sets, edits or deletes a property on a file or directory item(s).
+     * Sets <code>propName</code> to <code>propValue</code> on <code>path</code>.
+     * A <code>propValue</code> of <span class="javakeyword">null</span> will delete 
+     * the property.
+     * 
      * <p/>
+     * If <code>depth</code> is {@link org.tmatesoft.svn.core.SVNDepth#EMPTY}, set the property on <code>path</code>
+     * only; if {@link SVNDepth#FILES}, set it on <code>path</code> and its file
+     * children (if any); if {@link SVNDepth#IMMEDIATES}, on <code>path</code> and all
+     * of its immediate children (both files and directories); if
+     * {@link SVNDepth#INFINITY}, on <code>path</code> and everything beneath it.
+     * 
+     * <p/>
+     * If <code>propName</code> is an svn-controlled property (i.e. prefixed with
+     * <span class="javastring">"svn:"</span>), then the caller is responsible for ensuring that
+     * the value uses LF line-endings.
+     * 
+     * <p/>
+     * If <code>skipChecks</code> is <span class="javakeyword">true</span>, this method does no validity 
+     * checking.  But if <code>skipChecks</code> is <span class="javakeyword">false</span>, 
+     * and <code>propName</code> is not a valid property for <code>path</code>, it throws an exception, 
+     * either with an error code {@link org.tmatesoft.svn.core.SVNErrorCode#ILLEGAL_TARGET} 
+     * (if the property is not appropriate for <code>path</code>), or with 
+     * {@link org.tmatesoft.svn.core.SVNErrorCode#BAD_MIME_TYPE} (if <code>propName</code> is 
+     * <span class="javastring">"svn:mime-type"</span>, but <code>propVal</code> is not a valid mime-type).
+     * 
      * <p/>
      * To set or edit a property simply provide a <code>propName</code>
      * and a <code>propValue</code>. To delete a property set
      * <code>propValue</code> to <span class="javakeyword">null</span>
      * and the property <code>propName</code> will be deleted.
      *
-     * @param path      a WC item which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param recursive <span class="javakeyword">true</span> to
-     *                  descend recursively
-     * @param handler   a caller's property handler
+     * @param path          a WC item which properties are to be modified
+     * @param propName      a property name
+     * @param propValue     a property value
+     * @param skipChecks    <span class="javakeyword">true</span> to
+     *                      force the operation to run
+     * @param depth         a tree depth to recurse 
+     * @param handler       a caller's property handler
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>propName</code> is a revision
@@ -480,15 +515,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
      *                      svn:wc:} prefix
      *                      </ul>
-     * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * @since 1.2, SVN 1.5
      */
-    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, boolean recursive,
-                              ISVNPropertyHandler handler) throws SVNException {
-        doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, null);
-    }
-
     public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, 
             SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
@@ -677,7 +705,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      */
-    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, 
+            SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
@@ -719,7 +748,8 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      */
-    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, 
+            SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
@@ -766,9 +796,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                    but only the first of them returned
      * @param pegRevision a revision in which the item is first looked up
      * @param revision    a target revision;
-     * @param recursive   <span class="javakeyword">true</span> to
-     *                    descend recursively
-     * @return the item's property
+     * @param depth       a working copy depth to step in
+     * @return            the item's property
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>propName</code> starts
@@ -780,9 +809,9 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
      */
     public SVNPropertyData doGetProperty(final File path, String propName, SVNRevision pegRevision, 
-            SVNRevision revision, boolean recursive) throws SVNException {
+            SVNRevision revision, SVNDepth depth) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        doGetProperty(path, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+        doGetProperty(path, propName, pegRevision, revision, depth, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
                 if (data[0] == null && path.equals(file)) {
                     data[0] = property;
@@ -794,7 +823,7 @@ public class SVNWCClient extends SVNBasicClient {
 
             public void handleProperty(long revision, SVNPropertyData property) {
             }
-        });
+        }, null);
         return data[0];
     }
 
@@ -809,9 +838,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                    but only the first of them returned
      * @param pegRevision a revision in which the item is first looked up
      * @param revision    a target revision
-     * @param recursive   <span class="javakeyword">true</span> to
-     *                    descend recursively
-     * @return the item's property
+     * @param depth       a working copy depth to step in
+     * @return            the item's property
      * @throws SVNException if <code>propName</code> starts
      *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
      *                      svn:wc:} prefix
@@ -819,9 +847,9 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
      */
     public SVNPropertyData doGetProperty(final SVNURL url, String propName, SVNRevision pegRevision, 
-            SVNRevision revision, boolean recursive) throws SVNException {
+            SVNRevision revision, SVNDepth depth) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+        doGetProperty(url, propName, pegRevision, revision, depth, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
             }
 
@@ -870,9 +898,12 @@ public class SVNWCClient extends SVNBasicClient {
      *                      </ul>
      * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
      * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
+     * @deprecated use {@link #doGetProperty(File, String, SVNRevision, SVNRevision, SVNDepth, ISVNPropertyHandler, Collection)} instead
      */
-    public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        doGetProperty(path, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, null);
+    public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
+            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        doGetProperty(path, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), 
+                handler, null);
     }
 
     public void doGetPropertyList(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
@@ -993,8 +1024,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                      svn:wc:} prefix
      * @see #doGetProperty(SVNURL,String,SVNRevision,SVNRevision,boolean)
      * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
+     * @deprecated use {@link #doGetProperty(SVNURL, String, SVNRevision, SVNRevision, SVNDepth, ISVNPropertyHandler)} instead
      */
-    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, 
+            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         doGetProperty(url, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
@@ -1216,8 +1249,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li><code>path</code> doesn't exist and
      *                      <code>mkdir</code> is <span class="javakeyword">false</span>
      *                      <li><code>path</code> is the root directory of the Working Copy
+     * @deprecated use {@link #doAdd(File, boolean, boolean, boolean, SVNDepth, boolean, boolean)} instead
      */
-    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            boolean recursive) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), false, 
                 false);
     }
@@ -1257,8 +1292,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                      </ul>
      * @since 1.1
      */
-    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, 
-            boolean includeIgnored) throws SVNException {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            boolean recursive, boolean includeIgnored) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), 
                 includeIgnored, false);
     }
@@ -1474,6 +1509,7 @@ public class SVNWCClient extends SVNBasicClient {
      *                      from within the directory itself
      *                      </ul>
      * @see #doRevert(File[],boolean)
+     * @deprecated use {@link #doRevert(File[], SVNDepth, Collection)}
      */
     public void doRevert(File path, boolean recursive) throws SVNException {
         doRevert(new File[]{path}, recursive);
@@ -2840,6 +2876,44 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Sets, edits or deletes a property on a file or directory item(s).
+     * <p/>
+     * <p/>
+     * To set or edit a property simply provide a <code>propName</code>
+     * and a <code>propValue</code>. To delete a property set
+     * <code>propValue</code> to <span class="javakeyword">null</span>
+     * and the property <code>propName</code> will be deleted.
+     *
+     * @param path      a WC item which properties are to be
+     *                  modified
+     * @param propName  a property name
+     * @param propValue a property value
+     * @param force     <span class="javakeyword">true</span> to
+     *                  force the operation to run
+     * @param recursive <span class="javakeyword">true</span> to
+     *                  descend recursively
+     * @param handler   a caller's property handler
+     * @throws SVNException if one of the following is true:
+     *                      <ul>
+     *                      <li><code>propName</code> is a revision
+     *                      property
+     *                      <li><code>propName</code> starts
+     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                      svn:wc:} prefix
+     *                      </ul>
+     * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
+     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
+     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * @deprecated use {@link #doSetProperty(File, String, SVNPropertyValue, boolean, SVNDepth, ISVNPropertyHandler, Collection)} 
+     *             instead
+     */
+    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, 
+            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, 
+                null);
+    }
+
     private void setWCFormat(SVNAdminAreaInfo info, SVNAdminArea area, int format) throws SVNException {
         if (!isIgnoreExternals()) {
             SVNVersionedProperties props = area.getProperties(area.getThisDirName());
