@@ -30,19 +30,13 @@ import org.osgi.framework.BundleContext;
  */
 public class SVNKitPlugin extends Plugin {
 
-    private static final String DEBUG_TRACE = "/debug/trace";
-
     public SVNKitPlugin() {
     }
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
 
-        String pluginID = getBundle().getSymbolicName();
-        String traceOption = Platform.getDebugOption(pluginID + DEBUG_TRACE);
-        boolean enableTracing = Boolean.TRUE.toString().equals(traceOption);
-
-        ISVNDebugLog debugLog = new SVNKitLog(getBundle(), isDebugging(), enableTracing);
+        ISVNDebugLog debugLog = new SVNKitLog(getBundle(), isDebugging());
         SVNDebugLog.setDefaultLog(debugLog);
 
         DAVRepositoryFactory.setup();

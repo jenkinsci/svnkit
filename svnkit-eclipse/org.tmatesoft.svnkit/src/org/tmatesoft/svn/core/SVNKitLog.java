@@ -35,34 +35,29 @@ public class SVNKitLog extends SVNDebugLogAdapter {
     private static final String DEBUG_INFO = "/debug/info";
     private static final String DEBUG_WARNING = "/debug/warning";
     private static final String DEBUG_ERROR = "/debug/error";
+    private static final String DEBUG_TRACE = "/debug/trace";
 
     private boolean myIsFineEnabled;
     private boolean myIsInfoEnabled;
     private boolean myIsWarningEnabled;
     private boolean myIsErrorEnabled;
+    private boolean myIsTraceEnabled;
 
     private ILog myLog;
     private String myPluginID;
 
-    public SVNKitLog(Bundle bundle, boolean debugEnabled, boolean traceEnabled) {
+    public SVNKitLog(Bundle bundle, boolean debugEnabled) {
         myLog = Platform.getLog(bundle);
         myPluginID = bundle.getSymbolicName();
 
-        if (traceEnabled) {
-            // enable tracing even when not in debug mode
-            myIsErrorEnabled = true;
-            myIsWarningEnabled = true;
-            myIsInfoEnabled = true;
-            myIsErrorEnabled = true;
-        } else {
-            // enabled even when not in debug mode
-            myIsErrorEnabled = Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_ERROR));
+        // enabled even when not in debug mode
+        myIsErrorEnabled = Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_ERROR));
+        myIsTraceEnabled = Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_TRACE));
 
-            // debug mode have to be enabled
-            myIsWarningEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_WARNING));
-            myIsInfoEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_INFO));
-            myIsFineEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_FINE));
-        }
+        // debug mode have to be enabled
+        myIsWarningEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_WARNING));
+        myIsInfoEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_INFO));
+        myIsFineEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_FINE));
     }
 
     public boolean isFineEnabled() {
@@ -81,15 +76,19 @@ public class SVNKitLog extends SVNDebugLogAdapter {
         return myIsErrorEnabled;
     }
 
+    public boolean isTraceEnabled() {
+        return myIsTraceEnabled;
+    }
+
     public InputStream createLogStream(SVNLogType logType, InputStream is) {
-        if (isFineEnabled()) {
+        if (isTraceEnabled()) {
             return super.createLogStream(logType, is);
         }
         return is;
     }
 
     public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
-        if (isFineEnabled()) {
+        if (isTraceEnabled()) {
             return super.createLogStream(logType, os);
         }
         return os;
@@ -136,12 +135,15 @@ public class SVNKitLog extends SVNDebugLogAdapter {
     }
 
     public void log(SVNLogType logType, String message, byte[] data) {
-        if (isFineEnabled()) {
+        if (logType == SVNLogType.NETWORK && !isTraceEnabled()) {
+            return;
+        }
+        if (isFineEnabled() || isTraceEnabled()) {
             try {
-                myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " + 
+                myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " +
                         new String(data, "UTF-8")), null));
             } catch (UnsupportedEncodingException e) {
-                myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " + 
+                myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " +
                         new String(data)), null));
             }
         }
