@@ -58,7 +58,7 @@ public class SVNLogStream extends OutputStream {
             return;
         }
         if (myLog != null && myBuffer.size() > 0) {
-            myLog.log(SVNLogType.DEFAULT, myPrefix, myBuffer.toByteArray());
+            myLog.log(SVNLogType.NETWORK, myPrefix, myBuffer.toByteArray());
         }
         myBuffer.reset();
     }
