@@ -1142,7 +1142,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "merge aborted");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } else {
-            SVNURL fullURL = repository.getLocation().appendPath(sourceReposRelPath.startsWith("/") ? 
+            SVNURL fullURL = repository.getRepositoryRoot(true).appendPath(sourceReposRelPath.startsWith("/") ? 
                     sourceReposRelPath.substring(1) : sourceReposRelPath, false);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
                     "Cannot reintegrate from ''{0}'' yet:\n" +
