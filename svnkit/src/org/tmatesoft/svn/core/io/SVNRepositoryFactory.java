@@ -103,13 +103,17 @@ public abstract class SVNRepositoryFactory {
     
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
-            myFactoriesMap.put(protocol, factory);
+            synchronized (myFactoriesMap) {
+                myFactoriesMap.put(protocol, factory);
+            }
         }
     }
     
     protected static boolean hasRepositoryFactory(String protocol) {
         if (protocol != null) {
-            return myFactoriesMap.get(protocol) != null;
+            synchronized (myFactoriesMap) {
+                return myFactoriesMap.get(protocol) != null;
+            }
         }
         return false;
     }
@@ -187,12 +191,14 @@ public abstract class SVNRepositoryFactory {
      */
     public static SVNRepository create(SVNURL url, ISVNSession options) throws SVNException {
         String urlString = url.toString();
-    	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
-    		String key = (String) keys.next();
-    		if (Pattern.matches(key, urlString)) {
-    			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, options);
-    		}
-    	}
+        synchronized (myFactoriesMap) {
+            for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
+                String key = (String) keys.next();
+                if (Pattern.matches(key, urlString)) {
+                    return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, options);
+                }
+            }
+        }
         if ("file".equalsIgnoreCase(url.getProtocol())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open an ra_local session to URL");
             SVNErrorManager.error(err, SVNLogType.NETWORK);
