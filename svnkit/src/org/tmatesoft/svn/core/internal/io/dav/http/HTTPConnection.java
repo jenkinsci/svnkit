@@ -780,8 +780,15 @@ class HTTPConnection implements IHTTPConnection {
     private InputStream createInputStream(HTTPHeader readHeader, InputStream is) throws IOException {
         if ("chunked".equalsIgnoreCase(readHeader.getFirstHeaderValue(HTTPHeader.TRANSFER_ENCODING_HEADER))) {
             is = new ChunkedInputStream(is, myCharset);
-        } else if (readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER) != null) {
-            is = new FixedSizeInputStream(is, Long.parseLong(readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER).toString()));
+        } else if (readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER) != null) { 
+            String lengthStr = readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER);
+            long length = 0;
+            try {
+                length = Long.parseLong(lengthStr);
+            } catch (NumberFormatException nfe) {
+                length = 0;
+            }
+            is = new FixedSizeInputStream(is, length);
         } else if (!hasToCloseConnection(readHeader)) {
             // no content length and no valid transfer-encoding!
             // consider as empty response.

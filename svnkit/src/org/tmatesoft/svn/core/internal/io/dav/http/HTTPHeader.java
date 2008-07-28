@@ -17,6 +17,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -56,16 +57,16 @@ public class HTTPHeader {
     }
 
     public String toString() {
-        StringBuffer representation = new StringBuffer();
         if (myHeaders == null) {
-            return representation.toString();
+            return "";
         }
         
+        StringBuffer representation = new StringBuffer();        
         for(Iterator headers = myHeaders.keySet().iterator(); headers.hasNext();){
-            String headerName = (String)headers.next();
-            Collection headerValues = (Collection)myHeaders.get(headerName);
+            String headerName = (String) headers.next();
+            Collection headerValues = (Collection) myHeaders.get(headerName);
             for(Iterator values = headerValues.iterator(); values.hasNext();){
-                String value = (String)values.next();
+                String value = (String) values.next();
                 representation.append(headerName);
                 representation.append(": ");
                 representation.append(value);
@@ -77,7 +78,7 @@ public class HTTPHeader {
 
     public void addHeaderValue(String name, String value) {
         Map headers = getHeaders();
-        Collection values = (Collection)headers.get(name);
+        Collection values = (Collection) headers.get(name);
         if (values == null) {
             values = new LinkedList();
             headers.put(name, values);
@@ -89,42 +90,35 @@ public class HTTPHeader {
         if (myHeaders == null) {
             return null;
         }
-        return (Collection)myHeaders.get(name);
+        List values = new LinkedList();
+        for (Iterator names = myHeaders.keySet().iterator(); names.hasNext();) {
+            String headerName = (String) names.next();
+            if (name.equalsIgnoreCase(headerName)) {
+                values.addAll((Collection) myHeaders.get(headerName));
+            }
+        }        
+        return values.isEmpty() ? null : values;
     }
     
     public String getFirstHeaderValue(String name){
-        if (myHeaders == null) {
-            return null;
-        }
-        
-        LinkedList values = (LinkedList)myHeaders.get(name);
-        if (values != null) {
-            return (String)values.getFirst();
-        }
-        return null;
+        LinkedList values = (LinkedList) getHeaderValues(name);
+        return values != null ? (String) values.getFirst() : null;
     }
     
     public boolean hasHeader(String name){
-        if (myHeaders != null){
-            return myHeaders.containsKey(name);
-        }
-        return false;
-    }
-    
-    public void removeHeader(String name){
-        if (myHeaders != null) {
-            myHeaders.remove(name);
-        }
+        LinkedList values = (LinkedList) getHeaderValues(name);
+        return values != null && !values.isEmpty();
     }
     
     public void setHeaderValue(String name, String value){
         Map headers = getHeaders();
-        Collection values = (Collection)headers.get(name);
+        Collection values = (Collection) headers.get(name);
         if (values == null) {
             values = new LinkedList();
             headers.put(name, values);
+        } else {
+            values.clear();
         }
-        values.clear();
         values.add(value);
     }
     
