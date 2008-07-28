@@ -46,6 +46,8 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -264,7 +266,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (revAttr == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing rev attr in open-directory element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             
             long revision = Long.parseLong(revAttr);
@@ -277,7 +279,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 if (name == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                             "Missing name attr in open-directory element");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 myPath = SVNPathUtil.append(myPath, name);
                 myEditor.openDir(myPath, revision);
@@ -291,7 +293,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in add-directory element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             String copyFromPath = attrs.getValue(COPYFROM_PATH_ATTR);
             long copyFromRev = -1;
@@ -300,7 +302,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 if (copyFromRevString == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                             "Missing copyfrom-rev attr in add-directory element");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 copyFromRev = Long.parseLong(copyFromRevString);
             }
@@ -336,14 +338,14 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (revAttr == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing rev attr in open-file element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             long revision = Long.parseLong(revAttr);
             String name = attrs.getValue(NAME_ATTR);
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in open-file element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             myPath = SVNPathUtil.append(myPath, name);
             myEditor.openFile(myPath, revision);
@@ -354,7 +356,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in add-file element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             myPath = SVNPathUtil.append(myPath, name);
             String copyFromPath = attrs.getValue(COPYFROM_PATH_ATTR);
@@ -364,7 +366,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 if (copyFromRevisionAttr == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                             "Missing copyfrom-rev attr in add-file element");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 copyFromRev = Long.parseLong(copyFromRevisionAttr);
             }
@@ -375,7 +377,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in delete-entry element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         
             myEditor.deleteEntry(SVNPathUtil.append(myPath, name), -1);
@@ -384,7 +386,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myPropertyName == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in set-prop element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             myEncoding = attrs.getValue(ENCODING_ATTR);
         } else if (element == REMOVE_PROP) {
@@ -392,7 +394,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in remove-prop element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myIsDirectory) {
                 myEditor.changeDirProperty(name, null);
@@ -410,7 +412,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myCurrentWCPath == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing path attr in resource element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             myIsInResource = true;
         } else if (element == FETCH_PROPS) {
@@ -483,7 +485,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                             myEditor.changeDirProperty(SVNProperty.WC_URL, 
                                     SVNPropertyValue.create(myHref));
                         } catch (SVNException svne) {
-                            SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"));
+                            SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"), SVNLogType.NETWORK);
                         }
                         DirInfo topDirInfo = (DirInfo) myDirs.peek();
                         topDirInfo.myVSNURL = myHref;
@@ -493,7 +495,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                         myEditor.changeFileProperty(myPath, SVNProperty.WC_URL, 
                                 SVNPropertyValue.create(myHref));
                     } catch (SVNException svne) {
-                        SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"));
+                        SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save the URL of the version resource"), SVNLogType.NETWORK);
                     }
                 }
             }
@@ -512,7 +514,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING, 
                         "Unknown XML encoding: ''{0}''", myEncoding);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             
             if (myIsDirectory) {
@@ -543,14 +545,14 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         try {
             myEditor.applyTextDelta(myPath, baseChecksum);
         } catch (SVNException svne) {
-            SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save file"));
+            SVNErrorManager.error(svne.getErrorMessage().wrap("Could not save file"), SVNLogType.NETWORK);
         }
         
         if (myIsFetchContent) {
             if (myHref == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "assertion failure in DAVEditorHandler.fetchFile(): myHref is null");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             String deltaBaseVersionURL = myPath != null ? (String) myVersionURLs.get(myPath) : null;
             DeltaOutputStreamWrapper osWrapper = new DeltaOutputStreamWrapper(deltaBaseVersionURL != null, myPath);

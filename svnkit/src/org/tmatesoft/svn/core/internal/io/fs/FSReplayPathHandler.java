@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -95,7 +96,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
             if (kind != SVNNodeKind.DIR && kind != SVNNodeKind.FILE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
                 		"Filesystem path ''{0}'' is neither a file nor a directory", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
 

@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -144,7 +145,7 @@ public class SVNDeltaGenerator {
                 digest = MessageDigest.getInstance("MD5");
             } catch (NoSuchAlgorithmException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
                 return null;
             }
         }
@@ -158,7 +159,7 @@ public class SVNDeltaGenerator {
                 throw ioew.getOriginalException();
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
                 return null;
             }
             if (targetLength <= 0) {
@@ -175,7 +176,7 @@ public class SVNDeltaGenerator {
                 throw ioew.getOriginalException();
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
                 return null;
             }
             if (sourceLength < 0) {

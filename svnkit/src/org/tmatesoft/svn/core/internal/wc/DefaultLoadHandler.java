@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,8 +26,8 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
@@ -38,6 +37,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -124,7 +125,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, "Commit succeeded, but post-commit hook failed");
-                    SVNErrorManager.error(err, svne);
+                    SVNErrorManager.error(err, svne, SVNLogType.FSFS);
                 }
             }
             
@@ -154,7 +155,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 revision = Long.parseLong((String) headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER)); 
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         
@@ -176,7 +177,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     public void openNode(Map headers) throws SVNException {
         if (myCurrentRevisionBaton.myRevision == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpstream: Revision 0 must not contain node records");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         myCurrentNodeBaton = createNodeBaton(headers);
@@ -216,7 +217,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 break;
             default:
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNRECOGNIZED_DATA, "Unrecognized node-action on node ''{0}''", myCurrentNodeBaton.myPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -288,7 +289,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     }
                 } catch (IOException ioe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
-                    SVNErrorManager.error(err, ioe);
+                    SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
                 }
                 fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
             }
@@ -387,7 +388,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             
             if (!SVNRevision.isValidRevisionNumber(srcRevision)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Relative source revision {0} is not available in current repository", new Long(srcRevision));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(srcRevision);
@@ -403,7 +404,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                             String.valueOf(srcRevision), nodeBaton.myPath, 
                             String.valueOf(myCurrentRevisionBaton.myRevision), 
                             nodeBaton.myCopySourceChecksum, hexDigest });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
             myCurrentRevisionBaton.getCommitter().makeCopy(copyRoot, nodeBaton.myCopyFromPath, nodeBaton.myPath, true);
@@ -446,7 +447,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 baton.myCopyFromRevision = Long.parseLong((String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)); 
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         

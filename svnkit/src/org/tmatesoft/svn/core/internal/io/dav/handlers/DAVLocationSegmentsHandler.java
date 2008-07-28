@@ -21,6 +21,8 @@ import org.tmatesoft.svn.core.io.ISVNLocationSegmentHandler;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 
@@ -96,7 +98,7 @@ public class DAVLocationSegmentsHandler extends BasicDAVHandler {
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Expected valid revision range");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         }
     }

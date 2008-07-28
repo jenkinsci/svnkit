@@ -15,7 +15,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNReplicationEditor</b> is an editor implementation used by a 
@@ -125,7 +126,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             }
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1}", new Object[]{absPath, new Long(myPreviousRevision)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         myCommitEditor.deleteEntry(path, myPreviousRevision);
     }
@@ -163,7 +164,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             myCommitEditor.openDir(path, myPreviousRevision);
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addDir()");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -241,7 +242,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             SVNLogEntryPath realPath = getFileCopyOrigin(absPath);
             if (realPath == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown error, can't get the copy origin of a file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             SVNProperties props = new SVNProperties();
             if (areFileContentsEqual(absPath, myTargetRevision, realPath.getCopyPath(), realPath.getCopyRevision(), props)) {
@@ -254,7 +255,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             baton.myTextAct = IGNORE;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addFile()");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 

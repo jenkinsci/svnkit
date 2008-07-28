@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -50,7 +51,7 @@ public abstract class SVNAuthenticator {
             myPlainOutputStream = connection.getConnector().getOutputStream();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
     }
     

@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.OutputStream;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -21,12 +20,13 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -88,17 +89,17 @@ public class SVNExportEditor implements ISVNEditor {
             // export is obstructed.
             if (!myIsForce) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' exists and is not a directory", myCurrentDirectory);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else {
                 SVNFileUtil.deleteAll(myCurrentDirectory, myEventDispatcher);
             }
         } else if (dirType == SVNFileType.DIRECTORY && !myIsForce) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists", myCurrentDirectory);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (dirType == SVNFileType.NONE) {        
             if (!myCurrentDirectory.mkdirs()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Cannot create directory ''{0}''", myCurrentDirectory);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         myEventDispatcher.handleEvent(SVNEventFactory.createSVNEvent(myCurrentDirectory, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_ADD, null, null, null), ISVNEventHandler.UNKNOWN);
@@ -122,7 +123,7 @@ public class SVNExportEditor implements ISVNEditor {
 
         if (!myIsForce && file.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "File ''{0}'' already exists", file);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         myCurrentFile = file;
         myFileProperties = new SVNProperties();
@@ -162,7 +163,7 @@ public class SVNExportEditor implements ISVNEditor {
         if (textChecksum != null && !textChecksum.equals(realChecksum)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
                     new Object[] {myCurrentFile, textChecksum, realChecksum}); 
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         // retranslate.
         try {

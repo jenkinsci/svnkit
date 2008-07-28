@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -88,12 +89,12 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                             "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
                             path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (version < factory.getSupportedVersion()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                             "Working copy format of {0} is too old ({1}); please check out your working copy again", 
                             new Object[] {path, new Integer(version)});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } 
             } catch (SVNException e) {
                 error = e;
@@ -117,12 +118,12 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                             "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
                             path);
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.WC);
                 } else if (version < factory.getSupportedVersion()) {
                     error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                             "Working copy format of {0} is too old ({1}); please check out your working copy again", 
                             new Object[] {path, new Integer(version)});
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.WC);
                 } 
             } catch (SVNException e) {
                 error = e.getErrorMessage() ;
@@ -136,7 +137,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (error == null) {
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
         }
-        SVNErrorManager.error(error, logLevel);
+        SVNErrorManager.error(error, logLevel, SVNLogType.WC);
         return null;
     }
 
@@ -177,7 +178,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (wcFormat == SVNAdminArea15.WC_FORMAT) {
             return new SVNAdminArea15Factory();
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT), SVNLogType.DEFAULT);
         return null;
     }
 
@@ -200,7 +201,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (error == null) {
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", adminDir);
         }
-        SVNErrorManager.error(error);
+        SVNErrorManager.error(error, SVNLogType.WC);
         return -1;
     }
 
@@ -224,7 +225,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         File adminDir = new File(dir, SVNFileUtil.getAdminDirectoryName());
         if (adminDir.exists() && !adminDir.isDirectory()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' is not a directory", dir);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (!adminDir.exists()) {
             return false;
         } 
@@ -250,11 +251,11 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             if (!entry.isScheduledForDeletion()) {
                 if (entry.getRevision() != revision) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0} doesn''t match existing revision {1} in ''{2}''", new Object[]{new Long(revision), new Long(entry.getRevision()), dir});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 if (!url.equals(entry.getURL())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' doesn''t match existing URL ''{1}'' in ''{2}''", new Object[]{url, entry.getURL(), dir});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         }

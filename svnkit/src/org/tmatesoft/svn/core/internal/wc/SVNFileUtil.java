@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -154,12 +155,12 @@ public class SVNFileUtil {
     public static String readFile(File file) throws SVNException {
         InputStream is = null;
         try {
-            is = openFileForReading(file);
+            is = openFileForReading(file, SVNLogType.WC);
             return readFile(is);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot read from file ''{0}'': {1}", new Object[] { file, ioe.getMessage() });
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         } finally { 
             closeFile(is);
         }
@@ -219,7 +220,7 @@ public class SVNFileUtil {
             } else {
                 err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new file ''{0}''", file);
             }
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
     }
 
@@ -247,11 +248,11 @@ public class SVNFileUtil {
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot write to file ''{0}'': {1}", new Object[] {file, ioe.getMessage()});
-            SVNErrorManager.error(err, ioe, Level.FINE);
+            SVNErrorManager.error(err, ioe, Level.FINE, SVNLogType.DEFAULT);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot write to file ''{0}''", file);
-            SVNErrorManager.error(err, svne, Level.FINE);
+            SVNErrorManager.error(err, svne, Level.FINE, SVNLogType.DEFAULT);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -261,7 +262,7 @@ public class SVNFileUtil {
         if (version < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
                     "Version {0} is not non-negative", new Integer(version));
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         
         String contents = version + "\n";
@@ -273,7 +274,7 @@ public class SVNFileUtil {
             os.write(contents.getBytes("US-ASCII"));
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -314,7 +315,7 @@ public class SVNFileUtil {
 
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, 
                 "Unable to make name for ''{0}''", new File(parent, name));
-        SVNErrorManager.error(err, Level.FINE);
+        SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         return null;
     }
 
@@ -327,7 +328,7 @@ public class SVNFileUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot rename file ''{0}'' to ''{1}''; file ''{1}'' is a directory", 
                     new Object[] { src, dst });
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         boolean renamed = false;
         if (!isWindows) {
@@ -358,7 +359,7 @@ public class SVNFileUtil {
         if (!renamed) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot rename file ''{0}'' to ''{1}''", new Object[] {src, dst});
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
     }
 
@@ -403,7 +404,7 @@ public class SVNFileUtil {
                 }
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
             return false;
         }
         return true;
@@ -424,7 +425,7 @@ public class SVNFileUtil {
                 });
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
         }
     }
 
@@ -441,7 +442,7 @@ public class SVNFileUtil {
         try {
             execCommand(new String[] { CHMOD_COMMAND, "g+s", dir.getAbsolutePath() });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
         }
     }
 
@@ -543,7 +544,7 @@ public class SVNFileUtil {
             InputStream sis = null;
             OutputStream dos = null;
             try {
-                sis = SVNFileUtil.openFileForReading(src);
+                sis = SVNFileUtil.openFileForReading(src, SVNLogType.WC);
                 dos = SVNFileUtil.openFileForWriting(dst);
                 SVNTranslator.copy(sis, dos);
             } catch (IOException e) { 
@@ -556,7 +557,7 @@ public class SVNFileUtil {
             }
         }
         if (error != null) {
-            SVNErrorManager.error(error, Level.FINE);
+            SVNErrorManager.error(error, Level.FINE, SVNLogType.WC);
         }
         if (safe && tmpDst != dst) {
             rename(tmpDst, dst);
@@ -574,14 +575,14 @@ public class SVNFileUtil {
         if (SVNFileType.getType(link) != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot create symbolic link ''{0}''; file already exists", link);
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         String fileContents = "";
         try {
             fileContents = readSingleLine(linkName);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         }
         if (fileContents.startsWith("link ")) {
             fileContents = fileContents.substring("link".length()).trim();
@@ -601,7 +602,7 @@ public class SVNFileUtil {
                     LN_COMMAND, "-s", linkName, link.getAbsolutePath()
             });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
         }
         return SVNFileType.getType(link) == SVNFileType.SYMLINK;
     }
@@ -613,7 +614,7 @@ public class SVNFileUtil {
         if (SVNFileType.getType(src) != SVNFileType.SYMLINK) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", src);
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         String linkPath = getSymlinkName(src);
         OutputStream os = openFileForWriting(linkFile);
@@ -622,7 +623,7 @@ public class SVNFileUtil {
             os.write(linkPath.getBytes("UTF-8"));
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -643,7 +644,7 @@ public class SVNFileUtil {
                     LS_COMMAND, "-ld", link.getAbsolutePath()
             });
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
         }
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
             return null;
@@ -680,10 +681,10 @@ public class SVNFileUtil {
         } catch (NoSuchAlgorithmException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "MD5 implementation not found: {0}", e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
             return null;
         }
-        InputStream is = openFileForReading(file);
+        InputStream is = openFileForReading(file, SVNLogType.WC);
         byte[] buffer = new byte[1024 * 16];
         try {
             while (true) {
@@ -695,7 +696,7 @@ public class SVNFileUtil {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         } finally {
             closeFile(is);
         }
@@ -706,7 +707,7 @@ public class SVNFileUtil {
         if (f1 == null || f2 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
                     "NULL paths are supported in compareFiles method");
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
             return false;
         }
         if (f1.equals(f2)) {
@@ -719,8 +720,8 @@ public class SVNFileUtil {
             }
             equals = false;
         }
-        InputStream is1 = openFileForReading(f1);
-        InputStream is2 = openFileForReading(f2);
+        InputStream is1 = openFileForReading(f1, SVNLogType.WC);
+        InputStream is2 = openFileForReading(f2, SVNLogType.WC);
         try {
             while (true) {
                 int b1 = is1.read();
@@ -740,7 +741,7 @@ public class SVNFileUtil {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         } finally {
             closeFile(is1);
             closeFile(is2);
@@ -758,7 +759,7 @@ public class SVNFileUtil {
         try {
             Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
         }
     }
 
@@ -819,7 +820,7 @@ public class SVNFileUtil {
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot delete file ''{0}''", file);
-        SVNErrorManager.error(err, Level.FINE);
+        SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         return false;
     }
 
@@ -982,7 +983,7 @@ public class SVNFileUtil {
         if (kind != SVNFileType.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME,
                     "Can''t detect MIME type of non-file ''{0}''", file);
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         
         if (mimeTypes != null) {
@@ -1001,7 +1002,7 @@ public class SVNFileUtil {
         
         InputStream is = null;
         try {
-            is = openFileForReading(file);
+            is = openFileForReading(file, SVNLogType.WC);
             return detectMimeType(is);
         } catch (IOException e) {
             return null;
@@ -1029,7 +1030,7 @@ public class SVNFileUtil {
                 line = execCommand(commandLine);
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFinest(th);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
         }
         if (line == null || line.indexOf(' ') < 0) {
             return false;
@@ -1122,7 +1123,7 @@ public class SVNFileUtil {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot write to ''{0}'': {1}", new Object[] { file, e.getMessage() });
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         }
         return null;
     }
@@ -1168,21 +1169,25 @@ public class SVNFileUtil {
         } catch (FileNotFoundException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Can not write to file ''{0}'': {1}", new Object[] { file, e.getMessage() });
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Can not set position pointer in file ''{0}'': {1}", 
                     new Object[] { file, ioe.getMessage() });
-            SVNErrorManager.error(err, ioe, Level.FINE);
+            SVNErrorManager.error(err, ioe, Level.FINE, SVNLogType.DEFAULT);
         }
         return raFile;
     }
 
     public static InputStream openFileForReading(File file) throws SVNException {
-        return openFileForReading(file, Level.FINE);
+        return openFileForReading(file, Level.FINE, SVNLogType.DEFAULT);
+    }
+
+    public static InputStream openFileForReading(File file, SVNLogType logType) throws SVNException {
+        return openFileForReading(file, Level.FINE, logType);
     }
     
-    public static InputStream openFileForReading(File file, Level logLevel) throws SVNException {
+    public static InputStream openFileForReading(File file, Level logLevel, SVNLogType logType) throws SVNException {
         if (file == null) {
             return null;
         }
@@ -1191,7 +1196,7 @@ public class SVNFileUtil {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot read from ''{0}'': {1}", new Object[] { file, e.getMessage() });
-            SVNErrorManager.error(err, e, logLevel);
+            SVNErrorManager.error(err, e, logLevel, logType);
         }
         return null;
     }
@@ -1228,18 +1233,18 @@ public class SVNFileUtil {
         if (!file.isFile() || !file.canRead()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot read from ''{0}'': path refers to a directory or read access is denied", file);
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         if (!file.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "File ''{0}'' does not exist", file);
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         try {
             return new RandomAccessFile(file, "r");
         } catch (FileNotFoundException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read from ''{0}'': {1}", 
                     new Object[] { file, e.getMessage() });
-            SVNErrorManager.error(err, Level.FINE);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         return null;
     }
@@ -1331,9 +1336,9 @@ public class SVNFileUtil {
             }
             return handleOutput ? null : result.toString().trim();
         } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logFinest(e);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e);
         } catch (InterruptedException e) {
-            SVNDebugLog.getDefaultLog().logFinest(e);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e);
         } finally {
             closeFile(is);
         }
@@ -1451,8 +1456,8 @@ public class SVNFileUtil {
                 // a Properties object and get the variable from that
                 return getEnvironment().getProperty(name);
             } catch (Throwable e1) {
-                SVNDebugLog.getDefaultLog().logFinest(e);
-                SVNDebugLog.getDefaultLog().logFinest(e1);
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e);
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e1);
                 return null;
             }
         }
@@ -1509,7 +1514,7 @@ public class SVNFileUtil {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot create temporary directory: {0}", e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         }
         if (tmpFile.exists()) {
             tmpFile.delete();
@@ -1528,7 +1533,7 @@ public class SVNFileUtil {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot create temporary file: {0}", e.getMessage());
-            SVNErrorManager.error(err, e, Level.FINE);
+            SVNErrorManager.error(err, e, Level.FINE, SVNLogType.DEFAULT);
         }
         return tmpFile;
     }

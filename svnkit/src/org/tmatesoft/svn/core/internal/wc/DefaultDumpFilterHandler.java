@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -139,7 +140,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, 
                             "Invalid copy source path ''{0}''", copyFromPath);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
             
@@ -166,7 +167,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                             !SVNRevision.isValidRevisionNumber(reNumberedCopyFromValue.myRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
                                 "No valid copyfrom revision in filtered stream");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     }
                     writeDumpData(myOutputStream, SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION + ": " +
                             reNumberedCopyFromValue.myRevision + "\n");
@@ -224,7 +225,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                         numRead = dumpStream.read(buffer, read, numToRead);
                     } catch (IOException ioe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
-                        SVNErrorManager.error(err, ioe);
+                        SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
                     }
 
                     if (numRead < 0) {
@@ -240,7 +241,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                     } catch (IOException ioe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNEXPECTED_EOF, 
                                 "Unexpected EOF writing contents");
-                        SVNErrorManager.error(err, ioe);
+                        SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
                     }
                 }
 
@@ -282,7 +283,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         if (!myCurrentNodeBaton.myHasProps) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "Delta property block detected - not supported by svndumpfilter");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (propertyName.equals(SVNProperty.MERGE_INFO)) {
             Map filteredMergeInfo = adjustMergeInfo(propertyValue);
@@ -399,7 +400,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             writeDumpData(out, "\n");
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         } 
     }
     
@@ -417,7 +418,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, 
                         "Missing merge source path ''{0}''; try with --skip-missing-merge-sources", 
                         mergeSource);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             if (myIsDoRenumberRevisions) {
@@ -429,14 +430,14 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
                     if (revItemStart == null || !SVNRevision.isValidRevisionNumber(revItemStart.myRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
                                 "No valid revision range 'start' in filtered stream");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     }
 
                     RevisionItem revItemEnd = (RevisionItem) myRenumberHistory.get(new Long(range.getEndRevision()));
                     if (revItemEnd == null || !SVNRevision.isValidRevisionNumber(revItemEnd.myRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
                                 "No valid revision range 'end' in filtered stream");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     }
                     
                     range.setStartRevision(revItemStart.myRevision);
@@ -466,7 +467,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             out.write(data.getBytes("UTF-8")); 
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
     }
 
@@ -475,7 +476,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
             out.write(bytes); 
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
     }
 

@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -73,7 +74,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 printXMLHeader("info");
             }
         } else if (getSVNEnvironment().isIncremental()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"), SVNLogType.CLIENT);
         }
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {

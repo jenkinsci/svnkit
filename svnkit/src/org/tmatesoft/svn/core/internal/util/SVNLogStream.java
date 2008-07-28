@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -57,7 +58,7 @@ public class SVNLogStream extends OutputStream {
             return;
         }
         if (myLog != null && myBuffer.size() > 0) {
-            myLog.log(myPrefix, myBuffer.toByteArray());
+            myLog.log(SVNLogType.NETWORK, myPrefix, myBuffer.toByteArray());
         }
         myBuffer.reset();
     }

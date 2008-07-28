@@ -23,9 +23,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -62,7 +63,7 @@ public class SVNCommitCommand extends SVNCommand {
             SVNPath target = new SVNPath(targetName);
             if (target.isURL()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Must give local path (not URL) as the target of commit");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
         if (targets.isEmpty()) {
@@ -103,7 +104,7 @@ public class SVNCommitCommand extends SVNCommand {
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().getRootErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.UNKNOWN_CHANGELIST) {
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             throw svne;
         }

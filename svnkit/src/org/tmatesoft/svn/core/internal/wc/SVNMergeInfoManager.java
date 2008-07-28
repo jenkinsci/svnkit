@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -48,7 +49,7 @@ public class SVNMergeInfoManager {
                     " filesystem ''{1}'' uses only version {2}", 
                     new Object[] { new Integer(FSFS.MIN_MERGE_INFO_FORMAT), root.getOwner().getDBRoot(), 
                     new Integer(root.getOwner().getDBFormat()) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         Map mergeInfoAsHashes = getMergeInfoForPaths(root, paths, inherit, includeDescendants);
         Map mergeInfo = new TreeMap();
@@ -97,7 +98,7 @@ public class SVNMergeInfoManager {
                 if (mergeInfoString == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                             "Node-revision #''{0}'' claims to have mergeinfo but doesn''t", entry.getId());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 Map kidMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoString), null);
                 result.put(kidPath, kidMergeInfo);
@@ -146,7 +147,7 @@ public class SVNMergeInfoManager {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Node-revision ''{0}@{1}'' claims to have mergeinfo but doesn''t", 
                     new Object[] { nearestAncestor.getAbsPath(), new Long(revRoot.getRevision()) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (nearestAncestor == parentPath) {

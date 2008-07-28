@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -68,7 +69,7 @@ public class FSFileRevisionsFinder {
         if (mainLinePathRevisions.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "ASSERTION FAILURE in FSFileRevisionsFinder: mainLinePathRevisions is empty");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         SendBaton sb = new SendBaton();
@@ -209,7 +210,7 @@ public class FSFileRevisionsFinder {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, 
                     "''{0}'' is not a file in revision ''{1}''", 
                     new Object[] { path, new Long(endRevision) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         pathRevisions = pathRevisions == null ? new LinkedList() : pathRevisions;

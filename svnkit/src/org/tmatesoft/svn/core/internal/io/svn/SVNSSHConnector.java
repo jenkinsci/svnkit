@@ -78,27 +78,27 @@ public class SVNSSHConnector implements ISVNConnector {
                         connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository));
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.SSH, realm, null, authentication);
                         break;
                     } catch (SVNAuthenticationException e) {
-                        SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
                         authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.SSH, realm, e.getErrorMessage(), authentication);
                         authentication = (SVNSSHAuthentication) authManager.getNextAuthentication(ISVNAuthenticationManager.SSH, realm, repository.getLocation());
                         connection = null;
                     }
                 }
                 if (authentication == null) {
-                    SVNErrorManager.cancel("authentication cancelled");
+                    SVNErrorManager.cancel("authentication cancelled", SVNLogType.NETWORK);
                 } else if (connection == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm), SVNLogType.NETWORK);
                 }
                 try {
                     mySession = connection.openSession();
                     SVNAuthentication author = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, repository.getLocation());
                     if (author == null) {
-                        SVNErrorManager.cancel("authentication cancelled");
+                        SVNErrorManager.cancel("authentication cancelled", SVNLogType.NETWORK);
                     }
                     String userName = author.getUserName();
                     if (userName == null || "".equals(userName.trim())) {
@@ -127,13 +127,13 @@ public class SVNSSHConnector implements ISVNConnector {
                     return;
                 } catch (SocketTimeoutException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 } catch (UnknownHostException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 } catch (ConnectException e) {
 	                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 } catch (IOException e) {
                     reconnect--;
                     if (reconnect >= 0) {
@@ -141,10 +141,10 @@ public class SVNSSHConnector implements ISVNConnector {
                         connection.closeSession(mySession);
                         continue;
                     }
-                    repository.getDebugLog().logFine(e);
+                    repository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                     close(repository);
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 }
             } finally {
                 SVNSSHSession.unlock();
@@ -159,13 +159,15 @@ public class SVNSSHConnector implements ISVNConnector {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
             SVNSSHSession.lock(Thread.currentThread());
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                    Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
             try {
                 if (myConnection != null) {
                     if (myConnection.closeSession(mySession)) {
                         // no sessions left in connection, close it.
                         //  SVNSSHSession will make sure that connection is disposed if necessary.
-                        SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                                Thread.currentThread() + ": ABOUT TO CLOSE CONNECTION: " + myConnection);
                         SVNSSHSession.closeConnection(myConnection);
                         myConnection = null;
                     }
@@ -201,7 +203,8 @@ public class SVNSSHConnector implements ISVNConnector {
         } catch (IOException e) {
             // any failure here means that channel is stale.
             // session will be closed then.
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                    Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
             return true;
         }
         return false;

@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -51,12 +52,12 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
         }
         if (targets.isEmpty() || index > targets.size() - 1 ) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Repository argument required"));
+                    "Repository argument required"), SVNLogType.CLIENT);
         }
         SVNPath target = new SVNPath((String) targets.get(index));
         if (target.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "'" + target.getTarget() + "' is an URL when it should be a path"));
+                    "'" + target.getTarget() + "' is an URL when it should be a path"), SVNLogType.CLIENT);
         }
         return target.getFile();
     }
@@ -74,11 +75,11 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
         } else if (rev.getDate() != null) {
             result = repos.getDatedRevision(rev.getDate());
         } else if (rev != SVNRevision.UNDEFINED) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier"), SVNLogType.CLIENT);
         }
         if (result > latestRevision) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Revisions must not be greater than the youngest revision ("  + latestRevision + ")"));
+                    "Revisions must not be greater than the youngest revision ("  + latestRevision + ")"), SVNLogType.CLIENT);
         }
         return result;
     }

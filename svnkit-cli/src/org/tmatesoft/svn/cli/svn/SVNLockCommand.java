@@ -22,9 +22,10 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -67,7 +68,7 @@ public class SVNLockCommand extends SVNCommand {
         }
         targets = getSVNEnvironment().combineTargets(targets, true);
         if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
         client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
@@ -98,13 +99,13 @@ public class SVNLockCommand extends SVNCommand {
             byte[] data = getSVNEnvironment().getFileData();
             for (int i = 0; i < data.length; i++) {
                 if (data[i] == 0) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"), SVNLogType.CLIENT);
                 }
             }
             try {
                 return new String(getSVNEnvironment().getFileData(), getSVNEnvironment().getEncoding() != null ? getSVNEnvironment().getEncoding() : "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.CLIENT);
             }
         } else if (getSVNEnvironment().getMessage() != null) {
             return getSVNEnvironment().getMessage();

@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -232,7 +233,8 @@ public class SVNDumpEditor implements ISVNEditor {
                         mustDumpProps = true;
                     } else {
                         if (cmpRev < myOldestDumpedRevision) {
-                            SVNDebugLog.getDefaultLog().logFine("WARNING: Referencing data in revision " + cmpRev + 
+                            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, 
+                                    "WARNING: Referencing data in revision " + cmpRev + 
                                     ", which is older than the oldest\nWARNING: dumped revision (" + 
                                     myOldestDumpedRevision + 
                                     ").  Loading this dump into an empty repository\nWARNING: will fail.\n");
@@ -316,7 +318,7 @@ public class SVNDumpEditor implements ISVNEditor {
                                     }
                                 } catch (IOException ioe) {
                                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                                    SVNErrorManager.error(err, ioe);
+                                    SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
                                 }
 
                                 isHeaderWritten = true;
@@ -368,7 +370,7 @@ public class SVNDumpEditor implements ISVNEditor {
                 InputStream source = null;
                 try {
                     if (tmpFile != null) {
-                        source = SVNFileUtil.openFileForReading(tmpFile);
+                        source = SVNFileUtil.openFileForReading(tmpFile, SVNLogType.WC);
                     } else {
                         source = myRoot.getFileStreamForPath(getDeltaCombiner(), canonicalPath);
                     }
@@ -381,7 +383,7 @@ public class SVNDumpEditor implements ISVNEditor {
             writeDumpData("\n\n");
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
     }
     

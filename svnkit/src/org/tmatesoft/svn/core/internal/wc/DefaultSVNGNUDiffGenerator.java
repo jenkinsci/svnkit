@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.admin.ISVNGNUDiffGenerator;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -74,7 +75,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                     result.write(getEOL());
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
                 }
                 break;
         }
@@ -89,7 +90,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                 result.write(getEOL());
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
             }
         }
     }

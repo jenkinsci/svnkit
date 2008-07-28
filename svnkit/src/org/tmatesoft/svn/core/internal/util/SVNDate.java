@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -184,7 +185,7 @@ public class SVNDate extends Date {
         try {
             return parseDatestamp(str);
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(th);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
         }
         return NULL;
     }
@@ -196,7 +197,7 @@ public class SVNDate extends Date {
             throw svne;
         } catch (Throwable th) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
         }
         return NULL;
     }
@@ -204,7 +205,7 @@ public class SVNDate extends Date {
     private static SVNDate parseDatestamp(String str) throws SVNException {
         if (str == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         int index = 0;

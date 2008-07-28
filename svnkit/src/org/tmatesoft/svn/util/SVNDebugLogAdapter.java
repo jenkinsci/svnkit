@@ -13,6 +13,7 @@ package org.tmatesoft.svn.util;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
@@ -24,6 +25,47 @@ import org.tmatesoft.svn.core.internal.util.SVNLogStream;
  */
 public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
 
+
+    public void logError(SVNLogType logType, String message) {
+        log(logType, message, Level.INFO);
+    }
+
+    public void logError(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.INFO);
+    }
+
+    public void logSevere(SVNLogType logType, String message) {
+        log(logType, message, Level.SEVERE);
+    }
+
+    public void logSevere(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.SEVERE);
+    }
+
+    public void logFine(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINE);
+    }
+
+    public void logFine(SVNLogType logType, String message) {
+        log(logType, message, Level.FINE);
+    }
+
+    public void logFiner(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINER);
+    }
+
+    public void logFiner(SVNLogType logType, String message) {
+        log(logType, message, Level.FINER);
+    }
+
+    public void logFinest(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINEST);
+    }
+
+    public void logFinest(SVNLogType logType, String message) {
+        log(logType, message, Level.FINEST);
+    }
+
     public void flushStream(Object stream) {
         if (stream instanceof SVNLogInputStream) {
             SVNLogInputStream logStream = (SVNLogInputStream) stream;
@@ -34,11 +76,11 @@ public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
         }
     }
 
-    public InputStream createLogStream(InputStream is) {
+    public InputStream createLogStream(SVNLogType logType, InputStream is) {
         return new SVNLogInputStream(is, this);
     }
 
-    public OutputStream createLogStream(OutputStream os) {
+    public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
         return new SVNLogOutputStream(os, this);
     }
 

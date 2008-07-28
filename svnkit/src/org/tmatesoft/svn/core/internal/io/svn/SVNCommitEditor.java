@@ -15,7 +15,6 @@ package org.tmatesoft.svn.core.internal.io.svn;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -26,11 +25,13 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -172,7 +173,7 @@ class SVNCommitEditor implements ISVNEditor {
             myDiffWindowCount++;
             return SVNFileUtil.DUMMY_OUT;
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
         }
         return null;
     }

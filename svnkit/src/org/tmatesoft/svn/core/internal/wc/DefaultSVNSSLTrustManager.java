@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -71,7 +72,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 					InputStream is = null;
 					try {
 						if (file.isFile() && file.canRead()) {
-							is = SVNFileUtil.openFileForReading(file);
+							is = SVNFileUtil.openFileForReading(file, SVNLogType.WC);
 						}
 						keyStore.load(is, null);
 					}
@@ -190,7 +191,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 	public static X509Certificate loadCertificate(File pemFile) {
 		InputStream is = null;
 		try {
-			is = SVNFileUtil.openFileForReading(pemFile);
+			is = SVNFileUtil.openFileForReading(pemFile, SVNLogType.WC);
 		}
 		catch (SVNException e) {
 			return null;

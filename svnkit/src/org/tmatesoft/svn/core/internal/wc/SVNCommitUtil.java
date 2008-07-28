@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -79,7 +80,7 @@ public class SVNCommitUtil {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "Assertion failed in  SVNCommitUtil.driveCommitEditor(): path ''{0}'' is not canonical", 
                         commitPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
             String commonAncestor = lastPath == null || "".equals(lastPath) ? "" : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
@@ -268,7 +269,7 @@ public class SVNCommitUtil {
                     baseAccess.probeRetrieve(path);
                 } catch (SVNException e) {
                     SVNErrorMessage err = e.getErrorMessage().wrap("Are all the targets part of the same working copy?");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 if (depth != SVNDepth.INFINITY && !force) {
                     if (SVNFileType.getType(path) == SVNFileType.DIRECTORY) {
@@ -276,7 +277,7 @@ public class SVNCommitUtil {
                         SVNStatus status = statusClient.doStatus(path, false);
                         if (status != null && (status.getContentsStatus() == SVNStatusType.STATUS_DELETED || status.getContentsStatus() == SVNStatusType.STATUS_REPLACED)) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot non-recursively commit a directory deletion");
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.WC);
                         }
                     }
                 }
@@ -379,7 +380,7 @@ public class SVNCommitUtil {
             String url = null;
             if (entry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Entry for ''{0}'' has no URL", targetFile);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else {
                 url = entry.getURL();
             }
@@ -400,7 +401,7 @@ public class SVNCommitUtil {
                 if (parentEntry == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
                             "''{0}'' is scheduled for addition within unversioned parent", targetFile);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (parentEntry.isScheduledForAddition() || parentEntry.isScheduledForReplacement()) {
                     danglers.add(targetFile.getParentFile());
                 }
@@ -416,7 +417,7 @@ public class SVNCommitUtil {
                                     + " is marked as 'copied' but is not itself scheduled\n"
                                     + "for addition.  Perhaps you're committing a target that is\n"
                                     + "inside an unversioned (or not-yet-versioned) directory?", targetFile);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } else {
                     // just do not process this item as in case of recursive
                     // commit.
@@ -464,7 +465,7 @@ public class SVNCommitUtil {
                         "''{0}'' is not under version control\n"
                         + "and is not part of the commit, \n"
                         + "yet its child is part of the commit", file);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         if (isRecursionForced) {
@@ -511,7 +512,7 @@ public class SVNCommitUtil {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_DUPLICATE_COMMIT_URL, 
                         "Cannot commit both ''{0}'' and ''{1}'' as they refer to the same URL",
                         new Object[] {item.getFile(), oldItem.getFile()});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             itemsMap.put(item.getURL(), item);
         }
@@ -568,12 +569,12 @@ public class SVNCommitUtil {
         if (entry.getKind() != SVNNodeKind.DIR
                 && entry.getKind() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNFileType fileType = SVNFileType.getType(path);
         if (fileType == SVNFileType.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", path);                    
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         String specialPropertyValue = dir.getProperties(entry.getName()).getStringPropertyValue(SVNProperty.SPECIAL);
         boolean specialFile = fileType == SVNFileType.SYMLINK;
@@ -581,7 +582,7 @@ public class SVNCommitUtil {
             if (((specialPropertyValue == null && specialFile) || (!SVNFileUtil.isWindows && specialPropertyValue != null && !specialFile)) 
                     && fileType != SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Entry ''{0}'' has unexpectedly changed special status", path);                    
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         
@@ -616,7 +617,7 @@ public class SVNCommitUtil {
             if (SVNWCAccess.matchesChangeList(changelists, entry)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                         "Aborting commit: ''{0}'' remains in conflict", path);                    
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         if (entry.getURL() != null && !copyMode) {
@@ -629,7 +630,7 @@ public class SVNCommitUtil {
                 entry.getKind() == SVNNodeKind.DIR ? params.onMissingDirectory(path) : params.onMissingFile(path);
             if (action == ISVNCommitParameters.ERROR) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy file ''{0}'' is missing", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (action == ISVNCommitParameters.DELETE) {
                 commitDeletion = true;
                 entry.scheduleForDeletion();
@@ -662,7 +663,7 @@ public class SVNCommitUtil {
             } else if (!copyMode) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
                         "Did not expect ''{0}'' to be a working copy root", path);                    
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (parentRevision != entry.getRevision()) {
                 commitAddition = true;
@@ -676,7 +677,7 @@ public class SVNCommitUtil {
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
                             "Commit item ''{0}'' has copy flag but no copyfrom URL", path);                    
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         }
@@ -685,6 +686,12 @@ public class SVNCommitUtil {
         boolean commitLock;
 
         if (commitAddition) {
+            SVNFileType addedFileType = SVNFileType.getType(path);
+            if (addedFileType == SVNFileType.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, 
+                        "''{0}'' is scheduled for addition, but is missing", path);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
             SVNVersionedProperties props = dir.getProperties(entry.getName());
             SVNVersionedProperties baseProps = dir.getBaseProperties(entry.getName());            
             SVNProperties propDiff = null;
@@ -808,7 +815,7 @@ public class SVNCommitUtil {
                             // directory is not missing, but obstructed, 
                             // or no special params are specified.
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", currentFile);
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.WC);
                         } else { 
                             ISVNCommitParameters.Action action = 
                                 params != null ? params.onMissingDirectory(dir.getFile(currentEntry.getName())) : ISVNCommitParameters.ERROR;
@@ -825,7 +832,7 @@ public class SVNCommitUtil {
                                 continue;
                             } else if (action != ISVNCommitParameters.SKIP) {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", currentFile);
-                                SVNErrorManager.error(err);
+                                SVNErrorManager.error(err, SVNLogType.WC);
                             }
                         }
                     }

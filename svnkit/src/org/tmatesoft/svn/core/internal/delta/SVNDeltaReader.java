@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Reads diff windows from stream and feeds them to the ISVNDeltaConsumer instance.
@@ -75,7 +76,7 @@ public class SVNDeltaReader {
             if (myBuffer.get(0) != 'S' || myBuffer.get(1) != 'V' || myBuffer.get(2) != 'N' ||
                     (myBuffer.get(3) != '\0' && myBuffer.get(3) != '\1')) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW, "Svndiff has invalid header");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             myVersion = myBuffer.get(3);
             myBuffer.position(4);
@@ -110,7 +111,7 @@ public class SVNDeltaReader {
                     (sourceOffset < myLastSourceOffset || 
                      sourceOffset + sourceLength < myLastSourceOffset + myLastSourceLength)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SVNDIFF_CORRUPT_WINDOW, "Svndiff has backwards-sliding source views");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             if (myBuffer.remaining() < instructionsLength + newDataLength) {
                 return;
@@ -126,7 +127,7 @@ public class SVNDeltaReader {
                     instructionsLength = deflate(instructionsLength, out);
                     newDataLength = deflate(newDataLength, out);
                 } catch (IOException e) {
-                    SVNDebugLog.getDefaultLog().logSevere(e);
+                    SVNDebugLog.getDefaultLog().logSevere(SVNLogType.DEFAULT, e);
                 }
                 byte[] bytes = out.toByteArray();
                 ByteBuffer decompressed = ByteBuffer.wrap(bytes);

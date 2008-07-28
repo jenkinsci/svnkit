@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -81,7 +82,7 @@ public class FSNodeHistory {
 
         if (fsPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error occurred while checking ancestry of peg path");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return (history != null && (fsPath.equals(currentHistory.getPath())));
     }

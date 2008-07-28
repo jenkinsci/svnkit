@@ -133,7 +133,7 @@ class HTTPConnection implements IHTTPConnection {
                 readTimeout = DEFAULT_HTTP_TIMEOUT;
             }
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
-			    myRepository.getDebugLog().logFine("Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
+			    myRepository.getDebugLog().logFine(SVNLogType.NETWORK, "Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
                 mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout, readTimeout);
                 if (myProxyAuthentication == null) {
                     myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
@@ -157,7 +157,7 @@ class HTTPConnection implements IHTTPConnection {
                     SVNURL proxyURL = SVNURL.parseURIEncoded("http://" + proxyAuth.getProxyHost() + ":" + proxyAuth.getProxyPort()); 
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {"CONNECT", proxyURL});
                     proxyAuth.acknowledgeProxyContext(false, err);
-                    SVNErrorManager.error(err, connectRequest.getErrorMessage());
+                    SVNErrorManager.error(err, connectRequest.getErrorMessage(), SVNLogType.NETWORK);
                 }
             } else {
                 myIsProxied = false;
@@ -170,7 +170,7 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     public void readHeader(HTTPRequest request) throws IOException {
-        InputStream is = myRepository.getDebugLog().createLogStream(getInputStream());
+        InputStream is = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, getInputStream());
         
         try {            
             // may throw EOF exception.
@@ -290,7 +290,7 @@ class HTTPConnection implements IHTTPConnection {
         while (true) {
             HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
-                SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("Keep-Alive timeout detected");
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Keep-Alive timeout detected");
                 close();
             }
             int retryCount = 1;
@@ -334,10 +334,10 @@ class HTTPConnection implements IHTTPConnection {
                 myNextRequestTimeout = request.getNextRequestTimeout();
                 status = request.getStatus();
             } catch (SSLHandshakeException ssl) {
-                myRepository.getDebugLog().logFine(ssl);
+                myRepository.getDebugLog().logFine(SVNLogType.NETWORK, ssl);
                 close();
 	            if (ssl.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
-		            SVNErrorManager.cancel(ssl.getCause().getMessage());
+		            SVNErrorManager.cancel(ssl.getCause().getMessage(), SVNLogType.NETWORK);
 	            }
                 SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ssl.getMessage() }, SVNErrorMessage.TYPE_ERROR, ssl);
 		            if (keyManager != null) {
@@ -346,7 +346,7 @@ class HTTPConnection implements IHTTPConnection {
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
 	            continue;
             } catch (IOException e) {
-                myRepository.getDebugLog().logFine(e);
+                myRepository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                 if (e instanceof SocketTimeoutException) {
 	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof UnknownHostException) {
@@ -354,14 +354,14 @@ class HTTPConnection implements IHTTPConnection {
                 } else if (e instanceof ConnectException) {
 	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
-                    SVNErrorManager.cancel(e.getMessage());
+                    SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 } else if (e instanceof SSLException) {                   
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 } else {
                     err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
                 }
             } catch (SVNException e) {
-                myRepository.getDebugLog().logFine(e);
+                myRepository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                 // force connection close on SVNException 
                 // (could be thrown by user's auth manager methods).
                 close();
@@ -388,7 +388,7 @@ class HTTPConnection implements IHTTPConnection {
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
                 } catch (SVNException svne) {
-                    myRepository.getDebugLog().logFine(svne);
+                    myRepository.getDebugLog().logFine(SVNLogType.NETWORK, svne);
                     err = svne.getErrorMessage(); 
                     break;
                 }
@@ -419,7 +419,7 @@ class HTTPConnection implements IHTTPConnection {
                         status.getError().setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                                 "Probably you are trying to lock file in repository that only allows anonymous access"));
                     }
-                    SVNErrorManager.error(status.getError());
+                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
                     return status;  
                 }
 
@@ -539,13 +539,13 @@ class HTTPConnection implements IHTTPConnection {
         close();
         if (err != null && err.getErrorCode().getCategory() != SVNErrorCode.RA_DAV_CATEGORY &&
             err.getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         // err2 is another default context...
 //        myRepository.getDebugLog().info(err.getMessage());
-        myRepository.getDebugLog().logFine(new Exception(err.getMessage()));
+        myRepository.getDebugLog().logFine(SVNLogType.NETWORK, new Exception(err.getMessage()));
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
-        SVNErrorManager.error(err, err2);
+        SVNErrorManager.error(err, err2, SVNLogType.NETWORK);
         return null;
     }
 
@@ -750,7 +750,7 @@ class HTTPConnection implements IHTTPConnection {
                 return null;
             }
             myOutputStream = new BufferedOutputStream(mySocket.getOutputStream(), 2048);
-            myOutputStream = myRepository.getDebugLog().createLogStream(myOutputStream);
+            myOutputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, myOutputStream);
         }
         return myOutputStream;
     }
@@ -800,7 +800,7 @@ class HTTPConnection implements IHTTPConnection {
         if ("gzip".equals(readHeader.getFirstHeaderValue(HTTPHeader.CONTENT_ENCODING_HEADER))) {
             is = new GZIPInputStream(is);
         }
-        return myRepository.getDebugLog().createLogStream(is);
+        return myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, is);
     }
 
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {

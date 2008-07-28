@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -67,7 +68,7 @@ public class FSWriteLock {
 
     public static synchronized FSWriteLock getWriteLockForCurrentTxn(String token, FSFS owner) throws SVNException {
         if (token == null || token.length() == 0){
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect lock token for current transaction"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect lock token for current transaction"), SVNLogType.FSFS);
         }
         String uuid = owner.getUUID() + token;
         FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
@@ -81,7 +82,7 @@ public class FSWriteLock {
 
     public static synchronized FSWriteLock getWriteLockForTxn(String txnID, FSFS owner) throws SVNException {
         if (txnID == null || txnID.length() == 0){
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect txn id while locking"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_NO_LOCK_TOKEN, "Incorrect txn id while locking"), SVNLogType.FSFS);
         }
         String uuid = owner.getUUID() + txnID;
         FSWriteLock lock = (FSWriteLock) ourThreadDBLocksCache.get(uuid);
@@ -126,7 +127,7 @@ public class FSWriteLock {
             String msg = childError == null ? "file already locked" : childError.getLocalizedMessage();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                     "Can't get exclusive lock on file ''{0}'': {1}", new Object[]{myLockFile, msg});
-            SVNErrorManager.error(err, childError);
+            SVNErrorManager.error(err, childError, SVNLogType.FSFS);
         }
     }
 
@@ -152,7 +153,7 @@ public class FSWriteLock {
             } catch (IOException ioex) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Unexpected error while releasing file lock on ''{0}''", myLockFile);
-                SVNErrorManager.error(error, ioex);
+                SVNErrorManager.error(error, ioex, SVNLogType.FSFS);
             }
             myLock = null;
         }

@@ -17,7 +17,6 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
@@ -31,25 +30,14 @@ import org.osgi.framework.BundleContext;
  */
 public class SVNKitPlugin extends Plugin {
 
-    private static final String DEBUG_TRACE = "/debug/trace";
-
     public SVNKitPlugin() {
     }
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
 
-        ISVNDebugLog debugLog = new SVNKitLog(getBundle(), isDebugging(), false);
+        ISVNDebugLog debugLog = new SVNKitLog(getBundle(), isDebugging());
         SVNDebugLog.setDefaultLog(debugLog);
-        SVNDebugLog.registerLog(SVNLogType.WC, debugLog);
-
-        String pluginID = getBundle().getSymbolicName();
-        String traceOption = Platform.getDebugOption(pluginID + DEBUG_TRACE);
-        boolean enableTracing = Boolean.TRUE.toString().equals(traceOption);
-        if (enableTracing) {
-            ISVNDebugLog traceLog = new SVNKitLog(getBundle(), isDebugging(), true);
-            SVNDebugLog.registerLog(SVNLogType.NETWORK, traceLog);
-        }
 
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();

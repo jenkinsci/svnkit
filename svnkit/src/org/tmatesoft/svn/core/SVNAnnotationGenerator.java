@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 import de.regnis.q.sequence.line.QSequenceLineMedia;
@@ -199,7 +200,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         String newMimeType = propDiff != null ? propDiff.getStringValue(SVNProperty.MIME_TYPE) : null;
         if (!myIsForce && SVNProperty.isBinaryMimeType(newMimeType)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_BINARY_FILE, "Cannot calculate blame information for binary file ''{0}''", myPath);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         myCurrentRevision = fileRevision.getRevision();
         boolean known = fileRevision.getRevision() >= myStartRevision;
@@ -329,7 +330,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             }
         } catch (Throwable e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Exception while generating annotation: {0}", e.getMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         } finally {
             if (left != null) {
                 try {
@@ -455,7 +456,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN,                               
                         "ASSERTION FAILURE in SVNAnnotationGenerator.normalizeBlames():" +
                         "current chunks should always start at the same offset");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
 
             BlameChunk nextChunk = (BlameChunk) chain.get(i + 1);
@@ -521,7 +522,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "ASSERTION FAILURE in SVNAnnotationGenerator.reportAnnotations(): myPreviousFile is null, " +
                     "generator has to have been called at least once");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         int mergedCount = -1;
         if (myIncludeMergedRevisions) {
@@ -591,7 +592,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             handler.handleEOF();
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.DEFAULT);
         } finally {
             SVNFileUtil.closeFile(stream);
         }

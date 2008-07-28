@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -53,11 +54,11 @@ public class SVNLookPropGetCommand extends SVNLookCommand {
                 err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                         "Missing propname and repository path arguments");
             }
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else if (!environment.isRevProp() && environment.getSecondArgument() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                     "Missing propname or repository path argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         String propName = environment.getFirstArgument();
@@ -107,7 +108,7 @@ public class SVNLookPropGetCommand extends SVNLookCommand {
                     
                 }
             }
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         if (propValue.isString()) {

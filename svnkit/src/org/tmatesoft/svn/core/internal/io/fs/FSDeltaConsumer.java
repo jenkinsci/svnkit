@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -70,7 +71,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Base checksum mismatch on ''{0}'':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
                         path, baseChecksum, md5HexChecksum
                 });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
 

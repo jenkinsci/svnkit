@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.2
@@ -206,7 +207,7 @@ public class SVNMergeInfoUtil {
                 if (ind == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Pathname not terminated by ':'");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 String path = mergeInfo.substring(0, ind);
                 mergeInfo = mergeInfo.delete(0, ind + 1);
@@ -214,7 +215,7 @@ public class SVNMergeInfoUtil {
                 if (mergeInfo.length() != 0 && mergeInfo.charAt(0) != '\n') {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Could not find end of line in range list line in ''{0}''", mergeInfo);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 if (mergeInfo.length() > 0) {
                     mergeInfo = mergeInfo.deleteCharAt(0);
@@ -226,7 +227,7 @@ public class SVNMergeInfoUtil {
             if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.MERGE_INFO_PARSE_ERROR) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                         "Could not parse mergeinfo string ''{0}''", mergeInfo.toString());
-                SVNErrorManager.error(err, svne);
+                SVNErrorManager.error(err, svne, SVNLogType.DEFAULT);
             }
             throw svne;
         }
@@ -369,7 +370,7 @@ public class SVNMergeInfoUtil {
         if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == '\n') {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                     "Mergeinfo for ''{0}'' maps to an empty revision range", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         SVNMergeRange lastRange = null;
@@ -381,7 +382,7 @@ public class SVNMergeInfoUtil {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                         "Invalid character ''{0}'' found in revision list", 
                         new Character(mergeInfo.charAt(0)));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
             SVNMergeRange range = new SVNMergeRange(startRev - 1, startRev, true);
@@ -392,12 +393,12 @@ public class SVNMergeInfoUtil {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Unable to parse reversed revision range ''{0}-{1}''",
                             new Object[] { new Long(startRev), new Long(endRev) });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 } else if (startRev == endRev) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Unable to parse revision range ''{0}-{1}'' with same start and end revisions",
                             new Object[] { new Long(startRev), new Long(endRev) });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 range.setEndRevision(endRev);
             }
@@ -423,19 +424,19 @@ public class SVNMergeInfoUtil {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                                                                  "Invalid character ''{0}'' found in range list", 
                                                                  mergeInfo.length() > 0 ?  mergeInfo.charAt(0) + "" : "");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                                                              "Invalid character ''{0}'' found in range list", 
                                                              mergeInfo.length() > 0 ?  mergeInfo.charAt(0) + "" : "");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
         
         if (mergeInfo.length() == 0 || mergeInfo.charAt(0) != '\n' ) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, "Range list parsing ended before hitting newline");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         return (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
@@ -451,7 +452,7 @@ public class SVNMergeInfoUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
                                                          "Invalid revision number found parsing ''{0}''", 
                                                          mergeInfo.toString());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         String numberStr = mergeInfo.substring(0, ind);
@@ -462,14 +463,14 @@ public class SVNMergeInfoUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
                                                          "Invalid revision number found parsing ''{0}''", 
                                                          mergeInfo.toString());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         if (rev < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
                                                          "Negative revision number found parsing ''{0}''", 
                                                          mergeInfo.toString());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         mergeInfo = mergeInfo.delete(0, ind);
@@ -522,7 +523,7 @@ public class SVNMergeInfoUtil {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Parsing of overlapping revision ranges ''{0}'' and ''{1}'' is not supported",
                             new Object[] { lastRange.toString(), mRange.toString() });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 } else if (lastRange.isInheritable() == mRange.isInheritable()) {
                     lastRange.setEndRevision(mRange.getEndRevision());
                     return lastRange;
@@ -531,7 +532,7 @@ public class SVNMergeInfoUtil {
                   SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                           "Unable to parse unordered revision ranges ''{0}'' and ''{1}''", 
                           new Object[] { lastRange.toString(), mRange.toString() });
-                  SVNErrorManager.error(err);
+                  SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
         
@@ -561,7 +562,7 @@ public class SVNMergeInfoUtil {
 	        String pathSuffix = SVNPathUtil.getPathAsChild(inheritedMergeInfoPath, path);
 	        if (pathSuffix == null) {
 	            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "path suffix is null");
-	            SVNErrorManager.error(err);
+	            SVNErrorManager.error(err, SVNLogType.DEFAULT);
 	        }
 	        boolean elides = shouldElideMergeInfo((Map) myMergeInfoCatalog.get(inheritedMergeInfoPath), 
 	                (Map) myMergeInfoCatalog.get(path), pathSuffix);

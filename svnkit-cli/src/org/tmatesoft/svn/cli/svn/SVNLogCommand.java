@@ -29,15 +29,16 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -80,12 +81,12 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             if (getSVNEnvironment().isAllRevisionProperties()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "'with-all-revprops' option only valid in XML mode");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             if (getSVNEnvironment().getRevisionProperties() != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "'with-revprop' option only valid in XML mode");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
         
@@ -126,14 +127,14 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                 if (SVNCommandUtil.isURL((String) targets.get(i))) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Only relative paths can be specified after a URL");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
         } else {
             if (targets.size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "When specifying working copy paths, only one target may be given");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
 
@@ -160,7 +161,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
                     if (propVal.length() > 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                                 "cannot assign with 'with-revprop' option (drop the '=')");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                     revProps[i++] = propName;
                 }

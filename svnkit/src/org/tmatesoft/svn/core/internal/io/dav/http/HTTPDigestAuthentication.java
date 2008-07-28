@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -52,7 +53,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         }
         if (selectedQop != null && !"auth".equals(selectedQop)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Digest HTTP auth: ''(0}'' is not supported", selectedQop);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         myQop = selectedQop;
         myCnonce = createCnonce();
@@ -112,7 +113,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
             md5Helper = MessageDigest.getInstance(digAlg);
         } catch (Exception e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unsupported algorithm in HTTP Digest authentication: ''{0}''", digAlg);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
             return null;
         }
         StringBuffer tmp = new StringBuffer(uname.length() + realm.length() + pwd.length() + 2);

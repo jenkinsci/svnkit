@@ -21,6 +21,7 @@ import java.util.List;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -103,7 +104,7 @@ public class SVNMergeRangeList {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "ASSERTION FAILURE in SVNMergeRangeList.merge(): expected to reach the end of at least " +
                     "one range list");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         for (; i < myRanges.length; i++) {

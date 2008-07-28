@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -185,7 +186,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     public void parseChallenge(String challenge) throws SVNException {
         if (challenge == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: expected challenge");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         byte[] challengeBase64Bytes = HTTPAuthentication.getBytes(challenge, DEFAULT_CHARSET);
         byte[] resultBuffer = new byte[challengeBase64Bytes.length];
@@ -194,7 +195,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             resultLength = SVNBase64.base64ToByteArray(new StringBuffer(new String(challengeBase64Bytes, myCharset)), resultBuffer);
         } catch (UnsupportedEncodingException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: " + e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
         String proto = new String(resultBuffer, 0, 7);
@@ -206,10 +207,10 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         
         if (!PROTOCOL_NAME.equalsIgnoreCase(proto)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: incorrect signature ''(0}''", proto);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } else if (type != 2) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "NTLM HTTP auth: expected type 2 message instead of ''(0, number, integer}''", new Long(type));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
         myNonce = new byte[8];
@@ -383,7 +384,7 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
     public String authenticate() throws SVNException {
         if (myState != TYPE1 && myState != TYPE3) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unsupported message type in HTTP NTLM authentication");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
         String login = getUserName();
@@ -816,10 +817,10 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             return enc;
         } catch (IllegalBlockSizeException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Invalid block size for DES encryption: {0}", e.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } catch (BadPaddingException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Data not padded correctly for DES encryption: {0}", e.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return null;
     }
@@ -832,13 +833,13 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             return ecipher;
         } catch (NoSuchAlgorithmException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "DES encryption is not available: {0}", e.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } catch (InvalidKeyException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Invalid key for DES encryption: {0}", e.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } catch (NoSuchPaddingException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "NoPadding option for DES is not available: {0}", e.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return null;
     }

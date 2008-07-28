@@ -80,7 +80,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         try {
             startElement(getParent(), element, attributes);
         } catch (SVNException e) {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             throw new SAXException(e);
         }
         myParent.push(element);
@@ -93,7 +93,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         try {
             endElement(getParent(), element, myCDATA);
         } catch (SVNException e) {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             throw new SAXException(e);
         }
         myCDATA = null;
@@ -126,7 +126,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     protected abstract void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException;
 
     protected void invalidXML() throws SVNException {
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"), SVNLogType.NETWORK);
 
     }
 

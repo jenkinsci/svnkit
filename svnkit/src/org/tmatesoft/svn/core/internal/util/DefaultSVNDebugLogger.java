@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,98 +28,62 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
 
-    private Logger myLogger;
-    private SVNLogType myLogType;
+    private Map myLoggers;
 
-    public DefaultSVNDebugLogger(SVNLogType logType) {
-        myLogType = logType != null ? logType : SVNLogType.DEFAULT;
+    public DefaultSVNDebugLogger() {
+        myLoggers = new SVNHashMap();
     }
     
-    public void logError(String message) {
-        log(message, Level.INFO);
-    }
-
-    public void logError(Throwable th) {
-        log(th, Level.INFO);
-    }
-
-    public void logSevere(String message) {
-        log(message, Level.SEVERE);
-    }
-
-    public void logSevere(Throwable th) {
-        log(th, Level.SEVERE);
-    }
-
-    public void logFine(Throwable th) {
-        log(th, Level.FINE);
-    }
-
-    public void logFine(String message) {
-        log(message, Level.FINE);
-    }
-
-    public void logFiner(Throwable th) {
-        log(th, Level.FINER);
-    }
-
-    public void logFiner(String message) {
-        log(message, Level.FINER);
-    }
-
-    public void logFinest(Throwable th) {
-        log(th, Level.FINEST);
-    }
-
-    public void logFinest(String message) {
-        log(message, Level.FINEST);
-    }
-
-    public void log(Throwable th, Level logLevel) {
-        if (getLogger().isLoggable(logLevel) && th != null) {
-            getLogger().log(logLevel, getMessage(th.getMessage()), th);
+    public void log(SVNLogType logType, Throwable th, Level logLevel) {
+        Logger logger = getLogger(logType);
+        if (logger.isLoggable(logLevel) && th != null) {
+            logger.log(logLevel, getMessage(logType, th.getMessage()), th);
         }
     }
 
-    public void log(String message, Level logLevel) {
-        if (getLogger().isLoggable(logLevel) && message != null) {
-            getLogger().log(logLevel, getMessage(message));
+    public void log(SVNLogType logType, String message, Level logLevel) {
+        Logger logger = getLogger(logType); 
+        if (logger.isLoggable(logLevel) && message != null) {
+            logger.log(logLevel, getMessage(logType, message));
         }
     }
     
-    public void log(String message, byte[] data) {
-        if (getLogger().isLoggable(Level.FINEST)) {
+    public void log(SVNLogType logType, String message, byte[] data) {
+        Logger logger = getLogger(logType);
+        if (logger.isLoggable(Level.FINEST)) {
             try {
-                getLogger().log(Level.FINEST, message + "\n" + new String(data, "UTF-8"));
+                logger.log(Level.FINEST, message + "\n" + new String(data, "UTF-8"));
             } catch (UnsupportedEncodingException e) {
-                getLogger().log(Level.FINEST, message + "\n" + new String(data));
+                logger.log(Level.FINEST, message + "\n" + new String(data));
             }
         }
     }
 
-    public InputStream createLogStream(InputStream is) {
-        if (getLogger().isLoggable(Level.FINEST)) {
-            return super.createLogStream(is);
+    public InputStream createLogStream(SVNLogType logType, InputStream is) {
+        if (getLogger(logType).isLoggable(Level.FINEST)) {
+            return super.createLogStream(logType, is);
         }
         return is;
     }
 
-    public OutputStream createLogStream(OutputStream os) {
-        if (getLogger().isLoggable(Level.FINEST)) {
-            return super.createLogStream(os);
+    public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
+        if (getLogger(logType).isLoggable(Level.FINEST)) {
+            return super.createLogStream(logType, os);
         }
         return os;
     }
     
-    private Logger getLogger() {
-        if (myLogger == null) {
-            myLogger = Logger.getLogger(myLogType.getName());
+    private Logger getLogger(SVNLogType logType) {
+        Logger logger = (Logger) myLoggers.get(logType);
+        if (logger == null) {
+            logger = Logger.getLogger(logType.getName());
+            myLoggers.put(logType, logger);
         }
-        return myLogger;
+        return logger;
     }
 
-    private String getMessage(String originalMessage) {
-        return myLogType.getShortName() + ": " + originalMessage;
+    private String getMessage(SVNLogType logType, String originalMessage) {
+        return logType.getShortName() + ": " + originalMessage;
     }
 
 }

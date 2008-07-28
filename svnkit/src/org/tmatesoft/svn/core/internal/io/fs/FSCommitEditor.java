@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -133,7 +134,7 @@ public class FSCommitEditor implements ISVNEditor {
         SVNNodeKind kind = myTxnRoot.checkNodeKind(fullPath);
         if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Path ''{0}'' not present", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         DirBaton dirBaton = new DirBaton(revision, fullPath, parentBaton.isCopied());
@@ -151,7 +152,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode existingNode = myTxnRoot.getRevisionNode(fullPath);
         long createdRev = existingNode.getCreatedRevision();
         if (FSRepository.isValidRevision(revision) && revision < createdRev) {
-            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind));
+            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind), SVNLogType.FSFS);
         }
         myCommitter.deleteNode(fullPath);
     }
@@ -170,11 +171,11 @@ public class FSCommitEditor implements ISVNEditor {
         boolean isCopied = false;
         if (copyFromPath != null && FSRepository.isInvalidRevision(copyFromRevision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Got source path but no source revision for ''{0}''", fullPath);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         } else if (copyFromPath != null) {
             SVNNodeKind kind = myTxnRoot.checkNodeKind(fullPath);
             if (kind != SVNNodeKind.NONE && !parentBaton.isCopied()) {
-                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind));
+                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind), SVNLogType.FSFS);
             }
             copyFromPath = myRepository.getRepositoryPath(copyFromPath);
 
@@ -195,7 +196,7 @@ public class FSCommitEditor implements ISVNEditor {
             FSRevisionNode existingNode = myTxnRoot.getRevisionNode(dirBaton.getPath());
             long createdRev = existingNode.getCreatedRevision();
             if (dirBaton.getBaseRevision() < createdRev) {
-                SVNErrorManager.error(FSErrors.errorOutOfDate(dirBaton.getPath(), SVNNodeKind.DIR));
+                SVNErrorManager.error(FSErrors.errorOutOfDate(dirBaton.getPath(), SVNNodeKind.DIR), SVNLogType.FSFS);
             }
         }
         myCommitter.changeNodeProperty(dirBaton.getPath(), name, value);
@@ -270,11 +271,11 @@ public class FSCommitEditor implements ISVNEditor {
         String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
         if (copyFromPath != null && FSRepository.isInvalidRevision(copyFromRevision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "Got source path but no source revision for ''{0}''", fullPath);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         } else if (copyFromPath != null) {
             SVNNodeKind kind = myTxnRoot.checkNodeKind(fullPath);
             if (kind != SVNNodeKind.NONE && !parentBaton.isCopied()) {
-                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind));
+                SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind), SVNLogType.FSFS);
             }
             copyFromPath = myRepository.getRepositoryPath(copyFromPath);
 
@@ -290,7 +291,7 @@ public class FSCommitEditor implements ISVNEditor {
         FSRevisionNode revNode = myTxnRoot.getRevisionNode(fullPath);
 
         if (FSRepository.isValidRevision(revision) && revision < revNode.getCreatedRevision()) {
-            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, SVNNodeKind.FILE));
+            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, SVNNodeKind.FILE), SVNLogType.FSFS);
         }
     }
 
@@ -357,7 +358,7 @@ public class FSCommitEditor implements ISVNEditor {
                         "Checksum mismatch for resulting fulltext\n({0}):\n   expected checksum:  {1}\n   actual checksum:    {2}\n", new Object[] {
                                 fullPath, textChecksum, revNode.getTextRepresentation().getHexDigest()
                         });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
     }
@@ -365,7 +366,7 @@ public class FSCommitEditor implements ISVNEditor {
     public SVNCommitInfo closeEdit() throws SVNException {
         if (myTxn == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "No valid transaction supplied to closeEdit()");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         long committedRev = -1;

@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -348,11 +349,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
             if (startRevision > youngestRev) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(startRevision));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             if (endRevision > youngestRev) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(endRevision));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             boolean isDescendingOrder = startRevision >= endRevision;
@@ -579,7 +580,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "''{0}''\nis not the same repository as\n''{1}''", new Object[] {
                     url, reposRootURL
             });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String reposLinkPath = url.toDecodedString().substring(reposRootURL.toDecodedString().length());
         if ("".equals(reposLinkPath)) {
@@ -668,7 +669,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 		}
 		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY, 
 				"Don''t know anything about capability ''{0}''", capability);
-		SVNErrorManager.error(err);
+		SVNErrorManager.error(err, SVNLogType.FSFS);
 		return false;
 	}
 
@@ -712,7 +713,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     protected void replayRangeImpl(long startRevision, long endRevision, long lowRevision, boolean sendDeltas, 
             ISVNReplayHandler handler) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED);
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
     }
 
     private void openRepository() throws SVNException {
@@ -721,7 +722,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
             err.setChildErrorMessage(svne.getErrorMessage());
-            SVNErrorManager.error(err.wrap("Unable to open an ra_local session to URL"));
+            SVNErrorManager.error(err.wrap("Unable to open an ra_local session to URL"), SVNLogType.FSFS);
         }
     }
 
@@ -734,14 +735,14 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
         if (!SVNFileUtil.isWindows && hasCustomHostName) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains unsupported hostname", getLocation().toDecodedString());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         String startPath = SVNEncodingUtil.uriDecode(getLocation().getURIEncodedPath());
         String rootPath = FSFS.findRepositoryRoot(hasCustomHostName ? hostName : null, startPath);
         if (rootPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, rootPath).getAbsoluteFile() :
@@ -847,7 +848,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "''{0}''\nis not the same repository as\n''{1}''", new Object[] {
                         switchURL, getRepositoryRoot(false)
                 });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             switchPath = switchURL.toDecodedString().substring(reposRootURL.toDecodedString().length());
@@ -899,7 +900,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     auth = authManager.getNextAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
                 }
                 // auth manager returned null - that is cancellation.
-                SVNErrorManager.cancel("Authentication cancelled");
+                SVNErrorManager.cancel("Authentication cancelled", SVNLogType.FSFS);
             } catch (SVNCancelException e) {
                 throw e;
             } catch (SVNAuthenticationException e) {

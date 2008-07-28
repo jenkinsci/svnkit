@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -49,19 +50,19 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         if (targets.size() < 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Not enough arguments given");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (targets.size() > 2) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Too many arguments given");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNPath source = new SVNPath((String) targets.get(0), true);
         if (!source.isURL()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Path ''{0}'' is not a URL", source.getTarget());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNRevision srcPegRevision = source.getPegRevision();

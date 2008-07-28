@@ -22,12 +22,13 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -100,7 +101,7 @@ public class SVNMergeCommand extends SVNCommand {
         	if (firstRangeEnd == SVNRevision.UNDEFINED) {
         		SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
         				"Second revision required");
-        		SVNErrorManager.error(err);
+        		SVNErrorManager.error(err, SVNLogType.CLIENT);
         	}
         	twoSourcesSpecified = false;
         }
@@ -108,7 +109,7 @@ public class SVNMergeCommand extends SVNCommand {
         if (!twoSourcesSpecified) {
             if (targets.size() > 2) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                		"Too many arguments given"));
+                		"Too many arguments given"), SVNLogType.CLIENT);
             }
             if (targets.isEmpty()) {
                 pegRevision1 = SVNRevision.HEAD;
@@ -122,16 +123,16 @@ public class SVNMergeCommand extends SVNCommand {
                     if (target.isURL()) {
                     	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     			"Cannot specifify a revision range with two URLs");
-                    	SVNErrorManager.error(err);
+                    	SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                 }
             }
         } else {
             if (targets.size() < 2) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
             } else if (targets.size() > 3) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                		"Too many arguments given"));
+                		"Too many arguments given"), SVNLogType.CLIENT);
             }
             
             firstRangeStart = pegRevision1;
@@ -140,7 +141,7 @@ public class SVNMergeCommand extends SVNCommand {
             if (((firstRangeStart == null || firstRangeStart == SVNRevision.UNDEFINED) && !source1.isURL()) ||
                     ((pegRevision2 == null || pegRevision2 == SVNRevision.UNDEFINED) && !source2.isURL())) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
-                		"A working copy merge source needs an explicit revision"));
+                		"A working copy merge source needs an explicit revision"), SVNLogType.CLIENT);
             }
             if (firstRangeStart == null || firstRangeStart == SVNRevision.UNDEFINED) {
                 firstRangeStart = SVNRevision.HEAD;
@@ -196,13 +197,13 @@ public class SVNMergeCommand extends SVNCommand {
                     if (getSVNEnvironment().getDepth() != SVNDepth.UNKNOWN) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                                 "--depth cannot be used with --reintegrate");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                     
                     if (getSVNEnvironment().isForce()) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                                 "--force cannot be used with --reintegrate");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                     
                     if (source1.isURL()) {
@@ -254,7 +255,7 @@ public class SVNMergeCommand extends SVNCommand {
                 SVNErrorCode code = err.getErrorCode();
                 if (code == SVNErrorCode.UNVERSIONED_RESOURCE || code == SVNErrorCode.CLIENT_MODIFIED) {
                     err = err.wrap("Use --force to override this restriction");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
             throw e;

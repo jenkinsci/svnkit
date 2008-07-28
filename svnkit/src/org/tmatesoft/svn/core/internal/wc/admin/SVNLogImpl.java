@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -79,7 +80,7 @@ public class SVNLogImpl extends SVNLog {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write log file ''{0}'': {1}", new Object[] {myFile, e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(os);
             myCache = null;
@@ -95,7 +96,7 @@ public class SVNLogImpl extends SVNLog {
         BufferedReader reader = null;
         Collection commands = new ArrayList();
         try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myFile), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myFile, SVNLogType.WC), "UTF-8"));
             String line;
             SVNProperties attrs = new SVNProperties();
             String name = null;
@@ -134,7 +135,7 @@ public class SVNLogImpl extends SVNLog {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read log file ''{0}'': {1}", new Object[] {myFile, e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(reader);
         }

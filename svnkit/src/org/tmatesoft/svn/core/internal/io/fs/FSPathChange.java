@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -92,7 +93,7 @@ public class FSPathChange extends SVNLogEntryPath {
         //String[] piecesOfChangeLine = changeLine.split(" ", 5);
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         String id = changeLine.substring(0, delimiterInd);
@@ -102,21 +103,21 @@ public class FSPathChange extends SVNLogEntryPath {
         delimiterInd = changeLine.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String changesKindStr = changeLine.substring(0, delimiterInd);
 
         FSPathChangeKind changesKind = FSPathChangeKind.fromString(changesKindStr);
         if (changesKind == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change kind in rev file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         changeLine = changeLine.substring(delimiterInd + 1);
         delimiterInd = changeLine.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String textModeStr = changeLine.substring(0, delimiterInd);
         
@@ -127,14 +128,14 @@ public class FSPathChange extends SVNLogEntryPath {
             textModeBool = false;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid text-mod flag in rev-file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         changeLine = changeLine.substring(delimiterInd + 1);
         delimiterInd = changeLine.indexOf(' ');
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String propModeStr = changeLine.substring(0, delimiterInd);
         
@@ -145,7 +146,7 @@ public class FSPathChange extends SVNLogEntryPath {
             propModeBool = false;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid prop-mod flag in rev-file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         String pathStr = changeLine.substring(delimiterInd + 1);
@@ -158,7 +159,7 @@ public class FSPathChange extends SVNLogEntryPath {
 
             if (delimiterInd == -1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             copyfromRevision = Long.parseLong(copyfromLine.substring(0, delimiterInd));

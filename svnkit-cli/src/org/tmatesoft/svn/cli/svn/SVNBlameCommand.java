@@ -25,11 +25,12 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.ISVNAnnotateHandler;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -63,7 +64,7 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(null, true);
         if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         SVNRevision start = getSVNEnvironment().getStartRevision();
         SVNRevision end = getSVNEnvironment().getEndRevision();
@@ -78,13 +79,13 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         }
         if (getSVNEnvironment().isXML()) {
             if (getSVNEnvironment().isVerbose()) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'verbose' option invalid in XML mode"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'verbose' option invalid in XML mode"), SVNLogType.CLIENT);
             }
             if (!getSVNEnvironment().isIncremental()) {
                 printXMLHeader("blame");
             }
         } else if (getSVNEnvironment().isIncremental()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"), SVNLogType.CLIENT);
         }
         
         myBuffer = new StringBuffer();

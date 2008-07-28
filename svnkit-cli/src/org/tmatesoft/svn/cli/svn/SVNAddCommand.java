@@ -20,9 +20,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -52,7 +53,7 @@ public class SVNAddCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {

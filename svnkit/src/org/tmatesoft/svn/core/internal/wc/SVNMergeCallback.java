@@ -12,8 +12,6 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-
 import java.util.Iterator;
 import java.util.Map;
 
@@ -21,10 +19,11 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -34,7 +33,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -138,7 +137,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 if (!mergedFile.mkdirs()) {
                     if (SVNFileType.getType(mergedFile) != SVNFileType.DIRECTORY) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", mergedFile);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.DEFAULT);
                     }
                 }
                 ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();

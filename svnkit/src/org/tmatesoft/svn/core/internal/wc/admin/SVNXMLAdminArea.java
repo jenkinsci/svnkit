@@ -197,7 +197,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             baseProps = readBaseProperties(name);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         props = new SVNProperties13(baseProps);
@@ -217,7 +217,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             revertProps = readRevertProperties(name);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         props = new SVNProperties13(revertProps);
@@ -237,7 +237,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             properties = readProperties(name);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         props = new SVNProperties13(properties);
@@ -257,7 +257,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             properties = readWCProperties(name);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Failed to load properties from disk");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         props = new SVNProperties13(properties);
@@ -295,14 +295,14 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             SVNEntry rootEntry = (SVNEntry) myEntries.get(getThisDirName());
             if (rootEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "No default entry in directory ''{0}''", getRoot());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             String reposURL = rootEntry.getRepositoryRoot();
             String url = rootEntry.getURL();
             if (reposURL != null && !SVNPathUtil.isAncestor(reposURL, url)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Entry ''{0}'' has inconsistent repository root and url", getThisDirName());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
     
             File tmpFile = new File(getAdminDirectory(), "tmp/entries");
@@ -314,7 +314,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 SVNFileUtil.closeFile(os);
                 SVNFileUtil.deleteFile(tmpFile);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.WC);
             } finally {
                 SVNFileUtil.closeFile(os);
             }
@@ -399,7 +399,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myEntriesFile), "UTF-8"));
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(myEntriesFile, SVNLogType.WC), "UTF-8"));
             String line;
             Map entry = null;
             while ((line = reader.readLine()) != null) {
@@ -455,7 +455,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {myEntriesFile, e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(reader);
         }
@@ -519,8 +519,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     }
                 }
                 if (propName == null || !propName.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
-                    SVNDebugLog.getLog(SVNLogType.WC).logFine("attempt to write invalid entry property: " + propName + "=" + propValue);
-                    SVNDebugLog.getLog(SVNLogType.WC).logFine(new Exception());
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "attempt to write invalid entry property: " + propName + "=" + propValue);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, new Exception());
                     continue;
                 }
                 propName = propName.substring(SVNProperty.SVN_ENTRY_PREFIX.length());
@@ -627,12 +627,12 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base: ''{0}''\n" +
                             "   expected: {1}\n" +
                             "     actual: {2}\n", new Object[] {baseFile, entry.getChecksum(), checksum});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         } catch (NoSuchAlgorithmException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {1}", e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             baseTmpFile.delete();
         }
@@ -672,7 +672,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 return true;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked; try performing ''cleanup''", getRoot());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         boolean created = false;
         try {
@@ -680,15 +680,15 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}'': {1}", 
                     new Object[] {getRoot(), e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         }
         if (!created) {
             if (myLockFile.isFile()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing 'cleanup'", getRoot());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}''", getRoot());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         setLocked(true);
@@ -698,7 +698,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     boolean innerLock() throws SVNException {
         if (myLockFile.isFile()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' locked; try performing ''cleanup''", getRoot());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         boolean created = false;
         try {
@@ -706,15 +706,15 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}'': {1}", 
                     new Object[] {getRoot(), e.getLocalizedMessage()});
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         }
         if (!created) {
             if (myLockFile.isFile()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Working copy ''{0}'' is locked; try performing 'cleanup'", getRoot());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Cannot lock working copy ''{0}''", getRoot());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         return created;
@@ -740,7 +740,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         boolean deleted = SVNFileUtil.deleteFile(myLockFile);
         if (!deleted) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_LOCKED, "Failed to unlock working copy ''{0}''", getRoot());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return deleted;
     }
@@ -844,7 +844,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             try {
                 removeFromRevisionControl(getThisDirName(), true, false);
             } catch (SVNException svne) {
-                SVNDebugLog.getLog(SVNLogType.WC).logFine(svne);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, svne);
                 if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LEFT_LOCAL_MOD) {
                     throw svne;
                 }
@@ -869,7 +869,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         SVNEntry entry = getEntry(fileName, true);
         if (entry == null || (!getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Log command for directory ''{0}'' is mislocated", getRoot()); 
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (!implicit && entry.isScheduledForDeletion()) {
@@ -882,7 +882,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                         killMe.createNewFile();
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create file ''{0}'': {1}", new Object[] {killMe, e.getLocalizedMessage()}); 
-                        SVNErrorManager.error(err, e);
+                        SVNErrorManager.error(err, e, SVNLogType.WC);
                     } 
                 }
             } else {
@@ -924,7 +924,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                     modified = !SVNFileUtil.compareFiles(tmpFile, tmpFile2, null);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error comparing ''{0}'' and ''{1}''", new Object[] {workingFile, tmpFile});
-                    SVNErrorManager.error(err, svne);
+                    SVNErrorManager.error(err, svne, SVNLogType.WC);
                 } finally {
                     tmpFile2.delete();
                 }
@@ -1027,7 +1027,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 }
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error replacing text-base of ''{0}''", fileName);
-                SVNErrorManager.error(err, svne);
+                SVNErrorManager.error(err, svne, SVNLogType.WC);
             } finally {
                 tmpFile2.delete();
                 tmpFile.delete();
@@ -1061,7 +1061,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             modifyEntry(fileName, entryAttrs, false, true);
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error modifying entry of ''{0}''", fileName);
-            SVNErrorManager.error(err, svne);
+            SVNErrorManager.error(err, svne, SVNLogType.WC);
         }
         
         if (!getThisDirName().equals(fileName)) {
@@ -1100,7 +1100,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 parentArea.modifyEntry(entryInParent.getName(), entryAttrs, true, true);
             } catch (SVNException svne) {
                 SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Error modifying entry of ''{0}''", fileName);
-                SVNErrorManager.error(err, svne);
+                SVNErrorManager.error(err, svne, SVNLogType.WC);
             }
         }
         parentArea.saveEntries(false);

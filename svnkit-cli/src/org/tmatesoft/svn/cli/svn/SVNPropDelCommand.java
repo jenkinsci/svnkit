@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -55,7 +56,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
         Collection targets = new ArrayList(); 
@@ -73,7 +74,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Cannot specify revision for deleting versioned property ''{0}''", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else {
             SVNDepth depth = getSVNEnvironment().getDepth();
             if (depth == SVNDepth.UNKNOWN) {

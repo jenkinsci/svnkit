@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNMoveClient</b> provides an extra client-side functionality over
@@ -147,10 +148,10 @@ public class SVNMoveClient extends SVNBasicClient {
     public void doMove(File src, File dst) throws SVNException {
         if (dst.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "File ''{0}'' already exists", dst);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (!src.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", src);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         // src considered as unversioned when it is not versioned
         boolean srcIsVersioned = isVersionedFile(src);
@@ -506,7 +507,7 @@ public class SVNMoveClient extends SVNBasicClient {
         // dst could exists, if it is deleted directory.
         if (!src.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Path ''{0}'' does not exist", src);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         // src considered as unversioned when it is not versioned
         boolean srcIsVersioned = isVersionedFile(src);
@@ -731,19 +732,19 @@ public class SVNMoveClient extends SVNBasicClient {
         String opName = move ? "move" : "copy";
         if (move && srcType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Cannot perform 'virtual' {0}: ''{1}'' still exists", new Object[] {opName, src});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (dstType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Cannot perform 'virtual' {0}: ''{1}'' does not exist", new Object[] {opName, dst});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (dstType == SVNFileType.DIRECTORY) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {opName, dst});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (!move && srcType == SVNFileType.DIRECTORY) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Cannot perform 'virtual' {0}: ''{1}'' is a directory", new Object[] {opName, src});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         SVNURL srcRepoRoot = null;
@@ -757,7 +758,7 @@ public class SVNMoveClient extends SVNBasicClient {
             if (dstEntry != null) {
                 if (!dstEntry.isScheduledForAddition() && !dstEntry.isScheduledForReplacement()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for addition nor for replacement", new Object[]{opName, dst});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 versionedDst = true;
                 dstRepoRoot = dstEntry.getRepositoryRootURL();
@@ -775,7 +776,7 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNEntry srcEntry = srcAccess.getEntry(src, false);
             if (srcEntry == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "''{0}'' is not under version control", src);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
 
             srcRepoRoot = srcEntry.getRepositoryRootURL();
@@ -785,7 +786,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 cfRevision = getCopyFromRevision(src.getParentFile());
                 if (cfURL == null || cfRevision < 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Cannot locate copied directory root for ''{0}''", src);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 added = false;
             } else {
@@ -811,11 +812,11 @@ public class SVNMoveClient extends SVNBasicClient {
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
             if (dstEntry != null && !dstEntry.isScheduledForAddition() && !dstEntry.isScheduledForReplacement()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for addition nor for replacement", new Object[]{opName, dst});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (srcRepoRoot != null && dstRepoRoot != null && !dstRepoRoot.equals(srcRepoRoot)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: paths belong to different repositories", opName);
-                SVNErrorManager.error(err);                
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             SVNAdminArea srcArea = srcAccess.probeOpen(src, false, 0);

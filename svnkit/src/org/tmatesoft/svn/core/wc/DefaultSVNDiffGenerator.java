@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.diff.QDiffGenerator;
 import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
@@ -265,7 +266,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             bos.write(getEOL());
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         } finally {
             try {
                 bos.close();
@@ -346,7 +347,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } catch (IOException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         }
         
         if (!isForcedBinaryDiff() && (SVNProperty.isBinaryMimeType(mimeType1) || SVNProperty.isBinaryMimeType(mimeType2))) {
@@ -354,7 +355,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 displayBinary(bos, mimeType1, mimeType2);
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
             } finally {
                 try {
                     bos.close();
@@ -431,7 +432,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                         if (returnValue != 0 && returnValue != 1) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, 
                                     "''{0}'' returned {1}", new Object[] { diffCommand, String.valueOf(returnValue) });
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.DEFAULT);
                         }
                     }
 
@@ -440,7 +441,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                             writer.write(ch);
                         } catch (IOException ioe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
-                            SVNErrorManager.error(err, ioe);
+                            SVNErrorManager.error(err, ioe, SVNLogType.DEFAULT);
                         }
                     }
 
@@ -452,7 +453,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 writer.flush();
             } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
-                SVNErrorManager.error(err, ioe);
+                SVNErrorManager.error(err, ioe, SVNLogType.DEFAULT);
             } 
             return;
         }
@@ -467,7 +468,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } catch (IOException inner) {
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         }
 
         String header;
@@ -499,7 +500,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             writer.flush();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         } finally {
             SVNFileUtil.closeFile(is1);
             SVNFileUtil.closeFile(is2);
@@ -698,6 +699,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, 
                 "Path ''{0}'' must be an immediate child of the directory ''{1}''", 
                 new Object[] { path, myBasePath });
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.DEFAULT);
     }
 }

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -77,7 +78,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             myDigest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
-            SVNErrorManager.error(err, nsae);
+            SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
         }
         myIsCompress = compress;
     }
@@ -101,12 +102,12 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     public static OutputStream createStream(FSRevisionNode revNode, FSTransactionRoot txnRoot, OutputStream dstStream, boolean compress) throws SVNException {
         if (revNode.getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to set textual contents of a *non*-file node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!revNode.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to set textual contents of an immutable node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         OutputStream targetOS = null;
@@ -151,7 +152,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             txnLock.unlock();
             FSWriteLock.release(txnLock);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } catch (SVNException svne) {
             if (txnLock != null) {
                 txnLock.unlock();
@@ -250,7 +251,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             isHeaderWritten = true;
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
         return SVNFileUtil.DUMMY_OUT;
     }

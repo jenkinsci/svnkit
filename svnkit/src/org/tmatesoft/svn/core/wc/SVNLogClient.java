@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNLogClient</b> class is intended for such purposes as getting
@@ -204,7 +205,7 @@ public class SVNLogClient extends SVNBasicClient {
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"), SVNLogType.DEFAULT);
         }
         File tmpFile = new File(path.getParentFile(), SVNFileUtil.getAdminDirectoryName());
         tmpFile = new File(tmpFile, "tmp/text-base");
@@ -314,7 +315,7 @@ public class SVNLogClient extends SVNBasicClient {
         long startRev = getRevisionNumber(startRevision, repos, null);
         if (endRev < startRev) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
-                                                         "Start revision must precede end revision"));
+                                                         "Start revision must precede end revision"), SVNLogType.DEFAULT);
         }
         File tmpFile = SVNFileUtil.createTempDirectory("annotate");
         doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, force, 
@@ -449,7 +450,7 @@ public class SVNLogClient extends SVNBasicClient {
             if (entry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                         "Entry ''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             urls[i] = entry.getSVNURL();
             if (area != null) {
@@ -466,7 +467,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (baseURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
                     "target log paths belong to different repositories");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (targets.isEmpty()) {
             targets.add("");
@@ -858,7 +859,7 @@ public class SVNLogClient extends SVNBasicClient {
         
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' non-existent in that revision", url);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         final Map locksMap = new SVNHashMap();

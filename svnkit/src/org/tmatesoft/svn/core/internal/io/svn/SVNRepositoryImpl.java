@@ -67,6 +67,7 @@ import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -105,7 +106,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             return;
         } else if (!url.getProtocol().equals(myLocation.getProtocol())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "SVNRepository URL could not be changed from ''{0}'' to ''{1}''; create new SVNRepository instance instead", new Object[]{myLocation, url});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (forceReconnect) {
             closeSession();
@@ -269,7 +270,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     break;
                 } else if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Location entry not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 } else {
                     List values = SVNReader.parseTuple("rs", item.getItems(), null);
                     count++;
@@ -311,7 +312,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 } else if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
                             "Location segment entry not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 } else {
                     List segmentAttrs = SVNReader.parseTuple("rr(?s)", item.getItems(), null);
                     long rangeStartRevision = SVNReader.getLong(segmentAttrs, 0);
@@ -321,7 +322,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             SVNRepository.isInvalidRevision(rangeEndRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
                                 "Expected valid revision range");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                     if (rangePath != null) {
                         rangePath = ensureAbsolutePath(rangePath);    
@@ -357,7 +358,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 digest = MessageDigest.getInstance("MD5");
             } catch (NoSuchAlgorithmException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", e.getMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.NETWORK);
             }
             String expectedChecksum = SVNReader.getString(values, 0);
 
@@ -371,7 +372,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNItem item = readItem(false);
                     if (item.getKind() != SVNItem.BYTES) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Non-string as part of file contents");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                     if (item.getBytes().length == 0) {
                         break;
@@ -383,7 +384,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         contents.write(item.getBytes());
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage());
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                 }
                 read("", null, false);
@@ -391,7 +392,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     String resultChecksum = SVNFileUtil.toHexDigest(digest);
                     if (!expectedChecksum.equals(resultChecksum)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}''\nexpected checksum: ''{1}''\nactual checksum: ''{2}''", new Object[]{path, expectedChecksum, resultChecksum});
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                 }
             }
@@ -459,7 +460,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNItem item = (SVNItem) iterator.next();
                     if (item.getKind() != SVNItem.LIST) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Dirlist element not a list");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                     List direntProps = SVNReader.parseTuple("swnsr(?s)(?s)", item.getItems(), null);
                     String name = SVNReader.getString(direntProps, 0);
@@ -529,7 +530,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNItem item = (SVNItem) iterator.next();
                     if (item.getKind() != SVNItem.LIST) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Dirlist element not a list");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                     List direntProps = SVNReader.parseTuple("swnsr(?s)(?s)", item.getItems(), null);
                     String name = SVNReader.getString(direntProps, 0);
@@ -593,7 +594,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 hasRevision = true;
                 if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Revision entry not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 List items = SVNReader.parseTuple("srll?s", item.getItems(), null);
                 String name = null;
@@ -615,7 +616,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNItem chunkItem = readItem(false);
                 if (chunkItem.getKind() != SVNItem.BYTES) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Text delta chunk not a string");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 boolean hasDelta = chunkItem.getBytes().length > 0;
 
@@ -636,7 +637,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         chunkItem = readItem(false);
                         if (chunkItem.getKind() != SVNItem.BYTES) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Text delta chunk not a string");
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                     }
                     deltaReader.reset(name == null ? path : name, handler);
@@ -654,7 +655,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
             if (!hasRevision) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "The get-file-revs command didn't return any revisions");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             return count;
         } catch (SVNException e) {
@@ -728,7 +729,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Log entry not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
 
                 //now we read log response kind of
@@ -744,7 +745,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNItem pathItem = (SVNItem) iterator.next();
                         if (pathItem.getKind() != SVNItem.LIST) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Changed-path entry not a list");
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                         List pathItems = SVNReader.parseTuple("sw(?sr)", pathItem.getItems(), null);
                         String path = SVNReader.getString(pathItems, 0);
@@ -775,7 +776,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     if (wantCustomRevProps && (revisionProperties == null)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
 
                     if (revisionProperties != null) {
@@ -927,7 +928,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNItem item = (SVNItem) iterator.next();
                 if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Lock element not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 SVNLock lock = SVNReader.getLock(item.getItems());
                 locks.add(lock);
@@ -979,7 +980,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 }
                 if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Lock response not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 try {
                     List values = SVNReader.parseTuple("wl", item.getItems(), null);
@@ -992,7 +993,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNReader.handleFailureStatus(items);
                     } else {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                 } catch (SVNException e) {
                     path = getRepositoryPath(path);
@@ -1006,7 +1007,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNItem item = readItem(false);
                 if (item.getKind() != SVNItem.WORD || !"done".equals(item.getWord())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Didn't receive end marker for lock responses");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
             }
             read("", null, false);
@@ -1086,7 +1087,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     }
                     if (item.getKind() != SVNItem.LIST) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Unlock response not a list");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                     List values = SVNReader.parseTuple("wl", item.getItems(), null);
                     String status = SVNReader.getString(values, 0);
@@ -1098,7 +1099,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         SVNReader.handleFailureStatus(items);
                     } else {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                 } catch (SVNException e) {
                     error = e.getErrorMessage();
@@ -1112,7 +1113,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNItem item = readItem(false);
                 if (item.getKind() != SVNItem.WORD || !"done".equals(item.getWord())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Didn't receive end marker for unlock responses");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
             }
             read("", null, false);
@@ -1255,28 +1256,28 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     private void write(String template, Object[] values) throws SVNException {
         if (myConnection == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED), SVNLogType.NETWORK);
         }
         myConnection.write(template, values);
     }
 
     private List read(String template, List values, boolean readMalformedData) throws SVNException {
         if (myConnection == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED), SVNLogType.NETWORK);
         }
         return myConnection.read(template, values, readMalformedData);
     }
 
     private SVNItem readItem(boolean readMalformedData) throws SVNException {
         if (myConnection == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED), SVNLogType.NETWORK);
         }
         return myConnection.readItem(readMalformedData);
     }
 
     private List readTuple(String template, boolean readMalformedData) throws SVNException {
         if (myConnection == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED), SVNLogType.NETWORK);
         }
         return myConnection.readTuple(template, readMalformedData);
     }
@@ -1352,7 +1353,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private void handleUnsupportedCommand(SVNException e, String message) throws SVNException {
         if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, message);
-            SVNErrorManager.error(err, e.getErrorMessage());
+            SVNErrorManager.error(err, e.getErrorMessage(), SVNLogType.NETWORK);
         }
         throw e;
     }
@@ -1376,7 +1377,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         boolean recursive = getRecurseFromDepth(depth);
         target = target == null ? "" : target;
         if (url == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"), SVNLogType.NETWORK);
         }
 
         editor = getDepthFilterEditor(editor, depth, target != null);
@@ -1433,7 +1434,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         boolean recursive = getRecurseFromDepth(depth);
         target = target == null ? "" : target;
         if (url == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"), SVNLogType.NETWORK);
         }
         editor = getDepthFilterEditor(editor, depth, target != null);
         Object[] buffer = new Object[]{"switch", getRevisionObject(revision),
@@ -1505,7 +1506,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 SVNItem item = (SVNItem) iterator.next();
                 if (item.getKind() != SVNItem.LIST) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Merge info element is not a list");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 List values = SVNReader.parseTuple("ss", item.getItems(), null);
                 String path = SVNReader.getString(values, 0);
@@ -1546,7 +1547,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             String logMessage = revProps.getStringValue(SVNRevisionProperty.LOG);
             if (revProps.size() > 1 && !myConnection.isCommitRevprops()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server doesn't support setting arbitrary revision properties during commit");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
 
             write("(w(s(*l)w(*l)))", new Object[]{"commit", logMessage,
@@ -1586,7 +1587,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                 if (!"revprops".equals(word)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
                             "Expected ''revprops'', found ''{0}''", word);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 
                 SVNProperties revProps = SVNReader.getProperties(items, 1, null);

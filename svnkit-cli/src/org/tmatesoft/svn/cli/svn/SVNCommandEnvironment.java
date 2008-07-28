@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -178,7 +179,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 return "--version";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return commandName;
     }
@@ -205,12 +206,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 if (myResolveAccept == SVNConflictAcceptPolicy.EDIT) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "--accept={0} incompatible with --non-interactive", SVNConflictAcceptPolicy.EDIT);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 if (myResolveAccept == SVNConflictAcceptPolicy.LAUNCH) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "--accept={0} incompatible with --non-interactive", SVNConflictAcceptPolicy.LAUNCH);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
             options.setConflictHandler(new SVNCommandLineConflictHandler(myResolveAccept, this));
@@ -234,12 +235,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 		"Multiple revision argument encountered; " +
                         "can't specify -c twice, or both -c and -r");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
         	}
         } else if (!myRevisionRanges.isEmpty() && myIsReIntegrate) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "-r and -c can't be used with --reintegrate");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
     	if (myRevisionRanges.isEmpty()) {
@@ -256,16 +257,16 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 if (myIsRecordOnly) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                             "--reintegrate cannot be used with --ignore-ancestry or --record-only");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                             "--reintegrate cannot be used with --ignore-ancestry");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             } else if (myIsRecordOnly) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                         "--reintegrate cannot be used with --record-only");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
     }
@@ -278,19 +279,19 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 long limit = Long.parseLong(limitStr);
                 if (limit <= 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Argument to --limit must be positive");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 myLimit = limit;
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric limit argument given");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.MESSAGE) {
             myMessage = optionValue.getValue();
         } else if (option == SVNOption.CHANGE) {
             if (myOldTarget != null) {
             	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Can't specify -c with --old");
-            	SVNErrorManager.error(err);
+            	SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             
             String chValue = optionValue.getValue();
@@ -305,13 +306,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "Non-numeric change argument ({0}) given to -c", token);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 SVNRevisionRange range = null;
                 if (change == 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                             "There is no change 0");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 } else if (change > 0) {
                     range = new SVNRevisionRange(SVNRevision.create(change - 1), SVNRevision.create(change));
                 } else {
@@ -327,7 +328,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (revisions == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 		"Syntax error in revision argument ''{0}''", revStr);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             SVNRevisionRange range = new SVNRevisionRange(revisions[0], revisions[1]);
             myRevisionRanges.add(range);
@@ -358,7 +359,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 }
             } catch (UnsupportedEncodingException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.FORCE) {
             myIsForce = true;
@@ -385,7 +386,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", depth);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.SET_DEPTH) {
             String depth = optionValue.getValue();
@@ -401,7 +402,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", 
                         depth);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.VERSION) {
             myIsVersion = true;
@@ -432,7 +433,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.RELOCATE) {
             if (myDepth != SVNDepth.UNKNOWN) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
-                        "--depth and --relocate are mutually exclusive"));
+                        "--depth and --relocate are mutually exclusive"), SVNLogType.CLIENT);
             }
             myIsRelocate = true;
         } else if (option == SVNOption.EXTENSIONS) {
@@ -450,7 +451,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myEditorCommand = optionValue.getValue();
         } else if (option == SVNOption.OLD) {
             if (myIsChangeOptionUsed) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Can't specify -c with --old"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Can't specify -c with --old"), SVNLogType.CLIENT);
             }
             myOldTarget = optionValue.getValue();
         } else if (option == SVNOption.NEW) {
@@ -460,13 +461,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.AUTOPROPS) {
             if (myIsNoAutoProps) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
-                "--auto-props and --no-auto-props are mutually exclusive"));
+                "--auto-props and --no-auto-props are mutually exclusive"), SVNLogType.CLIENT);
             }
             myIsAutoProps = true;
         } else if (option == SVNOption.NO_AUTOPROPS) {
             if (myIsAutoProps) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
-                "--auto-props and --no-auto-props are mutually exclusive"));
+                "--auto-props and --no-auto-props are mutually exclusive"), SVNLogType.CLIENT);
             }
             myIsNoAutoProps = true;
         } else if (option == SVNOption.NATIVE_EOL) {
@@ -499,7 +500,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (accept == SVNConflictAcceptPolicy.INVALID) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                         "''{0}'' is not a valid --accept value;", optionValue.getValue());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             myResolveAccept = accept;
         } else if (option == SVNOption.SHOW_REVS) {
@@ -507,7 +508,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (myShowRevsType == SVNShowRevisionType.INVALID) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "''{0}'' is not a valid --show-revs value", optionValue.getValue());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.REINTEGRATE) {
             myIsReIntegrate = true;
@@ -525,20 +526,20 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             if (myFilePath != null) {
                 if (isVersioned(myFilePath)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_VERSIONED_FILE, getSVNCommand().getFileAmbigousErrorMessage());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
             if (myMessage != null && !"".equals(myMessage)) {
                 File file = new File(myMessage).getAbsoluteFile();
                 if (SVNFileType.getType(file) != SVNFileType.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_LOG_MESSAGE_IS_PATHNAME, getSVNCommand().getMessageAmbigousErrorMessage());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             }
         }
         if (!getSVNCommand().acceptsRevisionRange() && getEndRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_RANGE);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (!myIsDescend) {
             if (getCommand() instanceof SVNStatusCommand) {
@@ -779,7 +780,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         if (!extensions.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INVALID_DIFF_OPTION, 
                     "Invalid argument ''{0}'' in diff options", extensions.get(0));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
@@ -794,13 +795,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             byte[] data = getFileData();
             for (int i = 0; i < data.length; i++) {
                 if (data[i] == 0) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"), SVNLogType.CLIENT);
                 }
             }
             try {
                 return new String(getFileData(), getEncoding() != null ? getEncoding() : "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.CLIENT);
             }
         } else if (getMessage() != null) {
             return getMessage();
@@ -812,7 +813,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         if (myIsNonInteractive) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                     "Cannot invoke editor to get log message when non-interactive");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         message = null;
         while(message == null) {
@@ -831,7 +832,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                             "Could not use external editor to fetch log message; " +
                             "consider setting the $SVN_EDITOR environment variable " +
                             "or using the --message (-m) or --file (-F) options");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 throw e;
             }
@@ -841,7 +842,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                     editedMessage = getEncoding() != null ? new String(messageData, getEncoding()) : new String(messageData);
                 } catch (UnsupportedEncodingException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 if (editedMessage.indexOf(DEFAULT_LOG_MESSAGE_HEADER) >= 0) {
                     editedMessage = editedMessage.substring(0, editedMessage.indexOf(DEFAULT_LOG_MESSAGE_HEADER));
@@ -856,7 +857,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             try {
                 char c = (char) getIn().read();
                 if (c == 'a') {
-                    SVNErrorManager.cancel("");
+                    SVNErrorManager.cancel("", SVNLogType.CLIENT);
                 } else if (c == 'c') {
                     return "";
                 } else if (c == 'e') {
@@ -865,7 +866,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             } catch (IOException e) {
             }
         }
-        SVNErrorManager.cancel("");
+        SVNErrorManager.cancel("", SVNLogType.CLIENT);
         return null;
     }
     
@@ -877,7 +878,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         if (revProp == null || "".equals(revProp)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Revision property pair is empty");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         int index = revProp.indexOf('='); 
         String revPropName = null;
@@ -892,7 +893,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         if (!SVNPropertiesManager.isValidPropertyName(revPropName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "''{0}'' is not a valid Subversion property name", revPropName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         myRevisionProperties.put(revPropName, revPropValue);
     }

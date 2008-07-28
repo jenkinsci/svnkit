@@ -271,7 +271,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         }
         
         if (buffer.length() > 0) {
-            SVNDebugLog.getLog(SVNLogType.CLIENT).logFine(buffer.toString());
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.CLIENT, buffer.toString());
             out.print(buffer);
         }
     }

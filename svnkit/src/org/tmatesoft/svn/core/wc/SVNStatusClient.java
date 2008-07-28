@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNStatusClient</b> class provides methods for obtaining information on the 
@@ -254,7 +255,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 entry = wcAccess.getVersionedEntry(anchor.getRoot(), false);
                 if (entry.getURL() == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getAnchor().getRoot());
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.WC);
                 }
                 SVNURL url = entry.getSVNURL();
                 SVNRepository repository = createRepository(url, anchor.getRoot(), wcAccess, true);

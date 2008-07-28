@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -69,7 +70,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CANCELLED) {
                         throw e;
                     } else if (getLastError() != null) {
-                        SVNErrorManager.error(getLastError());
+                        SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
                     }
                     throw e;
                 }
@@ -104,19 +105,19 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                             getConnectionOutputStream().write(response);
                             getConnectionOutputStream().flush();
                         } catch (IOException e) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
                         }
                     }
                 }
             }
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Cannot negotiate authentication mechanism"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Cannot negotiate authentication mechanism"), SVNLogType.NETWORK);
         }
         if (failureReason != null) {
             if (getLastError() != null) {
-                SVNErrorManager.error(getLastError());
+                SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
             }
-            SVNErrorManager.error(failureReason);
+            SVNErrorManager.error(failureReason, SVNLogType.NETWORK);
         }
     }
     

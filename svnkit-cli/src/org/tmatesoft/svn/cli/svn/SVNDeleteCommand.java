@@ -22,10 +22,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -55,7 +56,7 @@ public class SVNDeleteCommand extends SVNCommand {
     public void run() throws SVNException {
         List targets = getSVNEnvironment().combineTargets(getSVNEnvironment().getTargets(), true);
         if (targets.isEmpty()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
         }
         boolean hasURLs = false;
         boolean hasPaths = false;
@@ -65,7 +66,7 @@ public class SVNDeleteCommand extends SVNCommand {
                 if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
                             "Local, non-commit operations do not take a log message or revision properties");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 hasPaths = true;
             } else {
@@ -73,7 +74,7 @@ public class SVNDeleteCommand extends SVNCommand {
             }
         }
         if (hasURLs && hasPaths) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Specify either URLs or local paths, not both"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Specify either URLs or local paths, not both"), SVNLogType.CLIENT);
         }
         if (hasURLs) {
             SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
@@ -91,7 +92,7 @@ public class SVNDeleteCommand extends SVNCommand {
                 getSVNEnvironment().printCommitInfo(info);
             } catch (SVNException e) {
                 SVNErrorMessage err = e.getErrorMessage();
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else {
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
@@ -112,7 +113,7 @@ public class SVNDeleteCommand extends SVNCommand {
                         err = err.wrap("Use --force to override this restriction");
                     }
                 }
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
     }

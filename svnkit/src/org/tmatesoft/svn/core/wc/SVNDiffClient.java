@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +29,7 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.AbstractDiffCallback;
@@ -51,6 +51,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -212,12 +213,12 @@ public class SVNDiffClient extends SVNMergeDriver {
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (rN.isLocal() || rM.isLocal()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions must be non-local for " +
                 "a pegged diff of an URL");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(url.toString(), url.toString());
         doDiffURLURL(url, null, rN, url, null, rM, pegRevision, depth, useAncestry, result);
@@ -287,14 +288,14 @@ public class SVNDiffClient extends SVNMergeDriver {
             boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         boolean rNisLocal = rN == SVNRevision.BASE || rN == SVNRevision.WORKING;
         boolean rMisLocal = rM == SVNRevision.BASE || rM == SVNRevision.WORKING;
         if (rNisLocal && rMisLocal) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for " +
                     "a pegged diff");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         path = path.getAbsoluteFile();
         getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
@@ -347,7 +348,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(url1.toString(), url2.toString());
         doDiffURLURL(url1, null, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, result);
@@ -400,7 +401,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(path1.getAbsolutePath(), url2.toString());
         if (rN == SVNRevision.BASE || rN == SVNRevision.WORKING) {
@@ -456,7 +457,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(url1.toString(), path2.getAbsolutePath());
         if (rM == SVNRevision.BASE || rM == SVNRevision.WORKING) {
@@ -530,7 +531,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE; 
@@ -580,14 +581,14 @@ public class SVNDiffClient extends SVNMergeDriver {
         
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE; 
         boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
         if (isPath1Local || isPath2Local) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } 
         doDiffURLURL(null, path, rN, null, path, rM, pegRevision, depth, useAncestry, handler);        
     }
@@ -599,14 +600,14 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE; 
         boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
         if (isPath1Local || isPath2Local) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } 
         doDiffURLURL(null, path1, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);        
     }
@@ -639,11 +640,11 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (rN == SVNRevision.BASE || rN == SVNRevision.WORKING) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } else {
             doDiffURLURL(null, path1, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
         }
@@ -677,11 +678,11 @@ public class SVNDiffClient extends SVNMergeDriver {
         }   
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (rM == SVNRevision.BASE || rM == SVNRevision.WORKING) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } else {
             doDiffURLURL(url1, null, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
         }
@@ -720,7 +721,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         doDiffURLURL(url, null, rN, url, null, rM, pegRevision, depth, useAncestry, handler);
     }
@@ -732,7 +733,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         doDiffURLURL(url1, null, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
     }
@@ -748,7 +749,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
             if (anchorEntry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNURL anchorURL = anchorEntry.getSVNURL();
             if (pegRevision.isValid()) {
@@ -793,7 +794,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
             if (anchorEntry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNURL url1;
             SVNURL anchorURL = anchorEntry.getSVNURL();
@@ -839,7 +840,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only diffs between a path's text-base " +
                                     "and its working files are supported at this time (-rBASE:WORKING)");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         SVNWCAccess wcAccess = createWCAccess();
@@ -897,11 +898,11 @@ public class SVNDiffClient extends SVNMergeDriver {
             if (kind1 == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
                         new Object[] {url1, new Long(rev1)});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (kind2 == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
                         new Object[] {url2, new Long(rev2)});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         } finally {
             repository2.closeSession();
@@ -972,11 +973,11 @@ public class SVNDiffClient extends SVNMergeDriver {
             if (kind1 == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
                         new Object[] {url1, new Long(rev1)});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             } else if (kind2 == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
                         new Object[] {url2, new Long(rev2)});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
                 target1 = SVNPathUtil.tail(url1.getPath());
@@ -1084,12 +1085,12 @@ public class SVNDiffClient extends SVNMergeDriver {
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNURL url2 = getURL(path2);
         if (url2 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, 
                  recordOnly);
@@ -1150,7 +1151,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, 
                  recordOnly);
@@ -1210,7 +1211,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         SVNURL url2 = getURL(path2);
         if (url2 == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, 
                  recordOnly);

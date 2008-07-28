@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -69,7 +70,7 @@ public class SVNAdminDumpCommand extends SVNAdminCommand implements ISVNAdminEve
         
         if (startRev > endRev) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "First revision cannot be higher than second"));
+                    "First revision cannot be higher than second"), SVNLogType.CLIENT);
         }
 
         boolean incremental = getSVNAdminEnvironment().isIncremental();

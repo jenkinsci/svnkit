@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -214,7 +215,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
         if (path == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "aborting in SVNAmbientDepthFilterEditor.makeFileBation(): path == null");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         FileBaton fileBaton = new FileBaton();
@@ -237,7 +238,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "aborting in SVNAmbientDepthFilterEditor.makeDirBation(): parentBaton != null" +
                     " while path == null");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         if (parentBaton != null && parentBaton.myIsAmbientlyExcluded) {

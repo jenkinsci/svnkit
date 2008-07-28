@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -48,11 +49,11 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
 
     public void run() throws SVNException {
         if (getSVNAdminEnvironment().getStartRevision() == SVNRevision.UNDEFINED) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Missing revision"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Missing revision"), SVNLogType.CLIENT);
         } 
         if (getSVNAdminEnvironment().getEndRevision() != SVNRevision.UNDEFINED) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Only one revision allowed"));
+                    "Only one revision allowed"), SVNLogType.CLIENT);
         }
         File repos = getLocalRepository();
         List targets = getEnvironment().combineTargets(null, false);
@@ -61,13 +62,13 @@ public class SVNAdminSetRevPropCommand extends SVNAdminCommand {
         }
         if (targets.size() != 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                "Exactly one property name and one file argument required"));
+                "Exactly one property name and one file argument required"), SVNLogType.CLIENT);
         }
         String propertyName = (String) targets.get(0);
         SVNPath target = new SVNPath((String) targets.get(1));
         if (!target.isFile()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                "Exactly one property name and one file argument required"));
+                "Exactly one property name and one file argument required"), SVNLogType.CLIENT);
         }
         SVNPropertyValue propertyValue = SVNPropertyValue.create(propertyName, getEnvironment().readFromFile(target.getFile()));
         SVNURL url = SVNURL.fromFile(repos);

@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -59,7 +60,7 @@ public class FSRevisionRoot extends FSRoot {
     public FSNodeHistory getNodeHistory(String path) throws SVNException {
         SVNNodeKind kind = checkNodeKind(path);
         if (kind == SVNNodeKind.NONE) {
-            SVNErrorManager.error(FSErrors.errorNotFound(this, path));
+            SVNErrorManager.error(FSErrors.errorNotFound(this, path), SVNLogType.FSFS);
         }
         return new FSNodeHistory(new SVNLocationEntry(getRevision(), SVNPathUtil.canonicalizeAbsolutePath(path)), 
                 false, new SVNLocationEntry(SVNRepository.INVALID_REVISION, null), getOwner());

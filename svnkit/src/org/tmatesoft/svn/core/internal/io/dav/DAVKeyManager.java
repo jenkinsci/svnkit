@@ -20,6 +20,7 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.1.1
@@ -58,7 +59,7 @@ class DAVKeyManager {
                 keyStore.load(is, passphrase);                    
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(th);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
         } finally {
             if (is != null) {
                 try {
@@ -76,7 +77,7 @@ class DAVKeyManager {
                     ourKeyManagers = kmf.getKeyManagers();
                 }
             } catch (Throwable e) {
-                SVNDebugLog.getDefaultLog().logFine(e);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e);
             } 
         }
         return ourKeyManagers; 

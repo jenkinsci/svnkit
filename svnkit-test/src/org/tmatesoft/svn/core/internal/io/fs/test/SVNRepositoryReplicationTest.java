@@ -44,6 +44,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Program arguments:
@@ -71,7 +72,8 @@ public class SVNRepositoryReplicationTest {
 
     public static void main(String[] args) {
         if (args.length < 4) {
-            SVNDebugLog.getDefaultLog().logFine("Expected input values: 1. source repository url. 2. destination repository url. 3. source working copy dir. 4. destination working copy dir. [5.] top revision to copy up to");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                    "Expected input values: 1. source repository url. 2. destination repository url. 3. source working copy dir. 4. destination working copy dir. [5.] top revision to copy up to");
             System.exit(1);
         }
 
@@ -91,7 +93,8 @@ public class SVNRepositoryReplicationTest {
         String targetWC = args.length > 8 ? args[8] : null;
 
         if (useWC && (sourceWC == null || targetWC == null)) {
-            SVNDebugLog.getDefaultLog().logFine("Both WC root dirs (source and target) must be specified");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                    "Both WC root dirs (source and target) must be specified");
             System.exit(1);
         }
 
@@ -112,9 +115,10 @@ public class SVNRepositoryReplicationTest {
 
             SVNRepositoryReplicator replicator = SVNRepositoryReplicator.newInstance();
             long processedRevs = replicator.replicateRepository(src, dst, fromRev, topRev);
-            SVNDebugLog.getDefaultLog().logFine("Number of processed revisions: " + processedRevs);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                    "Number of processed revisions: " + processedRevs);
             // compare history logs
-            SVNDebugLog.getDefaultLog().logFine("Comparing full history...");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Comparing full history...");
             compareHistory(src, dst);
 
             long startComparisonRev = args.length > 4 ? Long.parseLong(args[4]) : 1;
@@ -125,14 +129,15 @@ public class SVNRepositoryReplicationTest {
             passed = useWC ? compareRepositoriesWithWC(srcURL, dstURL, startComparisonRev, endComparisonRev, new File(sourceWC), new File(targetWC)) : compareRepositoriesWithoutWC(src, dst,
                     startComparisonRev, endComparisonRev);
         } catch (SVNException svne) {
-            SVNDebugLog.getDefaultLog().logFine("Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                    "Repositories comparing test FAILED with errors: " + svne.getErrorMessage().getMessage());
             System.out.println(svne.getErrorMessage().getMessage());
             System.exit(1);
         }
         if (passed) {
-            SVNDebugLog.getDefaultLog().logFine("Repositories comparing test PASSED");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Repositories comparing test PASSED");
         } else {
-            SVNDebugLog.getDefaultLog().logFine("Repositories comparing test FAILED");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Repositories comparing test FAILED");
             System.exit(1);
         }
     }
@@ -141,7 +146,7 @@ public class SVNRepositoryReplicationTest {
         Map srcItems = new SVNHashMap();
         Map dstItems = new SVNHashMap();
         for (long i = start; i <= end; i++) {
-            SVNDebugLog.getDefaultLog().logFine("Checking revision #" + i);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Checking revision #" + i);
             if (!compareRevisionProps(srcRepos.getLocation(), dstRepos.getLocation(), i)) {
                 return false;
             }
@@ -176,31 +181,36 @@ public class SVNRepositoryReplicationTest {
             }, dstEditor);
 
             if (srcEditor.getNumberOfChanges() != dstEditor.getNumberOfChanges()) {
-                SVNDebugLog.getDefaultLog().logFine("Different number of changes in revision " + i);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                        "Different number of changes in revision " + i);
                 return false;
             }
 
             if (srcItems.size() != dstItems.size()) {
-                SVNDebugLog.getDefaultLog().logFine("Different number of changed items in revision " + i);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                        "Different number of changed items in revision " + i);
                 return false;
             }
 
             for (Iterator itemsIter = srcItems.keySet().iterator(); itemsIter.hasNext();) {
                 String itemPath = (String) itemsIter.next();
                 if (dstItems.get(itemPath) == null) {
-                    SVNDebugLog.getDefaultLog().logFine("No item '" + itemPath + "' in '" + dstRepos.getLocation() + "' repository in revision " + i);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                            "No item '" + itemPath + "' in '" + dstRepos.getLocation() + "' repository in revision " + i);
                     return false;
                 }
                 SVNItem srcItem = (SVNItem) srcItems.get(itemPath);
                 SVNItem dstItem = (SVNItem) dstItems.get(itemPath);
                 if (srcItem.getKind() == SVNNodeKind.DIR) {
                     if (!checkDirItems(srcItem, dstItem)) {
-                        SVNDebugLog.getDefaultLog().logFine("Unequal dir items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS,
+                                "Unequal dir items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
                         return false;
                     }
                 } else {
                     if (!checkFileItems(srcItem, dstItem)) {
-                        SVNDebugLog.getDefaultLog().logFine("Unequal file items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, 
+                                "Unequal file items ('" + srcItem.getRepositoryPath() + "' vs. '" + dstItem.getRepositoryPath() + "') at revision " + i);
                         return false;
                     }
                 }
@@ -272,12 +282,12 @@ public class SVNRepositoryReplicationTest {
     private static boolean compareRepositoriesWithWC(SVNURL srcURL, SVNURL dstURL, long start, long end, File srcWCRoot, File dstWCRoot) throws SVNException {
         if (srcWCRoot.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Source WC directory already exists");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (dstWCRoot.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Target WC directory already exists");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         SVNClientManager manager = SVNClientManager.newInstance();
