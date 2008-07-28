@@ -135,17 +135,12 @@ public class SVNKitLog extends SVNDebugLogAdapter {
     }
 
     public void log(SVNLogType logType, String message, byte[] data) {
-        if (logType == SVNLogType.NETWORK && !isTraceEnabled()) {
-            return;
-        }
-        if (isFineEnabled() || isTraceEnabled()) {
-            try {
-                myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " +
-                        new String(data, "UTF-8")), null));
-            } catch (UnsupportedEncodingException e) {
-                myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " +
-                        new String(data)), null));
-            }
+        try {
+            myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " +
+                    new String(data, "UTF-8")), null));
+        } catch (UnsupportedEncodingException e) {
+            myLog.log(createStatus(IStatus.INFO, getMessage(logType, message + " : " +
+                    new String(data)), null));
         }
     }
 
