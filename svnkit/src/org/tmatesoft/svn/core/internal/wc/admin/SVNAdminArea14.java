@@ -55,6 +55,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea14 extends SVNAdminArea {
+
+    public static final int WC_FORMAT = SVNAdminArea14Factory.WC_FORMAT;
+
     public static final String[] ourCachableProperties = new String[] {
         SVNProperty.SPECIAL,
         SVNProperty.EXTERNALS, 
@@ -1924,7 +1927,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     protected int getFormatVersion() {
-        return SVNAdminArea14Factory.WC_FORMAT;
+        return WC_FORMAT;
     }
 
     protected SVNAdminArea createAdminAreaForDir(File dir) {
