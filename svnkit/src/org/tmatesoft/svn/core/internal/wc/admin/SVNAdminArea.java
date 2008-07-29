@@ -1504,7 +1504,7 @@ public abstract class SVNAdminArea {
         saveVersionedProperties(log, true);
         log.save();
 
-        if (getFormatVersion() != SVNXMLAdminArea.WC_FORMAT) {
+        if (getFormatVersion() != SVNXMLAdminAreaFactory.WC_FORMAT) {
             SVNFileUtil.deleteFile(getAdminFile("README.txt"));
             SVNFileUtil.deleteFile(getAdminFile("empty-file"));
             SVNFileUtil.deleteAll(getAdminFile("wcprops"), true);
@@ -1533,7 +1533,7 @@ public abstract class SVNAdminArea {
             File tmpCharsetPropFile = SVNAdminUtil.createTmpFile(this, "props", ".tmp", true);
             String tmpCharsetPropPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), tmpCharsetPropFile.getAbsolutePath());
 
-            if (getFormatVersion() == SVNAdminArea15.WC_FORMAT) {
+            if (getFormatVersion() == SVNAdminArea15Factory.WC_FORMAT) {
                 baseProps.setPropertyValue(SVNProperty.CHARSET, SVNPropertyValue.create("UTF-8"));
                 SVNWCProperties propFile = new SVNWCProperties(tmpCharsetPropFile, tmpCharsetPropPath);
                 propFile.setProperties(baseProps.asMap());
@@ -1569,7 +1569,7 @@ public abstract class SVNAdminArea {
                 command.put(SVNLog.NAME_ATTR, detranslatedPath);
                 log.addCommand(SVNLog.DELETE, command, false);
                 command.clear();
-            } else if (adminArea.getFormatVersion() == SVNAdminArea15.WC_FORMAT) {
+            } else if (adminArea.getFormatVersion() == SVNAdminArea15Factory.WC_FORMAT) {
                 command.put(SVNLog.NAME_ATTR, entry.getName());
                 command.put(SVNLog.DEST_ATTR, detranslatedPath);
                 log.addCommand(SVNLog.COPY_AND_DETRANSLATE, command, false);
@@ -1598,7 +1598,7 @@ public abstract class SVNAdminArea {
     }
 
     private void handlePropTime(SVNLog log, SVNEntry entry) throws SVNException {
-        if (getFormatVersion() == SVNXMLAdminArea.WC_FORMAT) {
+        if (getFormatVersion() == SVNXMLAdminAreaFactory.WC_FORMAT) {
             return;
         }
         SVNProperties command = new SVNProperties();

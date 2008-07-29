@@ -54,7 +54,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNXMLAdminArea extends SVNAdminArea {
-    public static final int WC_FORMAT = 4;
+
+    public static final int WC_FORMAT = SVNXMLAdminAreaFactory.WC_FORMAT;
+
     private static final String THIS_DIR = "";
     private static final Set BOOLEAN_PROPERTIES = new HashSet();
     private static final Set INAPPLICABLE_PROPERTIES = new HashSet();

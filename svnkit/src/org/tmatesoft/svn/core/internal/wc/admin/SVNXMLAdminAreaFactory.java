@@ -31,7 +31,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
+public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
+
     public static final int WC_FORMAT = 4;
 
     protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException {

@@ -55,13 +55,14 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea14 extends SVNAdminArea {
+
+    public static final int WC_FORMAT = SVNAdminArea14Factory.WC_FORMAT;
+
     public static final String[] ourCachableProperties = new String[] {
         SVNProperty.SPECIAL,
         SVNProperty.EXTERNALS, 
         SVNProperty.NEEDS_LOCK
     };
-    
-    public static final int WC_FORMAT = 8;
     
     protected static final String ATTRIBUTE_COPIED = "copied";
     protected static final String ATTRIBUTE_DELETED = "deleted";
