@@ -51,9 +51,9 @@ public class JavaHLCompositeLog extends SVNDebugLogAdapter {
         InputStream is = log.createLogStream(SVNLogType.NETWORK, SVNFileUtil.DUMMY_IN);
         OutputStream os = log.createLogStream(SVNLogType.NETWORK, SVNFileUtil.DUMMY_OUT);
         if (is == SVNFileUtil.DUMMY_IN && os == SVNFileUtil.DUMMY_OUT) {
-            return Boolean.TRUE;           
+            return Boolean.FALSE;
         }
-        return Boolean.FALSE;
+        return Boolean.TRUE;
     }
 
     public InputStream createLogStream(SVNLogType logType, InputStream is) {
