@@ -1741,7 +1741,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 public void checkCancelled() throws SVNCancelException {
                     if (myCancelOperation) {
                         myCancelOperation = false;
-                        SVNErrorManager.cancel("operation cancelled", SVNLogType.NETWORK);
+                        SVNErrorManager.cancel("operation cancelled", SVNLogType.DEFAULT);
                     }
                 }
             };
