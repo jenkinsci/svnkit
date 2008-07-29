@@ -169,13 +169,13 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     }
 
     private static SVNAdminAreaFactory getAdminAreaFactory(int wcFormat) throws SVNException {
-        if (wcFormat == SVNXMLAdminArea.WC_FORMAT) {
+        if (wcFormat == SVNXMLAdminAreaFactory.WC_FORMAT) {
             return new SVNXMLAdminAreaFactory();
         }
-        if (wcFormat == SVNAdminArea14.WC_FORMAT) {
+        if (wcFormat == SVNAdminArea14Factory.WC_FORMAT) {
             return new SVNAdminArea14Factory();           
         }
-        if (wcFormat == SVNAdminArea15.WC_FORMAT) {
+        if (wcFormat == SVNAdminArea15Factory.WC_FORMAT) {
             return new SVNAdminArea15Factory();
         }
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT), SVNLogType.DEFAULT);

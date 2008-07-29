@@ -28,8 +28,6 @@ import org.tmatesoft.svn.core.SVNProperty;
  */
 public class SVNAdminArea15 extends SVNAdminArea14 {
 
-    public static final int WC_FORMAT = 9;
-
     protected static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
 
     public SVNAdminArea15(File dir) {
@@ -112,7 +110,7 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
     }
 
     protected int getFormatVersion() {
-        return WC_FORMAT;
+        return SVNAdminArea15Factory.WC_FORMAT;
     }
 
     protected SVNAdminArea createAdminAreaForDir(File dir) {

@@ -61,8 +61,6 @@ public class SVNAdminArea14 extends SVNAdminArea {
         SVNProperty.NEEDS_LOCK
     };
     
-    public static final int WC_FORMAT = 8;
-    
     protected static final String ATTRIBUTE_COPIED = "copied";
     protected static final String ATTRIBUTE_DELETED = "deleted";
     protected static final String ATTRIBUTE_ABSENT = "absent";
@@ -1926,7 +1924,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     protected int getFormatVersion() {
-        return WC_FORMAT;
+        return SVNAdminArea14Factory.WC_FORMAT;
     }
 
     protected SVNAdminArea createAdminAreaForDir(File dir) {
