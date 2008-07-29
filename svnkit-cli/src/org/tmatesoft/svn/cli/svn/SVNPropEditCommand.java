@@ -145,7 +145,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                         SVNCommitInfo info = client.doSetProperty(target.getURL(), propertyName,
                                 newPropertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
                                 getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(),
-                                SVNDepth.EMPTY, this);
+                                this);
                         String message = "Set new value for property ''{0}'' on ''{1}''";
                         message = MessageFormat.format(message, new Object[]{propertyName, targetName});
                         getSVNEnvironment().getOut().println(message);

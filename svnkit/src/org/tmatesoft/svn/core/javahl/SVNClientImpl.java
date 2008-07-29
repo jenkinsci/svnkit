@@ -1206,7 +1206,7 @@ public class SVNClientImpl implements SVNClientInterface {
                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
                client.setCommitHandler(createCommitMessageHandler(true));
                client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD,
-                        "", revisionProperties, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
+                        "", revisionProperties, force, ISVNPropertyHandler.NULL);
            } catch (SVNException e) {
                throwException(e);
            } finally {

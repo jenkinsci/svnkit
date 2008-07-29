@@ -245,31 +245,36 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Gets contents of a file.
+     * Outputs the content of file identified by <code>path</code> and <code>revision</code> 
+     * to the stream <code>dst</code>. The actual node revision selected
+     * is determined by the path as it exists in <code>pegRevision</code>. If <code>pegRevision</code>
+     * is {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
+     * 
+     * <p/> 
      * If <vode>revision</code> is one of:
      * <ul>
-     * <li>{@link SVNRevision#BASE BASE}
-     * <li>{@link SVNRevision#WORKING WORKING}
-     * <li>{@link SVNRevision#COMMITTED COMMITTED}
+     * <li>{@link SVNRevision#BASE}
+     * <li>{@link SVNRevision#WORKING}
+     * <li>{@link SVNRevision#COMMITTED}
      * </ul>
-     * then the file contents are taken from the Working Copy file item.
+     * then the file contents are taken from the working copy file item.
      * Otherwise the file item's contents are taken from the repository
      * at a particular revision.
      *
-     * @param path           a Working Copy file item
-     * @param pegRevision    a revision in which the file item is first looked up
-     * @param revision       a target revision
+     * @param path           working copy path
+     * @param pegRevision    revision in which the file item is first looked up
+     * @param revision       target revision
      * @param expandKeywords if <span class="javakeyword">true</span> then
      *                       all keywords presenting in the file and listed in
-     *                       the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS svn:keywords}
+     *                       the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS}
      *                       property (if set) will be substituted, otherwise not
      * @param dst            the destination where the file contents will be written to
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li><code>path</code> refers to a directory
-     *                      <li><code>path</code> does not exist
-     *                      <li><code>path</code> is not under version control
-     *                      </ul>
+     * @throws SVNException  if one of the following is true:
+     *                       <ul>
+     *                       <li><code>path</code> refers to a directory
+     *                       <li><code>path</code> does not exist
+     *                       <li><code>path</code> is not under version control
+     *                       </ul>
      * @see #doGetFileContents(SVNURL,SVNRevision,SVNRevision,boolean,OutputStream)
      */
     public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, 
@@ -296,7 +301,8 @@ public class SVNWCClient extends SVNBasicClient {
             long revNumber = getRevisionNumber(revision, repos, path);
             SVNNodeKind kind = repos.checkPath("", revNumber);
             if (kind == SVNNodeKind.DIR) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", repos.getLocation());
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, 
+                        "URL ''{0}'' refers to a directory", repos.getLocation());
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             checkCancelled();
@@ -495,26 +501,29 @@ public class SVNWCClient extends SVNBasicClient {
      * <span class="javastring">"svn:mime-type"</span>, but <code>propVal</code> is not a valid mime-type).
      * 
      * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
-     *
-     * @param path          a WC item which properties are to be modified
-     * @param propName      a property name
-     * @param propValue     a property value
+     * <code>changeLists</code> is a collection of <code>String</code> changelist
+     * names, used as a restrictive filter on items whose properties are
+     * set; that is, don't set properties on any item unless it's a member
+     * of one of those changelists.  If <code>changelists</code> is empty (or
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     * 
+     * @param path          working copy path
+     * @param propName      property name
+     * @param propValue     property value
      * @param skipChecks    <span class="javakeyword">true</span> to
-     *                      force the operation to run
-     * @param depth         a tree depth to recurse 
+     *                      force the operation to run without validity checking 
+     * @param depth         working copy tree depth to process   
      * @param handler       a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li><code>propName</code> is a revision
-     *                      property
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
+     * @param changeLists   changelist names
+     * @throws SVNException <ul>
+     *                      <li><code>path</code> does not exist
+     *                      <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code - 
+     *                      if <code>propName</code> is a revision property name or not a valid property name or 
+     *                      not a regular property name (one starting with 
+     *                      a <span class="javastring">"svn:entry"</span> or 
+     *                      <span class="javastring">"svn:wc"</span> prefix)
      *                      </ul>
+     * @see   #doSetProperty(SVNURL, String, SVNPropertyValue, SVNRevision, String, SVNProperties, boolean, ISVNPropertyHandler)
      * @since 1.2, SVN 1.5
      */
     public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, 
@@ -564,10 +573,68 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Sets <code>propName</code> to <code>propValue</code> on <code>path</code>.
+     * A <code>propValue</code> of <span class="javakeyword">null</span> will delete 
+     * the property.
+     * 
+     * <p/>
+     * <code>baseRevision</code> must not be null; in this case, the property will only be set
+     * if it has not changed since <code>baseRevision</code>.
+     * 
+     * <p/>
+     * The {@link ISVNAuthenticationManager authentication manager} and 
+     * {@link ISVNCommitHandler commit handler}, either provided by a caller or default ones,
+     * will be used to immediately attempt to commit the property change in the
+     * repository.
+     * 
+     * <p/>
+     * If <code>propName</code> is an svn-controlled property (i.e. prefixed with
+     * <span class="javastring">"svn:"</span>), then the caller is responsible for ensuring that
+     * the value uses LF line-endings.
+     * 
+     * <p/>
+     * If <code>skipChecks</code> is <span class="javakeyword">true</span>, this method does no validity 
+     * checking.  But if <code>skipChecks</code> is <span class="javakeyword">false</span>, 
+     * and <code>propName</code> is not a valid property for <code>path</code>, it throws an exception, 
+     * either with an error code {@link org.tmatesoft.svn.core.SVNErrorCode#ILLEGAL_TARGET} 
+     * (if the property is not appropriate for <code>path</code>), or with 
+     * {@link org.tmatesoft.svn.core.SVNErrorCode#BAD_MIME_TYPE} (if <code>propName</code> is 
+     * <span class="javastring">"svn:mime-type"</span>, but <code>propVal</code> is not a valid mime-type).
+     * 
+     * <p/>
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> is an 
+     * {@link SVNProperties} object holding additional, custom revision properties 
+     * (<code>String</code> names mapped to <code>String</code> values) to be set on the new revision in
+     * the event that this is a committing operation. This table cannot contain any standard Subversion 
+     * properties.
+     * 
+     * @param url                  versioned item url
+     * @param propName             property name
+     * @param propValue            property value
+     * @param baseRevision         revision to change properties against          
+     * @param commitMessage        commit log message
+     * @param revisionProperties   custom revision properties to set
+     * @param skipChecks           <span class="javakeyword">true</span> to
+     *                             force the operation to run without validity checking 
+     * @param handler              a caller's property handler
+     * @throws SVNException        <ul>
+     *                             <li><code>url</code> does not exist in <code>baseRevision</code>
+     *                             <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code - 
+     *                             if <code>propName</code> is a revision property name or not a valid property name or 
+     *                             not a regular property name (one starting with 
+     *                             an <span class="javastring">"svn:entry"</span> or 
+     *                             <span class="javastring">"svn:wc"</span> prefix)
+     *                             <li>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                             if <code>propName</code> is either equal to {@link SVNProperty#EOL_STYLE} or 
+     *                             {@link SVNProperty#KEYWORDS} or {@link SVNProperty#CHARSET}
+     *                             </ul>
+     * @see   #doSetProperty(File, String, SVNPropertyValue, boolean, SVNDepth, ISVNPropertyHandler, Collection)
+     * @since 1.2, SVN 1.5
+     */
     public SVNCommitInfo doSetProperty(SVNURL url, String propName, SVNPropertyValue propValue,
             SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties,
-            boolean force, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
-        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+            boolean skipChecks, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
@@ -596,12 +663,6 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
-        if (SVNDepth.EMPTY.compareTo(depth) < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                    "Setting property recursively on non-local target ''{0}'' is not supported", url);
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-
         if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName) || SVNProperty.CHARSET.equals(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Setting property ''{0}'' on non-local target ''{1}'' is not supported",
@@ -611,13 +672,17 @@ public class SVNWCClient extends SVNBasicClient {
 
         SVNNodeKind kind = repos.checkPath("", revNumber);
         if (kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' does not exist in revision {1}", new Object[]{url.getPath(), new Long(revNumber)});
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                    "Path ''{0}'' does not exist in revision {1}", 
+                    new Object[]{ url.getPath(), new Long(revNumber) });
             SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
             final long baseRev = revNumber;
-            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, force, getOptions(), new ISVNFileContentFetcher() {
+            
+            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, 
+                    skipChecks, getOptions(), new ISVNFileContentFetcher() {
 
                 Boolean isBinary = null;
 
@@ -674,36 +739,26 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Sets, edits or deletes an unversioned revision property.
-     * This method uses a Working Copy item to obtain the URL of
-     * the repository which revision properties are to be changed.
+     * Set <code>propName</code> to <code>propValue</code> on revision 
+     * <code>revision</code> in the repository represented by <code>path</code>.
+     * 
      * <p/>
-     * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a revision property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
-     *
-     * @param path      a Working Copy item
-     * @param revision  a revision which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param handler   a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li>the operation can not be performed
-     *                      without forcing
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
-     *                      </ul>
-     * @see #doSetRevisionProperty(SVNURL,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * This method simply obtains a url given a working path and calls 
+     * {@link #doSetRevisionProperty(SVNURL, SVNRevision, String, SVNPropertyValue, boolean, ISVNPropertyHandler)}
+     * passing this url and the rest parameters.
+     * 
+     * @param path            working copy path
+     * @param revision        revision which properties are to be modified
+     * @param propName        property name
+     * @param propValue       property value
+     * @param force           if <span class="javakeyword">true</span> allows newlines in the author property
+     * @param handler         caller's property handler
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code - if 
+     *                        <code>propName</code> is invalid
+     *                        <li>exceptions thrown by {@link #doSetRevisionProperty(SVNURL, SVNRevision, String, SVNPropertyValue, boolean, ISVNPropertyHandler)}
+     *                        </ul>
      */
     public void doSetRevisionProperty(File path, SVNRevision revision, String propName, 
             SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
@@ -717,36 +772,42 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Sets, edits or deletes an unversioned revision property.
-     * This method uses a URL pointing to a repository which revision
-     * properties are to be changed.
+     * Set <code>propName</code> to <code>propValue</code> on revision 
+     * <code>revision</code> in the repository represented by <code>path</code>.
+     * 
+     * A <code>propValue</code> of <span class="javakeyword">null</span> will delete the
+     * property. The {@link ISVNAuthenticationManager authentication manager}, either provided by a caller 
+     * or a default one, will be used for authentication.
+     * 
      * <p/>
+     * If <code>propName</code> is an svn-controlled property (i.e. prefixed with
+     * <span class="javastring">"svn:"</span>), then the caller is responsible for ensuring that
+     * the value is UTF8-encoded and uses LF line-endings.
+     * 
      * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a revision property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
+     * Although this routine accepts a working copy path it doesn't affect the working copy at all;  
+     * it's a pure network operation that changes an *unversioned* property attached to a
+     * revision. This can be used to tweak log messages, dates, authors, and the like. 
+     * Be careful: it's a lossy operation.
+     * 
+     * <p>
+     * Also note that unless the administrator creates a pre-revprop-change hook in the repository, 
+     * this feature will fail.
      *
-     * @param url       a URL pointing to a repository location
-     * @param revision  a revision which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param handler   a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li>the operation can not be performed
-     *                      without forcing
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
-     *                      </ul>
+     * @param url             repository URL
+     * @param revision        revision which properties are to be modified
+     * @param propName        property name
+     * @param propValue       property value
+     * @param force           if <span class="javakeyword">true</span> allows newlines in the author property
+     * @param handler         caller's property handler
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>the operation can not be performed without forcing
+     *                        <li><code>propName</code> is either invalid or not a regular property name 
+     *                        (one starting with an <span class="javastring">"svn:entry"</span> or 
+     *                        <span class="javastring">"svn:wc"</span> prefix)
+     *                        </ul>
      * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
      */
     public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, 
             SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
@@ -2877,34 +2938,25 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     /**
-     * Sets, edits or deletes a property on a file or directory item(s).
-     * <p/>
-     * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
-     *
-     * @param path      a WC item which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param recursive <span class="javakeyword">true</span> to
-     *                  descend recursively
-     * @param handler   a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li><code>propName</code> is a revision
-     *                      property
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
-     *                      </ul>
-     * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * This method is deprecated. 
+     * 
+     * @param path           a WC item which properties are to be
+     *                       modified
+     * @param propName       a property name
+     * @param propValue      a property value
+     * @param force          <span class="javakeyword">true</span> to
+     *                       force the operation to run
+     * @param recursive      <span class="javakeyword">true</span> to
+     *                       descend recursively
+     * @param handler        a caller's property handler
+     * @throws SVNException  if one of the following is true:
+     *                       <ul>
+     *                       <li><code>propName</code> is a revision
+     *                       property
+     *                       <li><code>propName</code> starts
+     *                       with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                       svn:wc:} prefix
+     *                       </ul>
      * @deprecated use {@link #doSetProperty(File, String, SVNPropertyValue, boolean, SVNDepth, ISVNPropertyHandler, Collection)} 
      *             instead
      */
