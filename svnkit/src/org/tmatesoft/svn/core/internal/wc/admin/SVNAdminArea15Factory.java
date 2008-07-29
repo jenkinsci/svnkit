@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public class SVNAdminArea15Factory extends SVNAdminArea14Factory {
 
-    public static final int WC_FORMAT = 9;
+    public static final int WC_FORMAT = SVNAdminAreaFactory.WC_FORMAT_15;
 
     protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException {
         SVNAdminArea adminArea = new SVNAdminArea15(path); 

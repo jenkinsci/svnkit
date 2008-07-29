@@ -38,7 +38,11 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminAreaFactory implements Comparable {
-        
+
+    public static final int WC_FORMAT_13 = 4;
+    public static final int WC_FORMAT_14 = 8;
+    public static final int WC_FORMAT_15 = 9;
+
     private static final Collection ourFactories = new TreeSet();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
     private static ISVNAdminAreaFactorySelector ourSelector;
