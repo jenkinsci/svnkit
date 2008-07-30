@@ -70,25 +70,29 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         myAuthenticationManager = repository.getAuthenticationManager();
         myAuthentication = null;
         
-        for (Iterator mech = mechs.iterator(); mech.hasNext();) {
-            String m = (String) mech.next();
-            if ("ANONYMOUS".equals(m) || "EXTERNAL".equals(m)) {
-                mechs = new ArrayList();
-                mechs.add(m);
-                break;
+        if (mechs.contains("EXTERNAL") && repository.getExternalUserName() != null) {
+            mechs = new ArrayList();
+            mechs.add("EXTERNAL");
+        } else { 
+            for (Iterator mech = mechs.iterator(); mech.hasNext();) {
+                String m = (String) mech.next();
+                if ("ANONYMOUS".equals(m) || "EXTERNAL".equals(m)) {
+                    mechs = new ArrayList();
+                    mechs.add(m);
+                    break;
+                }
             }
         }
-        
         dispose();
         try {
-            myClient = createSaslClient(mechs, realm, repository.getLocation());
+            myClient = createSaslClient(mechs, realm, repository, repository.getLocation());
             while(true) {
                 if (myClient == null) {
                     new SVNPlainAuthenticator(getConnection()).authenticate(mechs, realm, repository);
                     return;
                 }
                 try {
-                    if (tryAuthentication()) {
+                    if (tryAuthentication(repository)) {
                         if (myAuthenticationManager != null && myAuthentication != null) {
                             String realmName = getFullRealmName(repository.getLocation(), realm);
                             myAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realmName, null, myAuthentication);
@@ -111,7 +115,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
                 }
                 dispose();
-                myClient = createSaslClient(mechs, realm, repository.getLocation());
+                myClient = createSaslClient(mechs, realm, repository, repository.getLocation());
             }
         } finally {
             if (failed) {
@@ -133,11 +137,13 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
     }
     
-    protected boolean tryAuthentication() throws SaslException, SVNException {
+    protected boolean tryAuthentication(SVNRepositoryImpl repos) throws SaslException, SVNException {
         String initialChallenge = null;
         String mechName = getMechanismName(myClient);
         boolean expectChallenge = !("ANONYMOUS".equals(mechName) || "EXTERNAL".equals(mechName));
-        if (myClient.hasInitialResponse()) {
+        if ("EXTERNAL".equals(mechName) && repos.getExternalUserName() != null) {
+            initialChallenge = repos.getExternalUserName();
+        } else if (myClient.hasInitialResponse()) {
             // compute initial response
             byte[] initialResponse = null;
             initialResponse = myClient.evaluateChallenge(new byte[0]);
@@ -226,7 +232,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
     }
     
-    protected SaslClient createSaslClient(List mechs, String realm, SVNURL location) throws SVNException {
+    protected SaslClient createSaslClient(List mechs, String realm, SVNRepositoryImpl repos, SVNURL location) throws SVNException {
         Map props = new SVNHashMap();
         props.put(Sasl.QOP, "auth-conf,auth-int,auth");
         props.put(Sasl.MAX_BUFFER, "8192");
@@ -247,8 +253,14 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     continue;
                 }
                 SVNAuthentication auth = null;
-                if ("ANONYMOUS".equals(mech) || "EXTERNAL".equals(mech)) {
+                if ("ANONYMOUS".equals(mech)) {
                     auth = new SVNPasswordAuthentication("", "", false);
+                } else if ("EXTERNAL".equals(mech)) {
+                    String name = repos.getExternalUserName();
+                    if (name == null) {
+                        name = "";
+                    }
+                    auth = new SVNPasswordAuthentication(name, "", false);
                 } else {                
                     if (myAuthenticationManager == null) {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm),
