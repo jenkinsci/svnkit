@@ -121,7 +121,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     if (target.isURL()) {
                         client.doGetProperty(target.getURL(), null, pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
                     } else {
-                        client.doGetPropertyList(target.getFile(), null, pegRevision, 
+                        client.doGetProperty(target.getFile(), null, pegRevision, 
                                 getSVNEnvironment().getStartRevision(), depth, this, changeLists);
                     }
                 } catch (SVNException e) {

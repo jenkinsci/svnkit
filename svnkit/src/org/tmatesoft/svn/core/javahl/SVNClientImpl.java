@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -841,7 +842,7 @@ public class SVNClientImpl implements SVNClientInterface {
             for (int i = 0; i < files.length; i++) {
                 File file = files[i];
                 try {
-                    getSVNWCClient().doAdd(file, false, true, false, false, false);
+                    getSVNWCClient().doAdd(file, false, true, false, SVNDepth.EMPTY, false, false);
                 } catch (SVNException e) {
                     throwException(e);
                 } finally {
@@ -2201,10 +2202,14 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNRevision(revision),
                     JavaHLObjectFactory.getSVNDepth(depth), handler);
         } else {
+            Collection changeListsCollection = null;
+            if (changelists != null && changelists.length > 0) {
+                changeListsCollection = Arrays.asList(changelists);
+            }
             client.doInfo(new File(pathOrUrl).getAbsoluteFile(),
                     JavaHLObjectFactory.getSVNRevision(pegRevision),
                     JavaHLObjectFactory.getSVNRevision(revision),
-                    JavaHLObjectFactory.getSVNDepth(depth), changelists, handler);
+                    JavaHLObjectFactory.getSVNDepth(depth), changeListsCollection, handler);
         }
     }
 }

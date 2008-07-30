@@ -113,7 +113,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                         SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                     SVNPropertyData property = client.doGetProperty(target.getFile(), propertyName, 
-                            SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNDepth.EMPTY);
+                            SVNRevision.UNDEFINED, SVNRevision.WORKING);
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create("");
                     byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);                   
                     byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
@@ -134,7 +134,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     }
                 } else {
                     SVNPropertyData property = client.doGetProperty(target.getURL(), propertyName, 
-                            SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNDepth.EMPTY);
+                            SVNRevision.UNDEFINED, SVNRevision.HEAD);
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create("");
                     byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);                                       
                     byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
