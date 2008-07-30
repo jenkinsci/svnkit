@@ -49,7 +49,7 @@ public class SVNPlainConnector implements ISVNConnector {
         try {
             int connectTimeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getConnectTimeout(repository) : DEFAULT_SVN_TIMEOUT;
             int readTimeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getReadTimeout(repository) : DEFAULT_SVN_TIMEOUT;
-            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout);
+            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout, repository.getCanceller());
         } catch (SocketTimeoutException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
             SVNErrorManager.error(err, e, SVNLogType.NETWORK);

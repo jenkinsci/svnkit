@@ -134,7 +134,7 @@ class HTTPConnection implements IHTTPConnection {
             }
 		    if (proxyAuth != null && proxyAuth.getProxyHost() != null) {
 			    myRepository.getDebugLog().logFine(SVNLogType.NETWORK, "Using proxy " + proxyAuth.getProxyHost() + " (secured=" + myIsSecured + ")");
-                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout, readTimeout);
+                mySocket = SVNSocketFactory.createPlainSocket(proxyAuth.getProxyHost(), proxyAuth.getProxyPort(), connectTimeout, readTimeout, myRepository.getCanceller());
                 if (myProxyAuthentication == null) {
                     myProxyAuthentication = new HTTPBasicAuthentication(proxyAuth.getProxyUserName(), proxyAuth.getProxyPassword(), myCharset);
                 }
@@ -163,8 +163,8 @@ class HTTPConnection implements IHTTPConnection {
                 myIsProxied = false;
                 myProxyAuthentication = null;
                 mySocket = myIsSecured ? 
-                        SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, connectTimeout, readTimeout) : 
-                        SVNSocketFactory.createPlainSocket(host, port, connectTimeout, readTimeout);
+                        SVNSocketFactory.createSSLSocket(keyManager != null ? new KeyManager[] { keyManager } : new KeyManager[0], trustManager, host, port, connectTimeout, readTimeout, myRepository.getCanceller()) :
+                        SVNSocketFactory.createPlainSocket(host, port, connectTimeout, readTimeout, myRepository.getCanceller());
             }
         }
     }

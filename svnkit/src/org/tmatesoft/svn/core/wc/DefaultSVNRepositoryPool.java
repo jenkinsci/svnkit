@@ -95,6 +95,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     private ISVNAuthenticationManager myAuthManager;
     private ISVNTunnelProvider myTunnelProvider;
     private ISVNDebugLog myDebugLog;
+    private ISVNCanceller myCanceller;
     private Map myPool;
     private long myTimeout;
     private Map myInactiveRepositories = new SVNHashMap();
@@ -204,6 +205,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             repos.setAuthenticationManager(myAuthManager);
             repos.setTunnelProvider(myTunnelProvider);
             repos.setDebugLog(myDebugLog);
+            repos.setCanceller(myCanceller);
             return repos;
         }
         
@@ -221,6 +223,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         repos.setAuthenticationManager(myAuthManager);
         repos.setTunnelProvider(myTunnelProvider);
         repos.setDebugLog(myDebugLog);
+        repos.setCanceller(myCanceller);
         return repos;
     }
     
@@ -360,6 +363,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     }
 
     public void setCanceller(ISVNCanceller canceller) {
+        myCanceller = canceller;
         Map pool = getPool();
         for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();
