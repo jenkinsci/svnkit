@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
@@ -120,8 +122,18 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 throw svne;
             }
             if (baton.myDatestamp == null) {
-                myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, SVNPropertyValue.create(""));
+                myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
             }
+            File revProps = myFSFS.getRevisionPropertiesFile(baton.myRevision);
+            if (!revProps.exists()) {
+                OutputStream os = SVNFileUtil.openFileForWriting(revProps);
+                try {
+                    SVNWCProperties.setProperties(new SVNProperties(), os, SVNWCProperties.SVN_HASH_TERMINATOR);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+            }
+
             
             if (myIsUsePostCommitHook) {
                 try {
