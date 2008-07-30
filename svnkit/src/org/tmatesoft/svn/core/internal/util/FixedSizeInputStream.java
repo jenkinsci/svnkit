@@ -10,7 +10,7 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.internal.io.dav.http;
+package org.tmatesoft.svn.core.internal.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +19,7 @@ import java.io.InputStream;
  * @version 1.1.1
  * @author  TMate Software Ltd.
  */
-class FixedSizeInputStream extends InputStream {
+public class FixedSizeInputStream extends InputStream {
     
     private long myLength;
     private InputStream mySource;

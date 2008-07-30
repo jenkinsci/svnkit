@@ -136,6 +136,10 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     public void textDeltaEnd(String path) throws SVNException {
         myDeltaProcessor.textDeltaEnd();
     }
+    
+    public void close() {
+        abort();
+    }
 
     public void abort() {
         if (myTargetStream != null) {
