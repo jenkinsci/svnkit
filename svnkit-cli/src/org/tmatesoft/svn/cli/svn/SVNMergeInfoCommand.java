@@ -59,12 +59,6 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         }
         
         SVNPath source = new SVNPath((String) targets.get(0), true);
-        if (!source.isURL()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Path ''{0}'' is not a URL", source.getTarget());
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
-        
         SVNRevision srcPegRevision = source.getPegRevision();
         if (srcPegRevision == SVNRevision.UNDEFINED) {
             srcPegRevision = SVNRevision.HEAD;
@@ -92,19 +86,39 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED) {
             if (target.isURL()) {
-                client.getLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                        false, null, this);
+                if (source.isURL()) {
+                    client.getLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                            false, null, this);
+                } else {
+                    client.getLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                            false, null, this);
+                }
             } else {
-                client.getLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
-                        false, null, this);
+                if (source.isURL()) {
+                    client.getLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
+                            false, null, this);
+                } else {
+                    client.getLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision,
+                            false, null, this);
+                }
             }
         } else if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.ELIGIBLE) {
             if (target.isURL()) {
-                client.getLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                        false, null, this);
+                if (source.isURL()) {
+                    client.getLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                            false, null, this);
+                } else {
+                    client.getLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                            false, null, this);
+                }
             } else {
-                client.getLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                        false, null, this);
+                if (source.isURL()) {
+                    client.getLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                            false, null, this);
+                } else {
+                    client.getLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                            false, null, this);
+                }
             }
         }
     }

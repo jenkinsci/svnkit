@@ -994,8 +994,7 @@ public abstract class SVNRepository {
         }
     }
 
-    public Collection getLocationSegments(String path, long pegRevision, long startRevision, 
-            long endRevision) throws SVNException {
+    public List getLocationSegments(String path, long pegRevision, long startRevision, long endRevision) throws SVNException {
         
         final List result = new LinkedList();
         getLocationSegments(path, pegRevision, startRevision, endRevision, new ISVNLocationSegmentHandler() {
