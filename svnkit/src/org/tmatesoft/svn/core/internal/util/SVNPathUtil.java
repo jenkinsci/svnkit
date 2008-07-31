@@ -441,19 +441,12 @@ public class SVNPathUtil {
         if (pathChild.compareTo(path) == 0) {
             return null;
         }
-        int count = 0;
-        for (count = 0; count < path.length() && count < pathChild.length(); count++) {
-            if (path.charAt(count) != pathChild.charAt(count)) {
-                return null;
-            }
-        }
-        if (count == path.length() && count < pathChild.length()) {
-            if (pathChild.charAt(count) == '/') {
-                return pathChild.substring(count + 1);
-            } else if (count == 1 && path.charAt(0) == '/') {
-                return pathChild.substring(1);
-            }
-        }
+	    if (!path.endsWith("/")) { // We don't want to have /foobar being a child of /foo
+		    path = path + "/";
+	    }
+	    if (pathChild.startsWith(path)) {
+		    return pathChild.substring(path.length());
+	    }
         return null;
     }
 
