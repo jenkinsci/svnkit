@@ -3330,19 +3330,23 @@ public class SVNWCClient extends SVNBasicClient {
         if (SVNDepth.FILES.compareTo(depth) <= 0 && entry.isDirectory()) {
             wcAccess.walkEntries(target, propGetHandler, false, depth);
         } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-            SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
-            if (propName != null) {
-                SVNPropertyValue propValue = properties.getPropertyValue(propName);
-                if (propValue != null) {
-                    handler.handleProperty(target, new SVNPropertyData(propName, propValue, getOptions()));
+            if (propName == null) {//proplist hack for compatibility with subvsersion
+                SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
+                if (propName != null) {
+                    SVNPropertyValue propValue = properties.getPropertyValue(propName);
+                    if (propValue != null) {
+                        handler.handleProperty(target, new SVNPropertyData(propName, propValue, getOptions()));
+                    }
+                } else {
+                    SVNProperties allProps = properties.asMap();
+                    for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
+                        String name = (String) names.next();
+                        SVNPropertyValue val = allProps.getSVNPropertyValue(name);
+                        handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
+                    }
                 }
             } else {
-                SVNProperties allProps = properties.asMap();
-                for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
-                    String name = (String) names.next();
-                    SVNPropertyValue val = allProps.getSVNPropertyValue(name);
-                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
-                }
+                propGetHandler.handleEntry(target, entry);
             }
         }
     }
