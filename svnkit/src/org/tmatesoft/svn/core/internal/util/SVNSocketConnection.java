@@ -40,10 +40,13 @@ public class SVNSocketConnection implements Runnable {
     }
 
     public boolean isSocketConnected() {
+        
         synchronized (this) {
-            try {
-                wait(100);
-            } catch (InterruptedException e) {
+            if (!myIsSocketConnected) {
+                try {
+                    wait(100);
+                } catch (InterruptedException e) {
+                }
             }
         }
         return myIsSocketConnected;
