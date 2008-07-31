@@ -1031,8 +1031,9 @@ public class DAVRepository extends SVNRepository {
         if (revision < 0) {
             revision = targetRevision;
         }
+        boolean sendAll = myConnectionFactory.useSendAllForDiff(this);
         runReport(getLocation(), targetRevision, target, url.toString(), depth, ignoreAncestry, false, 
-                getContents, false, false, false, true, reporter, editor);
+                getContents, false, sendAll, false, true, reporter, editor);
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
