@@ -29,13 +29,18 @@ public class CountingStream extends FilterOutputStream {
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        super.out.write(b, off, len);
+        out.write(b, off, len);
         myPosition += len;
     }
 
     public void write(int b) throws IOException {
-        super.write(b);
+        out.write(b);
         myPosition++;
+    }
+
+    public void write(byte[] b) throws IOException {
+        out.write(b);
+        myPosition += b.length;
     }
 
     public long getPosition() {

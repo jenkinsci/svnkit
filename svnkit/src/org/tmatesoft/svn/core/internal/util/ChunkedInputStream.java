@@ -10,17 +10,18 @@
  * ====================================================================
  */
 
-package org.tmatesoft.svn.core.internal.io.dav.http;
+package org.tmatesoft.svn.core.internal.util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+
 /**
  * @version 1.1.1
  * @author TMate Software Ltd.
  */
-class ChunkedInputStream extends InputStream {
+public class ChunkedInputStream extends InputStream {
 
     private String myCharset;
     private InputStream myInputStream;

@@ -406,6 +406,9 @@ public class FSCommitEditor implements ISVNEditor {
 
     private long finalizeCommit() throws SVNException {
         FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), myTxn.getTxnId());
+        if (myDeltaConsumer != null) {
+            myDeltaConsumer.close();
+        }
         return myCommitter.commitTxn();
     }
 
