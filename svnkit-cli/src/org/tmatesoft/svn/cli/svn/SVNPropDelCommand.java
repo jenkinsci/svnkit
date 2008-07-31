@@ -95,7 +95,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                         } else {
                             client.setCommitHandler(getSVNEnvironment());
                             client.doSetProperty(target.getURL(), propertyName, null, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
-                                    getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), depth, this);
+                                    getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), this);
                         }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 

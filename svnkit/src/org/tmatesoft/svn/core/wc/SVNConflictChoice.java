@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 
 /**
+ * 
  * @version 1.1.2
  * @author  TMate Software Ltd.
  */
