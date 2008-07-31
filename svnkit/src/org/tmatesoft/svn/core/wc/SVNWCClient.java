@@ -3319,8 +3319,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void doGetLocalProperty(SVNEntry entry, SVNAdminArea area, String propName, boolean base, 
-            ISVNPropertyHandler handler, SVNDepth depth, Collection changeLists) throws SVNException {
+    private void doGetLocalProperty(SVNEntry entry, SVNAdminArea area, String propName, boolean base, ISVNPropertyHandler handler, SVNDepth depth, Collection changeLists) throws SVNException {
         if (depth == null || depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.EMPTY;
         }
@@ -3331,7 +3330,20 @@ public class SVNWCClient extends SVNBasicClient {
         if (SVNDepth.FILES.compareTo(depth) <= 0 && entry.isDirectory()) {
             wcAccess.walkEntries(target, propGetHandler, false, depth);
         } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-            propGetHandler.handleEntry(target, entry);
+            SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
+            if (propName != null) {
+                SVNPropertyValue propValue = properties.getPropertyValue(propName);
+                if (propValue != null) {
+                    handler.handleProperty(target, new SVNPropertyData(propName, propValue, getOptions()));
+                }
+            } else {
+                SVNProperties allProps = properties.asMap();
+                for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
+                    String name = (String) names.next();
+                    SVNPropertyValue val = allProps.getSVNPropertyValue(name);
+                    handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
+                }
+            }
         }
     }
 
@@ -3486,8 +3498,7 @@ public class SVNWCClient extends SVNBasicClient {
         private String myPropName;
         private ISVNPropertyHandler myPropHandler;
         
-        public PropFetchHandler(Collection changeLists, String propName, ISVNPropertyHandler handler, 
-                boolean pristine) {
+        public PropFetchHandler(Collection changeLists, String propName, ISVNPropertyHandler handler, boolean pristine) {
             myChangeLists = changeLists;
             myIsPristine = pristine;
             myPropName = propName;
@@ -3496,20 +3507,18 @@ public class SVNWCClient extends SVNBasicClient {
         
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
             SVNAdminArea adminArea = entry.getAdminArea();
-            if (entry.isDirectory() && !entry.getName().equals(adminArea.getThisDirName())) {
+            
+            if (entry.isDirectory() && !entry.isThisDir()) {
                 return;
             }
-            if ((myIsPristine && entry.isScheduledForAddition()) || 
-                    (!myIsPristine && entry.isScheduledForDeletion())) {
+            if ((myIsPristine && entry.isScheduledForAddition()) || (!myIsPristine && entry.isScheduledForDeletion())) {
                 return;
             }
             if (!SVNWCAccess.matchesChangeList(myChangeLists, entry)) {
                 return;
             }
-
-            SVNVersionedProperties properties = myIsPristine ? adminArea.getBaseProperties(entry.getName()) : 
-                adminArea.getProperties(entry.getName());
-
+            
+            SVNVersionedProperties properties = myIsPristine ? adminArea.getBaseProperties(entry.getName()) : adminArea.getProperties(entry.getName());
             if (myPropName != null) {
                 SVNPropertyValue propValue = properties.getPropertyValue(myPropName);
                 if (propValue != null) {
