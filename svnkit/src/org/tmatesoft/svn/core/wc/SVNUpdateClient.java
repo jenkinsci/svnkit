@@ -96,7 +96,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
@@ -177,7 +177,71 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), force, false);
     }    
     
-    public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean force, boolean depthIsSticky) throws SVNException {
+    /**
+     * Updates working trees <code>paths</code> to <code>revision</code>. 
+     * Unversioned paths that are direct children of a versioned path will cause an update that 
+     * attempts to add that path, other unversioned paths are skipped.
+     * 
+     * <p/>
+     * <code>revision</code> must represent a valid revision number ({@link SVNRevision#getNumber()} >= 0),
+     * or date ({@link SVNRevision#getDate()} != <span class="javakeyword">true</span>), or be equal to 
+     * {@link SVNRevision#HEAD}. If <code>revision</code> does not meet these requirements, an exception with 
+     * the error code {@link SVNErrorCode#CLIENT_BAD_REVISION} is thrown.
+     * 
+     * <p/>
+     * The paths in <code>paths</code> can be from multiple working copies from multiple
+     * repositories, but even if they all come from the same repository there
+     * is no guarantee that revision represented by {@link SVNRevision#HEAD}
+     * will remain the same as each path is updated.
+     * 
+     * <p/>
+     * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
+     * as part of this operation.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, updates fully recursively.
+     * Else if it is {@link SVNDepth#IMMEDIATES} or {@link SVNDepth#FILES}, updates
+     * each target and its file entries, but not its subdirectories. Else if {@link SVNDepth#EMPTY}, 
+     * updates exactly each target, nonrecursively (essentially, updates the target's properties).
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, takes the working depth from
+     * <code>paths</code> and then behaves as described above.
+     * 
+     * <p/>
+     * If <code>depthIsSticky</code> is set and <code>depth</code> is not {@link SVNDepth#UNKNOWN}, 
+     * then in addition to updating <code>paths</code>, also sets
+     * their sticky ambient depth value to <code>depth</codes>.
+     * 
+     * <p/>
+     * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">true</span> then the update 
+     * tolerates existing unversioned items that obstruct added paths. Only obstructions of the same type 
+     * (file or dir) as the added item are tolerated. The text of obstructing files is left as-is, effectively
+     * treating it as a user modification after the update. Working properties of obstructing items are set 
+     * equal to the base properties. If <code>allowUnversionedObstructions</code> is 
+     * <span class="javakeyword">false</span> then the update will abort if there are any unversioned 
+     * obstructing items.
+     *
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, it is invoked for 
+     * each item handled by the update, and also for files restored from text-base. Also 
+     * {@link ISVNEventHandler#checkCancelled()} will be used at various places during the update to check 
+     * whether the caller wants to stop the update.
+     * 
+     * @param  paths                           working copy paths
+     * @param  revision                        revision to update to
+     * @param  depth                           tree depth to update
+     * @param  allowUnversionedObstructions    flag that allows tollerating unversioned items 
+     *                                         during update
+     * @param  depthIsSticky                   flag that controls whether the requested depth 
+     *                                         should be written to the working copy
+     * @return                                 an array of <code>long</code> revisions with each 
+     *                                         element set to the revision to which <code>revision</code> was resolved
+     * @throws SVNException 
+     * @since 1.2, SVN 1.5
+     */
+    public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, 
+            boolean depthIsSticky) throws SVNException {
         if (paths == null) {
             return new long[0];
         }
@@ -188,7 +252,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             try {
                 setEventPathPrefix("");
                 handlePathListItem(path);
-                long rev = doUpdate(path, revision, depth, force, depthIsSticky);
+                long rev = doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
                 revisions.add(new Long(rev));
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
@@ -213,20 +277,74 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
 
     /**
+     * Updates working copy <code></code> to <code>revision</code>. 
+     * Unversioned paths that are direct children of a versioned path will cause an update that 
+     * attempts to add that path, other unversioned paths are skipped.
      * 
+     * <p/>
+     * <code>revision</code> must represent a valid revision number ({@link SVNRevision#getNumber()} >= 0),
+     * or date ({@link SVNRevision#getDate()} != <span class="javakeyword">true</span>), or be equal to 
+     * {@link SVNRevision#HEAD}. If <code>revision</code> does not meet these requirements, an exception with 
+     * the error code {@link SVNErrorCode#CLIENT_BAD_REVISION} is thrown.
+     * 
+     * <p/>
+     * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
+     * as part of this operation.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, updates fully recursively.
+     * Else if it is {@link SVNDepth#IMMEDIATES} or {@link SVNDepth#FILES}, updates
+     * <code>path</code> and its file entries, but not its subdirectories. Else if {@link SVNDepth#EMPTY}, 
+     * updates exactly <code>path</code>, nonrecursively (essentially, updates the target's properties).
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, takes the working depth from
+     * <code>path</code> and then behaves as described above.
+     * 
+     * <p/>
+     * If <code>depthIsSticky</code> is set and <code>depth</code> is not {@link SVNDepth#UNKNOWN}, 
+     * then in addition to updating <code>path</code>, also sets its sticky ambient depth value to 
+     * <code>depth</codes>.
+     * 
+     * <p/>
+     * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">true</span> then the update 
+     * tolerates existing unversioned items that obstruct added paths. Only obstructions of the same type 
+     * (file or dir) as the added item are tolerated. The text of obstructing files is left as-is, effectively
+     * treating it as a user modification after the update. Working properties of obstructing items are set 
+     * equal to the base properties. If <code>allowUnversionedObstructions</code> is 
+     * <span class="javakeyword">false</span> then the update will abort if there are any unversioned 
+     * obstructing items.
+     *
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, it is invoked for 
+     * each item handled by the update, and also for files restored from text-base. Also 
+     * {@link ISVNEventHandler#checkCancelled()} will be used at various places during the update to check 
+     * whether the caller wants to stop the update.
+     * 
+     * @param  path                           working copy path
+     * @param  revision                       revision to update to
+     * @param  depth                          tree depth to update
+     * @param  allowUnversionedObstructions   flag that allows tollerating unversioned items 
+     *                                        during update
+     * @param  depthIsSticky                  flag that controls whether the requested depth 
+     *                                        should be written to the working copy
+     * @return                                revision to which <code>revision</code> was resolved
+     * @throws SVNException 
+     * @since 1.2, SVN 1.5
      */
-    public long doUpdate(File file, SVNRevision revision, SVNDepth depth, boolean force, boolean depthIsSticky) throws SVNException {
+    public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, 
+            boolean depthIsSticky) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
         }
         
-        file = file.getAbsoluteFile();
+        path = path.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminAreaInfo adminInfo = null;
         int admOpenDepth = getLevelsToLockFromDepth(depth);
         try {
-            adminInfo = wcAccess.openAnchor(file, !myIsUpdateLocksOnDemand, admOpenDepth);
+            adminInfo = wcAccess.openAnchor(path, !myIsUpdateLocksOnDemand, admOpenDepth);
             SVNAdminArea anchorArea = adminInfo.getAnchor();
 
             SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
@@ -241,13 +359,13 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             SVNRepository repos = createRepository(url, anchorArea.getRoot(), wcAccess, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
-            final SVNReporter reporter = new SVNReporter(adminInfo, file, true, !serverSupportsDepth, 
+            final SVNReporter reporter = new SVNReporter(adminInfo, path, true, !serverSupportsDepth, 
                     depth, getDebugLog());
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
-            long revNumber = getRevisionNumber(revision, repos, file);
+            long revNumber = getRevisionNumber(revision, repos, path);
             SVNURL reposRoot = repos.getRepositoryRoot(true);
-            wcAccess.setRepositoryRoot(file, reposRoot);
+            wcAccess.setRepositoryRoot(path, reposRoot);
             
             final SVNRepository repos2 = createRepository(reposRoot, null, null, false);
             ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
@@ -256,7 +374,8 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             };
             
-            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, force, depthIsSticky, depth, preservedExts, fileFetcher, myIsUpdateLocksOnDemand); 
+            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, allowUnversionedObstructions, 
+                    depthIsSticky, depth, preservedExts, fileFetcher, myIsUpdateLocksOnDemand); 
                 
             repos.update(revNumber, target, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
@@ -352,12 +471,74 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doSwitch(file, url, pegRevision, revision, SVNDepth.getInfinityOrFilesDepth(recursive), force, false);
     }    
     
-    public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
+    /**
+     * Switches working tree <code>path</code> to <code>url</code>\<code>pegRevision</code> at 
+     * <code>revision</code>. 
+     * 
+     * <p/>
+     * Summary of purpose: this is normally used to switch a working
+     * directory over to another line of development, such as a branch or
+     * a tag.  Switching an existing working directory is more efficient
+     * than checking out <code>url</code> from scratch.
+     *
+     * <p/>
+     * <code>revision</code> must represent a valid revision number ({@link SVNRevision#getNumber()} >= 0),
+     * or date ({@link SVNRevision#getDate()} != <span class="javakeyword">true</span>), or be equal to 
+     * {@link SVNRevision#HEAD}. If <code>revision</code> does not meet these requirements, an exception with 
+     * the error code {@link SVNErrorCode#CLIENT_BAD_REVISION} is thrown.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, switches fully recursively.
+     * Else if it is {@link SVNDepth#IMMEDIATES}, switches <code>path</code> and its file
+     * children (if any), and switches subdirectories but does not update
+     * them.  Else if {@link SVNDepth#FILES}, switches just file children,
+     * ignoring subdirectories completely. Else if {@link SVNDepth#EMPTY},
+     * switches just <code>path</code> and touches nothing underneath it.
+     *
+     * <p/>
+     * If <code>depthIsSticky</code> is set and <code>depth</code> is not 
+     * {@link SVNDepth#UNKNOWN}, then in addition to switching <code>path</code>, also sets
+     * its sticky ambient depth value to <code>depth</code>.
+     * 
+     * <p/>
+     * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
+     * as part of this operation.
+     *
+     * <p/>
+     * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">true</span> then the switch 
+     * tolerates existing unversioned items that obstruct added paths. Only
+     * obstructions of the same type (file or dir) as the added item are
+     * tolerated. The text of obstructing files is left as-is, effectively
+     * treating it as a user modification after the switch. Working
+     * properties of obstructing items are set equal to the base properties.
+     * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">false</span> then the switch 
+     * will abort if there are any unversioned obstructing items.
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, it is invoked for 
+     * paths affected by the switch, and also for files restored from text-base. Also 
+     * {@link ISVNEventHandler#checkCancelled()} will be used at various places during the switch to check 
+     * whether the caller wants to stop the switch.
+     *
+     * @param   path           the Working copy item to be switched
+     * @param   url            the repository location as a target against which the item will 
+     *                         be switched
+     * @param   pegRevision    a revision in which <code>file</code> is first looked up
+     *                         in the repository
+     * @param   revision       the desired revision of the repository target   
+     * @param   depth
+     * @param   force 
+     * @param   depthIsSticky
+     * @return                 value of the revision to which the working copy was actually switched.
+     * @throws SVNException 
+     * @since  1.2, SVN 1.5
+     */
+    public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
             boolean force, boolean depthIsSticky) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(file, true, SVNWCAccess.INFINITE_DEPTH);
-            final SVNReporter reporter = new SVNReporter(info, file, true, false, depth, getDebugLog());
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
+            final SVNReporter reporter = new SVNReporter(info, path, true, false, depth, getDebugLog());
             SVNAdminArea anchorArea = info.getAnchor();
             SVNEntry entry = anchorArea.getVersionedEntry(anchorArea.getThisDirName(), false);
             SVNURL sourceURL = entry.getSVNURL();
@@ -639,6 +820,87 @@ public class SVNUpdateClient extends SVNBasicClient {
         return exportedRevision;
     }
     
+    /**
+     * Substitutes the beginning part of a Working Copy's URL with a new one.
+     * 
+     * <p> 
+     * When a repository root location or a URL schema is changed the old URL of the 
+     * Working Copy which starts with <code>oldURL</code> should be substituted for a
+     * new URL beginning - <code>newURL</code>.
+     * 
+     * @param  dst				a Working Copy item's path 
+     * @param  oldURL			the old beginning part of the repository's URL that should
+     * 							be overwritten  
+     * @param  newURL			a new beginning part for the repository location that
+     * 							will overwrite <code>oldURL</code> 
+     * @param  recursive		if <span class="javakeyword">true</span> and <code>dst</code> is
+     * 							a directory then the entire tree will be relocated, otherwise if 
+     * 							<span class="javakeyword">false</span> - only <code>dst</code> itself
+     * @throws SVNException
+     */
+    public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            SVNAdminArea adminArea = wcAccess.probeOpen(dst, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            String name = dst.equals(adminArea.getRoot()) ? adminArea.getThisDirName() : dst.getName();
+            String from = oldURL.toString();
+            String to = newURL.toString();
+            if (from.endsWith("/")) {
+                from = from.substring(0, from.length() - 1);
+            } 
+            if (to.endsWith("/")) {
+                to = to.substring(0, to.length() - 1);
+            } 
+            doRelocate(adminArea, name, from, to, recursive, new SVNHashMap());
+        } finally {
+            wcAccess.close();
+        }
+    }
+
+    /**
+     * Canonicalizes all urls in the specified Working Copy.
+     * 
+     * @param dst               a WC path     
+     * @param omitDefaultPort   if <span class="javakeyword">true</span> then removes all
+     *                          port numbers from urls which equal to default ones, otherwise
+     *                          does not
+     * @param recursive         recurses an operation
+     * @throws SVNException
+     */
+    public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            SVNAdminAreaInfo adminAreaInfo = wcAccess.openAnchor(dst, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
+            SVNAdminArea target = adminAreaInfo.getTarget();
+            SVNEntry entry = wcAccess.getEntry(dst, false);
+            String name = target.getThisDirName();
+            if (entry != null && entry.isFile()) {
+                name = entry.getName();
+            }
+            doCanonicalizeURLs(adminAreaInfo, target, name, omitDefaultPort, recursive);
+            if (recursive && !isIgnoreExternals()) {
+                for(Iterator externals = adminAreaInfo.getNewExternals().keySet().iterator(); externals.hasNext();) {
+                    String path = (String) externals.next();
+                    String external = (String) adminAreaInfo.getNewExternals().get(path);
+                    SVNExternal[] exts = SVNExternal.parseExternals(path, external);
+                    File owner = new File(adminAreaInfo.getAnchor().getRoot(), path);
+                    for (int i = 0; i < exts.length; i++) {
+                        File externalFile = new File(owner, exts[i].getPath()); 
+                        try {
+                            doCanonicalizeURLs(externalFile, omitDefaultPort, true);
+                        } catch (SVNCancelException e) {
+                            throw e;
+                        } catch (SVNException e) {
+                            getDebugLog().logFine(SVNLogType.WC, e);
+                        }
+                    }
+                }
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
+
     private void copyVersionedDir(File from, File to, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminArea adminArea = wcAccess.probeOpen(from, false, 0);
@@ -851,87 +1113,6 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         return revNumber;
-    }
-    
-    /**
-     * Substitutes the beginning part of a Working Copy's URL with a new one.
-     * 
-     * <p> 
-     * When a repository root location or a URL schema is changed the old URL of the 
-     * Working Copy which starts with <code>oldURL</code> should be substituted for a
-     * new URL beginning - <code>newURL</code>.
-     * 
-     * @param  dst				a Working Copy item's path 
-     * @param  oldURL			the old beginning part of the repository's URL that should
-     * 							be overwritten  
-     * @param  newURL			a new beginning part for the repository location that
-     * 							will overwrite <code>oldURL</code> 
-     * @param  recursive		if <span class="javakeyword">true</span> and <code>dst</code> is
-     * 							a directory then the entire tree will be relocated, otherwise if 
-     * 							<span class="javakeyword">false</span> - only <code>dst</code> itself
-     * @throws SVNException
-     */
-    public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            SVNAdminArea adminArea = wcAccess.probeOpen(dst, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
-            String name = dst.equals(adminArea.getRoot()) ? adminArea.getThisDirName() : dst.getName();
-            String from = oldURL.toString();
-            String to = newURL.toString();
-            if (from.endsWith("/")) {
-                from = from.substring(0, from.length() - 1);
-            } 
-            if (to.endsWith("/")) {
-                to = to.substring(0, to.length() - 1);
-            } 
-            doRelocate(adminArea, name, from, to, recursive, new SVNHashMap());
-        } finally {
-            wcAccess.close();
-        }
-    }
-
-    /**
-     * Canonicalizes all urls in the specified Working Copy.
-     * 
-     * @param dst               a WC path     
-     * @param omitDefaultPort   if <span class="javakeyword">true</span> then removes all
-     *                          port numbers from urls which equal to default ones, otherwise
-     *                          does not
-     * @param recursive         recurses an operation
-     * @throws SVNException
-     */
-    public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            SVNAdminAreaInfo adminAreaInfo = wcAccess.openAnchor(dst, true, recursive ? SVNWCAccess.INFINITE_DEPTH : 0);
-            SVNAdminArea target = adminAreaInfo.getTarget();
-            SVNEntry entry = wcAccess.getEntry(dst, false);
-            String name = target.getThisDirName();
-            if (entry != null && entry.isFile()) {
-                name = entry.getName();
-            }
-            doCanonicalizeURLs(adminAreaInfo, target, name, omitDefaultPort, recursive);
-            if (recursive && !isIgnoreExternals()) {
-                for(Iterator externals = adminAreaInfo.getNewExternals().keySet().iterator(); externals.hasNext();) {
-                    String path = (String) externals.next();
-                    String external = (String) adminAreaInfo.getNewExternals().get(path);
-                    SVNExternal[] exts = SVNExternal.parseExternals(path, external);
-                    File owner = new File(adminAreaInfo.getAnchor().getRoot(), path);
-                    for (int i = 0; i < exts.length; i++) {
-                        File externalFile = new File(owner, exts[i].getPath()); 
-                        try {
-                            doCanonicalizeURLs(externalFile, omitDefaultPort, true);
-                        } catch (SVNCancelException e) {
-                            throw e;
-                        } catch (SVNException e) {
-                            getDebugLog().logFine(SVNLogType.WC, e);
-                        }
-                    }
-                }
-            }
-        } finally {
-            wcAccess.close();
-        }
     }
 
     private void doCanonicalizeURLs(SVNAdminAreaInfo adminAreaInfo, SVNAdminArea adminArea, String name, boolean omitDefaultPort, boolean recursive) throws SVNException {
