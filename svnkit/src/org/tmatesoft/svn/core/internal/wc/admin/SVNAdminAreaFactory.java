@@ -113,29 +113,32 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         SVNErrorMessage error = null;
         int version = -1;
         Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
-        
-        for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
-            SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
-            try {
-                version = factory.getVersion(path);
-                if (version > factory.getSupportedVersion()) {
-                    error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
-                            path);
-                    SVNErrorManager.error(error, SVNLogType.WC);
-                } else if (version < factory.getSupportedVersion()) {
-                    error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "Working copy format of {0} is too old ({1}); please check out your working copy again", 
-                            new Object[] {path, new Integer(version)});
-                    SVNErrorManager.error(error, SVNLogType.WC);
-                } 
-            } catch (SVNException e) {
-                error = e.getErrorMessage() ;
-                continue;
-            }
-            SVNAdminArea adminArea = factory.doOpen(path, version);
-            if (adminArea != null) {
-                return adminArea;
+        File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
+        File entriesFile = new File(adminDir, "entries");
+        if (adminDir.isDirectory() && entriesFile.isFile()) {
+            for (Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
+                SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
+                try {
+                    version = factory.getVersion(path);
+                    if (version > factory.getSupportedVersion()) {
+                        error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                                "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
+                                path);
+                        SVNErrorManager.error(error, SVNLogType.WC);
+                    } else if (version < factory.getSupportedVersion()) {
+                        error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                                "Working copy format of {0} is too old ({1}); please check out your working copy again",
+                                new Object[]{path, new Integer(version)});
+                        SVNErrorManager.error(error, SVNLogType.WC);
+                    }
+                } catch (SVNException e) {
+                    error = e.getErrorMessage();
+                    continue;
+                }
+                SVNAdminArea adminArea = factory.doOpen(path, version);
+                if (adminArea != null) {
+                    return adminArea;
+                }
             }
         }
         if (error == null) {
