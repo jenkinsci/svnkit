@@ -115,7 +115,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
         File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
         File entriesFile = new File(adminDir, "entries");
-        if (adminDir.exists() && entriesFile.exists()) {
+        if (adminDir.isDirectory() && entriesFile.isFile()) {
             for (Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
                 SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
                 try {
