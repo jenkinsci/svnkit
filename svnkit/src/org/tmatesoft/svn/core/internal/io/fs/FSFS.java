@@ -66,6 +66,7 @@ public class FSFS {
     public static final String REVISION_PROPERTIES_DIR = "revprops";
     public static final String WRITE_LOCK_FILE = "write-lock";
     public static final String LOCKS_DIR = "locks";
+    public static final String DAV_DIR = "dav";
     public static final String TRANSACTIONS_DIR = "transactions";
     public static final String TRANSACTION_PROTOS_DIR = "txn-protorevs";
     public static final String NODE_ORIGINS_DIR = "node-origins";

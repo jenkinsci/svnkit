@@ -237,9 +237,13 @@ public class SVNAdminClient extends SVNBasicClient {
      * @since                              1.1.1 
      */
     public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
-        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible);
+        return doCreateRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, false);
     }
 
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible);
+    }
+    
     /**
      * Copies revision properties from the source repository that the destination one is synchronized with 
      * to the given revision of the destination repository itself.
