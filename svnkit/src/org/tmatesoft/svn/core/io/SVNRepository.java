@@ -1995,9 +1995,11 @@ public abstract class SVNRepository {
     
     public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
             boolean includeDescendants) throws SVNException {
-        boolean isMergeInfoCapable = hasCapability(SVNCapability.MERGE_INFO);
-        if (!isMergeInfoCapable) {
+        if (paths == null) {
             return null;
+        }
+        assertServerIsMergeInfoCapable(getRepositoryRoot(true).toString());
+        for(int i = 0; paths != null && i < paths.length; i++) {
         }
         return getMergeInfoImpl(paths, revision, inherit, includeDescendants);
     }
