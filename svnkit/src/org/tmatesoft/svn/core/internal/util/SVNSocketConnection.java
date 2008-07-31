@@ -40,6 +40,12 @@ public class SVNSocketConnection implements Runnable {
     }
 
     public boolean isSocketConnected() {
+        synchronized (this) {
+            try {
+                wait(100);
+            } catch (InterruptedException e) {
+            }
+        }
         return myIsSocketConnected;
     }
 
@@ -49,7 +55,10 @@ public class SVNSocketConnection implements Runnable {
         } catch (IOException e) {
             myError = e;
         } finally {
-            myIsSocketConnected = true;
+            synchronized (this) {
+                myIsSocketConnected = true;
+                notify();
+            }
         }
     }
 }

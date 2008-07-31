@@ -100,10 +100,6 @@ public class SVNSocketFactory {
 
         while (!socketConnection.isSocketConnected()) {
             cancel.checkCancelled();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
         }
         
         if (socketConnection.getError() != null) {
