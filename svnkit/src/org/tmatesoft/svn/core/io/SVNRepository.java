@@ -2146,8 +2146,6 @@ public abstract class SVNRepository {
             return null;
         }
         assertServerIsMergeInfoCapable(getRepositoryRoot(true).toString());
-        for(int i = 0; paths != null && i < paths.length; i++) {
-        }
         return getMergeInfoImpl(paths, revision, inherit, includeDescendants);
     }
 
