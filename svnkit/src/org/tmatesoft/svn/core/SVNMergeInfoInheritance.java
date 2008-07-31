@@ -13,12 +13,28 @@ package org.tmatesoft.svn.core;
 
 
 /**
- * @version 1.1.2
+ * This class contains enumeration that describes the ways of requesting merge information.
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoInheritance {
+    
+    /**
+     * Represents the way of requesting the explicit merge information for the element.
+     */
     public static final SVNMergeInfoInheritance EXPLICIT = new SVNMergeInfoInheritance("explicit");
+    
+    /**
+     * Represents the way of requesting the explicit merge information for the element, if exists, otherwise
+     * inherited merge information from the nearest ancestor of the element.
+     */
     public static final SVNMergeInfoInheritance INHERITED = new SVNMergeInfoInheritance("inherited");
+    
+    /**
+     * Represents the way of requesting the merge information from the element's nearest ancestor, 
+     * regardless of whether the element has explicit info.
+     */
     public static final SVNMergeInfoInheritance NEAREST_ANCESTOR = new SVNMergeInfoInheritance("nearest-ancestor");
     
     private String myName;

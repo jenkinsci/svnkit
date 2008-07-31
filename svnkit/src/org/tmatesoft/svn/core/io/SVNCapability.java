@@ -29,17 +29,17 @@ public class SVNCapability {
 	
     /**
      * Represents the capability of the repository to support merge-tracking
-     * information 
+     * information.
      */
 	public static final SVNCapability MERGE_INFO = new SVNCapability("mergeinfo");
     
 	/**
-     * Represents the capability of retrieving arbitrary revision properties 
+     * Represents the capability of retrieving arbitrary revision properties. 
      */
 	public static final SVNCapability LOG_REVPROPS = new SVNCapability("log-revprops");
     
 	/**
-     * Represents the capability of replaying a directory in the repository (partial replay)
+     * Represents the capability of replaying a directory in the repository (partial replay).
      */
 	public static final SVNCapability PARTIAL_REPLAY = new SVNCapability("partial-replay");
     

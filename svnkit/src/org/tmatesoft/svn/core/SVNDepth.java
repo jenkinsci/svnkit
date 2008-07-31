@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core;
 
 /**
  * This class contains enumeration that desribes depth,
- * that is used .
+ * that is used.
  * The order of these depths is important: the higher the number,
  * the deeper it descends.  You can use it to compare two depths
  * numerically to decide which goes deeper.
