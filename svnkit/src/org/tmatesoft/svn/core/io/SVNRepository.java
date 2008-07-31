@@ -1556,7 +1556,33 @@ public abstract class SVNRepository {
     public void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         update(url, revision, target, SVNDepth.fromRecurse(recursive), reporter, editor);
     }
-
+    /**
+     * Updates a path switching it to a new repository location 
+     * the same way as {@link #update(SVNURL, long, String, boolean, ISVNReporterBaton, ISVNEditor)}
+     * with the difference that <code>depth</code> is used instead of recursion.
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
+     * 
+     * @param  url              a new location in the repository to switch to
+     * @param  revision         a desired revision to make update to; defaults
+     *                          to the latest revision (HEAD)
+     * @param  target           an entry name (optional)  
+     * @param  depth            the depth for update operation 
+     * @param  reporter         a caller's reporter
+     * @param  editor           a caller's editor
+     * @throws SVNException     in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+     * 
+     * @see                     #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
+     * @see                     #update(SVNURL, long, String, boolean, ISVNReporterBaton, ISVNEditor)
+     * @see                     ISVNReporterBaton
+     * @see                     ISVNReporter
+     * @see                     ISVNEditor
+     * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+     * @since                   SVNKit 1.2.0, SVN 1.5.0
+     */
     public abstract void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
@@ -1614,6 +1640,53 @@ public abstract class SVNRepository {
         update(revision, target, SVNDepth.fromRecurse(recursive), false, reporter, editor);
     }
 
+    /**
+     * Updates a path receiving changes from a repository.
+     * 
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will 
+     * restrict the scope of the update to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
+     * 
+     * <p>
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+     * then the scope of the update operation is the repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * The <code>reporter</code> is used to describe the state of the local item(s) (i.e. 
+     * items' revision numbers, deleted, switched items). All the paths described by the 
+     * <code>reporter</code> should be relative to the repository location to which this 
+     * object is set. 
+     * 
+     * <p>
+     * After that the <code>editor</code> is used to carry out all the work on 
+     * updating. This <code>editor</code> contains 
+     * knowledge of where the change will begin (when {@link ISVNEditor#openRoot(long) ISVNEditor.openRoot()} 
+     * is called).
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>reporter</code> and <code>editor</code>.
+     * 
+     * @param  revision         a desired revision to make update to; defaults to
+     *                          the latest revision (HEAD)
+     * @param  target           an entry name (optional)  
+     * @param  depth            a depth for update operation, determines the scope of the update
+     * @param  sendCopyFromArgs 
+     * @param  reporter         a caller's reporter
+     * @param  editor           a caller's editor
+     * @throws SVNException     in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+     * @see                     #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
+     * @see                     ISVNReporterBaton
+     * @see                     ISVNReporter
+     * @see                     ISVNEditor
+     * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+     */
     public abstract void update(long revision, String target, SVNDepth depth, 
             boolean sendCopyFromArgs, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
@@ -1669,10 +1742,30 @@ public abstract class SVNRepository {
         status(revision, target, SVNDepth.fromRecurse(recursive), reporter, editor);
     }
     
+    /**
+     * Gets status of a path to the particular <code>depth</code> as a scope. 
+     * {@link #status(long, String, boolean, ISVNReporterBaton, ISVNEditor)}
+     *
+     * @param  revision         a desired revision to get status against; defaults to
+     *                          the latest revision (HEAD)
+     * @param  target           an entry name (optional)  
+     * @param  depth            defines the status scope
+     * @param  reporter         a client's reporter-baton
+     * @param  editor           a client's status editor
+     * @throws SVNException     in the following cases:
+     *                          <ul>
+     *                          <li>a failure occured while connecting to a repository 
+     *                          <li>the user authentication failed 
+     *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                          </ul>
+     * @see                     #status(long, String, boolean, ISVNReporterBaton, ISVNEditor)
+     * @see                     ISVNReporterBaton
+     * @see                     ISVNEditor
+     */
     public abstract void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
-     * Checks out a directory from a repository .
+     * Checks out a directory from a repository.
      *
      * <p>
      * <code>target</code> is the name (one-level path component) of an entry that will 
@@ -1717,6 +1810,47 @@ public abstract class SVNRepository {
         checkout(revision, target, SVNDepth.fromRecurse(recursive), editor);
     }
     
+    /**
+     * Checks out a directory from a repository to define <code>depth</code>.
+     *
+     * <p>
+     * <code>target</code> is the name (one-level path component) of an entry that will 
+     * restrict the scope of the checkout to this entry. In other words <code>target</code> is a child entry of the 
+     * directory represented by the repository location to which this object is set. For
+     * example, if we have something like <code>"/dirA/dirB"</code> in a repository, then
+     * this object's repository location may be set to <code>"svn://host:port/path/to/repos/dirA"</code>,
+     * and <code>target</code> may be <code>"dirB"</code>.
+     * 
+     * <p>
+     * If <code>target</code> is <span class="javakeyword">null</span> or empty (<code>""</code>)
+     * then the scope of the checkout operation is the repository location to which
+     * this object is set.
+     * 
+     * <p>
+     * The provided <code>editor</code> is used to carry out all the work on 
+     * building a local tree of dirs and files being checked out. 
+     * 
+     * <p>
+     * <b>NOTE:</b> you may not invoke methods of this <b>SVNRepository</b>
+     * object from within the provided <code>editor</code>.
+     * 
+     * @param  revision     a desired revision of a dir to check out; defaults
+     *                      to the latest revision (HEAD)
+     * @param  target       an entry name (optional)  
+     * @param  depth        the checkout operation scope
+     * @param  editor       a caller's checkout editor
+     * @throws SVNException in the following cases:
+     *                      <ul>
+     *                      <li>the checkout scope is not a directory (only dirs can
+     *                      be checked out)
+     *                      <li>a failure occured while connecting to a repository 
+     *                      <li>the user authentication failed 
+     *                      (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
+     *                      </ul>
+     * @see                 #update(long, String, SVNDepth, boolean, ISVNReporterBaton, ISVNEditor)
+     * @see                 ISVNEditor
+     * 
+     */
     public void checkout(long revision, String target, SVNDepth depth, ISVNEditor editor) throws SVNException {
         final long lastRev = revision >= 0 ? revision : getLatestRevision();
         // check path?
@@ -1993,6 +2127,19 @@ public abstract class SVNRepository {
      */
     public abstract SVNLock[] getLocks(String path) throws SVNException;
     
+    /**
+     * Returns merge information for the repository entries in <code>paths</code> 
+     * for paricular <code>revision</code>, if the repository supports merge-tracking information
+     * @param paths                 paths under which merge information is to be retrieved
+     * @param revision              revision for which merge information is to be retrieved
+     * @param inherit               indicates whether explicit, explicit or inherited, or only inherited merge info is retrieved
+     * @param includeDescendants    indicates whether merge info is retrieved for descendants of elements in <code>paths</code>
+     * @return                      the map of merge information for the repository entries in <code>paths</code>
+     * @throws SVNException         in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+ 
+     * @since SVNKit 1.2.0, SVN 1.5.0 
+     */
     public Map getMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, 
             boolean includeDescendants) throws SVNException {
         if (paths == null) {

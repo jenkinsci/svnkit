@@ -12,6 +12,7 @@
 
 package org.tmatesoft.svn.core.io;
 
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -48,11 +49,11 @@ import org.tmatesoft.svn.core.SVNURL;
  * For more information on using reporters, please, read these on-line article: 
  * <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see 	ISVNReporterBaton
  * @see 	SVNRepository
- * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
+ * @see     <a href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public interface ISVNReporter {
 
@@ -76,11 +77,37 @@ public interface ISVNReporter {
      * @param  revision 		the local item's revision number
      * @param  startEmpty 		if <span class="javakeyword">true</span> and if the <code>path</code> is a 
      * 							directory, then means there're no entries yet
-     * @throws SVNException		
+     * @throws SVNException     in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      * 
      */
 	public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
 
+	 /**
+     * <p>
+     * Describes a local path as being at a particular revision with a particular depth.  
+     * 
+     * <p>
+     * If <code>startEmpty</code> is <span class="javakeyword">true</span> and the 
+     * <code>path</code> is a directory, an implementor should assume the 
+     * directory has no entries or properties (used in checkouts and aborted updates).
+     * 
+     * <p>
+     * A next call to this method will "override" any previous <code>setPath()</code> calls made on parent
+     * paths. The <code>path</code> is relative to the repository location specified for an 
+     * <b>SVNRepository</b> driver.
+     * 
+     * @param  path             a local item's path 
+     * @param  lockToken        if not <span class="javakeyword">null</span>, it is a lock token 
+     *                          for the <code>path</code>
+     * @param  revision         the local item's revision number
+	 * @param  depth            the scope of the operation
+     * @param  startEmpty       if <span class="javakeyword">true</span> and if the <code>path</code> is a 
+     *                          directory, then means there're no entries yet
+     * @throws SVNException     in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+     * 
+     */
     public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException;
 
 	/**
@@ -88,7 +115,8 @@ public interface ISVNReporter {
      * Describes a working copy <code>path</code> as deleted or missing.
      * 
      * @param  path 			a path relative to the root of the report
-     * @throws SVNException		
+     * @throws SVNException     in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
      */
     public void deletePath(String path) throws SVNException;
 
@@ -114,7 +142,9 @@ public interface ISVNReporter {
      * @param  revison 		the local item's revision number 
      * @param  startEmpty   if <span class="javakeyword">true</span> and if the <code>path</code> is a 
      *                      directory, then means there're no entries yet
-     * @throws SVNException 
+     * @throws SVNException in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+ 
      */
     public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmpty) throws SVNException;
 
@@ -128,7 +158,9 @@ public interface ISVNReporter {
      * Any directories or files not explicitly set (described) 
      * are assumed to be at the baseline revision. 
      * 
-     * @throws SVNException 	
+     * @throws SVNException                 in case the repository could not be connected
+     * @throws SVNAuthenticationException   in case of authentication problems
+	 *
      */
     public void finishReport() throws SVNException;
     
@@ -139,7 +171,9 @@ public interface ISVNReporter {
      * If an error occurs during a report, call this method
      * to abort the reporter correctly. 
      * 
-     * @throws SVNException		
+     * @throws SVNException     in case the repository could not be connected
+     * @throws SVNAuthenticationException in case of authentication problems
+	 *	
      */
     public void abortReport() throws SVNException;
 }
