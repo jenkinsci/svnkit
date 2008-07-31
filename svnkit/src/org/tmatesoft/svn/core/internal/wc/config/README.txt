@@ -71,7 +71,7 @@ Python's ConfigParser module; see
 Configuration data in the Windows registry
 ==========================================
 
-On Windows, configuration data may also be stored in the registry.  The
+On Windows, configuration data may also be stored in the registry. The
 functions svn_config_read and svn_config_merge will read from the
 registry when passed file names of the form:
 
