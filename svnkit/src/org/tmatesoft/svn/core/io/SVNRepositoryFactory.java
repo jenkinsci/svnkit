@@ -316,7 +316,7 @@ public abstract class SVNRepositoryFactory {
                 if ( children != null && children.length != 0) {
                     if (!force) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                        SVNErrorManager.error(err, SVNLogType.NETWORK);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     } else {
                         SVNFileUtil.deleteAll(path, true);
                     }
@@ -324,7 +324,7 @@ public abstract class SVNRepositoryFactory {
             } else {
                 if (!force) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 } else {
                     SVNFileUtil.deleteAll(path, true);
                 }
@@ -333,12 +333,12 @@ public abstract class SVNRepositoryFactory {
         //SVNFileUtil.deleteAll(path, true);
         if (!path.mkdirs() && !path.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
-            SVNErrorManager.error(err, SVNLogType.NETWORK);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         InputStream is = SVNRepositoryFactory.class.getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
         if (is == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
-            SVNErrorManager.error(err, SVNLogType.NETWORK);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar", true);
         OutputStream uuidOS = null; 
@@ -367,7 +367,7 @@ public abstract class SVNRepositoryFactory {
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
                                 new Object[] {hookFile, e.getLocalizedMessage()});
-                        SVNErrorManager.error(err, SVNLogType.NETWORK);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
@@ -380,7 +380,7 @@ public abstract class SVNRepositoryFactory {
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
                                 new Object[] {hookFile, e.getLocalizedMessage()});
-                        SVNErrorManager.error(err, SVNLogType.NETWORK);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
@@ -400,7 +400,7 @@ public abstract class SVNRepositoryFactory {
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
                 err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             int fsFormat = FSFS.DB_FORMAT;
@@ -414,7 +414,7 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository format to ''{0}''", reposFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
                 
@@ -430,8 +430,14 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
+
+                File davSandboxDir = new File(path, FSFS.DAV_DIR);
+                davSandboxDir.mkdir();
+            } else {
+                final File currentTxnLockFile = new File(path, "db/" + FSFS.TXN_CURRENT_LOCK_FILE);
+                SVNFileUtil.createEmptyFile(currentTxnLockFile);
             }
             
             long maxFilesPerDir = 0;
@@ -466,21 +472,20 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
-            
-            if (fsFormat >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
-                File currentFile = new File(path, "db/" + FSFS.CURRENT_FILE);
-                currentOS = SVNFileUtil.openFileForWriting(currentFile);
-                try {
-                    currentOS.write("0\n".getBytes("US-ASCII"));
-                } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                            "Can not write to ''{0}'' file: {1}", 
-                            new Object[] { currentFile.getName(), e.getLocalizedMessage() });
-                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
-                }
+
+            String currentFileLine = fsFormat >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT ? "0\n" : "0 1 1\n";
+            File currentFile = new File(path, "db/" + FSFS.CURRENT_FILE);
+            currentOS = SVNFileUtil.openFileForWriting(currentFile);
+            try {
+                currentOS.write(currentFileLine.getBytes("US-ASCII"));
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                        "Can not write to ''{0}'' file: {1}",
+                        new Object[]{currentFile.getName(), e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e, SVNLogType.FSFS);
             }
             
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
@@ -493,7 +498,7 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Can not write to ''{0}'' file: {1}", 
                             new Object[] { txnCurrentFile.getName(), e.getLocalizedMessage() });
-                    SVNErrorManager.error(err, e, SVNLogType.NETWORK);
+                    SVNErrorManager.error(err, e, SVNLogType.FSFS);
                 }
             }
             
