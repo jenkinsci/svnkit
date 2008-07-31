@@ -62,7 +62,7 @@ public class SVNURL {
      *                       components) is malformed
      */
     public static SVNURL create(String protocol, String userInfo, String host, int port, String path, boolean uriEncoded) throws SVNException {
-        if (host == null || host.indexOf('@') >= 0) {
+        if ((host == null && !"file".equalsIgnoreCase(protocol)) || (host != null && host.indexOf('@') >= 0)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid host name ''{0}''", host), SVNLogType.DEFAULT);
         }
         path = path == null ? "/" : path.trim();
@@ -512,7 +512,9 @@ public class SVNURL {
             url.append(userInfo);
             url.append("@");
         }
-        url.append(host);
+        if (host != null) {
+            url.append(host);
+        }
         if (port >= 0) {
             url.append(":");
             url.append(port);
