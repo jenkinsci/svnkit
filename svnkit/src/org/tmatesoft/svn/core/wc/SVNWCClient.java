@@ -69,6 +69,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -154,6 +155,13 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCClient extends SVNBasicClient {
 
+    /**
+     * Default implementation of {@link ISVNAddParameters} which
+     * <code>onInconsistentEOLs(File file)</code> always returns the 
+     * {@link ISVNAddParameters#REPORT_ERROR} action.
+     * 
+     * @since 1.2
+     */
     public static ISVNAddParameters DEFAULT_ADD_PARAMETERS = new ISVNAddParameters() {
         public Action onInconsistentEOLs(File file) {
             return ISVNAddParameters.REPORT_ERROR;
@@ -190,10 +198,32 @@ public class SVNWCClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNWCClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * <p/>
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNWCClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * <p/>
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNWCClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
 
+    /**
+     * Sets custom add parameters to this client object.
+     * @since 1.2
+     */
     public void setAddParameters(ISVNAddParameters addParameters) {
         myAddParameters = addParameters;
     }
@@ -236,6 +266,14 @@ public class SVNWCClient extends SVNBasicClient {
         myCommitHandler = handler;
     }
 
+    /**
+     * Returns the add parameters object used by this object.
+     * If no custom object was specified through a call to {@link #setAddParameters(ISVNAddParameters)} 
+     * then {@link #DEFAULT_ADD_PARAMETERS} is returned.
+     * 
+     * @return add parameters object
+     * @since 1.2
+     */
     protected ISVNAddParameters getAddParameters() {
         if (myAddParameters == null) {
             return DEFAULT_ADD_PARAMETERS;
