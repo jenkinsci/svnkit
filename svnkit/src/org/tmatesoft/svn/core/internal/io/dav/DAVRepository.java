@@ -1141,7 +1141,8 @@ public class DAVRepository extends SVNRepository {
         DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
         HTTPStatus status = myConnection.doReport(path, request, handler);
         if (status.getCode() == 501) {
-            return new SVNHashMap();
+	        SVNErrorMessage err = status.getError() != null ? status.getError() : SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Server does not support mergeinfo");
+	        SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (status.getError() != null) {
             SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
