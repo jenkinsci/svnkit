@@ -228,6 +228,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * {@link ISVNEventHandler#checkCancelled()} will be used at various places during the update to check 
      * whether the caller wants to stop the update.
      * 
+     * <p/>
+     * This operation requires repository access (in case the repository is not on the same machine, network
+     * connection is established).
+     * 
      * @param  paths                           working copy paths
      * @param  revision                        revision to update to
      * @param  depth                           tree depth to update
@@ -320,6 +324,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * each item handled by the update, and also for files restored from text-base. Also 
      * {@link ISVNEventHandler#checkCancelled()} will be used at various places during the update to check 
      * whether the caller wants to stop the update.
+     * 
+     * <p/>
+     * This operation requires repository access (in case the repository is not on the same machine, network
+     * connection is established).
      * 
      * @param  path                           working copy path
      * @param  revision                       revision to update to
@@ -519,22 +527,28 @@ public class SVNUpdateClient extends SVNBasicClient {
      * paths affected by the switch, and also for files restored from text-base. Also 
      * {@link ISVNEventHandler#checkCancelled()} will be used at various places during the switch to check 
      * whether the caller wants to stop the switch.
-     *
-     * @param   path           the Working copy item to be switched
-     * @param   url            the repository location as a target against which the item will 
-     *                         be switched
-     * @param   pegRevision    a revision in which <code>file</code> is first looked up
-     *                         in the repository
-     * @param   revision       the desired revision of the repository target   
-     * @param   depth
-     * @param   force 
-     * @param   depthIsSticky
-     * @return                 value of the revision to which the working copy was actually switched.
+     * 
+     * <p/>
+     * This operation requires repository access (in case the repository is not on the same machine, network
+     * connection is established).
+     * 
+     * @param  path                           the Working copy item to be switched
+     * @param  url                            the repository location as a target against which the item will 
+     *                                        be switched
+     * @param  pegRevision                    a revision in which <code>path</code> is first looked up
+     *                                        in the repository
+     * @param  revision                       the desired revision of the repository target   
+     * @param  depth                          tree depth to update
+     * @param  allowUnversionedObstructions   flag that allows tollerating unversioned items 
+     *                                        during update
+     * @param  depthIsSticky                  flag that controls whether the requested depth 
+     *                                        should be written into the working copy
+     * @return                                value of the revision to which the working copy was actually switched
      * @throws SVNException 
      * @since  1.2, SVN 1.5
      */
     public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
-            boolean force, boolean depthIsSticky) throws SVNException {
+            boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
@@ -561,8 +575,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             // reparent to the sourceURL
             repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
-            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), force, depthIsSticky, 
-                    depth, preservedExts, null, false);
+            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), 
+                    allowUnversionedObstructions, depthIsSticky, depth, preservedExts, null, false);
             //new SVNUpdateEditor(info, url.toString(), force, depth, preservedExts, null);
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
@@ -627,7 +641,76 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), force);
     }
     
-    public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean force) throws SVNException {
+    /**
+     * Checks out a working copy of <code>url</code> at <code>revision</code>, looked up at 
+     * <code>pegRevision</code>, using <code>dstPath</code> as the root directory of the newly
+     * checked out working copy. 
+     * 
+     * <p/>
+     * If <code>pegRevision</code> is {@link SVNRevision#UNDEFINED}, then it
+     * defaults to {@link SVNRevision#HEAD}.
+     * 
+     * <p/>
+     * <code>revision</code> must represent a valid revision number ({@link SVNRevision#getNumber()} >= 0),
+     * or date ({@link SVNRevision#getDate()} != <span class="javakeyword">true</span>), or be equal to 
+     * {@link SVNRevision#HEAD}. If <code>revision</code> does not meet these requirements, an exception with 
+     * the error code {@link SVNErrorCode#CLIENT_BAD_REVISION} is thrown.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, checks out fully recursively.
+     * Else if it is {@link SVNDepth#IMMEDIATES}, checks out <code>url</code> and its
+     * immediate entries (subdirectories will be present, but will be at
+     * depth {@link SVNDepth#EMPTY} themselves); else {@link SVNDepth#FILES},
+     * checks out <code>url</code> and its file entries, but no subdirectories; else
+     * if {@link SVNDepth#EMPTY}, checks out <code>url</code> as an empty directory at
+     * that depth, with no entries present.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, then behave as if for
+     * {@link SVNDepth#INFINITY}, except in the case of resuming a previous
+     * checkout of <code>dstPath</code> (i.e., updating), in which case uses the depth
+     * of the existing working copy.
+     *
+     * <p/>
+     * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
+     * as part of this operation.
+     *
+     * <p/>
+     * If <code>allowUnversionedObstructions</code> is <span class="javakeyword">true</span> then the checkout 
+     * tolerates existing unversioned items that obstruct added paths from <code>url</code>. Only
+     * obstructions of the same type (file or dir) as the added item are tolerated.  The text of obstructing 
+     * files is left as-is, effectively treating it as a user modification after the checkout. Working
+     * properties of obstructing items are set equal to the base properties. If 
+     * <code>allowUnversionedObstructions</code> is <span class="javakeyword">false</span> then the checkout 
+     * will abort if there are any unversioned obstructing items.
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, it is invoked 
+     * as the checkout processes. Also {@link ISVNEventHandler#checkCancelled()} will be used at various places 
+     * during the checkout to check whether the caller wants to stop the checkout.
+     * 
+     * <p/>
+     * This operation requires repository access (in case the repository is not on the same machine, network
+     * connection is established).
+     *
+     * @param url                           a repository location from where a Working Copy will be checked out     
+     * @param dstPath                       the local path where the Working Copy will be placed
+     * @param pegRevision                   the revision at which <code>url</code> will be firstly seen
+     *                                      in the repository to make sure it's the one that is needed
+     * @param revision                      the desired revision of the Working Copy to be checked out
+     * @param depth                         tree depth
+     * @param allowUnversionedObstructions  flag that allows tollerating unversioned items 
+     *                                      during 
+     * @return                              value of the revision actually checked out from the repository
+     * @throws SVNException                 <ul>
+     *                                      <li/>{@link SVNErrorCode#UNSUPPORTED_FEATURE} - if <code>url</code> refers to a 
+     *                                      file rather than a directory
+     *                                      <li/>{@link SVNErrorCode#RA_ILLEGAL_URL} - if <code>url</code> does not exist  
+     *                                      </ul>    
+     * @since 1.2, SVN 1.5
+     */
+    public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
+            boolean allowUnversionedObstructions) throws SVNException {
         if (dstPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "Checkout destination path can not be NULL");
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -663,7 +746,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (kind == SVNFileType.NONE) {
             depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
             SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber, depth);
-            result = doUpdate(dstPath, revision, depth, force, true);
+            result = doUpdate(dstPath, revision, depth, allowUnversionedObstructions, true);
         } else if (kind == SVNFileType.DIRECTORY) {
             int formatVersion = SVNAdminAreaFactory.checkWC(dstPath, true);
             if (formatVersion != 0) {
@@ -671,7 +754,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
                 wcAccess.closeAdminArea(dstPath);
                 if (rootEntry.getSVNURL() != null && url.equals(rootEntry.getSVNURL())) {
-                    result = doUpdate(dstPath, revision, depth, force, true);
+                    result = doUpdate(dstPath, revision, depth, allowUnversionedObstructions, true);
                 } else {
                     String message = "''{0}'' is already a working copy for a different URL";
                     if (rootEntry.isIncomplete()) {
@@ -683,7 +766,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } else {
                 depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
                 SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber, depth);
-                result = doUpdate(dstPath, revision, depth, force, true);
+                result = doUpdate(dstPath, revision, depth, allowUnversionedObstructions, true);
             }
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", dstPath);
@@ -736,11 +819,51 @@ public class SVNUpdateClient extends SVNBasicClient {
         return doExport(url, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
     }
     
+    /**
+     * Exports the contents of a subversion repository into a 'clean' directory (meaning a
+     * directory with no administrative directories). 
+     * 
+     * <p/>
+     * <code>pegRevision</code> is the revision where the path is first looked up. 
+     * If <code>pegRevision</code> is {@link SVNRevision#UNDEFINED}, 
+     * then it defaults to {@link SVNRevision#HEAD}.
+     * 
+     * <p/>
+     * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
+     * as part of this operation.
+     * 
+     * <p/>
+     * <code>eolStyle</code> allows you to override the standard eol marker on the platform
+     * you are running on. Can be either "LF", "CR" or "CRLF" or <span class="javakeyword">null</span>.  
+     * If <span class="javakeyword">null</span> will use the standard eol marker. Any other value will cause 
+     * an exception with the error code {@link SVNErrorCode#IO_UNKNOWN_EOL} error to be returned.
+     * 
+     * <p>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, exports fully recursively.
+     * Else if it is {@link SVNDepth#IMMEDIATES}, exports <code>url</code> and its immediate
+     * children (if any), but with subdirectories empty and at
+     * {@link SVNDepth#EMPTY}. Else if {@link SVNDepth#FILES}, exports <code>url</code> and
+     * its immediate file children (if any) only.  If <code>depth</code> is {@link SVNDepth#EMPTY}, 
+     * then exports exactly <code>url</code> and none of its children.
+     * 
+     * @param url             repository url to export from
+     * @param dstPath         path to export to
+     * @param pegRevision     the revision at which <code>url</code> will be firstly seen
+     *                        in the repository to make sure it's the one that is needed
+     * @param revision        the desired revision of the directory/file to be exported
+     * @param eolStyle        a string that denotes a specific End-Of-Line charecter  
+     * @param overwrite       if <span class="javakeyword">true</span>, will cause the export to overwrite 
+     *                        files or directories
+     * @param depth           tree depth
+     * @return                value of the revision actually exported
+     * @throws SVNException
+     * @since  1.2, SVN 1.5
+     */
     public long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, 
-            boolean force, SVNDepth depth) throws SVNException {
+            boolean overwrite, SVNDepth depth) throws SVNException {
         long[] revNum = { SVNRepository.INVALID_REVISION }; 
         SVNRepository repository = createRepository(url, null, null, pegRevision, revision, revNum);
-        long exportedRevision = doRemoteExport(repository, revNum[0], dstPath, eolStyle, force, depth);
+        long exportedRevision = doRemoteExport(repository, revNum[0], dstPath, eolStyle, overwrite, depth);
         dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, exportedRevision, 
                 SVNEventAction.UPDATE_COMPLETED, null, null, null));
         return exportedRevision;
@@ -802,7 +925,58 @@ public class SVNUpdateClient extends SVNBasicClient {
             String eolStyle, final boolean force, boolean recursive) throws SVNException {
         return doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, SVNDepth.fromRecurse(recursive));
     }
-    
+
+    /**
+     * Exports the contents of either a subversion repository or a
+     * subversion working copy into a 'clean' directory (meaning a 
+     * directory with no administrative directories).
+     * 
+     * <p/>
+     * <code>pegRevision</code> is the revision where the path is first looked up
+     * when exporting from a repository. If <code>pegRevision</code> is {@link SVNRevision#UNDEFINED}, 
+     * then it defaults to {@link SVNRevision#WORKING}.
+     * 
+     * <p/>
+     * If <code>revision</code> is one of:
+     * <ul>
+     * <li/>{@link SVNRevision#BASE}
+     * <li/>{@link SVNRevision#WORKING}
+     * <li/>{@link SVNRevision#COMMITTED}
+     * <li/>{@link SVNRevision#UNDEFINED}
+     * </ul> 
+     * then local export is performed. Otherwise exporting from the repository.
+     * <p/>
+     * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
+     * as part of this operation.
+     * 
+     * <p/>
+     * <code>eolStyle</code> allows you to override the standard eol marker on the platform
+     * you are running on. Can be either "LF", "CR" or "CRLF" or <span class="javakeyword">null</span>.  
+     * If <span class="javakeyword">null</span> will use the standard eol marker. Any other value will cause 
+     * an exception with the error code {@link SVNErrorCode#IO_UNKNOWN_EOL} error to be returned.
+     * 
+     * <p>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, exports fully recursively.
+     * Else if it is {@link SVNDepth#IMMEDIATES}, exports <code>srcPath</code> and its immediate
+     * children (if any), but with subdirectories empty and at
+     * {@link SVNDepth#EMPTY}. Else if {@link SVNDepth#FILES}, exports <code>srcPath</code> and
+     * its immediate file children (if any) only.  If <code>depth</code> is {@link SVNDepth#EMPTY}, 
+     * then exports exactly <code>srcPath</code> and none of its children.
+     * 
+     * @param srcPath         working copy path
+     * @param dstPath         path to export to
+     * @param pegRevision     the revision at which <code>url</code> will be firstly seen
+     *                        in the repository to make sure it's the one that is needed
+     * @param revision        the desired revision of the directory/file to be exported; used only
+     *                        when exporting from a repository
+     * @param eolStyle        a string that denotes a specific End-Of-Line charecter  
+     * @param overwrite       if <span class="javakeyword">true</span>, will cause the export to overwrite 
+     *                        files or directories
+     * @param depth           tree depth
+     * @return                value of the revision actually exported
+     * @throws SVNException
+     * @since  1.2, SVN 1.5
+     */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, 
             String eolStyle, final boolean force, SVNDepth depth) throws SVNException {
         long exportedRevision = -1;
