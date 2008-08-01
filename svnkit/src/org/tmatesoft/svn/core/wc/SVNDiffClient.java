@@ -769,7 +769,7 @@ public class SVNDiffClient extends SVNMergeDriver {
                     depth, changeLists);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, 
-                    !serverSupportsDepth, depth, getDebugLog());
+                    !serverSupportsDepth, depth, false, getDebugLog());
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
@@ -821,7 +821,7 @@ public class SVNDiffClient extends SVNMergeDriver {
                     depth, changeLists);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
-                    false, !serverSupportsDepth, depth, getDebugLog());
+                    false, !serverSupportsDepth, depth, false, getDebugLog());
             
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
