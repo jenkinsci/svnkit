@@ -45,15 +45,17 @@ public class SVNReporter implements ISVNReporterBaton {
     private boolean myUseDepthCompatibilityTrick;
     private File myTarget;
     private ISVNDebugLog myLog;
+    private boolean myIsLockOnDemand;
 
     public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, 
-            boolean useDepthCompatibilityTrick, SVNDepth depth, ISVNDebugLog log) {
+            boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, ISVNDebugLog log) {
         myInfo = info;
         myDepth = depth;
         myIsRestore = restoreFiles;
         myUseDepthCompatibilityTrick = useDepthCompatibilityTrick;
         myLog = log;
         myTarget = file;
+        myIsLockOnDemand = lockOnDemand;
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
@@ -257,7 +259,11 @@ public class SVNReporter implements ISVNReporterBaton {
         if (!myIsRestore) {
             return;
         }
+        if (myIsLockOnDemand && !adminArea.isLocked()) {
+            adminArea.lock(false);
+        }
         adminArea.restoreFile(name);
+            
         SVNEntry entry = adminArea.getEntry(name, true);
         myInfo.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.RESTORE, null, null, null));
     }    
