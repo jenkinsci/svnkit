@@ -565,6 +565,36 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return new SVNAdminArea[0];
     }
+
+    /**
+     * Ugrades SVNAdminArea associated with the path and cached in this SVNWCAccess instance.
+     * Updates caches if upgrade was done.
+     *
+     * @param  path                           path associated with already retrieved and locked SVNAdminArea
+     * @return                                newly created SVNAdminArea object if upgrade was done or already cached SVNAdminArea instance otherwise.
+     * @throws SVNException
+     */
+    public SVNAdminArea upgrade(File path) throws SVNException {
+        SVNAdminArea upgradedArea = null;
+        if (myAdminAreas != null) {
+            SVNAdminArea area = (SVNAdminArea) myAdminAreas.get(path);
+            if (area != null) {
+                ISVNCleanupHandler cleanupHandler = null;
+                if (myCleanupHandlers != null) {
+                    cleanupHandler = (ISVNCleanupHandler) myCleanupHandlers.get(area);
+                }
+                upgradedArea = SVNAdminAreaFactory.upgrade(area);
+                if (upgradedArea != area) {
+                    myAdminAreas.put(path, upgradedArea);
+                    if (cleanupHandler != null) {
+                        myCleanupHandlers.remove(area);
+                        myCleanupHandlers.put(upgradedArea, cleanupHandler);
+                    }
+                }
+            }
+        }
+        return upgradedArea;
+    }
     
     public SVNAdminArea retrieve(File path) throws SVNException {
         SVNAdminArea adminArea = getAdminArea(path);

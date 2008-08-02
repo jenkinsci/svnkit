@@ -352,7 +352,12 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNAdminAreaInfo adminInfo = null;
         int admOpenDepth = getLevelsToLockFromDepth(depth);
         try {
-            adminInfo = wcAccess.openAnchor(path, !myIsUpdateLocksOnDemand, admOpenDepth);
+            if (isUpdateLocksOnDemand()) {
+                adminInfo = wcAccess.openAnchor(path, true, 0);
+                wcAccess.close();
+            }
+
+            adminInfo = wcAccess.openAnchor(path, !isUpdateLocksOnDemand(), admOpenDepth);
             SVNAdminArea anchorArea = adminInfo.getAnchor();
 
             SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
