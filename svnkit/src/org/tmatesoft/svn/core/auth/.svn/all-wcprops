@@ -1,59 +1,17 @@
 K 25
 svn:wc:ra_dav:version-url
 V 83
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth
-END
-SVNSSHAuthentication.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/SVNSSHAuthentication.java
-END
-SVNAuthentication.java
-K 25
-svn:wc:ra_dav:version-url
-V 106
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/SVNAuthentication.java
-END
-SVNUserNameAuthentication.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/SVNUserNameAuthentication.java
-END
-SVNSSLAuthentication.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/SVNSSLAuthentication.java
-END
-SVNPasswordAuthentication.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/SVNPasswordAuthentication.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/auth
 END
 ISVNAuthenticationManager.java
 K 25
 svn:wc:ra_dav:version-url
 V 114
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.java
-END
-ISVNAuthenticationProvider.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/ISVNAuthenticationProvider.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/auth/ISVNAuthenticationManager.java
 END
 BasicAuthenticationManager.java
 K 25
 svn:wc:ra_dav:version-url
 V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/BasicAuthenticationManager.java
-END
-ISVNProxyManager.java
-K 25
-svn:wc:ra_dav:version-url
-V 105
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth/ISVNProxyManager.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/auth/BasicAuthenticationManager.java
 END

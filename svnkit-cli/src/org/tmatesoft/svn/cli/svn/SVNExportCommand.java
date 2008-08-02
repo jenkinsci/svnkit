@@ -41,6 +41,7 @@ public class SVNExportCommand extends SVNCommand {
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
+        options.add(SVNOption.QUIET);
         options.add(SVNOption.NON_RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.FORCE);

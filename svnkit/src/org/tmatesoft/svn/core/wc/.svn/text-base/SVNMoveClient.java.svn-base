@@ -755,8 +755,8 @@ public class SVNMoveClient extends SVNBasicClient {
             dstAccess.probeOpen(dst, false, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
             if (dstEntry != null) {
-                if (!dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is not scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
+                if (!dstEntry.isScheduledForAddition() && !dstEntry.isScheduledForReplacement()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for addition nor for replacement", new Object[]{opName, dst});
                     SVNErrorManager.error(err);
                 }
                 versionedDst = true;
@@ -809,8 +809,8 @@ public class SVNMoveClient extends SVNBasicClient {
         try {
             SVNAdminArea dstArea = dstAccess.probeOpen(dst, true, 0);
             SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-            if (dstEntry != null && !dstEntry.isScheduledForDeletion() && !dstEntry.isScheduledForReplacement()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for deletion nor for replacement", new Object[]{opName, dst});
+            if (dstEntry != null && !dstEntry.isScheduledForAddition() && !dstEntry.isScheduledForReplacement()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_ATTRIBUTE_INVALID, "Cannot perform 'virtual' {0}: ''{1}'' is scheduled neither for addition nor for replacement", new Object[]{opName, dst});
                 SVNErrorManager.error(err);
             }
             if (srcRepoRoot != null && dstRepoRoot != null && !dstRepoRoot.equals(srcRepoRoot)) {

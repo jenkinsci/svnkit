@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tigris/subversion/javahl
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tigris/subversion/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-30T16:42:46.833185Z
-4464
+2008-07-02T00:37:09.052516Z
+4473
 alex
 
 
@@ -45,10 +45,10 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-8632dc99a81f0f50d3ce8a1491e16224
-2008-06-30T16:42:46.833185Z
-4464
+2008-08-02T14:58:31.000000Z
+877a8d4882e6fa2e80528aff9f6b3c16
+2008-07-02T00:37:09.052516Z
+4473
 alex
 has-props
 

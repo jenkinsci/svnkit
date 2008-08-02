@@ -353,7 +353,17 @@ public abstract class SVNRepositoryFactory {
             // create pre-rev-prop.
             if (enableRevisionProperties) {
                 if (SVNFileUtil.isWindows) {
-                    SVNFileUtil.createEmptyFile(new File(path, "hooks/pre-revprop-change.bat"));
+                    File hookFile = new File(path, "hooks/pre-revprop-change.bat");
+                    OutputStream os = SVNFileUtil.openFileForWriting(hookFile);
+                    try {
+                        os.write("@echo off".getBytes());
+                    } catch (IOException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
+                                new Object[] {hookFile, e.getLocalizedMessage()});
+                        SVNErrorManager.error(err);
+                    } finally {
+                        SVNFileUtil.closeFile(os);
+                    }
                 } else {
                     File hookFile = new File(path, "hooks/pre-revprop-change");
                     OutputStream os = null;

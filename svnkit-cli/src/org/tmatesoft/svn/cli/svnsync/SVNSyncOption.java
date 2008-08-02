@@ -24,10 +24,10 @@ public class SVNSyncOption extends AbstractSVNOption {
     public static final SVNSyncOption QUESTION = new SVNSyncOption("?", null, true);
     public static final SVNSyncOption VERSION = new SVNSyncOption("version", null, true);
     public static final SVNSyncOption CONFIG_DIR = new SVNSyncOption("config-dir", null, false);
-    public static final SVNSyncOption SYNC_PASSWORD = new SVNSyncOption("sync-username", null, false);
-    public static final SVNSyncOption SYNC_USERNAME = new SVNSyncOption("sync-password", null, false);
-    public static final SVNSyncOption SOURCE_PASSWORD = new SVNSyncOption("source-username", null, false);
-    public static final SVNSyncOption SOURCE_USERNAME = new SVNSyncOption("source-password", null, false);
+    public static final SVNSyncOption SYNC_PASSWORD = new SVNSyncOption("sync-password", null, false);
+    public static final SVNSyncOption SYNC_USERNAME = new SVNSyncOption("sync-username", null, false);
+    public static final SVNSyncOption SOURCE_PASSWORD = new SVNSyncOption("source-password", null, false);
+    public static final SVNSyncOption SOURCE_USERNAME = new SVNSyncOption("source-username", null, false);
     public static final SVNSyncOption USERNAME = new SVNSyncOption("username", null, false);
     public static final SVNSyncOption PASSWORD = new SVNSyncOption("password", null, false);
     public static final SVNSyncOption NO_AUTH_CACHE = new SVNSyncOption("no-auth-cache", null, true);

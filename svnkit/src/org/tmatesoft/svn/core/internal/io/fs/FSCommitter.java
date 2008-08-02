@@ -148,7 +148,7 @@ public class FSCommitter {
         }
 
         makePathMutable(toParentPath.getParent(), toPath);
-        String fromCanonPath = fromPath;
+        String fromCanonPath = SVNPathUtil.canonicalizeAbsolutePath(fromPath);
         copy(toParentPath.getParent().getRevNode(), toParentPath.getEntryName(), fromNode, preserveHistory, fromRoot.getRevision(), fromCanonPath, txnId);
 
         if (changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE) {
@@ -239,7 +239,9 @@ public class FSCommitter {
         return childNode;
     }
 
-    public void addChange(String path, FSID id, FSPathChangeKind changeKind, boolean textModified, boolean propsModified, long copyFromRevision, String copyFromPath) throws SVNException {
+    public void addChange(String path, FSID id, FSPathChangeKind changeKind, boolean textModified, 
+            boolean propsModified, long copyFromRevision, String copyFromPath) throws SVNException {
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
         OutputStream changesFile = null;
         try {
             changesFile = SVNFileUtil.openFileForWriting(myTxnRoot.getTransactionChangesFile(), true);
@@ -657,6 +659,7 @@ public class FSCommitter {
     }
 
     public static void allowLockedOperation(FSFS fsfs, String path, final String username, final Collection lockTokens, boolean recursive, boolean haveWriteLock) throws SVNException {
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
         if (recursive) {
             ISVNLockHandler handler = new ISVNLockHandler() {
 

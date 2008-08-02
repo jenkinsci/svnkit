@@ -33,7 +33,7 @@ public class FSNodeHistory {
     private FSFS myFSFS;
     
     public FSNodeHistory(SVNLocationEntry newHistoryEntry, boolean interesting, 
-                         SVNLocationEntry newSearchResumeEntry, FSFS owner) {
+            SVNLocationEntry newSearchResumeEntry, FSFS owner) {
         myHistoryEntry = newHistoryEntry;
         mySearchResumeEntry = newSearchResumeEntry;
         myIsInteresting = interesting;

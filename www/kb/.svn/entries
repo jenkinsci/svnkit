@@ -1,8 +1,8 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/www/kb
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/www/kb
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -26,18 +26,6 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
-dev-guide-svnclient.html
-file
-
-
-
-
-2008-07-24T04:58:18.000000Z
-1feb59b75daf178310355e1093728c81
-2007-03-15T15:02:04.241225Z
-2977
-alex
-
 mailinglist.html
 file
 
@@ -46,6 +34,18 @@ file
 
 2008-07-24T04:58:18.000000Z
 89c091d3cae1d031b6d3059add29ee1a
+2007-03-15T15:02:04.241225Z
+2977
+alex
+
+dev-guide-svnclient.html
+file
+
+
+
+
+2008-07-24T04:58:18.000000Z
+1feb59b75daf178310355e1093728c81
 2007-03-15T15:02:04.241225Z
 2977
 alex
@@ -110,26 +110,14 @@ file
 3785
 alex
 
-dev-guide-authentication.html
+user-guide-command-line-client.html
 file
 
 
 
 
 2008-07-24T04:58:18.000000Z
-0ff9190b0d6bcca045a145610e27fb60
-2007-03-15T15:02:04.241225Z
-2977
-alex
-
-build-subclipse.html
-file
-
-
-
-
-2008-07-24T04:58:18.000000Z
-c5aa6aa00bf2a585c28cfe88b68f6304
+508e5973da5ae27580be2219320de2c2
 2007-03-15T15:02:04.241225Z
 2977
 alex
@@ -146,14 +134,26 @@ file
 2977
 alex
 
-user-guide-command-line-client.html
+build-subclipse.html
 file
 
 
 
 
 2008-07-24T04:58:18.000000Z
-508e5973da5ae27580be2219320de2c2
+c5aa6aa00bf2a585c28cfe88b68f6304
+2007-03-15T15:02:04.241225Z
+2977
+alex
+
+dev-guide-authentication.html
+file
+
+
+
+
+2008-07-24T04:58:18.000000Z
+0ff9190b0d6bcca045a145610e27fb60
 2007-03-15T15:02:04.241225Z
 2977
 alex

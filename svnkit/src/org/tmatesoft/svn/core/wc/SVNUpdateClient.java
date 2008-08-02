@@ -102,6 +102,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNUpdateClient extends SVNBasicClient {
 
+    private ISVNExternalsHandler myExternalsHandler;
+    private boolean myIsUpdateLocksOnDemand;
+
     /**
      * Constructs and initializes an <b>SVNUpdateClient</b> object
      * with the specified run-time configuration and authentication 
@@ -131,6 +134,17 @@ public class SVNUpdateClient extends SVNBasicClient {
 
     public SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
+    }
+    
+    public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
+        myExternalsHandler = externalsHandler;
+    }
+
+    public ISVNExternalsHandler getExternalsHandler() {
+        if (myExternalsHandler == null) {
+            myExternalsHandler = ISVNExternalsHandler.DEFAULT;
+        }
+        return myExternalsHandler;
     }
     
     /**
@@ -205,7 +219,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNAdminAreaInfo adminInfo = null;
         int admOpenDepth = getLevelsToLockFromDepth(depth);
         try {
-            adminInfo = wcAccess.openAnchor(file, true, admOpenDepth);
+            adminInfo = wcAccess.openAnchor(file, !myIsUpdateLocksOnDemand, admOpenDepth);
             SVNAdminArea anchorArea = adminInfo.getAnchor();
 
             SVNEntry entry = anchorArea.getEntry(anchorArea.getThisDirName(), false);
@@ -235,11 +249,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             };
             
-            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, 
-                    force, depthIsSticky, depth, preservedExts, fileFetcher); 
+            ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, force, depthIsSticky, depth, preservedExts, fileFetcher, myIsUpdateLocksOnDemand); 
                 
-            repos.update(revNumber, target, depth, true, reporter, 
-                    SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            repos.update(revNumber, target, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
 
             long targetRevision = SVNRepository.INVALID_REVISION;
             if (editor instanceof SVNUpdateEditor) {
@@ -262,6 +274,14 @@ public class SVNUpdateClient extends SVNBasicClient {
             wcAccess.close();
             sleepForTimeStamp();
         }
+    }
+    
+    public void setUpdateLocksOnDemand(boolean locksOnDemand) {
+        myIsUpdateLocksOnDemand = locksOnDemand;
+    }
+    
+    public boolean isUpdateLocksOnDemand() {
+        return myIsUpdateLocksOnDemand;
     }
 
     /**
@@ -349,7 +369,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), force, depthIsSticky, 
-                    depth, preservedExts, null);
+                    depth, preservedExts, null, false);
             //new SVNUpdateEditor(info, url.toString(), force, depth, preservedExts, null);
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
@@ -1093,24 +1113,42 @@ public class SVNUpdateClient extends SVNBasicClient {
         File target = new File(externalDiff.owner, targetDir);
         SVNURL oldURL = null;
         SVNURL newURL = null;
+        String externalDefinition = null;
         if (externalDiff.oldExternal != null && !externalDiff.isExport) {
             oldURL = externalDiff.oldExternal.resolveURL(externalDiff.rootURL, externalDiff.ownerURL);
+            externalDefinition = externalDiff.oldExternal.getRawValue(); 
         }
+        SVNRevision externalRevision = SVNRevision.UNDEFINED;
+        SVNRevision externalPegRevision = SVNRevision.UNDEFINED;
         if (externalDiff.newExternal != null) {
             newURL = externalDiff.newExternal.resolveURL(externalDiff.rootURL, externalDiff.ownerURL);
+            externalRevision = externalDiff.newExternal.getRevision();
+            externalPegRevision = externalDiff.newExternal.getPegRevision();
+            externalDefinition = externalDiff.newExternal.getRawValue();
         }
         if (oldURL == null && newURL == null) {
             return;
         }
+
+        SVNRevision[] revs = getExternalsHandler().handleExternal(target, newURL, externalRevision, 
+                externalPegRevision, externalDefinition, SVNRevision.UNDEFINED);
+        if (revs == null) {
+            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null);
+            dispatchEvent(event);
+            return;
+        }
+        externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
+        externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
+        
         try {
             setEventPathPrefix("path");
             if (oldURL == null) {
-                target.getParentFile().mkdirs();
+                target.mkdirs();
                 dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 if (externalDiff.isExport) {
-                    doExport(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), null, true, SVNDepth.INFINITY); 
+                    doExport(newURL, target, externalPegRevision, externalRevision, null, true, SVNDepth.INFINITY); 
                 } else {
-                    doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                    doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                 }
             } else if (newURL == null) {
                 SVNWCAccess wcAccess = createWCAccess();
@@ -1132,7 +1170,6 @@ public class SVNUpdateClient extends SVNBasicClient {
                     throw error;
                 }
             } else if (externalDiff.isUpdateUnchanged || !externalDiff.compareExternals(oldURL, newURL)) {
-                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                 SVNFileType fileType = SVNFileType.getType(target);
                 boolean empty = false;
                 if (fileType == SVNFileType.DIRECTORY) {
@@ -1143,6 +1180,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
                 
                 if (fileType == SVNFileType.DIRECTORY && !empty) {
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                     SVNWCAccess wcAccess = createWCAccess();
                     SVNAdminArea area = wcAccess.open(target, true, 0);
                     SVNEntry entry = area.getEntry(area.getThisDirName(), false);
@@ -1151,7 +1189,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     
                     if (entry != null && entry.getURL() != null) {
                         if (newURL.toString().equals(url)) {
-                            doUpdate(target, externalDiff.newExternal.getRevision(), SVNDepth.UNKNOWN, true, false);
+                            doUpdate(target, externalRevision, SVNDepth.UNKNOWN, true, false);
                             return;
                         } else if (entry.getRepositoryRoot() != null) {
                             if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), newURL.toString())) {
@@ -1164,26 +1202,28 @@ public class SVNUpdateClient extends SVNBasicClient {
                                             svne.getErrorMessage().getErrorCode() == SVNErrorCode.CLIENT_INVALID_RELOCATION) {
                                         deleteExternal(target);
                                         target.mkdirs();
-                                        doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                                        doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                                         return;
                                     } 
                                     throw svne;
                                 }
                             }
-                            doSwitch(target, newURL, externalDiff.newExternal.getPegRevision(), 
-                                    externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false, true);
+                            doSwitch(target, newURL, externalPegRevision, 
+                                    externalRevision, SVNDepth.INFINITY, false, true);
                             return;
                         }
                     }
                     deleteExternal(target);
                     target.mkdirs();
-                    doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, false);
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+                    doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                     return;
                 } 
                 if (fileType != SVNFileType.DIRECTORY) {
                     target.mkdirs();
                 }
-                doCheckout(newURL, target, externalDiff.newExternal.getPegRevision(), externalDiff.newExternal.getRevision(), SVNDepth.INFINITY, true);
+                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+                doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, true);
             }
         } catch (SVNCancelException cancel) {
             throw cancel;
@@ -1194,13 +1234,6 @@ public class SVNUpdateClient extends SVNBasicClient {
         } finally {
             setEventPathPrefix(null);
         }
-    }
-
-    protected SVNRevision getExternalRevision(File file, SVNURL newURL) {
-        if (file == null || newURL == null) {
-            return SVNRevision.HEAD;
-        }
-        return SVNRevision.HEAD;
     }
 
     private void deleteExternal(File external) throws SVNException {

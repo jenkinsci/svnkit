@@ -145,7 +145,7 @@ public class SVNWCManager {
             dir.modifyEntry(dir.getThisDirName(), command, true, true);
             if (copyFromURL != null) {
                 SVNURL newURL = parentEntry.getSVNURL().appendPath(name, false);
-                updateCleanup(path, wcAccess, newURL.toString(), parentEntry.getRepositoryRoot(), -1, false, null, SVNDepth.INFINITY);
+                updateCleanup(path, wcAccess, newURL.toString(), parentEntry.getRepositoryRoot(), -1, false, null, SVNDepth.INFINITY, false);
                 markTree(dir, null, true, false, COPIED | KEEP_LOCAL);
                 SVNPropertiesManager.deleteWCProperties(dir, null, true);
             }
@@ -289,7 +289,7 @@ public class SVNWCManager {
     }
 
     public static void updateCleanup(File path, SVNWCAccess wcAccess, String baseURL, String rootURL,
-                                     long newRevision, boolean removeMissingDirs, Collection excludePaths, SVNDepth depth) throws SVNException {
+                                     long newRevision, boolean removeMissingDirs, Collection excludePaths, SVNDepth depth, boolean skipUnlocked) throws SVNException {
         SVNEntry entry = wcAccess.getEntry(path, true);
         if (entry == null) {
             return;
@@ -301,12 +301,18 @@ public class SVNWCManager {
                 return;
             }
             SVNAdminArea dir = wcAccess.retrieve(path.getParentFile());
+            if (skipUnlocked && !dir.isLocked()) {
+                return;
+            }
             if (dir.tweakEntry(path.getName(), baseURL, rootURL, newRevision, false)) {
                 dir.saveEntries(false);
             }
         } else if (entry.isDirectory()) {
             SVNAdminArea dir = wcAccess.retrieve(path);
-            tweakEntries(dir, baseURL, rootURL, newRevision, removeMissingDirs, excludePaths, depth);
+            if (skipUnlocked && !dir.isLocked()) {
+                return;
+            }
+            tweakEntries(dir, baseURL, rootURL, newRevision, removeMissingDirs, excludePaths, depth, skipUnlocked);
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unrecognized node kind: ''{0}''", path);
             SVNErrorManager.error(err);
@@ -314,7 +320,7 @@ public class SVNWCManager {
         }
     }
 
-    private static void tweakEntries(SVNAdminArea dir, String baseURL, String rootURL, long newRevision, boolean removeMissingDirs, Collection excludePaths, SVNDepth depth) throws SVNException {
+    private static void tweakEntries(SVNAdminArea dir, String baseURL, String rootURL, long newRevision, boolean removeMissingDirs, Collection excludePaths, SVNDepth depth, boolean skipUnlocked) throws SVNException {
         boolean write = false;
         if (!excludePaths.contains(dir.getRoot())) {
             write = dir.tweakEntry(dir.getThisDirName(), baseURL, rootURL, newRevision, false);
@@ -354,7 +360,10 @@ public class SVNWCManager {
                         }
                     } else {
                         SVNAdminArea childDir = dir.getWCAccess().retrieve(path);
-                        tweakEntries(childDir, childURL, rootURL, newRevision, removeMissingDirs, excludePaths, depthBelowHere);
+                        if (skipUnlocked && !childDir.isLocked()) {
+                            continue;
+                        }
+                        tweakEntries(childDir, childURL, rootURL, newRevision, removeMissingDirs, excludePaths, depthBelowHere, skipUnlocked);
                     }
                 }
             }

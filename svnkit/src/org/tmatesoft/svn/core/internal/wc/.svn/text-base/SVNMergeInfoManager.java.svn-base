@@ -109,9 +109,9 @@ public class SVNMergeInfoManager {
         return result;
     }
     
-    private Map getMergeInfoForPath(FSRevisionRoot revRoot, String path, 
-            SVNMergeInfoInheritance inherit) throws SVNException {
+    private Map getMergeInfoForPath(FSRevisionRoot revRoot, String path, SVNMergeInfoInheritance inherit) throws SVNException {
         Map mergeInfo = null;
+        path = SVNPathUtil.canonicalizeAbsolutePath(path);
         FSParentPath parentPath = revRoot.openPath(path, true, true);
         if (inherit == SVNMergeInfoInheritance.NEAREST_ANCESTOR && parentPath.getParent() == null) {
             return mergeInfo;

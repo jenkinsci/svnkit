@@ -24,9 +24,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * @author  TMate Software Ltd.
  */
 public class SVNStreamGobbler extends Thread {
-    InputStreamReader is;
-    StringBuffer result;
-    IOException error;
+
+    private InputStreamReader is;
+    private final StringBuffer result = new StringBuffer();
+    private IOException error;
+    private boolean myIsEOF;
     private boolean myIsClosed;
 
     public SVNStreamGobbler(InputStream is) {
@@ -35,33 +37,56 @@ public class SVNStreamGobbler extends Thread {
         } catch (UnsupportedEncodingException e) {
             this.is = new InputStreamReader(is);
         }
-        result = new StringBuffer();
-    }
-    
-    public void close() {
-        myIsClosed = true;
-        SVNFileUtil.closeFile(is);
     }
 
     public void run() {
-        try {
-            int r;
-            while ((r = is.read()) >= 0) {
-                result.append((char) (r & 0xFF));
+        char[] buffer = new char[1024];
+        synchronized (result) {
+            while(true) {
+                try {
+                    int r = is.read(buffer);
+                    if (r < 0) {
+                        break;
+                    }
+                    if (r > 0) {
+                        result.append(buffer, 0, r);
+                    }
+                } catch (IOException e) {
+                    if (!myIsClosed) {
+                        error = e;
+                    }
+                    break;
+                }
             }
-        } catch (IOException ioe) {
-            if (!myIsClosed) {
-                error = ioe;
-            }
-        } finally {
-            if (!myIsClosed) {
-                SVNFileUtil.closeFile(is);
+            myIsEOF = true;
+            result.notifyAll();
+        }
+    }
+
+    public void waitFor() {
+        synchronized (result) {
+            while (!myIsEOF) {
+                try {
+                    result.wait();
+                } catch (InterruptedException e) {                    
+                }
             }
         }
     }
 
+    public void close() {
+        synchronized (result) {
+            myIsEOF = true;
+            result.notifyAll();
+            myIsClosed = true;
+            SVNFileUtil.closeFile(is);
+        }
+    }
+
     public String getResult() {
-        return result.toString();
+        synchronized(result) {
+            return result.toString();
+        }
     }
 
     public IOException getError() {

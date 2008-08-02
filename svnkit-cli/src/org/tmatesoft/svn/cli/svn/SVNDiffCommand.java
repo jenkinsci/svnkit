@@ -59,6 +59,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.NEW);
         options.add(SVNOption.NON_RECURSIVE);
         options.add(SVNOption.DEPTH);
+        options.add(SVNOption.DIFF_CMD);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.NO_DIFF_DELETED);
         options.add(SVNOption.NOTICE_ANCESTRY);
@@ -66,7 +67,6 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.XML);
-        options.add(SVNOption.DIFF_CMD);
         return options;
     }
 

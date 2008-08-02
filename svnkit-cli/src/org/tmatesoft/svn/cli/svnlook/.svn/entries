@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svnlook
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-cli/src/org/tmatesoft/svn/cli/svnlook
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-12T23:26:25.190711Z
-4335
-alex
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-07-24T04:58:15.000000Z
-76bc83d6ad9088b1a6efe5d404686fdc
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-08-02T14:58:26.000000Z
+5fb37846489fb2969695e4f9cc01b2a2
+2008-07-24T17:07:51.204272Z
+4582
+semen
 has-props
 
 SVNLookChangedCommand.java
@@ -51,18 +51,6 @@ file
 4205
 alex
 
-options.properties
-file
-
-
-
-
-2008-07-24T04:58:15.000000Z
-f65d7a28883b8ec98f5703d7bf839999
-2008-04-09T09:30:48.585366Z
-4138
-sa
-
 SVNLookInfoCommand.java
 file
 
@@ -74,6 +62,18 @@ file
 2008-04-25T17:13:33.319155Z
 4205
 alex
+
+options.properties
+file
+
+
+
+
+2008-08-02T14:58:26.000000Z
+176c93d08913277dbf8a373956f7cdd3
+2008-07-24T14:53:17.450696Z
+4578
+semen
 
 SVNLookTreeCommand.java
 file
@@ -87,18 +87,6 @@ file
 4205
 alex
 
-commands.properties
-file
-
-
-
-
-2008-07-24T04:58:15.000000Z
-e0740be3e4fae31aac68f5d43d40c55b
-2008-04-28T11:00:42.797330Z
-4210
-sa
-
 SVNLookHistoryCommand.java
 file
 
@@ -110,6 +98,18 @@ file
 2008-04-25T17:13:33.319155Z
 4205
 alex
+
+commands.properties
+file
+
+
+
+
+2008-08-02T14:58:26.000000Z
+e70d39f89e17c4c36f0cb7d3dfabf3bf
+2008-07-24T14:53:17.450696Z
+4578
+semen
 
 SVNLookAuthorCommand.java
 file

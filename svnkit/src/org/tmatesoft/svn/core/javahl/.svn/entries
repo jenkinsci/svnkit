@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/javahl
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-30T16:42:46.833185Z
-4464
-alex
+2008-07-10T19:38:40.151581Z
+4512
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -110,11 +110,11 @@ file
 
 
 
-2008-07-24T04:58:43.000000Z
-9725f986833d69468812b5161673eb97
-2008-06-30T16:42:46.833185Z
-4464
-alex
+2008-08-02T14:58:31.000000Z
+3f0d9fb87cc7e97ceb97b2b727e4d1c6
+2008-07-10T19:38:40.151581Z
+4512
+semen
 has-props
 
 JavaHLPropertyHandler.java
@@ -199,10 +199,10 @@ file
 
 
 
-2008-07-24T04:58:43.000000Z
-b8d72e01a9667c0a332e9d13fc054dbc
-2008-06-25T20:08:32.078789Z
-4427
-sa
+2008-08-02T14:58:31.000000Z
+9dccd5b41f3109140599bfe07c056d55
+2008-07-10T19:38:40.151581Z
+4512
+semen
 has-props
 

@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-12T23:26:25.190711Z
-4335
-alex
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-829ef4edfd6bf153cb53011c9b3c3621
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-08-02T14:58:26.000000Z
+978d9038d8d1b945f56426607045c7af
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 SVNDumpFilter.java
 file
@@ -56,11 +56,11 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-d0984d937d3b19df572009b341a11891
-2008-04-29T07:43:56.040893Z
-4211
-sa
+2008-08-02T14:58:26.000000Z
+9e02f26e6c57b941800d0c060b8f614b
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 SVNDumpFilterCommandEnvironment.java
 file
@@ -68,11 +68,11 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-f9171b669f763738f292d5d871f2fb7a
-2008-06-12T23:26:25.190711Z
-4335
-alex
+2008-08-02T14:58:26.000000Z
+acdd20e7c73343d6583e0de110ca5050
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 options.properties
 file
@@ -80,11 +80,11 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-cf55c3ac2230ae2d549f2b9354e9ac17
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-08-02T14:58:26.000000Z
+eb418e71d381d6c81207aba6adbf2754
+2008-07-24T14:53:17.450696Z
+4578
+semen
 
 SVNDumpFilterHelpCommand.java
 file
@@ -92,11 +92,11 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-834461f10f4731930cc0d6afd8c4f5de
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-08-02T14:58:26.000000Z
+51531b09e823a6c7d6726b37ffb8440f
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 SVNDumpFilterExcludeCommand.java
 file
@@ -104,11 +104,11 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-181aa452c0b4cb1773c25bc266525cbd
-2008-04-29T07:43:56.040893Z
-4211
-sa
+2008-08-02T14:58:26.000000Z
+ecc9af068fb507b1387f67ae5e2840e7
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 SVNDumpFilterOption.java
 file
@@ -128,9 +128,9 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-51d428da2a24f893ca017c9cca504176
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-08-02T14:58:26.000000Z
+25d8d6e6166c312939c97505c0e2f4b8
+2008-07-24T14:53:17.450696Z
+4578
+semen
 

@@ -222,7 +222,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
         }
     }
-    
+
+	public void acknowledgeTrustManager(TrustManager manager) {
+	}
+
     private boolean hasExplicitCredentials(String kind) {
         if (ISVNAuthenticationManager.PASSWORD.equals(kind) || ISVNAuthenticationManager.USERNAME.equals(kind) || ISVNAuthenticationManager.SSH.equals(kind)) {
             return 

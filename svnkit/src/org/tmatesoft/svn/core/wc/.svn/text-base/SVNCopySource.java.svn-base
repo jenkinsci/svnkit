@@ -28,7 +28,6 @@ public class SVNCopySource {
     private SVNURL myURL;
     private File myPath;
     private boolean myIsCopyContents;
-    private boolean myIsRememberExternalsRevision;
     
     public SVNCopySource(SVNRevision pegRevision, SVNRevision revision, File path) {
         myPegRevision = pegRevision;
@@ -75,13 +74,5 @@ public class SVNCopySource {
     
     public boolean isCopyContents() {
         return myIsCopyContents;
-    }
-
-    public boolean isRememberExternalsRevision() {
-        return myIsRememberExternalsRevision;
-    }
-    
-    public void setRememberExternalsRevision(boolean isRememberExternalsRevision) {
-        myIsRememberExternalsRevision = isRememberExternalsRevision;
     }
 }

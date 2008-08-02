@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-30T16:29:41.002571Z
-4460
+2008-07-23T16:04:10.353568Z
+4570
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-07-24T04:58:30.000000Z
-bdb0804c6d61b81cb57a9595d8d26dfd
-2008-06-30T16:29:41.002571Z
-4460
+2008-08-02T14:58:31.000000Z
+d9a782384ab3cf13b9c2860a3280e4e8
+2008-07-23T16:04:10.353568Z
+4570
 alex
 has-props
 
@@ -104,19 +104,6 @@ be21f31e46c149ddad142ee56d3aacd9
 alex
 has-props
 
-HTTPDigestAuthentication.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-8e27f5accfbf619f50dfa2eac2ba638b
-2007-10-11T15:36:00.683881Z
-3545
-alex
-has-props
-
 HTTPAuthentication.java
 file
 
@@ -127,6 +114,19 @@ file
 917a22e8bd09121fb525e90e72e3f85d
 2007-04-30T17:54:10.735494Z
 3052
+alex
+has-props
+
+HTTPDigestAuthentication.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+8e27f5accfbf619f50dfa2eac2ba638b
+2007-10-11T15:36:00.683881Z
+3545
 alex
 has-props
 
@@ -143,19 +143,6 @@ f81dbd450dd3ba0b527965c4495715e1
 alex
 has-props
 
-HTTPStatus.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-5bcc83b607d553ee76e23d152d01ba15
-2008-03-14T14:23:34.715607Z
-3980
-semen
-has-props
-
 XMLReader.java
 file
 
@@ -167,6 +154,19 @@ file
 2008-03-31T21:56:03.487600Z
 4093
 alex
+has-props
+
+HTTPStatus.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+5bcc83b607d553ee76e23d152d01ba15
+2008-03-14T14:23:34.715607Z
+3980
+semen
 has-props
 
 FixedSizeInputStream.java
@@ -182,19 +182,6 @@ e844bb3b24b0e107f54c0e713ecfdc0a
 alex
 has-props
 
-HTTPRequest.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-6bad7a94b758dae01166b9bca332aee5
-2008-04-15T21:50:31.741210Z
-4168
-alex
-has-props
-
 HTTPHeader.java
 file
 
@@ -206,6 +193,19 @@ file
 2008-06-05T19:17:38.151562Z
 4294
 sa
+has-props
+
+HTTPRequest.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+6bad7a94b758dae01166b9bca332aee5
+2008-04-15T21:50:31.741210Z
+4168
+alex
 has-props
 
 HTTPBodyInputStream.java

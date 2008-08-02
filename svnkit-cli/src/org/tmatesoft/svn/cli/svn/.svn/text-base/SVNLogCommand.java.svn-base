@@ -70,7 +70,6 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         options.add(SVNOption.INCREMENTAL);
         options.add(SVNOption.XML);
         options.add(SVNOption.LIMIT);
-        options.add(SVNOption.CHANGELIST);
         options.add(SVNOption.WITH_ALL_REVPROPS);
         options.add(SVNOption.WITH_REVPROP);
         return options;

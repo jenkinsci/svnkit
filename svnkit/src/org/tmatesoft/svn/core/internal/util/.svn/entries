@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/util
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/util
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-27T14:50:22.898201Z
-4439
-alex
+2008-07-16T18:19:19.141651Z
+4544
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -38,17 +38,18 @@ file
 4292
 semen
 
-SVNUUIDGenerator.java
+SVNDate.java
 file
 
 
 
 
 2008-07-24T04:58:42.000000Z
-3e5c60fa6c99fcc1e297a917f8203fd9
-2008-03-28T10:41:39.275582Z
-4075
-sa
+f0b3c127567e629576e140908b018300
+2008-06-19T20:15:15.874886Z
+4377
+alex
+has-props
 
 SVNLogInputStream.java
 file
@@ -62,18 +63,17 @@ file
 2942
 alex
 
-SVNDate.java
+SVNUUIDGenerator.java
 file
 
 
 
 
 2008-07-24T04:58:42.000000Z
-f0b3c127567e629576e140908b018300
-2008-06-19T20:15:15.874886Z
-4377
-alex
-has-props
+3e5c60fa6c99fcc1e297a917f8203fd9
+2008-03-28T10:41:39.275582Z
+4075
+sa
 
 SVNLogOutputStream.java
 file
@@ -125,18 +125,6 @@ file
 4085
 alex
 
-SVNEncodingUtil.java
-file
-
-
-
-
-2008-07-24T04:58:42.000000Z
-275445371e7181d95ce35d99e327a610
-2008-03-28T02:07:40.780210Z
-4072
-alex
-
 SVNBase64.java
 file
 
@@ -150,6 +138,18 @@ file
 sa
 has-props
 
+SVNEncodingUtil.java
+file
+
+
+
+
+2008-07-24T04:58:42.000000Z
+275445371e7181d95ce35d99e327a610
+2008-03-28T02:07:40.780210Z
+4072
+alex
+
 SVNCharsetInputStream.java
 file
 
@@ -160,6 +160,19 @@ file
 19355dd08f72edc9a03e7c41d26c4f38
 2008-04-04T13:52:45.471915Z
 4115
+semen
+has-props
+
+SVNCharsetOutputStream.java
+file
+
+
+
+
+2008-07-24T04:58:42.000000Z
+de49fd631e20828f4e18a7db0cf4efbf
+2008-05-01T13:20:52.223622Z
+4216
 semen
 has-props
 
@@ -175,30 +188,17 @@ b86213c63223b51f8e2ca2d58c04f391
 3647
 semen
 
-SVNCharsetOutputStream.java
-file
-
-
-
-
-2008-07-24T04:58:42.000000Z
-de49fd631e20828f4e18a7db0cf4efbf
-2008-05-01T13:20:52.223622Z
-4216
-semen
-has-props
-
 SVNStreamGobbler.java
 file
 
 
 
 
-2008-07-24T04:58:42.000000Z
-a0161549ddce92db34198a4abb8f6f33
-2007-07-22T18:26:49.512393Z
-3244
-alex
+2008-08-02T14:58:31.000000Z
+c04a926886aaac5b05905e3fac1e3b09
+2008-07-15T19:08:04.409308Z
+4536
+semen
 
 SVNPathUtil.java
 file
@@ -206,11 +206,11 @@ file
 
 
 
-2008-07-24T04:58:42.000000Z
-64012106f4e9ee366111c4c8a10ad191
-2008-05-03T18:11:03.195405Z
-4232
-semen
+2008-08-02T14:58:31.000000Z
+28c7d8643065c34a34d7bbfbb7c39879
+2008-07-16T18:19:19.141651Z
+4544
+sa
 
 DefaultSVNDebugLogger.java
 file
@@ -269,10 +269,10 @@ file
 
 
 
-2008-07-24T04:58:42.000000Z
-23e1873992597f3dc4a0eab120ccea79
-2008-06-19T22:37:37.998049Z
-4389
+2008-08-02T14:58:31.000000Z
+b9eff547cd7eaa14d3bae0205573af03
+2008-07-02T17:23:59.492748Z
+4478
 alex
 has-props
 

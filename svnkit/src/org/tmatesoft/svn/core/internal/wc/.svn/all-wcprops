@@ -1,401 +1,47 @@
 K 25
 svn:wc:ra_dav:version-url
 V 90
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc
-END
-SVNFileListUtil.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNFileListUtil.java
-END
-SVNDumpEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDumpEditor.java
-END
-ISVNAuthenticationStorage.java
-K 25
-svn:wc:ra_dav:version-url
-V 121
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNAuthenticationStorage.java
-END
-SVNCommitMediator.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCommitMediator.java
-END
-SVNAmbientDepthFilterEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 123
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNAmbientDepthFilterEditor.java
-END
-SVNFileType.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNFileType.java
-END
-SVNSynchronizeEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 116
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNSynchronizeEditor.java
-END
-SVNCancellableOutputStream.java
-K 25
-svn:wc:ra_dav:version-url
-V 122
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCancellableOutputStream.java
-END
-SVNDiffStatusEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDiffStatusEditor.java
-END
-SVNWCProperties.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNWCProperties.java
-END
-SVNAdminUtil.java
-K 25
-svn:wc:ra_dav:version-url
-V 108
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNAdminUtil.java
-END
-ISVNMergeInfoFilter.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNMergeInfoFilter.java
-END
-SVNNodeEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNNodeEditor.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc
 END
 SVNCancellableEditor.java
 K 25
 svn:wc:ra_dav:version-url
 V 116
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCancellableEditor.java
-END
-SVNPasswordCipher.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNPasswordCipher.java
-END
-IOExceptionWrapper.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/IOExceptionWrapper.java
-END
-SVNCommitter.java
-K 25
-svn:wc:ra_dav:version-url
-V 108
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCommitter.java
-END
-FSMergerBySequenceList.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceList.java
-END
-SVNStatusReporter.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNStatusReporter.java
-END
-SVNSubstitutor.java
-K 25
-svn:wc:ra_dav:version-url
-V 110
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNSubstitutor.java
-END
-ISVNInputFile.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNInputFile.java
-END
-SVNEventFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNEventFactory.java
-END
-SVNMergeDriver.java
-K 25
-svn:wc:ra_dav:version-url
-V 110
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNMergeDriver.java
-END
-SVNDiffEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDiffEditor.java
-END
-DefaultSVNMergerAction.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNMergerAction.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCancellableEditor.java
 END
 SVNCommitUtil.java
 K 25
 svn:wc:ra_dav:version-url
 V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCommitUtil.java
-END
-SVNAdminHelper.java
-K 25
-svn:wc:ra_dav:version-url
-V 110
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNAdminHelper.java
-END
-SVNRemoteDiffEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNRemoteDiffEditor.java
-END
-DefaultLoadHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultLoadHandler.java
-END
-SVNDumpStreamParser.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDumpStreamParser.java
-END
-ISVNCommitPathHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNCommitPathHandler.java
-END
-SVNFileUtil.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNFileUtil.java
-END
-SVNAdminDeltifier.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNAdminDeltifier.java
-END
-SVNExternal.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNExternal.java
-END
-SVNErrorManager.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNErrorManager.java
-END
-ISVNLoadHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNLoadHandler.java
-END
-DefaultSVNMerger.java
-K 25
-svn:wc:ra_dav:version-url
-V 112
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNMerger.java
-END
-DefaultDumpFilterHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 120
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultDumpFilterHandler.java
-END
-SVNPropertiesManager.java
-K 25
-svn:wc:ra_dav:version-url
-V 116
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNPropertiesManager.java
-END
-SVNPath.java
-K 25
-svn:wc:ra_dav:version-url
-V 103
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNPath.java
-END
-DefaultSVNGNUDiffGenerator.java
-K 25
-svn:wc:ra_dav:version-url
-V 122
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNGNUDiffGenerator.java
-END
-SVNImportMediator.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNImportMediator.java
-END
-AbstractSVNMerger.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/AbstractSVNMerger.java
-END
-FSMergerBySequence.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/FSMergerBySequence.java
-END
-SVNMergeCallback.java
-K 25
-svn:wc:ra_dav:version-url
-V 112
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNMergeCallback.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCommitUtil.java
 END
 DefaultSVNAuthenticationManager.java
 K 25
 svn:wc:ra_dav:version-url
 V 127
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNAuthenticationManager.java
-END
-SVNDepthFilterEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 116
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDepthFilterEditor.java
-END
-SVNStatusUtil.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNStatusUtil.java
-END
-AbstractDiffCallback.java
-K 25
-svn:wc:ra_dav:version-url
-V 116
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/AbstractDiffCallback.java
-END
-ISVNFileContentFetcher.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNFileContentFetcher.java
-END
-ISVNPropertyComparator.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNPropertyComparator.java
-END
-SVNDiffCallback.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDiffCallback.java
-END
-SVNCompositeConfigFile.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCompositeConfigFile.java
-END
-SVNExportEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNExportEditor.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNAuthenticationManager.java
 END
 SVNUpdateEditor.java
 K 25
 svn:wc:ra_dav:version-url
 V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNUpdateEditor.java
-END
-ISVNFileFetcher.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNFileFetcher.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNUpdateEditor.java
 END
 SVNStatusEditor.java
 K 25
 svn:wc:ra_dav:version-url
 V 111
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNStatusEditor.java
-END
-SVNWinCryptPasswordCipher.java
-K 25
-svn:wc:ra_dav:version-url
-V 121
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNWinCryptPasswordCipher.java
-END
-DefaultSVNOptions.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNOptions.java
-END
-SVNRevisionStatus.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNRevisionStatus.java
-END
-ISVNReturnValueCallback.java
-K 25
-svn:wc:ra_dav:version-url
-V 119
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNReturnValueCallback.java
-END
-DefaultSVNSSLTrustManager.java
-K 25
-svn:wc:ra_dav:version-url
-V 121
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/DefaultSVNSSLTrustManager.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNStatusEditor.java
 END
 SVNWCManager.java
 K 25
 svn:wc:ra_dav:version-url
 V 108
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNWCManager.java
-END
-SVNConfigFile.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNConfigFile.java
-END
-SVNRemoteStatusEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNRemoteStatusEditor.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNWCManager.java
 END
 SVNMergeInfoManager.java
 K 25
 svn:wc:ra_dav:version-url
 V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNMergeInfoManager.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNMergeInfoManager.java
 END

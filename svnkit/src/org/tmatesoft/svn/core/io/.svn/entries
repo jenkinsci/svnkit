@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/io
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/io
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-27T14:50:22.898201Z
-4439
+2008-07-23T16:02:26.488167Z
+4569
 alex
 
 
@@ -55,19 +55,6 @@ file
 semen
 has-props
 
-ISVNDeltaConsumer.java
-file
-
-
-
-
-2008-07-24T04:58:44.000000Z
-d1d1da5c105329cbd79b7a005d51e188
-2007-01-09T05:54:45.383114Z
-2895
-sa
-has-props
-
 ISVNConnectionListener.java
 file
 
@@ -81,16 +68,29 @@ dcdbbd7a6ea45bd4f9b2e40135065d14
 alex
 has-props
 
-SVNRepository.java
+ISVNDeltaConsumer.java
 file
 
 
 
 
 2008-07-24T04:58:44.000000Z
-9030b0aad64def28bb2f8ce263671c52
-2008-06-19T20:15:15.874886Z
-4377
+d1d1da5c105329cbd79b7a005d51e188
+2007-01-09T05:54:45.383114Z
+2895
+sa
+has-props
+
+SVNRepository.java
+file
+
+
+
+
+2008-08-02T14:58:31.000000Z
+a3f8af10f0b843fa31322e5abc8bf0fa
+2008-07-18T00:55:20.314663Z
+4550
 alex
 has-props
 
@@ -100,11 +100,11 @@ file
 
 
 
-2008-07-24T04:58:44.000000Z
-07bc512b3f662f87b6f04a8dbf0746c1
-2008-04-13T10:25:57.748462Z
-4157
-sa
+2008-08-02T14:58:31.000000Z
+e1f451bcc000a07593030f69d47adbe6
+2008-07-15T12:33:10.141782Z
+4530
+alex
 
 ISVNFileCheckoutTarget.java
 file
@@ -169,6 +169,18 @@ aa1c64be1fc8c0be2b3b95c66e85edbe
 3861
 sa
 
+ISVNSession.java
+file
+
+
+
+
+2008-07-24T04:58:44.000000Z
+00022af7507519d599b334332ff1ded3
+2007-07-11T14:46:58.846712Z
+3210
+alex
+
 ISVNWorkspaceMediator.java
 file
 
@@ -181,18 +193,6 @@ file
 3707
 semen
 has-props
-
-ISVNSession.java
-file
-
-
-
-
-2008-07-24T04:58:44.000000Z
-00022af7507519d599b334332ff1ded3
-2007-07-11T14:46:58.846712Z
-3210
-alex
 
 doc-files
 dir
@@ -308,10 +308,10 @@ file
 
 
 
-2008-07-24T04:58:44.000000Z
-06000ae0286a031dfdbe286dd4e58a20
-2008-06-27T14:50:22.898201Z
-4439
+2008-08-02T14:58:31.000000Z
+458b78209e27a4f56ac68131fe0c9b1e
+2008-07-23T16:02:26.488167Z
+4569
 alex
 has-props
 

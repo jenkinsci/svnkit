@@ -46,6 +46,7 @@ public class SVNUpdateCommand extends SVNCommand {
         options.add(SVNOption.FORCE);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.CHANGELIST);
+        options.add(SVNOption.EDITOR_CMD);
         options.add(SVNOption.ACCEPT);
         return options;
     }

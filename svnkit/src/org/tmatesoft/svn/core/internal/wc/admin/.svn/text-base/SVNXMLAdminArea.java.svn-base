@@ -340,11 +340,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
             boolean writeBaseProps, boolean close) throws SVNException {
         SVNProperties command = new SVNProperties();
         SVNNodeKind kind = name.equals(getThisDirName()) ? SVNNodeKind.DIR : SVNNodeKind.FILE;
-        SVNProperties propDiff = baseProps.compareTo(workingProps);
-        boolean hasPropMods = !propDiff.isEmpty();
         String dstPath = SVNAdminUtil.getPropPath(name, kind, false);
 
-        if (hasPropMods) {
+        if (!workingProps.isEmpty()) {
             String tmpPath = SVNAdminUtil.getPropPath(name, kind, true);
             File tmpFile = getFile(tmpPath);
             SVNWCProperties tmpProps = new SVNWCProperties(tmpFile, tmpPath);

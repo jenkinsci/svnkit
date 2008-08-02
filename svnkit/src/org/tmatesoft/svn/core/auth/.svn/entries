@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/auth
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/auth
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-12T23:26:25.190711Z
-4335
+2008-07-23T16:04:10.353568Z
+4570
 alex
 
 
@@ -97,10 +97,10 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-378a1d32b24c3db46d5160bda37f5f79
-2008-06-12T23:26:25.190711Z
-4335
+2008-08-02T14:58:31.000000Z
+46f5425ea8c0f3447a2c6583368a734d
+2008-07-23T16:04:10.353568Z
+4570
 alex
 has-props
 
@@ -123,10 +123,10 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-cdf80f9cf33dcc5385c2adbfdcfb4451
-2008-06-12T23:26:25.190711Z
-4335
+2008-08-02T14:58:31.000000Z
+15c2e5f7489b99924505890394197641
+2008-07-23T16:04:10.353568Z
+4570
 alex
 has-props
 

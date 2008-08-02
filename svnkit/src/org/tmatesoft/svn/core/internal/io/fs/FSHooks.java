@@ -204,6 +204,8 @@ public class FSHooks {
 
         int rc = -1;
         try {
+            inputGobbler.waitFor();
+            errorGobbler.waitFor();
             rc = hookProcess.waitFor();
         } catch (InterruptedException ie) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {

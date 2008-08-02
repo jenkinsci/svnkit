@@ -44,7 +44,7 @@ public abstract class AbstractSVNOption {
         return myIsUnary;
     }
     
-    public String getDescription(AbstractSVNCommand context) {
+    public String getDescription(AbstractSVNCommand context, String programName) {
         ResourceBundle bundle = null;
         try {
             bundle = ResourceBundle.getBundle(getResourceBundleName());
@@ -67,7 +67,7 @@ public abstract class AbstractSVNOption {
                 }
             }
         }
-        return MessageFormat.format("No description has been found for ''{0}'' option.", new Object[] {getName()});
+        return MessageFormat.format("not supported by ''{0}''", new Object[]{programName});
     }
     
     protected abstract String getResourceBundleName();

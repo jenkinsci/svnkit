@@ -11,37 +11,54 @@
  */
 package org.tmatesoft.svn.core;
 
-import org.eclipse.core.runtime.Plugin;
-import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
-import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
+import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
+
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Plugin;
+import org.osgi.framework.BundleContext;
 
 /**
  * The main plugin class to be used in the desktop.
- * 
+ *
+ * @author TMate Software Ltd.
  * @version 1.1.1
- * @author  TMate Software Ltd.
  */
 public class SVNKitPlugin extends Plugin {
+
+    private static final String DEBUG_TRACE = "/debug/trace";
 
     public SVNKitPlugin() {
     }
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
-        SVNDebugLog.setDefaultLog(new SVNKitLog(getBundle(), isDebugging()));
-        
+
+        ISVNDebugLog debugLog = new SVNKitLog(getBundle(), isDebugging(), false);
+        SVNDebugLog.setDefaultLog(debugLog);
+        SVNDebugLog.registerLog(SVNLogType.WC, debugLog);
+
+        String pluginID = getBundle().getSymbolicName();
+        String traceOption = Platform.getDebugOption(pluginID + DEBUG_TRACE);
+        boolean enableTracing = Boolean.TRUE.toString().equals(traceOption);
+        if (enableTracing) {
+            ISVNDebugLog traceLog = new SVNKitLog(getBundle(), isDebugging(), true);
+            SVNDebugLog.registerLog(SVNLogType.NETWORK, traceLog);
+        }
+
         DAVRepositoryFactory.setup();
         SVNRepositoryFactoryImpl.setup();
         FSRepositoryFactory.setup();
     }
-    
-    
-	public void stop(BundleContext context) throws Exception {
-		SVNSSHSession.shutdown();
-		super.stop(context);
-	}
+
+
+    public void stop(BundleContext context) throws Exception {
+        SVNSSHSession.shutdown();
+        super.stop(context);
+    }
 }

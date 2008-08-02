@@ -1,119 +1,23 @@
 K 25
 svn:wc:ra_dav:version-url
 V 94
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
-END
-SVNSSHConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNSSHConnector.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
 END
 SVNAuthenticator.java
 K 25
 svn:wc:ra_dav:version-url
 V 116
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNAuthenticator.java
-END
-SVNWriter.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNWriter.java
-END
-SVNEditModeReader.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNEditModeReader.java
-END
-SVNPlainConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNPlainConnector.java
-END
-SVNTunnelConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNTunnelConnector.java
-END
-SVNRepositoryFactoryImpl.java
-K 25
-svn:wc:ra_dav:version-url
-V 124
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNRepositoryFactoryImpl.java
-END
-SVNDataSource.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNDataSource.java
-END
-ISVNConnectorFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 120
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/ISVNConnectorFactory.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNAuthenticator.java
 END
 SVNPlainAuthenticator.java
 K 25
 svn:wc:ra_dav:version-url
 V 121
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNPlainAuthenticator.java
-END
-SVNItem.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNItem.java
-END
-SVNCommitEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNCommitEditor.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNPlainAuthenticator.java
 END
 SVNConnection.java
 K 25
 svn:wc:ra_dav:version-url
 V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNConnection.java
-END
-SVNRepositoryImpl.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNRepositoryImpl.java
-END
-SVNSSHSession.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNSSHSession.java
-END
-CramMD5.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/CramMD5.java
-END
-SVNReader.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNReader.java
-END
-ISVNConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 113
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/ISVNConnector.java
-END
-SVNAbstractTunnelConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 126
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNAbstractTunnelConnector.java
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNConnection.java
 END

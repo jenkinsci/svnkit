@@ -555,7 +555,7 @@ public class SVNTranslator {
         }
         if (!isSupported) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
-                    "Charset ''{0}'' is not supported on this computer; change svn:charset property value or remove that property for file ''{1}''",
+                    "Charset ''{0}'' is not supported on this computer; change svnkit:charset property value or remove that property for file ''{1}''",
                     new Object[]{charset, path}));
         }
         return charset;

@@ -217,7 +217,9 @@ public interface ISVNAuthenticationManager {
      * @throws SVNException 
      */
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
-    
+
+	public void acknowledgeTrustManager(TrustManager manager);
+
     /**
      * Checks whether client should send authentication credentials to 
      * a repository server not waiting for the server's challenge. 

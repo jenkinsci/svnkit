@@ -94,6 +94,9 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
 
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
         super.initOptions(commandLine);
+        if (getCommand().getClass() == SVNDumpFilterHelpCommand.class) {
+            return;            
+        }
         List arguments = getArguments();
         if (arguments == null || arguments.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
@@ -151,7 +154,7 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
         } 
         if (commandName == null) {
             if (isVersion()) {
-                SVNDumpFilterCommand versionCommand = new SVNDumpFilterCommand("--version", null) {
+                SVNDumpFilterCommand versionCommand = new SVNDumpFilterCommand("--version", null, 0) {
                     protected Collection createSupportedOptions() {
                         LinkedList options = new LinkedList();
                         options.add(SVNDumpFilterOption.VERSION);

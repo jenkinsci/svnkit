@@ -165,7 +165,7 @@ public class JavaHLObjectFactory {
     }
     
     public static Status createStatus(String path, SVNStatus status) {
-        if(status == null){
+        if (status == null){
             return null;
         }
         String url = status.getURL() != null ? status.getURL().toString() : null;

@@ -480,7 +480,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if (option == SVNOption.CHANGELIST) {            
             myChangelist = optionValue.getValue();
             myChangelists.add(myChangelist);
-        } else if (option == SVNOption.KEEP_CHANGELIST) {
+        } else if (option == SVNOption.KEEP_CHANGELISTS) {
             myIsKeepChangelist = true;
         } else if (option == SVNOption.KEEP_LOCAL) {
             myIsKeepLocal = true;

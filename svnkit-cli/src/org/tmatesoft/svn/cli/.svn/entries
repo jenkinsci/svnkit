@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-cli/src/org/tmatesoft/svn/cli
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-cli/src/org/tmatesoft/svn/cli
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-27T14:02:22.892631Z
-4434
-alex
+2008-07-24T17:07:51.204272Z
+4582
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -29,24 +29,17 @@ svn:special svn:externals svn:needs-lock
 svnadmin
 dir
 
-svndumpfilter
-dir
-
-svnsync
-dir
-
-AbstractSVNOption.java
+SVNDumpFilter.java
 file
 
 
 
 
-2008-07-24T04:58:16.000000Z
-8ad36914cf04f142251d3a6d6b684f3f
-2008-04-25T17:13:33.319155Z
-4205
+2008-08-02T14:58:27.000000Z
+a6ad910084328d929fa80cfcb83f8b0d
+2008-07-07T23:15:22.243933Z
+4504
 alex
-has-props
 
 SVNCommandUtil.java
 file
@@ -54,12 +47,24 @@ file
 
 
 
-2008-07-24T04:58:16.000000Z
-759300fddd35d674bdeec255f0720356
-2008-06-13T18:22:06.311763Z
-4347
-alex
+2008-08-02T14:58:27.000000Z
+9adaf1cde26daf012a063c64d7377620
+2008-07-24T14:53:17.450696Z
+4578
+semen
 has-props
+
+SVNSync.java
+file
+
+
+
+
+2008-08-02T14:58:27.000000Z
+2ab490ea2d52b7953cb8035c7ef36e5c
+2008-07-07T23:15:22.243933Z
+4504
+alex
 
 SVNConsoleAuthenticationProvider.java
 file
@@ -74,26 +79,19 @@ file
 alex
 has-props
 
-svn
-dir
-
-AbstractSVNCommand.java
+SVN.java
 file
 
 
 
 
-2008-07-24T04:58:16.000000Z
-3a3787e93c4c8f172190156608bc20da
-2008-04-25T17:13:33.319155Z
-4205
+2008-08-02T14:58:27.000000Z
+b1ace40a17d275a184ea3e287c046d24
+2008-07-07T23:15:22.243933Z
+4504
 alex
-has-props
 
 svnlook
-dir
-
-svnversion
 dir
 
 AbstractSVNLauncher.java
@@ -109,18 +107,17 @@ file
 sa
 has-props
 
-SVNOptionValue.java
+SVNVersion.java
 file
 
 
 
 
-2008-07-24T04:58:16.000000Z
-3d7b66f0d9b449114ad3e0481c1ffefb
-2008-04-25T17:13:33.319155Z
-4205
+2008-08-02T14:58:27.000000Z
+6ee597dab3a34b89362fc78d24d02085
+2008-07-07T23:15:22.243933Z
+4504
 alex
-has-props
 
 SVNCommandLine.java
 file
@@ -147,4 +144,79 @@ file
 4357
 sa
 has-props
+
+SVNAdmin.java
+file
+
+
+
+
+2008-08-02T14:58:27.000000Z
+db5d82784d5fc6b64b29504e5c2ce0c6
+2008-07-07T23:15:22.243933Z
+4504
+alex
+
+svndumpfilter
+dir
+
+AbstractSVNOption.java
+file
+
+
+
+
+2008-08-02T14:58:27.000000Z
+66fd169a766782a27f60317a90bc33b9
+2008-07-24T00:08:03.670009Z
+4575
+alex
+has-props
+
+svnsync
+dir
+
+svn
+dir
+
+AbstractSVNCommand.java
+file
+
+
+
+
+2008-08-02T14:58:27.000000Z
+74e3f292c32494a9cb0e37b4250edc70
+2008-07-24T14:53:17.450696Z
+4578
+semen
+has-props
+
+SVNLook.java
+file
+
+
+
+
+2008-08-02T14:58:27.000000Z
+4d6c100684f2d3facc27aed17382be5e
+2008-07-07T23:15:22.243933Z
+4504
+alex
+
+SVNOptionValue.java
+file
+
+
+
+
+2008-07-24T04:58:16.000000Z
+3d7b66f0d9b449114ad3e0481c1ffefb
+2008-04-25T17:13:33.319155Z
+4205
+alex
+has-props
+
+svnversion
+dir
 

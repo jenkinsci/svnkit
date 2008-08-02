@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-13T18:22:06.311763Z
-4347
+2008-07-19T00:26:02.392326Z
+4557
 alex
 
 
@@ -71,10 +71,10 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-daa3ee938c64d474df6c1428755652f5
-2008-06-13T18:22:06.311763Z
-4347
+2008-08-02T14:58:31.000000Z
+3043737ad09ff6be7cba0705657abdcd
+2008-07-19T00:26:02.392326Z
+4557
 alex
 has-props
 
@@ -84,10 +84,10 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-f66fbe0ced2890f3a93feee4fde9b697
-2008-06-13T18:22:06.311763Z
-4347
+2008-08-02T14:58:31.000000Z
+ebbcab00b13423e20efd8e8cb3322905
+2008-07-19T00:26:02.392326Z
+4557
 alex
 has-props
 
@@ -97,10 +97,10 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-1b2ce7de7c8f0a78d72a466e7785afd2
-2008-06-13T18:22:06.311763Z
-4347
+2008-08-02T14:58:31.000000Z
+9732ee12b1841e2dfeaa0b47cf901907
+2008-07-19T00:26:02.392326Z
+4557
 alex
 has-props
 

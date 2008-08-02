@@ -50,6 +50,10 @@ public class SVNPathUtil {
         }
     };
 
+    public static boolean isCanonical(String path) {
+        return (path != null && path.equals(canonicalizePath(path)));
+    }
+
     public static void checkPathIsValid(String path) throws SVNException {
         for (int i = 0; i < path.length(); i++) {
             char ch = path.charAt(i);
@@ -168,6 +172,42 @@ public class SVNPathUtil {
         return result.toString();
     }
 
+    public static String canonicalizeAbsolutePath(String path) {
+        if (path == null) {
+            return null;
+        }
+     
+        if ("".equals(path)) {
+            return "/";
+        }
+        
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        
+        StringBuffer canonicalizedPath = new StringBuffer();
+        boolean skipSlashes = false;
+        for (int i = 0; i < path.length(); i++) {
+            char ch = path.charAt(i);
+            if (ch == '/') {
+                if (skipSlashes) {
+                    continue;
+                }
+                skipSlashes = true;
+            } else {
+                if (skipSlashes) {
+                    skipSlashes = false;
+                }
+            }
+            canonicalizedPath.append(ch);
+        }
+        
+        if (canonicalizedPath.length() > 1 && canonicalizedPath.charAt(canonicalizedPath.length() - 1) == '/') {
+            canonicalizedPath.deleteCharAt(canonicalizedPath.length() - 1);
+        }
+        return canonicalizedPath.toString();
+    }
+    
     public static String append(String f, String s) {
         f = f == null ? "" : f;
         s = s == null ? "" : s;

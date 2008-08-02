@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PythonTests start="2008.07.01  at 06:06:35 CEST" elapsed="1 hours 22 minutes 7 seconds">
+<PythonTests start="2008.07.24  at 19:31:36 CEST" elapsed="1 hours 31 minutes 40 seconds">
   <server name="file" url="file:///home/builder/agent1ram/python/cmdline">
     <suite name="authz" total="0" passed="0" failed="0">
     </suite>
@@ -778,7 +778,7 @@
       <test name="update fails when repos uuid changed" id="44" result="PASSED"></test>
     </suite>
   </server>
-  <server name="svnserve" url="svn://localhost:58334">
+  <server name="svnserve" url="svn://localhost:41835">
     <suite name="authz" total="14" passed="14" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="authz issue #2486 - open directory" id="2" result="PASSED"></test>
@@ -1575,7 +1575,7 @@
       <test name="update fails when repos uuid changed" id="44" result="PASSED"></test>
     </suite>
   </server>
-  <server name="apache" url="http://localhost:37844">
+  <server name="apache" url="http://localhost:41681">
     <suite name="authz" total="13" passed="13" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="authz issue #2486 - open directory" id="2" result="PASSED"></test>

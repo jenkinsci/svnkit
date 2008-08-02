@@ -51,7 +51,6 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.FORCE);
         options.add(SVNOption.DRY_RUN);
         options.add(SVNOption.RECORD_ONLY);
-        options.add(SVNOption.USE_MERGE_HISTORY);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.IGNORE_ANCESTRY);
         options.add(SVNOption.ACCEPT);

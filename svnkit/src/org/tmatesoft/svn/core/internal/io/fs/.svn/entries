@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/fs
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/fs
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-27T14:50:22.898201Z
-4439
-alex
+2008-07-15T19:08:04.409308Z
+4536
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-07-24T04:58:30.000000Z
-0803530e35353501e7a792042a6d78de
-2007-11-17T19:24:52.880873Z
-3646
-semen
+2008-08-02T14:58:31.000000Z
+0dcce0453b7fbbaf7e052023c9b73971
+2008-07-15T12:32:11.279137Z
+4529
+alex
 
 FSClosestCopy.java
 file
@@ -81,11 +81,11 @@ file
 
 
 
-2008-07-24T04:58:30.000000Z
-4626ff9eccbc641b62b7050bfb73d587
-2008-06-10T13:13:05.831510Z
-4312
-sa
+2008-08-02T14:58:31.000000Z
+0ff71088f4880995f139a894ee70a7e0
+2008-07-15T12:32:11.279137Z
+4529
+alex
 has-props
 
 FSPathChangeKind.java
@@ -168,10 +168,10 @@ file
 
 
 
-2008-07-24T04:58:30.000000Z
-0bf841f499dd7c27178ed4184756eb34
-2008-03-28T02:07:40.780210Z
-4072
+2008-08-02T14:58:31.000000Z
+ef7d9da7ca7bbc4bd4db70e7281b660c
+2008-07-15T12:32:11.279137Z
+4529
 alex
 has-props
 
@@ -237,18 +237,6 @@ file
 2895
 sa
 
-FSPathChange.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-c8f8355c6c2e47810b9fcfb489249450
-2007-07-24T16:56:21.284721Z
-3251
-sa
-
 FSRepresentation.java
 file
 
@@ -257,6 +245,18 @@ file
 
 2008-07-24T04:58:30.000000Z
 64f8a85f0c83d8a2afef4e9b810a17ee
+2007-07-24T16:56:21.284721Z
+3251
+sa
+
+FSPathChange.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+c8f8355c6c2e47810b9fcfb489249450
 2007-07-24T16:56:21.284721Z
 3251
 sa
@@ -323,18 +323,6 @@ file
 4120
 alex
 
-PathInfo.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-eba0b368e22b185dccbfa96eb269104a
-2007-07-22T18:26:49.512393Z
-3244
-alex
-
 FSRepository.java
 file
 
@@ -346,6 +334,18 @@ file
 2008-05-16T14:03:46.861940Z
 4252
 sa
+
+PathInfo.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+eba0b368e22b185dccbfa96eb269104a
+2007-07-22T18:26:49.512393Z
+3244
+alex
 
 FSTranslateReporter.java
 file
@@ -371,18 +371,6 @@ file
 4234
 sa
 
-FSHooks.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-70978a1e8db1662ed31aac1a08d9bd0b
-2008-06-13T18:22:06.311763Z
-4347
-alex
-
 FSLocationsFinder.java
 file
 
@@ -394,6 +382,18 @@ file
 2008-03-16T14:45:20.069179Z
 4002
 alex
+
+FSHooks.java
+file
+
+
+
+
+2008-08-02T14:58:31.000000Z
+052af7eaf08f72f6ae267eeafa6453dd
+2008-07-15T19:08:04.409308Z
+4536
+semen
 
 FSTransactionRoot.java
 file
@@ -450,11 +450,11 @@ file
 
 
 
-2008-07-24T04:58:30.000000Z
-1e1286cb7762eaafb0dab0fceca4d841
-2008-03-26T20:07:08.769141Z
-4059
-sa
+2008-08-02T14:58:31.000000Z
+ffef131789721606e84abb619d8577b4
+2008-07-15T12:32:11.279137Z
+4529
+alex
 has-props
 
 FSCommitter.java
@@ -463,11 +463,11 @@ file
 
 
 
-2008-07-24T04:58:30.000000Z
-02ebb25e77d0fd07209f51124ddc0f81
-2008-05-16T14:03:46.861940Z
-4252
-sa
+2008-08-02T14:58:31.000000Z
+300203ec21e323fe77941287449f5621
+2008-07-15T12:32:11.279137Z
+4529
+alex
 has-props
 
 FSRevisionNode.java

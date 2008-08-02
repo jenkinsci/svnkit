@@ -23,9 +23,12 @@ import org.tmatesoft.svn.cli.AbstractSVNCommand;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {
-    
-    public SVNDumpFilterCommand(String name, String[] aliases) {
+
+    private int myOutputPriority;
+
+    public SVNDumpFilterCommand(String name, String[] aliases, int outputPriority) {
         super(name, aliases);
+        myOutputPriority = outputPriority;
     }
     
     public Collection getGlobalOptions() {
@@ -50,4 +53,7 @@ public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {
         return (SVNDumpFilterCommandEnvironment) getEnvironment();
     }
 
+    public int getOutputPriority() {
+        return myOutputPriority;
+    }
 }

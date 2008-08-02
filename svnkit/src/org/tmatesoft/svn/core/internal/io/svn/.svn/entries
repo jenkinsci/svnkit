@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-27T14:04:07.027915Z
-4435
+2008-07-19T00:26:02.392326Z
+4557
 alex
 
 
@@ -45,10 +45,10 @@ file
 
 
 
-2008-07-24T04:58:28.000000Z
-24de5fa63bbb43fd77b013ecea16f021
-2008-06-10T15:29:54.640297Z
-4317
+2008-08-02T14:58:31.000000Z
+41b59ebb5824ddb1d701491e1560662a
+2008-07-19T00:26:02.392326Z
+4557
 alex
 has-props
 
@@ -130,6 +130,9 @@ e7307a96cdc1f775ff6fdbcb2a3327c6
 sa
 has-props
 
+sasl
+dir
+
 ISVNConnectorFactory.java
 file
 
@@ -140,22 +143,6 @@ file
 1561023cb0476406a605a0a889f90b6a
 2008-01-23T16:42:39.168436Z
 3785
-alex
-has-props
-
-sasl
-dir
-
-SVNPlainAuthenticator.java
-file
-
-
-
-
-2008-07-24T04:58:28.000000Z
-f3dd9a6c3cfbd427ccc4302efe22d37f
-2008-06-10T15:29:54.640297Z
-4317
 alex
 has-props
 
@@ -172,16 +159,16 @@ d8a19245827e216928037bc4f539298f
 semen
 has-props
 
-SVNConnection.java
+SVNPlainAuthenticator.java
 file
 
 
 
 
-2008-07-24T04:58:28.000000Z
-457acfb1733ac15dd3f1365c9ebe1aeb
-2008-06-19T20:15:15.874886Z
-4377
+2008-08-02T14:58:31.000000Z
+e6b27f0e72d232a6f977143d6df1e8d9
+2008-07-12T16:08:58.868847Z
+4522
 alex
 has-props
 
@@ -196,6 +183,19 @@ file
 2008-04-18T18:48:56.263274Z
 4184
 semen
+has-props
+
+SVNConnection.java
+file
+
+
+
+
+2008-08-02T14:58:31.000000Z
+6496f07dd74c55517455b64c504f5c25
+2008-07-19T00:26:02.392326Z
+4557
+alex
 has-props
 
 SVNSSHSession.java

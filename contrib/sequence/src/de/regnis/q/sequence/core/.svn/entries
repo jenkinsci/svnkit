@@ -1,8 +1,8 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/contrib/sequence/src/de/regnis/q/sequence/core
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/contrib/sequence/src/de/regnis/q/sequence/core
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -65,6 +65,18 @@ file
 alex
 has-props
 
+QSequenceException.java
+file
+
+
+
+
+2008-07-24T04:58:24.000000Z
+e7b7944480a2873c848a35ba031a69e4
+2008-04-01T17:30:14.226162Z
+4095
+alex
+
 QSequenceDeePathForwardExtender.java
 file
 
@@ -77,18 +89,6 @@ file
 4095
 alex
 has-props
-
-QSequenceException.java
-file
-
-
-
-
-2008-07-24T04:58:24.000000Z
-e7b7944480a2873c848a35ba031a69e4
-2008-04-01T17:30:14.226162Z
-4095
-alex
 
 QSequenceAssert.java
 file
@@ -142,27 +142,14 @@ c8e1438d6dfbdbcf5a919b3befe7102f
 alex
 has-props
 
-QSequenceDeePathBackwardExtender.java
+QSequenceRestrictedMedia.java
 file
 
 
 
 
 2008-07-24T04:58:24.000000Z
-b4b127c8024555380a992da5e113a9f1
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-QSequenceDeePathExtenderArray.java
-file
-
-
-
-
-2008-07-24T04:58:24.000000Z
-d2d2eafa47c7fc91421b90bd6aca83cc
+37f3dbc618c69bebb6e90c9b0572c652
 2008-04-01T17:30:14.226162Z
 4095
 alex
@@ -181,14 +168,27 @@ file
 alex
 has-props
 
-QSequenceRestrictedMedia.java
+QSequenceDeePathExtenderArray.java
 file
 
 
 
 
 2008-07-24T04:58:24.000000Z
-37f3dbc618c69bebb6e90c9b0572c652
+d2d2eafa47c7fc91421b90bd6aca83cc
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+QSequenceDeePathBackwardExtender.java
+file
+
+
+
+
+2008-07-24T04:58:24.000000Z
+b4b127c8024555380a992da5e113a9f1
 2008-04-01T17:30:14.226162Z
 4095
 alex

@@ -1,41 +1,11 @@
 K 25
 svn:wc:ra_dav:version-url
 V 56
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit-test
 END
 python-tests-log.xml
 K 25
 svn:wc:ra_dav:version-url
 V 77
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test/python-tests-log.xml
-END
-logging.properties
-K 25
-svn:wc:ra_dav:version-url
-V 75
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test/logging.properties
-END
-test.windows.properties
-K 25
-svn:wc:ra_dav:version-url
-V 80
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test/test.windows.properties
-END
-python-suite.txt
-K 25
-svn:wc:ra_dav:version-url
-V 73
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test/python-suite.txt
-END
-logging.cli.properties
-K 25
-svn:wc:ra_dav:version-url
-V 79
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test/logging.cli.properties
-END
-svnkit-test.iml
-K 25
-svn:wc:ra_dav:version-url
-V 72
-/repos/svnkit/!svn/ver/4471/tags/1.2.0-beta2/svnkit-test/svnkit-test.iml
+/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit-test/python-tests-log.xml
 END

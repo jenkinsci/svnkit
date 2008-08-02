@@ -1,14 +1,14 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/wc
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-30T16:37:26.775790Z
-4463
+2008-07-23T16:04:10.353568Z
+4570
 alex
 
 
@@ -52,6 +52,19 @@ file
 alex
 has-props
 
+SVNCommitMediator.java
+file
+
+
+
+
+2008-07-24T04:58:40.000000Z
+1b1df063c681eea87246491fde7cffb3
+2008-06-30T16:12:41.398204Z
+4459
+alex
+has-props
+
 ISVNAuthenticationStorage.java
 file
 
@@ -65,16 +78,16 @@ fe5bc09468e77bb82e6151337cce1152
 alex
 has-props
 
-SVNCommitMediator.java
+SVNFileType.java
 file
 
 
 
 
 2008-07-24T04:58:40.000000Z
-1b1df063c681eea87246491fde7cffb3
-2008-06-30T16:12:41.398204Z
-4459
+1b7cd4e838794f8815c9307d0cedb232
+2008-06-19T20:15:15.874886Z
+4377
 alex
 has-props
 
@@ -90,18 +103,17 @@ file
 3973
 sa
 
-SVNFileType.java
+SVNCancellableOutputStream.java
 file
 
 
 
 
 2008-07-24T04:58:40.000000Z
-1b7cd4e838794f8815c9307d0cedb232
-2008-06-19T20:15:15.874886Z
-4377
+290311082fd1bc864ad0278f6420df21
+2007-05-24T14:23:16.557202Z
+3111
 alex
-has-props
 
 SVNSynchronizeEditor.java
 file
@@ -116,18 +128,6 @@ file
 sa
 has-props
 
-SVNCancellableOutputStream.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-290311082fd1bc864ad0278f6420df21
-2007-05-24T14:23:16.557202Z
-3111
-alex
-
 SVNDiffStatusEditor.java
 file
 
@@ -138,6 +138,19 @@ file
 5a16eff45ff08a3e724c0d3eb5f21e68
 2008-01-27T19:14:22.740809Z
 3803
+semen
+has-props
+
+SVNAdminUtil.java
+file
+
+
+
+
+2008-07-24T04:58:40.000000Z
+07f88ce60890a631a68d06d56f334315
+2008-06-05T12:34:21.270436Z
+4290
 semen
 has-props
 
@@ -154,19 +167,6 @@ f740a0bbbfcb6a69e8e1b84e6fe723b2
 alex
 has-props
 
-SVNAdminUtil.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-07f88ce60890a631a68d06d56f334315
-2008-06-05T12:34:21.270436Z
-4290
-semen
-has-props
-
 ISVNMergeInfoFilter.java
 file
 
@@ -179,19 +179,6 @@ fa7b318f652018b96ed3e8e7c8a62b8b
 3251
 sa
 
-SVNCancellableEditor.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-d5af88f0df93d35e3c30918998fd6928
-2008-06-19T20:15:15.874886Z
-4377
-alex
-has-props
-
 SVNNodeEditor.java
 file
 
@@ -203,6 +190,19 @@ file
 2008-04-10T15:04:04.524481Z
 4151
 sa
+has-props
+
+SVNCancellableEditor.java
+file
+
+
+
+
+2008-08-02T14:58:31.000000Z
+694f5bb312956c040daea8249aa07138
+2008-07-18T00:52:23.790740Z
+4549
+alex
 has-props
 
 SVNPasswordCipher.java
@@ -352,10 +352,10 @@ file
 
 
 
-2008-07-24T04:58:40.000000Z
-1364f5dbb2741778b9fd55305b53005c
-2008-05-26T19:44:08.599369Z
-4269
+2008-08-02T14:58:31.000000Z
+f26a9fc438d0aa58bb5731157a15b855
+2008-07-16T18:19:19.141651Z
+4544
 sa
 has-props
 
@@ -477,6 +477,18 @@ f21e8912775c81eca7cdeaddd83fc73c
 sa
 has-props
 
+DefaultSVNMerger.java
+file
+
+
+
+
+2008-07-24T04:58:40.000000Z
+e82d510b23b251d7ac85a81daa1eb56f
+2008-06-05T12:34:21.270436Z
+4290
+semen
+
 ISVNLoadHandler.java
 file
 
@@ -490,30 +502,6 @@ file
 sa
 has-props
 
-DefaultSVNMerger.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-e82d510b23b251d7ac85a81daa1eb56f
-2008-06-05T12:34:21.270436Z
-4290
-semen
-
-DefaultDumpFilterHandler.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-52dbcd5dea3c05929f9694c51239d7e6
-2008-04-29T07:43:56.040893Z
-4211
-sa
-
 SVNPropertiesManager.java
 file
 
@@ -526,6 +514,18 @@ file
 4245
 sa
 has-props
+
+DefaultDumpFilterHandler.java
+file
+
+
+
+
+2008-07-24T04:58:40.000000Z
+52dbcd5dea3c05929f9694c51239d7e6
+2008-04-29T07:43:56.040893Z
+4211
+sa
 
 SVNPath.java
 file
@@ -611,24 +611,15 @@ file
 
 
 
-2008-07-24T04:58:40.000000Z
-14b8883063fe0682987f29d7adc9ce06
-2008-06-12T23:26:25.190711Z
-4335
+2008-08-02T14:58:31.000000Z
+db21fe688ce3fd26c312f511e45114ae
+2008-07-23T16:04:10.353568Z
+4570
 alex
 has-props
 
-SVNDepthFilterEditor.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-f9c3317823c92eaecbbfcbc09077ae88
-2008-06-11T11:13:42.595162Z
-4324
-sa
+admin
+dir
 
 SVNStatusUtil.java
 file
@@ -642,8 +633,17 @@ cd64360eb97ce77dae590067ec5c503b
 4463
 alex
 
-admin
-dir
+SVNDepthFilterEditor.java
+file
+
+
+
+
+2008-07-24T04:58:40.000000Z
+f9c3317823c92eaecbbfcbc09077ae88
+2008-06-11T11:13:42.595162Z
+4324
+sa
 
 AbstractDiffCallback.java
 file
@@ -671,19 +671,6 @@ fa2b3f4d2e2c06c546df462f177fd27d
 alex
 has-props
 
-ISVNPropertyComparator.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-df8193a8b71d370a095733af9b1c1456
-2007-01-09T05:54:45.383114Z
-2895
-sa
-has-props
-
 SVNDiffCallback.java
 file
 
@@ -697,17 +684,17 @@ file
 alex
 has-props
 
-SVNCompositeConfigFile.java
+ISVNPropertyComparator.java
 file
 
 
 
 
 2008-07-24T04:58:40.000000Z
-7c71cdbc55430a24ee4d9b915d6fe1dd
-2007-03-15T17:46:00.407086Z
-2978
-alex
+df8193a8b71d370a095733af9b1c1456
+2007-01-09T05:54:45.383114Z
+2895
+sa
 has-props
 
 SVNExportEditor.java
@@ -723,17 +710,17 @@ file
 sa
 has-props
 
-SVNUpdateEditor.java
+SVNCompositeConfigFile.java
 file
 
 
 
 
 2008-07-24T04:58:40.000000Z
-25aa5a9f73ba45af75a0af4e111e09ab
-2008-06-19T12:47:42.020106Z
-4357
-sa
+7c71cdbc55430a24ee4d9b915d6fe1dd
+2007-03-15T17:46:00.407086Z
+2978
+alex
 has-props
 
 ISVNFileFetcher.java
@@ -748,17 +735,30 @@ a53320b5b6618f594124216acee58554
 3707
 semen
 
+SVNUpdateEditor.java
+file
+
+
+
+
+2008-08-02T14:58:31.000000Z
+e548975c26ae25ab4bc11c53e75c6659
+2008-07-23T15:59:34.130065Z
+4568
+alex
+has-props
+
 SVNStatusEditor.java
 file
 
 
 
 
-2008-07-24T04:58:40.000000Z
-534b457993dc5e29efa5af8d57ec2847
-2008-05-01T20:29:40.401667Z
-4221
-sa
+2008-08-02T14:58:31.000000Z
+3a0ab31a699dbc9d5fe1dbe0e704dc6d
+2008-07-04T23:06:43.705871Z
+4492
+alex
 has-props
 
 SVNWinCryptPasswordCipher.java
@@ -786,18 +786,6 @@ file
 alex
 has-props
 
-SVNRevisionStatus.java
-file
-
-
-
-
-2008-07-24T04:58:40.000000Z
-6d9e5333232d52e7744156888985be90
-2008-02-05T17:00:13.078634Z
-3823
-sa
-
 ISVNReturnValueCallback.java
 file
 
@@ -809,6 +797,18 @@ e07eaccc9ec932a8b0191c11c4b5d956
 2008-06-13T18:22:06.311763Z
 4347
 alex
+
+SVNRevisionStatus.java
+file
+
+
+
+
+2008-07-24T04:58:40.000000Z
+6d9e5333232d52e7744156888985be90
+2008-02-05T17:00:13.078634Z
+3823
+sa
 
 DefaultSVNSSLTrustManager.java
 file
@@ -829,11 +829,11 @@ file
 
 
 
-2008-07-24T04:58:40.000000Z
-b2cebb5f10c951169424515ee90744d9
-2008-06-05T12:34:21.270436Z
-4290
-semen
+2008-08-02T14:58:31.000000Z
+ae0ba5375e0465e3bc9bfa72eaabb7fe
+2008-07-23T15:59:34.130065Z
+4568
+alex
 has-props
 
 SVNConfigFile.java
@@ -867,9 +867,9 @@ file
 
 
 
-2008-07-24T04:58:40.000000Z
-20058d4994bcf3c04de6cf492f1dc4f4
-2008-04-04T19:03:46.051091Z
-4119
-sa
+2008-08-02T14:58:31.000000Z
+c718573940ec60355ac6bd7aaf7f4ca0
+2008-07-15T12:32:11.279137Z
+4529
+alex
 

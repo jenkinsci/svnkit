@@ -1,8 +1,8 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -26,6 +26,18 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
+DAVMergeInfoHandler.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+1fbfdf9c22f385e62dd789843347410a
+2008-04-03T15:13:54.382324Z
+4106
+semen
+
 DAVGetLocksHandler.java
 file
 
@@ -39,18 +51,6 @@ f640fcccaef020c0414869a047bbeaaa
 sa
 has-props
 
-DAVMergeInfoHandler.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-1fbfdf9c22f385e62dd789843347410a
-2008-04-03T15:13:54.382324Z
-4106
-semen
-
 DAVLocationSegmentsHandler.java
 file
 
@@ -63,19 +63,6 @@ file
 4010
 alex
 
-BasicDAVHandler.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-7658a034a32f669face12305feb7c93e
-2008-06-19T20:15:15.874886Z
-4377
-alex
-has-props
-
 DAVLogHandler.java
 file
 
@@ -86,6 +73,19 @@ file
 3dd753d1f6d140cb9c6eee3af3ed0080
 2008-05-03T02:14:31.962139Z
 4227
+alex
+has-props
+
+BasicDAVHandler.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+7658a034a32f669face12305feb7c93e
+2008-06-19T20:15:15.874886Z
+4377
 alex
 has-props
 
@@ -128,17 +128,17 @@ file
 semen
 has-props
 
-BasicDAVDeltaHandler.java
+DAVOptionsHandler.java
 file
 
 
 
 
 2008-07-24T04:58:30.000000Z
-f4bd1bd7fbb2dbe9a295c0ed82aad944
-2007-11-22T15:21:44.360179Z
-3671
-semen
+5e2d1350cd20a78660417364af15341a
+2007-11-27T14:03:45.042223Z
+3682
+sa
 has-props
 
 DAVLocationsHandler.java
@@ -154,30 +154,30 @@ file
 alex
 has-props
 
-DAVOptionsHandler.java
+BasicDAVDeltaHandler.java
 file
 
 
 
 
 2008-07-24T04:58:30.000000Z
-5e2d1350cd20a78660417364af15341a
-2007-11-27T14:03:45.042223Z
-3682
-sa
-has-props
-
-DAVDateRevisionHandler.java
-file
-
-
-
-
-2008-07-24T04:58:30.000000Z
-a82f060ab19d48f5f6f5d3effd2eb8ec
+f4bd1bd7fbb2dbe9a295c0ed82aad944
 2007-11-22T15:21:44.360179Z
 3671
 semen
+has-props
+
+DAVReplayHandler.java
+file
+
+
+
+
+2008-07-24T04:58:30.000000Z
+845e062b846e27c68c403344249946ff
+2008-06-06T20:42:25.407562Z
+4301
+sa
 has-props
 
 DAVPropertiesHandler.java
@@ -193,17 +193,17 @@ file
 alex
 has-props
 
-DAVReplayHandler.java
+DAVDateRevisionHandler.java
 file
 
 
 
 
 2008-07-24T04:58:30.000000Z
-845e062b846e27c68c403344249946ff
-2008-06-06T20:42:25.407562Z
-4301
-sa
+a82f060ab19d48f5f6f5d3effd2eb8ec
+2007-11-22T15:21:44.360179Z
+3671
+semen
 has-props
 
 DAVFileRevisionHandler.java

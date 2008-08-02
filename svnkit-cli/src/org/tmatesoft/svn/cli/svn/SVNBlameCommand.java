@@ -52,11 +52,11 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
         options.add(SVNOption.VERBOSE);
+        options.add(SVNOption.USE_MERGE_HISTORY);
         options.add(SVNOption.INCREMENTAL);
         options.add(SVNOption.XML);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.FORCE);
-        options.add(SVNOption.USE_MERGE_HISTORY);
         return options;
     }
 

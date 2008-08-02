@@ -15,6 +15,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Comparator;
 
 import org.tmatesoft.svn.cli.AbstractSVNCommand;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
@@ -31,10 +32,10 @@ public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
         "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
         "Type ''{0} --version'' to see the program version.\n" +
         "\n" + 
-        "Available subcommands:\n";
+        "Available subcommands:";
 
     public SVNDumpFilterHelpCommand() {
-        super("help", new String[] {"?", "h"});
+        super("help", new String[] {"?", "h"}, 1);
     }
     
     protected Collection createSupportedOptions() {
@@ -50,15 +51,30 @@ public class SVNDumpFilterHelpCommand extends SVNDumpFilterCommand {
                     getEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
-                String help = SVNCommandUtil.getCommandHelp(command);
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName(), false);
                 getEnvironment().getOut().println(help);
             }
         } else if (getSVNDumpFilterEnvironment().isVersion()) {
             String version = SVNCommandUtil.getVersion(getEnvironment(), getSVNDumpFilterEnvironment().isQuiet());
             getEnvironment().getOut().println(version);
         } else if (getEnvironment().getArguments().isEmpty()) {
+            Comparator commandComparator = new Comparator() {
+                public int compare(Object o1, Object o2) {
+                    AbstractSVNCommand c1 = (AbstractSVNCommand) o1;
+                    AbstractSVNCommand c2 = (AbstractSVNCommand) o2;
+                    if (c1 instanceof SVNDumpFilterCommand && c2 instanceof SVNDumpFilterCommand) {
+                        SVNDumpFilterCommand dumpFilterCommand1 = (SVNDumpFilterCommand) c1;
+                        SVNDumpFilterCommand dumpFilterCommand2 = (SVNDumpFilterCommand) c2;
+                        if (dumpFilterCommand1.getOutputPriority() != dumpFilterCommand2.getOutputPriority()) {
+                            return dumpFilterCommand1.getOutputPriority() < dumpFilterCommand2.getOutputPriority() ? -1 : 1;                            
+                        }
+                    }
+                    return c1.getName().compareTo(c2.getName());
+                }
+            };
+            
             String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, 
-                    null);
+                    null, commandComparator);
             getEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] { 

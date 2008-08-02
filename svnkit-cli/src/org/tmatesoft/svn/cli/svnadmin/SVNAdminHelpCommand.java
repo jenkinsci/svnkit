@@ -31,7 +31,7 @@ public class SVNAdminHelpCommand extends SVNAdminCommand {
         "Type ''{0} help <subcommand>'' for help on a specific subcommand.\n" +
         "Type ''{0} --version'' to see the program version and FS modules.\n" +
         "\n" + 
-        "Available subcommands:\n";
+        "Available subcommands:";
 
     private static final String VERSION_HELP_FOOTER =
         "\nThe following repository back-end (FS) modules are available:\n\n" +
@@ -54,7 +54,8 @@ public class SVNAdminHelpCommand extends SVNAdminCommand {
                     getEnvironment().getErr().println("\"" + commandName + "\": unknown command.\n");
                     continue;
                 }
-                String help = SVNCommandUtil.getCommandHelp(command);
+                getEnvironment().getProgramName();
+                String help = SVNCommandUtil.getCommandHelp(command, getEnvironment().getProgramName(), true);
                 getEnvironment().getOut().println(help);
             }
         } else if (getSVNAdminEnvironment().isVersion()) {
@@ -64,7 +65,7 @@ public class SVNAdminHelpCommand extends SVNAdminCommand {
                 getEnvironment().getOut().println(VERSION_HELP_FOOTER);
             }
         } else if (getEnvironment().getArguments().isEmpty()) {
-            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null);
+            String help = SVNCommandUtil.getGenericHelp(getEnvironment().getProgramName(), GENERIC_HELP_HEADER, null, null);
             getEnvironment().getOut().print(help);
         } else {
             String message = MessageFormat.format("Type ''{0} help'' for usage.", new Object[] {getEnvironment().getProgramName()});

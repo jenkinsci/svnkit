@@ -1,15 +1,15 @@
 8
 
 dir
-4575
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn
+4653
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-25T20:08:32.078789Z
-4427
-sa
+2008-07-10T19:38:40.151581Z
+4512
+semen
 
 
 svn:special svn:externals svn:needs-lock
