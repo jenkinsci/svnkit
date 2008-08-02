@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -132,6 +133,25 @@ public class SVNUpdateClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNUpdateClient</b> object
+     * with the specified run-time configuration and authentication 
+     * drivers.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNUpdateClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the 
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
+     * 
+     * <p/> 
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     * 
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver     
+     */
     public SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -415,10 +435,38 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Sets whether working copies should be locked on demand or not during an update process.
+     * 
+     * <p>
+     * For additional description, please, refer to {@link #isUpdateLocksOnDemand()}.
+     * 
+     * @param <span class="javakeyword">true</span> to make update lock a working copy tree on 
+     *        demand only (for those subdirectories only which will be changed by update)
+     */
     public void setUpdateLocksOnDemand(boolean locksOnDemand) {
         myIsUpdateLocksOnDemand = locksOnDemand;
     }
     
+    /**
+     * Says whether the entire working copy should be locked while updating or not.
+     * 
+     * <p/>
+     * If this method returns <span class="javakeyword">false</span>, then the working copy will be 
+     * closed for all paths involved in the update. Otherwise only those working copy subdirectories 
+     * will be locked, which will be either changed by the update or which contain deleted files
+     * that should be restored during the update; all other versioned subdirectories than won't be 
+     * touched by the update will remain opened for read only access without locking. 
+     * 
+     * <p/>
+     * Locking working copies on demand is intended to improve update performance for large working 
+     * copies because even a no-op update on a huge working copy always locks the entire tree by default.
+     * And locking a working copy tree means opening special lock files for privileged access for all 
+     * subdirectories involved. This makes an update process work slower. Locking wc on demand 
+     * feature suggests such a workaround to enhance update performance.
+     * 
+     * @return  <span class="javakeyword">true</span> when locking wc on demand
+     */
     public boolean isUpdateLocksOnDemand() {
         return myIsUpdateLocksOnDemand;
     }
@@ -950,6 +998,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * <li/>{@link SVNRevision#UNDEFINED}
      * </ul> 
      * then local export is performed. Otherwise exporting from the repository.
+     * 
      * <p/>
      * If externals are {@link #isIgnoreExternals() ignored}, doesn't process externals definitions
      * as part of this operation.
