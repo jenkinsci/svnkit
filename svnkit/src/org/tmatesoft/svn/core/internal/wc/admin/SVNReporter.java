@@ -107,7 +107,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
             } else if (targetEntry.isFile()) {
                 if (missing) {
-                    restoreFile(targetArea, targetEntry.getName());
+                    targetArea = restoreFile(targetArea, targetEntry.getName());
                 }
                 // report either linked path or entry path
                 parentEntry = parentEntry == null ? wcAccess.getEntry(myTarget.getParentFile(), false) : parentEntry;
@@ -176,7 +176,7 @@ public class SVNReporter implements ISVNReporterBaton {
 
             if (entry.isFile()) {
                 if (missing && !entry.isScheduledForDeletion() && !entry.isScheduledForReplacement()) {
-                    restoreFile(adminArea, entry.getName());
+                    adminArea = restoreFile(adminArea, entry.getName());
                 }
                 String url = entry.getURL();
                 if (reportAll) {
@@ -255,16 +255,18 @@ public class SVNReporter implements ISVNReporterBaton {
         }
     }
     
-    private void restoreFile(SVNAdminArea adminArea, String name) throws SVNException {
+    private SVNAdminArea restoreFile(SVNAdminArea adminArea, String name) throws SVNException {
         if (!myIsRestore) {
-            return;
+            return adminArea;
         }
         if (myIsLockOnDemand && !adminArea.isLocked()) {
             adminArea.lock(false);
+            adminArea = myInfo.getWCAccess().upgrade(adminArea.getRoot());
         }
         adminArea.restoreFile(name);
             
         SVNEntry entry = adminArea.getEntry(name, true);
         myInfo.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.RESTORE, null, null, null));
+        return adminArea;
     }    
 }
