@@ -156,10 +156,31 @@ public class SVNUpdateClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
     
+    /**
+     * Sets an externals handler to be used by this client object.
+     * 
+     * @param externalsHandler user's implementation of {@link ISVNExternalsHandler}
+     * @see   #getExternalsHandler()
+     * @since 1.2
+     */
     public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
         myExternalsHandler = externalsHandler;
     }
 
+    /**
+     * Returns an externals handler used by this update client.
+     * 
+     * <p/>
+     * If no user's handler is provided then {@link ISVNExternalsHandler#DEFAULT} is returned and 
+     * used by this client object by default.
+     * 
+     * <p/>
+     * For more information what externals handlers are for, please, refer to {@link ISVNExternalsHandler}. 
+     * 
+     * @return externals handler being in use
+     * @see #setExternalsHandler(ISVNExternalsHandler)
+     * @since 1.2 
+     */
     public ISVNExternalsHandler getExternalsHandler() {
         if (myExternalsHandler == null) {
             myExternalsHandler = ISVNExternalsHandler.DEFAULT;
