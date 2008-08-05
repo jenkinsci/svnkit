@@ -723,6 +723,7 @@ public class JavaHLObjectFactory {
             code = e.getErrorMessage().getErrorCode().getCode();
         }
         ClientException ec = new ClientException(e.getMessage(), null, code);
+        ec.initCause(e);
         svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, ec);
         svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, e);
         throw ec;
