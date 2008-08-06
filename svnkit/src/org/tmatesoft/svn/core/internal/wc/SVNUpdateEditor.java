@@ -1527,7 +1527,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             File file = new File(myAdminInfo.getAnchor().getRoot(), path);
             SVNAdminArea area = myAdminInfo.getWCAccess().retrieve(file);
             if (myIsLockOnDemand && area != null && !area.isLocked()) {
-                area.lock(true);
+                area.lock(false);
+                area = myAdminInfo.getWCAccess().upgrade(file);
             }
             return area;
         }
