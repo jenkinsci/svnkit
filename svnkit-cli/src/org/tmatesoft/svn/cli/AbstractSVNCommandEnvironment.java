@@ -19,7 +19,6 @@ import java.io.PrintStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +34,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -292,7 +292,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
 
     
     public void handleError(SVNErrorMessage err) {
-        Collection codes = new HashSet();
+        Collection codes = new SVNHashSet();
         int count = 0;
         while(err != null && count < 2) {
             if ("".equals(err.getMessageTemplate()) && codes.contains(err.getErrorCode())) {

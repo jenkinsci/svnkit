@@ -13,7 +13,8 @@
 package org.tmatesoft.svn.core;
 
 import java.util.Collection;
-import java.util.HashSet;
+
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 
 /**
  * The <b>SVNRevisionProperty</b> class represents revision properties - those
@@ -28,7 +29,7 @@ import java.util.HashSet;
  */
 public class SVNRevisionProperty {
     
-    private static final Collection REVISION_PROPS = new HashSet();
+    private static final Collection REVISION_PROPS = new SVNHashSet();
 
     static {
         REVISION_PROPS.add(SVNRevisionProperty.AUTHOR);

@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -31,6 +30,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
@@ -564,7 +564,7 @@ public class SVNWCManager {
                 throw svne;
             }
 
-            Collection versioned = new HashSet();
+            Collection versioned = new SVNHashSet();
             for (Iterator entries = childDir.entries(false); entries.hasNext();) {
                 SVNEntry entry = (SVNEntry) entries.next();
                 versioned.add(entry.getName());

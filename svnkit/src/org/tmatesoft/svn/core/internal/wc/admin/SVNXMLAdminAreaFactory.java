@@ -33,7 +33,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
 
-    public static final int WC_FORMAT = SVNXMLAdminAreaFactory.WC_FORMAT_13;
+    public static final int WC_FORMAT = SVNAdminAreaFactory.WC_FORMAT_13;
 
     protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException {
         SVNXMLAdminArea adminArea = new SVNXMLAdminArea(path);

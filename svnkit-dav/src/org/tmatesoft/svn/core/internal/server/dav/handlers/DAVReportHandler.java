@@ -19,7 +19,6 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,11 +36,11 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNLogType;
-
 import org.xml.sax.Attributes;
 
 /**
@@ -50,7 +49,7 @@ import org.xml.sax.Attributes;
  */
 public class DAVReportHandler extends ServletDAVHandler {
 
-    private static Set REPORT_NAMESPACES = new HashSet();
+    private static Set REPORT_NAMESPACES = new SVNHashSet();
 
     protected static final String PATH_ATTR = "path";
     protected static final String REVISION_ATTR = "rev";

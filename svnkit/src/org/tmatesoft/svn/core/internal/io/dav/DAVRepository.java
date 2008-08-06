@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,6 +53,7 @@ import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -592,7 +592,7 @@ public class DAVRepository extends SVNRepository {
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = doGetFullPath(targetPaths[i]);
             }
-            Collection relativePaths = new HashSet();
+            Collection relativePaths = new SVNHashSet();
             String path = SVNPathUtil.condencePaths(fullPaths, relativePaths, false);
             if (relativePaths.isEmpty()) {
                 relativePaths.add("");

@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -40,9 +39,9 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -113,7 +112,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private static final Pattern COMMA = Pattern.compile(",");
 
     //Report related stuff DAVOptionsHandler uses
-    protected static Set REPORT_ELEMENTS = new HashSet();
+    protected static Set REPORT_ELEMENTS = new SVNHashSet();
     protected static final DAVElement UPDATE_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "update-report");
     protected static final DAVElement LOG_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "log-report");
     protected static final DAVElement DATED_REVISIONS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "dated-rev-report");

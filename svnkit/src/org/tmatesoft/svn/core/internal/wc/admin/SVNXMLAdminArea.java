@@ -22,7 +22,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +37,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -58,8 +58,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     public static final int WC_FORMAT = SVNXMLAdminAreaFactory.WC_FORMAT;
 
     private static final String THIS_DIR = "";
-    private static final Set BOOLEAN_PROPERTIES = new HashSet();
-    private static final Set INAPPLICABLE_PROPERTIES = new HashSet();
+    private static final Set BOOLEAN_PROPERTIES = new SVNHashSet();
+    private static final Set INAPPLICABLE_PROPERTIES = new SVNHashSet();
     static {
         BOOLEAN_PROPERTIES.add(SVNProperty.COPIED);
         BOOLEAN_PROPERTIES.add(SVNProperty.DELETED);

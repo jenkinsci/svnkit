@@ -16,7 +16,6 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,6 +32,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
@@ -72,7 +72,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
     public SVNLookCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
         myRevision = -1;
-        myExtensions = new HashSet();
+        myExtensions = new SVNHashSet();
     }
     
     public File getRepositoryFile() {

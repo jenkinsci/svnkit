@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.File;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -311,6 +312,8 @@ public class SVNHashMap implements Map {
                 hash = hash*33 + str.charAt(i);
             }
             return hash;
+        } else if (key.getClass() == File.class) {
+            return hashCode(((File) key).getPath());
         }
         return key.hashCode();
     }

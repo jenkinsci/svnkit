@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +32,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -537,7 +537,7 @@ public class FSCommitter {
         Map sourceEntries = source.getDirEntries(myFSFS);
         Map targetEntries = target.getDirEntries(myFSFS);
         Map ancestorEntries = ancestor.getDirEntries(myFSFS);
-        Set removedEntries = new HashSet();
+        Set removedEntries = new SVNHashSet();
         for (Iterator ancestorEntryNames = ancestorEntries.keySet().iterator(); ancestorEntryNames.hasNext();) {
             String ancestorEntryName = (String) ancestorEntryNames.next();
             FSEntry ancestorEntry = (FSEntry) ancestorEntries.get(ancestorEntryName);

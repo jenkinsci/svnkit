@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +42,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminDeltifier;
@@ -51,7 +51,6 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNLogType;
-
 import org.xml.sax.Attributes;
 
 /**
@@ -60,7 +59,7 @@ import org.xml.sax.Attributes;
  */
 public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
-    private static Set UPDATE_REPORT_NAMESPACES = new HashSet();
+    private static Set UPDATE_REPORT_NAMESPACES = new SVNHashSet();
 
     private static final DAVElement ENTRY = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "entry");
     private static final DAVElement MISSING = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "missing");
