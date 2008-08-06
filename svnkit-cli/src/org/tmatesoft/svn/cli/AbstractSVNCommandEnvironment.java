@@ -141,7 +141,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             handleError(err);
             while(err != null) {
                 if (err.getErrorCode() == SVNErrorCode.WC_LOCKED) {
-                    getErr().println("svn: run 'jsvn clenaup' to remove locks (type 'jsvn help clenaup' for details)");
+                    getErr().println("svn: run 'jsvn cleanup' to remove locks (type 'jsvn help cleanup' for details)");
                     break;
                 }
                 err = err.getChildErrorMessage();
