@@ -385,7 +385,11 @@ public class SVNUpdateClient extends SVNBasicClient {
             ISVNEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, allowUnversionedObstructions, 
                     depthIsSticky, depth, preservedExts, fileFetcher, isUpdateLocksOnDemand()); 
                 
-            repos.update(revNumber, target, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            try {
+                repos.update(revNumber, target, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            } finally {
+                repos2.closeSession();
+            }
 
             long targetRevision = SVNRepository.INVALID_REVISION;
             if (editor instanceof SVNUpdateEditor) {
