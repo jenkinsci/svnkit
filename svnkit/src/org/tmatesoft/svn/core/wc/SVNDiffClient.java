@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -80,7 +80,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  */
 public class SVNDiffClient extends SVNMergeDriver {
@@ -163,8 +163,9 @@ public class SVNDiffClient extends SVNMergeDriver {
     }
 
     /**
-     * Gets the diff options that are used in merge operations 
-     * by this client. Creates a new one if none was used before.
+     * Gets the diff options that are used in merge operations by this client. 
+     * If none was provided by the user, one created as <code>new SVNDiffOptions()</code> will be returned
+     * and used further.
      * 
      * @return diff options
      */
@@ -204,21 +205,57 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <li><code>url</code> was not found in <code>rN</code>
      *                        <li><code>url</code> was not found in <code>rM</code>
      *                        </ul>
+     * @deprecated use {@link #doDiff(SVNURL, SVNRevision, SVNRevision, SVNRevision, SVNDepth, boolean, OutputStream)} 
+     *             instead
      */
-    public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry,
-            OutputStream result) throws SVNException {
+    public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, 
+            boolean useAncestry, OutputStream result) throws SVNException {
         doDiff(url, pegRevision, rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
-     
-    public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            OutputStream result) throws SVNException {
+
+    /**
+     * Produces diff output which describes the delta between <code>url</code> in peg revision 
+     * <code>pegRevision</code>, as it changed between <code>rN</code> and <code>rM</code>. 
+     * 
+     * <p/>
+     * If <code>pegRevision is {@link SVNRevision#isValid() invalid}, behaves identically to 
+     * {@link #doDiff(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, OutputStream)}, 
+     * using <code>url</code> for both of that function's <code>url1</code> and <code>url2</code> arguments.
+     * 
+     * <p/>
+     * All other options are handled identically to 
+     * {@link #doDiff(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, OutputStream)}.
+     *
+     * @param  url            a repository location
+     * @param  pegRevision    a revision in which <code>url</code> is first looked up
+     * @param  rN             an old revision                          
+     * @param  rM             a new revision
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code -
+     *                        if either of <code>rN</code> and <code>rM</code> is either 
+     *                        {@link SVNRevision#isValid() invalid} or {@link SVNRevision#isLocal() local} 
+     *                        <li>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code - 
+     *                        <code>url</code> can not be found in either <code>rN</code> or <code>rM</code>
+     *                        </ul>
+     * @since                 1.2, SVN 1.5
+     */
+    public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (rN.isLocal() || rM.isLocal()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions must be non-local for " +
-                "a pegged diff of an URL");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Both rN and rM revisions must be non-local for a pegged diff of an URL");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(url.toString(), url.toString());
@@ -241,7 +278,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      * the repository location of <code>path</code> is compared for these 
      * revisions (<code>'svn diff -r N:M URL'</code>).
      * 
-     * @param  path           a Working Copy file path
+     * @param  path           a Working Copy path
      * @param  pegRevision    a revision in which the repository location of <code>path</code> 
      *                        is first looked up
      * @param  rN             an old revision                          
@@ -262,12 +299,34 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <li><code>path</code> was not found in <code>rN</code>
      *                        <li><code>path</code> was not found in <code>rM</code>
      *                        </ul>
+     * @deprecated            use {@link #doDiff(File, SVNRevision, SVNRevision, SVNRevision, SVNDepth, boolean, OutputStream, Collection)}
+     *                        instead 
      */
-    public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry,
-            OutputStream result) throws SVNException {
+    public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, 
+            boolean useAncestry, OutputStream result) throws SVNException {
         doDiff(path, pegRevision, rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
     }
     
+    /**
+     * Iterates over the passed in <code>paths</code> calling 
+     * {@link #doDiff(File, SVNRevision, SVNRevision, SVNRevision, SVNDepth, boolean, OutputStream, Collection)} 
+     * for each one in the array.
+     * 
+     * @param  paths         array of working copy paths 
+     * @param  rN            an old revision                          
+     * @param  rM            a new revision
+     * @param  pegRevision   a revision in which the repository location of <code>paths</code> 
+     *                       is first looked up
+     * @param  depth         tree depth to process
+     * @param  useAncestry   if <span class="javakeyword">true</span> then
+     *                       the paths ancestry will be noticed while calculating differences,
+     *                       otherwise not
+     * @param  result        the target {@link java.io.OutputStream} where
+     *                       the differences will be written to
+     * @param  changeLists   collection with changelist names
+     * @throws SVNException
+     * @since                1.2, SVN 1.5
+     */
     public void doDiff(File[] paths, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, 
             boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
         if (paths == null) {
@@ -285,17 +344,60 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
     }
     
+    /**
+     * Produces diff output which describes the delta between <code>path</code> in peg revision 
+     * <code>pegRevision</code>, as it changed between <code>rN</code> and <code>rM</code>. 
+     * 
+     * <p/>
+     * If <code>rM</code> is neither {@link SVNRevision#BASE}, nor {@link SVNRevision#WORKING}, nor 
+     * {@link SVNRevision#COMMITTED}, and if, on the contrary, <code>rN</code> is one of the aforementioned 
+     * revisions, then a wc-against-url diff is performed; if <code>rN</code> also is not one of those 
+     * revision constants, then a url-against-url diff is performed. Otherwise it's a url-against-wc diff. 
+     * 
+     * <p/>
+     * If <code>pegRevision is {@link SVNRevision#isValid() invalid}, behaves identically to 
+     * {@link #doDiff(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, OutputStream, Collection)}, 
+     * using <code>path</code> for both of that function's <code>path1</code> and <code>path2</code> arguments.
+     * 
+     * <p/>
+     * All other options are handled identically to 
+     * {@link #doDiff(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, OutputStream, Collection)}.
+     *
+     * @param  path           a Working Copy path
+     * @param  pegRevision    a revision in which the repository location of <code>path</code> 
+     *                        is first looked up
+     * @param  rN             an old revision                          
+     * @param  rM             a new revision
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @param  changeLists    collection with changelist names
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code -
+     *                        if either of <code>rN</code> and <code>rM</code> is 
+     *                        {@link SVNRevision#isValid() invalid}; if both <code>rN</code> and 
+     *                        <code>rM</code> are either {@link SVNRevision#WORKING} or {@link SVNRevision#BASE}
+     *                        <li>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code - 
+     *                        <code>path</code> can not be found in either <code>rN</code> or <code>rM</code>
+     *                        </ul>
+     * @since                 1.2, SVN 1.5
+     */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, 
             boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         boolean rNisLocal = rN == SVNRevision.BASE || rN == SVNRevision.WORKING;
         boolean rMisLocal = rM == SVNRevision.BASE || rM == SVNRevision.WORKING;
         if (rNisLocal && rMisLocal) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for " +
-                    "a pegged diff");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "At least one revision must be non-local for a pegged diff");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         path = path.getAbsoluteFile();
@@ -339,16 +441,84 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <li><code>url1</code> was not found in <code>rN</code>
      *                        <li><code>url2</code> was not found in <code>rM</code>
      *                        </ul>
+     * @deprecated use {@link #doDiff(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, OutputStream)}
+     *             instead
      */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         doDiff(url1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
     }
     
-    public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            OutputStream result) throws SVNException {
+    /**
+     * Produces diff output which describes the delta between <code>url1</code>/<code>rN</code> and 
+     * <code>url2</code>/<code>rM</code>. Writes the output of the diff to <code>result</code>.
+     * 
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} and there was a 
+     * non-<span class="javakeyword">null</span> {@link DefaultSVNDiffGenerator#setBasePath(File) base path} 
+     * provided to it, the original path and modified path will have this base path stripped from the front 
+     * of the respective paths. If the base path is not <span class="javakeyword">null</span> but 
+     * is not a parent path of the target, an exception with the {@link SVNErrorCode#BAD_RELATIVE_PATH} error 
+     * code is thrown. 
+     * 
+     * <p/>
+     * <code>url1</code> and <code>url2</code> must both represent the same node kind -- that
+     * is, if <code>url1</code> is a directory, <code>url2</code> must also be, and if <code>url1</code>
+     * is a file, <code>url2</code> must also be.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, diffs fully recursively. Else if it is 
+     * {@link SVNDepth#IMMEDIATES}, diffs the named paths and their file children (if any), and diffs 
+     * properties of subdirectories, but does not descend further into the subdirectories. Else if 
+     * {@link SVNDepth#FILES}, behaves as if for {@link SVNDepth#IMMEDIATES} except doesn't diff properties 
+     * of subdirectories. If {@link SVNDepth#EMPTY}, diffs exactly the named paths but nothing underneath them.
+     * 
+     * <p/>
+     * <code>useAncestry</code> controls whether or not items being diffed will be checked for relatedness 
+     * first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     * 
+     * <p/>
+     * If {@link ISVNDiffGenerator#isDiffDeleted()} returns <span class="javakeyword">true</span>, then no diff 
+     * output will be generated on deleted files.
+     * 
+     * <p/>
+     * Generated headers are encoded using {@link ISVNDiffGenerator#getEncoding()}.
+     *
+     * <p/>
+     * Diffs output will not be generated for binary files, unless 
+     * {@link ISVNDiffGenerator#isForcedBinaryDiff()} is <span class="javakeyword">true</span>, in which case 
+     * diffs will be shown regardless of the content types.
+     *
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} then a caller can set 
+     * {@link SVNDiffOptions} to it which will be used to pass additional options to the diff processes 
+     * invoked to compare files.
+     * 
+     * @param  url1           the first URL to be compared
+     * @param  rN             a revision of <code>url1</code>
+     * @param  url2           the second URL to be compared
+     *                        against <code>path1</code>
+     * @param  rM             a revision of <code>url2</code>
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                        either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                        </ul> 
+     * @since  1.2, SVN 1.5
+     */
+    public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, OutputStream result) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(url1.toString(), url2.toString());
@@ -392,14 +562,96 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <li>the repository location of <code>path1</code> was 
      *                        not found in <code>rN</code>
      *                        </ul>
+     * @deprecated            use {@link #doDiff(File, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, OutputStream, Collection)}
+     *                        instead
      */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         doDiff(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
     }
-    
-    public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            OutputStream result, Collection changeLists) throws SVNException {
+
+    /**
+     * Produces diff output which describes the delta between <code>path1</code>/<code>rN</code> and 
+     * <code>url2</code>/<code>rM</code>. Writes the output of the diff to <code>result</code>.
+     * 
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} and there was a 
+     * non-<span class="javakeyword">null</span> {@link DefaultSVNDiffGenerator#setBasePath(File) base path} 
+     * provided to it, the original path and modified path will have this base path stripped from the front 
+     * of the respective paths. If the base path is not <span class="javakeyword">null</span> but 
+     * is not a parent path of the target, an exception with the {@link SVNErrorCode#BAD_RELATIVE_PATH} error 
+     * code is thrown. 
+     * 
+     * <p/>
+     * <code>path1</code> and <code>url2</code> must both represent the same node kind -- that
+     * is, if <code>path1</code> is a directory, <code>url2</code> must also be, and if <code>path1</code>
+     * is a file, <code>url2</code> must also be.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, diffs fully recursively. Else if it is 
+     * {@link SVNDepth#IMMEDIATES}, diffs the named paths and their file children (if any), and diffs 
+     * properties of subdirectories, but does not descend further into the subdirectories. Else if 
+     * {@link SVNDepth#FILES}, behaves as if for {@link SVNDepth#IMMEDIATES} except doesn't diff properties 
+     * of subdirectories. If {@link SVNDepth#EMPTY}, diffs exactly the named paths but nothing underneath them.
+     * 
+     * <p/>
+     * <code>useAncestry</code> controls whether or not items being diffed will be checked for relatedness 
+     * first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     * 
+     * <p/>
+     * If {@link ISVNDiffGenerator#isDiffDeleted()} returns <span class="javakeyword">true</span>, then no diff 
+     * output will be generated on deleted files.
+     * 
+     * <p/>
+     * Generated headers are encoded using {@link ISVNDiffGenerator#getEncoding()}.
+     *
+     * <p/>
+     * Diffs output will not be generated for binary files, unless 
+     * {@link ISVNDiffGenerator#isForcedBinaryDiff()} is <span class="javakeyword">true</span>, in which case 
+     * diffs will be shown regardless of the content types.
+     *
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} then a caller can set 
+     * {@link SVNDiffOptions} to it which will be used to pass additional options to the diff processes 
+     * invoked to compare files.
+     * 
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist names, used as a restrictive 
+     * filter on items whose differences are reported; that is, doesn't generate diffs about any item unless
+     * it's a member of one of those changelists. If <code>changeLists</code> is empty (or 
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     *
+     * <p/>
+     * Note: changelist filtering only applies to diffs in which at least one side of the diff represents 
+     * working copy data.
+     * 
+     * <p/>
+     * If both <code>rN</code> is either {@link SVNRevision#WORKING} or {@link SVNRevision#BASE}, then it will 
+     * be a wc-against-url; otherwise, a url-against-url diff. 
+     * 
+     * @param  path1          a WC path
+     * @param  rN             a revision of <code>path1</code>
+     * @param  url2           a repository location URL that is to be compared 
+     *                        against <code>path1</code> (or its repository location)
+     * @param  rM             a revision of <code>url2</code>
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @param  changeLists    collection with changelist names    
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                        either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                        </ul> 
+     * @since  1.2, SVN 1.5
+     */
+    public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
@@ -448,16 +700,100 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <li>the repository location of <code>path2</code> was 
      *                        not found in <code>rM</code>
      *                        </ul>
+     * @deprecated            use {@link #doDiff(SVNURL, SVNRevision, File, SVNRevision, SVNDepth, boolean, OutputStream, Collection)}
+     *                        instead 
+     *                       
      */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         doDiff(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
     }
 
-    public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            OutputStream result, Collection changeLists) throws SVNException {
+    /**
+     * Produces diff output which describes the delta between <code>url1</code>/<code>rN</code> and 
+     * <code>path2</code>/<code>rM</code>. Writes the output of the diff to <code>result</code>.
+     * 
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} and there was a 
+     * non-<span class="javakeyword">null</span> {@link DefaultSVNDiffGenerator#setBasePath(File) base path} 
+     * provided to it, the original path and modified path will have this base path stripped from the front 
+     * of the respective paths. If the base path is not <span class="javakeyword">null</span> but 
+     * is not a parent path of the target, an exception with the {@link SVNErrorCode#BAD_RELATIVE_PATH} error 
+     * code is thrown. 
+     * 
+     * <p/>
+     * <code>url1</code> and <code>path2</code> must both represent the same node kind -- that
+     * is, if <code>url1</code> is a directory, <code>path2</code> must also be, and if <code>url1</code>
+     * is a file, <code>path2</code> must also be.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, diffs fully recursively. Else if it is 
+     * {@link SVNDepth#IMMEDIATES}, diffs the named paths and their file children (if any), and diffs 
+     * properties of subdirectories, but does not descend further into the subdirectories. Else if 
+     * {@link SVNDepth#FILES}, behaves as if for {@link SVNDepth#IMMEDIATES} except doesn't diff properties 
+     * of subdirectories. If {@link SVNDepth#EMPTY}, diffs exactly the named paths but nothing underneath them.
+     * 
+     * <p/>
+     * <code>useAncestry</code> controls whether or not items being diffed will be checked for relatedness 
+     * first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     * 
+     * <p/>
+     * If {@link ISVNDiffGenerator#isDiffDeleted()} returns <span class="javakeyword">true</span>, then no diff 
+     * output will be generated on deleted files.
+     * 
+     * <p/>
+     * Generated headers are encoded using {@link ISVNDiffGenerator#getEncoding()}.
+     *
+     * <p/>
+     * Diffs output will not be generated for binary files, unless 
+     * {@link ISVNDiffGenerator#isForcedBinaryDiff()} is <span class="javakeyword">true</span>, in which case 
+     * diffs will be shown regardless of the content types.
+     *
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} then a caller can set 
+     * {@link SVNDiffOptions} to it which will be used to pass additional options to the diff processes 
+     * invoked to compare files.
+     * 
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist names, used as a restrictive 
+     * filter on items whose differences are reported; that is, doesn't generate diffs about any item unless
+     * it's a member of one of those changelists. If <code>changeLists</code> is empty (or 
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     *
+     * <p/>
+     * Note: changelist filtering only applies to diffs in which at least one side of the diff represents 
+     * working copy data.
+     * 
+     * <p/>
+     * If both <code>rM</code> is either {@link SVNRevision#WORKING} or {@link SVNRevision#BASE}, then it will 
+     * be a url-against-wc; otherwise, a url-against-url diff. 
+     * 
+     * @param  url1           a repository location URL 
+     * @param  rN             a revision of <code>url1</code>
+     * @param  path2          a WC path that is to be compared 
+     *                        against <code>url1</code>
+     * @param  rM             a revision of <code>path2</code>
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @param  changeLists    collection with changelist names    
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                        either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                        </ul> 
+     * @since  1.2, SVN 1.5
+     */
+    public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         getDiffGenerator().init(url1.toString(), path2.getAbsolutePath());
@@ -522,14 +858,98 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        or <code>rN</code> is not {@link SVNRevision#BASE}, or
      *                        <code>rM</code> is not {@link SVNRevision#WORKING} 
      *                        </ul>
+     * @deprecated            use {@link #doDiff(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, OutputStream, Collection)} 
+     *                        instead
      */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
             OutputStream result) throws SVNException {
         doDiff(path1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
     }
     
-    public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            OutputStream result, Collection changeLists) throws SVNException {
+    /**
+     * Produces diff output which describes the delta between <code>path1</code>/<code>rN</code> and 
+     * <code>path2</code>/<code>rM</code>. Writes the output of the diff to <code>result</code>.
+     * 
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} and there was a 
+     * non-<span class="javakeyword">null</span> {@link DefaultSVNDiffGenerator#setBasePath(File) base path} 
+     * provided to it, the original path and modified path will have this base path stripped from the front 
+     * of the respective paths. If the base path is not <span class="javakeyword">null</span> but 
+     * is not a parent path of the target, an exception with the {@link SVNErrorCode#BAD_RELATIVE_PATH} error 
+     * code is thrown. 
+     * 
+     * <p/>
+     * <code>path1</code> and <code>path2</code> must both represent the same node kind -- that
+     * is, if <code>path1</code> is a directory, <code>path2</code> must also be, and if <code>path1</code>
+     * is a file, <code>path2</code> must also be.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, diffs fully recursively. Else if it is 
+     * {@link SVNDepth#IMMEDIATES}, diffs the named paths and their file children (if any), and diffs 
+     * properties of subdirectories, but does not descend further into the subdirectories. Else if 
+     * {@link SVNDepth#FILES}, behaves as if for {@link SVNDepth#IMMEDIATES} except doesn't diff properties 
+     * of subdirectories. If {@link SVNDepth#EMPTY}, diffs exactly the named paths but nothing underneath them.
+     * 
+     * <p/>
+     * <code>useAncestry</code> controls whether or not items being diffed will be checked for relatedness 
+     * first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     * 
+     * <p/>
+     * If {@link ISVNDiffGenerator#isDiffDeleted()} returns <span class="javakeyword">true</span>, then no diff 
+     * output will be generated on deleted files.
+     * 
+     * <p/>
+     * Generated headers are encoded using {@link ISVNDiffGenerator#getEncoding()}.
+     *
+     * <p/>
+     * Diffs output will not be generated for binary files, unless 
+     * {@link ISVNDiffGenerator#isForcedBinaryDiff()} is <span class="javakeyword">true</span>, in which case 
+     * diffs will be shown regardless of the content types.
+     *
+     * <p/>
+     * If this client object uses {@link DefaultSVNDiffGenerator} then a caller can set 
+     * {@link SVNDiffOptions} to it which will be used to pass additional options to the diff processes 
+     * invoked to compare files.
+     * 
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist names, used as a restrictive 
+     * filter on items whose differences are reported; that is, doesn't generate diffs about any item unless
+     * it's a member of one of those changelists. If <code>changeLists</code> is empty (or 
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     *
+     * <p/>
+     * Note: changelist filtering only applies to diffs in which at least one side of the diff represents 
+     * working copy data.
+     * 
+     * <p/>
+     * If both <code>rN</code> and <code>rM</code> are either {@link SVNRevision#WORKING} or 
+     * {@link SVNRevision#BASE}, then it will be a wc-against-wc diff operation, in which case no repository 
+     * access is needed. If only <code>rN</code> or <code>rM</code> is, then it will be a wc-against-url or 
+     * url-against-wc diff correspondingly; if neither - a url-against-url diff. 
+     * 
+     * @param  path1          a WC path
+     * @param  rN             a revision of <code>path1</code>
+     * @param  path2          a WC path that is to be compared 
+     *                        against <code>path1</code>
+     * @param  rM             a revision of <code>path2</code>
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  result         the target {@link java.io.OutputStream} where
+     *                        the differences will be written to
+     * @param  changeLists    collection with changelist names    
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                        either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                        </ul> 
+     * @since  1.2, SVN 1.5
+     */
+    public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
         if (!rN.isValid() || !rM.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
@@ -565,13 +985,47 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
      */
-    public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         doDiffStatus(path1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
-    
-    public void doDiffStatus(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+
+    /**
+     * Produces a diff summary which lists the changed items between <code>path</code> in peg revision 
+     * <code>pegRevision</code>, as it changed between <code>rN</code> and <code>rM</code>. 
+     *
+     * <p/>
+     * If <code>pegRevision</code> is {@link SVNRevision#isValid() invalid}, behaves identically to 
+     * {@link #doDiffStatus(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}, 
+     * using <code>path</code> for both of that method's <code>path1</code> and <code>path2</code> argments.
+     * 
+     * <p/>
+     * The method may report false positives if <code>useAncestry</code> is 
+     * <span class="javakeyword">false</span>, as described in the documentation for 
+     * {@link #doDiffStatus(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}.
+     * 
+     * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
+     * difference.
+     * 
+     * <p/>
+     * See {@link #doDiff(File, SVNRevision, SVNRevision, SVNRevision, SVNDepth, boolean, OutputStream, Collection)} 
+     * for a description of the other parameters.
+     *
+     * @param  path            working copy path
+     * @param  rN              left-hand revision
+     * @param  rM              right-hand revision
+     * @param  pegRevision     a revision in which the repository location of <code>path</code> 
+     *                         is first looked up
+     * @param  depth           tree depth to process
+     * @param  useAncestry     if <span class="javakeyword">true</span> then
+     *                         the paths ancestry will be noticed while calculating differences,
+     *                         otherwise not
+     * @param  handler         a diff status handler
+     * @throws SVNException   
+     * @since                  1.2, SVN 1.5
+     */
+    public void doDiffStatus(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
@@ -581,33 +1035,74 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
         
         if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Not all required revisions are specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE; 
         boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
         if (isPath1Local || isPath2Local) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Summarizing diff can only compare repository to repository");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } 
         doDiffURLURL(null, path, rN, null, path, rM, pegRevision, depth, useAncestry, handler);        
     }
     
-    public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    /**
+     * Produces a diff summary which lists the changed items between
+     * <code>path1</code>/<code>rN</code> and <code>path2</code>/<code>rM</code> without creating text
+     * deltas. 
+     * 
+     * <p/>
+     * The function may report false positives if <code>ignoreAncestry</code> is 
+     * <span class="javakeyword">false</span>, since a file might have been modified between two revisions, 
+     * but still have the same contents.
+     * 
+     * <p/>
+     * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
+     * difference.
+     * 
+     * <p/>
+     * See {@link #doDiff(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, OutputStream, Collection)} 
+     * for a description of the other parameters.
+     *
+     * @param  path1             the path of a left-hand item to diff
+     * @param  rN                a revision of <code>path1</code>
+     * @param  path2             the path of a right-hand item to diff
+     * @param  rM                a revision of <code>path2</code>
+     * @param  depth             tree depth to process 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                           either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                           <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if 
+     *                           either of <code>rM</code> or </code>rN</code> is either {@link SVNRevision#WORKING}
+     *                           or {@link SVNRevision#BASE} 
+     *                           </ul> 
+     * @since                    1.2, SVN 1.5
+     */
+    public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
         if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Not all required revisions are specified");            
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE; 
         boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
         if (isPath1Local || isPath2Local) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Summarizing diff can only compare repository to repository");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } 
         doDiffURLURL(null, path1, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);        
@@ -629,13 +1124,13 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
      */
-    public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         doDiffStatus(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
-    public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
@@ -667,13 +1162,13 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
      */
-    public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         doDiffStatus(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
-    public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }   
@@ -727,8 +1222,8 @@ public class SVNDiffClient extends SVNMergeDriver {
         doDiffURLURL(url, null, rN, url, null, rM, pegRevision, depth, useAncestry, handler);
     }
 
-    public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
+    public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, 
+            boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
@@ -737,288 +1232,6 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         doDiffURLURL(url1, null, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
-    }
-    
-    private void doDiffURLWC(SVNURL url1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, 
-            boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
-            File anchorPath = info.getAnchor().getRoot();
-            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-            
-            SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
-            if (anchorEntry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            SVNURL anchorURL = anchorEntry.getSVNURL();
-            if (pegRevision.isValid()) {
-                SVNRepositoryLocation[] locations = getLocations(url1, null, null, pegRevision, revision1, SVNRevision.UNDEFINED);
-                url1 = locations[0].getURL();
-                String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
-                getDiffGenerator().init(url1.toString(), anchorPath2);
-            }
-            SVNRepository repository = createRepository(anchorURL, null, null, true);
-            long revNumber = getRevisionNumber(revision1, repository, null);
-            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
-                                                                getDiffGenerator(), 
-                                                                reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */,
-                    revision2 == SVNRevision.BASE  || revision2 == SVNRevision.COMMITTED  /* compare to base */, 
-                    depth, changeLists);
-            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, 
-                    !serverSupportsDepth, depth, false, getDebugLog());
-            
-            long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
-            try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-            } finally {
-                editor.cleanup();
-            }
-        } finally {
-            wcAccess.close();
-        }
-    }
-
-    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, 
-            SVNRevision revision2, boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result, 
-            Collection changeLists) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            int admDepth = getAdminDepth(depth);
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, admDepth);
-            File anchorPath = info.getAnchor().getRoot();
-            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-            
-            SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
-            if (anchorEntry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            SVNURL url1;
-            SVNURL anchorURL = anchorEntry.getSVNURL();
-            if (pegRevision.isValid()) {
-                SVNRepositoryLocation[] locations = getLocations(null, path1, null, pegRevision, revision1, SVNRevision.UNDEFINED);
-                url1 = locations[0].getURL();
-                String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
-                if (!reverse) {
-                    getDiffGenerator().init(url1.toString(), anchorPath2);
-                } else {
-                    getDiffGenerator().init(anchorPath2, url1.toString());
-                } 
-            } else {
-                url1 = getURL(path1);
-            }
-            SVNRepository repository = createRepository(anchorURL, null, null, true);
-            long revNumber = getRevisionNumber(revision1, repository, path1);
-            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
-                                                                getDiffGenerator(), 
-                                                                reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, 
-                    revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
-                    depth, changeLists);
-            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
-                    false, !serverSupportsDepth, depth, false, getDebugLog());
-            
-            // this should be rev2.
-            long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
-            try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-            } finally {
-                editor.cleanup();
-            }
-        } finally {
-            wcAccess.close();
-        }
-    }
-    
-    private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2, 
-                            SVNDepth depth, boolean useAncestry, OutputStream result, 
-                            Collection changeLists) throws SVNException {
-        if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only diffs between a path's text-base " +
-                                    "and its working files are supported at this time (-rBASE:WORKING)");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            int admDepth = getAdminDepth(depth);
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, admDepth);
-            wcAccess.getVersionedEntry(path1, false);
-            long rev = getRevisionNumber(revision1, null, path1);
-            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
-                                                                getDiffGenerator(), 
-                                                                rev, -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, false, depth, 
-                    changeLists);
-            try {
-                editor.closeEdit();
-            } finally {
-                editor.cleanup();
-            }
-        } finally {
-            wcAccess.close();
-        }
-    }
-    
-    private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
-            SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
-        File basePath = null;
-        if (path1 != null) {
-            basePath = path1;
-        }
-        if (path2 != null) {
-            basePath = path2;
-        }
-        if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
-            url1 = locations[0].getURL();
-            url2 = locations[1].getURL();
-            
-            getDiffGenerator().init(url1.toString(), url2.toString());
-        } else {
-            url1 = url1 == null ? getURL(path1) : url1;
-            url2 = url2 == null ? getURL(path2) : url2;
-        }
-        SVNRepository repository1 = createRepository(url1, null, null, true);
-        SVNRepository repository2 = createRepository(url2, null, null, false);
-
-        final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = -1;
-        String target1 = null;
-        SVNNodeKind kind1 = null;
-        SVNNodeKind kind2 = null;
-        try {
-            rev2 = getRevisionNumber(revision2, repository2, path2);            
-            kind1 = repository1.checkPath("", rev1);
-            kind2 = repository2.checkPath("", rev2);
-            if (kind1 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                        new Object[] {url1, new Long(rev1)});
-                SVNErrorManager.error(err, SVNLogType.WC);
-            } else if (kind2 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                        new Object[] {url2, new Long(rev2)});
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        } finally {
-            repository2.closeSession();
-        }
-        if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
-            target1 = SVNPathUtil.tail(url1.getPath());
-            if (basePath != null) {
-                basePath = basePath.getParentFile();
-            }
-            url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-            repository1 = createRepository(url1, null, null, true);
-        }
-        repository2 = createRepository(url1, null, null, false); 
-        SVNRemoteDiffEditor editor = null;
-        try {
-            SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
-            callback.setBasePath(basePath);
-            editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
-            ISVNReporterBaton reporter = new ISVNReporterBaton() {
-                public void report(ISVNReporter reporter) throws SVNException {
-                    //TODO(sd): dynamic depth here
-                    reporter.setPath("", null, rev1, SVNDepth.INFINITY, false);
-                    reporter.finishReport();
-                }
-            };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-        } finally {
-            if (editor != null) {
-                editor.cleanup();
-            }
-            repository2.closeSession();
-        }
-    }
-
-    private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
-            SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        File basePath = null;
-        if (path1 != null) {
-            basePath = path1;
-        }
-        if (path2 != null) {
-            basePath = path2;
-        }
-        if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
-            url1 = locations[0].getURL();
-            url2 = locations[1].getURL();
-            
-            getDiffGenerator().init(url1.toString(), url2.toString());
-        } else {
-            url1 = url1 == null ? getURL(path1) : url1;
-            url2 = url2 == null ? getURL(path2) : url2;
-        }
-        SVNRepository repository1 = createRepository(url1, null, null, true);
-        SVNRepository repository2 = createRepository(url2, null, null, false);
-        
-        final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = -1;
-        SVNNodeKind kind1 = null;
-        SVNNodeKind kind2 = null;
-        String target1 = null;
-
-        try {
-            rev2 = getRevisionNumber(revision2, repository2, path2);
-            
-            kind1 = repository1.checkPath("", rev1);
-            kind2 = repository2.checkPath("", rev2);
-            if (kind1 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                        new Object[] {url1, new Long(rev1)});
-                SVNErrorManager.error(err, SVNLogType.WC);
-            } else if (kind2 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
-                        new Object[] {url2, new Long(rev2)});
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
-                target1 = SVNPathUtil.tail(url1.getPath());
-                if (basePath != null) {
-                    basePath = basePath.getParentFile();
-                }
-                url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-                repository1 = createRepository(url1, null, null, true);
-            }
-        } finally {
-            repository2.closeSession();
-        }
-        repository2 = createRepository(url1, null, null, false); 
-        File tmpFile = getDiffGenerator().createTempDirectory();
-        try {
-            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, repository2, rev1, handler);
-            ISVNReporterBaton reporter = new ISVNReporterBaton() {
-                public void report(ISVNReporter reporter) throws SVNException {
-                    //TODO(sd): dynamic depth here
-                    reporter.setPath("", null, rev1, SVNDepth.INFINITY, false);
-                    reporter.finishReport();
-                }
-            };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, depth, false, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-        } finally {
-            if (tmpFile != null) {
-                SVNFileUtil.deleteAll(tmpFile, true, null);
-            }
-            repository2.closeSession();
-        }
-    }
-    
-    private int getAdminDepth(SVNDepth depth) {
-        int admDepth = SVNWCAccess.INFINITE_DEPTH;
-        if (depth == SVNDepth.IMMEDIATES) {
-            admDepth = 1;
-        } else if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
-            admDepth = 0;
-        }
-        return admDepth;
     }
     
     /**
@@ -1519,8 +1732,7 @@ public class SVNDiffClient extends SVNMergeDriver {
     public Collection suggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
         LinkedList suggestions = new LinkedList();
         SVNURL reposRoot = getReposRoot(path, null, pegRevision, null, null);
-        SVNLogClient logClient = new SVNLogClient(getRepositoryPool(), getOptions());
-        SVNLocationEntry copyFromInfo = logClient.getCopySource(path, null, pegRevision);
+        SVNLocationEntry copyFromInfo = getCopySource(path, null, pegRevision);
         String copyFromPath = copyFromInfo.getPath();
         SVNURL copyFromURL = null;
         if (copyFromPath != null) {
@@ -1544,8 +1756,7 @@ public class SVNDiffClient extends SVNMergeDriver {
     public Collection suggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
         LinkedList suggestions = new LinkedList();
         SVNURL reposRoot = getReposRoot(null, url, pegRevision, null, null);
-        SVNLogClient logClient = new SVNLogClient(getRepositoryPool(), getOptions());
-        SVNLocationEntry copyFromInfo = logClient.getCopySource(null, url, pegRevision);
+        SVNLocationEntry copyFromInfo = getCopySource(null, url, pegRevision);
         String copyFromPath = copyFromInfo.getPath();
 
         SVNURL copyFromURL = null;
@@ -1565,6 +1776,286 @@ public class SVNDiffClient extends SVNMergeDriver {
             }
         }
         return suggestions;
+    }
+
+    private void doDiffURLWC(SVNURL url1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, 
+            boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
+            File anchorPath = info.getAnchor().getRoot();
+            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
+            
+            SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
+            if (anchorEntry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            SVNURL anchorURL = anchorEntry.getSVNURL();
+            if (pegRevision.isValid()) {
+                SVNRepositoryLocation[] locations = getLocations(url1, null, null, pegRevision, revision1, SVNRevision.UNDEFINED);
+                url1 = locations[0].getURL();
+                String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
+                getDiffGenerator().init(url1.toString(), anchorPath2);
+            }
+            SVNRepository repository = createRepository(anchorURL, null, null, true);
+            long revNumber = getRevisionNumber(revision1, repository, null);
+            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
+                                                                getDiffGenerator(), 
+                                                                reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */,
+                    revision2 == SVNRevision.BASE  || revision2 == SVNRevision.COMMITTED  /* compare to base */, 
+                    depth, changeLists);
+            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, 
+                    !serverSupportsDepth, depth, false, getDebugLog());
+            
+            long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
+            try {
+                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            } finally {
+                editor.cleanup();
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
+
+    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, 
+            SVNRevision revision2, boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result, 
+            Collection changeLists) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            int admDepth = getAdminDepth(depth);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, admDepth);
+            File anchorPath = info.getAnchor().getRoot();
+            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
+            
+            SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
+            if (anchorEntry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            SVNURL url1;
+            SVNURL anchorURL = anchorEntry.getSVNURL();
+            if (pegRevision.isValid()) {
+                SVNRepositoryLocation[] locations = getLocations(null, path1, null, pegRevision, revision1, SVNRevision.UNDEFINED);
+                url1 = locations[0].getURL();
+                String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
+                if (!reverse) {
+                    getDiffGenerator().init(url1.toString(), anchorPath2);
+                } else {
+                    getDiffGenerator().init(anchorPath2, url1.toString());
+                } 
+            } else {
+                url1 = getURL(path1);
+            }
+            SVNRepository repository = createRepository(anchorURL, null, null, true);
+            long revNumber = getRevisionNumber(revision1, repository, path1);
+            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), 
+                                                                getDiffGenerator(), 
+                                                                reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, 
+                    revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
+                    depth, changeLists);
+            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
+            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
+                    false, !serverSupportsDepth, depth, false, getDebugLog());
+            
+            // this should be rev2.
+            long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
+            try {
+                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+            } finally {
+                editor.cleanup();
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
+    
+    private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2, 
+            SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
+        if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Only diffs between a path's text-base and its working files are supported at this time (-rBASE:WORKING)");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            int admDepth = getAdminDepth(depth);
+            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, admDepth);
+            wcAccess.getVersionedEntry(path1, false);
+            long rev = getRevisionNumber(revision1, null, path1);
+            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), getDiffGenerator(), rev, -1, 
+                    result);
+            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, false, depth, 
+                    changeLists);
+            try {
+                editor.closeEdit();
+            } finally {
+                editor.cleanup();
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
+    
+    private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
+            SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
+        File basePath = null;
+        if (path1 != null) {
+            basePath = path1;
+        }
+        if (path2 != null) {
+            basePath = path2;
+        }
+        if (pegRevision.isValid()) {
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
+            url1 = locations[0].getURL();
+            url2 = locations[1].getURL();
+            
+            getDiffGenerator().init(url1.toString(), url2.toString());
+        } else {
+            url1 = url1 == null ? getURL(path1) : url1;
+            url2 = url2 == null ? getURL(path2) : url2;
+        }
+        SVNRepository repository1 = createRepository(url1, null, null, true);
+        SVNRepository repository2 = createRepository(url2, null, null, false);
+
+        final long rev1 = getRevisionNumber(revision1, repository1, path1);
+        long rev2 = -1;
+        String target1 = null;
+        SVNNodeKind kind1 = null;
+        SVNNodeKind kind2 = null;
+        try {
+            rev2 = getRevisionNumber(revision2, repository2, path2);            
+            kind1 = repository1.checkPath("", rev1);
+            kind2 = repository2.checkPath("", rev2);
+            if (kind1 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url1, new Long(rev1)});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (kind2 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url2, new Long(rev2)});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } finally {
+            repository2.closeSession();
+        }
+        if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
+            target1 = SVNPathUtil.tail(url1.getPath());
+            if (basePath != null) {
+                basePath = basePath.getParentFile();
+            }
+            url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
+            repository1 = createRepository(url1, null, null, true);
+        }
+        repository2 = createRepository(url1, null, null, false); 
+        SVNRemoteDiffEditor editor = null;
+        try {
+            SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
+            callback.setBasePath(basePath);
+            editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
+            ISVNReporterBaton reporter = new ISVNReporterBaton() {
+                public void report(ISVNReporter reporter) throws SVNException {
+                    //TODO(sd): dynamic depth here
+                    reporter.setPath("", null, rev1, SVNDepth.INFINITY, false);
+                    reporter.finishReport();
+                }
+            };
+            repository1.diff(url2, rev2, rev1, target1, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+        } finally {
+            if (editor != null) {
+                editor.cleanup();
+            }
+            repository2.closeSession();
+        }
+    }
+
+    private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision,
+            SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
+        File basePath = null;
+        if (path1 != null) {
+            basePath = path1;
+        }
+        if (path2 != null) {
+            basePath = path2;
+        }
+        if (pegRevision.isValid()) {
+            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
+            url1 = locations[0].getURL();
+            url2 = locations[1].getURL();
+            
+            getDiffGenerator().init(url1.toString(), url2.toString());
+        } else {
+            url1 = url1 == null ? getURL(path1) : url1;
+            url2 = url2 == null ? getURL(path2) : url2;
+        }
+        SVNRepository repository1 = createRepository(url1, null, null, true);
+        SVNRepository repository2 = createRepository(url2, null, null, false);
+        
+        final long rev1 = getRevisionNumber(revision1, repository1, path1);
+        long rev2 = -1;
+        SVNNodeKind kind1 = null;
+        SVNNodeKind kind2 = null;
+        String target1 = null;
+
+        try {
+            rev2 = getRevisionNumber(revision2, repository2, path2);
+            
+            kind1 = repository1.checkPath("", rev1);
+            kind2 = repository2.checkPath("", rev2);
+            if (kind1 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url1, new Long(rev1)});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (kind2 == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}",
+                        new Object[] {url2, new Long(rev2)});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
+                target1 = SVNPathUtil.tail(url1.getPath());
+                if (basePath != null) {
+                    basePath = basePath.getParentFile();
+                }
+                url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
+                repository1 = createRepository(url1, null, null, true);
+            }
+        } finally {
+            repository2.closeSession();
+        }
+        repository2 = createRepository(url1, null, null, false); 
+        File tmpFile = getDiffGenerator().createTempDirectory();
+        try {
+            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, repository2, rev1, handler);
+            ISVNReporterBaton reporter = new ISVNReporterBaton() {
+                public void report(ISVNReporter reporter) throws SVNException {
+                    //TODO(sd): dynamic depth here
+                    reporter.setPath("", null, rev1, SVNDepth.INFINITY, false);
+                    reporter.finishReport();
+                }
+            };
+            repository1.diff(url2, rev2, rev1, target1, !useAncestry, depth, false, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+        } finally {
+            if (tmpFile != null) {
+                SVNFileUtil.deleteAll(tmpFile, true, null);
+            }
+            repository2.closeSession();
+        }
+    }
+    
+    private int getAdminDepth(SVNDepth depth) {
+        int admDepth = SVNWCAccess.INFINITE_DEPTH;
+        if (depth == SVNDepth.IMMEDIATES) {
+            admDepth = 1;
+        } else if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+            admDepth = 0;
+        }
+        return admDepth;
     }
 
     private Object[] getLocationFromPathAndRevision(File path, SVNURL url, SVNRevision pegRevision) throws SVNException {

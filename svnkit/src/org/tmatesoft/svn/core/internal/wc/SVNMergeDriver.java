@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeInfo;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNMergeRange;
@@ -116,6 +117,27 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     public abstract SVNDiffOptions getMergeOptions();
+
+    protected SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
+        long[] pegRev = { SVNRepository.INVALID_REVISION };
+        SVNRepository repos = createRepository(url, path, null, revision, revision, pegRev);
+        SVNLocationEntry copyFromEntry = null;
+        String targetPath = getPathRelativeToRoot(path, url, null, null, repos);
+        CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
+            try {
+                repos.log(new String[] { "" }, pegRev[0], 1, true, true, 0, false, new String[0], receiver);
+                copyFromEntry = receiver.getCopyFromLocation();
+            } catch (SVNException e) {
+                SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
+                if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
+                    return new SVNLocationEntry(SVNRepository.INVALID_REVISION, null);
+                }
+                throw e;
+            }
+
+        return copyFromEntry == null ? new SVNLocationEntry(SVNRepository.INVALID_REVISION, null) 
+                                     : copyFromEntry;
+    }
 
     protected void getLogsForMergeInfoRangeList(SVNURL reposRootURL, String[] paths, SVNMergeRangeList rangeList, 
             boolean discoverChangedPaths, String[] revProps, ISVNLogEntryHandler handler) throws SVNException {
@@ -1305,8 +1327,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 		        if (segments.size() > 1) {
 		            SVNLocationSegment segment2 = (SVNLocationSegment) segments.get(1);
 		            SVNURL segmentURL = sourceRootURL.appendPath(segment2.getPath(), false);
-		            SVNLogClient logClient = getLogClient();
-		            SVNLocationEntry copyFromLocation = logClient.getCopySource(null, segmentURL, 
+		            SVNLocationEntry copyFromLocation = getCopySource(null, segmentURL, 
 		                    SVNRevision.create(segment2.getStartRevision()));
 		            String copyFromPath = copyFromLocation.getPath();
 		            long copyFromRevision = copyFromLocation.getRevision();
@@ -2556,4 +2577,50 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
         }
     }
+
+    private static class CopyFromReceiver implements ISVNLogEntryHandler {
+        private String myTargetPath;
+        private SVNLocationEntry myCopyFromLocation;
+        
+        public CopyFromReceiver(String targetPath) {
+            myTargetPath = targetPath;
+        }
+        
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            if (myCopyFromLocation != null) {
+                return;
+            }
+            
+            Map changedPaths = logEntry.getChangedPaths();
+            if (changedPaths != null && !changedPaths.isEmpty()) {
+                TreeMap sortedChangedPaths = new TreeMap(Collections.reverseOrder());
+                sortedChangedPaths.putAll(changedPaths);
+                for (Iterator changedPathsIter = sortedChangedPaths.keySet().iterator(); changedPathsIter.hasNext();) {
+                    String changedPath = (String) changedPathsIter.next();
+                    SVNLogEntryPath logEntryPath = (SVNLogEntryPath) sortedChangedPaths.get(changedPath);
+                    if (logEntryPath.getCopyPath() != null && 
+                        SVNRevision.isValidRevisionNumber(logEntryPath.getCopyRevision()) && 
+                        SVNPathUtil.isAncestor(changedPath, myTargetPath)) {
+                        String copyFromPath = null;
+                        if (changedPath.equals(myTargetPath)) {
+                            copyFromPath = logEntryPath.getCopyPath();
+                        } else {
+                            String relPath = myTargetPath.substring(changedPath.length());
+                            if (relPath.startsWith("/")) {
+                                relPath = relPath.substring(1);
+                            }
+                            copyFromPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(logEntryPath.getCopyPath(), relPath));
+                        }
+                        myCopyFromLocation = new SVNLocationEntry(logEntryPath.getCopyRevision(), copyFromPath);
+                        break;
+                    }
+                }
+            }
+        } 
+
+        public SVNLocationEntry getCopyFromLocation() {
+            return myCopyFromLocation;
+        }
+    }
+
 }
