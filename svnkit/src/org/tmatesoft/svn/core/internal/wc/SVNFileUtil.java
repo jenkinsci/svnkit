@@ -1114,12 +1114,11 @@ public class SVNFileUtil {
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
-        if (file.isFile() && !file.canWrite()) {
+        if (isOpenVMS && !append && file.isFile()) {
+            deleteFile(file);            
+        } else if (file.isFile() && !file.canWrite()) {
             // force writable.
             setReadonly(file, false);
-        }
-        if (isOpenVMS && file.exists() && !append) {
-            deleteFile(file);            
         }
         try {
             return new BufferedOutputStream(createFileOutputStream(file, append));
