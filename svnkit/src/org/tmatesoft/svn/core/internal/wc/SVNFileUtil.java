@@ -1114,7 +1114,9 @@ public class SVNFileUtil {
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
-        if (file.isFile() && !file.canWrite()) {
+        if (isOpenVMS && !append && file.isFile()) {
+            deleteFile(file);            
+        } else if (file.isFile() && !file.canWrite()) {
             // force writable.
             setReadonly(file, false);
         }
