@@ -565,8 +565,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             case '<':
             case '>':
             case '|':
-            case '[':
-            case ']':
             case '\\':
             case '^':
             case '{':
