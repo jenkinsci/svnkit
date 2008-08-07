@@ -984,6 +984,8 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @param  handler           a diff status handler
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
+     * @deprecated               use {@link #doDiffStatus(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)} 
+     *                           instead
      */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, 
             boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
@@ -1004,6 +1006,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      * <span class="javakeyword">false</span>, as described in the documentation for 
      * {@link #doDiffStatus(File, SVNRevision, File, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}.
      * 
+     * <p/>
      * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
      * difference.
      * 
@@ -1123,12 +1126,51 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @param  handler           a diff status handler
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
+     * @deprecated               use {@link #doDiffStatus(File, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}
+     *                           instead
      */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, 
             boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         doDiffStatus(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
-    
+
+    /**
+     * Produces a diff summary which lists the changed items between
+     * <code>path1</code>/<code>rN</code> and <code>url2</code>/<code>rM</code> without creating text
+     * deltas. 
+     * 
+     * <p/>
+     * The function may report false positives if <code>ignoreAncestry</code> is 
+     * <span class="javakeyword">false</span>, since a file might have been modified between two revisions, 
+     * but still have the same contents.
+     * 
+     * <p/>
+     * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
+     * difference.
+     * 
+     * <p/>
+     * See {@link #doDiff(File, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, OutputStream, Collection)} 
+     * for a description of the other parameters.
+     *
+     * @param  path1             the path of a left-hand item to diff
+     * @param  rN                a revision of <code>path1</code>
+     * @param  url2              repository url as a right-hand item
+     * @param  rM                a revision of <code>url2</code>
+     * @param  depth             tree depth to process 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                           either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                           <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if 
+     *                           either of <code>rM</code> or </code>rN</code> is either {@link SVNRevision#WORKING}
+     *                           or {@link SVNRevision#BASE} 
+     *                           </ul> 
+     * @since                    1.2, SVN 1.5
+     */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, 
             boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -1161,12 +1203,51 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @param  handler           a diff status handler
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
+     * @deprecated               use {@link #doDiffStatus(SVNURL, SVNRevision, File, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}
+     *                           instead
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, 
             boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         doDiffStatus(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
     
+    /**
+     * Produces a diff summary which lists the changed items between
+     * <code>url1</code>/<code>rN</code> and <code>path2</code>/<code>rM</code> without creating text
+     * deltas. 
+     * 
+     * <p/>
+     * The function may report false positives if <code>ignoreAncestry</code> is 
+     * <span class="javakeyword">false</span>, since a file might have been modified between two revisions, 
+     * but still have the same contents.
+     * 
+     * <p/>
+     * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
+     * difference.
+     * 
+     * <p/>
+     * See {@link #doDiff(SVNURL, SVNRevision, File, SVNRevision, SVNDepth, boolean, OutputStream, Collection)} 
+     * for a description of the other parameters.
+     *
+     * @param  url1              repository url as a left-hand item
+     * @param  rN                a revision of <code>url1</code>
+     * @param  path2             the path of a right-hand item to diff
+     * @param  rM                a revision of <code>path2</code>
+     * @param  depth             tree depth to process 
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if 
+     *                           either <code>rN</code> or <code>rM</code> is {@link SVNRevision#isValid() invalid}
+     *                           <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if 
+     *                           either of <code>rM</code> or </code>rN</code> is either {@link SVNRevision#WORKING}
+     *                           or {@link SVNRevision#BASE} 
+     *                           </ul> 
+     * @since                    1.2, SVN 1.5
+     */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, 
             boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -1199,12 +1280,49 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @param  handler           a diff status handler
      * @throws SVNException
      * @since                    1.1, new in Subversion 1.4
+     * @deprecated               use {@link #doDiffStatus(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)} 
+     *                           instead
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
         doDiffStatus(url1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
     }
-    
+
+    /**
+     * Produces a diff summary which lists the changed items between <code>url</code> in peg revision 
+     * <code>pegRevision</code>, as it changed between <code>rN</code> and <code>rM</code>. 
+     *
+     * <p/>
+     * If <code>pegRevision</code> is {@link SVNRevision#isValid() invalid}, behaves identically to 
+     * {@link #doDiffStatus(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}, 
+     * using <code>url</code> for both of that method's <code>url1</code> and <code>url2</code> argments.
+     * 
+     * <p/>
+     * The method may report false positives if <code>useAncestry</code> is 
+     * <span class="javakeyword">false</span>, as described in the documentation for 
+     * {@link #doDiffStatus(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, ISVNDiffStatusHandler)}.
+     * 
+     * <p/> 
+     * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
+     * difference.
+     * 
+     * <p/>
+     * See {@link #doDiff(SVNURL, SVNRevision, SVNRevision, SVNRevision, SVNDepth, boolean, OutputStream)} 
+     * for a description of the other parameters.
+     *
+     * @param  url             repository url
+     * @param  rN              left-hand revision
+     * @param  rM              right-hand revision
+     * @param  pegRevision     a revision in which the repository location of <code>path</code> 
+     *                         is first looked up
+     * @param  depth           tree depth to process
+     * @param  useAncestry     if <span class="javakeyword">true</span> then
+     *                         the paths ancestry will be noticed while calculating differences,
+     *                         otherwise not
+     * @param  handler         a diff status handler
+     * @throws SVNException   
+     * @since                  1.2, SVN 1.5
+     */
     public void doDiffStatus(SVNURL url, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
             ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -1222,6 +1340,36 @@ public class SVNDiffClient extends SVNMergeDriver {
         doDiffURLURL(url, null, rN, url, null, rM, pegRevision, depth, useAncestry, handler);
     }
 
+    /**
+     * Produces a diff summary which lists the changed items between
+     * <code>url1</code>/<code>rN</code> and <code>url2</code>/<code>rM</code> without creating text
+     * deltas. 
+     * 
+     * <p/>
+     * The function may report false positives if <code>ignoreAncestry</code> is 
+     * <span class="javakeyword">false</span>, since a file might have been modified between two revisions, 
+     * but still have the same contents.
+     * 
+     * <p/>
+     * Calls <code>handler</code> for each difference with an {@link SVNDiffStatus} object describing the 
+     * difference.
+     * 
+     * <p/>
+     * See {@link #doDiff(SVNURL, SVNRevision, SVNURL, SVNRevision, SVNDepth, boolean, OutputStream)} 
+     * for a description of the other parameters.
+     * 
+     * @param  url1              the url of a left-hand item to diff
+     * @param  rN                a revision of <code>url1</code>
+     * @param  url2              the url of a right-hand item to diff
+     * @param  rM                a revision of <code>url2</code>
+     * @param  depth             tree depth to process
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  handler           a diff status handler
+     * @throws SVNException
+     * @since                    1.2, SVN 1.5
+     */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, 
             boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
         if (handler == null) {
@@ -1278,16 +1426,92 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        not found in <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
+     * @deprecated            use {@link #doMerge(File, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     *                        instead
      */
-    public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
-            boolean force, boolean dryRun) throws SVNException {
+    public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, 
+            boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
         doMerge(path1, revision1, path2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
     
-    public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, 
-                        File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
-                        boolean dryRun, boolean recordOnly) throws SVNException {
+    /** 
+     * Merges changes from <code>path1</code>/<code>revision1</code> to <code>path2</code>/<code>revision2</code> 
+     * into the working-copy path <code>dstPath</code>.
+     * 
+     * <p/>
+     * <code>path1</code> and <code>path2</code> must both represent the same node kind - that
+     * is, if <code>path1</code> is a directory, <code>path2</code> must also be, and if <code>path1</code>
+     * is a file, <code>path2</code> must also be.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, merges fully recursively. Else if 
+     * {@link SVNDepth#IMMEDIATES}, merges changes at most to files that are immediate children of 
+     * <code>dstPath</code> and to directory properties of <code>dstPath</code> and its immediate subdirectory 
+     * children. Else if {@link SVNDepth#FILES}, merges at most to immediate file children of 
+     * <code>dstPath</code> and to <code>dstPath</code> itself. Else if {@link SVNDepth#EMPTY}, applies changes 
+     * only to <code>dstPath</code> (i.e., directory property changes only).
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, uses the depth of <code>dstPath</code>.
+     *
+     * <p/>
+     * Uses <code>useAncestry</code> to control whether or not items being diffed will be checked for 
+     * relatedness first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     *
+     * <p/>
+     * If <code>force</code> is not set and the merge involves deleting locally modified or unversioned items 
+     * the operation will fail. If <code>force</code> is set such items will be deleted.
+     * 
+     * <p/>
+     * {@link #getMergeOptions() merge options} is used to pass arguments to the merge processes (internal or 
+     * external). 
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is not <span class="javakeyword">null</span>, then it will be 
+     * called once for each merged target.
+     * 
+     * <p>
+     * If <code>recordOnly</code> is <span class="javakeyword">true</span>, the merge isn't actually performed, 
+     * but the mergeinfo for the revisions which would've been merged is recorded in the working copy (and must 
+     * be subsequently committed back to the repository).
+     * 
+     * <p/>
+     * If <code>dryRun</code> is <span class="javakeyword">true</span>, the merge is carried out, and full 
+     * notification feedback is provided, but the working copy is not modified.
+     *
+     * <p/>
+     * Note: this method requires repository access. 
+     * 
+     * @param  path1             left-hand working copy path
+     * @param  revision1         revision of <code>path1</code>
+     * @param  path2             right-hand working copy path
+     * @param  revision2         revision of <code>path2</code>
+     * @param  dstPath           target working copy path
+     * @param  depth             tree depth to process
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  force             <span class="javakeyword">true</span> to
+     *                           force the operation to run
+     * @param  dryRun            if <span class="javakeyword">true</span> then runs merge without any file 
+     *                           changes 
+     * @param  recordOnly        if <span class="javakeyword">true</span>, records only the rusult of merge - 
+     *                           mergeinfo data
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - 
+     *                           if either <code>revision1</code> or <code>revision2</code> is 
+     *                           {@link SVNRevision#isValid() invalid}
+     *                           <li/>exception with {@link SVNErrorCode#ENTRY_MISSING_URL} error code - 
+     *                           if failed to retrieve url of either <code>path1</code> or <code>path2</code>
+     *                           </ul>
+     * @since                    1.2, SVN 1.5
+     */
+    public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, 
+            SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         path1 = path1.getAbsoluteFile();
         path2 = path2.getAbsoluteFile();
         dstPath = dstPath.getAbsoluteFile();
@@ -1298,16 +1522,17 @@ public class SVNDiffClient extends SVNMergeDriver {
          */
         SVNURL url1 = getURL(path1);
         if (url1 == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", 
+                    path1);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNURL url2 = getURL(path2);
         if (url2 == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", 
+                    path2);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, 
-                 recordOnly);
+        runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
     
     /**
@@ -1350,16 +1575,92 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
+     * @deprecated            use {@link #doMerge(File, SVNRevision, SVNURL, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     *                        instead
      */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         doMerge(path1, revision1, url2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
-    
-    public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, 
-                        File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
-                        boolean dryRun, boolean recordOnly) throws SVNException {
+
+    /** 
+     * Merges changes from <code>path1</code>/<code>revision1</code> to <code>url2</code>/<code>revision2</code> 
+     * into the working-copy path <code>dstPath</code>.
+     * 
+     * <p/>
+     * <code>path1</code> and <code>url2</code> must both represent the same node kind - that
+     * is, if <code>path1</code> is a directory, <code>url2</code> must also be, and if <code>path1</code>
+     * is a file, <code>url2</code> must also be.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, merges fully recursively. Else if 
+     * {@link SVNDepth#IMMEDIATES}, merges changes at most to files that are immediate children of 
+     * <code>dstPath</code> and to directory properties of <code>dstPath</code> and its immediate subdirectory 
+     * children. Else if {@link SVNDepth#FILES}, merges at most to immediate file children of 
+     * <code>dstPath</code> and to <code>dstPath</code> itself. Else if {@link SVNDepth#EMPTY}, applies changes 
+     * only to <code>dstPath</code> (i.e., directory property changes only).
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, uses the depth of <code>dstPath</code>.
+     *
+     * <p/>
+     * Uses <code>useAncestry</code> to control whether or not items being diffed will be checked for 
+     * relatedness first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     *
+     * <p/>
+     * If <code>force</code> is not set and the merge involves deleting locally modified or unversioned items 
+     * the operation will fail. If <code>force</code> is set such items will be deleted.
+     * 
+     * <p/>
+     * {@link #getMergeOptions() merge options} is used to pass arguments to the merge processes (internal or 
+     * external). 
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is not <span class="javakeyword">null</span>, then it will be 
+     * called once for each merged target.
+     * 
+     * <p>
+     * If <code>recordOnly</code> is <span class="javakeyword">true</span>, the merge isn't actually performed, 
+     * but the mergeinfo for the revisions which would've been merged is recorded in the working copy (and must 
+     * be subsequently committed back to the repository).
+     * 
+     * <p/>
+     * If <code>dryRun</code> is <span class="javakeyword">true</span>, the merge is carried out, and full 
+     * notification feedback is provided, but the working copy is not modified.
+     *
+     * <p/>
+     * Note: this method requires repository access. 
+     * 
+     * @param  path1             left-hand item - working copy path
+     * @param  revision1         revision of <code>path1</code>
+     * @param  url2              right-hand item - repository url
+     * @param  revision2         revision of <code>url2</code>
+     * @param  dstPath           target working copy path
+     * @param  depth             tree depth to process
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  force             <span class="javakeyword">true</span> to
+     *                           force the operation to run
+     * @param  dryRun            if <span class="javakeyword">true</span> then runs merge without any file 
+     *                           changes 
+     * @param  recordOnly        if <span class="javakeyword">true</span>, records only the rusult of merge - 
+     *                           mergeinfo data
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - 
+     *                           if either <code>revision1</code> or <code>revision2</code> is 
+     *                           {@link SVNRevision#isValid() invalid}
+     *                           <li/>exception with {@link SVNErrorCode#ENTRY_MISSING_URL} error code - 
+     *                           if failed to retrieve the repository url of <code>path1</code>
+     *                           </ul>
+     * @since                    1.2, SVN 1.5
+     */
+    public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, 
+            SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         path1 = path1.getAbsoluteFile();
         dstPath = dstPath.getAbsoluteFile();
         SVNURL url1 = getURL(path1);
@@ -1410,6 +1711,8 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        not found in <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
+     * @deprecated            use {@link #doMerge(SVNURL, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     *                        instead
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
@@ -1417,9 +1720,83 @@ public class SVNDiffClient extends SVNMergeDriver {
                 useAncestry, force, dryRun, false);
     }
     
-    public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, 
-                        File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
-                        boolean dryRun, boolean recordOnly) throws SVNException {
+    /** 
+     * Merges changes from <code>url1</code>/<code>revision1</code> to <code>path2</code>/<code>revision2</code> 
+     * into the working-copy path <code>dstPath</code>.
+     * 
+     * <p/>
+     * <code>url1</code> and <code>path2</code> must both represent the same node kind - that
+     * is, if <code>url1</code> is a directory, <code>path2</code> must also be, and if <code>url1</code>
+     * is a file, <code>path2</code> must also be.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, merges fully recursively. Else if 
+     * {@link SVNDepth#IMMEDIATES}, merges changes at most to files that are immediate children of 
+     * <code>dstPath</code> and to directory properties of <code>dstPath</code> and its immediate subdirectory 
+     * children. Else if {@link SVNDepth#FILES}, merges at most to immediate file children of 
+     * <code>dstPath</code> and to <code>dstPath</code> itself. Else if {@link SVNDepth#EMPTY}, applies changes 
+     * only to <code>dstPath</code> (i.e., directory property changes only).
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, uses the depth of <code>dstPath</code>.
+     *
+     * <p/>
+     * Uses <code>useAncestry</code> to control whether or not items being diffed will be checked for 
+     * relatedness first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     *
+     * <p/>
+     * If <code>force</code> is not set and the merge involves deleting locally modified or unversioned items 
+     * the operation will fail. If <code>force</code> is set such items will be deleted.
+     * 
+     * <p/>
+     * {@link #getMergeOptions() merge options} is used to pass arguments to the merge processes (internal or 
+     * external). 
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is not <span class="javakeyword">null</span>, then it will be 
+     * called once for each merged target.
+     * 
+     * <p>
+     * If <code>recordOnly</code> is <span class="javakeyword">true</span>, the merge isn't actually performed, 
+     * but the mergeinfo for the revisions which would've been merged is recorded in the working copy (and must 
+     * be subsequently committed back to the repository).
+     * 
+     * <p/>
+     * If <code>dryRun</code> is <span class="javakeyword">true</span>, the merge is carried out, and full 
+     * notification feedback is provided, but the working copy is not modified.
+     *
+     * <p/>
+     * Note: this method requires repository access. 
+     * 
+     * @param  url1              left-hand item - repository url
+     * @param  revision1         revision of <code>url1</code>
+     * @param  path2             right-hand item - working copy path
+     * @param  revision2         revision of <code>path2</code>
+     * @param  dstPath           target working copy path
+     * @param  depth             tree depth to process
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  force             <span class="javakeyword">true</span> to
+     *                           force the operation to run
+     * @param  dryRun            if <span class="javakeyword">true</span> then runs merge without any file 
+     *                           changes 
+     * @param  recordOnly        if <span class="javakeyword">true</span>, records only the rusult of merge - 
+     *                           mergeinfo data
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - 
+     *                           if either <code>revision1</code> or <code>revision2</code> is 
+     *                           {@link SVNRevision#isValid() invalid}
+     *                           <li/>exception with {@link SVNErrorCode#ENTRY_MISSING_URL} error code - 
+     *                           if failed to retrieve the repository url of <code>path2</code>
+     *                           </ul>
+     * @since                    1.2, SVN 1.5
+     */
+    public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, 
+            SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         path2 = path2.getAbsoluteFile();
         dstPath = dstPath.getAbsoluteFile();
         SVNURL url2 = getURL(path2);
@@ -1473,18 +1850,91 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
+     * @deprecated            use {@link #doMerge(SVNURL, SVNRevision, SVNURL, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     *                        instead                        
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
         doMerge(url1, revision1, url2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), 
                 useAncestry, force, dryRun, false);
     }
-    
-    public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, 
-                        File dstPath, SVNDepth depth, boolean useAncestry, boolean force, 
-                        boolean dryRun, boolean recordOnly) throws SVNException {
-         runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, 
-                  recordOnly);
+
+    /** 
+     * Merges changes from <code>url1</code>/<code>revision1</code> to <code>url2</code>/<code>revision2</code> 
+     * into the working-copy path <code>dstPath</code>.
+     * 
+     * <p/>
+     * <code>url1</code> and <code>url2</code> must both represent the same node kind - that
+     * is, if <code>url1</code> is a directory, <code>url2</code> must also be, and if <code>url1</code>
+     * is a file, <code>url2</code> must also be.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#INFINITY}, merges fully recursively. Else if 
+     * {@link SVNDepth#IMMEDIATES}, merges changes at most to files that are immediate children of 
+     * <code>dstPath</code> and to directory properties of <code>dstPath</code> and its immediate subdirectory 
+     * children. Else if {@link SVNDepth#FILES}, merges at most to immediate file children of 
+     * <code>dstPath</code> and to <code>dstPath</code> itself. Else if {@link SVNDepth#EMPTY}, applies changes 
+     * only to <code>dstPath</code> (i.e., directory property changes only).
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#UNKNOWN}, uses the depth of <code>dstPath</code>.
+     *
+     * <p/>
+     * Uses <code>useAncestry</code> to control whether or not items being diffed will be checked for 
+     * relatedness first. Unrelated items are typically transmitted to the editor as a deletion of one thing
+     * and the addition of another, but if this flag is <span class="javakeyword">true</span>, unrelated
+     * items will be diffed as if they were related.
+     *
+     * <p/>
+     * If <code>force</code> is not set and the merge involves deleting locally modified or unversioned items 
+     * the operation will fail. If <code>force</code> is set such items will be deleted.
+     * 
+     * <p/>
+     * {@link #getMergeOptions() merge options} is used to pass arguments to the merge processes (internal or 
+     * external). 
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is not <span class="javakeyword">null</span>, then it will be 
+     * called once for each merged target.
+     * 
+     * <p/>
+     * If <code>recordOnly</code> is <span class="javakeyword">true</span>, the merge isn't actually performed, 
+     * but the mergeinfo for the revisions which would've been merged is recorded in the working copy (and must 
+     * be subsequently committed back to the repository).
+     * 
+     * <p/>
+     * If <code>dryRun</code> is <span class="javakeyword">true</span>, the merge is carried out, and full 
+     * notification feedback is provided, but the working copy is not modified.
+     *
+     * <p/>
+     * Note: this method requires repository access. 
+     * 
+     * @param  url1              left-hand repository url
+     * @param  revision1         revision of <code>url1</code>
+     * @param  url2              right-hand repository url
+     * @param  revision2         revision of <code>url2</code>
+     * @param  dstPath           target working copy path
+     * @param  depth             tree depth to process
+     * @param  useAncestry       if <span class="javakeyword">true</span> then
+     *                           the paths ancestry will be noticed while calculating differences,
+     *                           otherwise not
+     * @param  force             <span class="javakeyword">true</span> to
+     *                           force the operation to run
+     * @param  dryRun            if <span class="javakeyword">true</span> then runs merge without any file 
+     *                           changes 
+     * @param  recordOnly        if <span class="javakeyword">true</span>, records only the rusult of merge - 
+     *                           mergeinfo data
+     * @throws SVNException      in the following cases:
+     *                           <ul>
+     *                           <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - 
+     *                           if either <code>revision1</code> or <code>revision2</code> is 
+     *                           {@link SVNRevision#isValid() invalid}
+     *                           </ul>
+     * @since                    1.2, SVN 1.5
+     */
+    public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, 
+            SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+         runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
     
     /**
@@ -1530,6 +1980,8 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
+     * @deprecated            use {@link #doMerge(SVNURL, SVNRevision, Collection, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     *                        instead
      */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
@@ -1540,13 +1992,51 @@ public class SVNDiffClient extends SVNMergeDriver {
                 useAncestry, force, dryRun, false);
     }
     
+    /**
+     * Merges the changes between <code>url1</code> in peg revision <code>pegRevision</code>, as it changed 
+     * between the ranges described in <code>rangesToMerge</code>.
+     * 
+     * <p/>
+     * <code>rangesToMerge</code> is a collection of {@link SVNRevisionRange} ranges. These ranges may 
+     * describe additive and/or subtractive merge ranges, they may overlap fully or partially, and/or they may 
+     * partially or fully negate each other. This rangelist is not required to be sorted.  
+     * 
+     * <p/>
+     * All other options are handled identically to 
+     * {@link #doMerge(SVNURL, SVNRevision, SVNURL, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}.
+     *
+     * <p/>
+     * Note: this method requires repository access.
+     * 
+     * @param  url1           a source URL
+     * @param  pegRevision    a revision in which <code>url1</code> 
+     *                        is first looked up
+     * @param  rangesToMerge  collection of revision ranges to merge
+     * @param  dstPath        target working copy path
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @param  recordOnly
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} - If any revision in 
+     *                        the list of provided ranges is {@link SVNRevision#isValid() invalid}
+     *                        </ul>
+     * @since                 1.2, SVN 1.5
+     */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, 
-    		SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
+            SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         if (pegRevision == null || !pegRevision.isValid()) {
             pegRevision = SVNRevision.HEAD;
         }
-        runPeggedMerge(url1, null, rangesToMerge, pegRevision, dstPath, depth, dryRun, 
-                       force, !useAncestry, recordOnly);
+        runPeggedMerge(url1, null, rangesToMerge, pegRevision, dstPath, depth, dryRun, force, !useAncestry, 
+                recordOnly);
     }
     
     /**
@@ -1594,6 +2084,8 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
+     * @deprecated            use {@link #doMerge(File, SVNRevision, List, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     *                        instead
      */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
             boolean force, boolean dryRun) throws SVNException {
@@ -1604,6 +2096,44 @@ public class SVNDiffClient extends SVNMergeDriver {
                 useAncestry, force, dryRun, false);
     }
     
+    /**
+     * Merges the changes between <code>path1</code> in peg revision <code>pegRevision</code>, as it changed 
+     * between the ranges described in <code>rangesToMerge</code>.
+     * 
+     * <p/>
+     * <code>rangesToMerge</code> is a collection of {@link SVNRevisionRange} ranges. These ranges may 
+     * describe additive and/or subtractive merge ranges, they may overlap fully or partially, and/or they may 
+     * partially or fully negate each other. This rangelist is not required to be sorted.  
+     * 
+     * <p/>
+     * All other options are handled identically to 
+     * {@link #doMerge(File, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}.
+     *
+     * <p/>
+     * Note: this method requires repository access.
+     * 
+     * @param  path1          working copy path
+     * @param  pegRevision    a revision in which <code>path1</code> 
+     *                        is first looked up
+     * @param  rangesToMerge  collection of revision ranges to merge
+     * @param  dstPath        target working copy path
+     * @param  depth          tree depth to process
+     * @param  useAncestry    if <span class="javakeyword">true</span> then
+     *                        the paths ancestry will be noticed while calculating differences,
+     *                        otherwise not
+     * @param  force          <span class="javakeyword">true</span> to
+     *                        force the operation to run
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @param  recordOnly
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} - If any revision in 
+     *                        the list of provided ranges is {@link SVNRevision#isValid() invalid}
+     *                        </ul>
+     * @since                 1.2, SVN 1.5
+     */
     public void doMerge(File path1, SVNRevision pegRevision, List rangesToMerge, File dstPath, SVNDepth depth, 
     		boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         /*
@@ -1617,6 +2147,31 @@ public class SVNDiffClient extends SVNMergeDriver {
                        force, !useAncestry, recordOnly);
     }
 
+    /**
+     * Performs a reintegration merge of <code>srcPath</code> at <code>pegRevision</code> into 
+     * <code>dstPath</code>.
+     * 
+     * <p/>
+     * <code>dstPath</code> must be a single-revision, {@link SVNDepth#INFINITY}, pristine, unswitched working 
+     * copy -- in other words, it must reflect a single revision tree, the "target". The mergeinfo on 
+     * <code>srcPath</code> must reflect that all of the target has been merged into it. Then this behaves like 
+     * a merge with {@link #doMerge(File, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)} 
+     * from the target's URL to the source.
+     * 
+     * <p/>
+     * All other options are handled identically to {@link #doMerge(File, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}.
+     * The depth of the merge is always {@link SVNDepth#INFINITY}.
+     *
+     * @param  srcPath        working copy path 
+     * @param  pegRevision    a revision in which <code>srcPath</code> 
+     *                        is first looked up
+     * @param  dstPath        target working copy path
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException 
+     * @since                 1.2, SVN 1.5
+     */
     public void doMergeReIntegrate(File srcPath, SVNRevision pegRevision, File dstPath, 
             boolean dryRun) throws SVNException {
         if (pegRevision == null || !pegRevision.isValid()) {
