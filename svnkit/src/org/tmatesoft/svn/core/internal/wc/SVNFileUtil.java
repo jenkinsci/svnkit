@@ -1118,6 +1118,9 @@ public class SVNFileUtil {
             // force writable.
             setReadonly(file, false);
         }
+        if (isOpenVMS && file.exists() && !append) {
+            deleteFile(file);            
+        }
         try {
             return new BufferedOutputStream(createFileOutputStream(file, append));
         } catch (IOException e) {
