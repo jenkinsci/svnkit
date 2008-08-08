@@ -369,7 +369,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 repository = createRepository(url2, null, null, true);
                 sourceReposRoot = repository.getRepositoryRoot(true);
                 if (!wcReposRoot.equals(sourceReposRoot)) {
-                    Object source = srcPath ;
+                    Object source = srcPath;
                     if (source == null) {
                         source = srcURL;
                     }

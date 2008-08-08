@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -122,7 +121,7 @@ public class SVNLogClient extends SVNBasicClient {
      * 
      * <p/>
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
-     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
      *
      * @param repositoryPool   a repository pool object
      * @param options          a run-time configuration options driver
@@ -413,35 +412,35 @@ public class SVNLogClient extends SVNBasicClient {
      * 
      * <p>
      * Calling this method is equivalent to 
-     * <code>doLog(paths, startRevision, endRevision, SVNRevision.UNDEFINED, stopOnCopy, reportPaths, false, limit, null, handler)</code>.
+     * <code>doLog(paths, startRevision, endRevision, SVNRevision.UNDEFINED, stopOnCopy, discoverChangedPaths, false, limit, null, handler)</code>.
      * 
-     * @param  paths           an array of Working Copy paths,
-     *                         should not be <span class="javakeyword">null</span>
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
-     * @throws SVNException    if one of the following is true:
-     *                         <ul>
-     *                         <li>a path is not under version control
-     *                         <li>can not obtain a URL of a WC path - there's no such
-     *                         entry in the Working Copy
-     *                         <li><code>paths</code> contain entries that belong to
-     *                         different repositories
-     *                         </ul>
-     * @see                    #doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)                                                    
+     * @param  paths                  an array of Working Copy paths,
+     *                                should not be <span class="javakeyword">null</span>
+     * @param  startRevision          a revision for an operation to start from (including
+     *                                this revision)    
+     * @param  endRevision            a revision for an operation to stop at (including
+     *                                this revision)
+     * @param  stopOnCopy             <span class="javakeyword">true</span> not to cross
+     *                                copies while traversing history, otherwise copies history
+     *                                will be also included into processing
+     * @param  discoverChangedPaths   <span class="javakeyword">true</span> to report
+     *                                of all changed paths for every revision being processed 
+     *                                (those paths will be available by calling 
+     *                                {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit                  a maximum number of log entries to be processed 
+     * @param  handler                a caller's log entry handler
+     * @throws SVNException           if one of the following is true:
+     *                                <ul>
+     *                                <li>a path is not under version control
+     *                                <li>can not obtain a URL of a WC path - there's no such
+     *                                entry in the Working Copy
+     *                                <li><code>paths</code> contain entries that belong to
+     *                                different repositories
+     *                                </ul>
+     * @see                           #doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)                                                    
      */
-    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
-        doLog(paths, startRevision, endRevision, SVNRevision.UNDEFINED, stopOnCopy, reportPaths, false, limit, null, handler);
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, startRevision, endRevision, SVNRevision.UNDEFINED, stopOnCopy, discoverChangedPaths, false, limit, null, handler);
     }
 
     /**
@@ -457,7 +456,7 @@ public class SVNLogClient extends SVNBasicClient {
      * If <code>limit</code> is non-zero, only invokes <code>handler</code> on the first <code>limit</code> logs.
      *
      * <p/>
-     * If <code>reportPaths</code> is set, then the changed paths <code>Map</code> argument
+     * If <code>discoverChangedPaths</code> is set, then the changed paths <code>Map</code> argument
      * will be passed to a constructor of {@link SVNLogEntry} on each invocation of <code>handler</code>.
      *
      * <p/>
@@ -491,33 +490,36 @@ public class SVNLogClient extends SVNBasicClient {
      * <p/>
      * Note: this routine requires repository access.
      * 
-     * @param  paths           an array of Working Copy paths, for which log messages are desired
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  pegRevision     a revision in which <code>paths</code> are first looked up
-     *                         in the repository
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
-     * @throws SVNException    if one of the following is true:
-     *                         <ul>
-     *                         <li>can not obtain a URL of a WC path - there's no such
-     *                         entry in the Working Copy
-     *                         <li><code>paths</code> contain entries that belong to
-     *                         different repositories
-     *                         </ul>
-     * @since                  1.2, SVN 1.5 
+     * @param  paths                  an array of Working Copy paths, for which log messages are desired
+     * @param  startRevision          a revision for an operation to start from (including
+     *                                this revision)    
+     * @param  endRevision            a revision for an operation to stop at (including
+     *                                this revision)
+     * @param  pegRevision            a revision in which <code>paths</code> are first looked up
+     *                                in the repository
+     * @param  stopOnCopy             <span class="javakeyword">true</span> not to cross
+     *                                copies while traversing history, otherwise copies history
+     *                                will be also included into processing
+     * @param  discoverChangedPaths   <span class="javakeyword">true</span> to report
+     *                                of all changed paths for every revision being processed 
+     *                                (those paths will be available by calling 
+     *                                {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  includeMergedRevisions if <span class="javakeyword">true</span>, merged revisions will be also 
+     *                                reported
+     * @param  limit                  a maximum number of log entries to be processed 
+     * @param  revisionProperties     names of revision properties to retrieve     
+     * @param  handler                a caller's log entry handler
+     * @throws SVNException           if one of the following is true:
+     *                                <ul>
+     *                                <li>can not obtain a URL of a WC path - there's no such
+     *                                entry in the Working Copy
+     *                                <li><code>paths</code> contain entries that belong to
+     *                                different repositories
+     *                                </ul>
+     * @since                         1.2, SVN 1.5 
      */
     public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, SVNRevision pegRevision, boolean stopOnCopy, 
-            boolean reportPaths, boolean includeMergedRevisions, long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
+            boolean discoverChangedPaths, boolean includeMergedRevisions, long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0 || handler == null) {
             return;
         }
@@ -606,13 +608,13 @@ public class SVNLogClient extends SVNBasicClient {
                 checkCancelled();
                 long startRev = getRevisionNumber(startRevision, repos, paths[i]);
                 long endRev = getRevisionNumber(endRevision, repos, paths[i]);
-                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+                repos.log(targetPaths, startRev, endRev, discoverChangedPaths, stopOnCopy, limit, 
                           includeMergedRevisions, revisionProperties, wrappingHandler);
             }
         } else {
             long startRev = getRevisionNumber(startRevision, repos, null);
             long endRev = getRevisionNumber(endRevision, repos, null);
-            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+            repos.log(targetPaths, startRev, endRev, discoverChangedPaths, stopOnCopy, limit, 
                       includeMergedRevisions, revisionProperties, wrappingHandler);
         }
     }
@@ -624,38 +626,38 @@ public class SVNLogClient extends SVNBasicClient {
      * 
      * <p>
      * Calling this method is equivalent to 
-     * <code>doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, reportPaths, false, limit, null, handler)</code>.
+     * <code>doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, false, limit, null, handler)</code>.
      * 
-     * @param  paths           an array of Working Copy paths,
-     *                         should not be <span class="javakeyword">null</span>
-     * @param  pegRevision     a revision in which <code>path</code> is first looked up
-     *                         in the repository
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
-     * @throws SVNException    if one of the following is true:
-     *                         <ul>
-     *                         <li>a path is not under version control
-     *                         <li>can not obtain a URL of a WC path - there's no such
-     *                         entry in the Working Copy
-     *                         <li><code>paths</code> contain entries that belong to
-     *                         different repositories
-     *                         </ul>
-     * @see                    #doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)
+     * @param  paths                 an array of Working Copy paths,
+     *                               should not be <span class="javakeyword">null</span>
+     * @param  pegRevision           a revision in which <code>path</code> is first looked up
+     *                               in the repository
+     * @param  startRevision         a revision for an operation to start from (including
+     *                               this revision)    
+     * @param  endRevision           a revision for an operation to stop at (including
+     *                               this revision)
+     * @param  stopOnCopy            <span class="javakeyword">true</span> not to cross
+     *                               copies while traversing history, otherwise copies history
+     *                               will be also included into processing
+     * @param  discoverChangedPaths  <span class="javakeyword">true</span> to report
+     *                               of all changed paths for every revision being processed 
+     *                               (those paths will be available by calling 
+     *                               {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit                 a maximum number of log entries to be processed 
+     * @param  handler               a caller's log entry handler
+     * @throws SVNException          if one of the following is true:
+     *                               <ul>
+     *                               <li>a path is not under version control
+     *                               <li>can not obtain a URL of a WC path - there's no such
+     *                               entry in the Working Copy
+     *                               <li><code>paths</code> contain entries that belong to
+     *                               different repositories
+     *                               </ul>
+     * @see                          #doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)
      */
     public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, 
-            boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
-        doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, reportPaths, false, limit, null, 
+            boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, false, limit, null, 
                 handler);
     }
     
@@ -666,32 +668,32 @@ public class SVNLogClient extends SVNBasicClient {
      * 
      * <p>
      * Calling this method is equivalent to 
-     * <code> doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, reportPaths, false, limit, null, handler)</code>.
+     * <code> doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, false, limit, null, handler)</code>.
      *  
-     * @param  url             a target URL            
-     * @param  paths           an array of paths relative to the target 
-     *                         <code>url</code>
-     * @param  pegRevision     a revision in which <code>url</code> is first looked up
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
+     * @param  url                   a target URL            
+     * @param  paths                 an array of paths relative to the target 
+     *                               <code>url</code>
+     * @param  pegRevision           a revision in which <code>url</code> is first looked up
+     * @param  startRevision         a revision for an operation to start from (including
+     *                               this revision)    
+     * @param  endRevision           a revision for an operation to stop at (including
+     *                               this revision)
+     * @param  stopOnCopy            <span class="javakeyword">true</span> not to cross
+     *                               copies while traversing history, otherwise copies history
+     *                               will be also included into processing
+     * @param  discoverChangedPaths  <span class="javakeyword">true</span> to report
+     *                               of all changed paths for every revision being processed 
+     *                               (those paths will be available by calling 
+     *                               {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit                 a maximum number of log entries to be processed 
+     * @param  handler               a caller's log entry handler
      * @throws SVNException
-     * @see                    #doLog(SVNURL, String[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)
-     * @since                  1.1, new in Subversion 1.4
+     * @see                          #doLog(SVNURL, String[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)
+     * @since                        1.1, new in Subversion 1.4
      */
-    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, 
-              reportPaths, false, limit, null, handler);
+              discoverChangedPaths, false, limit, null, handler);
     }
 
     /**
@@ -707,7 +709,7 @@ public class SVNLogClient extends SVNBasicClient {
      * If <code>limit</code> is non-zero, only invokes <code>handler</code> on the first <code>limit</code> logs.
      *
      * <p/>
-     * If <code>reportPaths</code> is set, then the changed paths <code>Map</code> argument
+     * If <code>discoverChangedPaths</code> is set, then the changed paths <code>Map</code> argument
      * will be passed to a constructor of {@link SVNLogEntry} on each invocation of <code>handler</code>.
      *
      * <p/>
@@ -737,28 +739,31 @@ public class SVNLogClient extends SVNBasicClient {
      * <p/>
      * Note: this routine requires repository access.
      * 
-     * @param  url             repository URL            
-     * @param  paths           an array of paths relative to <code>url</code>
-     * @param  pegRevision     a revision in which <code>paths</code> are first looked up
-     *                         in the repository
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
+     * @param  url                     repository URL            
+     * @param  paths                   an array of paths relative to <code>url</code>
+     * @param  pegRevision             a revision in which <code>paths</code> are first looked up
+     *                                 in the repository
+     * @param  startRevision           a revision for an operation to start from (including
+     *                                 this revision)    
+     * @param  endRevision             a revision for an operation to stop at (including
+     *                                 this revision)
+     * @param  stopOnCopy              <span class="javakeyword">true</span> not to cross
+     *                                 copies while traversing history, otherwise copies history
+     *                                 will be also included into processing
+     * @param  discoverChangedPaths    <span class="javakeyword">true</span> to report
+     *                                 of all changed paths for every revision being processed 
+     *                                 (those paths will be available by calling 
+     *                                 {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  includeMergedRevisions  if <span class="javakeyword">true</span>, merged revisions will be also 
+     *                                 reported
+     * @param  limit                   a maximum number of log entries to be processed
+     * @param  revisionProperties      names of revision properties to retrieve     
+     * @param  handler                 a caller's log entry handler
      * @throws SVNException 
-     * @since                  1.2, SVN 1.5 
+     * @since                          1.2, SVN 1.5 
      */
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, 
-            SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, boolean includeMergeInfo, 
+            SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, 
             long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         if (startRevision.isValid() && !endRevision.isValid()) {
             endRevision = startRevision;
@@ -792,7 +797,7 @@ public class SVNLogClient extends SVNBasicClient {
         checkCancelled();
         long endRev = getRevisionNumber(endRevision, repos, null);
         checkCancelled();
-        repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, includeMergeInfo, revisionProperties, 
+        repos.log(paths, startRev, endRev, discoverChangedPaths, stopOnCopy, limit, includeMergedRevisions, revisionProperties, 
                 wrappingHandler);
     }
     

@@ -2102,7 +2102,7 @@ public class SVNWCClient extends SVNBasicClient {
      *                       looked up
      * @param revision       a target revision
      * @param depth          tree depth
-     * @param changelists    collection changelist names
+     * @param changeLists    collection changelist names
      * @param handler        caller's info handler
      * @throws SVNException 
      * @since 1.2, SVN 1.5

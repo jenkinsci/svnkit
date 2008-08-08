@@ -78,6 +78,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <tr bgcolor="#EAEAEA" align="left">
  * <td>doMerge()</td><td>'svn merge'</td>
  * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>getLogXXXMergeInfo()</td><td>'svn merginfo'</td>
+ * </tr>
  * </table>
  * 
  * @version 1.2
@@ -93,14 +96,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * with the specified run-time configuration and authentication 
      * drivers.
      * 
-     * <p>
+     * <p/>
      * If <code>options</code> is <span class="javakeyword">null</span>,
      * then this <b>SVNDiffClient</b> will be using a default run-time
      * configuration driver  which takes client-side settings from the 
      * default SVN's run-time configuration area but is not able to
      * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
      * 
-     * <p>
+     * <p/>
      * If <code>authManager</code> is <span class="javakeyword">null</span>,
      * then this <b>SVNDiffClient</b> will be using a default authentication
      * and network layers driver (see {@link SVNWCUtil#createDefaultAuthenticationManager()})
@@ -115,6 +118,25 @@ public class SVNDiffClient extends SVNMergeDriver {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNDiffClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNDiffClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create 
+     * {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNDiffClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -2154,14 +2176,24 @@ public class SVNDiffClient extends SVNMergeDriver {
      * <p/>
      * <code>dstPath</code> must be a single-revision, {@link SVNDepth#INFINITY}, pristine, unswitched working 
      * copy -- in other words, it must reflect a single revision tree, the "target". The mergeinfo on 
-     * <code>srcPath</code> must reflect that all of the target has been merged into it. Then this behaves like 
-     * a merge with {@link #doMerge(File, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)} 
-     * from the target's URL to the source.
+     * <code>srcPath</code> must reflect that all of the target has been merged into it. 
+     * 
+     * <p/>
+     * This kind of merge should be used for back merging (for example, merging branches back to trunk, 
+     * in which case merge is carried out by comparing the latest trunk tree with the latest branch tree; i.e. 
+     * the resulting difference is excatly the branch changes which will go back to trunk).
      * 
      * <p/>
      * All other options are handled identically to {@link #doMerge(File, SVNRevision, File, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}.
      * The depth of the merge is always {@link SVNDepth#INFINITY}.
-     *
+     * 
+     * <p/>
+     * If <code>pegRevision</code> is <span class="javakeyword">null</span> or {@link SVNRevision#isValid() invalid}, 
+     * then it defaults to {@link SVNRevision#WORKING}. 
+     * 
+     * <p/>
+     * Note: this method requires repository access.
+     * 
      * @param  srcPath        working copy path 
      * @param  pegRevision    a revision in which <code>srcPath</code> 
      *                        is first looked up
@@ -2179,22 +2211,111 @@ public class SVNDiffClient extends SVNMergeDriver {
         }
         runMergeReintegrate(null, srcPath, pegRevision, dstPath, dryRun);
     }
-    
+
+    /**
+     * Performs a reintegration merge of <code>srcURL</code> at <code>pegRevision</code> into 
+     * <code>dstPath</code>.
+     * 
+     * <p/>
+     * <code>dstPath</code> must be a single-revision, {@link SVNDepth#INFINITY}, pristine, unswitched working 
+     * copy -- in other words, it must reflect a single revision tree, the "target". The mergeinfo on 
+     * <code>srcPath</code> must reflect that all of the target has been merged into it. 
+     * 
+     * <p/>
+     * This kind of merge should be used for back merging (for example, merging branches back to trunk, 
+     * in which case merge is carried out by comparing the latest trunk tree with the latest branch tree; i.e. 
+     * the resulting difference is excatly the branch changes which will go back to trunk).
+     * 
+     * <p/>
+     * All other options are handled identically to {@link #doMerge(SVNURL, SVNRevision, SVNURL, SVNRevision, File, SVNDepth, boolean, boolean, boolean, boolean)}.
+     * The depth of the merge is always {@link SVNDepth#INFINITY}.
+     * 
+     * <p/>
+     * If <code>pegRevision</code> is <span class="javakeyword">null</span> or {@link SVNRevision#isValid() invalid}, 
+     * then it defaults to {@link SVNRevision#HEAD}. 
+     * 
+     * <p/>
+     * Note: this method requires repository access.
+     * 
+     * @param  srcURL         repository url 
+     * @param  pegRevision    a revision in which <code>srcURL</code> 
+     *                        is first looked up
+     * @param  dstPath        target working copy path
+     * @param  dryRun         if <span class="javakeyword">true</span> then
+     *                        only tries the operation to run (to find out
+     *                        if a file can be merged successfully)
+     * @throws SVNException 
+     * @since                 1.2, SVN 1.5
+     */
     public void doMergeReIntegrate(SVNURL srcURL, SVNRevision pegRevision, File dstPath, 
             boolean dryRun) throws SVNException {
         if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.WORKING;
+            pegRevision = SVNRevision.HEAD;
         }
         runMergeReintegrate(srcURL, null, pegRevision, dstPath, dryRun);
     }
 
+    /**
+     * Drives a log entry <code>handler</code> with the revisions merged from <code>mergeSrcURL</code> (as of 
+     * <code>srcPegRevision</code>) into <code>path</code> (as of <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     * 
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  path                     working copy path (merge target)                    
+     * @param  pegRevision              a revision in which <code>path</code> is first looked up
+     * @param  mergeSrcURL              merge source repository url
+     * @param  srcPegRevision           a revision in which <code>mergeSrcURL</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, 
-            SVNRevision srcPegRevision, boolean discoverChangedPaths, 
-            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
         getLogMergedMergeInfoImpl(path, null, pegRevision, mergeSrcURL, null, srcPegRevision, discoverChangedPaths, 
                 revisionProperties, handler);
     }
 
+    /**
+     * Drives a log entry <code>handler</code> with the revisions merged from <code>mergeSrcURL</code> (as of 
+     * <code>srcPegRevision</code>) into <code>url</code> (as of <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     * 
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url                      repository url (merge target)                    
+     * @param  pegRevision              a revision in which <code>url</code> is first looked up
+     * @param  mergeSrcURL              merge source repository url
+     * @param  srcPegRevision           a revision in which <code>mergeSrcURL</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
@@ -2202,6 +2323,33 @@ public class SVNDiffClient extends SVNMergeDriver {
                 revisionProperties, handler);
     }
 
+    /**
+     * Drives a log entry <code>handler</code> with the revisions merged from <code>mergeSrcPath</code> (as of 
+     * <code>srcPegRevision</code>) into <code>path</code> (as of <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     * 
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  path                     working copy path (merge target)                    
+     * @param  pegRevision              a revision in which <code>path</code> is first looked up
+     * @param  mergeSrcPath             merge source working copy path
+     * @param  srcPegRevision           a revision in which <code>mergeSrcPath</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
@@ -2209,6 +2357,33 @@ public class SVNDiffClient extends SVNMergeDriver {
                 revisionProperties, handler);
     }
 
+    /**
+     * Drives a log entry <code>handler</code> with the revisions merged from <code>mergeSrcPath</code> (as of 
+     * <code>srcPegRevision</code>) into <code>url</code> (as of <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     * 
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url                      repository url (merge target)                    
+     * @param  pegRevision              a revision in which <code>url</code> is first looked up
+     * @param  mergeSrcPath             merge source working copy path
+     * @param  srcPegRevision           a revision in which <code>mergeSrcPath</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
@@ -2216,13 +2391,69 @@ public class SVNDiffClient extends SVNMergeDriver {
                 revisionProperties, handler);
     }
 
+    /**
+     * Drives a log entry <code>handler</code> with the revisions eligible for merge from 
+     * <code>mergeSrcURL</code> (as of <code>srcPegRevision</code>) into <code>path</code> (as of 
+     * <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  path                     working copy path (merge target)                    
+     * @param  pegRevision              a revision in which <code>path</code> is first looked up
+     * @param  mergeSrcURL              merge source repository url
+     * @param  srcPegRevision           a revision in which <code>mergeSrcURL</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
             SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
         getLogEligibleMergeInfoImpl(path, null, pegRevision, mergeSrcURL, null, srcPegRevision, discoverChangedPaths, 
                 revisionProperties, handler);
     }
-    
+
+    /**
+     * Drives a log entry <code>handler</code> with the revisions eligible for merge from 
+     * <code>mergeSrcURL</code> (as of <code>srcPegRevision</code>) into <code>url</code> (as of 
+     * <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url                      repository url (merge target)                    
+     * @param  pegRevision              a revision in which <code>url</code> is first looked up
+     * @param  mergeSrcURL              merge source repository url
+     * @param  srcPegRevision           a revision in which <code>mergeSrcURL</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
             SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
@@ -2230,6 +2461,34 @@ public class SVNDiffClient extends SVNMergeDriver {
                 revisionProperties, handler);
     }
 
+    /**
+     * Drives a log entry <code>handler</code> with the revisions eligible for merge from 
+     * <code>mergeSrcPath</code> (as of <code>srcPegRevision</code>) into <code>path</code> (as of 
+     * <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  path                     working copy path (merge target)                    
+     * @param  pegRevision              a revision in which <code>path</code> is first looked up
+     * @param  mergeSrcPath             merge source working copy path
+     * @param  srcPegRevision           a revision in which <code>mergeSrcPath</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
             File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
@@ -2237,6 +2496,34 @@ public class SVNDiffClient extends SVNMergeDriver {
                 revisionProperties, handler);
     }
     
+    /**
+     * Drives a log entry <code>handler</code> with the revisions eligible for merge from 
+     * <code>mergeSrcPath</code> (as of <code>srcPegRevision</code>) into <code>url</code> (as of 
+     * <code>pegRevision</code>).
+     * 
+     * <p/>
+     * <code>discoverChangedPaths</code> and <code>revisionProperties</code> are the same as for 
+     * {@link SVNLogClient#doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)}. 
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url                      repository url (merge target)                    
+     * @param  pegRevision              a revision in which <code>url</code> is first looked up
+     * @param  mergeSrcPath             merge source working copy path
+     * @param  srcPegRevision           a revision in which <code>mergeSrcPath</code> is first looked up
+     * @param  discoverChangedPaths     <span class="javakeyword">true</span> to report of all changed paths for 
+     *                                  every revision being processed (those paths will be available by calling 
+     *                                  {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  revisionProperties       names of revision properties to retrieve     
+     * @param  handler                  the caller's log entry handler
+     * @throws SVNException             in the following cases: 
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                                  if the server doesn't support retrieval of mergeinfo
+     *                                  </ul> 
+     * @since                           1.2, SVN 1.5
+     */
     public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
             File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
@@ -2244,6 +2531,30 @@ public class SVNDiffClient extends SVNMergeDriver {
                 revisionProperties, handler);
     }
 
+    /**
+     * Returns mergeinfo as a <code>Map</code> with merge source URLs (as {@link SVNURL}) mapped to 
+     * range lists ({@link SVNMergeRangeList}). Range lists are objects containing arrays of 
+     * {@link SVNMergeRange ranges} describing the ranges which have been merged into <code>path</code> as 
+     * of <code>pegRevision</code>. If there is no mergeinfo, returns <span class="javakeyword">null</span>. 
+     * 
+     * <p/>
+     * Note: unlike most APIs which deal with mergeinfo, this one returns data where the keys of the map are 
+     * absolute repository URLs rather than repository filesystem paths.
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  path           working copy path 
+     * @param  pegRevision    a revision in which <code>path</code> is first looked up
+     * @return                mergeinfo for <code>path</code>
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                        if the server doesn't support retrieval of mergeinfo (which will never happen 
+     *                        for file:// URLs)                        
+     *                        </ul>            
+     * @since                 1.2, SVN 1.5
+     */
     public Map getMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
     	SVNURL reposRoot[] = new SVNURL[1];
     	Map mergeInfo = getMergeInfo(path, pegRevision, reposRoot);
@@ -2264,6 +2575,30 @@ public class SVNDiffClient extends SVNMergeDriver {
     	return mergeInfo;
     }
 
+    /**
+     * Returns mergeinfo as a <code>Map</code> with merge source URLs (as {@link SVNURL}) mapped to 
+     * range lists ({@link SVNMergeRangeList}). Range lists are objects containing arrays of 
+     * {@link SVNMergeRange ranges} describing the ranges which have been merged into <code>url</code> as 
+     * of <code>pegRevision</code>. If there is no mergeinfo, returns <span class="javakeyword">null</span>. 
+     * 
+     * <p/>
+     * Note: unlike most APIs which deal with mergeinfo, this one returns data where the keys of the map are 
+     * absolute repository URLs rather than repository filesystem paths.
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url            repository url 
+     * @param  pegRevision    a revision in which <code>url</code> is first looked up
+     * @return                mergeinfo for <code>url</code>
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                        if the server doesn't support retrieval of mergeinfo (which will never happen 
+     *                        for file:// URLs)                        
+     *                        </ul>            
+     * @since                 1.2, SVN 1.5
+     */
     public Map getMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
     	SVNURL reposRoot[] = new SVNURL[1];
     	Map mergeInfo = getMergeInfo(url, pegRevision, reposRoot);
@@ -2284,6 +2619,16 @@ public class SVNDiffClient extends SVNMergeDriver {
     	return mergeInfo;
     }
 
+    /** 
+     * Returns a collection of potential merge sources (expressed as full repository {@link SVNURL URLs}) for 
+     * <code>path</code> at <code>pegRevision</code>. 
+     *
+     * @param  path          working copy path 
+     * @param  pegRevision   a revision in which <code>path</code> is first looked up
+     * @throws SVNException 
+     * @return               potential merge sources for <code>path</code> 
+     * @since                1.2, SVN 1.5
+     */
     public Collection suggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
         LinkedList suggestions = new LinkedList();
         SVNURL reposRoot = getReposRoot(path, null, pegRevision, null, null);
@@ -2308,6 +2653,16 @@ public class SVNDiffClient extends SVNMergeDriver {
         return suggestions;
     }
 
+    /** 
+     * Returns a collection of potential merge sources (expressed as full repository {@link SVNURL URLs}) for 
+     * <code>url</code> at <code>pegRevision</code>. 
+     *
+     * @param  url           repository url 
+     * @param  pegRevision   a revision in which <code>url</code> is first looked up
+     * @throws SVNException 
+     * @return               potential merge sources for <code>url</code> 
+     * @since                1.2, SVN 1.5
+     */
     public Collection suggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
         LinkedList suggestions = new LinkedList();
         SVNURL reposRoot = getReposRoot(null, url, pegRevision, null, null);
