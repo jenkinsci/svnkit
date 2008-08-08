@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * <b>handleProperty()</b> methods of <b>ISVNPropertyHandler</b> for processing
  * or simply return that 'properties object' as a target.
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  * @see     ISVNPropertyHandler
  * @see     SVNWCClient
@@ -37,8 +37,18 @@ public class SVNPropertyData {
      * Constructs an <b>SVNPropertyData</b> given a property name and its
      * value. 
      * 
-     * @param name  a property name
-     * @param data  a property value
+     * <p>
+     * if <code>data</code> is not <span class="javakeyword">null</span>, is a 
+     * {@link SVNPropertyValue#isString() string} property and <code>name</code> is an 
+     * {@link SVNProperty#isSVNProperty(String) svn-namespace} property name, then <code>options</code>, 
+     * if not <span class="javakeyword">null</span>, is used to translate the property value replacing 
+     * all LF end of line markers in the property value with ones returned by {@link ISVNOptions#getNativeEOL()}.
+     * Otherwise, if <code>options</code> is <span class="javakeyword">null</span>, 
+     * the <span class="javastring">"line.separator"</span> system property is used to retrieve a new EOL marker.
+     *  
+     * @param name    a property name
+     * @param data    a property value
+     * @param options provides EOL style information
      */
     public SVNPropertyData(String name, SVNPropertyValue data, ISVNOptions options) {
         myName = name;
