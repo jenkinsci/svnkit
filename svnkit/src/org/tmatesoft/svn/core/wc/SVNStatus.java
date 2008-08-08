@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -87,7 +87,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * for remote status invocations - that is when a doStatus() method of <b>SVNStatusClient</b>
  * is called with the flag <code>remote</code> set to <span class="javakeyword">true</span>.
  *  
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  * @see     ISVNStatusHandler
  * @see     SVNStatusType
@@ -160,6 +160,7 @@ public class SVNStatus {
      * @param remoteLock               item's lock in the repository
      * @param localLock                item's local lock
      * @param entryProperties          item's SVN specific '&lt;entry' properties
+     * @param changelistName           changelist name which the item belongs to         
      */
     public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
@@ -631,6 +632,13 @@ public class SVNStatus {
         return myEntry;
     }
 
+    /**
+     * Returns the name of the changelist which the working copy item, denoted by this object,
+     * belongs to.   
+     * 
+     * @return  changelist name  
+     * @since   1.2
+     */
     public String getChangelistName() {
         return myChangelistName;
     }
