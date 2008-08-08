@@ -62,6 +62,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -117,6 +118,322 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     public abstract SVNDiffOptions getMergeOptions();
+
+    /**
+     * @param  path 
+     * @param  pegRevision 
+     * @param  mergeSrcURL 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                    use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogMergedMergeInfo(File, SVNRevision, SVNURL, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                                instead
+     */
+    public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+
+        }
+    }
+
+    /**
+     * @param  url 
+     * @param  pegRevision 
+     * @param  mergeSrcURL 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                   use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogMergedMergeInfo(SVNURL, SVNRevision, SVNURL, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                               instead
+     */
+    public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+
+    /**
+     * @param  path 
+     * @param  pegRevision 
+     * @param  mergeSrcPath 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                    use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogMergedMergeInfo(File, SVNRevision, File, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                                instead
+     */
+    public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+
+    /**
+     * @param  url 
+     * @param  pegRevision 
+     * @param  mergeSrcPath 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                   use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogMergedMergeInfo(SVNURL, SVNRevision, File, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                               instead
+     */
+    public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, 
+            SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+
+    /**
+     * @param  path 
+     * @param  pegRevision 
+     * @param  mergeSrcURL 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException
+     * @deprecated                    use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogEligibleMergeInfo(File, SVNRevision, SVNURL, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                                instead  
+     */
+    public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
+            SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+    
+    /**
+     * @param  url 
+     * @param  pegRevision 
+     * @param  mergeSrcURL 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                    use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogEligibleMergeInfo(SVNURL, SVNRevision, SVNURL, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                                instead
+     */
+    public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
+            SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+
+    /**
+     * @param  path 
+     * @param  pegRevision 
+     * @param  mergeSrcPath 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                    use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogEligibleMergeInfo(File, SVNRevision, File, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                                instead
+     */
+    public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
+            File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+
+    /**
+     * @param  url 
+     * @param  pegRevision 
+     * @param  mergeSrcPath 
+     * @param  srcPegRevision 
+     * @param  discoverChangedPaths 
+     * @param  revisionProperties 
+     * @param  handler 
+     * @throws SVNException 
+     * @deprecated                     use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetLogEligibleMergeInfo(SVNURL, SVNRevision, File, SVNRevision, boolean, String[], ISVNLogEntryHandler)}
+     *                                 instead
+     */
+    public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
+            File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
+            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            diffClient.doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, 
+                    discoverChangedPaths, revisionProperties, handler);
+        }
+    }
+
+    /**
+     * @param  path 
+     * @param  pegRevision 
+     * @return                mergeinfo
+     * @throws SVNException 
+     * @deprecated            use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetMergedMergeInfo(File, SVNRevision)}
+     *                        instead
+     */
+    public Map getMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            return diffClient.doGetMergedMergeInfo(path, pegRevision);
+        }
+        return null;
+    }
+
+    /**
+     * @param  url 
+     * @param  pegRevision 
+     * @return                   mergeinfo
+     * @throws SVNException 
+     * @deprecated               use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doGetMergedMergeInfo(SVNURL, SVNRevision)}
+     *                           instead
+     */
+    public Map getMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            return diffClient.doGetMergedMergeInfo(url, pegRevision);
+        }
+        return null;
+    }
+    
+    /**
+     * @param  path 
+     * @param  pegRevision 
+     * @return                mergeinfo
+     * @throws SVNException 
+     * @deprecate             use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doSuggestMergeSources(File, SVNRevision)}
+     *                        instead
+     */
+    public Collection suggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            return diffClient.doSuggestMergeSources(path, pegRevision);
+        }
+        return null;
+    }
+
+    /**
+     * @param  url 
+     * @param  pegRevision 
+     * @return                mergeinfo
+     * @throws SVNException 
+     * @deprecated            use {@link org.tmatesoft.svn.core.wc.SVNDiffClient#doSuggestMergeSources(SVNURL, SVNRevision)}
+     *                        instead
+     */
+    public Collection suggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
+        if (this instanceof SVNDiffClient) {
+            SVNDiffClient diffClient = (SVNDiffClient) this;
+            return diffClient.doSuggestMergeSources(url, pegRevision);
+        }
+        return null;
+    }
+
+    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        boolean isOperativeNotification = false;
+        if (isOperativeNotification(event)) {
+            myOperativeNotificationsNumber++;
+            isOperativeNotification = true;
+        }
+
+        if (myAreSourcesAncestral) {
+            myNotificationsNumber++;
+            if (!myIsSingleFileMerge && isOperativeNotification) {
+                Object childrenWithMergeInfoArray[] = null;
+                if (myChildrenWithMergeInfo != null) {
+                    childrenWithMergeInfoArray = myChildrenWithMergeInfo.toArray();
+                }
+                int newNearestAncestorIndex = findNearestAncestor(childrenWithMergeInfoArray, 
+                        event.getAction() != SVNEventAction.UPDATE_DELETE, event.getFile());
+                if (newNearestAncestorIndex != myCurrentAncestorIndex) {
+                    MergePath child = (MergePath) childrenWithMergeInfoArray[newNearestAncestorIndex];
+                    myCurrentAncestorIndex = newNearestAncestorIndex;
+                    if (!child.myIsAbsent && !child.myRemainingRanges.isEmpty() &&
+                            !(newNearestAncestorIndex == 0 && myIsTargetHasDummyMergeRange)) {
+                        SVNMergeRange ranges[] = child.myRemainingRanges.getRanges();
+                        SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.myPath, 
+                                SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
+                                myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, ranges[0]);
+                        super.handleEvent(mergeBeginEvent, ISVNEventHandler.UNKNOWN);
+                    }
+                }
+            }
+            
+            if (event.getContentsStatus() == SVNStatusType.MERGED ||
+                    event.getContentsStatus() == SVNStatusType.CHANGED ||
+                    event.getPropertiesStatus() == SVNStatusType.MERGED ||
+                    event.getPropertiesStatus() == SVNStatusType.CHANGED ||
+                    event.getAction() == SVNEventAction.UPDATE_ADD) {
+                File mergedPath = event.getFile();
+                if (myMergedPaths == null) {
+                    myMergedPaths = new LinkedList();
+                }
+                myMergedPaths.add(mergedPath);
+            }
+            
+            if (event.getAction() == SVNEventAction.SKIP) {
+                File skippedPath = event.getFile();
+                if (mySkippedPaths == null) {
+                    mySkippedPaths = new LinkedList();
+                }
+                mySkippedPaths.add(skippedPath);
+            } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
+                boolean isRootOfAddedSubTree = false;
+                File addedPath = event.getFile();
+                if (myAddedPaths == null) {
+                    isRootOfAddedSubTree = true;
+                    myAddedPaths = new LinkedList();
+                } else {
+                    File addedPathParent = addedPath.getParentFile();
+                    isRootOfAddedSubTree = !myAddedPaths.contains(addedPathParent);
+                }
+                if (isRootOfAddedSubTree) {
+                    myAddedPaths.add(addedPath);
+                }
+            }
+        } else if (!myIsSingleFileMerge && myOperativeNotificationsNumber == 1 && isOperativeNotification) {
+            SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(myTarget, 
+                    SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
+                    myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, null);
+            super.handleEvent(mergeBeginEvent, ISVNEventHandler.UNKNOWN);
+        }
+        
+        super.handleEvent(event, progress);
+    }
+
+    public void checkCancelled() throws SVNCancelException {
+        super.checkCancelled();
+    }
 
     protected SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
         long[] pegRev = { SVNRepository.INVALID_REVISION };
@@ -870,82 +1187,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         if (err != null) {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-    }
-
-    public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        boolean isOperativeNotification = false;
-        if (isOperativeNotification(event)) {
-            myOperativeNotificationsNumber++;
-            isOperativeNotification = true;
-        }
-
-        if (myAreSourcesAncestral) {
-            myNotificationsNumber++;
-            if (!myIsSingleFileMerge && isOperativeNotification) {
-            	Object childrenWithMergeInfoArray[] = null;
-            	if (myChildrenWithMergeInfo != null) {
-            		childrenWithMergeInfoArray = myChildrenWithMergeInfo.toArray();
-            	}
-            	int newNearestAncestorIndex = findNearestAncestor(childrenWithMergeInfoArray, 
-            	        event.getAction() != SVNEventAction.UPDATE_DELETE, event.getFile());
-                if (newNearestAncestorIndex != myCurrentAncestorIndex) {
-                	MergePath child = (MergePath) childrenWithMergeInfoArray[newNearestAncestorIndex];
-                    myCurrentAncestorIndex = newNearestAncestorIndex;
-                    if (!child.myIsAbsent && !child.myRemainingRanges.isEmpty() &&
-                    		!(newNearestAncestorIndex == 0 && myIsTargetHasDummyMergeRange)) {
-                        SVNMergeRange ranges[] = child.myRemainingRanges.getRanges();
-                    	SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(child.myPath, 
-                        		SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
-                        		myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, ranges[0]);
-                    	super.handleEvent(mergeBeginEvent, ISVNEventHandler.UNKNOWN);
-                    }
-                }
-            }
-            
-            if (event.getContentsStatus() == SVNStatusType.MERGED ||
-            		event.getContentsStatus() == SVNStatusType.CHANGED ||
-            		event.getPropertiesStatus() == SVNStatusType.MERGED ||
-            		event.getPropertiesStatus() == SVNStatusType.CHANGED ||
-            		event.getAction() == SVNEventAction.UPDATE_ADD) {
-            	File mergedPath = event.getFile();
-            	if (myMergedPaths == null) {
-            		myMergedPaths = new LinkedList();
-            	}
-            	myMergedPaths.add(mergedPath);
-            }
-            
-            if (event.getAction() == SVNEventAction.SKIP) {
-                File skippedPath = event.getFile();
-                if (mySkippedPaths == null) {
-                    mySkippedPaths = new LinkedList();
-                }
-                mySkippedPaths.add(skippedPath);
-            } else if (event.getAction() == SVNEventAction.UPDATE_ADD) {
-            	boolean isRootOfAddedSubTree = false;
-            	File addedPath = event.getFile();
-            	if (myAddedPaths == null) {
-            		isRootOfAddedSubTree = true;
-            		myAddedPaths = new LinkedList();
-            	} else {
-            		File addedPathParent = addedPath.getParentFile();
-            		isRootOfAddedSubTree = !myAddedPaths.contains(addedPathParent);
-            	}
-            	if (isRootOfAddedSubTree) {
-            		myAddedPaths.add(addedPath);
-            	}
-            }
-        } else if (!myIsSingleFileMerge && myOperativeNotificationsNumber == 1 && isOperativeNotification) {
-        	SVNEvent mergeBeginEvent = SVNEventFactory.createSVNEvent(myTarget, 
-            		SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
-            		myIsSameRepository ? SVNEventAction.MERGE_BEGIN : SVNEventAction.FOREIGN_MERGE_BEGIN, null, null, null);
-        	super.handleEvent(mergeBeginEvent, ISVNEventHandler.UNKNOWN);
-        }
-        
-        super.handleEvent(event, progress);
-    }
-
-    public void checkCancelled() throws SVNCancelException {
-        super.checkCancelled();
     }
 
     protected SVNProperties filterSelfReferentialMergeInfo(SVNProperties props, File path) throws SVNException {
