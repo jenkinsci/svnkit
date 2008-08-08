@@ -399,6 +399,24 @@ public class SVNSSHSession {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": CONNECTION CREATED: " + this);
         }
         
+        public boolean isSessionPingSupported() {
+            lock(Thread.currentThread());
+            try {
+                String version = null;
+                try {
+                    version = new String(myConnection.getVersionInfo().getServerString());
+                } catch (IOException e) {
+                    return false;
+                }
+                if (version != null && version.indexOf("OpenSSH") >= 0) {
+                    return true;
+                }
+                return false;
+            } finally {
+                unlock();
+            }
+        }
+        
         public void dispose() {
             lock(Thread.currentThread());
             try {

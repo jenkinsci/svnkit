@@ -129,7 +129,6 @@ public class SVNSSHConnector implements ISVNConnector {
                     } else {
                         mySession.execCommand(SVNSERVE_COMMAND_WITH_USER_NAME + "\"" + repository.getExternalUserName() + "\"");
                     }
-        
                     myOutputStream = mySession.getStdin();
                     myOutputStream = new BufferedOutputStream(myOutputStream, 16*1024);
                     myInputStream = mySession.getStdout();
@@ -211,6 +210,10 @@ public class SVNSSHConnector implements ISVNConnector {
         }
         if (!myIsUseSessionPing) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "SKIPPING CHANNEL PING, IT HAS BEEN DISABLED");
+            return false;
+        }
+        if (!myConnection.isSessionPingSupported()) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "SKIPPING CHANNEL PING, IT IS NOT SUPPORTED");
             return false;
         }
         try {
