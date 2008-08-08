@@ -10,7 +10,7 @@ Note: JNA is optional component, remove jna.jar from the classpath if you would 
 
 2) TriLead SSH-2
 
-Trilead Library, build 212 - Java SSH-2 library
+Trilead Library, build 213 - Java SSH-2 library
 License: http://www.trilead.com/Download/Trilead-SSH-2-Java/LICENSE.txt 
 URL: http://www.trilead.com/Products/Trilead-SSH-2-Java/
 Note: Trilead library is only used for svn+ssh connections. Otherwise you may remove trilead.jar from the classpath.
