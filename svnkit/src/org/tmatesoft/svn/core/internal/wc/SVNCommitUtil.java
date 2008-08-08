@@ -379,7 +379,6 @@ public class SVNCommitUtil {
     public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess, Collection paths, Map lockTokens, 
             boolean justLocked, SVNDepth depth, boolean force, Collection changelists, 
             ISVNCommitParameters params) throws SVNException {
-        // TODO
         Map commitables = new TreeMap(FILE_COMPARATOR);
         Collection danglers = new SVNHashSet();
         Iterator targets = paths.iterator();
@@ -387,8 +386,8 @@ public class SVNCommitUtil {
         boolean isRecursionForced = false;
 
         do {
-            baseAccess.checkCancelled();
             String target = targets.hasNext() ? (String) targets.next() : "";
+            baseAccess.checkCancelled();
             // get entry for target
             File targetFile = new File(baseAccess.getAnchor(), target);
             String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
@@ -397,8 +396,21 @@ public class SVNCommitUtil {
             SVNEntry entry = baseAccess.getVersionedEntry(targetFile, false);
             String url = null;
             if (entry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Entry for ''{0}'' has no URL", targetFile);
-                SVNErrorManager.error(err, SVNLogType.WC);
+                // it could be missing directory.
+                if (!entry.isThisDir() && entry.getName() != null && 
+                        entry.isDirectory() && !(entry.isScheduledForAddition() || entry.isScheduledForReplacement()) && SVNFileType.getType(targetFile) == SVNFileType.NONE) {
+                    File parentDir = targetFile.getParentFile();
+                    if (parentDir != null) {
+                        SVNEntry parentEntry = baseAccess.getEntry(parentDir, false);
+                        if (parentEntry != null) {
+                            url = SVNPathUtil.append(parentEntry.getURL(), SVNEncodingUtil.uriEncode(entry.getName()));
+                        }
+                    }
+                } 
+                if (url == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Entry for ''{0}'' has no URL", targetFile);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
             } else {
                 url = entry.getURL();
             }
