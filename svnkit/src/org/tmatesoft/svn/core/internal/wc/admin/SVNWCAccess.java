@@ -476,7 +476,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
             
             SVNEntry parentEntry = access.getEntry(parent, false);
-            if (parentEntry == null) {
+            if (parentEntry == null || !parentEntry.isThisDir()) {
                 return true;
             }
             
