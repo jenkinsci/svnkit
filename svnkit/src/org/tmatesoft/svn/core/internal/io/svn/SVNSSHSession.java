@@ -71,7 +71,7 @@ public class SVNSSHSession {
         ourTimeout = value;
     }
 
-    public static SSHConnectionInfo getConnection(SVNURL location, SVNSSHAuthentication credentials, int connectTimeout) throws SVNException {
+    public static SSHConnectionInfo getConnection(SVNURL location, SVNSSHAuthentication credentials, int connectTimeout, boolean useConnectionPing) throws SVNException {
         lock(Thread.currentThread());
         try {
             if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
@@ -108,23 +108,28 @@ public class SVNSSHSession {
             for (Iterator infos = connectionsList.iterator(); infos.hasNext();) {
                 SSHConnectionInfo info = (SSHConnectionInfo) infos.next();
                 // ping connection here. if it is stale - close connection and remove it from the pool.
-                try {
-                    info.myConnection.ping();
-                } catch (IOException e) {
-                    // ping failed, remove _this_ info only and close its connection.
-                    // the we may check next available connection.
-                    
-                    // all channels binded to the closed connection will be closed
-                    // on the next attempt to access them.
+                if (useConnectionPing) {
+                    try {
+                        info.myConnection.ping();
+                    } catch (IOException e) {
+                        // ping failed, remove _this_ info only and close its connection.
+                        // the we may check next available connection.
+                        
+                        // all channels binded to the closed connection will be closed
+                        // on the next attempt to access them.
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                                ourRequestor + ": ROTTEN CONNECTION DETECTED, WILL CLOSE IT: " + info);
+                        infos.remove();
+                        // to let it be closed even if it is the last one.
+                        info.setPersistent(false);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                                ourRequestor + ": ROTTEN CONNECTION MADE NOT PERSISTENT: " + info);
+                        closeConnection(info);
+                        continue;
+                    }
+                } else {
                     SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
-                            ourRequestor + ": ROTTEN CONNECTION DETECTED, WILL CLOSE IT: " + info);
-                    infos.remove();
-                    // to let it be closed even if it is the last one.
-                    info.setPersistent(false);
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
-                            ourRequestor + ": ROTTEN CONNECTION MADE NOT PERSISTENT: " + info);
-                    closeConnection(info);
-                    continue;
+                            "SKIPPING CONNECTION PING, IT HAS BEEN DISABLED");
                 }
                 if (info.getSessionCount() < MAX_SESSIONS_PER_CONNECTION) {
                     info.resetTimeout();

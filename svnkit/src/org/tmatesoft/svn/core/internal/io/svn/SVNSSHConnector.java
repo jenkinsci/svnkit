@@ -49,6 +49,17 @@ public class SVNSSHConnector implements ISVNConnector {
     private InputStream myInputStream;
     private OutputStream myOutputStream;
     private SSHConnectionInfo myConnection;
+    private boolean myIsUseSessionPing;
+    private boolean myIsUseConnectionPing;
+    
+    public SVNSSHConnector() {
+        this(true, true);
+    }
+    
+    public SVNSSHConnector(boolean useConnectionPing, boolean useSessionPing) {
+        myIsUseConnectionPing = useConnectionPing;
+        myIsUseSessionPing = useSessionPing;
+    }
 
     public void open(SVNRepositoryImpl repository) throws SVNException {
         ISVNAuthenticationManager authManager = repository.getAuthenticationManager();
@@ -75,7 +86,7 @@ public class SVNSSHConnector implements ISVNConnector {
             try {
                 while (authentication != null) {
                     try {
-                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository));
+                        connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository), myIsUseConnectionPing);
                         if (connection == null) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}''", repository.getLocation().setPath("", false));
                             SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -198,11 +209,16 @@ public class SVNSSHConnector implements ISVNConnector {
         if (mySession == null) {
             return true;
         }
+        if (!myIsUseSessionPing) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "SKIPPING CHANNEL PING, IT HAS BEEN DISABLED");
+            return false;
+        }
         try {
             mySession.ping();
         } catch (IOException e) {
             // any failure here means that channel is stale.
             // session will be closed then.
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e); 
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
                     Thread.currentThread() + ": DETECTED STALE SESSION : " + myConnection);
             return true;
