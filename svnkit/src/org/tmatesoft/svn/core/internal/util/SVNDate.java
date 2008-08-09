@@ -300,9 +300,17 @@ public class SVNDate extends Date {
                 if (segment.length() == 0) {
                     result[index] = 0;
                 } else if (index + 1 < DATE_SEPARATORS.length) {
-                    result[index] = Integer.parseInt(segment);
+                    try {
+                        result[index] = Integer.parseInt(segment);
+                    } catch (NumberFormatException nfe) {
+                        return -1;
+                    }
                 } else {
-                    result[index] = Integer.parseInt(segment.substring(0, Math.min(3, segment.length())));
+                    try {
+                        result[index] = Integer.parseInt(segment.substring(0, Math.min(3, segment.length())));
+                    } catch (NumberFormatException nfe) {
+                        return -1;
+                    }
                 }
                 startIndex = charIndex + 1;
                 index++;
