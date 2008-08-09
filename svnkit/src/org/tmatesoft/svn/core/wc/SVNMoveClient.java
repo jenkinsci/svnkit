@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -35,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -60,7 +62,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * all the necessary administrative version control information.
  * </ul>
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  */
 public class SVNMoveClient extends SVNBasicClient {
@@ -96,6 +98,24 @@ public class SVNMoveClient extends SVNBasicClient {
         myCopyClient = new SVNCopyClient(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNMoveClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNMoveClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNMoveClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
         myWCClient = new SVNWCClient(repositoryPool, options);
@@ -208,7 +228,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     // attempt replace.
                     SVNFileUtil.copy(src, dst, false, false);
                     try {
-                        myWCClient.doAdd(dst, false, false, false, true, false);
+                        myWCClient.doAdd(dst, false, false, false, SVNDepth.INFINITY, false, false);
                     } catch (SVNException e) {
                         // will be thrown on obstruction.
                     }
@@ -224,7 +244,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     // just add dst (at least try to add, files already there).
                     wcAccess.close();
                     try {
-                        myWCClient.doAdd(dst, false, false, false, true, false);
+                        myWCClient.doAdd(dst, false, false, false, SVNDepth.INFINITY, false, false);
                     } catch (SVNException e) {
                         // obstruction
                     }
@@ -358,7 +378,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         SVNFileUtil.deleteAll(dst, this);
                         SVNFileUtil.copy(src, dst, false, false);
                         wcAccess.close();
-                        myWCClient.doAdd(dst, false, false, false, true, false);
+                        myWCClient.doAdd(dst, false, false, false, SVNDepth.INFINITY, false, false);
                     }
                 }
                 // now delete src (if it is not the same as dst :))
@@ -370,68 +390,6 @@ public class SVNMoveClient extends SVNBasicClient {
                 }
             } finally {
                 wcAccess.close();
-            }
-        }
-    }
-
-    private void updateCopiedDirectory(SVNAdminArea dir, String name, String newURL, String reposRootURL, String copyFromURL, long copyFromRevision) throws SVNException {
-        SVNWCAccess wcAccess = dir.getWCAccess();
-        SVNEntry entry = dir.getEntry(name, true);
-        if (entry != null) {
-            entry.setCopied(true);
-            if (newURL != null) {
-                entry.setURL(newURL);
-            }
-            entry.setRepositoryRoot(reposRootURL);
-            if (entry.isFile()) {
-                if (dir.getWCProperties(name) != null) {
-                    dir.getWCProperties(name).removeAll();
-                    dir.saveWCProperties(false);
-                }
-                if (copyFromURL != null) {
-                    entry.setCopyFromURL(copyFromURL);
-                    entry.setCopyFromRevision(copyFromRevision);
-                }
-            }
-            boolean deleted = false;
-            if (entry.isDeleted() && newURL != null) {
-                // convert to scheduled for deletion.
-                deleted = true;
-                entry.setDeleted(false);
-                entry.scheduleForDeletion();
-                if (entry.isDirectory()) {
-                    entry.setKind(SVNNodeKind.FILE);
-                }
-            }
-            if (entry.getLockToken() != null && newURL != null) {
-                entry.setLockToken(null);
-                entry.setLockOwner(null);
-                entry.setLockComment(null);
-                entry.setLockCreationDate(null);
-            }
-            if (!dir.getThisDirName().equals(name) && entry.isDirectory() && !deleted) {
-                SVNAdminArea childDir = wcAccess.retrieve(dir.getFile(name));
-                if (childDir != null) {
-                    String childCopyFromURL = copyFromURL == null ? null : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(entry.getName()));
-                    updateCopiedDirectory(childDir, childDir.getThisDirName(), newURL, reposRootURL, childCopyFromURL, copyFromRevision);
-                }
-            } else if (dir.getThisDirName().equals(name)) {
-                dir.getWCProperties(dir.getThisDirName()).removeAll();
-                dir.saveWCProperties(false);
-                if (copyFromURL != null) {
-                    entry.setCopyFromURL(copyFromURL);
-                    entry.setCopyFromRevision(copyFromRevision);
-                }
-                for (Iterator ents = dir.entries(true); ents.hasNext();) {
-                    SVNEntry childEntry = (SVNEntry) ents.next();
-                    if (dir.getThisDirName().equals(childEntry.getName())) {
-                        continue;
-                    }
-                    String childCopyFromURL = copyFromURL == null ? null : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
-                    String newChildURL = newURL == null ? null : SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
-                    updateCopiedDirectory(dir, childEntry.getName(), newChildURL, reposRootURL, childCopyFromURL, copyFromRevision);
-                }
-                dir.saveEntries(false);
             }
         }
     }
@@ -539,7 +497,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 dstAccess.close();
             }
             if (revert) {
-                myWCClient.doRevert(dst, true);
+                myWCClient.doRevert(new File[] { dst }, SVNDepth.INFINITY, null);
             } else {
                 // should we do this? there is no old source, may be rename is enough.
 //                myWCClient.doAdd(dst, false, false, false, true, false);
@@ -565,7 +523,7 @@ public class SVNMoveClient extends SVNBasicClient {
                 if (dstEntry != null && dstEntry.isScheduledForDeletion()) {
                     wcAccess.close();
                     // clear undo.
-                    myWCClient.doRevert(dst, true);
+                    myWCClient.doRevert(new File[] { dst }, SVNDepth.INFINITY, null);
                     myWCClient.doDelete(src, true, false);
                     return;
                 }
@@ -589,7 +547,7 @@ public class SVNMoveClient extends SVNBasicClient {
                     // just add dst (at least try to add, files already there).
                     wcAccess.close();
                     try {
-                        myWCClient.doAdd(dst, false, false, false, true, false);
+                        myWCClient.doAdd(dst, false, false, false, SVNDepth.INFINITY, false, false);
                     } catch (SVNException e) {
                         // obstruction
                     }
@@ -675,7 +633,7 @@ public class SVNMoveClient extends SVNBasicClient {
                         wcAccess.close();
                         SVNFileUtil.deleteAll(dst, this);
                         SVNFileUtil.copy(src, dst, false, false);
-                        myWCClient.doAdd(dst, false, false, false, true, false);
+                        myWCClient.doAdd(dst, false, false, false, SVNDepth.INFINITY, false, false);
                     }
                 }
                 // now delete src.
@@ -801,7 +759,7 @@ public class SVNMoveClient extends SVNBasicClient {
             if (move) {
                 myWCClient.doDelete(src, true, false);
             }
-            myWCClient.doAdd(dst, true, false, false, false, false);            
+            myWCClient.doAdd(dst, true, false, false, SVNDepth.EMPTY, false, false);            
             return;
         }
 
@@ -879,29 +837,64 @@ public class SVNMoveClient extends SVNBasicClient {
         }
     }
 
-    private static boolean isVersionedFile(File file) {
-        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-        try {
-            SVNAdminArea area = wcAccess.probeOpen(file, false, 0);
-            if (area.getEntry(area.getThisDirName(), false) == null) {
-                return false;
+    private void updateCopiedDirectory(SVNAdminArea dir, String name, String newURL, String reposRootURL, String copyFromURL, long copyFromRevision) throws SVNException {
+        SVNWCAccess wcAccess = dir.getWCAccess();
+        SVNEntry entry = dir.getEntry(name, true);
+        if (entry != null) {
+            entry.setCopied(true);
+            if (newURL != null) {
+                entry.setURL(newURL);
             }
-            SVNFileType type = SVNFileType.getType(file);
-            if (type.isFile() || type == SVNFileType.NONE) {
-                // file or missing file
-                return area.getEntry(file.getName(), false) != null;
-            } else if (type != SVNFileType.NONE && !area.getRoot().equals(file)) {
-                // directory, but not anchor. always considered unversioned.
-                return false;
-            } 
-            return true;
-        } catch (SVNException e) {
-            return false;
-        } finally {
-            try {
-                wcAccess.close();
-            } catch (SVNException svne) {
-                //
+            entry.setRepositoryRoot(reposRootURL);
+            if (entry.isFile()) {
+                if (dir.getWCProperties(name) != null) {
+                    dir.getWCProperties(name).removeAll();
+                    dir.saveWCProperties(false);
+                }
+                if (copyFromURL != null) {
+                    entry.setCopyFromURL(copyFromURL);
+                    entry.setCopyFromRevision(copyFromRevision);
+                }
+            }
+            boolean deleted = false;
+            if (entry.isDeleted() && newURL != null) {
+                // convert to scheduled for deletion.
+                deleted = true;
+                entry.setDeleted(false);
+                entry.scheduleForDeletion();
+                if (entry.isDirectory()) {
+                    entry.setKind(SVNNodeKind.FILE);
+                }
+            }
+            if (entry.getLockToken() != null && newURL != null) {
+                entry.setLockToken(null);
+                entry.setLockOwner(null);
+                entry.setLockComment(null);
+                entry.setLockCreationDate(null);
+            }
+            if (!dir.getThisDirName().equals(name) && entry.isDirectory() && !deleted) {
+                SVNAdminArea childDir = wcAccess.retrieve(dir.getFile(name));
+                if (childDir != null) {
+                    String childCopyFromURL = copyFromURL == null ? null : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(entry.getName()));
+                    updateCopiedDirectory(childDir, childDir.getThisDirName(), newURL, reposRootURL, childCopyFromURL, copyFromRevision);
+                }
+            } else if (dir.getThisDirName().equals(name)) {
+                dir.getWCProperties(dir.getThisDirName()).removeAll();
+                dir.saveWCProperties(false);
+                if (copyFromURL != null) {
+                    entry.setCopyFromURL(copyFromURL);
+                    entry.setCopyFromRevision(copyFromRevision);
+                }
+                for (Iterator ents = dir.entries(true); ents.hasNext();) {
+                    SVNEntry childEntry = (SVNEntry) ents.next();
+                    if (dir.getThisDirName().equals(childEntry.getName())) {
+                        continue;
+                    }
+                    String childCopyFromURL = copyFromURL == null ? null : SVNPathUtil.append(copyFromURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
+                    String newChildURL = newURL == null ? null : SVNPathUtil.append(newURL, SVNEncodingUtil.uriEncode(childEntry.getName()));
+                    updateCopiedDirectory(dir, childEntry.getName(), newChildURL, reposRootURL, childCopyFromURL, copyFromRevision);
+                }
+                dir.saveEntries(false);
             }
         }
     }
@@ -961,4 +954,32 @@ public class SVNMoveClient extends SVNBasicClient {
             wcAccess.close();
         }
     }
+
+    private static boolean isVersionedFile(File file) {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        try {
+            SVNAdminArea area = wcAccess.probeOpen(file, false, 0);
+            if (area.getEntry(area.getThisDirName(), false) == null) {
+                return false;
+            }
+            SVNFileType type = SVNFileType.getType(file);
+            if (type.isFile() || type == SVNFileType.NONE) {
+                // file or missing file
+                return area.getEntry(file.getName(), false) != null;
+            } else if (type != SVNFileType.NONE && !area.getRoot().equals(file)) {
+                // directory, but not anchor. always considered unversioned.
+                return false;
+            } 
+            return true;
+        } catch (SVNException e) {
+            return false;
+        } finally {
+            try {
+                wcAccess.close();
+            } catch (SVNException svne) {
+                //
+            }
+        }
+    }
+
 }
