@@ -212,6 +212,12 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
     
     /**
+     * @param file 
+     * @param revision 
+     * @param recursive 
+     * @param force 
+     * @return               actual revision number  
+     * @throws SVNException 
      * @deprecated use {@link #doUpdate(File, SVNRevision, SVNDepth, boolean, boolean)} instead
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
@@ -466,8 +472,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      * <p>
      * For additional description, please, refer to {@link #isUpdateLocksOnDemand()}.
      * 
-     * @param <span class="javakeyword">true</span> to make update lock a working copy tree on 
-     *        demand only (for those subdirectories only which will be changed by update)
+     * @param locksOnDemand <span class="javakeyword">true</span> to make update lock a working copy tree on 
+     *                      demand only (for those subdirectories only which will be changed by update)
      */
     public void setUpdateLocksOnDemand(boolean locksOnDemand) {
         myIsUpdateLocksOnDemand = locksOnDemand;
@@ -551,6 +557,14 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
     
     /**
+     * @param file 
+     * @param url 
+     * @param pegRevision 
+     * @param revision 
+     * @param recursive 
+     * @param force 
+     * @return               actual revision number
+     * @throws SVNException 
      * @deprecated use {@link #doSwitch(File, SVNURL, SVNRevision, SVNRevision, SVNDepth, boolean, boolean)} instead 
      */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
@@ -713,6 +727,14 @@ public class SVNUpdateClient extends SVNBasicClient {
     }
 
     /**
+     * @param url 
+     * @param dstPath 
+     * @param pegRevision 
+     * @param revision 
+     * @param recursive 
+     * @param force 
+     * @return               actual revision number 
+     * @throws SVNException 
      * @deprecated use {@link #doCheckout(SVNURL, File, SVNRevision, SVNRevision, SVNDepth, boolean)} instead
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
@@ -1057,17 +1079,17 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @since  1.2, SVN 1.5
      */
     public long doExport(File srcPath, final File dstPath, SVNRevision pegRevision, SVNRevision revision, 
-            String eolStyle, final boolean force, SVNDepth depth) throws SVNException {
+            String eolStyle, final boolean overwrite, SVNDepth depth) throws SVNException {
         long exportedRevision = -1;
         if (revision != SVNRevision.BASE && revision != SVNRevision.WORKING && revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) {
             SVNRepository repository = createRepository(null, srcPath, null, pegRevision, revision, null);
             long revisionNumber = getRevisionNumber(revision, repository, srcPath);
-            exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, force, depth); 
+            exportedRevision = doRemoteExport(repository, revisionNumber, dstPath, eolStyle, overwrite, depth); 
         } else {
             if (revision == SVNRevision.UNDEFINED) {
                 revision = SVNRevision.WORKING;
             }
-            copyVersionedDir(srcPath, dstPath, revision, eolStyle, force, depth);
+            copyVersionedDir(srcPath, dstPath, revision, eolStyle, overwrite, depth);
         }
         dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, exportedRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null));
         return exportedRevision;
