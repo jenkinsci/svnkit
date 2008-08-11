@@ -1046,10 +1046,10 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(path)) {
                 SVNURL url = SVNURL.parseURIEncoded(path);
-                mergeSrcURLs = client.suggestMergeSources(url,
+                mergeSrcURLs = client.doSuggestMergeSources(url,
                         JavaHLObjectFactory.getSVNRevision(pegRevision));
             } else {
-                mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
+                mergeSrcURLs = client.doSuggestMergeSources(new File(path).getAbsoluteFile(),
                     JavaHLObjectFactory.getSVNRevision(pegRevision));
             }
             if (mergeSrcURLs != null) {
@@ -1075,10 +1075,10 @@ public class SVNClientImpl implements SVNClientInterface {
         Map mergeInfo = null;
         try {
             if (isURL(path)) {
-                mergeInfo = client.getMergedMergeInfo(SVNURL.parseURIEncoded(path),
+                mergeInfo = client.doGetMergedMergeInfo(SVNURL.parseURIEncoded(path),
                         JavaHLObjectFactory.getSVNRevision(revision));
             } else {
-                mergeInfo = client.getMergedMergeInfo(new File(path).getAbsoluteFile(),
+                mergeInfo = client.doGetMergedMergeInfo(new File(path).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNRevision(revision));
             }
             return JavaHLObjectFactory.createMergeInfo(mergeInfo);
@@ -1107,16 +1107,16 @@ public class SVNClientImpl implements SVNClientInterface {
             if (isURL(pathOrUrl)) {
                 SVNURL url = SVNURL.parseURIEncoded(pathOrUrl);
                 if (kind == MergeinfoLogKind.eligible) {
-                    client.getLogEligibleMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogEligibleMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 } else if (kind == MergeinfoLogKind.merged) {
-                    client.getLogMergedMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogMergedMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 }
             } else {
                 File path = new File(pathOrUrl).getAbsoluteFile();
                 if (kind == MergeinfoLogKind.eligible) {
-                    client.getLogEligibleMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogEligibleMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 } else if (kind == MergeinfoLogKind.merged) {
-                    client.getLogMergedMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogMergedMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 }
             }
         } catch (SVNException e) {
