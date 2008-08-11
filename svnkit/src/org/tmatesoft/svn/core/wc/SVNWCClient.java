@@ -1598,7 +1598,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @deprecated use {@link #doRevert(File[], SVNDepth, Collection)}
      */
     public void doRevert(File path, boolean recursive) throws SVNException {
-        doRevert(new File[]{path}, recursive);
+        doRevert(new File[] { path }, SVNDepth.getInfinityOrEmptyDepth(recursive), null);
     }
 
     /**

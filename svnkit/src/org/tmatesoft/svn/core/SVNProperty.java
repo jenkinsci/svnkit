@@ -27,12 +27,18 @@ public class SVNProperty {
      */
     public static final String SVN_PREFIX = "svn:";
     
+    /**
+     * SVNKit's own property namespace.
+     */
     public static final String SVNKIT_PREFIX = "svnkit:";
     /**
      * An <span class="javastring">"svn:wc:"</span> prefix.
      */
     public static final String SVN_WC_PREFIX = "svn:wc:";
 
+    /**
+     * The namespace for revision properties which are used in repository synching operations.
+     */
     public static final String SVN_SYNC_PREFIX = "svn:sync-";
 
     /**
@@ -350,9 +356,12 @@ public class SVNProperty {
     }
 
     /**
-     * Checks if a property is regular. Regular are some <span class="javastring">"svn:"</span>
-     * properties and all user props, i.e. ones stored in the repository filesystem.
-     *
+     * Checks if a property is regular. 
+     * 
+     * <p/>
+     * A property is considered to be regular if it is not <span class="javakeyword">null</span> and 
+     * does not start neither with {@link #SVN_WC_PREFIX} nor with {@link #SVN_ENTRY_PREFIX}.
+     * 
      * @param name a property name
      * @return <span class="javakeyword">true</span> if regular, otherwise
      *         <span class="javakeyword">false</span>

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -105,10 +106,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Overloaded <b>doCopy()</b> methods of <b>SVNCopyClient</b> are similar to
  * <code>'svn copy'</code> and <code>'svn move'</code> commands of the SVN command line client. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
- * 
  */
 public class SVNCopyClient extends SVNBasicClient {
 
@@ -143,6 +143,24 @@ public class SVNCopyClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNCopyClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNCopyClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -259,8 +277,86 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
-    public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, boolean failWhenDstExists,
-            String commitMessage, SVNProperties revisionProperties) throws SVNException {
+   /** 
+    * Copies each source in <code>sources</code> to <code>dst</code>.
+    *
+    * <p/>
+    * If multiple <code>sources</code> are given, <code>dst</code> must be a directory, and <code>sources</code> 
+    * will be copied as children of <code>dst</code>.
+    *
+    * <p/>
+    * Each <code>src</code> in <code>sources</code> must be files or directories under version control,
+    * or URLs of a versioned item in the repository. If <code>sources</code> has multiple items, they  
+    * must be all repository URLs or all working copy paths.
+    * 
+    * <p/>
+    * The parent of <code>dst</code> must already exist.
+    * 
+    * <p/>
+    * If <code>sources</code> has only one item, attempts to copy it to <code>dst</code>. 
+    * If <code>failWhenDstExists</code> is <span class="javakeyword">false</span> and <code>dst</code> already 
+    * exists, attempts to copy the item as a child of <code>dst</code>. If <code>failWhenDstExists</code> is 
+    * <span class="javakeyword">true</span> and <code>dst</code> already exists, throws an {@link SVNException} 
+    * with the {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
+    * 
+    * <p/>
+    * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+    * <span class="javakeyword">false</span>, all <code>sources</code> are copied as children of <code>dst</code>. 
+    * If any child of <code>dst</code> already exists with the same name any item in <code>sources</code>,
+    * throws an {@link SVNException} with the {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
+    * 
+    * <p/>
+    * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+    * <span class="javakeyword">true</span>, throws an {@link SVNException} with the 
+    * {@link SVNErrorCode#CLIENT_MULTIPLE_SOURCES_DISALLOWED}.
+    *
+    * <p/>
+    * 
+    * If @a dst_path is a URL, use the authentication baton
+    * in @a ctx and @a ctx->log_msg_func3/@a ctx->log_msg_baton3 to immediately
+    * attempt to commit the copy action in the repository.  If the commit
+    * succeeds, allocate (in @a pool) and populate @a *commit_info_p.  If
+    * @a dst_path is not a URL, and the copy succeeds, set @a
+    * *commit_info_p to @c NULL.
+    *
+    * If @a dst_path is not a URL, then this is just a variant of
+    * svn_client_add(), where the @a sources are scheduled for addition
+    * as copies.  No changes will happen to the repository until a commit occurs.
+    * This scheduling can be removed with svn_client_revert2().
+    *
+    * If @a make_parents is TRUE, create any non-existent parent directories
+    * also.
+    *
+    * If non-NULL, @a revprop_table is a hash table holding additional,
+    * custom revision properties (<tt>const char *</tt> names mapped to
+    * <tt>svn_string_t *</tt> values) to be set on the new revision in
+    * the event that this is a committing operation.  This table cannot
+    * contain any standard Subversion properties.
+    *
+    * @a ctx->log_msg_func3/@a ctx->log_msg_baton3 are a callback/baton combo
+    * that this function can use to query for a commit log message when one is
+    * needed.
+    *
+    * If @a ctx->notify_func2 is non-NULL, invoke it with @a ctx->notify_baton2
+    * for each item added at the new location, passing the new, relative path of
+    * the added item.
+    * 
+    * @param  sources 
+    * @param  dst 
+    * @param  isMove 
+    * @param  makeParents 
+    * @param  failWhenDstExists 
+    * @param  commitMessage 
+    * @param  revisionProperties 
+    * @return 
+    * @throws SVNException          in the following cases:
+    *                               <ul>
+    *                               <li/>exception with {@link SVNErrorCode#FS_ALREADY_EXISTS} - 
+    *                               </ul> 
+    * @since                        1.2, SVN 1.5
+    */
+    public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, 
+            boolean failWhenDstExists, String commitMessage, SVNProperties revisionProperties) throws SVNException {
         if (sources.length > 1 && failWhenDstExists) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
