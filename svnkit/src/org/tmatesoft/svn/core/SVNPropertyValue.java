@@ -79,6 +79,9 @@ public class SVNPropertyValue {
      * @see                  #create(String, byte[], int, int)
      */
     public static SVNPropertyValue create(String propertyName, byte[] data) {
+        if (data == null) {
+            return null;
+        }
         return create(propertyName, data, 0, data.length);
     }
 
