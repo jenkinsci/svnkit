@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,13 +26,38 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
  * {@link ISVNMergerFactory} interface. Read more about that interface to
  * find out how to get a default implementation of <b>ISVNMerger</b>.
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  */
 public interface ISVNMerger {
     
+    /**
+     * Performs a text merge.
+     * 
+     * @param  files 
+     * @param  dryRun 
+     * @param  options 
+     * @return                
+     * @throws SVNException 
+     * 
+     */
     public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException;
    
+    /**
+     * 
+     * @param  localPath 
+     * @param  workingProperties 
+     * @param  baseProperties 
+     * @param  serverBaseProps 
+     * @param  propDiff 
+     * @param  adminArea 
+     * @param  log 
+     * @param  baseMerge 
+     * @param  dryRun 
+     * @return 
+     * @throws SVNException 
+     * 
+     */
 	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff,
 			SVNAdminArea adminArea, SVNLog log, boolean baseMerge, boolean dryRun) throws SVNException;
