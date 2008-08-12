@@ -234,10 +234,31 @@ public class SVNCopyClient extends SVNBasicClient {
        return myCommitParameters;
     }
 
+    /**
+     * Sets an externals handler to be used by this client object.
+     * 
+     * @param externalsHandler user's implementation of {@link ISVNExternalsHandler}
+     * @see   #getExternalsHandler()
+     * @since 1.2
+     */
     public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
         myExternalsHandler = externalsHandler;
     }
 
+    /**
+     * Returns an externals handler used by this update client.
+     * 
+     * <p/>
+     * If no user's handler is provided then {@link ISVNExternalsHandler#DEFAULT} is returned and 
+     * used by this client object by default.
+     * 
+     * <p/>
+     * For more information what externals handlers are for, please, refer to {@link ISVNExternalsHandler}. 
+     * 
+     * @return           externals handler being in use
+     * @see              #setExternalsHandler(ISVNExternalsHandler)
+     * @since            1.2 
+     */
     public ISVNExternalsHandler getExternalsHandler() {
         if (myExternalsHandler == null) {
             myExternalsHandler = ISVNExternalsHandler.DEFAULT;
@@ -245,6 +266,62 @@ public class SVNCopyClient extends SVNBasicClient {
         return myExternalsHandler;
     }
 
+    /** 
+     * Copies each source in <code>sources</code> to <code>dst</code>.
+     *
+     * <p/>
+     * If multiple <code>sources</code> are given, <code>dst</code> must be a directory, and <code>sources</code> 
+     * will be copied as children of <code>dst</code>.
+     *
+     * <p/>
+     * Each <code>src</code> in <code>sources</code> must be files or directories under version control,
+     * or URLs of a versioned item in the repository. If <code>sources</code> has multiple items, they  
+     * must be all repository URLs or all working copy paths.
+     * 
+     * <p/>
+     * The parent of <code>dst</code> must already exist.
+     * 
+     * <p/>
+     * If <code>sources</code> has only one item, attempts to copy it to <code>dst</code>. 
+     * If <code>failWhenDstExists</code> is <span class="javakeyword">false</span> and <code>dst</code> already 
+     * exists, attempts to copy the item as a child of <code>dst</code>. If <code>failWhenDstExists</code> is 
+     * <span class="javakeyword">true</span> and <code>dst</code> already exists, throws an {@link SVNException} 
+     * with the {@link SVNErrorCode#ENTRY_EXISTS} error code.
+     * 
+     * <p/>
+     * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+     * <span class="javakeyword">false</span>, all <code>sources</code> are copied as children of <code>dst</code>. 
+     * If any child of <code>dst</code> already exists with the same name any item in <code>sources</code>,
+     * throws an {@link SVNException} with the {@link SVNErrorCode#ENTRY_EXISTS} error code.
+     * 
+     * <p/>
+     * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+     * <span class="javakeyword">true</span>, throws an {@link SVNException} with the 
+     * {@link SVNErrorCode#CLIENT_MULTIPLE_SOURCES_DISALLOWED}.
+     *
+     * <p/>
+     * This method is just a variant of a local add operation, where <code>sources</code> are scheduled for 
+     * addition as copies. No changes will happen to the repository until a commit occurs. This scheduling can 
+     * be removed with {@link SVNWCClient#doRevert(File[], SVNDepth, Collection)}.
+     * 
+     * <p/>
+     * If <code>makeParents is <span class="javakeyword">true</span>, creates any non-existent parent directories
+     * also.
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, invokes it  
+     * for each item added at the new location.
+     * 
+     * @param  sources               array of copy sources 
+     * @param  dst                   destination working copy path
+     * @param  isMove                if <span class="javakeyword">true</span>, then it will be a move operation 
+     *                               (delete, then add with history)                 
+     * @param  makeParents           if <span class="javakeyword">true</span>, creates non-existent parent 
+     *                               directories as well
+     * @param  failWhenDstExists     controls whether to fail or not if <code>dst</code> already exists
+     * @throws SVNException          
+     * @since                        1.2, SVN 1.5
+     */
     public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, 
             boolean failWhenDstExists) throws SVNException {
         if (sources.length > 1 && failWhenDstExists) {
@@ -311,48 +388,37 @@ public class SVNCopyClient extends SVNBasicClient {
     * {@link SVNErrorCode#CLIENT_MULTIPLE_SOURCES_DISALLOWED}.
     *
     * <p/>
-    * 
-    * If @a dst_path is a URL, use the authentication baton
-    * in @a ctx and @a ctx->log_msg_func3/@a ctx->log_msg_baton3 to immediately
-    * attempt to commit the copy action in the repository.  If the commit
-    * succeeds, allocate (in @a pool) and populate @a *commit_info_p.  If
-    * @a dst_path is not a URL, and the copy succeeds, set @a
-    * *commit_info_p to @c NULL.
+    * {@link ISVNAuthenticationManager Authentication manager} (whether provided directly through the 
+    * appropriate constructor or in an {@link ISVNRepositoryPool} instance) and {@link #getCommitHandler() commit handler} 
+    * are used to immediately attempt to commit the copy action in the repository. 
     *
-    * If @a dst_path is not a URL, then this is just a variant of
-    * svn_client_add(), where the @a sources are scheduled for addition
-    * as copies.  No changes will happen to the repository until a commit occurs.
-    * This scheduling can be removed with svn_client_revert2().
-    *
-    * If @a make_parents is TRUE, create any non-existent parent directories
+    * <p/>
+    * If <code>makeParents is <span class="javakeyword">true</span>, creates any non-existent parent directories
     * also.
-    *
-    * If non-NULL, @a revprop_table is a hash table holding additional,
-    * custom revision properties (<tt>const char *</tt> names mapped to
-    * <tt>svn_string_t *</tt> values) to be set on the new revision in
-    * the event that this is a committing operation.  This table cannot
-    * contain any standard Subversion properties.
-    *
-    * @a ctx->log_msg_func3/@a ctx->log_msg_baton3 are a callback/baton combo
-    * that this function can use to query for a commit log message when one is
-    * needed.
-    *
-    * If @a ctx->notify_func2 is non-NULL, invoke it with @a ctx->notify_baton2
-    * for each item added at the new location, passing the new, relative path of
-    * the added item.
     * 
-    * @param  sources 
-    * @param  dst 
-    * @param  isMove 
-    * @param  makeParents 
-    * @param  failWhenDstExists 
-    * @param  commitMessage 
-    * @param  revisionProperties 
-    * @return 
-    * @throws SVNException          in the following cases:
-    *                               <ul>
-    *                               <li/>exception with {@link SVNErrorCode#FS_ALREADY_EXISTS} - 
-    *                               </ul> 
+    * <p/>
+    * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> is an object holding 
+    * additional, custom revision properties (<code>String</code> to {@link SVNPropertyValue} mappings) to be 
+    * set on the new revision. This table cannot contain any standard Subversion properties.
+    * 
+    * <p/>
+    * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, invokes it  
+    * for each item added at the new location.
+    * 
+    * <p/>
+    * Note: this routine requires repository access.
+    * 
+    * @param  sources               array of copy sources 
+    * @param  dst                   destination url
+    * @param  isMove                if <span class="javakeyword">true</span>, then it will be a move operation 
+    *                               (delete, then add with history)                 
+    * @param  makeParents           if <span class="javakeyword">true</span>, creates non-existent parent 
+    *                               directories as well
+    * @param  failWhenDstExists     controls whether to fail or not if <code>dst</code> already exists
+    * @param  commitMessage         commit log message
+    * @param  revisionProperties    custom revision properties
+    * @return                       information about the new committed revision 
+    * @throws SVNException          
     * @since                        1.2, SVN 1.5
     */
     public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, 
@@ -388,7 +454,27 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     /**
-     * Converts a disjoint wc to a copied one.
+     * Converts a disjoint working copy to a copied one.
+     * 
+     * @param  nestedWC      the root of the working copy located in another working copy (disjoint wc)
+     * @throws SVNException  in the following cases:
+     *                       <ul>
+     *                       <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                       if <code>nestedWC</code> is either not a directory, or has no parent at all;
+     *                       if the current local filesystem parent of <code>nestedWC</code> is actually a 
+     *                       child of it in the repository
+     *                       <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -  
+     *                       if <code>nestedWC</code> is not a disjoint working copy, i.e. there is already
+     *                       a versioned item under the parent path of <code>nestedWC</code>;
+     *                       if <code>nestedWC</code> is not in the repository yet (has got a schedule for 
+     *                       addition flag)
+     *                       <li/>exception with {@link SVNErrorCode#WC_INVALID_SCHEDULE} error code - 
+     *                       if <code>nestedWC</code> is not from the same repository as the parent directory;
+     *                       if the parent of <code>nestedWC</code> is scheduled for deletion;
+     *                       if <code>nestedWC</code> is scheduled for deletion
+     *                       <li/>
+     *                       </ul>
+     * @since                1.2.0 
      */
     public void doCopy(File nestedWC) throws SVNException {
         copyDisjointWCToWC(nestedWC);
