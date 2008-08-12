@@ -87,36 +87,36 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED) {
             if (target.isURL()) {
                 if (source.isURL()) {
-                    client.getLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                    client.doGetLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
                             false, null, this);
                 } else {
-                    client.getLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                    client.doGetLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
                             false, null, this);
                 }
             } else {
                 if (source.isURL()) {
-                    client.getLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
+                    client.doGetLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
                             false, null, this);
                 } else {
-                    client.getLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision,
+                    client.doGetLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision,
                             false, null, this);
                 }
             }
         } else if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.ELIGIBLE) {
             if (target.isURL()) {
                 if (source.isURL()) {
-                    client.getLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                    client.doGetLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
                             false, null, this);
                 } else {
-                    client.getLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                    client.doGetLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
                             false, null, this);
                 }
             } else {
                 if (source.isURL()) {
-                    client.getLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                    client.doGetLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
                             false, null, this);
                 } else {
-                    client.getLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                    client.doGetLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision, 
                             false, null, this);
                 }
             }

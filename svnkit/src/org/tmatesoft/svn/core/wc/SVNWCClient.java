@@ -2449,7 +2449,7 @@ public class SVNWCClient extends SVNBasicClient {
         final long[] minRevision = new long[]{-1};
         final boolean[] switched = new boolean[3];
         final String[] wcURL = new String[1];
-        statusClient.doStatus(path, true, false, true, false, false, new ISVNStatusHandler() {
+        statusClient.doStatus(path, SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
                 if (status.getEntryProperties() == null || status.getEntryProperties().isEmpty()) {
                     return;
@@ -2472,7 +2472,7 @@ public class SVNWCClient extends SVNBasicClient {
                     wcURL[0] = status.getURL().toString();
                 }
             }
-        });
+        }, null);
         if (!switched[0] && trailURL != null) {
             if (wcURL[0] == null) {
                 switched[0] = true;

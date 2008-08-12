@@ -11,16 +11,14 @@
  */
 package org.tmatesoft.svn.core;
 
+import org.eclipse.core.runtime.Plugin;
+import org.osgi.framework.BundleContext;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.io.svn.SVNSSHSession;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
-
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Plugin;
-import org.osgi.framework.BundleContext;
 
 /**
  * The main plugin class to be used in the desktop.
