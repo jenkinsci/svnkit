@@ -43,7 +43,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
  * The created socket then used by the inner engine of <b><i>SVNKit</i></b>
  * library to communicate with a Subversion repository.
  *
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNSocketFactory {
@@ -66,7 +66,7 @@ public class SVNSocketFactory {
     public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
-        InetSocketAddress socketAddress = new InetSocketAddress(address, port); equal to 60 seconds
+        InetSocketAddress socketAddress = new InetSocketAddress(address, port);
         connect(sslSocket, socketAddress, connectTimeout, cancel);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
