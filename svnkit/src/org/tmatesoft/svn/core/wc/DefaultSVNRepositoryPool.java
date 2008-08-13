@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -56,7 +56,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that use a single socket connection (i.e. don't close a connection after every repository
  * access operation but reuse a single one). 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession, ISVNConnectionListener {
@@ -227,6 +227,12 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         return repos;
     }
     
+    /**
+     * Sets the given authentication instance to this pool and to all {@link SVNRepository} objects 
+     * stored in this pool. 
+     * 
+     * @param authManager    authentication manager instance 
+     */
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
         myAuthManager = authManager;
         Map pool = getPool();
@@ -257,16 +263,24 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     /**
      * Closes connections of cached <b>SVNRepository</b> objects. 
      * 
+     * <p>
+     * Actually, calls the {@link #dispose()} routine.
+     *  
      * @param shutdownAll if <span class="javakeyword">true</span> - closes
      *                    connections of all the cached objects, otherwise only
      *                    connections of those cached objects which owner threads
      *                    have already disposed
-     * @see               org.tmatesoft.svn.core.io.SVNRepository                                    
+     * @see               SVNRepository                                    
      */
     public synchronized void shutdownConnections(boolean shutdownAll) {
         dispose();
     }
-    
+
+    /**
+     * Disposes this pool. Clears all inactive {@link SVNRepository} objects from this pool.
+     * 
+     * @since 1.2.0 
+     */
     public void dispose() {
         synchronized (myInactiveRepositories) {
             myInactiveRepositories.clear();
@@ -299,13 +313,6 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         }
     }
     
-    private Map getPool() {
-        if (myPool == null) {
-            myPool = new SVNHashMap();
-        }
-        return myPool;
-    }
-
     // no caching in this class
     /**
      * Does nothing.
@@ -344,6 +351,10 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         return false;
     }
 
+    /**
+     * 
+     * @param repository 
+     */
     public void connectionClosed(final SVNRepository repository) {
         // start inactivity timer.
         synchronized (myInactiveRepositories) {
@@ -358,10 +369,6 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         }
     }
     
-    private long getTimeout() {
-        return myTimeout;
-    }
-
     public void setCanceller(ISVNCanceller canceller) {
         myCanceller = canceller;
         Map pool = getPool();
@@ -381,7 +388,18 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             repository.setDebugLog(myDebugLog);
         }
     }
-    
+
+    private long getTimeout() {
+        return myTimeout;
+    }
+
+    private Map getPool() {
+        if (myPool == null) {
+            myPool = new SVNHashMap();
+        }
+        return myPool;
+    }
+
     private class TimeoutTask extends TimerTask {
         public void run() {
             boolean scheduled = false;

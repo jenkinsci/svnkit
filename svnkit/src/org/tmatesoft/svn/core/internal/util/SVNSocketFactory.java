@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -66,7 +66,7 @@ public class SVNSocketFactory {
     public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
-        InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+        InetSocketAddress socketAddress = new InetSocketAddress(address, port); equal to 60 seconds
         connect(sslSocket, socketAddress, connectTimeout, cancel);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);

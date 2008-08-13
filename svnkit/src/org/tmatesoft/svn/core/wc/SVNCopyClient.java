@@ -312,6 +312,9 @@ public class SVNCopyClient extends SVNBasicClient {
      * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, invokes it  
      * for each item added at the new location.
      * 
+     * <p/>
+     * Note: this routine requires repository access only when sources are urls.
+     * 
      * @param  sources               array of copy sources 
      * @param  dst                   destination working copy path
      * @param  isMove                if <span class="javakeyword">true</span>, then it will be a move operation 
@@ -455,6 +458,11 @@ public class SVNCopyClient extends SVNBasicClient {
 
     /**
      * Converts a disjoint working copy to a copied one.
+     * 
+     * <p/>
+     * Note: this routine does not require repository access. However if it's performed on an old format 
+     * working copy where repository root urls were not written, the routine will connect to the repository 
+     * to fetch the repository root url. 
      * 
      * @param  nestedWC      the root of the working copy located in another working copy (disjoint wc)
      * @throws SVNException  in the following cases:

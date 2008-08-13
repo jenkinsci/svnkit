@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -20,10 +20,10 @@ import java.io.File;
  * <p> 
  * To obtain an ssh user credential, specify the {@link ISVNAuthenticationManager#SSH SSH} 
  * kind to credentials getter method of <b>ISVNAuthenticationManager</b>: 
- * {@link ISVNAuthenticationManager#getFirstAuthentication(String, String, SVNURL) getFirstAuthentication()}, 
- * {@link ISVNAuthenticationManager#getNextAuthentication(String, String, SVNURL) getNextAuthentication()}.
+ * {@link ISVNAuthenticationManager#getFirstAuthentication(String, String, org.tmatesoft.svn.core.SVNURL) getFirstAuthentication()}, 
+ * {@link ISVNAuthenticationManager#getNextAuthentication(String, String, org.tmatesoft.svn.core.SVNURL) getNextAuthentication()}.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationManager  
  */
@@ -144,6 +144,12 @@ public class SVNSSHAuthentication extends SVNAuthentication {
         return myPortNumber;
     }
     
+    /**
+     * Tells whether this authentication object contains a user's private key.
+     * @return <span class="javakeyword">true</span> if either {@link #getPrivateKey()} or
+     *         {@link #getPrivateKeyFile()} returns non-<span class="javakeyword">null</span>
+     * @since  1.2.0 
+     */
     public boolean hasPrivateKey() {
         return myPrivateKeyFile != null || myPrivateKeyValue != null;
     }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,27 +30,33 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
  * share that pool, but each thread is able only to retrieve those objects,
  * that belong to it (were created in that thread). 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     DefaultSVNRepositoryPool
  */
 public interface ISVNRepositoryPool {
     
     /**
-     * Updates authentication manager instance referenced by SVNRepository objects 
+     * Updates authentication manager instance referenced by {@link SVNRepository} objects 
      * currently in the pool.
+     * 
+     * @param authManager authentication manager instance 
      */
     public void setAuthenticationManager(ISVNAuthenticationManager authManager);
     
     /**
-     * Updates canceller instance referenced by SVNRepository objects 
+     * Updates canceller instance referenced by {@link SVNRepository} objects 
      * currently in the pool.
+     * 
+     * @param canceller      canceller instance 
      */
     public void setCanceller(ISVNCanceller canceller);
 
     /**
-     * Updates debug log instance referenced by SVNRepository objects 
+     * Updates debug log instance referenced by {@link SVNRepository} objects 
      * currently in the pool.
+     * 
+     * @param log debug logger object 
      */
     public void setDebugLog(ISVNDebugLog log);
     
@@ -106,5 +112,9 @@ public interface ISVNRepositoryPool {
      */
     public void shutdownConnections(boolean shutdownAll);
     
+    /**
+     * Disposes this pool.
+     * @since 1.2.0 
+     */
     public void dispose();
 }
