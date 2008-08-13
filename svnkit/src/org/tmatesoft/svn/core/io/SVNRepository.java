@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -379,10 +379,22 @@ public abstract class SVNRepository {
         return myTunnelProvider;
     }
     
+    /**
+     * Sets a canceller to this object.
+     * 
+     * @param canceller  canceller object
+     * @since            1.2.0 
+     */
     public void setCanceller(ISVNCanceller canceller) {
         myCanceller = canceller;
     }
     
+    /**
+     * Returns the canceller, stored in this object.
+     * 
+     * @return  canceller object
+     * @since   1.2.0
+     */
     public ISVNCanceller getCanceller() {
         return myCanceller == null ? ISVNCanceller.NULL : myCanceller;
     }
@@ -751,6 +763,9 @@ public abstract class SVNRepository {
         }
     }
 
+    /**
+     * 
+     */
     public void assertServerIsMergeInfoCapable(String pathOrURL) throws SVNException {
         boolean isMergeInfoCapable = hasCapability(SVNCapability.MERGE_INFO);
         if (!isMergeInfoCapable) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,6 +18,7 @@ import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -26,8 +27,14 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 
 
 /**
- * @version 1.1.2
+ * The <b>SVNMergeFileSet</b> class holds information about the file that is to be merged.
+ * This information includes references to <code>File</code> objects with working, base, repository contents; 
+ * file mimeType; labels to append to the file name to produce conflict files in case a merge fails with a 
+ * conflict, and so on.
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNMergeFileSet {
     
@@ -37,7 +44,6 @@ public class SVNMergeFileSet {
     private String myWCFilePath;
     private String myMergeResultFilePath;
     
-    private boolean myIsBinary;
     private String myMimeType;
     private SVNAdminArea myAdminArea;
     private SVNLog myLog;
@@ -55,6 +61,24 @@ public class SVNMergeFileSet {
     
     private Collection myTmpPaths = new ArrayList();
 
+    /**
+     * Creates a new <code>SVNMergeFileSet</code> object given the data prepared for 
+     * merging a file.
+     * 
+     * <p/>
+     * Note: This is intended for internal use only, not for API users.
+     * 
+     * @param adminArea     admin area the file is controlled under 
+     * @param log           log object
+     * @param baseFile      file with pristine contents
+     * @param localFile     file with translated working contents
+     * @param wcPath        working copy path relative to the location of <code>adminArea</code>
+     * @param reposFile     file contents from the repository
+     * @param resultFile    file where the resultant merged contents will be written to  
+     * @param targetFile    working copy file   
+     * @param copyFromFile  contents of the copy source file (if any)  
+     * @param mimeType      
+     */
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
             File baseFile, 
             File localFile, 
@@ -63,8 +87,7 @@ public class SVNMergeFileSet {
             File resultFile,
             File targetFile,//non-translated wc file
             File copyFromFile,
-            String mimeType, 
-            boolean binary) {
+            String mimeType) {
         myAdminArea = adminArea;
         myLog = log;
         myLocalFile = localFile;
@@ -75,44 +98,97 @@ public class SVNMergeFileSet {
         myMergeResultFile = resultFile;
         myCopyFromFile = copyFromFile;
         myMimeType = mimeType;
-        myIsBinary = binary;
         
         if (myBaseFile != null) {
-            myBaseFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), myBaseFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myBaseFile) : null;
+            myBaseFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), 
+                    myBaseFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myBaseFile) : null;
         }
         if (myLocalFile != null) {
             myLocalFilePath = SVNFileUtil.getBasePath(myLocalFile);
         }
         if (myRepositoryFile != null) {
-            myRepositoryFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), myRepositoryFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
+            myRepositoryFilePath = SVNPathUtil.isAncestor(myAdminArea.getAdminDirectory().getAbsolutePath(), 
+                    myRepositoryFile.getAbsolutePath()) ? SVNFileUtil.getBasePath(myRepositoryFile) : null;
         }
         if (myMergeResultFile != null) {
             myMergeResultFilePath = SVNFileUtil.getBasePath(myMergeResultFile);
         }
     }
     
+    /**
+     * Sets the labels for conflict files.
+     * 
+     * <p/>
+     * If <code>baseLabel</code> is <span class="javakeyword">null</span>, 
+     * <span class="javastring">".old"</span> will be set by default. 
+     * If <code>localLabel</code> is <span class="javakeyword">null</span>, 
+     * <span class="javastring">".working"</span> will be set by default. 
+     * If <code>repositoryLabel</code> is <span class="javakeyword">null</span>, 
+     * <span class="javastring">".new"</span> will be set by default. 
+     * 
+     * @param baseLabel          base file label 
+     * @param localLabel         working file label
+     * @param repositoryLabel    repository file label
+     */
     public void setMergeLabels(String baseLabel, String localLabel, String repositoryLabel) {
         myLocalLabel = localLabel == null ? ".working" : localLabel;
         myBaseLabel = baseLabel == null ? ".old" : baseLabel;
         myRepositoryLabel = repositoryLabel == null ? ".new" : repositoryLabel;
     }
 
+    /**
+     * Returns the log object.
+     * 
+     * <p/>
+     * Note: This is intended for internal use only, not for API users.
+     * 
+     * @return wc modification commands logger 
+     */
     public SVNLog getLog() {
         return myLog;
     }
     
+    /**
+     * Returns the base file label.
+     * 
+     * @return base label string 
+     */
     public String getBaseLabel() {
         return myBaseLabel;
     }
     
+    /**
+     * Returns the local file label.
+     * 
+     * @return working file label 
+     */
     public String getLocalLabel() {
         return myLocalLabel;
     }
 
+    /**
+     * Returns the repository file label.
+     * 
+     * @return label of the repository file version 
+     */
     public String getRepositoryLabel() {
         return myRepositoryLabel;
     }
     
+    /**
+     * Returns the base file path.
+     * 
+     * <p/>
+     * If the {@link #getBaseFile() base file} is located under the 
+     * {@link #getAdminArea() admin area}, then the return path will be just a relevant to the admin area path 
+     * of the base file. Otherwise (in case the repository file is located not under the admin area) this 
+     * method will create a temporary file in the <code>.svn/tmp</code> area of the admin area and copy the 
+     * contents of the base file into it; the return path will be again relative to the location of 
+     * the admin area.  
+     * 
+     * @return               path of the file with pristine contents
+     * @throws SVNException 
+     */
     public String getBasePath() throws SVNException {
         if (myBaseFilePath == null && myBaseFile != null) {
             File tmp = SVNAdminUtil.createTmpFile(myAdminArea);
@@ -123,14 +199,41 @@ public class SVNMergeFileSet {
         return myBaseFilePath;
     }
     
+    /**
+     * Returns the path of the detranslated version of the working copy file.
+     * Detranslating of a working copy file takes place in case it's a symlink, or it has keywords or 
+     * eol-style properties set on it.
+     * 
+     * @return path to the file with detranslated working contents; it's relevant to the 
+     *         {@link #getAdminArea() admin area} location
+     */
     public String getLocalPath() {
         return myLocalFilePath;
     }
     
+    /**
+     * Returns the path of the working copy file.
+     * 
+     * @return path of the working copy file; it's relevant to the {@link #getAdminArea() admin area} location
+     */
     public String getWCPath() {
         return myWCFilePath;
     }
     
+    /**
+     * Returns the path to the file containing the contents of the repository version of the file.
+     *
+     * <p/>
+     * If the {@link #getRepositoryFile() repository file} is located under the 
+     * {@link #getAdminArea() admin area}, then the return path will be just a relevant to the admin area path 
+     * of the repository file. Otherwise (in case the repository file is located not under the admin area) this 
+     * method will create a temporary file in the <code>.svn/tmp</code> area of the admin area and copy the 
+     * contents of the repository file into it; the return path will be again relative to the location of 
+     * the admin area.  
+     * 
+     * @return                path of the file containing file contents that come from the repository  
+     * @throws SVNException 
+     */
     public String getRepositoryPath() throws SVNException {
         if (myRepositoryFilePath == null && myRepositoryFile != null) {
             File tmp = SVNAdminUtil.createTmpFile(myAdminArea);
@@ -170,7 +273,7 @@ public class SVNMergeFileSet {
     }
     
     public boolean isBinary() {
-        return myIsBinary;
+        return SVNProperty.isBinaryMimeType(myMimeType);
     }
     
     public String getMimeType() {

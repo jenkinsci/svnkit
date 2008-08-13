@@ -428,7 +428,6 @@ public abstract class SVNAdminArea {
         } else if (copyFromText == null) {
             mimeType = props.getStringPropertyValue(SVNProperty.MIME_TYPE);
         }
-        boolean isBinary = SVNProperty.isBinaryMimeType(mimeType);
 
         localLabel = localLabel == null ? ".working" : localLabel;
         baseLabel = baseLabel == null ? ".old" : baseLabel;
@@ -455,7 +454,7 @@ public abstract class SVNAdminArea {
         File resultFile = SVNAdminUtil.createTmpFile(this);
 
         SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log, base, tmpTarget, localPath, latest, 
-                resultFile, getFile(localPath), copyFromText, mimeType, isBinary);
+                resultFile, getFile(localPath), copyFromText, mimeType);
 
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
 

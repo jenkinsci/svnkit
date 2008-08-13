@@ -110,6 +110,11 @@ public interface ISVNAuthenticationManager {
     /**
      * Returns a manager which handles trust data for the specified <code>url</code>.
      *   
+     * <p/>
+     * Note: in pre-1.2.0 versions <code>ISVNAuthenticationManager</code> used to provide <code>ISVNSSLManager</code> 
+     * via a method <code>getSSLManager()</code> which is now replaced by this one. <code>ISVNSSLManager</code> 
+     * is no longer used (replaced by <code>TrustManager</code>).
+     * 
      * @param  url          repository url                
      * @return              trust manager
      * @throws SVNException

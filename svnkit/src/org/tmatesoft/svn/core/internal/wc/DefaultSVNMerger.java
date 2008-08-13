@@ -796,8 +796,8 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             if (!isDir && workingProps != null) {
                 mimeType = workingProps.getStringValue(SVNProperty.MIME_TYPE);
             }
-            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, newFile,
-                    mergedFile, adminArea.getFile(localPath), null, mimeType, SVNProperty.isBinaryMimeType(mimeType));
+            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, 
+                    newFile, mergedFile, adminArea.getFile(localPath), null, mimeType);
 
             SVNConflictAction action = SVNConflictAction.EDIT;
             if (oldValue == null && newValue != null) {
