@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,14 +15,20 @@ import java.io.File;
 
 
 /**
- * @version 1.1.2
+ * The <b>SVNConflictResult</b> represents the decision of   
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNConflictResult {
 
     private SVNConflictChoice myConflictChoice;
     private File myMergedFile;
     
+    /**
+     * 
+     */
     public SVNConflictResult(SVNConflictChoice conflictChoice, File mergedFile) {
         myConflictChoice = conflictChoice;
         myMergedFile = mergedFile;

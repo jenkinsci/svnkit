@@ -15,7 +15,8 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 
 
 /**
- * The <b>SVNConflictDescription</b>
+ * The <b>SVNConflictDescription</b> represents an object that describes a conflict that has occurred in the
+ * working copy. It's passed to {@link ISVNConflictHandler#handleConflict(SVNConflictDescription)}.
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
@@ -28,7 +29,21 @@ public class SVNConflictDescription {
     private boolean myIsPropertyConflict;
     private SVNConflictAction myConflictAction;
     private SVNConflictReason myConflictReason;
-    
+
+    /**
+     * Creates a new <code>SVNConflictDescription</code> object.
+     * 
+     * <p/>
+     * <code>propertyName</code> is relevant only for property conflicts (i.e. in case 
+     * <code>isPropertyConflict</code> is <span class="javakeyword">true</span>).
+     * 
+     * @param mergeFiles            files involved in the merge 
+     * @param nodeKind              node kind of the item which the conflict occurred on           
+     * @param propertyName          name of the property property which the conflict occurred on          
+     * @param isPropertyConflict    if 
+     * @param conflictAction 
+     * @param conflictReason 
+     */
     public SVNConflictDescription(SVNMergeFileSet mergeFiles, SVNNodeKind nodeKind, String propertyName, 
             boolean isPropertyConflict, SVNConflictAction conflictAction, SVNConflictReason conflictReason) {
         myMergeFiles = mergeFiles;
@@ -39,10 +54,17 @@ public class SVNConflictDescription {
         myConflictReason = conflictReason;
     }
 
+    /**
+     * Returns information about files involved in the merge.
+     * @return merge file set 
+     */
     public SVNMergeFileSet getMergeFiles() {
         return myMergeFiles;
     }
     
+    /**
+     * 
+     */
     public SVNConflictAction getConflictAction() {
         return myConflictAction;
     }

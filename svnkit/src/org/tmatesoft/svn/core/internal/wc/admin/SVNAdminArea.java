@@ -454,7 +454,7 @@ public abstract class SVNAdminArea {
         File resultFile = SVNAdminUtil.createTmpFile(this);
 
         SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, log, base, tmpTarget, localPath, latest, 
-                resultFile, getFile(localPath), copyFromText, mimeType);
+                resultFile, copyFromText, mimeType);
 
         mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
 

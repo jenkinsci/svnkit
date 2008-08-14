@@ -53,7 +53,6 @@ public class SVNMergeFileSet {
     private String myRepositoryLabel;
 
     private File myLocalFile;
-    private File myTargetFile;
     private File myBaseFile;
     private File myRepositoryFile;
     private File myMergeResultFile;
@@ -75,9 +74,8 @@ public class SVNMergeFileSet {
      * @param wcPath        working copy path relative to the location of <code>adminArea</code>
      * @param reposFile     file contents from the repository
      * @param resultFile    file where the resultant merged contents will be written to  
-     * @param targetFile    working copy file   
      * @param copyFromFile  contents of the copy source file (if any)  
-     * @param mimeType      
+     * @param mimeType      file mime type       
      */
     public SVNMergeFileSet(SVNAdminArea adminArea, SVNLog log,
             File baseFile, 
@@ -85,13 +83,11 @@ public class SVNMergeFileSet {
             String wcPath, 
             File reposFile, 
             File resultFile,
-            File targetFile,//non-translated wc file
             File copyFromFile,
             String mimeType) {
         myAdminArea = adminArea;
         myLog = log;
         myLocalFile = localFile;
-        myTargetFile = targetFile;
         myBaseFile = baseFile;
         myRepositoryFile = reposFile;
         myWCFilePath = wcPath;
@@ -244,46 +240,94 @@ public class SVNMergeFileSet {
         return myRepositoryFilePath;
     }
     
+    /**
+     * Returns the path of the file where the merged resultant text is written to.
+     * 
+     * @return path of the result file; it's relevant to the {@link #getAdminArea() admin area} location
+     */
     public String getResultPath() {
         return myMergeResultFilePath;
     }
     
-    public File getTargetFile() {
-        return myTargetFile;
-    }
-    
+    /**
+     * Returns the file containing the pristine file contents.
+     * @return base file 
+     */
     public File getBaseFile() {
         return myBaseFile;
     }
     
+    /**
+     * Returns the working copy file as it presents in the working copy.
+     * @return working copy file 
+     */
     public File getWCFile() {
         return myAdminArea.getFile(myWCFilePath);
     }
     
+    /**
+     * Returns the detranslated working copy file.
+     * Detranslating of a working copy file takes place in case it's a symlink, or it has keywords or 
+     * eol-style properties set on it.
+     * 
+     * @return detranslated working copy file 
+     */
     public File getLocalFile() {
         return myLocalFile;
     }
     
+    /**
+     * Returns the repository version of the file. 
+     * @return repository file 
+     */
     public File getRepositoryFile() {
         return myRepositoryFile;
     }
     
+    /**
+     * Returns the file where the merged resultant text is written to.
+     * @return merge result file
+     */
     public File getResultFile() {
         return myMergeResultFile;
     }
     
+    /**
+     * Tells whether this file is binary or textual.
+     * The result will depend on the value of the file {@link #getMimeType() mime type}.
+     * 
+     * @return <span class="javakeyword">true</span> if binary 
+     */
     public boolean isBinary() {
         return SVNProperty.isBinaryMimeType(myMimeType);
     }
     
+    /**
+     * Returns the mime type of the file.
+     * @return file mime type 
+     */
     public String getMimeType() {
         return myMimeType;
     }
     
+    /**
+     * Returns the admin area which controls the file.
+     * 
+     * <p/>
+     * Note: this method is not intended for API users.
+     * @return admin area
+     */
     public SVNAdminArea getAdminArea() {
         return myAdminArea;
     }
     
+    /**
+     * Disposes this object.
+     * 
+     * <p/>
+     * Note: this method is not intended for API users.
+     * @throws SVNException 
+     */
     public void dispose() throws SVNException {
         // add deletion commands to the log file.
         SVNProperties command = new SVNProperties();
@@ -295,6 +339,10 @@ public class SVNMergeFileSet {
         }
     }
     
+    /**
+     * Returns the file which is the copy source for the file being merged.
+     * @return copy source file 
+     */
     public File getCopyFromFile() {
         return myCopyFromFile;
     }

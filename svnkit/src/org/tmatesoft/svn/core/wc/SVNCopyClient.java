@@ -253,7 +253,8 @@ public class SVNCopyClient extends SVNBasicClient {
      * used by this client object by default.
      * 
      * <p/>
-     * For more information what externals handlers are for, please, refer to {@link ISVNExternalsHandler}. 
+     * For more information what externals handlers are for, please, refer to {@link ISVNExternalsHandler} and 
+     * {@link #doCopy(SVNCopySource[], SVNURL, boolean, boolean, boolean, String, SVNProperties)}. 
      * 
      * @return           externals handler being in use
      * @see              #setExternalsHandler(ISVNExternalsHandler)
@@ -407,6 +408,26 @@ public class SVNCopyClient extends SVNBasicClient {
     * <p/>
     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, invokes it  
     * for each item added at the new location.
+    * 
+    * <p/>
+    * When performing a wc-to-url copy (tagging|branching from a working copy) it's possible to fix 
+    * revisions of external working copies (if any) which are located within the working copy being copied.
+    * For example, imagine you have a working copy and on one of its subdirecotries you set an 
+    * <span class="javastring">"svn:externals"</span> property which does not contain a revision number. 
+    * Suppose you have made a tag from your working copy and in some period of time a user checks out 
+    * that tag. It could have happened that the external project has evolved since the tag creation moment 
+    * and the tag version is nomore compatible with it. So, the user has a broken project since it will not 
+    * compile because of the API incompatibility between the two versions of the external project: the HEAD 
+    * one and the one existed in the moment of the tag creation. That is why it appears useful to fix externals 
+    * revisions during a wc-to-url copy. To enable externals revision fixing a user should implement 
+    * {@link ISVNExternalsHandler}. The user's implementation 
+    * {@link ISVNExternalsHandler#handleExternal(File, SVNURL, SVNRevision, SVNRevision, String, SVNRevision)} 
+    * method will be called on every external that will be met in the working copy. If the user's implementation 
+    * returns non-<span class="javakeyword">null</span> external revision, it's compared with the revisions 
+    * fetched from the external definition. If they are different, the user's revision will be written in 
+    * the external definition of the tag. Otherwise if the returned revision is equal to the revision from 
+    * the external definition or if the user's implementation returns <span class="javakeyword">null</span> for 
+    * that external, it will be skipped (i.e. left as is, unprocessed).        
     * 
     * <p/>
     * Note: this routine requires repository access.
