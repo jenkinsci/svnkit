@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -67,7 +67,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * ...</pre>
  * </p> 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     ISVNInfoHandler
  * @see     SVNWCClient
@@ -472,22 +472,54 @@ public class SVNInfo {
         return myURL;
     }
 
+    /**
+     * Gets the item's depth. 
+     * 
+     * @return  depth value  
+     * @since   1.2.0, SVN 1.5.0
+     */
     public SVNDepth getDepth() {
         return myDepth;
     }
 
+    /**
+     * Gets the name of the changelist the item belongs to.
+     * 
+     * @return  changelist name 
+     * @since   1.2.0, SVN 1.5.0
+     */
     public String getChangelistName() {
         return myChangelistName;
     }
 
+    /**
+     * Returns the size of the working copy file.
+     * Relevant for file items only.
+     * 
+     * @return  working file size in bytes
+     * @since   1.2.0, SVN 1.5.0
+     */
     public long getWorkingSize() {
         return myWorkingSize;
     }
 
+    /**
+     * Returns the size of the file in the repository.
+     * Relevant for file items only and in case of a remote operation (i.e. info fetched just from 
+     * the working copy will always return -1 in this method).
+     * 
+     * @return  repository file size in bytes
+     * @since   1.2.0, SVN 1.5.0
+     */
     public long getRepositorySize() {
         return myRepositorySize;
     }
 
+    /**
+     * 
+     * @return  error message   
+     * @since   1.2.0, SVN 1.5.0
+     */
     public SVNErrorMessage getError() {
         return myError;
     }

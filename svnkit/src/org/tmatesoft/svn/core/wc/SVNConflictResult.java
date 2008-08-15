@@ -15,7 +15,8 @@ import java.io.File;
 
 
 /**
- * The <b>SVNConflictResult</b> represents the decision of   
+ * The <b>SVNConflictResult</b> represents the decision of the user's {@link ISVNConflictHandler conflict handler}
+ * regarding a conflict situation.   
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
@@ -27,17 +28,36 @@ public class SVNConflictResult {
     private File myMergedFile;
     
     /**
+     * Creates a new <code>SVNConflictChoice</code> object.
      * 
+     * @param conflictChoice way that the conflict should be resolved in 
+     * @param mergedFile     file containing the merge result      
      */
     public SVNConflictResult(SVNConflictChoice conflictChoice, File mergedFile) {
         myConflictChoice = conflictChoice;
         myMergedFile = mergedFile;
     }
 
+    /**
+     * Returns the conflict handler's choice. This way implementor can manage conflicts providing a choice 
+     * object defining what to do with the conflict.
+     * 
+     * @return  conflict choice
+     */
     public SVNConflictChoice getConflictChoice() {
         return myConflictChoice;
     }
 
+    /**
+     * Returns the file with the merge result.
+     * 
+     * <p/>
+     * Usually this will be the {@link SVNMergeFileSet#getResultFile() result file} obtained by the 
+     * user's {@link ISVNConflictHandler conflict handler} from the {@link SVNConflictDescription description}'s 
+     * {@link SVNMergeFileSet merge file set} object.
+     * 
+     * @return merged file
+     */
     public File getMergedFile() {
         return myMergedFile;
     }
