@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,9 +26,9 @@ import java.io.File;
  * the three constants predefined in this interface. According to the return value the file may be added as-is, as 
  * binary or addition may be cancelled and an exception may be thrown indicating an error.
  * 
- * @version 1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
- * @since   1.2
+ * @since   1.2.0
  */
 public interface ISVNAddParameters {
 

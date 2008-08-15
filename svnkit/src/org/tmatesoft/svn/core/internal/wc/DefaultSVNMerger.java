@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -55,8 +55,9 @@ import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
@@ -695,10 +696,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     	
     }
 
-    private boolean maybeGeneratePropConflict(String localPath, String propName,
-                                              SVNProperties workingProps, SVNPropertyValue oldValue, SVNPropertyValue newValue,
-                                              SVNPropertyValue baseValue, SVNPropertyValue workingValue,
-                                              SVNAdminArea adminArea, SVNLog log, boolean isDir) throws SVNException {
+    private boolean maybeGeneratePropConflict(String localPath, String propName, SVNProperties workingProps, 
+            SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue baseValue, 
+            SVNPropertyValue workingValue, SVNAdminArea adminArea, SVNLog log, boolean isDir) throws SVNException {
         boolean conflictRemains = true;
         if (myConflictCallback == null) {
             return conflictRemains;
@@ -796,8 +796,8 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             if (!isDir && workingProps != null) {
                 mimeType = workingProps.getStringValue(SVNProperty.MIME_TYPE);
             }
-            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, newFile,
-                    mergedFile, adminArea.getFile(localPath), null, mimeType, SVNProperty.isBinaryMimeType(mimeType));
+            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, 
+                    newFile, mergedFile, null, mimeType);
 
             SVNConflictAction action = SVNConflictAction.EDIT;
             if (oldValue == null && newValue != null) {

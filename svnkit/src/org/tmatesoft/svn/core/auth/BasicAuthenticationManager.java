@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,7 +41,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * manager (how to get it read javadoc for {@link ISVNAuthenticationManager}), 
  * this basic manager or implement your own one.  
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationProvider
  */
@@ -146,6 +146,18 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         myProxyPassword = proxyPassword;
     }
 
+    /**
+     * Returns the first user's authentication credentials.
+     * 
+     * @param  kind          credentials kind; valid kinds are {@link ISVNAuthenticationManager#SSH}, 
+     *                       {@link ISVNAuthenticationManager#PASSWORD}, {@link ISVNAuthenticationManager#USERNAME}, 
+     *                       {@link ISVNAuthenticationManager#SSL}, {@link ISVNAuthenticationManager#USERNAME}  
+     * @param  realm         authentication realm
+     * @param  url           repository url
+     * @return               first user's credentials
+     * @throws SVNException  exception with {@link org.tmatesoft.svn.core.SVNErrorCode#RA_NOT_AUTHORIZED} 
+     *                       error code - in case of invalid <code>kind</code>
+     */
     public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
         if (ISVNAuthenticationManager.SSH.equals(kind) && mySSHAuthentications.size() > 0) {
             mySSHIndex = 0; 
@@ -171,6 +183,19 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         return null;
     } 
 
+    /**
+     * Returns next user authentication credentials. This method is called whenever the first credentials 
+     * returned by {@link #getFirstAuthentication(String, String, SVNURL)} failed to authenticate the user. 
+     * 
+     * @param  kind          credentials kind; valid kinds are {@link ISVNAuthenticationManager#SSH}, 
+     *                       {@link ISVNAuthenticationManager#PASSWORD}, {@link ISVNAuthenticationManager#USERNAME}, 
+     *                       {@link ISVNAuthenticationManager#SSL}, {@link ISVNAuthenticationManager#USERNAME}  
+     * @param  realm         authentication realm
+     * @param  url           repository url
+     * @return               next user's authentication credentials                
+     * @throws SVNException  exception with {@link org.tmatesoft.svn.core.SVNErrorCode#RA_NOT_AUTHORIZED} 
+     *                       error code - in case of invalid <code>kind</code>
+     */
     public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
         if (ISVNAuthenticationManager.SSH.equals(kind) && mySSHIndex + 1 < mySSHAuthentications.size()) {
             mySSHIndex++; 
@@ -209,6 +234,14 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         return this;
     }
 
+    /**
+     * Returns <span class="javakeyword">null</span>. 
+     * 
+     * @param  url             repository url
+     * @return                 <span class="javakeyword">null</span>
+     * @throws SVNException
+     * @since                  1.2.0       
+     */
 	public TrustManager getTrustManager(SVNURL url) throws SVNException {
 		return null;
 	}
@@ -225,29 +258,71 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
     }
 
+    /**
+     * Does nothing.
+     * 
+     * @param manager
+     * @since          1.2.0 
+     */
 	public void acknowledgeTrustManager(TrustManager manager) {
 	}
 
+	/**
+	 * Tells whether authentication should be tried despite not being challenged from the server yet.
+	 * 
+	 * <p/>
+	 * By default the return value is always <span class="javakeyword">false</span> until this behavior is 
+	 * changed via a call to {@link #setAuthenticationForced(boolean)}. 
+	 * 
+	 * @return  authentication force flag 
+	 */
 	public boolean isAuthenticationForced() {
         return myIsAuthenticationForced;
     }
     
+	/**
+	 * Sets whether authentication should be forced or not.
+	 * 
+	 * @param forced  authentication force flag
+	 * @see           #isAuthenticationForced() 
+	 */
     public void setAuthenticationForced(boolean forced) {
         myIsAuthenticationForced = forced;
     }
 
+    /**
+     * Returns the proxy host name.
+     * 
+     * @return the proxy host argument value specified via the {@link #setProxy(String, int, String, String)} 
+     *         method 
+     */
     public String getProxyHost() {
         return myProxyHost;
     }
 
+    /**
+     * Returns the proxy port number.
+     * @return the proxy port argument value specified via the {@link #setProxy(String, int, String, String)} 
+     *         method 
+     */
     public int getProxyPort() {
         return myProxyPort;
     }
 
+    /**
+     * Returns the proxy user name.
+     * @return the proxy user name argument value specified via the {@link #setProxy(String, int, String, String)} 
+     *         method 
+     */
     public String getProxyUserName() {
         return myProxyUserName;
     }
 
+    /**
+     * Returns the password to authenticate against the proxy server.
+     * @return the proxy password argument value specified via the {@link #setProxy(String, int, String, String)} 
+     *         method 
+     */
     public String getProxyPassword() {
         return myProxyPassword;
     }
@@ -261,6 +336,18 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     public void acknowledgeProxyContext(boolean accepted, SVNErrorMessage errorMessage) {
     }
 
+    /**
+     * Returns connection timeout value.
+     * 
+     * <p/>
+     * This implementation returns a read timeout value equal to 3600 seconds for <code>http</code> 
+     * or <code>https</code> access operations. If <code>repository</code> uses a different access protocol,
+     * the return value will be 0.
+     * 
+     * @param  repository  repository access object 
+     * @return             read timeout value in milliseconds
+     * @since              1.2.0
+     */
     public int getReadTimeout(SVNRepository repository) {
         String protocol = repository.getLocation().getProtocol();
         if ("http".equals(protocol) || "https".equals(protocol)) {
@@ -269,6 +356,18 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         return 0;
     }
 
+    /**
+     * Returns connection timeout value.
+     * 
+     * <p/>
+     * This implementation returns a connection timeout value equal to 60 seconds for <code>http</code> 
+     * or <code>https</code> access operations. If <code>repository</code> uses a different access protocol,
+     * the return value will be 0.
+     * 
+     * @param  repository  repository access object 
+     * @return             connection timeout value in milliseconds
+     * @since              1.2.0
+     */
     public int getConnectTimeout(SVNRepository repository) {
         String protocol = repository.getLocation().getProtocol();
         if ("http".equals(protocol) || "https".equals(protocol)) {

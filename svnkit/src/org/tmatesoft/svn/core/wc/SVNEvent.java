@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -93,7 +93,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * will be dispatched progress events. 
  * </p>
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     SVNStatusType
@@ -141,11 +141,8 @@ public class SVNEvent {
      * Used by SVNKit internals to construct and initialize an 
      * <b>SVNEvent</b> object. It's not intended for users (from an API point of view).
      * 
-     * @param info           admin info
-     * @param adminArea      admin area the item belongs to
-     * @param name           the item's name
+     * @param file           local path
      * @param action         the type of action the item is exposed to
-     * @param expectedAction the action type that was expected 
      * @param kind           the item's node kind
      * @param revision       a revision number
      * @param mimetype       the item's MIME type
@@ -153,11 +150,14 @@ public class SVNEvent {
      * @param pstatus        the item's properties status
      * @param lstatus        the item's lock status
      * @param lock           the item's lock
+     * @param expected       the action type that was expected 
      * @param error          an error message
+     * @param range          merge range
+     * @param changelistName change list name
      */
-
-    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus,
-            SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName) {
+    public SVNEvent(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, 
+            SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, 
+            SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName) {
         myFile = file != null ? file.getAbsoluteFile() : null;
         myNodeKind = kind == null ? SVNNodeKind.UNKNOWN : kind;
         myMimeType = mimetype;
@@ -174,6 +174,11 @@ public class SVNEvent {
         myPreviousRevision = -1;
     }
 
+    /**
+     * Returns local path the event is fired for.
+     * 
+     * @return local path 
+     */
     public File getFile() {
         return myFile;
     }
@@ -308,40 +313,92 @@ public class SVNEvent {
         return myRevision;
     }
 
+    /**
+     * Returns the local revision before it will be changed by an update.
+     * @return       revision prior to modification
+     * @since        1.2.0, SVN 1.5.0
+     */
     public long getPreviousRevision() {
         return myPreviousRevision;
     }
 
+    /**
+     * Returns the repository URL that this event is fired for.
+     * @return repository url 
+     */
 	public SVNURL getURL() {
 		return myURL;
 	}
 
+    /**
+     * Returns the item's repository url before it will be changed by an update.
+     * @return       repository url prior to modification
+     * @since        1.2.0, SVN 1.5.0
+     */
 	public SVNURL getPreviousURL() {
 		return myPreviousURL;
 	}
 
 	/**
-     * Sets the item's path relative to the Working Copy root.
+     * Returns a changelist name. Relevant for changelist operations provided by 
+     * {@link SVNChangelistClient}.
+	 * 
+	 * @return  changelist name
+     * @since   1.2.0, SVN 1.5.0 
      * 
-     * @param path  the item's relative path
      */
-    
     public String getChangelistName() {
         return myChangelistName;
     }
     
+    /** 
+     * Returns the merge range. 
+     * 
+     * <p/>
+     * When {@link #getAction() action} is {@link SVNEventAction#MERGE_BEGIN}, and both the left and right sides 
+     * of the merge are not from the same URL, the return value is <span class="javakeyword">null</span>.  
+     * 
+     * @return  merge range 
+     * @since   1.2.0, New in SVN 1.5.0 
+     */
     public SVNMergeRange getMergeRange() {
         return myRange;
     }    
 
+    /**
+     * Sets the item revision which will be changed by the operation after this event is handled.
+     * 
+     * <p/>
+     * Note: this method is not intended for API users.
+     * 
+     * @param previousRevision previous revision
+     * @since                  1.2.0, SVN 1.5.0
+     */
     public void setPreviousRevision(long previousRevision) {
         myPreviousRevision = previousRevision;
     }
 
+    /**
+     * Sets the repository url.
+     * 
+     * <p/>
+     * Note: this method is not intended for API users.
+     * 
+     * @param url repository url 
+     */
     public void setURL(SVNURL url) {
         myURL = url;
     }
 
+    /**
+     * Sets the item url which will be changed by the operation after this event is handled.
+     * 
+     * <p/>
+     * Note: this method is not intended for API users.
+     * 
+     * @param url previous url
+     * @since     1.2.0, SVN 1.5.0
+     */
 	public void setPreviousURL(SVNURL url) {
 	    myPreviousURL = url;
 	}
