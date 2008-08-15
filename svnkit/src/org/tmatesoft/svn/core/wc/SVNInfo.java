@@ -130,15 +130,6 @@ public class SVNInfo {
                 dirEntry.getAuthor(), lock, SVNDepth.UNKNOWN, dirEntry.getSize());
     }
 
-    static SVNInfo createInfo(File file, SVNErrorMessage error) {
-        return new SVNInfo(file, error);
-    }
-    
-    protected SVNInfo(File file, SVNErrorMessage error) {
-        myFile = file;
-        myError = error;
-    }
-    
     protected SVNInfo(File file, SVNURL url, SVNURL rootURL, long revision, SVNNodeKind kind,
             String uuid, long committedRevision, String committedDate,
             String author, String schedule, SVNURL copyFromURL,
@@ -513,15 +504,6 @@ public class SVNInfo {
      */
     public long getRepositorySize() {
         return myRepositorySize;
-    }
-
-    /**
-     * 
-     * @return  error message   
-     * @since   1.2.0, SVN 1.5.0
-     */
-    public SVNErrorMessage getError() {
-        return myError;
     }
 
 }

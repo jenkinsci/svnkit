@@ -149,8 +149,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  *
+ * @version 1.2.0
  * @author TMate Software Ltd.
- * @version 1.2
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNWCClient extends SVNBasicClient {
