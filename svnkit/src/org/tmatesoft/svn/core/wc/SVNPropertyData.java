@@ -79,4 +79,38 @@ public class SVNPropertyData {
         return myValue;
     }
 
+    public int hashCode() {
+        int result = 17 + ((myName == null) ? 0 : myName.hashCode());
+        return 31 * result + ((myValue == null) ? 0 : myValue.hashCode());
+    }
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }         
+            
+        SVNPropertyData other = (SVNPropertyData) obj;
+        if (myName == null) {
+            if (other.myName != null) {
+                return false;
+            }
+        } else if (!myName.equals(other.myName)) {
+            return false;
+        }
+        if (myValue == null) {
+            if (other.myValue != null) {
+                return false;
+            }
+        } else if (!myValue.equals(other.myValue)) {
+            return false;
+        }
+        return true;
+    }
+
 }
