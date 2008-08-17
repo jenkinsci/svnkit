@@ -16,7 +16,11 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * <code>SVNEventAdapter</code> is a simple no-op implementation of {@link ISVNEventHandler}.
+ * <code>SVNEventAdapter</code> is an adapter class for {@link ISVNEventHandler}.
+ * Users's event handler implementations should extend this adapter class rather than implementing 
+ * {@link ISVNEventHandler} directly. This way, if the {@link ISVNEventHandler} interface is changed  
+ * in future, users' event handler implementations won't get broken since the changes will be reflected in 
+ * this adapter class. 
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
@@ -25,18 +29,18 @@ import org.tmatesoft.svn.core.SVNException;
 public class SVNEventAdapter implements ISVNEventHandler {
 
     /**
-     * Does nothing.
-     * @throws SVNCancelException no
+     * Does nothing. To be overriden by a user's implementation.
+     * @throws SVNCancelException 
      */
     public void checkCancelled() throws SVNCancelException {
     }
 
     /**
-     * Does nothing.
+     * Does nothing. To be overriden by a user's implementation.
      * 
      * @param event 
      * @param progress 
-     * @throws SVNException no 
+     * @throws SVNException 
      */
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
     }

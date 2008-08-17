@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -47,7 +47,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * <li><a href="http://svnkit.com/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
  * </ul>
  *  
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see		ISVNReporterBaton
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -143,14 +143,14 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
 	public void openDir(String path, long revision) throws SVNException;
     
 	/**
-     * Changes the value of a property of the currently "opened"/"added" directory.
+     * Changes the value of a property of the currently opened/added directory.
      * 
      * @param  name				the name of a property to be changed
      * @param  value			new property value
      * @throws SVNException
      * @see 					#openDir(String, long)
+     * @since                   1.2.0
      */
-
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException;
 
     /**
@@ -195,6 +195,15 @@ public interface ISVNEditor extends ISVNDeltaConsumer {
      */
     public void openFile(String path, long revision) throws SVNException;
 
+    /**
+     * Changes the value of a property of the currently opened/added file. 
+     * 
+     * @param  path           file path relative to the root of this editor 
+     * @param  propertyName   property name
+     * @param  propertyValue  property value
+     * @throws SVNException
+     * @since                 1.2.0        
+     */
     public void changeFileProperty(String path, String propertyName, SVNPropertyValue propertyValue) throws SVNException;
 
     /**

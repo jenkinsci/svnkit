@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -91,10 +92,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  *   
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
- * 
  */
 public class SVNCommitClient extends SVNBasicClient {
 
@@ -128,6 +128,24 @@ public class SVNCommitClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNCommitClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNCommitClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNCommitClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -165,7 +183,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * Returns the specified commit handler (if set) being in use or a default one 
      * (<b>DefaultSVNCommitHandler</b>) if no special 
      * implementations of <b>ISVNCommitHandler</b> were 
-     * previousely provided.
+     * previously provided.
      *   
      * @return	the commit handler being in use or a default one
      * @see	    #setCommitHander(ISVNCommitHandler)
@@ -211,7 +229,8 @@ public class SVNCommitClient extends SVNBasicClient {
     }
     
     /**
-     * Committs removing specified URL-paths from the repository. 
+     * Committs removing specified URL-paths from the repository.
+     * This call is equivalent to <code>doDelete(urls, commitMessage, null)</code>. 
      *   
      * @param  urls				an array containing URL-strings that represent
      * 							repository locations to be removed
@@ -224,12 +243,42 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          <li>probably some of URLs refer to different
      *                          repositories
      *                          </ul>
+     * @see                     #doDelete(SVNURL[], String, SVNProperties)
      */
     public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage)
             throws SVNException {
         return doDelete(urls, commitMessage, null);
     }
     
+    /** 
+     * Deletes items from a repository.
+     * 
+     * <p/>
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> holds additional, custom 
+     * revision properties (<code>String</code> names mapped to {@link SVNPropertyValue} values) to be set on 
+     * the new revision. This table cannot contain any standard Subversion properties.
+     *
+     * <p/>
+     * {@link #getCommitHandler() Commit handler} will be asked for a commit log message.
+     *
+     * <p/>
+     * If the caller's {@link ISVNEventHandler event handler} is not <span class="javakeyword">null</span> and 
+     * if the commit succeeds, the handler will be called with {@link SVNEventAction#COMMIT_COMPLETED} event 
+     * action.
+     * 
+     * @param  urls                  repository urls to delete 
+     * @param  commitMessage         commit log message
+     * @param  revisionProperties    custom revision properties 
+     * @return                       information about the new committed revision    
+     * @throws SVNException          in the following cases:
+     *                               <ul>
+     *                               <li/>exception with {@link SVNErrorCode#RA_ILLEGAL_URL} error code - if 
+     *                               cannot compute common root url for <code>urls</code>
+     *                               <li/>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code - if 
+     *                               some of <code>urls</code> does not exist
+     *                               </ul>
+     * @since                        1.2.0, SVN 1.5.0
+     */
     public SVNCommitInfo doDelete(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties)
             throws SVNException {
         if (urls == null || urls.length == 0) {
@@ -238,7 +287,8 @@ public class SVNCommitClient extends SVNBasicClient {
         List paths = new ArrayList();
         SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, true);
         if (rootURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Can not compute common root URL for specified URLs");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
+                    "Can not compute common root URL for specified URLs");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (paths.isEmpty()) {
@@ -270,7 +320,8 @@ public class SVNCommitClient extends SVNBasicClient {
             SVNNodeKind kind = repos.checkPath(path, -1);
             if (kind == SVNNodeKind.NONE) {
                 SVNURL url = rootURL.appendPath(path, false);
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' does not exist", url);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                        "URL ''{0}'' does not exist", url);
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
@@ -315,7 +366,43 @@ public class SVNCommitClient extends SVNBasicClient {
         return doMkDir(urls, commitMessage, null, false);
     }
     
-    public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties, boolean makeParents) throws SVNException {
+    /** 
+     * Creates directory(ies) in a repository.
+     * 
+     * <p/>
+     * If <code>makeParents</code> is <span class="javakeyword">true</span>, creates any non-existent parent 
+     * directories also.
+     * 
+     * <p/>
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> holds additional,
+     * custom revision properties (<code>String</code> names mapped to {@link SVNPropertyValue} values) to be 
+     * set on the new revision. This table cannot contain any standard Subversion properties.
+     *
+     * <p/>
+     * {@link #getCommitHandler() Commit handler} will be asked for a commit log message.
+     *
+     * <p/>
+     * If the caller's {@link ISVNEventHandler event handler} is not <span class="javakeyword">null</span> and 
+     * if the commit succeeds, the handler will be called with {@link SVNEventAction#COMMIT_COMPLETED} event 
+     * action.
+     * 
+     * @param  urls                  repository locations to create 
+     * @param  commitMessage         commit log message
+     * @param  revisionProperties    custom revision properties
+     * @param  makeParents           if <span class="javakeyword">true</span>, creates all non-existent 
+     *                               parent directories
+     * @return                       information about the new committed revision
+     * @throws SVNException          in the following cases:
+     *                               <ul>
+     *                               <li/>exception with {@link SVNErrorCode#RA_ILLEGAL_URL} error code - if 
+     *                               cannot compute common root url for <code>urls</code>
+     *                               <li/>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code - if 
+     *                               some of <code>urls</code> does not exist
+     *                               </ul>
+     * @since                        1.2.0, SVN 1.5.0
+     */
+    public SVNCommitInfo doMkDir(SVNURL[] urls, String commitMessage, SVNProperties revisionProperties, 
+            boolean makeParents) throws SVNException {
         if (makeParents) {
             List allURLs = new LinkedList();
             for (int i = 0; i < urls.length; i++) {
@@ -331,7 +418,8 @@ public class SVNCommitClient extends SVNBasicClient {
         Collection paths = new HashSet();
         SVNURL rootURL = SVNURLUtil.condenceURLs(urls, paths, false);
         if (rootURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Can not compute common root URL for specified URLs");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
+                    "Can not compute common root URL for specified URLs");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (paths.isEmpty()) {
@@ -397,7 +485,8 @@ public class SVNCommitClient extends SVNBasicClient {
             throw e;
         }
         if (info != null && info.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, null, null, null), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), 
+                    SVNEventAction.COMMIT_COMPLETED, null, null, null), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }
@@ -426,9 +515,11 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          exists
      *                          <li><code>path</code> contains a reserved name - <i>'.svn'</i>
      *                          </ul>
+     * @deprecated              use {@link #doImport(File, SVNURL, String, SVNProperties, boolean, boolean, SVNDepth)}
+     *                          instead                          
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean recursive) throws SVNException {
-        return doImport(path, dstURL, commitMessage, true, recursive);
+        return doImport(path, dstURL, commitMessage, null, true, false, SVNDepth.fromRecurse(recursive));
     }
 
     /**
@@ -460,11 +551,77 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          exists
      *                          <li><code>path</code> contains a reserved name - <i>'.svn'</i>
      *                          </ul>
+     * @deprecated              use {@link #doImport(File, SVNURL, String, SVNProperties, boolean, boolean, SVNDepth)}
+     *                          instead                          
      */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, boolean useGlobalIgnores, boolean recursive) throws SVNException {
         return doImport(path, dstURL, commitMessage, null, useGlobalIgnores, false, SVNDepth.fromRecurse(recursive));
     }
-    
+
+    /** 
+     * Imports file or directory <code>path</code> into repository directory <code>dstURL</code> at
+     * HEAD revision. If some components of <code>dstURL</code> do not exist, then creates parent directories 
+     * as necessary.
+     * 
+     * <p/>
+     * If <code>path</code> is a directory, the contents of that directory are imported directly into the 
+     * directory identified by <code>dstURL</code>. Note that the directory <code>path</code> itself is not 
+     * imported -- that is, the base name of <code>path<code> is not part of the import.
+     *
+     * <p/>
+     * If <code>path</code> is a file, then the parent of <code>dstURL</code> is the directory
+     * receiving the import. The base name of <code>dstURL</code> is the filename in the repository. 
+     * In this case if <code>dstURL</code> already exists, throws {@link SVNException}.
+     *
+     * <p/>
+     * If the caller's {@link ISVNEventHandler event handler} is not <span class="javakeyword">null</span> it 
+     * will be called as the import progresses with {@link SVNEventAction#COMMIT_ADDED} action. If the commit 
+     * succeeds, the handler will be called with {@link SVNEventAction#COMMIT_COMPLETED} event 
+     * action.
+     * 
+     * <p/>
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> holds additional, custom 
+     * revision properties (<code>String</code> names mapped to {@link SVNPropertyValue} values) to be set on the new revision.
+     * This table cannot contain any standard Subversion properties.
+     *
+     * <p/>
+     * {@link #getCommitHandler() Commit handler} will be asked for a commit log message.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, imports just <code>path</code> and nothing below it. If 
+     * {@link SVNDepth#FILES}, imports <code>path</code> and any file children of <code>path</code>. If 
+     * {@link SVNDepth#IMMEDIATES}, imports <code>path</code>, any file children, and any immediate 
+     * subdirectories (but nothing underneath those subdirectories). If {@link SVNDepth#INFINITY}, imports
+     * <code>path</code> and everything under it fully recursively.
+     * 
+     * <p/>
+     * If <code>useGlobalIgnores</code> is <span class="javakeyword">false</span>, doesn't add files or 
+     * directories that match ignore patterns.
+     * 
+     * <p/>
+     * If <code>ignoreUnknownNodeTypes</code> is <span class="javakeyword">false</span>, ignores files of which 
+     * the node type is unknown, such as device files and pipes.
+     * 
+     * @param  path                     path to import
+     * @param  dstURL                   import destination url 
+     * @param  commitMessage            commit log message
+     * @param  revisionProperties       custom revision properties
+     * @param  useGlobalIgnores         whether matching against global ignore patterns should take place
+     * @param  ignoreUnknownNodeTypes   whether to ignore files of unknown node types or not 
+     * @param  depth                    tree depth to process
+     * @return                          information about the new committed revision
+     * @throws SVNException             in the following cases:
+     *                                  <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#ENTRY_NOT_FOUND} error code - 
+     *                                  if <code>path</code> does not exist
+     *                                  <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -
+     *                                  if <code>dstURL</code> already exists and <code>path</code> is a file
+     *                                  <li/>exception with {@link SVNErrorCode#CL_ADM_DIR_RESERVED} error code -
+     *                                  if trying to import an item with a reserved SVN name (like 
+     *                                  <code>'.svn'</code> or <code>'_svn'</code>) 
+     *                                  </ul> 
+     * @since                           1.2.0, New in SVN 1.5.0
+     */
     public SVNCommitInfo doImport(File path, SVNURL dstURL, String commitMessage, 
             SVNProperties revisionProperties, boolean useGlobalIgnores, boolean ignoreUnknownNodeTypes,
             SVNDepth depth) throws SVNException {
@@ -472,7 +629,8 @@ public class SVNCommitClient extends SVNBasicClient {
         SVNRepository repos = null;
         SVNFileType srcKind = SVNFileType.getType(path);
         if (srcKind == SVNFileType.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, "Path ''{0}'' does not exist", path);            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
+                    "Path ''{0}'' does not exist", path);            
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         List newPaths = new ArrayList();
@@ -489,11 +647,13 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         }
         if (newPaths.isEmpty() && (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", dstURL);            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
+                    "Path ''{0}'' already exists", dstURL);            
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (newPaths.contains(SVNFileUtil.getAdminDirectoryName())) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ADM_DIR_RESERVED, "''{0}'' is a reserved name and cannot be imported", SVNFileUtil.getAdminDirectoryName());            
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ADM_DIR_RESERVED, 
+                    "''{0}'' is a reserved name and cannot be imported", SVNFileUtil.getAdminDirectoryName());            
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNCommitItem[] items = new SVNCommitItem[1];
@@ -506,7 +666,8 @@ public class SVNCommitClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
         commitMessage = validateCommitMessage(commitMessage);
-        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, new SVNImportMediator());
+        ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, 
+                new SVNImportMediator());
         String filePath = "";
         if (srcKind != SVNFileType.DIRECTORY) {
             filePath = (String) newPaths.remove(0);
@@ -560,7 +721,8 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         }
         if (info != null && info.getNewRevision() >= 0) { 
-            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), SVNEventAction.COMMIT_COMPLETED, null, null, null), ISVNEventHandler.UNKNOWN);
+            dispatchEvent(SVNEventFactory.createSVNEvent(null, SVNNodeKind.NONE, null, info.getNewRevision(), 
+                    SVNEventAction.COMMIT_COMPLETED, null, null, null), ISVNEventHandler.UNKNOWN);
         }
         return info != null ? info : SVNCommitInfo.NULL;
     }
@@ -591,12 +753,9 @@ public class SVNCommitClient extends SVNBasicClient {
         return doCommit(paths, keepLocks, commitMessage, null, null, false, force, SVNDepth.fromRecurse(recursive));
     }
     
-    public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, 
-                                  String commitMessage, SVNProperties revisionProperties, 
-                                  String[] changelists, boolean keepChangelist, boolean force, 
-                                  SVNDepth depth) throws SVNException {
-        SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, force, 
-                                                      depth, changelists);
+    public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, SVNProperties revisionProperties, 
+            String[] changelists, boolean keepChangelist, boolean force, SVNDepth depth) throws SVNException {
+        SVNCommitPacket packet = doCollectCommitItems(paths, keepLocks, force, depth, changelists);
         try {
             packet = packet.removeSkippedItems();
             return doCommit(packet, keepLocks, keepChangelist, commitMessage, revisionProperties);
@@ -844,7 +1003,6 @@ public class SVNCommitClient extends SVNBasicClient {
      * @throws SVNException
      * @see	                    SVNCommitItem
      */
-    //TODO(sd): to be updated...
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
         return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), null);
     }

@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * 
  * @author  TMate Software Ltd.
  * @version 1.2.0
- * @since   1.2
+ * @since   1.2.0
  */
 public class SVNProperties {
 
