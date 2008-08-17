@@ -351,4 +351,29 @@ public class SVNProperties {
         return result;
     }
 
+    public int hashCode() {
+        return 31 + ((myProperties == null) ? 0 : myProperties.hashCode());
+    }
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        SVNProperties other = (SVNProperties) obj;
+        if (myProperties == null) {
+            if (other.myProperties != null) {
+                return false;
+            }
+        } else if (!myProperties.equals(other.myProperties)) {
+            return false;
+        }
+        return true;
+    }
+    
 }
