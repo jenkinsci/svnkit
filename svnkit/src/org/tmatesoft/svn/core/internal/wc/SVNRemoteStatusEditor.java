@@ -212,7 +212,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             }
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
             myFileInfo.myRemoteDate = SVNDate.parseDate(value.getString());
-        } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+        } else if (SVNProperty.LAST_AUTHOR.equals(name) && value != null) {
             myFileInfo.myRemoteAuthor = value.getString();
         }
     }
