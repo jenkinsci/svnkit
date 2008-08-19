@@ -37,6 +37,10 @@ public interface ISVNCanceller {
      * Checks if the current operation is cancelled (somehow interrupted)
      * and should throw an <b>SVNCancelException</b>.
      * 
+     * <p/>
+     * This method is often called during iterations when processing trees of versioned items.
+     * This way the entire operation may be interrupted without waiting till the iteration run out.
+     * 
      * @throws SVNCancelException
      */
     public void checkCancelled() throws SVNCancelException;

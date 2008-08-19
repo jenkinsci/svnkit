@@ -40,7 +40,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * The <b>SVNChangelistClient</b> provides API for managing changelists.
  * 
  * <p>
- * Here's a list of the <b>SVNUpdateClient</b>'s methods 
+ * Here's a list of the <b>SVNChangelistClient</b>'s methods 
  * matched against corresponing commands of the SVN command line 
  * client:
  * 
@@ -50,19 +50,10 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td><b>Subversion</b></td>
  * </tr>   
  * <tr bgcolor="#EAEAEA" align="left">
- * <td>doCheckout()</td><td>'svn checkout'</td>
+ * <td>doAddToChangelist()</td><td>'svn changelist CLNAME TARGET'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
- * <td>doUpdate()</td><td>'svn update'</td>
- * </tr>
- * <tr bgcolor="#EAEAEA" align="left">
- * <td>doSwitch()</td><td>'svn switch'</td>
- * </tr>
- * <tr bgcolor="#EAEAEA" align="left">
- * <td>doRelocate()</td><td>'svn switch --relocate oldURL newURL'</td>
- * </tr>
- * <tr bgcolor="#EAEAEA" align="left">
- * <td>doExport()</td><td>'svn export'</td>
+ * <td>doRemoveFromChangelist()</td><td>'svn changelist --remove TARGET'</td>
  * </tr>
  * </table>
  * 
@@ -187,6 +178,9 @@ public class SVNChangelistClient extends SVNBasicClient {
      * Note: this metadata is purely a client-side "bookkeeping" convenience, and is entirely managed by the 
      * working copy.
      * 
+     * <p/>
+     * Note: this method does not require repository access.
+     * 
      * @param  paths          working copy paths to add to <code>changelist</code>
      * @param  depth          tree depth to process
      * @param  changelist     name of the changelist to add new paths to 
@@ -212,6 +206,9 @@ public class SVNChangelistClient extends SVNBasicClient {
      * <p/>
      * Note: this metadata is purely a client-side "bookkeeping" convenience, and is entirely managed by the 
      * working copy.
+     *
+     * <p/>
+     * Note: this method does not require repository access.
      * 
      * @param paths            paths to remove from any changelists  
      * @param depth            tree depth to process
@@ -229,6 +226,9 @@ public class SVNChangelistClient extends SVNBasicClient {
      * <p/>
      * This method is just like {@link #doGetChangeLists(File, Collection, SVNDepth, ISVNChangelistHandler)} 
      * except for it operates on multiple targets instead of a single one. 
+     *
+     * <p/>
+     * Note: this method does not require repository access.
      * 
      * @param  changeLists   collection of changelist names 
      * @param  targets       working copy paths to operate on 
@@ -262,6 +262,9 @@ public class SVNChangelistClient extends SVNBasicClient {
      * <p/> 
      * If there was an event handler provided via {@link #setEventHandler(ISVNEventHandler)}, then its 
      * {@link ISVNEventHandler#checkCancelled()} will be invoked during the recursive walk.
+     *
+     * <p/>
+     * Note: this method does not require repository access.
      * 
      * @param  path            target working copy path            
      * @param  changeLists     collection of changelist names

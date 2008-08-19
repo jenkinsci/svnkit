@@ -91,14 +91,19 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     /**
-     * Gets a run-time configuration area driver used by this object.
+     * Gets run-time configuration options used by this object.
      * 
-     * @return the run-time options driver being in use
+     * @return the run-time options being in use
      */
     public ISVNOptions getOptions() {
         return myOptions;
     }
     
+    /**
+     * Sets run-time global configuration options to this object.
+     * 
+     * @param options  the run-time configuration options 
+     */
     public void setOptions(ISVNOptions options) {
         myOptions = options;
         if (myOptions == null) {
@@ -233,6 +238,9 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myDebugLog;
     }
     
+    /**
+     * 
+     */
     public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, 
             SVNWCAccess access) throws SVNException {
         SVNURL reposRoot = null;
