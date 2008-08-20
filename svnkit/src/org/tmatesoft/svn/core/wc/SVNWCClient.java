@@ -1448,7 +1448,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @param path                      working copy path
      * @param force                     if <span class="javakeyword">true</span> 
      * @param mkdir                     does not throw exceptions on already-versioned items
-     * @param climbUnversionedParents   not used
+     * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
      *                                  to paths being added

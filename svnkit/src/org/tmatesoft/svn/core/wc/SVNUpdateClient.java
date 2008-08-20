@@ -276,6 +276,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      * whether the caller wants to stop the update.
      * 
      * <p/>
+     * Before updating a next path from <code>paths</code> this method calls {@link #handlePathListItem(File)} 
+     * passing the path to it.
+     * 
+     * <p/>
      * This operation requires repository access (in case the repository is not on the same machine, network
      * connection is established).
      * 
