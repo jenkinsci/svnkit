@@ -764,7 +764,21 @@ public abstract class SVNRepository {
     }
 
     /**
+     * Checks that this object is connected to a mergeinfo capable repository. 
      * 
+     * <p/>
+     * If the repository that this object is used to access to does not support merge-tracking,
+     * an {@link SVNException} is thrown with the error code {@link SVNErrorCode#UNSUPPORTED_FEATURE}.
+     *  
+     * <p/>
+     * <code>pathOrURL</code> is used only in an error message. If <code>pathOrURL</code> is 
+     * <span class="javakeyword">null</span>, it defaults to the {@link #getLocation() location} of this 
+     * object.  
+     * 
+     * @param pathOrURL        path or URl string for an error message 
+     * @throws SVNException    exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if 
+     *                         the repository does not support merge-tracking 
+     * @since                  1.2.0 
      */
     public void assertServerIsMergeInfoCapable(String pathOrURL) throws SVNException {
         boolean isMergeInfoCapable = hasCapability(SVNCapability.MERGE_INFO);
@@ -847,7 +861,7 @@ public abstract class SVNRepository {
      */
     public long log(String[] targetPaths, long startRevision, long endRevision, boolean changedPath, boolean strictNode,
             ISVNLogEntryHandler handler) throws SVNException {
-        return log(targetPaths, startRevision, endRevision,changedPath,strictNode, 0, handler);
+        return log(targetPaths, startRevision, endRevision, changedPath, strictNode, 0, handler);
     }
 
     /**
@@ -926,13 +940,95 @@ public abstract class SVNRepository {
         return log(targetPaths, startRevision, endRevision, changedPath, strictNode, limit, false, null, handler);
     }
     
-    public long log(String[] targetPaths, long startRevision, long endRevision, 
-            boolean changedPath, boolean strictNode, long limit, boolean includeMergedRevisions, 
-            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
+    /**
+     * Invokes <code>handler</code> on each log message from <code>startRevision</code> to 
+     * <code>endRevision</code>. <code>startRevision</code> may be greater or less than <code>endRevision</code>;
+     * this just controls whether the log messages are processed in descending
+     * or ascending revision number order.
+     * 
+     * <p/>
+     * If <code>startRevision</code> or <code>endRevision</code> is invalid (<code>&lt;0</code>), it defaults 
+     * to youngest.
+     * 
+     * <p/>
+     * If <code>targetPaths</code> is non-<span class="javakeyword">null</span> and has one or more elements, 
+     * then shows only revisions in which at least one of <code>targetPaths</code> was changed (i.e., if
+     * file, text or props changed; if dir, props changed or an entry was added or deleted). Each path may be 
+     * either absolut (starts with '/') or relative to this object's {@link #getLocation() location}.
+     * 
+     * <p/>
+     * If <code>limit</code> is non-zero only invokes <code>handler</code> on the first <code>limit</code>
+     * logs.
+     * 
+     * <p/>
+     * If <code>discoverChangedPaths</code> is set, then each call to <code>handler</code> passes an 
+     * {@link org.tmatesoft.svn.core.SVNLogEntry} object with non-empty  
+     * {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths() changed paths map};
+     * the hash's keys are all the paths committed in that revision.
+     * Otherwise, each call to <code>handler</code> passes <span class="javakeyword">null</span> for changed paths.
+     * 
+     * <p/>
+     * If <code>strictNodeHistory</code> is set, copy history will not be traversed (if any exists) when 
+     * harvesting the revision logs for each path.
+     *
+     * <p/>
+     * If <code>includeMergedRevisions</code> is set, log information for revisions which have been merged to 
+     * <code>targetPahts</code> will also be returned.
+     * 
+     * <p/>
+     * If <code>revisionProperties</code> is <span class="javakeyword">null</span>, retrieves all revprops; else, 
+     * retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+     *
+     * <p/>
+     * If any invocation of <code>handler</code> throws an exception, then throws that exception immediately and 
+     * without wrapping it.
+     * 
+     * <p/>
+     * Note: the caller may not invoke any repository access operations using from within <code>handler</code>.
+     * 
+     * <p/>
+     * Note: if <code>targetPahts</code> is <span class="javakeyword">null</span> or empty, the result depends 
+     * on the server. Pre-1.5 servers will send nothing; 1.5 servers will effectively perform the log operation 
+     * on the root of the repository. This behavior may be changed in the future to ensure consistency across 
+     * all pedigrees of server.
+     * 
+     * <p/>
+     * Note: pre-1.5 servers do not support custom revision properties retrieval; if 
+     * <code>revisionProperties</code> is <span class="javakeyword">null</span> or contains a revision property 
+     * other than {@link SVNRevisionProperty#AUTHOR}, {@link SVNRevisionProperty#DATE}, 
+     * {@link SVNRevisionProperty#LOG}, an exception with the {@link SVNErrorCode#RA_NOT_IMPLEMENTED} error code 
+     * is thrown.
+     *
+     * @param  targetPaths               paths that mean only those revisions at which they were 
+     *                                   changed
+     * @param  startRevision             a revision to start from
+     * @param  endRevision               a revision to end at 
+     * @param  discoverChangedPaths      if <span class="javakeyword">true</span> then revision information will 
+     *                                   also include all changed paths per revision, otherwise not
+     * @param  strictNodeHistory         if <span class="javakeyword">true</span> then copy history (if any) is not 
+     *                                   to be traversed
+     * @param  limit                     the maximum number of log entries to process
+     * @param  includeMergedRevisions    whether mergeinfo information should be taken into account or not
+     * @param  revisionProperties        revision properties to fetch with log entries
+     * @param  handler                   a caller's handler that will be dispatched log entry objects
+     * @return                           the number of revisions traversed
+     * @throws SVNException              in the following cases:
+     *                                   <ul>
+     *                                   <li/>exception with {@link SVNErrorCode#FS_NO_SUCH_REVISION} error code - 
+     *                                   if <code>startRevision</code> or <code>endRevision</code> is a 
+     *                                   non-existent revision
+     *                                   <li/>exception with {@link SVNErrorCode#RA_NOT_IMPLEMENTED} error code -
+     *                                   in case of a pre-1.5 server and custom revision properties requested
+     *                                   </ul> 
+     * @since                            1.2.0, New in Subversion 1.5.0
+     */
+    public long log(String[] targetPaths, long startRevision, long endRevision, boolean discoverChangedPaths, 
+            boolean strictNodeHistory, long limit, boolean includeMergedRevisions, String[] revisionProperties, 
+            ISVNLogEntryHandler handler) throws SVNException {
         if (includeMergedRevisions) {
             assertServerIsMergeInfoCapable(null);
         }
-        return logImpl(targetPaths, startRevision, endRevision, changedPath, strictNode, limit, 
+        return logImpl(targetPaths, startRevision, endRevision, discoverChangedPaths, strictNodeHistory, limit, 
                 includeMergedRevisions, revisionProperties, handler);
     }
 
@@ -994,8 +1090,33 @@ public abstract class SVNRepository {
         }
     }
 
+    
     /**
-     * @since SVNKit 1.2.0, SVN 1.5.0
+     * Calls <code>handler</code> for each segment in the location history of <code>path</code> in 
+     * <code>pegRevision</code>, working backwards in time from <code>startRevision</code> to 
+     * <code>endRevision</code>.
+     * 
+     * <p/>
+     * <code>endRevision</code> may be invalid (<code>&lt;0</code>) to indicate that you want to trace the 
+     * history of the object to its origin.
+     * 
+     * <p/>
+     * <code>startRevision</code> may be invalid to indicate "the HEAD revision". 
+     * Otherwise, <code>startRevision</code> must be younger than <code>endRevision</code> (unless 
+     * <code>endRevision</code> is invalid).
+     * 
+     * <p/>
+     * <code>pegRevision</code> may be invalid to indicate "the HEAD revision", and must evaluate to be at 
+     * least as young as <code>startRevision</code>.
+     * 
+     * @param path             repository path 
+     * @param pegRevision      revision in which <code>path</code> is valid
+     * @param startRevision    revision range start 
+     * @param endRevision      revision range end
+     * @param handler          caller's segment handler implementation 
+     * @return                 number of revisions covered by all segments found
+     * @throws SVNException    
+     * @since                  1.2.0, New in Subversion 1.5.0
      */
     public long getLocationSegments(String path, long pegRevision, long startRevision, long endRevision, 
             ISVNLocationSegmentHandler handler) throws SVNException {
@@ -1009,6 +1130,23 @@ public abstract class SVNRepository {
         }
     }
 
+    /**
+     * Calls <code>handler</code> for each segment in the location history of <code>path</code> in 
+     * <code>pegRevision</code>, working backwards in time from <code>startRevision</code> to 
+     * <code>endRevision</code>.
+     * 
+     * <p/>
+     * The same as {@link #getLocationSegments(String, long, long, long, ISVNLocationSegmentHandler)} except for 
+     * this method returns a list of all the segments fetched for <code>path</code>.
+     * 
+     * @param path             repository path 
+     * @param pegRevision      revision in which <code>path</code> is valid
+     * @param startRevision    revision range start 
+     * @param endRevision      revision range end
+     * @return                 number of revisions covered by all segments found
+     * @throws SVNException 
+     * @since                  1.2.0, New in Subversion 1.5.0
+     */
     public List getLocationSegments(String path, long pegRevision, long startRevision, long endRevision) throws SVNException {
         
         final List result = new LinkedList();
@@ -1450,11 +1588,71 @@ public abstract class SVNRepository {
      * @see 					ISVNReporter
      * @see 					ISVNEditor
 	 */
-    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, boolean recursive, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
-        diff(url, targetRevision, revision, target, ignoreAncestry, SVNDepth.fromRecurse(recursive), getContents, reporter, editor);
+    public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, 
+            boolean recursive, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        diff(url, targetRevision, revision, target, ignoreAncestry, SVNDepth.fromRecurse(recursive), 
+                getContents, reporter, editor);
     }
 
-    public abstract void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry, SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+    /**
+     * Asks this repository access object to 'diff' a working copy against <code>targetRevision</code>.
+     * 
+     * <p/>
+     * Note: this method cannot be used to diff a single file, only a directory. 
+     * See the svn_ra_do_switch2() function for more details.
+     * 
+     * <p/>
+     * The client initially provides an <code>editor</code>; this editor contains knowledge of where the common 
+     * diff root is in the working copy (when {@link ISVNEditor#openRoot(long)} is called).
+     *
+     * In return, the client receives a @a reporter/@a report_baton. The
+     * client then describes its working copy by making calls into the
+     * @a reporter.
+     *
+     * When finished, the client calls @a reporter->finish_report().  The
+     * RA layer then does a complete drive of @a diff_editor, ending with
+     * close_edit(), to transmit the diff.
+     *
+     * @a diff_target is an optional single path component will restrict
+     * the scope of the diff to an entry in the directory represented by
+     * the @a session's URL, or empty if the entire directory is meant to be
+     * one of the diff paths.
+     *
+     * The working copy will be diffed against @a versus_url as it exists
+     * in revision @a revision, or as it is in head if @a revision is
+     * @c SVN_INVALID_REVNUM.
+     *
+     * Use @a ignore_ancestry to control whether or not items being
+     * diffed will be checked for relatedness first.  Unrelated items
+     * and the addition of another, but if this flag is @c TRUE,
+     * are typically transmitted to the editor as a deletion of one thing
+     * unrelated items will be diffed as if they were related.
+     *
+     * Diff only as deeply as @a depth indicates.
+     *
+     * The caller may not perform any RA operations using @a session before
+     * finishing the report, and may not perform any RA operations using
+     * @a session from within the editing operations of @a diff_editor.
+     *
+     * @a text_deltas instructs the driver of the @a diff_editor to enable
+     * the generation of text deltas. If @a text_deltas is FALSE the window
+     * handler returned by apply_textdelta will be called once with a NULL
+     * @c svn_txdelta_window_t pointer.
+     *
+     * Use @a pool for memory allocation.
+     *
+     * @note The reporter provided by this function does NOT supply copy-
+     * from information to the diff editor callbacks.
+     *
+     * @note In order to prevent pre-1.5 servers from doing more work than
+     * needed, and sending too much data back, a pre-1.5 'recurse'
+     * directive may be sent to the server, based on @a depth.
+     *
+     * @since New in 1.5.
+     */
+    public abstract void diff(SVNURL url, long targetRevision, long revision, String target, 
+            boolean ignoreAncestry, SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, 
+            ISVNEditor editor) throws SVNException;
 
     /**
      * @deprecated use {@link #diff(SVNURL, long, long, String, boolean, boolean, boolean, ISVNReporterBaton, ISVNEditor)} instead
@@ -1562,11 +1760,8 @@ public abstract class SVNRepository {
      *                          <li>the user authentication failed 
      *                          (see {@link org.tmatesoft.svn.core.SVNAuthenticationException})
      *                          </ul>
-     * @see                     #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
-     * @see                     ISVNReporterBaton
-     * @see                     ISVNReporter
-     * @see                     ISVNEditor
-     * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
+     * @deprecated              use {@link #update(SVNURL, long, String, SVNDepth, ISVNReporterBaton, ISVNEditor)} 
+     *                          instead
      */
     public void update(SVNURL url, long revision, String target, boolean recursive, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         update(url, revision, target, SVNDepth.fromRecurse(recursive), reporter, editor);
@@ -1590,15 +1785,57 @@ public abstract class SVNRepository {
      * @throws SVNException     in case the repository could not be connected
      * @throws SVNAuthenticationException in case of authentication problems
      * 
-     * @see                     #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
-     * @see                     #update(SVNURL, long, String, boolean, ISVNReporterBaton, ISVNEditor)
      * @see                     ISVNReporterBaton
      * @see                     ISVNReporter
      * @see                     ISVNEditor
      * @see                     <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
      * @since                   SVNKit 1.2.0, SVN 1.5.0
      */
-    public abstract void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
+
+    /**
+     * Asks this repository access object to 'switch' a versioned tree to a new <code>url</code>.
+     * 
+     * <p/>
+     * The client initially provides a @a switch_editor/@a switch_baton to the RA
+     * layer; this editor contains knowledge of where the change will
+     * begin in the working copy (when open_root() is called).
+     *
+     * In return, the client receives a @a reporter/@a report_baton.  The
+     * client then describes its working copy by making calls into the
+     * @a reporter.
+     *
+     * When finished, the client calls @a reporter->finish_report().  The
+     * RA layer then does a complete drive of @a switch_editor, ending with
+     * close_edit(), to switch the working copy.
+     *
+     * @a switch_target is an optional single path component will restrict
+     * the scope of things affected by the switch to an entry in the
+     * directory represented by the @a session's URL, or empty if the
+     * entire directory is meant to be switched.
+     *
+     * Switch the target only as deeply as @a depth indicates.
+     *
+     * The working copy will be switched to @a revision_to_switch_to, or the
+     * "latest" revision if this arg is invalid.
+     *
+     * The caller may not perform any RA operations using
+     * @a session before finishing the report, and may not perform
+     * any RA operations using @a session from within the editing
+     * operations of @a switch_editor.
+     *
+     * Use @a pool for memory allocation.
+     *
+     * @note The reporter provided by this function does NOT supply copy-
+     * from information to the diff editor callbacks.
+     *
+     * @note In order to prevent pre-1.5 servers from doing more work than
+     * needed, and sending too much data back, a pre-1.5 'recurse'
+     * directive may be sent to the server, based on @a depth.
+     *
+     * @since New in 1.5.
+     */
+    public abstract void update(SVNURL url, long revision, String target, SVNDepth depth, 
+            ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException;
     
     /**
      * Updates a path receiving changes from a repository.
