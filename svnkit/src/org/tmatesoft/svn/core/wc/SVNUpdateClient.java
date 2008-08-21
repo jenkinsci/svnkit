@@ -1408,12 +1408,14 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
         if (!isIgnoreExternals()) {
             SVNPropertyValue externalsValue = adminArea.getProperties(adminArea.getThisDirName()).getPropertyValue(SVNProperty.EXTERNALS);
-            String ownerPath = adminArea.getRelativePath(adminAreaInfo.getAnchor());
-            String externals = externalsValue == null ? null : externalsValue.getString();
-            adminAreaInfo.addExternal(ownerPath, externals, externals);
             if (externalsValue != null) {
-                externalsValue = SVNPropertyValue.create(canonicalizeExtenrals(externals, omitDefaultPort));
-                adminArea.getProperties(adminArea.getThisDirName()).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
+                String ownerPath = adminArea.getRelativePath(adminAreaInfo.getAnchor());
+                String externals = externalsValue == null ? null : externalsValue.getString();
+                adminAreaInfo.addExternal(ownerPath, externals, externals);
+                if (externalsValue != null) {
+                    externalsValue = SVNPropertyValue.create(canonicalizeExtenrals(externals, omitDefaultPort));
+                    adminArea.getProperties(adminArea.getThisDirName()).setPropertyValue(SVNProperty.EXTERNALS, externalsValue);
+                }
             }
         }
         
