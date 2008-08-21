@@ -14,3 +14,7 @@ Trilead Library, build 213 - Java SSH-2 library
 License: http://www.trilead.com/Download/Trilead-SSH-2-Java/LICENSE.txt 
 URL: http://www.trilead.com/Products/Trilead-SSH-2-Java/
 Note: Trilead library is only used for svn+ssh connections. Otherwise you may remove trilead.jar from the classpath.
+
+Note: This version of SVNKit uses patched version of Trilead Library (with additional Connection.getVersionInfo method). 
+Currently SVNKit will not work with the Trilead library downloaded from trilead.com web site. 
+We expect next version of Trilead library (build 214) to be compatible with SVNKit.
