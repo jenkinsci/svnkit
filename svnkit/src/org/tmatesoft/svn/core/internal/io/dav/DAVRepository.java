@@ -1071,10 +1071,9 @@ public class DAVRepository extends SVNRepository {
                         error = svne;
                     }
                     if (error != null){
-                        if (error.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE){
+                        if (error.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                             result = DAVConnection.DAV_CAPABILITY_NO;
-                        } else if (error.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
-                                error.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND){
+                        } else if (error.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                             result = DAVConnection.DAV_CAPABILITY_YES;
                         } else {
                             throw error;
