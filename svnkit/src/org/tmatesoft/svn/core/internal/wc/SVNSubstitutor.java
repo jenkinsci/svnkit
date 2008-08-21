@@ -46,7 +46,6 @@ public class SVNSubstitutor {
     private int[] myLastEOLLength = new int[] {0};
     private int myKeywordBufferLength;
     private int myEOLBufferLength;
-    private int myNextSignOff;
 
     public SVNSubstitutor(byte[] eol, boolean repair, Map keywords, boolean expand) {
         myEOL = eol;
@@ -65,6 +64,7 @@ public class SVNSubstitutor {
     
     public ByteBuffer translateChunk(ByteBuffer src, ByteBuffer dst) throws SVNException {
         if (src != null) {
+            int nextSignOff = 0;            
             while(src.hasRemaining()) {
                 byte p = src.get(src.position());
                 if (myEOLBufferLength > 0) {
@@ -88,19 +88,19 @@ public class SVNSubstitutor {
                             myKeywordBufferLength = newLength;
                         }
                         dst = write(dst, myKeywordBuffer, 0, myKeywordBufferLength);
-                        myNextSignOff = 0;
+                        nextSignOff = 0;
                         myKeywordBufferLength = 0;                        
                     } else {
-                        if (myNextSignOff == 0) {
-                            myNextSignOff = myKeywordBufferLength - 1;
+                        if (nextSignOff == 0) {
+                            nextSignOff = myKeywordBufferLength - 1;
                         }
                         continue;
                     }
                 } else if (myKeywordBufferLength == KEYWORD_MAX_LENGTH - 1 || (myKeywordBufferLength > 0 && (p == '\r' || p == '\n'))) {
-                    if (myNextSignOff > 0) {
-                        unread(src, myKeywordBufferLength - myNextSignOff);
-                        myKeywordBufferLength = myNextSignOff;
-                        myNextSignOff = 0;
+                    if (nextSignOff > 0) {
+                        unread(src, myKeywordBufferLength - nextSignOff);
+                        myKeywordBufferLength = nextSignOff;
+                        nextSignOff = 0;
                     }
                     dst = write(dst, myKeywordBuffer, 0, myKeywordBufferLength);
                     myKeywordBufferLength = 0;
