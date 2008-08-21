@@ -70,6 +70,8 @@ public interface ISVNCommitParameters {
     public Action onMissingDirectory(File file);
     
     /**
+     * S
+     * @param directory 
      * @return true if directory should be deleted after commit.
      */
     public boolean onDirectoryDeletion(File directory);

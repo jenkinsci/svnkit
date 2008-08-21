@@ -25,7 +25,7 @@ import java.io.Serializable;
  * they are representations of all the changed paths in the revision represented
  * by that <b>SVNLogEntry</b> object.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see 	SVNLogEntry
  */

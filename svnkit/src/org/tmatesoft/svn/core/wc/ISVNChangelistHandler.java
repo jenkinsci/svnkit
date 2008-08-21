@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,11 +15,24 @@ import java.io.File;
 
 
 /**
- * @version 1.1.2
+ * The <b>ISVNChangelistHandler</b> is an interface for handlers used in 
+ * changelist retrieval methods of {@link SVNChangelistClient}. 
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @sinve   1.2.0
  */
 public interface ISVNChangelistHandler {
 
+    /**
+     * Handles the next path belonging to <code>changelistName</code>.
+     * <p/>
+     * On each invocation, <code>path</code> is a newly discovered member of the changelist named 
+     * <code>changelistName</code>.
+     * 
+     * @param path                working copy path 
+     * @param changelistName      changelist name
+     */
     public void handle(File path, String changelistName);
 
 }

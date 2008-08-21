@@ -41,41 +41,49 @@ public class SVNDirEntry implements Comparable {
     
     /**
      * Represents entry kind (if it is a file or a directory).
+     * @since 1.2.0
      */
     public static final int DIRENT_KIND = 0x00001;
     
     /**
      * Represents file size (if the entry is a file).
+     * @since 1.2.0
      */
     public static final int DIRENT_SIZE = 0x00002;
     
     /**
      * Contains the information whether the entry has any properties.
+     * @since 1.2.0
      */
     public static final int DIRENT_HAS_PROPERTIES = 0x00004;
     
     /**
      * Represents the last revision when the entry was changed.
+     * @since 1.2.0
      */
     public static final int DIRENT_CREATED_REVISION = 0x00008;
     
     /**
      * Represents the time of the last changed revision.
+     * @since 1.2.0
      */
     public static final int DIRENT_TIME = 0x00010;
     
     /**
      * Represents the author of the last changed revision.
+     * @since 1.2.0
      */
     public static final int DIRENT_LAST_AUTHOR = 0x00020;
     
     /**
      * Represents commit log message for the last changed revision.
+     * @since 1.2.0
      */
     public static final int DIRENT_COMMIT_MESSAGE = 0x00040;
     
     /**
      * Represents a combination of all the entry fields.
+     * @since 1.2.0
      */
     public static final int DIRENT_ALL = ~0;
 
@@ -107,8 +115,7 @@ public class SVNDirEntry implements Comparable {
      * @param lastAuthor 	    the person who last changed the entry
      */
     public SVNDirEntry(SVNURL url, SVNURL repositoryRoot, String name, SVNNodeKind kind, long size,
-                       boolean hasProperties, long revision, Date createdDate,
-                       String lastAuthor) {
+            boolean hasProperties, long revision, Date createdDate, String lastAuthor) {
         myURL = url;
         myRepositoryRoot = repositoryRoot;
         myName = name;
@@ -136,8 +143,7 @@ public class SVNDirEntry implements Comparable {
      * @param commitMessage     the log message of the last change commit
      */
     public SVNDirEntry(SVNURL url, SVNURL repositoryRoot, String name, SVNNodeKind kind, long size,
-            boolean hasProperties, long revision, Date createdDate,
-            String lastAuthor, String commitMessage) {
+            boolean hasProperties, long revision, Date createdDate, String lastAuthor, String commitMessage) {
         myURL = url;
         myRepositoryRoot = repositoryRoot;
         myName = name;
@@ -262,6 +268,7 @@ public class SVNDirEntry implements Comparable {
     }
     
     /**
+     * @return     repository path
      * @deprecated use {@link #getRelativePath()} instead.
      */
     public String getPath() {
@@ -270,6 +277,11 @@ public class SVNDirEntry implements Comparable {
     
     /**
      * Returns the commit log message for the revision of this entry.
+     * 
+     * <p/>
+     * This is guaranteed to be non-<span class="javakeyword">null</span> only for the target entry 
+     * returned by the {@link org.tmatesoft.svn.core.io.SVNRepository#getDir(String, long, boolean, java.util.Collection)}
+     * method.
      * 
      * @return a commit log message
      */

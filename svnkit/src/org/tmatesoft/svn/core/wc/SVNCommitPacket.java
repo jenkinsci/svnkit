@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -26,8 +25,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * for being committed to a repository.
  * 
  * <p>
- * Used by <b>SVNCommitClient</b> in {@link SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems()}
- * to collect and hold information on paths that have local changes.
+ * Used by {@link SVNCommitClient} to collect and hold information on paths that are to be committed.
+ * Each <code>SVNCommitPacket</code> is committed in a single transaction.
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.

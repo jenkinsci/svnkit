@@ -69,7 +69,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -211,7 +210,7 @@ public class SVNWCClient extends SVNBasicClient {
      * <p/>
      * <p/>
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
-     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
      *
      * @param repositoryPool   a repository pool object
      * @param options          a run-time configuration options driver
@@ -1449,7 +1448,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @param path                      working copy path
      * @param force                     if <span class="javakeyword">true</span> 
      * @param mkdir                     does not throw exceptions on already-versioned items
-     * @param climbUnversionedParents   not used
+     * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
      *                                  to paths being added

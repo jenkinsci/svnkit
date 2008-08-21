@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -66,7 +66,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that allow you to set your {@link ISVNEventHandler event handler}, 
  * obtain run-time configuration options, and others. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNBasicClient implements ISVNEventHandler {
@@ -91,14 +91,19 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     /**
-     * Gets a run-time configuration area driver used by this object.
+     * Gets run-time configuration options used by this object.
      * 
-     * @return the run-time options driver being in use
+     * @return the run-time options being in use
      */
     public ISVNOptions getOptions() {
         return myOptions;
     }
     
+    /**
+     * Sets run-time global configuration options to this object.
+     * 
+     * @param options  the run-time configuration options 
+     */
     public void setOptions(ISVNOptions options) {
         myOptions = options;
         if (myOptions == null) {
@@ -203,6 +208,11 @@ public class SVNBasicClient implements ISVNEventHandler {
         myEventDispatcher = dispatcher;
     }
 
+    /**
+     * Sets a path list handler implementation to this object.
+     * @param handler  handler implementation
+     * @since          1.2.0
+     */
     public void setPathListHandler(ISVNPathListHandler handler) {
         myPathListHandler = handler;
     }
@@ -233,6 +243,34 @@ public class SVNBasicClient implements ISVNEventHandler {
         return myDebugLog;
     }
     
+    /**
+     * Returns the root of the repository. 
+     * 
+     * <p/>
+     * If <code>path</code> is not <span class="javakeyword">null</span> and <code>pegRevision</code> is 
+     * either {@link SVNRevision#WORKING} or {@link SVNRevision#BASE}, then attempts to fetch the repository 
+     * root from the working copy represented by <code>path</code>. If these conditions are not met or if the 
+     * repository root is not recorded in the working copy, then a repository connection is established 
+     * and the repository root is fetched from the session. 
+     * 
+     * <p/>
+     * When fetching the repository root from the working copy and if <code>access</code> is 
+     * <span class="javakeyword">null</span>, a new working copy access will be created and the working copy 
+     * will be opened non-recursively for reading only. 
+     * 
+     * <p/>
+     * All necessary cleanup (session or|and working copy close) will be performed automatically as the routine 
+     * finishes. 
+     * 
+     * @param  path           working copy path
+     * @param  url            repository url
+     * @param  pegRevision    revision in which the target is valid
+     * @param  adminArea      working copy administrative area object
+     * @param  access         working copy access object
+     * @return                repository root url
+     * @throws SVNException 
+     * @since                 1.2.0         
+     */
     public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, 
             SVNWCAccess access) throws SVNException {
         SVNURL reposRoot = null;
@@ -390,7 +428,17 @@ public class SVNBasicClient implements ISVNEventHandler {
         dispatchEvent(event, progress);
     }
     
-    
+    /**
+     * Handles a next working copy path with the {@link ISVNPathListHandler path list handler} 
+     * if any was provided to this object through {@link #setPathListHandler(ISVNPathListHandler)}.
+     * 
+     * <p/>
+     * Note: used by <code>SVNKit</code> internals.
+     * 
+     * @param  path            working copy path 
+     * @throws SVNException 
+     * @since                  1.2.0
+     */
     public void handlePathListItem(File path) throws SVNException {
         if (myPathListHandler != null && path != null) {
             myPathListHandler.handlePathListItem(path);

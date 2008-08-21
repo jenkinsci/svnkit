@@ -86,7 +86,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private SimpleDateFormat myKeywordDateFormat = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss' 'ZZZZ' ('E', 'dd' 'MMM' 'yyyy')'");
     
     
-
     public DefaultSVNOptions() {
         this(null, true);
     }
@@ -471,7 +470,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     /**
      * Returns the value of a property from the <i>[svnkit]</i> section
-     * of the <i>config</i> file. Currently not used.
+     * of the <i>config</i> file.
      *
      * @param   propertyName a SVNKit specific config property name
      * @return the value of the property
@@ -489,7 +488,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     /**
      * Sets the value of a property from the <i>[svnkit]</i> section
-     * of the <i>config</i> file. Currently not used.
+     * of the <i>config</i> file. 
      *
      * @param   propertyName   a SVNKit specific config property name
      * @param   propertyValue  a new value for the property; if
@@ -507,29 +506,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         myConflictResolver = resolver;
     }
 
-    private SVNCompositeConfigFile getConfigFile() {
-        if (myConfigFile == null) {
-            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
-            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
-            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
-            myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
-        }
-        return myConfigFile;
-    }
-
-    private static File getDefaultConfigDir() {
-        return SVNWCUtil.getDefaultConfigurationDirectory();
-    }
-
-    private static boolean getBooleanValue(String value, boolean defaultValue) {
-        if (value == null) {
-            return defaultValue;
-        }
-        value = value.trim();
-        return YES.equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)
-                || "on".equalsIgnoreCase(value);
-    }
-
     public static boolean matches(String pattern, String fileName) {
         if (pattern == null || fileName == null) {
             return false;
@@ -539,46 +515,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             return compiled.matcher(fileName).matches();
         }
         return false;
-    }
-
-    private static Pattern compileNamePatter(String wildcard) {
-        if (wildcard == null) {
-            return null;
-        }
-        StringBuffer result = new StringBuffer();
-        for (int i = 0; i < wildcard.length(); i++) {
-            char ch = wildcard.charAt(i);
-            switch (ch) {
-            case '?':
-                result.append(".");
-                break;
-            case '*':
-                result.append(".*");
-                break;
-
-            case '.':
-            case '!':
-            case '$':
-            case '(':
-            case ')':
-            case '+':
-            case '<':
-            case '>':
-            case '|':
-            case '\\':
-            case '^':
-            case '{':
-            case '}':
-                result.append("\\");
-            default:
-                result.append(ch);
-            }
-        }
-        try {
-            return Pattern.compile(result.toString());
-        } catch (PatternSyntaxException e) {
-            return null;
-        }
     }
 
     public ISVNMerger createMerger(byte[] conflictStart, byte[] conflictSeparator, byte[] conflictEnd) {
@@ -626,39 +562,6 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             }
         }
         return myKeywordDateFormat;
-    }
-    
-    private static Locale toLocale(String str) {
-        if (str == null) {
-            return null;
-        }
-        int len = str.length();
-        if (len != 2 && len != 5 && len < 7) {
-            return null;
-        }
-        char ch0 = str.charAt(0);
-        char ch1 = str.charAt(1);
-        if (ch0 < 'a' || ch0 > 'z' || ch1 < 'a' || ch1 > 'z') {
-            return null;
-        }
-        if (len == 2) {
-            return new Locale(str, "");
-        }
-        if (str.charAt(2) != '_') {
-            return null;
-        }
-        char ch3 = str.charAt(3);
-        char ch4 = str.charAt(4);
-        if (ch3 < 'A' || ch3 > 'Z' || ch4 < 'A' || ch4 > 'Z') {
-            return null;
-        }
-        if (len == 5) {
-            return new Locale(str.substring(0, 2), str.substring(3, 5));
-        }
-        if (str.charAt(5) != '_') {
-            return null;
-        }
-        return new Locale(str.substring(0, 2), str.substring(3, 5), str.substring(6));
     }
 
     public String[] getPreservedConflictFileExtensions() {
@@ -740,4 +643,101 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     public void setDiffCommand(String diffCmd) {
         getConfigFile().setPropertyValue(HELPERS_GROUP, DIFF_CMD, diffCmd, !myIsReadonly);
     }
+
+    private SVNCompositeConfigFile getConfigFile() {
+        if (myConfigFile == null) {
+            SVNConfigFile.createDefaultConfiguration(myConfigDirectory);
+            SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
+            SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
+            myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
+        }
+        return myConfigFile;
+    }
+
+    private static Pattern compileNamePatter(String wildcard) {
+        if (wildcard == null) {
+            return null;
+        }
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < wildcard.length(); i++) {
+            char ch = wildcard.charAt(i);
+            switch (ch) {
+            case '?':
+                result.append(".");
+                break;
+            case '*':
+                result.append(".*");
+                break;
+
+            case '.':
+            case '!':
+            case '$':
+            case '(':
+            case ')':
+            case '+':
+            case '<':
+            case '>':
+            case '|':
+            case '\\':
+            case '^':
+            case '{':
+            case '}':
+                result.append("\\");
+            default:
+                result.append(ch);
+            }
+        }
+        try {
+            return Pattern.compile(result.toString());
+        } catch (PatternSyntaxException e) {
+            return null;
+        }
+    }
+
+    private static Locale toLocale(String str) {
+        if (str == null) {
+            return null;
+        }
+        int len = str.length();
+        if (len != 2 && len != 5 && len < 7) {
+            return null;
+        }
+        char ch0 = str.charAt(0);
+        char ch1 = str.charAt(1);
+        if (ch0 < 'a' || ch0 > 'z' || ch1 < 'a' || ch1 > 'z') {
+            return null;
+        }
+        if (len == 2) {
+            return new Locale(str, "");
+        }
+        if (str.charAt(2) != '_') {
+            return null;
+        }
+        char ch3 = str.charAt(3);
+        char ch4 = str.charAt(4);
+        if (ch3 < 'A' || ch3 > 'Z' || ch4 < 'A' || ch4 > 'Z') {
+            return null;
+        }
+        if (len == 5) {
+            return new Locale(str.substring(0, 2), str.substring(3, 5));
+        }
+        if (str.charAt(5) != '_') {
+            return null;
+        }
+        return new Locale(str.substring(0, 2), str.substring(3, 5), str.substring(6));
+    }
+
+    private static File getDefaultConfigDir() {
+        return SVNWCUtil.getDefaultConfigurationDirectory();
+    }
+
+    private static boolean getBooleanValue(String value, boolean defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        value = value.trim();
+        return YES.equalsIgnoreCase(value) || "true".equalsIgnoreCase(value)
+                || "on".equalsIgnoreCase(value);
+    }
+
 }

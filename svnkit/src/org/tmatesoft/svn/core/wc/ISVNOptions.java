@@ -143,10 +143,28 @@ public interface ISVNOptions extends ISVNTunnelProvider {
      */
     public ISVNMergerFactory getMergerFactory();
     
+    /**
+     * Returns the date format used to format datestamps.
+     * @return date format
+     */
     public DateFormat getKeywordDateFormat();
     
+    /**
+     * Returns an array of path extensions which the user wants to preserve when conflict files are made. 
+     * 
+     * <p/>
+     * If the extension of a conflicted path does not match any of the returned by this method or if this method
+     * returns <span class="javakeyword">null</span>, the extension (if any) of the conflicted file will be 
+     * cut off.     
+     * 
+     * @return  array of preserved file extensions   
+     * @since   1.2.0, new in Subversion 1.5.0 
+     */
     public String[] getPreservedConflictFileExtensions();
 
+    /**
+     * 
+     */
     public boolean isAllowAllForwardMergesFromSelf();
 
     public byte[] getNativeEOL();

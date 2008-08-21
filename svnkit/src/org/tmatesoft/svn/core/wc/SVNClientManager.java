@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -106,7 +106,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * <li>
  * </ol>
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -251,12 +251,21 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return repository;
     }
 
+    /**
+     * @param shutdownAll 
+     * @deprecated          use {@link #dispose()} instead
+     */
     public void shutdownConnections(boolean shutdownAll) {
         if (myRepositoryPool != null) {
             myRepositoryPool.dispose();
         }
     }
 
+    /**
+     * Disposes this client object.
+     * Call this method when you've finished working with this object. This will close 
+     * any active network sessions. 
+     */
     public void dispose() {
         if (myRepositoryPool != null) {
             myRepositoryPool.dispose();
@@ -328,6 +337,11 @@ public class SVNClientManager implements ISVNRepositoryPool {
     }
     
     /**
+     * Sets whether externals should be ignored or not by all of the <b>SVN*Clinet</b> objects which this client
+     * manager will provide.
+     * 
+     * @param isIgnoreExternals   whether externals should be ignored or not
+     * @since                     1.2.0 
      */
     public void setIgnoreExternals(boolean isIgnoreExternals) {
         myIsIgnoreExternals = isIgnoreExternals;
@@ -366,10 +380,22 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
     }
     
+    /**
+     * Tells wheter externals are ignored or not.
+     * @return  <span class="javakeyword">true</span> if externals are ignored; otherwise 
+     *          <span class="javakeyword">false</span>
+     * @since   1.2.0  
+     */
     public boolean isIgnoreExternals() {
         return myIsIgnoreExternals;
     }
 
+    /**
+     * Sets global run-time configuration options to all of the <b>SVN*Client</b> objects provided by this 
+     * client manager.
+     * 
+     * @param options  run-time configuration options 
+     */
     public void setOptions(ISVNOptions options) {
         myOptions = options;
         if (myCommitClient != null) {
@@ -624,6 +650,19 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myWCClient;
     }
     
+    /**
+     * Returns an instance of the {@link SVNChangelistClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNChangelistClient</b> instance
+     * @since  1.2.0
+     */
     public SVNChangelistClient getChangelistClient() {
         if (myChangelistClient == null) {
             myChangelistClient = new SVNChangelistClient(this, myOptions);
@@ -698,18 +737,41 @@ public class SVNClientManager implements ISVNRepositoryPool {
         }
     }
 
+    /**
+     * Sets an authentication manager to this client manager.
+     * This authentication manager will be used by all the <b>SVN*Client</b> objects provided by 
+     * this client manager for authenticating the client side against the server side when needed (on demand)
+     * or preliminarily (if specified).
+     * 
+     * @param authManager   user's implementation of the authentication manager interface 
+     */
     public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
         if (myRepositoryPool != null) {
             myRepositoryPool.setAuthenticationManager(authManager);
         }
     }
 
+    /**
+     * Sets a canceller to this client manager.
+     * This canceller will be used by all the <b>SVN*Client</b> objects provided by this client manager.
+     * 
+     * @param canceller     user's implementation of the canceller interface
+     * @since               1.2.0
+     */
     public void setCanceller(ISVNCanceller canceller) {
         if (myRepositoryPool != null) {
             myRepositoryPool.setCanceller(canceller);
         }
     }
 
+    /**
+     * Returns the repository pool used by this client manager.
+     * This pool is used to create and manage {@link SVNRepository} objects by all the <b>SVN*Client</b>
+     * objects provided by this client manager.
+     * 
+     * @return        repository pool object
+     * @since         1.2.0
+     */
     public ISVNRepositoryPool getRepositoryPool() {
         return myRepositoryPool;
     }
