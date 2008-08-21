@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
@@ -37,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -120,6 +122,28 @@ public class SVNMoveClient extends SVNBasicClient {
         super(repositoryPool, options);
         myWCClient = new SVNWCClient(repositoryPool, options);
         myCopyClient = new SVNCopyClient(repositoryPool, options);
+    }
+
+	public void setEventHandler(ISVNEventHandler dispatcher) {
+		super.setEventHandler(dispatcher);
+		myWCClient.setEventHandler(dispatcher);
+		myCopyClient.setEventHandler(dispatcher);
+	}
+
+	public void setDebugLog(ISVNDebugLog log) {
+		super.setDebugLog(log);
+		myWCClient.setDebugLog(log);
+		myCopyClient.setDebugLog(log);
+	}
+
+	public void setOptions(ISVNOptions options) {
+		super.setOptions(options);
+		if (myWCClient != null) {
+			myWCClient.setOptions(options);
+		}
+		if (myCopyClient != null) {
+			myCopyClient.setOptions(options);
+		}
     }
     
     /**
@@ -828,6 +852,8 @@ public class SVNMoveClient extends SVNBasicClient {
             log.save();
             dstArea.runLogs();
 
+	        SVNEvent event = SVNEventFactory.createSVNEvent(dst, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+	        dispatchEvent(event);
         } finally {
             srcAccess.close();
             dstAccess.close();
