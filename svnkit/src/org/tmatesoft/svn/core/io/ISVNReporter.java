@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -79,11 +79,11 @@ public interface ISVNReporter {
      * 							directory, then means there're no entries yet
      * @throws SVNException     in case the repository could not be connected
      * @throws SVNAuthenticationException in case of authentication problems
-     * 
+     * @deprecated              use {@link #setPath(String, String, long, SVNDepth, boolean)} instead
      */
 	public void setPath(String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
 
-	 /**
+	/**
      * <p>
      * Describes a local path as being at a particular revision with a particular depth.  
      * 
@@ -106,7 +106,6 @@ public interface ISVNReporter {
      *                          directory, then means there're no entries yet
      * @throws SVNException     in case the repository could not be connected
      * @throws SVNAuthenticationException in case of authentication problems
-     * 
      */
     public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException;
 
@@ -121,17 +120,17 @@ public interface ISVNReporter {
     public void deletePath(String path) throws SVNException;
 
     /**
-     * <p>
      * Describes a local path as being at a particular revision
      * to switch the path to a different repository location.  
      * 
+     * <p/>
      * Like {@link #setPath(String, String, long, boolean) setPath()}, but differs in 
      * that the local item's <code>path</code> (relative to the root
      * of the report driver) isn't a reflection of the path in the repository, 
      * but is instead a reflection of a different repository path at a 
      * <code>revision</code>.
      * 
-     * <p>
+     * <p/>
      * If <code>startEmpty</code> is set and the <code>path</code> is a directory,
      * the implementor should assume the directory has no entries or properties.
      * 
@@ -144,10 +143,32 @@ public interface ISVNReporter {
      *                      directory, then means there're no entries yet
      * @throws SVNException in case the repository could not be connected
      * @throws SVNAuthenticationException in case of authentication problems
- 
+     * @deprecated          use {@link #linkPath(SVNURL, String, String, long, SVNDepth, boolean)} instead
      */
     public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmpty) throws SVNException;
 
+    /** 
+     * Describes a local path as being at a particular revision
+     * to switch the path to a different repository location.  
+     * 
+     * <p/> 
+     * Like {@link #setPath(String, String, long, SVNDepth, boolean)}, but differs in  
+     * that the local item's <code>path</code> (relative to the root
+     * of the report driver) isn't a reflection of the path in the repository, 
+     * but is instead a reflection of a different repository <code>url</code> at 
+     * <code>revision</code>, and has depth <code>depth</code>. 
+     * 
+     * <p/>
+     * <code>path</code> may not be underneath a path on which {@link } was
+     * previously called with @c svn_depth_exclude in this report.
+     *
+     * If @a start_empty is set and @a path is a directory,
+     * the implementor should assume the directory has no entries or props.
+     *
+     * If @a lock_token is non-NULL, it is the lock token for @a path in the WC.
+     *
+     * All temporary allocations are done in @a pool.
+     */
     public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException;
     
     /**
