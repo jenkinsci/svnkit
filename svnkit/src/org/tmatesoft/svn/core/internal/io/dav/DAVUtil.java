@@ -120,7 +120,7 @@ public class DAVUtil {
             if (err == null) {
                 break;
             }
-            if (err.getErrorCode() != SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+            if (err.getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(fullPath), loppedPath);

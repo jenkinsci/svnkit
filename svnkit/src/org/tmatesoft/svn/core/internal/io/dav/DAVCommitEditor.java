@@ -233,7 +233,7 @@ class DAVCommitEditor implements ISVNEditor {
             if (err == null) {
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_ALREADY_EXISTS, "File ''{0}'' already exists", filePath);
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
-            } else if (err.getErrorCode() != SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+            } else if (err.getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             } 
         }
