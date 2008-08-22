@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,8 +15,11 @@ import java.io.File;
 import java.util.Map;
 
 /**
- * @version 1.1.2
+ * The <code>SVNMergeInfo</code> represents information about merges to a certain repository path.
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNMergeInfo {
     private String myPath;

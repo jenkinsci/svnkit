@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -20,9 +20,9 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * data storage (mainly instructions and new text data for deltas) as well
  * as for caching and getting some kind of wcprops.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
- * @see		SVNRepository#getCommitEditor(String, Map, boolean, ISVNWorkspaceMediator)
+ * @see		SVNRepository#getCommitEditor(String, java.util.Map, boolean, org.tmatesoft.svn.core.SVNProperties, ISVNWorkspaceMediator)
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  * 
  */
@@ -33,10 +33,10 @@ public interface ISVNWorkspaceMediator {
      * subdirectory. 
      * 
      * @param  path 		a WC item's path
-     * @param  name 		a propery name
+     * @param  name 		a property name
      * @return 				the value for the property
      * @throws SVNException
-     * @see					#setWorkspaceProperty(String, String, String)
+     * @see					#setWorkspaceProperty(String, String, SVNPropertyValue)
      */
     public SVNPropertyValue getWorkspaceProperty(String path, String name) throws SVNException;
     
@@ -45,7 +45,7 @@ public interface ISVNWorkspaceMediator {
      * administrative subdirectory.
      * 
      * @param  path 			a WC item's path
-     * @param  name 			a propery name
+     * @param  name 			a property name
      * @param  value			a value for the property
      * @throws SVNException
      * @see						#getWorkspaceProperty(String, String)

@@ -2192,7 +2192,7 @@ public abstract class SVNRepository {
         Collections.sort(pathsList, SVNPathUtil.PATH_COMPARATOR);
         ISVNReporterBaton reporterBaton = new ISVNReporterBaton() {
             public void report(ISVNReporter reporter) throws SVNException {
-                reporter.setPath("", null, lastRev, false);
+                reporter.setPath("", null, lastRev, SVNDepth.INFINITY, false);
                 for (Iterator ps = pathsList.iterator(); ps.hasNext();) {
                     String path = (String) ps.next();
                     reporter.deletePath(path);
