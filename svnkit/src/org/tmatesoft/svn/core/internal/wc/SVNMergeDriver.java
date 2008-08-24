@@ -58,6 +58,7 @@ import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNFileLocationsFinder;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
@@ -108,6 +109,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private SVNRepository myRepository1;
     private SVNRepository myRepository2;
     private SVNLogClient myLogClient;
+
+    private ISVNFileLocationsFinder myFileLocationsFinder;
     
     public SVNMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -970,6 +973,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNErrorMessage error = makeMergeConflictError(targetWCPath, conflictedRange);
             SVNErrorManager.error(error, SVNLogType.WC);
         }
+    }
+
+    public void setCopiedLocationFinder(ISVNFileLocationsFinder fileLocationsFinder) {
+        myFileLocationsFinder = fileLocationsFinder;
     }
 
     protected void doDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
@@ -2115,8 +2122,13 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
 
         if (editor == null) {
-            editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2, 
-                    defaultStart, revision2, myIsDryRun, this, this);
+            if (myFileLocationsFinder != null) {
+                editor = new SVNMultipleLocationsDiffEditor(myFileLocationsFinder, adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
+                        defaultStart, revision2, myIsDryRun, this, this);
+            } else {
+                editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
+                        defaultStart, revision2, myIsDryRun, this, this);
+            }
         } else {
             editor.reset(defaultStart, revision2);
         }
