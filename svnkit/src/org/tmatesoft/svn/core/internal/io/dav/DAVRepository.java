@@ -1066,7 +1066,7 @@ public class DAVRepository extends SVNRepository {
                 if (capability == SVNCapability.MERGE_INFO) {
                     SVNException error = null;
                     try {
-                        doGetMergeInfo(new String[]{""}, 0, SVNMergeInfoInheritance.EXPLICIT, false);
+                        doGetMergeInfo(new String[]{""}, -1, SVNMergeInfoInheritance.EXPLICIT, false);
                     } catch (SVNException svne) {
                         error = svne;
                     }
