@@ -70,7 +70,7 @@ public class SaslInputStream extends InputStream {
                 if (myByteBuffer.remaining() == 0) {
                     myByteBuffer = null;
                 }
-                return off;
+                return read;
             }
         }
     }
