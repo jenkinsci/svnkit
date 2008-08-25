@@ -725,13 +725,6 @@ public class SVNLogClient extends SVNBasicClient {
      * else, retrieves only the revision properties named in the array (i.e. retrieves none if the array is empty).
      * 
      * <p/>
-     * If <code>startRevision</code> is {@link SVNRevision#isValid() valid} but <code>endRevision</code> 
-     * is not, then <code>endRevision</code> defaults to <code>startRevision</code>. If both 
-     * <code>startRevision</code> and <code>endRevision</code> are invalid, then <code>endRevision</code> 
-     * defaults to revision <code>0</code>, and <code>startRevision</code> defaults either to 
-     * <code>pegRevision</code> in case the latter one is valid, or to {@link SVNRevision#HEAD}, if it is not.
-     * 
-     * <p/>
      * Important: to avoid an exception with the {@link SVNErrorCode#FS_NO_SUCH_REVISION} error code  
      * when invoked against an empty repository (i.e. one not containing a revision 1), callers should specify 
      * the range {@link SVNRevision#HEAD}:<code>0</code>. 
@@ -765,17 +758,14 @@ public class SVNLogClient extends SVNBasicClient {
     public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, 
             SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, 
             long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
-        if (startRevision.isValid() && !endRevision.isValid()) {
-            endRevision = startRevision;
-        } else if (!startRevision.isValid()) {
-            if (!pegRevision.isValid()) {
-                startRevision = SVNRevision.HEAD;
-            } else {
-                startRevision = pegRevision;
-            }
-            if (!endRevision.isValid()) {
-                endRevision = SVNRevision.create(0);
-            }
+        if (!startRevision.isValid() || !endRevision.isValid()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Missing required revision specification");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.COMMITTED || pegRevision == SVNRevision.PREVIOUS) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Revision type requires a working copy path, not a URL");
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
