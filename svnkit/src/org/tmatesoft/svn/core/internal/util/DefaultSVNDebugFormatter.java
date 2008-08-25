@@ -33,7 +33,10 @@ public class DefaultSVNDebugFormatter extends Formatter {
         String message = formatMessage(record);
         sb.append("[");
         Date date = new Date(record.getMillis());
-        sb.append(DATE_FORMAT.format(date));
+        
+        synchronized (DATE_FORMAT) {
+            sb.append(DATE_FORMAT.format(date));
+        }
         sb.append("] ");
         sb.append(message);
         sb.append("\n");
