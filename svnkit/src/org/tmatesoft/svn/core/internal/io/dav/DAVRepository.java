@@ -213,7 +213,7 @@ public class DAVRepository extends SVNRepository {
         } catch (SVNException e) {
             SVNErrorMessage error = e.getErrorMessage();
             while (error != null) {
-                if (error.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                if (error.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                     return kind;
                 }
                 error = error.getChildErrorMessage();
@@ -919,7 +919,7 @@ public class DAVRepository extends SVNRepository {
                     DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, true, null);
                     path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
                 } catch (SVNException e) {
-                    if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                    if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                         return null;
                     }
                     throw e;
@@ -929,7 +929,7 @@ public class DAVRepository extends SVNRepository {
             Map propsMap = new SVNHashMap();
             HTTPStatus status = DAVUtil.getProperties(myConnection, path, 0, null, elements, propsMap);
             if (status.getError() != null) {
-                if (status.getError().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                if (status.getError().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                     return null;
                 }
                 SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
