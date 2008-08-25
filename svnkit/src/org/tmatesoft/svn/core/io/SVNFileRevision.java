@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * <b>SVNFileRevision</b> objects are passed to an <b>ISVNFileRevisionHandler</b>'s {@link ISVNFileRevisionHandler#openRevision(SVNFileRevision) openRevision()}
  * method.  
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see		ISVNFileRevisionHandler
@@ -54,6 +54,18 @@ public class SVNFileRevision implements Comparable {
         this(path, revision, properties, propertiesDelta, false);
     }
     
+    /**
+     * Constructs an instance of <b>SVNFileRevision</b>.
+     *  
+     * @param path              a file path relative to a repository location
+     *                          (a URL used to create an 
+     *                          <b>SVNRepository</b> to access a repository)
+     * @param revision          a revision of the file
+     * @param properties        revision properties
+     * @param propertiesDelta   file properties for the <code>revision</code>
+     * @param isResultOfMerge   whether this revision of the file is the result of a merge
+     * @since                   1.2.0 
+     */
     public SVNFileRevision(String path, long revision, SVNProperties properties, SVNProperties propertiesDelta, boolean isResultOfMerge) {
         myPath = path;
         myRevision = revision;
@@ -144,6 +156,12 @@ public class SVNFileRevision implements Comparable {
         return myRevision == number ? 0 : myRevision > number ? 1 : -1;
     }
 
+    /**
+     * Tells whether this file revision is the result of a merge. 
+     * @return      <span class="javakeyword">true</span> if this file revision is 
+     *              the result of a merge
+     * @since       1.2.0
+     */
     public boolean isResultOfMerge() {
         return myIsResultOfMerge;
     }

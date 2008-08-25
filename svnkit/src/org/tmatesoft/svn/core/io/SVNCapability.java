@@ -17,6 +17,7 @@ package org.tmatesoft.svn.core.io;
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNCapability {
     
@@ -55,6 +56,10 @@ public class SVNCapability {
 		myName = name;
 	}
 
+	/**
+	 * Returns a string representation of this object.
+	 * @return this object's string representation
+	 */
 	public String toString() {
         return myName;
     }
