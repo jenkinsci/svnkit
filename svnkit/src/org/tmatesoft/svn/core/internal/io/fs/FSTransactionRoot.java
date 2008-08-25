@@ -214,6 +214,9 @@ public class FSTransactionRoot extends FSRoot {
             if (!uniquePath.exists() && uniquePath.mkdirs()) {
                 return txnId;
             }
+            if (!uniquePath.exists()) {
+                break;
+            }
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, 
