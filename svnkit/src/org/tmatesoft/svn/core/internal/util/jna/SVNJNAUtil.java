@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class SVNJNAUtil {
     
+    private static boolean ourIsJNAEnabled;
     private static boolean ourIsJNAPresent;
     private static final String JNA_CLASS_NAME = "com.sun.jna.Library";
     
@@ -38,10 +39,20 @@ public class SVNJNAUtil {
         } catch (ClassNotFoundException e) {
             ourIsJNAPresent = false;
         }
+        String jnaEnabledProperty = System.getProperty("svnkit.useJNA", "true");
+        ourIsJNAEnabled = Boolean.valueOf(jnaEnabledProperty).booleanValue();
+    }
+    
+    public static void setJNAEnabled(boolean enabled) {
+        synchronized (SVNJNAUtil.class) {
+            ourIsJNAEnabled = enabled;
+        }
     }
     
     public static boolean isJNAPresent() {
-        return ourIsJNAPresent;
+        synchronized (SVNJNAUtil.class) {
+            return ourIsJNAPresent && ourIsJNAEnabled;
+        }
     }
 
     // linux.
