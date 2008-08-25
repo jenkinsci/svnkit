@@ -52,7 +52,7 @@ public class SVNMultipleLocationsDiffEditor extends SVNRemoteDiffEditor {
         myCurrentLocations = getCopiedFileInfos(getCurrentFile().myWCFile);
     }
 
-    private Collection getCopiedFileInfos(File file) {
+    private Collection getCopiedFileInfos(File file) throws SVNException {
         Collection copiedTo = getCopiedLocationsFinder().findLocations(file);
         if (copiedTo == null) {
             return null;
