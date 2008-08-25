@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -36,7 +36,7 @@ import java.text.MessageFormat;
  * Error messages may be supplied within exceptions of the main exception type - 
  * {@link SVNException}.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNErrorMessage implements Serializable {
@@ -378,6 +378,16 @@ public class SVNErrorMessage implements Serializable {
         return parentError;
     }
 
+    /**
+     * Wraps this error message into a new one that is returned as 
+     * a parent error message. A parent message is set the error code 
+     * of this error message, a new error description <code>parentMessage</code> with corresponding <code>relatedObjects</code> to
+     * format the error description, and this error message as its child. 
+     *  
+     * @param  parentMessage     a parent error description
+     * @param  relatedObjects    objects to be formatted with <code>parentMessage</code>
+     * @return                   a parent error message
+     */
     public SVNErrorMessage wrap(String parentMessage, Object[] relatedObjects){
         SVNErrorMessage parentError = SVNErrorMessage.create(this.getErrorCode(), parentMessage, relatedObjects);
         parentError.setChildErrorMessage(this);
@@ -402,10 +412,11 @@ public class SVNErrorMessage implements Serializable {
      * <code>type</code> must be either {@link #TYPE_ERROR} or {@link #TYPE_WARNING}.
      * This method is intended for inner (within internals) purposes only and 
      * must not be used by API users.
+     * @param type    error message type
      * 
-     * @return <span class="javakeyword">true</span> if the type of this 
-     *          error message is changed, <span class="javakeyword">false</span> if 
-     *          the type passed is not recognized and thus ignored
+     * @return        <span class="javakeyword">true</span> if the type of this 
+     *                error message is changed, <span class="javakeyword">false</span> if 
+     *                the type passed is not recognized and thus ignored
      */
     public boolean setType(int type) {
         if (type == TYPE_ERROR) {
@@ -418,6 +429,12 @@ public class SVNErrorMessage implements Serializable {
         return false;
     }
     
+    /**
+     * Follows the children chain and returns the error message of the last child in this chain.
+     * Starts with {@link #getChildErrorMessage()}.
+     * 
+     * @return  error message of the last element in the children chain
+     */
     public SVNErrorMessage getRootErrorMessage() {
         SVNErrorMessage err = this;
         while (err.myChildErrorMessage != null) {

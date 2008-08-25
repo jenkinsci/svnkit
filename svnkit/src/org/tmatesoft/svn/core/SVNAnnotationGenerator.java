@@ -120,6 +120,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     
     /**
      * Constructs an annotation generator object. 
+     * 
      * <p>
      * This constructor is equivalent to 
      * <code>SVNAnnotationGenerator(path, tmpDirectory, startRevision, false, cancelBaton)</code>.
@@ -138,6 +139,9 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     /**
      * Constructs an annotation generator object. 
      * 
+     * <p/>
+     * This constructor is identical to <code>SVNAnnotationGenerator(path, tmpDirectory, startRevision, force, new SVNDiffOptions(), cancelBaton)</code>.
+     * 
      * @param path           a file path (relative to a repository location)
      * @param tmpDirectory   a revision to stop at
      * @param startRevision  a start revision to begin annotation with
@@ -151,7 +155,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
     /**
      * Constructs an annotation generator object.
-     *  
+     * 
+     * <p/>
+     * This constructor is identical to <code>SVNAnnotationGenerator(path, tmpDirectory, startRevision, force, false, diffOptions, null, null, cancelBaton)</code>.
+     * 
      * @param path           a file path (relative to a repository location)
      * @param tmpDirectory   a revision to stop at
      * @param startRevision  a start revision to begin annotation with
@@ -165,16 +172,19 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     }
 
     /**
+     * Constructs an annotation generator object.
      * 
-     * @param path 
-     * @param tmpDirectory 
-     * @param startRevision 
-     * @param force 
-     * @param includeMergedRevisions 
-     * @param diffOptions 
-     * @param encoding 
-     * @param handler 
-     * @param cancelBaton 
+     * @param path                    a file path (relative to a repository location)
+     * @param tmpDirectory            a revision to stop at
+     * @param startRevision           a start revision to begin annotation with
+     * @param force                   forces binary files processing  
+     * @param includeMergedRevisions  whether to include merged revisions or not
+     * @param diffOptions             diff options 
+     * @param encoding                charset name to use to encode annotation result
+     * @param handler                 caller's annotation handler implementation 
+     * @param cancelBaton             a baton which is used to check if an operation 
+     *                                is cancelled
+     * @since                         1.2.0 
      */
     public SVNAnnotationGenerator(String path, File tmpDirectory, long startRevision, boolean force, boolean includeMergedRevisions, 
             SVNDiffOptions diffOptions, String encoding, ISVNAnnotateHandler handler, ISVNEventHandler cancelBaton) {
@@ -247,6 +257,13 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public void closeRevision(String token) throws SVNException {
     }
     
+    /**
+     * Creates a temporary file for delta application.
+     * 
+     * @param  token             not used in this method 
+     * @param  baseChecksum      not used in this method
+     * @throws SVNException 
+     */
     public void applyTextDelta(String token, String baseChecksum) throws SVNException {
         if (myCurrentFile == null) {
             myCurrentFile = SVNFileUtil.createUniqueFile(myTmpDirectory, "annotate", ".tmp", false);
@@ -254,10 +271,23 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myDeltaProcessor.applyTextDelta(myPreviousFile, myCurrentFile, false);
     }
 
+    /**
+     * Applies a next text delta chunk.
+     *  
+     * @param  token          not used in this method 
+     * @param  diffWindow     next diff window 
+     * @return                dummy output stream
+     * @throws SVNException 
+     */
     public OutputStream textDeltaChunk(String token, SVNDiffWindow diffWindow) throws SVNException {
         return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
     
+    /**
+     * Marks the end of the text delta series.
+     * @param token          not used in this method
+     * @throws SVNException 
+     */
     public void textDeltaEnd(String token) throws SVNException {
         myDeltaProcessor.textDeltaEnd();
         

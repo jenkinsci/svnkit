@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,6 +17,7 @@ package org.tmatesoft.svn.core;
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNMergeInfoInheritance {
     
@@ -42,7 +43,11 @@ public class SVNMergeInfoInheritance {
     private SVNMergeInfoInheritance(String name) {
         myName = name;
     }
-    
+  
+    /**
+     * Returns a string representation of this object.
+     * @return this object as a string 
+     */
     public String toString() {
         return myName;
     }
