@@ -351,10 +351,27 @@ public class SVNProperties {
         return result;
     }
 
+    /**
+     * Returns a hash code of this object.
+     * 
+     * <p/>
+     * A hash code is evaluated as follows: <code>31 + </code>{@link java.util.Map#hashCode() hash code} of the 
+     * underlying <code>Map</code> holding the property key to property value mappings. 
+     * 
+     * @return hash code of this object 
+     */
     public int hashCode() {
         return 31 + ((myProperties == null) ? 0 : myProperties.hashCode());
     }
 
+    /**
+     * Tells whether this object and <code>obj</code> are equal.
+     * 
+     * @param  obj object to compare with 
+     * @return     <span class="javakeyword">true</span> if <code>obj</code> is either this very object,
+     *             or is an instance of <code>SVNProperties</code> with the same contents of properties 
+     *              
+     */
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
