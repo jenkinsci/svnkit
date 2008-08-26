@@ -383,6 +383,12 @@ public abstract class SVNRepositoryFactory {
             }
         }
         //SVNFileUtil.deleteAll(path, true);
+        // check if path is inside repository
+        File root = FSFS.findRepositoryRoot(path);
+        if (root != null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "''{0}'' is a subdirectory of an existing repository rooted at ''{1}''", new Object[] {path, root});
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
         if (!path.mkdirs() && !path.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
             SVNErrorManager.error(err, SVNLogType.FSFS);
