@@ -1044,17 +1044,26 @@ public class SVNAdminClient extends SVNBasicClient {
      * <code>'svndumpfilter'</code> utility.
      * 
      * <p/>
-     * If <code>exclude</code> is <span class="javakeyword">true</span>
+     * If <code>exclude</code> is <span class="javakeyword">true</span> then filters out nodes with 
+     * <code>prefixes</code>, otherwise nodes without <code>prefixes</code>.
      * 
-     * @param dumpStream 
-     * @param resultDumpStream 
-     * @param exclude 
-     * @param renumberRevisions 
-     * @param dropEmptyRevisions 
-     * @param preserveRevisionProperties 
-     * @param prefixes 
-     * @param skipMissingMergeSources 
+     * <p/>
+     * 
+     * @param  dumpStream                   the input repository dump stream
+     * @param  resultDumpStream             the resultant (filtered) dump stream
+     * @param  exclude                      whether to exclude or include paths with the specified 
+     *                                      <code>prefixes</code> 
+     * @param  renumberRevisions            if <span class="javakeyword">true</span>, renumbers revisions left
+     *                                      after filtering
+     * @param  dropEmptyRevisions           if <span class="javakeyword">true</span>, then removes revisions
+     *                                      emptied by filtering  
+     * @param  preserveRevisionProperties   if <span class="javakeyword">true</span>, then does not filter
+     *                                      revision properties
+     * @param  prefixes                     prefixes of the path to filter 
+     * @param  skipMissingMergeSources      if <span class="javakeyword">true</span>, then skips missig merge 
+     *                                      sources
      * @throws SVNException 
+     * @since                               1.2.0, SVN 1.5.0
      */
     public void doFilter(InputStream dumpStream, OutputStream resultDumpStream, boolean exclude, 
             boolean renumberRevisions, boolean dropEmptyRevisions, boolean preserveRevisionProperties, 
