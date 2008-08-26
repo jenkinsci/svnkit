@@ -251,8 +251,6 @@ public class JavaHLObjectFactory {
             return SVNRevision.create(((Revision.Number)r).getNumber());
         } else if(r.getKind() == RevisionKind.date){
             return SVNRevision.create(((Revision.DateSpec)r).getDate());
-        } else if (r == Revision.START) {
-            return SVNRevision.create(0);
         }
         return (SVNRevision)REVISION_KIND_CONVERSION_MAP.get(new Integer(r.getKind()));
     }
