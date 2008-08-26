@@ -2116,7 +2116,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (remainingRanges != null && !remainingRanges.isEmpty()) {
                     SVNMergeRange[] ranges = remainingRanges.getRanges();
                     SVNMergeRange range = ranges[0];
-                    targetStart = range.getStartRevision();
+                    if ((!isRollBack && range.getStartRevision() > revision2) ||
+                            (isRollBack && range.getStartRevision() < revision2)) {
+                        targetStart = revision2;
+                    } else {
+                        targetStart = range.getStartRevision();
+                    }
                 }
             }
         }
