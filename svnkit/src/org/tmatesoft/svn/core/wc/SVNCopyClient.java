@@ -1715,11 +1715,9 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-        if (dstEntry != null && dstEntry.isFile()) {
-            if (!dstEntry.isScheduledForDeletion()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "There is already a versioned item ''{0}''", dst);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+        if (dstEntry != null && !dstEntry.isScheduledForDeletion()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "There is already a versioned item ''{0}''", dst);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNEntry srcEntry = srcAccess.getVersionedEntry(src, false);
         if ((srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) || srcEntry.getURL() == null) {
