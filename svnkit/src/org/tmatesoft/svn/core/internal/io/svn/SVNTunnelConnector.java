@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -65,7 +66,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
             
             repository.setExternalUserName(userName);
         } 
-
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "tunnel command: " + expandedTunnel);
 	    open(repository, expandedTunnel);
     }
 

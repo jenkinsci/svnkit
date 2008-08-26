@@ -46,7 +46,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
         SVNURL location = repos.getLocation();
         SVNPasswordAuthentication auth = null;
         if (repos.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
-            getConnection().write("(w(s))", new Object[]{"EXTERNAL", repos.getExternalUserName()});
+            getConnection().write("(w(s))", new Object[]{"EXTERNAL", ""});
             failureReason = readAuthResponse();
         } else if (mechs.contains("ANONYMOUS")) {
             getConnection().write("(w(s))", new Object[]{"ANONYMOUS", ""});

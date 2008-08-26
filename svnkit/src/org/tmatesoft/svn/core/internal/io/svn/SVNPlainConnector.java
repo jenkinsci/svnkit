@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,6 +100,7 @@ public class SVNPlainConnector implements ISVNConnector {
     public InputStream getInputStream() throws IOException {
         if (myInputStream == null) {
             myInputStream = mySocket.getInputStream();
+            myInputStream = new BufferedInputStream(myInputStream);
         }
         return myInputStream;
     }

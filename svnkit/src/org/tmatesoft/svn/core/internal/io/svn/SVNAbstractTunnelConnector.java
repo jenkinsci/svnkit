@@ -1,5 +1,7 @@
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,8 +29,8 @@ public abstract class SVNAbstractTunnelConnector implements ISVNConnector {
         // 4. launch process.
         try {
             myProcess = Runtime.getRuntime().exec(process);
-            myInputStream = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, myProcess.getInputStream());
-            myOutputStream = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, myProcess.getOutputStream());
+            myInputStream = new BufferedInputStream(myProcess.getInputStream());
+            myOutputStream = new BufferedOutputStream(myProcess.getOutputStream());
             new StreamGobbler(myProcess.getErrorStream());
         } catch (IOException e) {
             try {
