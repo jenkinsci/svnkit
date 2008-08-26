@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNLock;
  * The <b>SVNAdminEvent</b> is a type of an event used to notify callers' handlers 
  * in several methods of <b>SVNAdminClient</b>. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
@@ -44,6 +44,7 @@ public class SVNAdminEvent {
      * @param revision               a new committed revision
      * @param originalRevision       the original revision
      * @param action                 an event action                 
+     * @param message                event description message 
      */
     public SVNAdminEvent(long revision, long originalRevision, SVNAdminEventAction action, String message) {
         myRevision = revision;
@@ -74,6 +75,7 @@ public class SVNAdminEvent {
      * 
      * @param revision    a revision number
      * @param action      an event action
+     * @param message     an event description message
      */
     public SVNAdminEvent(long revision, SVNAdminEventAction action, String message) {
         myOriginalRevision = -1;
@@ -104,6 +106,15 @@ public class SVNAdminEvent {
         myAction = action;
     }
 
+    /**
+     * Creates a new event. 
+     * 
+     * @param action   an event action     
+     * @param lock     lock info
+     * @param error    an error message (if an error occurred)
+     * @param message  an event description message
+     * @since          1.2.0
+     */
     public SVNAdminEvent(SVNAdminEventAction action, SVNLock lock, SVNErrorMessage error, String message) {
         myError = error;
         myMessage = message;
@@ -111,11 +122,24 @@ public class SVNAdminEvent {
         myLock = lock;
     }
 
+    /**
+     * Creates a new event.
+     * 
+     * @param action    an event action 
+     * @param message   an event description message
+     * @since           1.2.0
+     */
     public SVNAdminEvent(SVNAdminEventAction action, String message) {
         myAction = action;
         myMessage = message;
     }
 
+    /**
+     * Creates a new event.
+     * 
+     * @param action   an event action 
+     * @since          1.2.0
+     */
     public SVNAdminEvent(SVNAdminEventAction action) {
         this(action, null);
     }
@@ -129,6 +153,13 @@ public class SVNAdminEvent {
         return myAction;
     }
     
+    /**
+     * Returns an event description message.
+     * If no message was provided, returns just an empty string.
+     * 
+     * @return   event description message
+     * @since    1.2.0
+     */
     public String getMessage() {
         return myMessage == null ? "" : myMessage;
     }
@@ -195,10 +226,22 @@ public class SVNAdminEvent {
         return myPath;
     }
 
+    /**
+     * Returns the lock information.
+     * 
+     * @return     lock info
+     * @since      1.2.0
+     */
     public SVNLock getLock() {
         return myLock;
     }
 
+    /**
+     * Returns the error message describing the error occurred while performing an operation.
+     * 
+     * @return      error message
+     * @since       1.2.0 
+     */
     public SVNErrorMessage getError() {
         return myError;
     }

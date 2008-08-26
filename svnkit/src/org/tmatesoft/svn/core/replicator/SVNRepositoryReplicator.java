@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,6 +17,7 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -71,9 +72,13 @@ import org.tmatesoft.svn.util.SVNLogType;
  * destination repository the same changes in both versioned and unversioned (revision
  * properties) data except locks as in the source repository.
  *
- * @author TMate Software Ltd.
- * @version 1.1.1
- * @since 1.1.0
+ * <p/>
+ * With modern Subersion servers you may alternatively use {@link SVNRepository#replay(long, long, boolean, ISVNEditor)} 
+ * for repository replication purposes.
+ * 
+ * @author  TMate Software Ltd.
+ * @version 1.2.0
+ * @since   1.1.0
  */
 public class SVNRepositoryReplicator implements ISVNEventHandler {
 
@@ -122,6 +127,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
 
     /**
      * Replicates a range of repository revisions.
+     * 
      * <p/>
      * <p/>
      * Starts copying from <code>fromRevision</code> (including) and expands to
@@ -130,27 +136,30 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
      * it defaults to <code>src.getLatestRevision()</code>. The latest revision of the
      * destination repository must be equal to <code>fromRevision - 1</code>, where <code>fromRevision</code> is
      * already a valid revision.
+     * 
      * <p/>
      * <p/>
      * The replicator uses a log operation to investigate the changed paths in every
      * revision to be copied. So, for each revision being replicated an appropriate
-     * event with log information for that revision is {@link #fireReplicatingEvent(SVNLogEntry) fired}
+     * event with log information for that revision is fired (<code>fireReplicatingEvent(SVNLogEntry)</code>)
      * to the registered {@link ISVNReplicationHandler handler} (if any). Also during each copy
      * iteration the replicator tests the handler's {@link ISVNReplicationHandler#checkCancelled() checkCancelled()}
      * method to check if the replication operation is cancelled. At the end of the copy operation
-     * the replicator {@link #fireReplicatedEvent(SVNCommitInfo) fires} yet one event with commit information about the replicated revision.
+     * the replicator (<code>fireReplicatedEvent(SVNCommitInfo)</code>) yet one event with commit information about the 
+     * replicated revision.
+     * 
      * <p/>
      * <p/>
      * Both <code>src</code> and <code>dst</code> must be created for the root locations
      * of the repositories.
      *
-     * @param src          a source repository to copy from
-     * @param dst          a destination repository to copy into
-     * @param fromRevision a start revision
-     * @param toRevision   a final revision
-     * @return the number of revisions copied from the source repository
+     * @param src            a source repository to copy from
+     * @param dst            a destination repository to copy into
+     * @param fromRevision   a start revision
+     * @param toRevision     a final revision
+     * @return               the number of revisions copied from the source repository
      * @throws SVNException
-     * @see #replicateRepository(SVNRepository,SVNRepository,boolean)
+     * @see                  #replicateRepository(SVNRepository,SVNRepository,boolean)
      */
     public long replicateRepository(SVNRepository src, SVNRepository dst, long fromRevision, long toRevision) throws SVNException {
         fromRevision = fromRevision <= 0 ? 1 : fromRevision;
@@ -217,7 +226,7 @@ public class SVNRepositoryReplicator implements ISVNEventHandler {
 
                 src.update(i, null, true, new ISVNReporterBaton() {
                     public void report(ISVNReporter reporter) throws SVNException {
-                        reporter.setPath("", null, previousRev, false);
+                        reporter.setPath("", null, previousRev, SVNDepth.INFINITY, false);
                         reporter.finishReport();
                     }
                 }, SVNCancellableEditor.newInstance(bridgeEditor, this, src.getDebugLog()));

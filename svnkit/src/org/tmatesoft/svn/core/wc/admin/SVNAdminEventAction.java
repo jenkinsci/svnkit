@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc.admin;
  * The <b>SVNAdminEventAction</b> is an enumeration of possible actions that 
  * may take place in different methods of <b>SVNAdminClient</b>. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
@@ -90,18 +90,53 @@ public class SVNAdminEventAction {
      */
     public static final SVNAdminEventAction TRANSACTION_REMOVED = new SVNAdminEventAction(8);
 
+    /**
+     * Says that unlocking a path failed.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction UNLOCK_FAILED = new SVNAdminEventAction(9);
     
+    /**
+     * Says that a path was successfully unlocked.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction UNLOCKED = new SVNAdminEventAction(10);
 
+    /**
+     * Says that a path is not locked.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction NOT_LOCKED = new SVNAdminEventAction(11);
 
+    /**
+     * A next lock is fetched from the repository.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction LOCK_LISTED = new SVNAdminEventAction(12);
-    
+
+    /**
+     * Says that a recovery process is about to start.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction RECOVERY_STARTED = new SVNAdminEventAction(13);
-    
+
+    /**
+     * Says that an upgrade process is about to start.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction UPGRADE = new SVNAdminEventAction(14);
     
+    /**
+     * Says that revision properties were copied.
+     *
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction REVISION_PROPERTIES_COPIED = new SVNAdminEventAction(15);
 
     public static final SVNAdminEventAction DUMP_FILTER_REVISION_COMMITTED = new SVNAdminEventAction(16);

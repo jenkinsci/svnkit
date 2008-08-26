@@ -1137,7 +1137,8 @@ public abstract class SVNRepository {
      * 
      * <p/>
      * The same as {@link #getLocationSegments(String, long, long, long, ISVNLocationSegmentHandler)} except for 
-     * this method returns a list of all the segments fetched for <code>path</code>.
+     * this method returns a list of all the segments fetched for <code>path</code>. The list will be sorted 
+     * into an ascenging order (segments with greater start revisions will be placed in the head of the list). 
      * 
      * @param path             repository path 
      * @param pegRevision      revision in which <code>path</code> is valid

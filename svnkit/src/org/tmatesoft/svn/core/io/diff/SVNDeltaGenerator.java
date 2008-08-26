@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,7 +41,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * and the X-Delta algorithm for generating delta as a difference between target and 
  * non-empty source streams.    
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaGenerator {
@@ -56,7 +56,7 @@ public class SVNDeltaGenerator {
     /**
      * Creates a generator that will produce diff windows of 
      * 100Kbytes contents length. That is, after applying of 
-     * such a window you get 100Kbytes of file contents.
+     * such a window you get 100 Kbytes of file contents.
      * 
      * @see #SVNDeltaGenerator(int)
      */
@@ -197,11 +197,51 @@ public class SVNDeltaGenerator {
         return SVNFileUtil.toHexDigest(digest);
     }
 
+    /**
+     * Generates a series of diff windows of fixed size comparing 
+     * target bytes (read from <code>target</code> stream) against an empty file, and sends produced windows to 
+     * the provided consumer.  
+     * 
+     * <p/>
+     * This is identical to <code>sendDelta(path, null, 0, 0, target, targetLength, consumer)</code>.
+     * 
+     * @param  path             a file repository path
+     * @param  target           an input byte array to read target bytes from
+     * @param  targetLength      
+     * @param  consumer         a diff windows consumer
+     * @throws SVNException
+     */
     public void sendDelta(String path, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         sendDelta(path, null, 0, 0, target, targetLength, consumer);
     }
 
-    public void sendDelta(String path, byte[] source, int sourceLength, long sourceOffset, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
+    /**
+     * Generates a series of diff windows of fixed size comparing 
+     * <code>targetLength</code> of target bytes (read from <code>target</code> stream) against 
+     * <code>sourceLength</code> of source bytes (read from <code>source</code> stream at offset 
+     * <code>sourceOffset</code>), and sends produced windows to the provided <code>consumer</code>. 
+     * 
+     * <p/>
+     * Size of the produced windows is set in a constructor of this delta generator.
+     *  
+     * <p/>
+     * <code>consumer</code>'s {@link org.tmatesoft.svn.core.io.ISVNDeltaConsumer#textDeltaChunk(String, SVNDiffWindow) textDeltaChunk()} 
+     * method is called to receive and process generated windows. 
+     * Now new data comes within a window, so the output stream is either 
+     * ignored (if it's <span class="javakeyword">null</span>) or immediately closed 
+     * (if it's not <span class="javakeyword">null</span>). 
+     * 
+     * @param  path             a file repository path
+     * @param  source           an input stream to read source bytes from
+     * @param  sourceLength     the size of the source view
+     * @param  sourceOffset     an offset of the source view in the given <code>source</code> stream 
+     * @param  target           an input stream to read target bytes from
+     * @param  targetLength     the size of the target view
+     * @param  consumer         a diff windows consumer
+     * @throws SVNException
+     */
+    public void sendDelta(String path, byte[] source, int sourceLength, long sourceOffset, byte[] target, 
+            int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
         if (targetLength == 0 || target == null) {
             // send empty window, needed to create empty file. 
             // only when no windows was sent at all.
