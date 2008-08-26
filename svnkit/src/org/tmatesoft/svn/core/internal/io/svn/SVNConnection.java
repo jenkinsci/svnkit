@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -371,8 +370,7 @@ public class SVNConnection {
     OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
-                myOutputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, 
-                        myConnector.getOutputStream());
+                myOutputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, myConnector.getOutputStream());
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
             }
@@ -383,8 +381,8 @@ public class SVNConnection {
     InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
-                myInputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, 
-                        new BufferedInputStream(myConnector.getInputStream()));
+                InputStream is = myConnector.getInputStream();
+                myInputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, is); 
                 myLoggingInputStream = myInputStream;
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
@@ -401,7 +399,7 @@ public class SVNConnection {
     }
 
     void setInputStream(InputStream is) {
-        if (myLoggingInputStream != null) {
+        if (myLoggingInputStream != null) {            
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
         myInputStream = is;

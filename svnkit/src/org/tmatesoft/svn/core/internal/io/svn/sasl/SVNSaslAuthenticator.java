@@ -102,19 +102,30 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                         setEncryption(repository);
                         break;
                     }
+                    // some sort of authentication error.
                 } catch (SaslException e) {
                     mechs.remove(getMechanismName(myClient));
                 } 
-                if (myAuthenticationManager != null && myAuthentication != null) {
+                if (myAuthenticationManager != null) {
                     SVNErrorMessage error = getLastError();
                     if (error == null) {
                         error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED);
                         setLastError(error);
                     }
-                    String realmName = getFullRealmName(repository.getLocation(), realm);
-                    myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
+                    if (myAuthentication != null) {
+                        String realmName = getFullRealmName(repository.getLocation(), realm);
+                        myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
+                    } else {
+                        // automatically generated authentication, do not try this mech again, will lead to the same error.
+                        // 
+                        mechs.remove(getMechanismName(myClient));
+                    }
                 }
                 dispose();
+                if (mechs.isEmpty()) {
+                    failed = true;
+                    break;
+                }
                 myClient = createSaslClient(mechs, realm, repository, repository.getLocation());
             }
         } finally {
@@ -142,7 +153,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         String mechName = getMechanismName(myClient);
         boolean expectChallenge = !("ANONYMOUS".equals(mechName) || "EXTERNAL".equals(mechName));
         if ("EXTERNAL".equals(mechName) && repos.getExternalUserName() != null) {
-            initialChallenge = repos.getExternalUserName();
+            initialChallenge = "";
         } else if (myClient.hasInitialResponse()) {
             // compute initial response
             byte[] initialResponse = null;
@@ -219,6 +230,11 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     buffSize = 8192;
                 }
                 buffSize = Math.min(8192, buffSize);
+            }
+            try {
+                getPlainOutputStream().flush();
+            } catch (IOException e) {
+                //
             }
             OutputStream os = new SaslOutputStream(myClient, buffSize, getPlainOutputStream());
             os = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, os);
