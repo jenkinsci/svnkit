@@ -328,7 +328,8 @@ public class SVNProperty {
 
     /**
      * Default value for the {@link #CHARSET} property denoting that the native charset should be used 
-     * to encode a file during translate.
+     * to encode a file during translation. The native charset name will be fetched via a call to 
+     * {@link org.tmatesoft.svn.core.wc.ISVNOptions#getNativeCharset()}.
      */
     public static final String NATIVE = "native";
     

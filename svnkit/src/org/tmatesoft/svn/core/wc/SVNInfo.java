@@ -99,7 +99,6 @@ public class SVNInfo {
     private File myPropConflictFile;
     private SVNDepth myDepth;
     private String myChangelistName;
-    private SVNErrorMessage myError;
     private long myWorkingSize;
     private long myRepositorySize;
     

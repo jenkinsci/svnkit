@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -72,11 +72,10 @@ import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
  * <p>
  * Read also this <a href="http://svnbook.red-bean.com/nightly/en/svn-book.html#svn.advanced">Subversion book chapter</a> on runtime configuration area.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     SVNWCUtil
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
- * 
  */
 public interface ISVNOptions extends ISVNTunnelProvider {
     
@@ -163,13 +162,46 @@ public interface ISVNOptions extends ISVNTunnelProvider {
     public String[] getPreservedConflictFileExtensions();
 
     /**
+     * Says to a merge driver whether to allow all forward merges or not.
      * 
+     * <p/> 
+     * If this returns <span class="javakeyword">true</span>, we allow all forward-merges not already found in 
+     * recorded mergeinfo, and thus we destroy the ability to, say, merge the whole of a branch to the trunk 
+     * while automatically ignoring the revisions common to both.
+     * 
+     * <p/>
+     * If this returns <span class="javakeyword">false</span>, we allow only forward-merges not found in either 
+     * recorded mergeinfo or implicit mergeinfo (natural history), then the previous scenario works great, but 
+     * we can't reverse-merge a previous change made to our line of history and then remake it (because the 
+     * reverse-merge will leave no mergeinfo trace, and the remake-it attempt will still find the original 
+     * change in natural mergeinfo. 
+     * 
+     * @return  <span class="javakeyword">true</span> to allow all forward-merges; otherwise <span class="javakeyword">false</span>
+     * @since   1.2.0  
      */
     public boolean isAllowAllForwardMergesFromSelf();
 
+    /**
+     * Returns the native EOL marker bytes.
+     * @return native EOL bytes
+     * @since         1.2.0
+     */
     public byte[] getNativeEOL();
 
+    /**
+     * Returns the native charset name. See also {@link org.tmatesoft.svn.core.SVNProperty#NATIVE}.
+     * @return  native charset name
+     * @since   1.2.0       
+     */
     public String getNativeCharset();
 
+    /**
+     * Returns a hash holding file extensions to MIME types mappings. Extensions must not include 
+     * the leading dot in their names. 
+     * 
+     * @return      map which keys are <code>String</code> file extensions, and values are <code>String</code>
+     *              MIME types      
+     * @since       1.2.0, New in Subversion 1.5.0
+     */
     public Map getFileExtensionsToMimeTypes();
 }

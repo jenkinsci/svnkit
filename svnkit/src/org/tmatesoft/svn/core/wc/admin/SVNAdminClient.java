@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -115,7 +115,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.0
  */
@@ -164,7 +164,8 @@ public class SVNAdminClient extends SVNBasicClient {
     /**
      * Sets an event handler for this object. 
      * {@link ISVNAdminEventHandler} should be provided to <b>SVNAdminClent</b>
-     * via this method also.
+     * via this method also. But it does not mean that you can have two handler set, only 
+     * one handler can be used at a time.
      * 
      * @param handler an event handler
      */
@@ -240,25 +241,74 @@ public class SVNAdminClient extends SVNBasicClient {
         return doCreateRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, false);
     }
 
-    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+    /**
+     * Creates an FSFS-type repository.
+     * 
+     * This implementation uses {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory#createLocalRepository(File, String, boolean, boolean)}}.
+     * <p>
+     * If <code>uuid</code> is <span class="javakeyword">null</span> a new uuid will be generated, otherwise 
+     * the specified will be used.
+     * 
+     * <p>
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>, an empty 
+     * pre-revprop-change hook will be placed into the repository /hooks subdir. This enables changes to 
+     * revision properties of the newly created repository. 
+     * 
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
+     * exists, deletes that path and creates a repository in its place.
+     * 
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * to be compatible with pre-1.4 servers.
+     * 
+     * <p>
+     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code>) 
+     * set to <span class="javakeyword">true</span> at a time.
+     * 
+     * @param  path                        a repository root dir path
+     * @param  uuid                        a repository uuid
+     * @param  enableRevisionProperties    enables/disables changes to revision properties
+     * @param  force                       forces operation to run
+     * @param  pre14Compatible             <span class="javakeyword">true</span> to 
+     *                                     create a repository with pre-1.4 format
+     * @param  pre15Compatible             <span class="javakeyword">true</span> to
+     *                                     create a repository with pre-1.5 format
+     * @return                             a local URL (file:///) of a newly created repository
+     * @throws SVNException
+     * @since                              1.2.0, SVN 1.5.0 
+     */
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
+            boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
         return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible);
     }
     
     /**
-     * Copies revision properties from the source repository that the destination one is synchronized with 
-     * to the given revision of the destination repository itself.
+     * Copies revision properties from the source repository starting at <code>startRevision</code> and up to 
+     * <code>endRevision</code> to corresponding revisions of the destination repository represented by 
+     * <code>toURL</code>.
      * 
      * <p>
      * This method is equivalent to the command 'copy-revprops' of the native Subversion <i>svnsync</i> utility. 
      * Note that the destination repository given as <code>toURL</code> must be synchronized with a source 
      * repository. Please, see {@link #doInitialize(SVNURL, SVNURL)}} how to initialize such a synchronization.  
      * 
+     * <p/>
+     * If the caller has {@link #setEventHandler(ISVNEventHandler) provided} an event handler, the handler will 
+     * receive an {@link SVNAdminEvent} with the {@link SVNAdminEventAction#REVISION_PROPERTIES_COPIED} action 
+     * when the properties get copied.
+     * 
      * @param  toURL          a url to the destination repository which must be synchronized
      *                        with another repository 
-     * @param  revision       a particular revision of the source repository to copy revision properties
-     *                        from 
-     * @throws SVNException   
-     * @since                 1.1, new in Subversion 1.4
+     * @param  startRevision  start revision
+     * @param  endRevision    end revision
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#IO_ERROR} error code - if any of revisions
+     *                        between <code>startRevision</code> and <code>endRevision</code> inclusively was not 
+     *                        synchronized yet
+     *                        </ul>
+     * @since                 1.2.0, new in Subversion 1.5.0
      */
     public void doCopyRevisionProperties(SVNURL toURL, long startRevision, long endRevision) throws SVNException {
         SVNRepository toRepos = null;
@@ -331,7 +381,15 @@ public class SVNAdminClient extends SVNBasicClient {
      * 
      * @param  fromURL         a source repository url
      * @param  toURL           a destination repository url
-     * @throws SVNException   
+     * @throws SVNException    in the following cases:
+     *                         <ul>
+     *                         <li/>exception with {@link SVNErrorCode#IO_ERROR} error code - if 
+     *                         either the target repository's last revision is different from <code>0</code>, or
+     *                         no {@link SVNRevisionProperty#FROM_URL} property value found in the target 
+     *                         repository
+     *                         <li/>exception with {@link SVNErrorCode#RA_PARTIAL_REPLAY_NOT_SUPPORTED} error 
+     *                         code - if the source repository does not support partial replay
+     *                         </ul>
      * @since                  1.1, new in Subversion 1.4
      */
     public void doInitialize(SVNURL fromURL, SVNURL toURL) throws SVNException {
@@ -544,6 +602,19 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Walks through the repository tree found under <code>repositoryRoot</code> and reports all found locks 
+     * via calls to the caller's {@link ISVNAdminEventHandler} handler implementation.
+     * 
+     * <p/>
+     * On each locked path found this method dispatches an {@link SVNAdminEventAction#LOCK_LISTED} 
+     * {@link SVNAdminEvent event} to the caller's handler providing the 
+     * {@link SVNAdminEvent#getLock() lock information}. 
+     * 
+     * @param  repositoryRoot   repository root location
+     * @throws SVNException
+     * @since                   1.2.0, SVN 1.5.0  
+     */
     public void doListLocks(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         File digestFile = fsfs.getDigestFileFromRepositoryPath("/");
@@ -562,6 +633,29 @@ public class SVNAdminClient extends SVNBasicClient {
         fsfs.walkDigestFiles(digestFile, handler, false);
     }
 
+    /**
+     * Removes locks from the specified <code>paths</code> in the repository found under 
+     * <code>repositoryRoot</code>.
+     * 
+     * <p/>
+     * If any path of the <code>paths</code> is not locked, then an {@link SVNAdminEvent event} with the 
+     * {@link SVNAdminEventAction#NOT_LOCKED} action is dispatched to the caller's {@link ISVNAdminEventHandler} 
+     * handler.
+     * 
+     * <p/>
+     * If, on the contrary, a path is locked, it is unlocked and an event with the 
+     * {@link SVNAdminEventAction#UNLOCKED} action is dispatched to the caller's handler providing the 
+     * {@link SVNAdminEvent#getLock() lock information}.
+     * 
+     * <p/>
+     * If some error occurs while unlocking, an event with the {@link SVNAdminEventAction#UNLOCK_FAILED} action 
+     * is dispatched to the caller's handler providing the {@link SVNAdminEvent#getError() error description}.
+     * 
+     * @param  repositoryRoot       repository root location 
+     * @param  paths                paths to unlock
+     * @throws SVNException 
+     * @since                       1.2.0, SVN 1.5.0  
+     */
     public void doRemoveLocks(File repositoryRoot, String[] paths) throws SVNException {
         if (paths == null) {
             return;
@@ -580,7 +674,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 lock = fsfs.getLockHelper(path, false);
                 if (lock == null) {
                     if (myEventHandler != null) {
-                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NOT_LOCKED, lock, null, "Path '" + path + "' isn't locked.");
+                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NOT_LOCKED, null, null, "Path '" + path + "' isn't locked.");
                         myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
                     }
                     continue;
@@ -671,6 +765,9 @@ public class SVNAdminClient extends SVNBasicClient {
      * passing a dummy output stream to it. This allows to check the integrity of the 
      * repository data. 
      * 
+     * <p/>
+     * This is identical to <code>doVerify(repositoryRoot, SVNRevision.create(0), SVNRevision.HEAD)</code>.
+     * 
      * @param  repositoryRoot   a repository root directory path
      * @throws SVNException     verification failed - a repository may be corrupted
      * @since                   1.1.1
@@ -679,6 +776,22 @@ public class SVNAdminClient extends SVNBasicClient {
         doVerify(repositoryRoot, SVNRevision.create(0), SVNRevision.HEAD);
     }
 
+    /**
+     * Verifies repository contents found under <code>repositoryRoot</code> starting at <code>startRevision</code>
+     * and up to <code>endRevision</code>. This method uses the dump implementation 
+     * (non incremental) passing a dummy output stream to it. This allows to check the integrity of the 
+     * repository data. 
+     * 
+     * <p/> 
+     * If <code>startRevision</code> is {@link SVNRevision#isValid() invalid}, it defaults to <code>0</code>.
+     * If <code>endRevision</code> is {@link SVNRevision#isValid() invalid}, it defaults to the HEAD revision.
+     * 
+     * @param  repositoryRoot   a repository root directory path
+     * @param  startRevision    revision to start verification at
+     * @param  endRevision      revision to stop verification at
+     * @throws SVNException     verification failed - a repository may be corrupted
+     * @since                   1.2.0, SVN 1.5.0
+     */
     public void doVerify(File repositoryRoot, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         long startRev = startRevision.getNumber();
@@ -807,6 +920,20 @@ public class SVNAdminClient extends SVNBasicClient {
         parser.parseDumpStream(dumpStream, handler, decoder);
     }
 
+    /**
+     * Recovers the repository found under <code>repositoryRoot</code>.
+     * This method can recover only FSFS type repositories and is identical to the <code>'svnadmin recover'</code>
+     * command.
+     * 
+     * <p/>
+     * If the caller has {@link #setEventHandler(ISVNEventHandler) provided} an event handler, the handler will 
+     * receive an {@link SVNAdminEvent} with the {@link SVNAdminEventAction#RECOVERY_STARTED} action before 
+     * the recovery starts.
+     * 
+     * @param  repositoryRoot    repository root location 
+     * @throws SVNException 
+     * @since                    1.2.0, SVN 1.5.0
+     */
     public void doRecover(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepositoryForRecovery(repositoryRoot);
         if (myEventHandler != null) {
@@ -817,6 +944,26 @@ public class SVNAdminClient extends SVNBasicClient {
         recoverer.runRecovery();
     }
     
+    /**
+     * Upgrades the repository located at <code>repositoryRoot</code> to the latest supported
+     * schema version. This method is identical to the <code>'svnadmin upgrade'</code> command.
+     * 
+     * <p/>
+     * This functionality is provided as a convenience for repository administrators who wish to make use of 
+     * new Subversion functionality without having to undertake a potentially costly full repository dump 
+     * and load operation. As such, the upgrade performs only the minimum amount of work needed to accomplish 
+     * this while still maintaining the integrity of the repository. It does not guarantee the most optimized 
+     * repository state as a dump and subsequent load would.
+     *
+     * <p/>
+     * If the caller has {@link #setEventHandler(ISVNEventHandler) provided} an event handler, the handler will 
+     * receive an {@link SVNAdminEvent} with the {@link SVNAdminEventAction#UPGRADE} action before 
+     * the upgrade starts.
+     * 
+     * @param  repositoryRoot   repository root location
+     * @throws SVNException 
+     * @since                   1.2.0, SVN 1.5.0
+     */
     public void doUpgrade(File repositoryRoot)throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         if (myEventHandler != null) {
@@ -831,6 +978,20 @@ public class SVNAdminClient extends SVNBasicClient {
         SVNFileUtil.writeVersionFile(reposFormatFile, FSFS.REPOSITORY_FORMAT);
     }
     
+    /**
+     * Resets the repository UUID with the provided <code>uuid</code> for the repository located at 
+     * <code>repositoryRoot</code>. This method is identical to the <code>'svnadmin setuuid'</code> command.
+     * 
+     * <p/>
+     * If no <code>uuid</code> is specified, then <code>SVNKit</code> will generate a new one and will use it to 
+     * reset the original UUID.
+     * 
+     * @param  repositoryRoot   repository root location
+     * @param  uuid             new UUID to set
+     * @throws SVNException     exception with {@link SVNErrorCode#BAD_UUID} error code - if the <code>uuid</code>
+     *                          is malformed 
+     * @since                   1.2.0, SVN 1.5.0
+     */
     public void doSetUUID(File repositoryRoot, String uuid) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         if (uuid == null) {
@@ -846,17 +1007,55 @@ public class SVNAdminClient extends SVNBasicClient {
         fsfs.setUUID(uuid);
     }
     
+    /**
+     * Makes a hot copy of a repository located at <code>srcRepositoryRoot</code> to one located at 
+     * <code>newRepositoryRoot</code>. This method is identical to the <code>'svnadmin hotcopy'</code> command.
+     * 
+     * @param  srcRepositoryRoot   repository to copy data from 
+     * @param  newRepositoryRoot   repository to copy data to
+     * @throws SVNException 
+     * @since                       1.2.0, SVN 1.5.0
+     */
     public void doHotCopy(File srcRepositoryRoot, File newRepositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(srcRepositoryRoot, false);
         FSHotCopier copier = getHotCopier();
         copier.runHotCopy(fsfs, newRepositoryRoot);
     }
     
+    /**
+     * Returns the HEAD revision of the repository located at <code>repositoryRoot</code>.
+     * 
+     * <p/>
+     * Identical to the <code>'svnlook youngest'</code> svn command.
+     * 
+     * @param  repositoryRoot  repository root location
+     * @return                 the last revision
+     * @throws SVNException 
+     * @since                  1.2.0
+     */
     public long getYoungestRevision(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         return fsfs.getYoungestRevision();
     }
     
+    /**
+     * Filters out nodes with or without the given <code>prefixes</code> from <code>dumpStream</code> 
+     * to <code>resultDumpStream</code>. This method is similar to the functionality provided by the 
+     * <code>'svndumpfilter'</code> utility.
+     * 
+     * <p/>
+     * If <code>exclude</code> is <span class="javakeyword">true</span>
+     * 
+     * @param dumpStream 
+     * @param resultDumpStream 
+     * @param exclude 
+     * @param renumberRevisions 
+     * @param dropEmptyRevisions 
+     * @param preserveRevisionProperties 
+     * @param prefixes 
+     * @param skipMissingMergeSources 
+     * @throws SVNException 
+     */
     public void doFilter(InputStream dumpStream, OutputStream resultDumpStream, boolean exclude, 
             boolean renumberRevisions, boolean dropEmptyRevisions, boolean preserveRevisionProperties, 
             Collection prefixes, boolean skipMissingMergeSources) throws SVNException {

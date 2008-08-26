@@ -18,15 +18,14 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 
 
 /**
- * <b>ISVNMerger</b> is the merger driver interface used by SVNKit in 
- * merging operations. 
+ * <b>ISVNMerger</b> is the merger driver interface used by <code>SVNKit</code> in merging operations. 
  * 
  * <p>
  * Merger drivers are created by a merger factory implementing the 
  * {@link ISVNMergerFactory} interface. Read more about that interface to
  * find out how to get a default implementation of <b>ISVNMerger</b>.
  * 
- * @version 1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public interface ISVNMerger {
