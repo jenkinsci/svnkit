@@ -227,7 +227,11 @@ public class SVNReplicationEditor implements ISVNEditor {
     }
 
     /**
+     * Changes a property of the current directory.
      * 
+     * @param name 
+     * @param value 
+     * @throws SVNException 
      */
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isRegularProperty(name)) {
@@ -254,6 +258,11 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Closes the current opened dir.
+     * 
+     * @throws SVNException 
+     */
     public void closeDir() throws SVNException {
         if (myDirsStack.size() > 1 && !myCopiedPaths.isEmpty()) {
             EntryBaton currentDir = (EntryBaton) myDirsStack.peek();
@@ -263,6 +272,14 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.closeDir();
     }
 
+    /**
+     * Adds a new file.
+     * 
+     * @param path 
+     * @param copyFromPath 
+     * @param copyFromRevision 
+     * @throws SVNException 
+     */
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         String absPath = getSourceRepository().getRepositoryPath(path);
         EntryBaton baton = new EntryBaton(absPath);
@@ -313,6 +330,13 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Opens a file.
+     * 
+     * @param path 
+     * @param revision 
+     * @throws SVNException 
+     */
     public void openFile(String path, long revision) throws SVNException {
         EntryBaton baton = new EntryBaton(getSourceRepository().getRepositoryPath(path));
         baton.myPropsAct = ACCEPT;
@@ -321,6 +345,13 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.openFile(path, myPreviousRevision);
     }
 
+    /**
+     * Starts applying text delta.
+     * 
+     * @param path 
+     * @param baseChecksum 
+     * @throws SVNException 
+     */
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
@@ -328,6 +359,14 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Applies a next chunk of delta.
+     * 
+     * @param path 
+     * @param diffWindow 
+     * @return                dummy output stream 
+     * @throws SVNException 
+     */
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
@@ -336,6 +375,12 @@ public class SVNReplicationEditor implements ISVNEditor {
         return SVNFileUtil.DUMMY_OUT;
     }
 
+    /**
+     * Handles text delta end.
+     * 
+     * @param path 
+     * @throws SVNException 
+     */
     public void textDeltaEnd(String path) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
@@ -343,6 +388,14 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Changes file property.
+     * 
+     * @param path 
+     * @param name 
+     * @param value 
+     * @throws SVNException 
+     */
     public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isRegularProperty(name)) {
             return;
@@ -368,6 +421,13 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Closes the current opened file.
+     * 
+     * @param path 
+     * @param textChecksum 
+     * @throws SVNException 
+     */
     public void closeFile(String path, String textChecksum) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct != IGNORE || baton.myTextAct != IGNORE) {
@@ -375,6 +435,11 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Commits the transaction.
+     * @return commit info
+     * @throws SVNException 
+     */
     public SVNCommitInfo closeEdit() throws SVNException {
         myCommitInfo = myCommitEditor.closeEdit();
         if (mySourceRepository != null) {
@@ -385,6 +450,11 @@ public class SVNReplicationEditor implements ISVNEditor {
         
     }
 
+    /**
+     * Aborts the transaction. 
+     * 
+     * @throws SVNException 
+     */
     public void abortEdit() throws SVNException {
         if (mySourceRepository != null) {
             mySourceRepository.closeSession();

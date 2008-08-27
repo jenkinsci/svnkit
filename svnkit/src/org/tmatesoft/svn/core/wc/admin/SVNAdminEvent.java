@@ -245,19 +245,49 @@ public class SVNAdminEvent {
     public SVNErrorMessage getError() {
         return myError;
     }
-    
-    public void setDroppedRevisionsCount(long droppedRevisionsCount) {
-        myDroppedRevisionsCount = droppedRevisionsCount;
-    }
-    
+
+    /**
+     * Returns the total number of revisions dropped during dumpfiltering.
+     * 
+     * @return number of dropped revisions   
+     * @since   1.2.0 
+     */
     public long getDroppedRevisionsCount() {
         return myDroppedRevisionsCount;
     }
     
+    /**
+     * Returns the total number of nodes dropped during dumpfiltering.
+     * 
+     * @return number of dropped nodes   
+     * @since   1.2.0 
+     */
     public int getDroppedNodesCount() {
         return myDroppedNodesCount;
     }
-    
+
+    /**
+     * Sets the total number of revisions dropped during dumpfiltering.
+     * 
+     * <p/>
+     * This method is not intended for API users. 
+     * 
+     * @param droppedRevisionsCount number of dropped revisions
+     * @since                       1.2.0 
+     */
+    public void setDroppedRevisionsCount(long droppedRevisionsCount) {
+        myDroppedRevisionsCount = droppedRevisionsCount;
+    }
+
+    /**
+     * Sets the total number of nodes dropped during dumpfiltering.
+     * 
+     * <p/>
+     * This method is not intended for API users. 
+     * 
+     * @param droppedNodesCount number of dropped nodes
+     * @since                   1.2.0 
+     */
     public void setDroppedNodesCount(int droppedNodesCount) {
         myDroppedNodesCount = droppedNodesCount;
     }

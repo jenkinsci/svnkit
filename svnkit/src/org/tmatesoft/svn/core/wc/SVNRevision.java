@@ -254,7 +254,7 @@ public class SVNRevision {
      * 
      * @param   revision a revision number
      * @return           <span class="javakeyword">true</span> if valid (<code>&gt;=0</code>), 
-     *                   otherwise false
+     *                   otherwise <span class="javakeyword">false</span>
      */
     public static boolean isValidRevisionNumber(long revision) {
         return revision >= 0;
