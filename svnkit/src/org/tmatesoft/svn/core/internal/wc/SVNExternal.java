@@ -200,7 +200,26 @@ public class SVNExternal {
             boolean token0isURL = SVNPathUtil.isURL(token0); 
             boolean token1isURL = SVNPathUtil.isURL(token1);
             
-            if (revisionToken == 0 || token0isURL || !token1isURL) {
+            if (token0isURL && token1isURL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, 
+                        "Invalid svn:external property on ''{0}'': cannot use two absolute URLs (''{1}'' and ''{2}'') in an external; " +
+                        "one must be a path where an absolute or relative URL is checked out to", new Object[] {owner, token0, token1});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (revisionToken == 0 && token1isURL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, 
+                        "Invalid svn:external property on ''{0}'': cannot use a URL ''{1}'' as the target directory for an external definition",
+                        new Object[] {owner, token1});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (revisionToken == 1 && token0isURL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, 
+                        "Invalid svn:external property on ''{0}'': cannot use a URL ''{1}'' as the target directory for an external definition",
+                        new Object[] {owner, token0});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            
+            if (revisionToken == 0 || (revisionToken == -1 && (token0isURL || !token1isURL))) {
                 external.myPath = token1;
                 boolean schemeRelative = token0.startsWith("//");
                 if (schemeRelative) {
