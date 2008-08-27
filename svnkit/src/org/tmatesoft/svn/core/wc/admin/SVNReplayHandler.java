@@ -34,8 +34,12 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * <code>SVNReplayHandler</code> is an implementation of {@link ISVNReplayHandler} that is used in 
+ * {@link SVNAdminClient#doSynchronize(org.tmatesoft.svn.core.SVNURL)}. 
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @version 1.2.0
  */
 public class SVNReplayHandler implements ISVNReplayHandler {
     private SVNRepository myTargetRepository;
@@ -45,7 +49,17 @@ public class SVNReplayHandler implements ISVNReplayHandler {
     private ISVNEventHandler myCanceller;
     private SVNSynchronizeEditor mySyncEditor;
     private SVNAdminClient myAdminClient;
-    
+   
+    /**
+     * Creates a new replay handler.
+     * 
+     * @param targetRepository 
+     * @param hasCommitRevPropsCapability 
+     * @param logEntryHandler 
+     * @param debugLog 
+     * @param canceller 
+     * @param adminClient 
+     */
     public SVNReplayHandler(SVNRepository targetRepository, boolean hasCommitRevPropsCapability, 
             ISVNLogEntryHandler logEntryHandler, ISVNDebugLog debugLog, ISVNEventHandler canceller,
             SVNAdminClient adminClient) {
@@ -57,6 +71,12 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         myAdminClient = adminClient;
     }
 
+    /**
+     * @param  revision 
+     * @param  revisionProperties 
+     * @return editor to replicate the revision 
+     * @throws SVNException 
+     */
     public ISVNEditor handleStartRevision(long revision, SVNProperties revisionProperties) throws SVNException {
         myTargetRepository.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, 
                 SVNPropertyValue.create(SVNProperty.toString(revision)));
@@ -76,6 +96,12 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         return cancellableEditor;
     }
 
+    /**
+     * @param revision 
+     * @param revisionProperties 
+     * @param editor 
+     * @throws SVNException 
+     */
     public void handleEndRevision(long revision, SVNProperties revisionProperties, ISVNEditor editor) throws SVNException {
         editor.closeEdit();
         if (mySyncEditor.getCommitInfo().getNewRevision() != revision) {

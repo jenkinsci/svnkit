@@ -192,7 +192,7 @@ public class SVNAdminClient extends SVNBasicClient {
      * <p>
      * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
      * exists, deletes that path and creates a repository in its place.
-     *  
+     * 
      * @param  path                        a repository root dir path
      * @param  uuid                        a repository uuid
      * @param  enableRevisionProperties    enables/disables changes to revision properties
@@ -1048,6 +1048,27 @@ public class SVNAdminClient extends SVNBasicClient {
      * <code>prefixes</code>, otherwise nodes without <code>prefixes</code>.
      * 
      * <p/>
+     * If the caller has {@link #setEventHandler(ISVNEventHandler) provided} an event handler, the handler will 
+     * be called with different actions:
+     * <ul>
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_TOTAL_REVISIONS_DROPPED} - use {@link SVNAdminEvent#getDroppedRevisionsCount()} 
+     * to retrieve the total number of dropped revisions.
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_DROPPED_RENUMBERED_REVISION} - is sent only when 
+     * <code>renumberRevisions</code> is <span class="javakeyword">true</span> and informs that an original 
+     * revision (which is provided as {@link SVNAdminEvent#getRevision()}) was dropped.
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_RENUMBERED_REVISION} - is sent only when 
+     * <code>renumberRevisions</code> is <span class="javakeyword">true</span> and informs that the original 
+     * revision (provided as {@link SVNAdminEvent#getOriginalRevision()}) was renumbered to {@link SVNAdminEvent#getRevision()}.  
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_DROPPED_NODE} - says that {@link SVNAdminEvent#getPath()} was 
+     * dropped.
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_TOTAL_NODES_DROPPED} - use {@link SVNAdminEvent#getDroppedNodesCount()} 
+     * to retrieve the total number of dropped nodes.
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_REVISION_COMMITTED} - is sent to inform that the original 
+     * revision {@link SVNAdminEvent#getOriginalRevision()} resulted in {@link SVNAdminEvent#getRevision()} 
+     * in the output.
+     * <li/>{@link SVNAdminEventAction#DUMP_FILTER_REVISION_SKIPPED} - is sent to inform that the original 
+     * revision {@link SVNAdminEvent#getRevision()} is dropped (skipped).
+     * </ul>
      * 
      * @param  dumpStream                   the input repository dump stream
      * @param  resultDumpStream             the resultant (filtered) dump stream

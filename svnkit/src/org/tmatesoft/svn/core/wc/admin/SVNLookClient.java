@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -119,7 +119,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
@@ -556,6 +556,8 @@ public class SVNLookClient extends SVNBasicClient {
      * @param  revision         a revision number
      * @param  includeIDs       if <span class="javakeyword">true</span> a node 
      *                          revision id is also included for each path 
+     * @param  limit            maximum number of history entries; if <code>&lt;=0</code>, then no limitation 
+     *                          is applied and all history entries are reported   
      * @param  handler          a history handler
      * @throws SVNException     <ul>
      *                          <li>no repository is found at 
@@ -625,6 +627,7 @@ public class SVNLookClient extends SVNBasicClient {
      * @param  revision         a revision number
      * @param  includeIDs       if <span class="javakeyword">true</span> a node 
      *                          revision id is also included for each path
+     * @param  recursive        whether to descend recursively or operate on a single directory only
      * @param  handler          a tree handler
      * @throws SVNException     <ul>
      *                          <li>no repository is found at 
@@ -672,6 +675,7 @@ public class SVNLookClient extends SVNBasicClient {
      * @param  transactionName  a transaction name
      * @param  includeIDs       if <span class="javakeyword">true</span> a node 
      *                          revision id is also included for each path
+     * @param  recursive        whether to descend recursively or operate on a single directory only
      * @param  handler          a tree handler
      * @throws SVNException     <ul>
      *                          <li>no repository is found at 

@@ -139,18 +139,55 @@ public class SVNAdminEventAction {
      */
     public static final SVNAdminEventAction REVISION_PROPERTIES_COPIED = new SVNAdminEventAction(15);
 
+    /**
+     * Says that a next revision was processed during dumpfiltering. Sent during dumpfiltering.
+     * 
+     * @since 1.2.0 
+     */
     public static final SVNAdminEventAction DUMP_FILTER_REVISION_COMMITTED = new SVNAdminEventAction(16);
 
+    /**
+     * Informs that an original revision is dropped. Sent during dumpfiltering.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction DUMP_FILTER_REVISION_SKIPPED = new SVNAdminEventAction(17);
 
+    /**
+     * Informs of the total number of dropped revisions. Sent after dumpfiltering is finished.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction DUMP_FILTER_TOTAL_REVISIONS_DROPPED = new SVNAdminEventAction(18);
 
+    /**
+     * Informs of the original revision that was dropped during dumpfiltering. Sent only in case  
+     * renumbering original revisions is enabled. Sent after dumpfiltering is finished.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction DUMP_FILTER_DROPPED_RENUMBERED_REVISION = new SVNAdminEventAction(19);
 
+    /**
+     * Informs of an original revision that was renumbered. Sent only in case renumbering original revisions 
+     * is enabled. Sent after dumpfiltering is finished.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction DUMP_FILTER_RENUMBERED_REVISION = new SVNAdminEventAction(20);
 
+    /**
+     * Provides the total number of dropped nodes during dumpfiltering. Sent after dumpfiltering is finished.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction DUMP_FILTER_TOTAL_NODES_DROPPED = new SVNAdminEventAction(21);
 
+    /**
+     * Informs of a dropped node during dumpfiltering. Sent after dumpfiltering is finished.
+     * 
+     * @since 1.2.0
+     */
     public static final SVNAdminEventAction DUMP_FILTER_DROPPED_NODE = new SVNAdminEventAction(22);
 
 }

@@ -16,7 +16,7 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * <code>SVNEventAdapter</code> is an adapter class for {@link ISVNEventHandler}.
+ * <b>SVNEventAdapter</b> is an adapter class for {@link ISVNEventHandler}.
  * Users's event handler implementations should extend this adapter class rather than implementing 
  * {@link ISVNEventHandler} directly. This way, if the {@link ISVNEventHandler} interface is changed  
  * in future, users' event handler implementations won't get broken since the changes will be reflected in 
@@ -29,14 +29,15 @@ import org.tmatesoft.svn.core.SVNException;
 public class SVNEventAdapter implements ISVNEventHandler {
 
     /**
-     * Does nothing. To be overriden by a user's implementation.
+     * Does nothing. To be overridden by a user's implementation.
+     * 
      * @throws SVNCancelException 
      */
     public void checkCancelled() throws SVNCancelException {
     }
 
     /**
-     * Does nothing. To be overriden by a user's implementation.
+     * Does nothing. To be overridden by a user's implementation.
      * 
      * @param event 
      * @param progress 

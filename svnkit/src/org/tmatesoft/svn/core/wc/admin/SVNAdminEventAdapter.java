@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,17 +17,43 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 
 
 /**
- * @version 1.0
+ * <b>SVNAdminEventAdapter</b> is an adapter class for {@link ISVNAdminEventHandler}.
+ * Users's event handler implementations should extend this adapter class rather than implementing 
+ * {@link ISVNAdminEventHandler} directly. This way, if the {@link ISVNAdminEventHandler} interface is changed  
+ * in future, users' event handler implementations won't get broken since the changes will be reflected in 
+ * this adapter class. 
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNAdminEventAdapter implements ISVNAdminEventHandler {
 
+    /**
+     * Does nothing. To be overridden by a user's implementation.
+     * 
+     * @param event 
+     * @param progress 
+     * @throws SVNException 
+     */
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
     }
 
+    /**
+     * Does nothing. To be overridden by a user's implementation.
+     * 
+     * @throws SVNCancelException 
+     */
     public void checkCancelled() throws SVNCancelException {
     }
 
+    /**
+     * Does nothing. To be overridden by a user's implementation.
+     * 
+     * @param event 
+     * @param progress 
+     * @throws SVNException 
+     */
     public void handleEvent(SVNEvent event, double progress) throws SVNException {
     }
 
