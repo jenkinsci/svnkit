@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,7 +24,7 @@ import java.io.File;
  * a committer object, for example, to 
  * {@link SVNCommitClient#setCommitParameters(ISVNCommitParameters) SVNCommitClient}. 
  *   
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     DefaultSVNCommitParameters
  */
@@ -70,14 +70,18 @@ public interface ISVNCommitParameters {
     public Action onMissingDirectory(File file);
     
     /**
-     * S
-     * @param directory 
-     * @return true if directory should be deleted after commit.
+     * Instructs whether to remove the local <code>directory</code> after commit or not.
+     *    
+     * @param directory  working copy directory
+     * @return           <span class="javakeyword">true</span> if directory should be deleted after commit
      */
     public boolean onDirectoryDeletion(File directory);
     
     /**
-     * @return true if file should be deleted after commit.
+     * Instructs whether to remove the local <code>file</code> after commit or not.
+     * 
+     * @param file  working copy file 
+     * @return      <span class="javakeyword">true</span> if file should be deleted after commit
      */
     public boolean onFileDeletion(File file);
     

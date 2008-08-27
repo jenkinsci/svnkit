@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -44,11 +44,23 @@ public class DefaultSVNCommitParameters implements ISVNCommitParameters {
         return ERROR;
     }
 
+    /**
+     * Returns <span class="javakeyword">true</span>.
+     * 
+     * @param directory working copy directory
+     * @return          <span class="javakeyword">true</span>
+     */
     public boolean onDirectoryDeletion(File directory) {
         return true;
     }
 
-    public boolean onFileDeletion(File directory) {
+    /**
+     * Returns <span class="javakeyword">true</span>.
+     * @param file   working copy file
+     * @return <span class="javakeyword">true</span>
+     * 
+     */
+    public boolean onFileDeletion(File file) {
         return true;
     }
 }

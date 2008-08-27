@@ -23,9 +23,9 @@ import org.tmatesoft.svn.core.SVNURL;
  * <p/>
  * Such handlers, if provided, are used in checkout/update, wc-to-url copying operations.
  *  
- * @version 1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
- * @since   1.2
+ * @since   1.2.0
  */
 public interface ISVNExternalsHandler {
     /**

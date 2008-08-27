@@ -109,6 +109,10 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * <b>SVNRepository</b> objects created by this instance will
      * use a single socket connection.
      * 
+     * <p/>
+     * This constructor is identical to 
+     * <code>DefaultSVNRepositoryPool(authManager, tunnelProvider, DEFAULT_IDLE_TIMEOUT, true)</code>.
+     * 
      * @param authManager      an authentication driver
      * @param tunnelProvider   a tunnel provider
      */
@@ -125,9 +129,10 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * @param authManager      an authentication driver
      * @param tunnelProvider   a tunnel provider
      * @param timeout          inactivity timeout after which open connections should be closed 
-     * @param keepConnection   whether to left connection open 
+     * @param keepConnection   whether to keep connection open 
      */
-    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, long timeout, boolean keepConnection) {
+    public DefaultSVNRepositoryPool(ISVNAuthenticationManager authManager, ISVNTunnelProvider tunnelProvider, 
+            long timeout, boolean keepConnection) {
         myAuthManager = authManager;
         myTunnelProvider = tunnelProvider;
         myDebugLog = SVNDebugLog.getDefaultLog();
@@ -303,7 +308,14 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             }
         }
     }
-    
+
+    /**
+     * Stops the daemon thread that checks whether there are any <code>SVNRepository</code> objects 
+     * expired.
+     * 
+     * @see   #connectionClosed(SVNRepository)
+     * @since 1.1.5
+     */
     public static void shutdownTimer() {
         synchronized (DefaultSVNRepositoryPool.class) {
             if (ourTimer != null) {
@@ -352,8 +364,22 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     }
 
     /**
+     * Places the specified <code>repository</code> into the pool of inactive <code>SVNRepository</code> 
+     * objects. 
      * 
-     * @param repository 
+     * <p/>
+     * If this pool keeps connections open (refer to the <code>keepConnection</code> parameter of the 
+     * {@link #DefaultSVNRepositoryPool(ISVNAuthenticationManager, ISVNTunnelProvider, long, boolean) constructor}), 
+     * then each <code>SVNRepository</code> object which is passed to this method (what means it finished 
+     * the operation), must be reused in a period of time not greater than the timeout value. The timeout value 
+     * is either equal to the value passed to the {@link #DefaultSVNRepositoryPool(ISVNAuthenticationManager, ISVNTunnelProvider, long, boolean) constructor}, 
+     * or it defaults to 60 seconds if no valid timeout value was provided. Otherwise the repository object will 
+     * be {@link SVNRepository#closeSession() closed}. Timeout checking occurs one time in 10 seconds. This 
+     * behavior - closing repository objects after timeout - can be changed by switching off the timer thread 
+     * via {@link #shutdownTimer()}.   
+     * 
+     * @param repository repository access object
+     * @since 1.1.4
      */
     public void connectionClosed(final SVNRepository repository) {
         // start inactivity timer.
@@ -363,12 +389,26 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         }
     }
 
+    /**
+     * Removes the specified <code>repository</code> object from the pool of inactive <code>SVNRepository</code>
+     * objects held by this object. This method is synchronized.
+     * 
+     * @param repository repository access object to remove from the pool
+     * @since 1.1.4
+     */
     public void connectionOpened(SVNRepository repository) {
         synchronized (myInactiveRepositories) {
             myInactiveRepositories.remove(repository);
         }
     }
-    
+
+    /**
+     * Sets a canceller to be used in all {@link SVNRepository} objects produced by this
+     * pool.
+     * 
+     * @param canceller caller's canceller
+     * @since 1.1.4
+     */
     public void setCanceller(ISVNCanceller canceller) {
         myCanceller = canceller;
         Map pool = getPool();
@@ -379,6 +419,13 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         }
     }
 
+    /**
+     * Sets a debug logger to be used in all {@link SVNRepository} objects produced by this
+     * pool.
+     * 
+     * @param log debug logger
+     * @since 1.1.4 
+     */
     public void setDebugLog(ISVNDebugLog log) {
         myDebugLog = log == null ? SVNDebugLog.getDefaultLog() : log;
         Map pool = getPool();

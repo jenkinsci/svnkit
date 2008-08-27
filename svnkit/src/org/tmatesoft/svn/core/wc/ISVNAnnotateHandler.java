@@ -107,5 +107,9 @@ public interface ISVNAnnotateHandler {
      */
     public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException;
 
+    /**
+     * Handles the EOF met after the document contents.
+     * @since  1.2.0
+     */
     public void handleEOF();
 }
