@@ -28,7 +28,6 @@ import java.util.Map;
 import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
-import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -273,7 +272,7 @@ public abstract class SVNRepository {
      *                            repository 
      * @return  the UUID of a repository
      * @throws SVNException in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
      */
     public String getRepositoryUUID(boolean forceConnection) throws SVNException {
         if (forceConnection && myRepositoryUUID == null) {
@@ -312,7 +311,7 @@ public abstract class SVNRepository {
      *                            repository 
      * @return                    the repository root directory location url
      * @throws SVNException in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
      * @see                       #testConnection()
      */
     public SVNURL getRepositoryRoot(boolean forceConnection) throws SVNException {
@@ -1969,7 +1968,7 @@ public abstract class SVNRepository {
      * @param  reporter         a caller's reporter
      * @param  editor           a caller's editor
      * @throws SVNException     in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
      * @see                     #update(long, String, boolean, ISVNReporterBaton, ISVNEditor)
      * @see                     ISVNReporterBaton
      * @see                     ISVNReporter
@@ -2231,7 +2230,7 @@ public abstract class SVNRepository {
      *                         sent
      * @param  editor          a commit editor to receive changes 
      * @throws SVNException in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
      * @since  1.1, new in SVN 1.4
      */
     public abstract void replay(long lowRevision, long revision, boolean sendDeltas, ISVNEditor editor) throws SVNException;
@@ -2531,7 +2530,7 @@ public abstract class SVNRepository {
      * @param includeDescendants    indicates whether merge info is retrieved for descendants of elements in <code>paths</code>
      * @return                      the map of merge information for the repository entries in <code>paths</code>
      * @throws SVNException         in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
  
      * @since SVNKit 1.2.0, SVN 1.5.0 
      */
@@ -2671,7 +2670,7 @@ public abstract class SVNRepository {
      * @return boolean if the repository has specified capability
      * 
      * @throws SVNException in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
      * 
      * @since SVNKit 1.2.0, SVN 1.5.0
      * @see   SVNCapability
@@ -2837,7 +2836,7 @@ public abstract class SVNRepository {
      *                      this <b>SVNRepository</b> is set
      * @return              a path relative to the repository root
      * @throws SVNException in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems            
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems            
      */
     public String getRepositoryPath(String relativePath) throws SVNException {
         if (relativePath == null) {
@@ -2863,7 +2862,7 @@ public abstract class SVNRepository {
      *                                  repository 
      * @return                          a path relative to the host
      * @throws SVNException in case the repository could not be connected
-     * @throws SVNAuthenticationException in case of authentication problems
+     * @throws org.tmatesoft.svn.core.SVNAuthenticationException in case of authentication problems
      */
     public String getFullPath(String relativeOrRepositoryPath) throws SVNException {
         if (relativeOrRepositoryPath == null) {

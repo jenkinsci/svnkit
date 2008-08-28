@@ -62,7 +62,6 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -147,7 +146,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * 
      * <p/> 
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
-     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
      * 
      * @param repositoryPool   a repository pool object
      * @param options          a run-time configuration options driver     
@@ -208,7 +207,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @deprecated use {@link #doUpdate(File, SVNRevision, SVNDepth, boolean, boolean)} instead 
      */
     public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
-        return doUpdate(file, revision, recursive, false);
+        return doUpdate(file, revision, SVNDepth.fromRecurse(recursive), false, false);
     }
     
     /**
@@ -531,7 +530,9 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @deprecated use {@link #doSwitch(File, SVNURL, SVNRevision, SVNRevision, SVNDepth, boolean, boolean)} instead
      */
     public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
-        return doSwitch(file, url, SVNRevision.UNDEFINED, revision, recursive);
+        return doSwitch(file, url, SVNRevision.UNDEFINED, revision, SVNDepth.getInfinityOrFilesDepth(recursive), 
+                false, false);
+        
     }
 
     /**
@@ -557,7 +558,8 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @deprecated use {@link #doSwitch(File, SVNURL, SVNRevision, SVNRevision, SVNDepth, boolean, boolean)} instead
      */
     public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
-        return doSwitch(file, url, pegRevision, revision, recursive, false);
+        return doSwitch(file, url, pegRevision, revision, SVNDepth.getInfinityOrFilesDepth(recursive), false, 
+                false);
     }
     
     /**
@@ -727,7 +729,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @deprecated use {@link #doCheckout(SVNURL, File, SVNRevision, SVNRevision, SVNDepth, boolean)} instead  
      */
     public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
-        return doCheckout(url, dstPath, pegRevision, revision, recursive, false);
+        return doCheckout(url, dstPath, pegRevision, revision, SVNDepth.fromRecurse(recursive), false);
     }
 
     /**

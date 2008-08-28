@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -160,9 +161,9 @@ public class SVNRepositoryReplicationTest {
 
                 public void report(ISVNReporter reporter) throws SVNException {
                     if (previousRev == -1) {
-                        reporter.setPath("", null, 0, true);
+                        reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
                     } else {
-                        reporter.setPath("", null, previousRev, false);
+                        reporter.setPath("", null, previousRev, SVNDepth.INFINITY, false);
                     }
                     reporter.finishReport();
                 }
@@ -172,9 +173,9 @@ public class SVNRepositoryReplicationTest {
 
                 public void report(ISVNReporter reporter) throws SVNException {
                     if (previousRev == -1) {
-                        reporter.setPath("", null, 0, true);
+                        reporter.setPath("", null, 0, SVNDepth.INFINITY, true);
                     } else {
-                        reporter.setPath("", null, previousRev, false);
+                        reporter.setPath("", null, previousRev, SVNDepth.INFINITY, false);
                     }
                     reporter.finishReport();
                 }
@@ -304,10 +305,12 @@ public class SVNRepositoryReplicationTest {
         UpdateHandler handler = new UpdateHandler();
         handler.setEventsMap(events1);
         updateClient.setEventHandler(handler);
-        updateClient.doCheckout(srcURL, srcWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
-
+        updateClient.doCheckout(srcURL, srcWCRoot, SVNRevision.create(i), SVNRevision.create(i), 
+                SVNDepth.INFINITY, false);
+        
         handler.setEventsMap(events2);
-        updateClient.doCheckout(dstURL, dstWCRoot, SVNRevision.create(i), SVNRevision.create(i), true);
+        updateClient.doCheckout(dstURL, dstWCRoot, SVNRevision.create(i), SVNRevision.create(i), 
+                SVNDepth.INFINITY, false);
 
         if (!compareEvents(events1, events2)) {
             return false;
@@ -322,10 +325,10 @@ public class SVNRepositoryReplicationTest {
             events2.clear();
 
             handler.setEventsMap(events1);
-            updateClient.doUpdate(srcWCRoot, SVNRevision.create(i), true);
+            updateClient.doUpdate(srcWCRoot, SVNRevision.create(i), SVNDepth.INFINITY, false, false);
 
             handler.setEventsMap(events2);
-            updateClient.doUpdate(dstWCRoot, SVNRevision.create(i), true);
+            updateClient.doUpdate(dstWCRoot, SVNRevision.create(i), SVNDepth.INFINITY, false, false);
 
             if (!compareEvents(events1, events2)) {
                 return false;
@@ -403,8 +406,8 @@ public class SVNRepositoryReplicationTest {
         SVNProperties props2 = new SVNProperties();
         ISVNPropertyHandler handler1 = new PropertyHandler(props1);
         ISVNPropertyHandler handler2 = new PropertyHandler(props2);
-        wcClient.doGetProperty(dir1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
-        wcClient.doGetProperty(dir2, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler2);
+        wcClient.doGetProperty(dir1, null, SVNRevision.HEAD, SVNRevision.WORKING, SVNDepth.EMPTY, handler1, null);
+        wcClient.doGetProperty(dir2, null, SVNRevision.HEAD, SVNRevision.WORKING, SVNDepth.EMPTY, handler2, null);
         return compareProps(props1, props2);
     }
 
@@ -426,8 +429,11 @@ public class SVNRepositoryReplicationTest {
         SVNProperties props2 = new SVNProperties();
         ISVNPropertyHandler handler1 = new PropertyHandler(props1);
         ISVNPropertyHandler handler2 = new PropertyHandler(props2);
-        wcClient.doGetProperty(file1, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler1);
-        wcClient.doGetProperty(file2, null, SVNRevision.HEAD, SVNRevision.WORKING, false, handler2);
+        wcClient.doGetProperty(file1, null, SVNRevision.HEAD, SVNRevision.WORKING, 
+                SVNDepth.EMPTY, handler1, null);
+
+        wcClient.doGetProperty(file2, null, SVNRevision.HEAD, SVNRevision.WORKING, SVNDepth.EMPTY, 
+                handler2, null);
         if (!compareProps(props1, props2)) {
             return false;
         }

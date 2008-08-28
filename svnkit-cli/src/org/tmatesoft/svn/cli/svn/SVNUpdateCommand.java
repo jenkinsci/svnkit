@@ -81,7 +81,7 @@ public class SVNUpdateCommand extends SVNCommand {
                     targetPaths.add(path.getAbsolutePath());
                 }
             };
-            changelistClient.getChangeListPaths(changeLists, fileTargets, clDepth, handler);
+            changelistClient.doGetChangeListPaths(changeLists, fileTargets, clDepth, handler);
             targets = targetPaths;
         }
         

@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs.test;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
@@ -40,7 +41,8 @@ public class SVNImportThread extends Thread {
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNCommitInfo info = null;
         try {
-            info = manager.getCommitClient().doImport(myDirectory, myURL, myCommitMessage, true);
+            info = manager.getCommitClient().doImport(myDirectory, myURL, myCommitMessage, null, true, false, 
+                    SVNDepth.INFINITY);
         } catch (SVNException svne) {
             System.out.println("Import failed: " + svne.getErrorMessage().getFullMessage());
             svne.printStackTrace();

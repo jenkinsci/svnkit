@@ -88,9 +88,9 @@ public class SVNChangeListCommand extends SVNCommand {
         }
         try {
             if (changelist != null) {
-                client.addToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
+                client.doAddToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
             } else {
-                client.removeFromChangelist(files, depth, getSVNEnvironment().getChangelists());
+                client.doRemoveFromChangelist(files, depth, getSVNEnvironment().getChangelists());
             }
         } catch (SVNException e) {
             getSVNEnvironment().handleWarning(e.getErrorMessage(), 

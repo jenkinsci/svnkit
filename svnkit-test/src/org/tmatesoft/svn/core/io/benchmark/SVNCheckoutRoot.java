@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io.benchmark;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -42,7 +43,7 @@ class SVNCheckoutRoot extends SVNMeasurable implements Runnable, ISVNEditor, ISV
 
 
     public void report(ISVNReporter reporter) throws SVNException {
-        reporter.setPath("", null, myLastRevision, true);
+        reporter.setPath("", null, myLastRevision, SVNDepth.INFINITY, true);
         reporter.finishReport();
     }
 

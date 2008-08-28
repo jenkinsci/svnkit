@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 
-import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
-import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;

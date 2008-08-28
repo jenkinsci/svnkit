@@ -264,7 +264,7 @@ public class SVNClientManager implements ISVNRepositoryPool {
     /**
      * Disposes this client object.
      * Call this method when you've finished working with this object. This will close 
-     * any active network sessions. 
+     * any open network sessions. 
      */
     public void dispose() {
         if (myRepositoryPool != null) {

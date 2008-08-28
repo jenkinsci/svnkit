@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -214,7 +215,7 @@ public class Export {
                  * and even let server know that some files or directories are locally missing or
                  * locked. 
                  */
-                reporter.setPath("", null, exportRevision, true);
+                reporter.setPath("", null, exportRevision, SVNDepth.INFINITY, true);
                 
                 /*
                  * Don't forget to finish the report!
