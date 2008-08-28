@@ -18,12 +18,12 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 
 
 /**
- * <b>ISVNMerger</b> is the merger driver interface used by <code>SVNKit</code> in merging operations. 
+ * <b>ISVNMerger</b> is the merge driver interface used by <code>SVNKit</code> in merging operations. 
  * 
  * <p>
- * Merger drivers are created by a merger factory implementing the 
+ * Merge drivers are created by a merger factory implementing the 
  * {@link ISVNMergerFactory} interface. Read more about that interface to
- * find out how to get a default implementation of <b>ISVNMerger</b>.
+ * find out how to get a default implementation of <code>ISVNMerger</code>.  
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
@@ -33,29 +33,33 @@ public interface ISVNMerger {
     /**
      * Performs a text merge.
      * 
-     * @param  files 
-     * @param  dryRun 
-     * @param  options 
-     * @return                
+     * @param  files            files invoked in merge  
+     * @param  dryRun           if <span class="javakeyword">true</span>, merge is simulated only, no real
+     *                          changes are done
+     * @param  options          merge options to take into account
+     * @return                  result of merging 
      * @throws SVNException 
-     * 
      */
     public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException;
    
     /**
+     * Given <code>adminArea</code>/<code>localPath</code> and property changes (<code>propDiff</code>) based 
+     * on <code>serverBaseProps</code>, merges the changes into the working copy.
      * 
-     * @param  localPath 
-     * @param  workingProperties 
-     * @param  baseProperties 
-     * @param  serverBaseProps 
-     * @param  propDiff 
-     * @param  adminArea 
-     * @param  log 
-     * @param  baseMerge 
-     * @param  dryRun 
-     * @return 
+     * @param  localPath           working copy path base name
+     * @param  workingProperties   working properties
+     * @param  baseProperties      pristine properties
+     * @param  serverBaseProps     properties that come from the server
+     * @param  propDiff            property changes that come from the repository
+     * @param  adminArea           admin area object representing the <code>.svn<./code> admin area of 
+     *                             the target which properties are merged
+     * @param  log                 logger
+     * @param  baseMerge           if <span class="javakeyword">false</span>, then changes only working properties;
+     *                             otherwise, changes both the base and working properties
+     * @param  dryRun              if <span class="javakeyword">true</span>, merge is simulated only, no real
+     *                             changes are done
+     * @return                     result of merging 
      * @throws SVNException 
-     * 
      */
 	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff,

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,11 +16,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.tigris.subversion.javahl.ClientException;
+import org.tigris.subversion.javahl.Depth;
 import org.tigris.subversion.javahl.Revision;
 import org.tigris.subversion.javahl.SVNClient;
 import org.tigris.subversion.javahl.SVNClientInterface;
+import org.tigris.subversion.javahl.Status;
+import org.tigris.subversion.javahl.StatusCallback;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -28,7 +32,7 @@ import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class Benchmark {
@@ -110,14 +114,14 @@ public class Benchmark {
         marks.add(mark);
         
         // delete temporary location.
-        client.remove(new String[] {dstURL}, "deleted", true);
+        client.remove(new String[] {dstURL}, "deleted", true, false, null);
         return (Mark[]) marks.toArray(new Mark[marks.size()]);
     }
     
     private static Mark doCheckout(SVNClientInterface client, String url, String path) throws ClientException {
         Mark mark = new Mark("Checkout");
         mark.start();
-        client.checkout(url, path, Revision.HEAD, true);
+        client.checkout(url, path, Revision.HEAD, null, Depth.infinity, false, false);
         mark.finish();
         return mark;
     }
@@ -125,7 +129,14 @@ public class Benchmark {
     private static Mark doLocalStatus(SVNClientInterface client, String path) throws ClientException {
         Mark mark = new Mark("Local status");
         mark.start();
-        client.status(path, true, false, true, true, false);
+        client.status(path, Depth.unknown, false, true, true, false, null, new StatusCallback() {
+            private List myStatuses = new ArrayList();
+
+            public void doStatus(Status status) {
+                myStatuses.add(status);
+            }
+        });
+
         mark.finish();
         return mark;
     }
@@ -133,7 +144,13 @@ public class Benchmark {
     private static Mark doRemoteStatus(SVNClientInterface client, String path) throws ClientException {
         Mark mark = new Mark("Remote status");
         mark.start();
-        client.status(path, true, true, true, true, false);
+        client.status(path, Depth.unknown, true, true, true, false, null, new StatusCallback() {
+            private List myStatuses = new ArrayList();
+
+            public void doStatus(Status status) {
+                myStatuses.add(status);
+            }
+        });
         mark.finish();
         return mark;
     }
@@ -141,7 +158,7 @@ public class Benchmark {
     private static Mark doExport(SVNClientInterface client, String from, String to) throws ClientException {
         Mark mark = new Mark("Local export");
         mark.start();
-        client.doExport(from, to, Revision.WORKING, false);
+        client.doExport(from, to, Revision.WORKING, Revision.WORKING, false, false, Depth.infinity, null);
         mark.finish();
         return mark;
     }
@@ -149,7 +166,7 @@ public class Benchmark {
     private static Mark doImport(SVNClientInterface client, String url, String path) throws ClientException {
         Mark mark = new Mark("Import");
         mark.start();
-        client.doImport(path, url, "import", true);
+        client.doImport(path, url, "import", Depth.infinity, false, false, null);
         mark.finish();
         return mark;
     }
@@ -158,7 +175,7 @@ public class Benchmark {
         // move dir (add and delete).
         String srcPath = path + "/subversion/clients";
         String dstPath = path + "/subversion/clients2";
-        client.move(srcPath, dstPath, "", true);
+        client.move(new String[] { srcPath }, dstPath, "", true, true, false, null);
         // modify files.
         File[] files = SVNFileListUtil.listFiles(new File(path + "/www"));
         try {
@@ -179,7 +196,7 @@ public class Benchmark {
         // make local modifications at path
         Mark mark = new Mark("Commit");
         mark.start();
-        client.commit(new String[] {path}, "commit", true, false);
+        client.commit(new String[] { path }, "commit", Depth.infinity, false, false, null, null);
         mark.finish();
         return mark;
     }
@@ -187,7 +204,13 @@ public class Benchmark {
     private static Mark doStatus(SVNClientInterface client, String path) throws ClientException {
         Mark mark = new Mark("Status (mods)");
         mark.start();
-        client.status(path, true, false, true, true, false);
+        client.status(path, Depth.unknown, false, true, true, false, null, new StatusCallback() {
+            private List myStatuses = new ArrayList();
+
+            public void doStatus(Status status) {
+                myStatuses.add(status);
+            }
+        });
         mark.finish();
         return mark;
     }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,24 +32,63 @@ import org.xml.sax.SAXException;
  * that writes XML formatted annotation information to a specified 
  * <b>ContentHandler</b>. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnnotateHandler {
 
+    /**
+     * <code>'path'</code> attribute.
+     */
     public static final String PATH_ATTR = "path";
+    /**
+     * <code>'revision'</code> attribute.
+     */
     public static final String REVISION_ATTR = "revision";
+
+    /**
+     * <code>'date'</code> tag.
+     */
     public static final String DATE_TAG = "date";
+
+    /**
+     * <code>'author'</code> tag.
+     */
     public static final String AUTHOR_TAG = "author";
+
+    /**
+     * <code>'commit'</code> tag.
+     */
     public static final String COMMIT_TAG = "commit";
+
+    /**
+     * <code>'entry'</code> tag.
+     */
     public static final String ENTRY_TAG = "entry";
+
+    /**
+     * <code>'line-number'</code> tag.
+     */
     public static final String LINE_NUMBER_TAG = "line-number";
+
+    /**
+     * <code>'target'</code> tag.
+     */
     public static final String TARGET_TAG = "target";
+
+    /**
+     * <code>'blame'</code> tag.
+     */
     public static final String BLAME_TAG = "blame";
+
+    /**
+     * <code>'merged'</code> tag.
+     */
     public static final String MERGED_TAG = "merged";
     
     private long myLineNumber;
     private boolean myIsUseMergeHistory;
+    
     /**
      * Creates a new annotation handler.
      * 
@@ -71,8 +110,15 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         this(contentHandler, log, false);
     }
 
-    public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log, 
-                                 boolean isUseMergeHistory) {
+    /**
+     * Creates a new annotation handler.
+     * 
+     * @param contentHandler     a <b>ContentHandler</b> to form 
+     *                           an XML tree
+     * @param log                a debug logger
+     * @param isUseMergeHistory  whether merge history should be taken into account or not
+     */
+    public SVNXMLAnnotateHandler(ContentHandler contentHandler, ISVNDebugLog log, boolean isUseMergeHistory) {
         super(contentHandler, log);
         myIsUseMergeHistory = isUseMergeHistory;
     }
@@ -110,6 +156,15 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         }
     }
 
+    /**
+     * Handles line annotation producing corresponding xml tags.
+     * 
+     * @param date 
+     * @param revision 
+     * @param author 
+     * @param line 
+     * @throws SVNException 
+     */
     public void handleLine(Date date, long revision, String author, String line) throws SVNException {
         try {
             addAttribute(LINE_NUMBER_TAG, myLineNumber + "");
@@ -131,6 +186,20 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         }
     }
 
+    /**
+     * Handles line annotation producing corresponding xml tags.
+     * 
+     * @param date 
+     * @param revision 
+     * @param author 
+     * @param line 
+     * @param mergedDate 
+     * @param mergedRevision 
+     * @param mergedAuthor 
+     * @param mergedPath 
+     * @param lineNumber 
+     * @throws SVNException 
+     */
     public void handleLine(Date date, long revision, String author, String line, 
                            Date mergedDate, long mergedRevision, String mergedAuthor, 
                            String mergedPath, int lineNumber) throws SVNException {
@@ -162,10 +231,22 @@ public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnn
         } 
     }
 
+    /**
+     * Just returns <span class="javakeyword">false</span>.
+     * @param date 
+     * @param revision 
+     * @param author 
+     * @param contents 
+     * @return               <span class="javakeyword">false</span>
+     * @throws SVNException 
+     */
     public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException {
         return false;
     }
 
+    /**
+     * Does nothing.
+     */
     public void handleEOF() {
     }
 }

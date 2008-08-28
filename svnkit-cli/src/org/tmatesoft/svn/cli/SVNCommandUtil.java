@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -35,7 +35,7 @@ import org.tmatesoft.svn.util.Version;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNCommandUtil {
@@ -360,7 +360,7 @@ public class SVNCommandUtil {
         }
         if (!quiet) {
             message += 
-                "\nCopyright (C) 2004-2007 TMate Software.\n" +
+                "\nCopyright (c) 2004-2008 TMate Software.\n" +
                 "SVNKit is open source (GPL) software, see http://svnkit.com/ for more information.\n" +
                 "SVNKit is pure Java (TM) version of Subversion, see http://subversion.tigris.org/";
         }

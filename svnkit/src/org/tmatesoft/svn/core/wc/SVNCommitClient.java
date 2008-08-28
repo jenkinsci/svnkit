@@ -57,7 +57,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -141,7 +140,7 @@ public class SVNCommitClient extends SVNBasicClient {
      * 
      * <p/>
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
-     * then {@link SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
      *
      * @param repositoryPool   a repository pool object
      * @param options          a run-time configuration options driver

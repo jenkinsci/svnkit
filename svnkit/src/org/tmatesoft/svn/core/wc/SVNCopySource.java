@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
@@ -127,7 +126,7 @@ public class SVNCopySource {
     /**
      * Tells whether the contents of this copy source should be copied rather than the copy source itself.
      * This is relevant only for directory copy sources. If a user {@link #setCopyContents(boolean) specifies} 
-     * to copy contents of a file he will get an {@link SVNException}. So, if this copy source represents a 
+     * to copy contents of a file he will get an {@link org.tmatesoft.svn.core.SVNException}. So, if this copy source represents a 
      * directory and if this method returns <span class="javakeyword">true</span>, children of this copy source 
      * directory will be copied to the target instead of the copy source.    
      * 

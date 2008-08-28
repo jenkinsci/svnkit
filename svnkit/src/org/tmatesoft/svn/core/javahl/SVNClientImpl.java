@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -133,7 +133,7 @@ import org.tmatesoft.svn.util.Version;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNClientImpl implements SVNClientInterface {
 
@@ -167,7 +167,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     /**
      * @author TMate Software Ltd.
-     * @version 1.1.1
+     * @version 1.2.0
      */
     public static final class LogLevel implements SVNClientLogLevel {
     }
@@ -393,7 +393,7 @@ public class SVNClientImpl implements SVNClientInterface {
             ((DefaultSVNAuthenticationManager)myAuthenticationManager).setRuntimeStorage(getClientCredentialsStorage());
         }
         if (myClientManager != null) {
-            myClientManager.shutdownConnections(true);
+            myClientManager.dispose();
             myClientManager.setAuthenticationManager(myAuthenticationManager);
             myClientManager.setOptions(myOptions);
         }
@@ -1904,7 +1904,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
 
         try {
-            changelistClient.addToChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelist, changelists);
+            changelistClient.doAddToChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelist, changelists);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1924,7 +1924,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
         SVNChangelistClient changelistClient = getChangelistClient();
         try {
-            changelistClient.removeFromChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelists);
+            changelistClient.doRemoveFromChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelists);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1948,7 +1948,7 @@ public class SVNClientImpl implements SVNClientInterface {
         
         SVNChangelistClient changelistClient = getChangelistClient();
         try {
-            changelistClient.getChangeLists(new File(rootPath).getAbsoluteFile(), 
+            changelistClient.doGetChangeLists(new File(rootPath).getAbsoluteFile(), 
                     JavaHLObjectFactory.getChangeListsCollection(changelists), 
                     JavaHLObjectFactory.getSVNDepth(depth), handler);
         } catch (SVNException e) {

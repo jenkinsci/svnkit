@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNChangeListCommand extends SVNCommand {
@@ -88,9 +88,9 @@ public class SVNChangeListCommand extends SVNCommand {
         }
         try {
             if (changelist != null) {
-                client.addToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
+                client.doAddToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
             } else {
-                client.removeFromChangelist(files, depth, getSVNEnvironment().getChangelists());
+                client.doRemoveFromChangelist(files, depth, getSVNEnvironment().getChangelists());
             }
         } catch (SVNException e) {
             getSVNEnvironment().handleWarning(e.getErrorMessage(), 

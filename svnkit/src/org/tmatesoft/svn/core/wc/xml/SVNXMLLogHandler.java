@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -33,21 +33,63 @@ import org.xml.sax.SAXException;
  * This log handler implementation writes xml formatted information 
  * about the log entries it's passed to a specified <b>ContentHandler</b>. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntryHandler {
-
+    /**
+     * <code>'copyfrom-rev'</code> attribute.
+     */
     public static final String COPYFROM_REV_ATTR = "copyfrom-rev";
+
+    /**
+     * <code>'copyfrom-path'</code> attribute.
+     */
     public static final String COPYFROM_PATH_ATTR = "copyfrom-path";
+
+    /**
+     * <code>'action'</code> attribute.
+     */
     public static final String ACTION_ATTR = "action";
+
+    /**
+     * <code>'revision'</code> attribute.
+     */
     public static final String REVISION_ATTR = "revision";
+
+    /**
+     * <code>'msg'</code> tag.
+     */
     public static final String MSG_TAG = "msg";
+
+    /**
+     * <code>'path'</code> tag.
+     */
     public static final String PATH_TAG = "path";
+
+    /**
+     * <code>'paths'</code> tag.
+     */
     public static final String PATHS_TAG = "paths";
+    
+    /**
+     * <code>'date'</code> tag.
+     */
     public static final String DATE_TAG = "date";
+
+    /**
+     * <code>'author'</code> tag.
+     */
     public static final String AUTHOR_TAG = "author";
+
+    /**
+     * <code>'logentry'</code> tag.
+     */
     public static final String LOGENTRY_TAG = "logentry";
+
+    /**
+     * <code>'log'</code> tag.
+     */
     public static final String LOG_TAG = "log";
     
     private boolean myIsOmitLogMessage;
@@ -82,6 +124,12 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
         return LOG_TAG;
     }
 
+    /**
+     * Handles a next log entry producing corresponding xml.
+     * 
+     * @param  logEntry       log entry 
+     * @throws SVNException 
+     */
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
         try {
             sendToHandler(logEntry);
@@ -91,6 +139,12 @@ public class SVNXMLLogHandler extends AbstractXMLHandler implements ISVNLogEntry
         }
     }
     
+    /**
+     * Sets whether log messages must be omitted or not.
+     * 
+     * @param omitLogMessage  <span class="javakeyword">true</span> to omit; 
+     *                        otherwise <span class="javakeyword">false</span> 
+     */
     public void setOmitLogMessage(boolean omitLogMessage) {
         myIsOmitLogMessage = omitLogMessage;
     }

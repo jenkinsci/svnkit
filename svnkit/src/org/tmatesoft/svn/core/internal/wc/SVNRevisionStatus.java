@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNRevisionStatus {
