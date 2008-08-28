@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminRecoverCommand extends SVNAdminCommand implements ISVNAdminEventHandler {

@@ -51,7 +51,7 @@ import org.xml.sax.XMLReader;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public abstract class ServletDAVHandler extends BasicDAVHandler {
 

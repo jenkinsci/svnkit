@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLocationEntryHandler {
 

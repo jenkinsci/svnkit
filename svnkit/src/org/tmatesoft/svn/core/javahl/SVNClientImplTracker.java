@@ -19,7 +19,7 @@ import java.util.Map;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNClientImplTracker implements Runnable {

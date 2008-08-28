@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public abstract class SVNXMLCommand extends SVNCommand {
 

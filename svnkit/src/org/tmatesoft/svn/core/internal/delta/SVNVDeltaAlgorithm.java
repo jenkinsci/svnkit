@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.delta;
 import java.util.Arrays;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {

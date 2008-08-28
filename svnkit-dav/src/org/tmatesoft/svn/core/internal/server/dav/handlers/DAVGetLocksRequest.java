@@ -15,7 +15,7 @@ import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVGetLocksRequest extends DAVRequest {
     protected void init() throws SVNException {

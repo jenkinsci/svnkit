@@ -21,7 +21,7 @@ import com.sun.jna.WString;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 class SVNWinCrypt {

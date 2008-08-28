@@ -37,7 +37,7 @@ import org.tmatesoft.svn.util.Version;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVGetHandler extends ServletDAVHandler {
    

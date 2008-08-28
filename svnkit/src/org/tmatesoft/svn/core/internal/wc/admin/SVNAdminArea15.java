@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea15 extends SVNAdminArea14 {

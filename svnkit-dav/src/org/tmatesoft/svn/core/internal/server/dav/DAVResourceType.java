@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVResourceType {
     public static final DAVResourceType REGULAR = new DAVResourceType("regular");

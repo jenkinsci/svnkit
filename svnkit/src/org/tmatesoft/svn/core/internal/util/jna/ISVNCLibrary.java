@@ -16,7 +16,7 @@ import com.sun.jna.Pointer;
  */
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 interface ISVNCLibrary extends Library {

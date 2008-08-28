@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFileRevisionHandler {
     

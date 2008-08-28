@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNCommandLineDiffGenerator extends DefaultSVNDiffGenerator {

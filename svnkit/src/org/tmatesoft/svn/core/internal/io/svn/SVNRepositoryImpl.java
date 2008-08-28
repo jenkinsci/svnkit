@@ -71,7 +71,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 

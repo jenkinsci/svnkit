@@ -20,7 +20,7 @@ import com.sun.jna.win32.StdCallLibrary;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 interface ISVNWinCryptLibrary extends StdCallLibrary {

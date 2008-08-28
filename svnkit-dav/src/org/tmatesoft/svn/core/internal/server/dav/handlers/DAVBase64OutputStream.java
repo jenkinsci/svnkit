@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNBase64;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DAVBase64OutputStream extends OutputStream {

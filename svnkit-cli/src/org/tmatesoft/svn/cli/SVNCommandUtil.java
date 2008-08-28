@@ -35,7 +35,7 @@ import org.tmatesoft.svn.util.Version;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNCommandUtil {

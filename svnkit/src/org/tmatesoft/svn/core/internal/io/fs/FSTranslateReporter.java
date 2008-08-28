@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.io.ISVNReporter;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSTranslateReporter implements ISVNReporter {

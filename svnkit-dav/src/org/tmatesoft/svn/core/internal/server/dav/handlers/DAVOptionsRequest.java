@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVOptionsRequest extends DAVRequest {
 

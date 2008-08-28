@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.javahl;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public interface PromptUserPassword4 extends PromptUserPasswordSSH {

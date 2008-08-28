@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVPropfindRequest extends DAVRequest {
 

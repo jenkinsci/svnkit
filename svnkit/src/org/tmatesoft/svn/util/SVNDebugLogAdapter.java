@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogStream;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNDebugLogAdapter implements ISVNDebugLog {

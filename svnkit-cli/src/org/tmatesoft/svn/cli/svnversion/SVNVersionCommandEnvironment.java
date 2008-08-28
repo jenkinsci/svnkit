@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNVersionCommandEnvironment extends AbstractSVNCommandEnvironment {

@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVLogRequest extends DAVRequest {
 

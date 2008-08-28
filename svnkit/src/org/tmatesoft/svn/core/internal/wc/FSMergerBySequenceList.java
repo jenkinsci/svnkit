@@ -17,7 +17,7 @@ import java.util.List;
 import de.regnis.q.sequence.QSequenceDifferenceBlock;
 
 /**
- * @version 1.1.0
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 final class FSMergerBySequenceList {

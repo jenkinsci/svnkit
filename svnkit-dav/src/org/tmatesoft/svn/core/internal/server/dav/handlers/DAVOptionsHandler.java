@@ -40,7 +40,7 @@ import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class DAVOptionsHandler extends ServletDAVHandler {
 

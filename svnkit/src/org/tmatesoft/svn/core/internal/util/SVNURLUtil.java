@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNURLUtil {
 

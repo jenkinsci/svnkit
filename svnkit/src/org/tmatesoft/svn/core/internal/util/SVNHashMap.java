@@ -24,7 +24,7 @@ import java.util.Set;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNHashMap implements Map {

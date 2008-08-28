@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 /**
  * The kind of change that occurred on the path.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSPathChangeKind implements Serializable {

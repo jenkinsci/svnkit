@@ -17,7 +17,7 @@ import org.tmatesoft.svn.cli.AbstractSVNLauncher;
 import org.tmatesoft.svn.cli.SVNCommandLine;
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVN extends AbstractSVNLauncher {

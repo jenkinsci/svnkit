@@ -16,7 +16,7 @@ import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNWinCryptPasswordCipher extends SVNPasswordCipher {

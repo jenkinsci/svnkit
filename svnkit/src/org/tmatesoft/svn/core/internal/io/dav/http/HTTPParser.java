@@ -17,7 +17,7 @@ import java.io.InputStream;
 import java.text.ParseException;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 class HTTPParser {

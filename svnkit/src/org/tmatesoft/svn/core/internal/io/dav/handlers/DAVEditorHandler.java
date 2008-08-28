@@ -54,7 +54,7 @@ import org.xml.sax.SAXException;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 

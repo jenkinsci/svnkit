@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNVersionCommand extends AbstractSVNCommand {
