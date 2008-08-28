@@ -2156,7 +2156,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        </ul>
      * @since                 1.2, SVN 1.5
      */
-    public void doMerge(File path1, SVNRevision pegRevision, List rangesToMerge, File dstPath, SVNDepth depth, 
+    public void doMerge(File path1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, SVNDepth depth, 
     		boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly) throws SVNException {
         /*
          * Equivalent of 3. merge -r N:M SOURCE[@REV] [WCPATH]
