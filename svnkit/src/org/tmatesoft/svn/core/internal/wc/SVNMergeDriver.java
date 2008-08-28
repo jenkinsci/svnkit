@@ -2159,7 +2159,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                                        SVNMergeRange[] remainingRanges = remainingRangesList.getRanges();
                                        range = remainingRanges[0];
                                        
-                                       if (parent.myRemainingRanges != null && !parent.myRemainingRanges.isEmpty()) {
+                                       if ((!isRollBack && range.getStartRevision() > revision2) ||
+                                               (isRollBack && range.getStartRevision() < revision2)) {
+                                           continue;
+                                       } else if (parent.myRemainingRanges != null && !parent.myRemainingRanges.isEmpty()) {
                                            SVNMergeRange parentRange = parent.myRemainingRanges.getRanges()[0];
                                            SVNMergeRange childRange = childMergePath.myRemainingRanges.getRanges()[0];
                                            if (parentRange.getStartRevision() == childRange.getStartRevision()) {
