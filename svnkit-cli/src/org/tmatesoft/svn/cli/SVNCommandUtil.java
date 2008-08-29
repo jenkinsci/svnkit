@@ -19,8 +19,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Properties;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -30,6 +32,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
 
@@ -187,19 +190,29 @@ public class SVNCommandUtil {
                 result = SVNFileUtil.execCommand(command, env, false, null);
             }
         } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX){
-            String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
-            if (shellCommand == null || "".equals(shellCommand.trim())) {
-                shellCommand = "/bin/sh";
+            if (env == null) {
+                String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
+                if (shellCommand == null || "".equals(shellCommand.trim())) {
+                    shellCommand = "/bin/sh";
+                }
+                String[] command = new String[3];
+                command[0] = shellCommand;
+                command[1] = "-c";
+                command[2] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[2] += " " + args[i];
+                }
+                command[2] += " < /dev/tty > /dev/tty";
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            } else {
+                // test mode, do not use bash and redirection.
+                String[] command = new String[1 + args.length];
+                command[0] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[1 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
             }
-            String[] command = new String[3];
-            command[0] = shellCommand;
-            command[1] = "-c";
-            command[2] = editorCommand;
-            for (int i = 0; i < args.length; i++) {
-                command[2] += " " + args[i];
-            }
-            command[2] += " < /dev/tty > /dev/tty";
-            result = SVNFileUtil.execCommand(command, env, false, null);
         } else if (SVNFileUtil.isOpenVMS) {
             String[] command = new String[1 + args.length];
             command[0] = editorCommand;
