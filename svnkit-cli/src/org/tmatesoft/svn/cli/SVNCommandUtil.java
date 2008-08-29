@@ -80,21 +80,13 @@ public class SVNCommandUtil {
             SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
-        String result = null;
+        String merger = mergeToolCommand;
         if (SVNFileUtil.isWindows) {
-            String merger = mergeToolCommand.toLowerCase();
-            if (!(merger.endsWith(".exe") || merger.endsWith(".bat") || merger.endsWith(".cmd"))) {
-                result = SVNFileUtil.execCommand(new String[] { "cmd.exe", "/C", merger, basePath, repositoryPath, 
-                        localPath, mergeResultPath }, testEnvironment, true, null);
-            } else {
-                result = SVNFileUtil.execCommand(new String[] { merger, basePath, repositoryPath, localPath, 
-                        mergeResultPath }, testEnvironment, true, null);
-            }
-        } else {
-            result = SVNFileUtil.execCommand(new String[] { mergeToolCommand, basePath, repositoryPath, localPath, 
-                    mergeResultPath }, testEnvironment, true, null);
+            merger = mergeToolCommand.toLowerCase();
         }
 
+        String result = runEditor(merger, new String[] {basePath, repositoryPath, 
+                localPath, mergeResultPath}, testEnvironment);
         if (result == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
                     mergeToolCommand + " " + basePath + " " + repositoryPath + " " + localPath + " " + 
@@ -109,19 +101,7 @@ public class SVNCommandUtil {
         if (testEnv[0] != null) {
             testEnv = new String[] {"SVNTEST_EDITOR_FUNC=" + (testEnv[2] != null ? testEnv[2] : "")};
         }
-        String result = null;
-        if (SVNFileUtil.isWindows) {
-            String editor = editorCommand.trim().toLowerCase();
-            if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, 
-                        path}, testEnv, false, null);
-            } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false, null);
-            }
-        } else {
-            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false, null);
-        }
-        
+        String result = runEditor(editorCommand, new String[] {path}, testEnv);
         if (result == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
                     editorCommand + " " + path + "' failed.");
@@ -152,17 +132,7 @@ public class SVNCommandUtil {
             testEnv = null;
         }
         try {
-            String result = null;
-            if (SVNFileUtil.isWindows) {
-                String editor = editorCommand.trim().toLowerCase();
-                if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
-                } else {
-                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
-                }
-            } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
-            }
+            String result = runEditor(editorCommand, new String[] {tmpFile.getAbsolutePath()}, testEnv);
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
@@ -193,6 +163,52 @@ public class SVNCommandUtil {
         } finally {
             SVNFileUtil.deleteFile(tmpFile);
         }
+    }
+
+    private static String runEditor(String editorCommand, String[] args, String[] env) throws SVNException {
+        String result = null;
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOS2) {
+            String editor = editorCommand.trim().toLowerCase();
+            if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
+                String[] command = new String[3 + args.length];
+                command[0] = "cmd.exe";
+                command[1] = "/C";
+                command[2] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[3 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            } else {
+                String[] command = new String[1 + args.length];
+                command[0] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[1 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            }
+        } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX){
+            String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
+            if (shellCommand == null || "".equals(shellCommand.trim())) {
+                shellCommand = "/bin/sh";
+            }
+            String[] command = new String[3];
+            command[0] = shellCommand;
+            command[1] = "-c";
+            command[2] = editorCommand;
+            for (int i = 0; i < args.length; i++) {
+                command[2] += " " + args[i];
+            }
+            command[2] += " < /dev/tty > /dev/tty";
+            result = SVNFileUtil.execCommand(command, env, false, null);
+        } else if (SVNFileUtil.isOpenVMS) {
+            String[] command = new String[1 + args.length];
+            command[0] = editorCommand;
+            for (int i = 0; i < args.length; i++) {
+                command[1 + i] = args[i];
+            }
+            result = SVNFileUtil.execCommand(command, env, false, null);
+        } 
+        return result;
     }
     
     //TODO: password masking
