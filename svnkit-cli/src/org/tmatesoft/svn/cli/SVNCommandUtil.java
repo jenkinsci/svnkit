@@ -190,47 +190,29 @@ public class SVNCommandUtil {
                 result = SVNFileUtil.execCommand(command, env, false, null);
             }
         } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX){
-            String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
-            if (shellCommand == null || "".equals(shellCommand.trim())) {
-                shellCommand = "/bin/sh";
-            }
-            String[] command = new String[3];
-            command[0] = shellCommand;
-            command[1] = "-c";
-            command[2] = editorCommand;
-            for (int i = 0; i < args.length; i++) {
-                command[2] += " " + args[i];
-            }
-            command[2] += " < /dev/tty > /dev/tty";
-            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "running command: " + command[0] + " " + command[1] + " " + command[2]);
-            Properties environment = new Properties();
-            try {
-                environment = SVNFileUtil.getEnvironment();
-                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "current environment: " + environment);
-            } catch (Throwable e) {
-                environment = new Properties(); 
-            }
-            if (env != null) {
-                for (int i = 0; i < env.length; i++) {
-                    String envLine = env[i];
-                    int index = envLine.indexOf('=');
-                    if (index >= 0) {
-                        String name = envLine.substring(0, index);
-                        String value = envLine.substring(index + 1);
-                        environment.put(name, value);
-                    }
+            if (env == null) {
+                String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
+                if (shellCommand == null || "".equals(shellCommand.trim())) {
+                    shellCommand = "/bin/sh";
                 }
+                String[] command = new String[3];
+                command[0] = shellCommand;
+                command[1] = "-c";
+                command[2] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[2] += " " + args[i];
+                }
+                command[2] += " < /dev/tty > /dev/tty";
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            } else {
+                // test mode, do not use bash and redirection.
+                String[] command = new String[1 + args.length];
+                command[0] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[1 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
             }
-            String[] programEnvironment = new String[environment.size()];
-            int index = 0;
-            for (Iterator names = environment.keySet().iterator(); names.hasNext();) {
-                String name = (String) names.next();
-                String value = (String) environment.get(name);
-                programEnvironment[index] = name + "=" + value;
-                index++;
-            }
-            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "command environment: " + Arrays.asList(programEnvironment));
-            result = SVNFileUtil.execCommand(command, programEnvironment, false, null);
         } else if (SVNFileUtil.isOpenVMS) {
             String[] command = new String[1 + args.length];
             command[0] = editorCommand;
