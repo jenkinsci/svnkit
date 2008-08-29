@@ -22,6 +22,7 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Properties;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -202,14 +203,34 @@ public class SVNCommandUtil {
             }
             command[2] += " < /dev/tty > /dev/tty";
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "running command: " + command[0] + " " + command[1] + " " + command[2]);
+            Properties environment = new Properties();
             try {
-                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "current environment: " + SVNFileUtil.getEnvironment());
+                environment = SVNFileUtil.getEnvironment();
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "current environment: " + environment);
             } catch (Throwable e) {
+                environment = new Properties(); 
             }
             if (env != null) {
-                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "ccommand environment: " + Arrays.asList(env));
+                for (int i = 0; i < env.length; i++) {
+                    String envLine = env[i];
+                    int index = envLine.indexOf('=');
+                    if (index >= 0) {
+                        String name = envLine.substring(0, index);
+                        String value = envLine.substring(index + 1);
+                        environment.put(name, value);
+                    }
+                }
             }
-            result = SVNFileUtil.execCommand(command, env, false, null);
+            String[] programEnvironment = new String[environment.size()];
+            int index = 0;
+            for (Iterator names = environment.keySet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                String value = (String) environment.get(name);
+                programEnvironment[index] = name + "=" + value;
+                index++;
+            }
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "command environment: " + Arrays.asList(programEnvironment));
+            result = SVNFileUtil.execCommand(command, programEnvironment, false, null);
         } else if (SVNFileUtil.isOpenVMS) {
             String[] command = new String[1 + args.length];
             command[0] = editorCommand;
