@@ -194,10 +194,11 @@ public class SVNCommandUtil {
             String[] command = new String[3];
             command[0] = shellCommand;
             command[1] = "-c";
+            command[2] = editorCommand;
             for (int i = 0; i < args.length; i++) {
-                command[2] += args[i] + " ";
+                command[2] += " " + args[i];
             }
-            command[2] += "< /dev/tty > /dev/tty";
+            command[2] += " < /dev/tty > /dev/tty";
             result = SVNFileUtil.execCommand(command, env, false, null);
         } else if (SVNFileUtil.isOpenVMS) {
             String[] command = new String[1 + args.length];
