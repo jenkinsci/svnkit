@@ -1480,7 +1480,7 @@ public class SVNFileUtil {
         return new String[] {ourTestEditor, ourTestMergeTool, ourTestFunction};
     }
 
-    private static Properties getEnvironment() throws Throwable {
+    public static Properties getEnvironment() throws Throwable {
         Process p = null;
         Properties envVars = new Properties();
         Runtime r = Runtime.getRuntime();

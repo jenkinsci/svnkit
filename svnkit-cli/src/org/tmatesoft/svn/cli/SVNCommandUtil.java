@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
 
@@ -199,6 +201,14 @@ public class SVNCommandUtil {
                 command[2] += " " + args[i];
             }
             command[2] += " < /dev/tty > /dev/tty";
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "running command: " + command[0] + " " + command[1] + " " + command[2]);
+            try {
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "current environment: " + SVNFileUtil.getEnvironment());
+            } catch (Throwable e) {
+            }
+            if (env != null) {
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.CLIENT, "ccommand environment: " + Arrays.asList(env));
+            }
             result = SVNFileUtil.execCommand(command, env, false, null);
         } else if (SVNFileUtil.isOpenVMS) {
             String[] command = new String[1 + args.length];
