@@ -224,7 +224,6 @@ public class SVNCommandUtil {
         return result;
     }
     
-    //TODO: password masking
     public static String prompt(String promptMessage, SVNCommandEnvironment env) throws SVNException {
         System.out.print(promptMessage);
         System.out.flush();
