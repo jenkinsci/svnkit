@@ -15,7 +15,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
@@ -34,6 +38,10 @@ import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
  * @author  TMate Software Ltd.
  */
 public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider {
+    
+    private static final int MAX_PROMPT_COUNT = 3;
+    private Map myRequestsCount = new HashMap();
+    
 
     public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
         if (!(certificate instanceof X509Certificate)) {
@@ -49,53 +57,59 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         }
         System.out.print(prompt.toString());
         System.out.flush();
-        int r = -1;
         while(true) {
-            try {
-                r = System.in.read();
-                if (r < 0) {
-                    return ISVNAuthenticationProvider.REJECTED;
-                }
-                char ch = (char) (r & 0xFF);
-                if (ch == 'R' || ch == 'r') {
-                    return ISVNAuthenticationProvider.REJECTED;
-                } else if (ch == 't' || ch == 'T') {
-                    return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
-                } else if (resultMayBeStored && (ch == 'p' || ch == 'P')) {
-                    return ISVNAuthenticationProvider.ACCEPTED;
-                }
-            } catch (IOException e) {
+            String line = readLine();
+            if (line == null) {
                 return ISVNAuthenticationProvider.REJECTED;
+            }
+            if (line.length() < 1) {
+                continue;
+            }
+            char ch = line.charAt(0);
+            if (ch == 'R' || ch == 'r') {
+                return ISVNAuthenticationProvider.REJECTED;
+            } else if (ch == 't' || ch == 'T') {
+                return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+            } else if (resultMayBeStored && (ch == 'p' || ch == 'P')) {
+                return ISVNAuthenticationProvider.ACCEPTED;
             }
         }
     }
 
     public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+        Integer requestsCount = (Integer) myRequestsCount.get(kind + "$" + url + "$" + realm);
+        if (requestsCount == null) {
+            myRequestsCount.put(kind + "$" + url + "$" + realm, new Integer(1));
+        } else if (requestsCount.intValue() == MAX_PROMPT_COUNT) {
+            // no more than three requests per realm
+            return null;
+        } else {
+            myRequestsCount.put(kind + "$" + url + "$" + realm, new Integer(requestsCount.intValue() + 1));
+        }
+        
         if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
             String name = null;
             printRealm(realm);
-            while(name == null) {
-                name = prompt("Username");
-                if ("".equals(name)) {
-                    name = null;
-                }
+            name = prompt("Username");
+            if (name == null) {
+                return null;
             }
-            String password = prompt("Password for '" + name + "'");
+            String password = promptPassword("Password for '" + name + "'");
             if (password == null) {
-                password = "";
+                return null;
             }
             return new SVNPasswordAuthentication(name, password, authMayBeStored);
         } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
             String name = null;
             printRealm(realm);
-            while(name == null) {
-                name = prompt("Username");
-                if ("".equals(name)) {
-                    name = null;
-                }
+            name = prompt("Username");
+            if (name == null) {
+                return null;
             }
-            String password = prompt("Password for '" + url.getHost() + "' (leave blank if you are going to use private key)");
-            if ("".equals(password)) {
+            String password = promptPassword("Password for '" + url.getHost() + "' (leave blank if you are going to use private key)");
+            if (password == null) {
+                return null;
+            } else if ("".equals(password)) {
                 password = null;
             }
             String keyFile = null;
@@ -104,21 +118,30 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 while(keyFile == null) {
                     keyFile = prompt("Private key for '" + url.getHost() + "' (OpenSSH format)");
                     if ("".equals(keyFile)) {
-                        name = null;
-                    }
-                    File file = new File(keyFile);
-                    if (!file.isFile() && !file.canRead()) {
                         continue;
                     }
-                    passphrase = prompt("Private key passphrase [none]");
-                    if ("".equals(passphrase)) {
-                        passphrase = null;
+                    if (keyFile == null) {
+                        return null;
                     }
+                    File file = new File(keyFile);
+                    if (!file.isFile() || !file.canRead()) {
+                        keyFile = null;
+                        continue;
+                    }
+                }
+                passphrase = promptPassword("Private key passphrase [none]");
+                if ("".equals(passphrase)) {
+                    passphrase = null;
+                } else if (passphrase == null) {
+                    return null;
                 }
             }
             int port = 22;
             String portValue = prompt("Port number for '" + url.getHost() + "' [22]");
-            if (portValue != null && !"".equals(portValue)) {
+            if (portValue == null) {
+                return null;
+            }
+            if (!"".equals(portValue)) {
                 try {
                     port = Integer.parseInt(portValue);
                 } catch (NumberFormatException e) {}
@@ -129,7 +152,6 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 return new SVNSSHAuthentication(name, new File(keyFile), passphrase, port, authMayBeStored);
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-            printRealm(realm);
             String name = System.getProperty("user.name");
             if (name != null && "".equals(name.trim())) {
                 name = null;
@@ -138,14 +160,15 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 return new SVNUserNameAuthentication(name, authMayBeStored);
             }
             printRealm(realm);
-            while(name == null) {
-                name = prompt(!"file".equals(url.getProtocol()) ? 
-                    "Author name [" + System.getProperty("user.name") + "]" : 
-                    "Username [" + System.getProperty("user.name") + "]");
-                if (name == null || "".equals(name.trim())) {
-                    name = System.getProperty("user.name");
-                }
+            name = prompt(!"file".equals(url.getProtocol()) ? 
+                "Author name [" + System.getProperty("user.name") + "]" : 
+                "Username [" + System.getProperty("user.name") + "]");
+            if (name == null) {
+                return null;
             }
+            if ("".equals(name.trim())) {
+                name = System.getProperty("user.name");
+            }            
             return new SVNUserNameAuthentication(name, authMayBeStored);
         } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
             printRealm(realm);
@@ -153,12 +176,22 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             while(path == null) {
                 path = prompt("Client certificate filename");
                 if ("".equals(path)) {
+                    continue;
+                }
+                if (path == null) {
+                    return null;
+                }
+                File file = new File(path);
+                if (!file.isFile() || !file.canRead()) {
                     path = null;
+                    continue;
                 }
             }
-            String password = prompt("Passphrase for '" + realm + "'");
+            String password = promptPassword("Passphrase for '" + realm + "'");
             if (password == null) {
-                password = "";
+                return null;
+            } else if ("".equals(password)) {
+                password = null;
             }
             return new SVNSSLAuthentication(new File(path), password, authMayBeStored);
         }
@@ -175,6 +208,41 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
     private static String prompt(String label) {
         System.out.print(label + ": ");
         System.out.flush();
+        return readLine();
+    }
+    
+    private static String promptPassword(String label) {
+        System.out.print(label + ": ");
+        System.out.flush();
+        Class systemClass = System.class;
+        try {
+            // try to use System.console().readPassword - since JDK 1.6
+            Method consoleMethod = systemClass.getMethod("console", new Class[0]);
+            if (consoleMethod != null) {
+                Object consoleObject = consoleMethod.invoke(null, new Object[0]);
+                if (consoleObject != null) {
+                    Class consoleClass = consoleObject.getClass();
+                    Method readPasswordMethod = consoleClass.getMethod("readPassword", new Class[0]);
+                    if (readPasswordMethod != null) {
+                        Object password = readPasswordMethod.invoke(consoleObject, new Object[0]);
+                        if (password == null) {
+                            return null;
+                        } else if (password instanceof char[]) {
+                            return new String((char[]) password);
+                        }
+                    }
+                }
+            }
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }        
+        return readLine();
+    }
+
+    private static String readLine() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         try {
             return reader.readLine();
