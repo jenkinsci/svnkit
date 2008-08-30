@@ -1,3 +1,10 @@
+== version 1.2.0-rc1
+
++ Javadoc updated
++ SASL authentication support bugfixes
++ Bug in keyword expansion code fixed
++ Other bugfixes
+
 == version 1.2.0-beta5
 
 + SASL authentication support improved
