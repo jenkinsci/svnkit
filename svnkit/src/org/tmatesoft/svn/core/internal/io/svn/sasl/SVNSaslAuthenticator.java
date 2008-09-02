@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -220,26 +221,36 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
         String qop = (String) myClient.getNegotiatedProperty(Sasl.QOP);
         String buffSizeStr = (String) myClient.getNegotiatedProperty(Sasl.MAX_BUFFER);
+        String sendSizeStr = (String) myClient.getNegotiatedProperty(Sasl.RAW_SEND_SIZE);
         
         if ("auth-int".equals(qop) || "auth-conf".equals(qop)) {
-            int buffSize = 8192;
+            int outBuffSize = 1000;
+            int inBuffSize = 1000;
+            if (sendSizeStr != null) {
+                try {
+                    outBuffSize = Integer.parseInt(sendSizeStr);
+                } catch (NumberFormatException nfe) {
+                    outBuffSize = 1000;
+                }
+            }
             if (buffSizeStr != null) {
                 try {
-                    buffSize = Integer.parseInt(buffSizeStr);
+                    inBuffSize = Integer.parseInt(buffSizeStr);
                 } catch (NumberFormatException nfe) {
-                    buffSize = 8192;
+                    inBuffSize = 1000;
                 }
-                buffSize = Math.min(8192, buffSize);
             }
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "SASL read buffer size: " + inBuffSize);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "SASL write buffer size: " + outBuffSize);
             try {
                 getPlainOutputStream().flush();
             } catch (IOException e) {
                 //
             }
-            OutputStream os = new SaslOutputStream(myClient, buffSize, getPlainOutputStream());
+            OutputStream os = new SaslOutputStream(myClient, outBuffSize, getPlainOutputStream());
             os = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, os);
             setOutputStream(os);
-            InputStream is = new SaslInputStream(myClient, buffSize, getPlainInputStream());
+            InputStream is = new SaslInputStream(myClient, inBuffSize, getPlainInputStream());
             is = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, is);
             setInputStream(is);
             getConnection().setEncrypted(this);
@@ -252,6 +263,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         Map props = new SVNHashMap();
         props.put(Sasl.QOP, "auth-conf,auth-int,auth");
         props.put(Sasl.MAX_BUFFER, "8192");
+        props.put(Sasl.RAW_SEND_SIZE, "8192");
         props.put(Sasl.POLICY_NOPLAINTEXT, "false");
         props.put(Sasl.REUSE, "false");
         props.put(Sasl.POLICY_NOANONYMOUS, "true");
