@@ -667,7 +667,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     /**
-     * @param mergeInfo must not be null!
+     * mergeInfo must not be null!
      */
     protected Map getWCMergeInfo(File path, SVNEntry entry, File limitPath, SVNMergeInfoInheritance inherit, 
             boolean base, boolean[] inherited) throws SVNException {

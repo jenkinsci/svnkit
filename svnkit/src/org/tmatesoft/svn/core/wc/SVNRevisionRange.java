@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc;
  * Revision range objects are passed to the pegged versions of the {@link SVNDiffClient}'s <code>doMerge()</code> 
  * method to specify ranges of the source which must be merged into the target. Read more, for example, 
  * in the description for 
- * {@link SVNDiffClient#doMerge(java.io.File, SVNRevision, java.util.List, java.io.File, org.tmatesoft.svn.core.SVNDepth, boolean, boolean, boolean, boolean)}.
+ * {@link SVNDiffClient#doMerge(java.io.File, SVNRevision, java.util.Collection, java.io.File, org.tmatesoft.svn.core.SVNDepth, boolean, boolean, boolean, boolean)}.
  * 
  * @version 1.2
  * @author  TMate Software Ltd.
