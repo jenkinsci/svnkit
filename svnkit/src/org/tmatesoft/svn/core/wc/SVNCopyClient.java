@@ -1624,7 +1624,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 // delete src.
                 SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), sourceFile, true, true);
             } finally {
-                if (dstAccess != srcAccess) {
+                if (dstAccess != null && dstAccess != srcAccess) {
                     dstAccess.close();
                 }
                 srcAccess.close();
