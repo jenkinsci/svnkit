@@ -28,6 +28,7 @@ at runtime without code generation.
          id="com.sun.jna"
          download-size="0"
          install-size="0"
+         unpack="false"
          version="3.0.4"/>
 
 </feature>
