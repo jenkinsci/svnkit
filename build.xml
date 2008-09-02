@@ -301,9 +301,13 @@
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
         <property name="svnkit.plugin.name" value="plugins/org.tmatesoft.svnkit_${build.number}" />
         <property name="svnkit.feature.name" value="features/org.tmatesoft.svnkit_${build.number}" />
+        <property name="jna.plugin.name" value="plugins/com.sun.jna_3.0.4" />
+        <property name="jna.feature.name" value="features/com.sun.jna_3.0.4" />
 
         <mkdir dir="build/eclipse/${svnkit.plugin.name}" />
         <mkdir dir="build/eclipse/${svnkit.feature.name}" />
+        <mkdir dir="build/eclipse/${jna.plugin.name}" />
+        <mkdir dir="build/eclipse/${jna.feature.name}" />
         <mkdir dir="build/eclipse/site/plugins" />
         <mkdir dir="build/eclipse/site/features" />
         
@@ -311,6 +315,7 @@
         <copy todir="build/eclipse/${svnkit.plugin.name}">
             <fileset dir="build/lib">
                 <include name="*.jar" />
+                <exclude name="jna.jar" />
                 <exclude name="svnkit-cli.jar" />
                 <exclude name="svnkitclisrc.zip" />
                 <include name="svnkitsrc.zip" />
@@ -324,7 +329,6 @@
                 <include name="TRILEAD-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
-				<include name="JNA-LICENSE" />
             </fileset>
             <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
                 <include name="plugin.xml" />
@@ -337,14 +341,38 @@
                 <include name="COPYING" />
             </fileset>
         </jar>
+
+    	<copy todir="build/eclipse/${jna.plugin.name}">
+            <fileset dir="build/lib">
+                <include name="jna.jar" />
+            </fileset>
+        </copy>
+        <copy todir="build/eclipse/${jna.plugin.name}">
+            <fileset dir="svnkit-eclipse/com.sun.jna">
+                <include name="plugin.xml" />
+            </fileset>
+            <fileset dir="build/lib">
+                <include name="JNA-LICENSE" />
+            </fileset>
+        </copy>
         
         <!-- build features -->
         <copy todir="build/eclipse/${svnkit.feature.name}">
-            <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit.feature">
+            <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
                 <exclude name="**/.svn"/>
+            	<include name="feature.xml"/>
+            	<include name="feature.properties"/>
             </fileset>
         </copy>
-        <copy file="svnkit-eclipse/site.xml" todir="build/eclipse/site"/>
+        <copy todir="build/eclipse/${jna.feature.name}">
+            <fileset dir="svnkit-eclipse/com.sun.jna">
+                <exclude name="**/.svn"/>
+            	<include name="feature.xml"/>
+            	<include name="feature.properties"/>
+            </fileset>
+        </copy>
+
+    	<copy file="svnkit-eclipse/site.xml" todir="build/eclipse/site"/>
 
         <!-- update versions -->
         <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%svnkit.version%" value="${build.number}"/>
@@ -352,6 +380,8 @@
         <!-- build jars for update site -->
         <zip destfile="build/eclipse/site/${svnkit.plugin.name}.jar" basedir="build/eclipse/${svnkit.plugin.name}"/>
         <zip destfile="build/eclipse/site/${svnkit.feature.name}.jar" basedir="build/eclipse/${svnkit.feature.name}"/>
+        <zip destfile="build/eclipse/site/${jna.plugin.name}.jar" basedir="build/eclipse/${jna.plugin.name}"/>
+        <zip destfile="build/eclipse/site/${jna.feature.name}.jar" basedir="build/eclipse/${jna.feature.name}"/>
     </target>
 
     <target name="build-doc">

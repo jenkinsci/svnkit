@@ -16,11 +16,11 @@
       </library>
       <library name="svnkitplugin.jar"/>
       <library name="trilead.jar"/>
-      <library name="jna.jar"/>
    </runtime>
    
    <requires>
       <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="com.sun.jna" optional="true"/>
    </requires>
 
 </plugin>
