@@ -20,7 +20,7 @@ import java.io.File;
  * 
  * @version 1.2.0
  * @author  TMate Software Ltd.
- * @sinve   1.2.0
+ * @since   1.2.0
  */
 public interface ISVNChangelistHandler {
 

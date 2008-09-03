@@ -2106,7 +2106,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      *                        <code>revision2</code>
      *                        <li><code>dstPath</code> is not under version control
      *                        </ul>
-     * @deprecated            use {@link #doMerge(File, SVNRevision, List, File, SVNDepth, boolean, boolean, boolean, boolean)}
+     * @deprecated            use {@link #doMerge(File, SVNRevision, Collection, File, SVNDepth, boolean, boolean, boolean, boolean)}
      *                        instead
      */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, 
