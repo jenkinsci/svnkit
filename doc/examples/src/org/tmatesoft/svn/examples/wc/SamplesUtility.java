@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -43,7 +44,7 @@ public class SamplesUtility {
     
     private static final String IOTA = "iota";
     private static final String MU = "mu";
-    private static final String LAMBDA = "labmda";
+    private static final String LAMBDA = "lambda";
     private static final String ALPHA = "alpha";
     private static final String BETA = "beta";
     private static final String GAMMA = "gamma";
@@ -209,7 +210,7 @@ public class SamplesUtility {
         commitEditor.addDir("A/D/G", null, SVNRepository.INVALID_REVISION);
         
         //add /A/D/G/pi file
-        String piPath = "A/D/G" + PI;
+        String piPath = "A/D/G/" + PI;
         commitEditor.addFile(piPath, null, SVNRepository.INVALID_REVISION);
         commitEditor.applyTextDelta(piPath, null);
         fileText = (String) ourGreekTreeFiles.get(PI);
@@ -219,7 +220,7 @@ public class SamplesUtility {
         commitEditor.closeFile(piPath, checksum);
 
         //add /A/D/G/rho file
-        String rhoPath = "A/D/G" + RHO;
+        String rhoPath = "A/D/G/" + RHO;
         commitEditor.addFile(rhoPath, null, SVNRepository.INVALID_REVISION);
         commitEditor.applyTextDelta(rhoPath, null);
         fileText = (String) ourGreekTreeFiles.get(RHO);
@@ -229,7 +230,7 @@ public class SamplesUtility {
         commitEditor.closeFile(rhoPath, checksum);
 
         //add /A/D/G/tau file
-        String tauPath = "A/D/G" + TAU;
+        String tauPath = "A/D/G/" + TAU;
         commitEditor.addFile(tauPath, null, SVNRepository.INVALID_REVISION);
         commitEditor.applyTextDelta(tauPath, null);
         fileText = (String) ourGreekTreeFiles.get(TAU);
@@ -245,7 +246,7 @@ public class SamplesUtility {
         commitEditor.addDir("A/D/H", null, SVNRepository.INVALID_REVISION);
 
         //add /A/D/H/chi file
-        String chiPath = "A/D/H" + CHI;
+        String chiPath = "A/D/H/" + CHI;
         commitEditor.addFile(chiPath, null, SVNRepository.INVALID_REVISION);
         commitEditor.applyTextDelta(chiPath, null);
         fileText = (String) ourGreekTreeFiles.get(CHI);
@@ -255,7 +256,7 @@ public class SamplesUtility {
         commitEditor.closeFile(chiPath, checksum);
 
         //add /A/D/H/omega file
-        String omegaPath = "A/D/H" + OMEGA;
+        String omegaPath = "A/D/H/" + OMEGA;
         commitEditor.addFile(omegaPath, null, SVNRepository.INVALID_REVISION);
         commitEditor.applyTextDelta(omegaPath, null);
         fileText = (String) ourGreekTreeFiles.get(OMEGA);
@@ -265,7 +266,7 @@ public class SamplesUtility {
         commitEditor.closeFile(omegaPath, checksum);
 
         //add /A/D/H/psi file
-        String psiPath = "A/D/H" + PSI;
+        String psiPath = "A/D/H/" + PSI;
         commitEditor.addFile(psiPath, null, SVNRepository.INVALID_REVISION);
         commitEditor.applyTextDelta(psiPath, null);
         fileText = (String) ourGreekTreeFiles.get(PSI);
@@ -308,5 +309,12 @@ public class SamplesUtility {
                 outputStream.close();
             }
         }
+    }
+    
+    public static void initializeFSFSprotocol() {
+        /*
+         * Call this setup method only once in you program and prior to using SVNKit.
+         */
+        FSRepositoryFactory.setup();
     }
 }

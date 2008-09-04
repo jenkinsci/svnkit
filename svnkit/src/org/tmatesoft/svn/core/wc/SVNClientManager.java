@@ -149,7 +149,8 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * Creates a new instance of this class using default {@link ISVNOptions}
      * and {@link org.tmatesoft.svn.core.auth.ISVNAuthenticationManager} drivers. 
      * That means this <b>SVNClientManager</b> will use the SVN's default run-time 
-     * configuration area.  
+     * configuration area. Default options are obtained via a call to 
+     * {@link SVNWCUtil#createDefaultOptions(boolean)}.    
      * 
      * @return a new <b>SVNClientManager</b> instance
      */
@@ -163,6 +164,10 @@ public class SVNClientManager implements ISVNRepositoryPool {
      * That means this <b>SVNClientManager</b> will use the caller's configuration options
      * (which correspond to options found in the default SVN's <i>config</i>
      * file) and the default SVN's <i>servers</i> configuration and auth storage.  
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>, default options are 
+     * used which are obtained via a call to {@link SVNWCUtil#createDefaultOptions(boolean)}.  
      * 
      * @param  options  a config driver
      * @return          a new <b>SVNClientManager</b> instance

@@ -21,8 +21,10 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 
@@ -32,7 +34,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class DiffWCToRepository {
+public class DiffBASEToHEAD {
     
     /**
      * Pass the absolute path of the base directory where all example data will be created in 
@@ -58,6 +60,7 @@ public class DiffWCToRepository {
             //checkout the entire repository tree
             SVNURL reposURL = SVNURL.fromFile(reposRoot);
             SamplesUtility.checkOutWorkingCopy(reposURL, wcRoot);
+
             
             //now make some changes to the working copy
             SamplesUtility.writeToFile(new File(wcRoot, "iota"), "New text appended to 'iota'", true);
@@ -67,14 +70,22 @@ public class DiffWCToRepository {
             SVNWCClient wcClient = SVNClientManager.newInstance().getWCClient();
             wcClient.doSetProperty(new File(wcRoot, "A/B"), "spam", SVNPropertyValue.create("egg"), false, 
                     SVNDepth.EMPTY, null, null);
+
+            //commit local changes
+            SVNCommitClient commitClient = clientManager.getCommitClient();
+            commitClient.doCommit(new File[] { wcRoot }, false, "committing changes", null, null, false, false, SVNDepth.INFINITY);
             
-            //now run diff the working copy against the repository
+            //roll back changes in the working copy - update to revision 1
+            SVNUpdateClient updateClient = clientManager.getUpdateClient();
+            updateClient.doUpdate(wcRoot, SVNRevision.create(1), SVNDepth.INFINITY, false, false);
+            
+            //now diff the base revision of the working copy against the repository
             SVNDiffClient diffClient = clientManager.getDiffClient();
 
             /*
-             * This corresponds to 'svn diff -rHEAD'.
+             * This corresponds to 'svn diff -rBASE:HEAD'.
              */
-            diffClient.doDiff(wcRoot, SVNRevision.UNDEFINED, SVNRevision.WORKING, SVNRevision.HEAD, 
+            diffClient.doDiff(wcRoot, SVNRevision.UNDEFINED, SVNRevision.BASE, SVNRevision.HEAD, 
                     SVNDepth.INFINITY, true, System.out, null);
         } catch (SVNException svne) {
             System.out.println(svne.getErrorMessage());
