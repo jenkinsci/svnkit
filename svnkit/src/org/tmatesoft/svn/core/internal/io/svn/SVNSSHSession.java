@@ -17,6 +17,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -39,6 +41,7 @@ import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.InteractiveCallback;
 import com.trilead.ssh2.Session;
 import com.trilead.ssh2.crypto.PEMDecoder;
+import com.trilead.ssh2.transport.ClientServerHello;
 
 /**
  * @version 1.2.0
@@ -402,10 +405,25 @@ public class SVNSSHSession {
         public boolean isSessionPingSupported() {
             lock(Thread.currentThread());
             try {
-                String version = null;
+                ClientServerHello csh = null;
                 try {
-                    version = new String(myConnection.getVersionInfo().getServerString());
-                } catch (IOException e) {
+                    Method getVersionInfoMethod = myConnection.getClass().getMethod("getVersionInfo", new Class[0]);
+                    if (getVersionInfoMethod != null) {
+                        Object result = getVersionInfoMethod.invoke(myConnection, new Object[0]);
+                        if (result instanceof ClientServerHello) {
+                            csh = (ClientServerHello) result;
+                        }
+                    }
+                } catch (SecurityException e1) {
+                } catch (NoSuchMethodException e1) {
+                } catch (IllegalArgumentException e) {
+                } catch (IllegalAccessException e) {
+                } catch (InvocationTargetException e) {
+                }
+                String version = null;
+                if (csh != null && csh.getServerString() != null) {
+                    version = new String(csh.getServerString());
+                } else {
                     return false;
                 }
                 if (version != null && version.indexOf("OpenSSH") >= 0) {
