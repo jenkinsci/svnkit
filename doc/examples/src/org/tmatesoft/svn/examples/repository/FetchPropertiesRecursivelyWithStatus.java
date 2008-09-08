@@ -14,8 +14,8 @@ package org.tmatesoft.svn.examples.repository;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Stack;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -108,7 +108,7 @@ public class FetchPropertiesRecursivelyWithStatus {
     }
     
     private static class PropFetchingEditor implements ISVNEditor {
-        private LinkedList myDirectoriesStack = new LinkedList();
+        private Stack myDirectoriesStack = new Stack();
         private Map myDirProps = new HashMap();
         private Map myFileProps = new HashMap();
         
