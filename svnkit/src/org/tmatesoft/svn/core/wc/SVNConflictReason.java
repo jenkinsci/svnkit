@@ -34,11 +34,11 @@ public class SVNConflictReason {
      */
     public static final SVNConflictReason DELETED = new SVNConflictReason();
     /**
-     * Constant saying that an object is unknown or missing.
+     * Constant saying that an object is unknown or missing. Reserved (never passed currently).
      */
     public static final SVNConflictReason MISSING = new SVNConflictReason();
     /**
-     * Constant saying that an object is unversioned.
+     * Constant saying that an object is unversioned. Reserved (never passed currently).
      */
     public static final SVNConflictReason UNVERSIONED = new SVNConflictReason();
     

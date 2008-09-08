@@ -35,6 +35,13 @@ doc/JSPWikiDocs/UpdatingFromARepository/Update_Tree1.png -text
 doc/JSPWikiDocs/UpdatingFromARepository/Update_Tree2.png -text
 doc/JSPWikiDocs/WhatIsSubversionFor/repository_tree.png -text
 doc/JSPWikiDocs/WhatIsSubversionFor/right.gif -text
+doc/examples/src/org/tmatesoft/svn/examples/repository/FetchPropertiesRecursivelyWithStatus.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/Annotations.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/ConflictedMerge.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/DiffBASEToHEAD.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/DiffWCToRepository.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/Merge.java -text
+doc/examples/src/org/tmatesoft/svn/examples/wc/SamplesUtility.java -text
 doc/javadoc-files/SVNKit_API_Packages.jpg -text
 doc/javadoc-files/info.png -text
 doc/wiki/AuthManager_Architecture.png -text
