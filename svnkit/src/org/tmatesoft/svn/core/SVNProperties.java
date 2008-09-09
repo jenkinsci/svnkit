@@ -16,6 +16,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
@@ -36,9 +40,11 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * @version 1.2.0
  * @since   1.2.0
  */
-public class SVNProperties {
+public class SVNProperties implements Cloneable, Serializable {
 
-    private Map myProperties;
+    private static final long serialVersionUID = 1L;
+
+    private transient Map myProperties;
     
     /**
      * Creates a new <code>SVNProperties</code> object wrapping a given map with properties.
@@ -392,5 +398,32 @@ public class SVNProperties {
         }
         return true;
     }
-    
+
+    /**
+     * Creates and returns a copy of this object.
+     *
+     * @return     a clone of this instance
+     *
+     */
+    public Object clone() throws CloneNotSupportedException {
+        try {
+            super.clone();
+        } catch (CloneNotSupportedException cnse) {
+            return null;
+        }
+        
+        SVNProperties result = new SVNProperties();
+        result.putAll(this);
+        return result;
+    }
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        s.writeObject(myProperties);
+    }
+
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        myProperties = (Map) s.readObject();
+    }
 }
