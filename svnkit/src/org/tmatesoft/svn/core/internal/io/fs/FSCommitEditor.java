@@ -364,28 +364,31 @@ public class FSCommitEditor implements ISVNEditor {
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {
-        if (myTxn == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "No valid transaction supplied to closeEdit()");
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
-
-        long committedRev = -1;
-        SVNErrorMessage errorMessage = null;
-        committedRev = finalizeCommit();
         try {
-           FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), committedRev);
-        } catch (SVNException svne) {
-            errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, svne.getErrorMessage().getFullMessage(), SVNErrorMessage.TYPE_WARNING);
+            if (myTxn == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "No valid transaction supplied to closeEdit()");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+    
+            long committedRev = -1;
+            SVNErrorMessage errorMessage = null;
+            committedRev = finalizeCommit();
+            try {
+               FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), committedRev);
+            } catch (SVNException svne) {
+                errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, svne.getErrorMessage().getFullMessage(), SVNErrorMessage.TYPE_WARNING);
+            }
+    
+            SVNProperties revProps = myFSFS.getRevisionProperties(committedRev);
+            String dateProp = revProps.getStringValue(SVNRevisionProperty.DATE);
+            Date datestamp = dateProp != null ? SVNDate.parseDateString(dateProp) : null;
+            
+            SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage);
+            releaseLocks();
+            return info;
+        } finally {
+            myRepository.closeRepository();
         }
-
-        SVNProperties revProps = myFSFS.getRevisionProperties(committedRev);
-        String dateProp = revProps.getStringValue(SVNRevisionProperty.DATE);
-        Date datestamp = dateProp != null ? SVNDate.parseDateString(dateProp) : null;
-        
-        SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage);
-        releaseLocks();
-        myRepository.closeRepository();
-        return info;
     }
 
     private void releaseLocks() {
@@ -416,20 +419,16 @@ public class FSCommitEditor implements ISVNEditor {
         if (myDeltaConsumer != null) {
             myDeltaConsumer.abort();
         }
-
-        if (myTxn == null || !isTxnOwner) {
-            myRepository.closeRepository();
-            return;
-        }
-
         try {
+            if (myTxn == null || !isTxnOwner) {
+                return;
+            }
             FSCommitter.abortTransaction(myFSFS, myTxn.getTxnId());
         } finally {
             myRepository.closeRepository();
+            myTxn = null;
+            myTxnRoot = null;
         }
-
-        myTxn = null;
-        myTxnRoot = null;
     }
 
     private static class DirBaton {
