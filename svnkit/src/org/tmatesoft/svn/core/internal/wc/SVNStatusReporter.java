@@ -78,8 +78,8 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myReporter.deletePath(path);
     }
 
-    public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmpty) throws SVNException {
-        linkPath(url, path, lockToken, revison, SVNDepth.INFINITY, startEmpty);
+    public void linkPath(SVNURL url, String path, String lockToken, long revision, boolean startEmpty) throws SVNException {
+        linkPath(url, path, lockToken, revision, SVNDepth.INFINITY, startEmpty);
     }
 
     public void finishReport() throws SVNException {
@@ -109,12 +109,12 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
         myReporter.abortReport();
     }
 
-    public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException {
+    public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
         SVNURL rootURL = SVNURLUtil.getCommonURLAncestor(url, myRepositoryLocation);
         if (SVNPathUtil.getPathAsChild(rootURL.getPath(), myRepositoryLocation.getPath()) != null) {
             myRepositoryLocation = rootURL;
         }
-        myReporter.linkPath(url, path, lockToken, revison, depth, startEmpty);
+        myReporter.linkPath(url, path, lockToken, revision, depth, startEmpty);
     }
 
     public void setPath(String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {

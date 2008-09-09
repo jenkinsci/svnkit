@@ -1295,9 +1295,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     public void linkPath(SVNURL url, String path,
-                         String lockToken, long revison, boolean startEmpty)
+                         String lockToken, long revision, boolean startEmpty)
             throws SVNException {
-        linkPath(url, path, lockToken, revison, SVNDepth.INFINITY, startEmpty);
+        linkPath(url, path, lockToken, revision, SVNDepth.INFINITY, startEmpty);
     }
 
     public void finishReport() throws SVNException {
@@ -1358,10 +1358,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         throw e;
     }
 
-    public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException {
-        assertValidRevision(revison);
+    public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
+        assertValidRevision(revision);
         write("(w(ssnw(s)w))", new Object[]{"link-path", path,
-                url.toString(), getRevisionObject(revison),
+                url.toString(), getRevisionObject(revision),
                 Boolean.valueOf(startEmpty), lockToken, SVNDepth.asString(depth)});
     }
 
