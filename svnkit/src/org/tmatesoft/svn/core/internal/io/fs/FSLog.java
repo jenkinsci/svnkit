@@ -584,16 +584,19 @@ public class FSLog {
             }
         }
         
-        RangeListPath firstRangeListPath = (RangeListPath) rangeListPaths.get(0);
-        while (!firstRangeListPath.myRangeList.isEmpty()) {
-            PathListRange pathListRange = new PathListRange();
-            pathListRange.myPaths = new String[] { firstRangeListPath.myPath };
-            pathListRange.myRange = firstRangeListPath.myRangeList.getRanges()[0];
-            SVNMergeRange[] ranges = new SVNMergeRange[firstRangeListPath.myRangeList.getSize() - 1];
-            System.arraycopy(firstRangeListPath.myRangeList.getRanges(), 1, ranges, 0, ranges.length);
-            firstRangeListPath.myRangeList = new SVNMergeRangeList(ranges);
-            combinedList.add(pathListRange);
+        if (!rangeListPaths.isEmpty()) {
+            RangeListPath firstRangeListPath = (RangeListPath) rangeListPaths.get(0);
+            while (!firstRangeListPath.myRangeList.isEmpty()) {
+                PathListRange pathListRange = new PathListRange();
+                pathListRange.myPaths = new String[] { firstRangeListPath.myPath };
+                pathListRange.myRange = firstRangeListPath.myRangeList.getRanges()[0];
+                SVNMergeRange[] ranges = new SVNMergeRange[firstRangeListPath.myRangeList.getSize() - 1];
+                System.arraycopy(firstRangeListPath.myRangeList.getRanges(), 1, ranges, 0, ranges.length);
+                firstRangeListPath.myRangeList = new SVNMergeRangeList(ranges);
+                combinedList.add(pathListRange);
+            }
         }
+        
         return combinedList;
     }
 
