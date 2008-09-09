@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
@@ -19,16 +22,16 @@ import java.util.Set;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.2.0
- * @author  TMate Software Ltd.
  */
 public class SVNHashSet extends AbstractSet implements Set, Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private static final Object OBJECT = new Object();
-    
-    private SVNHashMap myMap;
+
+    private transient SVNHashMap myMap;
 
     public SVNHashSet() {
         myMap = new SVNHashMap();
@@ -36,7 +39,7 @@ public class SVNHashSet extends AbstractSet implements Set, Serializable {
 
     public SVNHashSet(Collection values) {
         myMap = new SVNHashMap();
-        addAll(values);        
+        addAll(values);
     }
 
     public boolean add(Object o) {
@@ -61,5 +64,25 @@ public class SVNHashSet extends AbstractSet implements Set, Serializable {
 
     public int size() {
         return myMap.size();
+    }
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.writeInt(myMap.size());
+        if (myMap.size() == 0) {
+            return;
+        }
+
+        for (Iterator i = iterator(); i.hasNext();) {
+            s.writeObject(i.next());
+        }
+    }
+
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        myMap = new SVNHashMap();
+        int size = s.readInt();
+        for (int i = 0; i < size; i++) {
+            Object o = s.readObject();
+            myMap.put(o, OBJECT);
+        }
     }
 }

@@ -11,15 +11,12 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.io.Serializable;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
@@ -44,7 +41,7 @@ public class SVNProperties implements Cloneable, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private transient Map myProperties;
+    private Map myProperties;
     
     /**
      * Creates a new <code>SVNProperties</code> object wrapping a given map with properties.
@@ -415,15 +412,5 @@ public class SVNProperties implements Cloneable, Serializable {
         SVNProperties result = new SVNProperties();
         result.putAll(this);
         return result;
-    }
-
-    private void writeObject(ObjectOutputStream s) throws IOException {
-        s.defaultWriteObject();
-        s.writeObject(myProperties);
-    }
-
-    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
-        s.defaultReadObject();
-        myProperties = (Map) s.readObject();
     }
 }

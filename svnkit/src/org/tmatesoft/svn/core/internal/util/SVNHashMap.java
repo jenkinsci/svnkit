@@ -275,6 +275,12 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
     }
 
     public Object clone() throws CloneNotSupportedException {
+        try {
+            super.clone();
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
+        
         SVNHashMap result = new SVNHashMap();
         result.myTable = new TableEntry[myTable.length];
         result.myEntryCount = myEntryCount;
@@ -296,6 +302,7 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
 
         while (i.hasNext()) {
             Map.Entry e = (Map.Entry) i.next();
+            System.out.println("key = " + e.getKey() + " | " + "value = " + e.getValue());
             s.writeObject(e.getKey());
             s.writeObject(e.getValue());
         }
@@ -329,8 +336,8 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
             Map.Entry e = (Map.Entry) (i.next());
             Object key = e.getKey();
             Object value = e.getValue();
-            buf.append((key == this ?  "(this Map)" : key) + "=" + 
-                           (value == this ? "(this Map)": value));
+            buf.append(key == this ? "(this Map)" : key);
+            buf.append("=");buf.append(value == this ? "(this Map)" : value);
 
             hasNext = i.hasNext();
             if (hasNext) {
