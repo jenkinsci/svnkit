@@ -31,6 +31,8 @@ import java.io.Serializable;
  */
 public class SVNLogEntryPath implements Serializable {
     
+    private static final long serialVersionUID = 1L;
+
     /**
      * Char <span class="javastring">'A'</span> (item added).
      */

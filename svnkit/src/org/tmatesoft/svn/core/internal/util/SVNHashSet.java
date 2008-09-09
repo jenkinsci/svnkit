@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public class SVNHashSet extends AbstractSet implements Set, Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 4845L;
 
     private static final Object OBJECT = new Object();
 

@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  */
 public class SVNLogEntry implements Serializable {
     
+    private static final long serialVersionUID = 4845L;
+
     /**
      * This is a log entry children stop marker use by the <code>SVNKit</code> internals. Users should not
      * compare the log entry received in their {@link ISVNLogEntryHandler} implementations with this one.

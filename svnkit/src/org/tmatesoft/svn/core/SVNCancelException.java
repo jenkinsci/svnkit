@@ -21,6 +21,9 @@ package org.tmatesoft.svn.core;
  * @see		SVNException
  */
 public class SVNCancelException extends SVNException {
+    
+    private static final long serialVersionUID = 4845L;
+
     /**
      * Creates a cancel exception.
      *

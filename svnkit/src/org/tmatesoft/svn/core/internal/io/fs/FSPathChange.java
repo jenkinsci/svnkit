@@ -24,6 +24,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class FSPathChange extends SVNLogEntryPath {
+    
+    private static final long serialVersionUID = 4845L;
+    
     private static final String FLAG_TRUE = "true";
     private static final String FLAG_FALSE = "false";
 

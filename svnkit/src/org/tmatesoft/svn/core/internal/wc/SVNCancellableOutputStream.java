@@ -61,6 +61,8 @@ public class SVNCancellableOutputStream extends FilterOutputStream {
      */
     public static class IOCancelException extends IOException {
 
+        private static final long serialVersionUID = 4845L;
+
         public IOCancelException(String message) {
             super(message);
         }

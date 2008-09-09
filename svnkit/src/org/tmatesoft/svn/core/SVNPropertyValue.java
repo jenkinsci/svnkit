@@ -29,6 +29,8 @@ import java.util.Arrays;
  */
 public class SVNPropertyValue implements Serializable {
 
+    private static final long serialVersionUID = 4845L;
+    
     private String myValue;
     private byte[] myData;
 

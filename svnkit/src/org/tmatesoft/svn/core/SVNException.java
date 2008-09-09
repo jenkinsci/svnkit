@@ -24,6 +24,8 @@ package org.tmatesoft.svn.core;
  */
 public class SVNException extends Exception {
     
+    private static final long serialVersionUID = 4845L;
+    
     private SVNErrorMessage myErrorMessage;
 
     /**

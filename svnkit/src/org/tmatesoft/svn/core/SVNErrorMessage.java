@@ -40,6 +40,9 @@ import java.text.MessageFormat;
  * @author  TMate Software Ltd.
  */
 public class SVNErrorMessage implements Serializable {
+    
+    private static final long serialVersionUID = 4845L;
+    
     /**
      * Error messages of this type are considered to be errors (most critical) rather 
      * than warnings. 

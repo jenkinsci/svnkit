@@ -34,6 +34,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNDate extends Date {
 
+    private static final long serialVersionUID = 4845L;
+
     public static final SVNDate NULL = new SVNDate(0, 0);
 
     private static final Calendar CALENDAR = Calendar.getInstance(TimeZone.getTimeZone("GMT"), new Locale("en", "US"));

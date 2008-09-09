@@ -135,6 +135,8 @@ public class SVNSSLUtil {
 
     public static class CertificateNotTrustedException extends CertificateException {
 
+        private static final long serialVersionUID = 4845L;
+
         public CertificateNotTrustedException() {
             super();
         }
