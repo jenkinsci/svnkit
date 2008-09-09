@@ -467,6 +467,10 @@ public class SVNLogClient extends SVNBasicClient {
      * If <code>includeMergedRevisions</code> is set, log information for revisions which have been merged to 
      * <code>paths</code> will also be returned.
      * 
+     * <p/> 
+     * Refer to {@link org.tmatesoft.svn.core.SVNLogEntry#hasChildren()} for additional information on how 
+     * to handle mergeinfo information during a log operation.
+     * 
      * <p/>
      * If <code>revisionProperties is <span class="javakeyword">null</span>, retrieves all revision properties; 
      * else, retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
