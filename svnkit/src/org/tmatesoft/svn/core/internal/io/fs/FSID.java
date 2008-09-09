@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class FSID implements Serializable {
 
+    private static final long serialVersionUID = 4845L;
     private String myNodeID;
     private String myCopyID;
     private String myTxnID;

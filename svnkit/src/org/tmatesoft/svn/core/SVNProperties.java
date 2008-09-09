@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -36,7 +37,9 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * @version 1.2.0
  * @since   1.2.0
  */
-public class SVNProperties {
+public class SVNProperties implements Cloneable, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Map myProperties;
     
@@ -392,5 +395,22 @@ public class SVNProperties {
         }
         return true;
     }
-    
+
+    /**
+     * Creates and returns a copy of this object.
+     *
+     * @return     a clone of this instance
+     *
+     */
+    public Object clone() throws CloneNotSupportedException {
+        try {
+            super.clone();
+        } catch (CloneNotSupportedException cnse) {
+            return null;
+        }
+        
+        SVNProperties result = new SVNProperties();
+        result.putAll(this);
+        return result;
+    }
 }

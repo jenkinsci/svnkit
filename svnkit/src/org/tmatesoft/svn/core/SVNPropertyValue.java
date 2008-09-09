@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core;
 
 import java.io.UnsupportedEncodingException;
+import java.io.Serializable;
 import java.util.Arrays;
 
 
@@ -26,8 +27,10 @@ import java.util.Arrays;
  * @version 1.2.0
  * @since   1.2.0
  */
-public class SVNPropertyValue {
+public class SVNPropertyValue implements Serializable {
 
+    private static final long serialVersionUID = 4845L;
+    
     private String myValue;
     private byte[] myData;
 
@@ -55,7 +58,7 @@ public class SVNPropertyValue {
             return null;
         }
         if (SVNProperty.isSVNProperty(propertyName)) {
-            String value = null;
+            String value;
             try {
                 value = new String(data, offset, length, "UTF-8");
             } catch (UnsupportedEncodingException e) {

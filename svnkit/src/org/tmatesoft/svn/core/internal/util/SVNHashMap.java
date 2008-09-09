@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -26,18 +29,20 @@ import java.util.Set;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class SVNHashMap implements Map {
+public class SVNHashMap implements Map, Cloneable, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Object NULL_KEY = new Object();
     private static final int INITIAL_CAPACITY = 16;
     
-    private TableEntry[] myTable;
-    private int myEntryCount;
-    private int myModCount;
+    private transient TableEntry[] myTable;
+    private transient int myEntryCount;
+    private transient int myModCount;
     
-    private Set myKeySet;
-    private Set myEntrySet;
-    private Collection myValueCollection;
+    private transient volatile Set myKeySet;
+    private transient volatile Set myEntrySet;
+    private transient volatile Collection myValueCollection;
 
     public SVNHashMap() {
         this(null);
@@ -268,7 +273,13 @@ public class SVNHashMap implements Map {
         return h;
     }
 
-    protected Object clone() throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
+        try {
+            super.clone();
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
+        
         SVNHashMap result = new SVNHashMap();
         result.myTable = new TableEntry[myTable.length];
         result.myEntryCount = myEntryCount;
@@ -276,6 +287,43 @@ public class SVNHashMap implements Map {
         result.putAll(this);
         return result;
     }
+    
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        Iterator i = (myEntryCount > 0) ? entrySet().iterator() : null;
+        
+        s.defaultWriteObject();
+        s.writeInt(myTable.length);
+        s.writeInt(myEntryCount);
+
+        if ( i == null) {
+            return;
+        }
+
+        while (i.hasNext()) {
+            Map.Entry e = (Map.Entry) i.next();
+            System.out.println("key = " + e.getKey() + " | " + "value = " + e.getValue());
+            s.writeObject(e.getKey());
+            s.writeObject(e.getValue());
+        }
+    }
+    
+    private void readObject(java.io.ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+    
+        int numBuckets = s.readInt();
+        myTable = new TableEntry[numBuckets];
+    
+        // Read in size (number of Mappings)
+        int size = s.readInt();
+    
+        // Read the keys and values, and put the mappings in the HashMap
+        for (int i=0; i < size; i++) {
+            Object key = s.readObject();
+            Object value = s.readObject();
+            put(key, value);
+        }
+    }
+
 
     public String toString() {
         StringBuffer buf = new StringBuffer();
@@ -287,8 +335,8 @@ public class SVNHashMap implements Map {
             Map.Entry e = (Map.Entry) (i.next());
             Object key = e.getKey();
             Object value = e.getValue();
-            buf.append((key == this ?  "(this Map)" : key) + "=" + 
-                           (value == this ? "(this Map)": value));
+            buf.append(key == this ? "(this Map)" : key);
+            buf.append("=");buf.append(value == this ? "(this Map)" : value);
 
             hasNext = i.hasNext();
             if (hasNext) {

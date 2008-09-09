@@ -6,6 +6,9 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 public class IOExceptionWrapper extends IOException {
+    
+    private static final long serialVersionUID = 4845L;
+    
     private SVNException myOriginalException;
     
     public IOExceptionWrapper(SVNException cause) {

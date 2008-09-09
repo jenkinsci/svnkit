@@ -23,6 +23,8 @@ package org.tmatesoft.svn.core;
  */
 public class SVNAuthenticationException extends SVNException {
 
+    private static final long serialVersionUID = 4845L;
+
     /**
      * Creates a new authentication exception given detailed error 
      * information and the original cause.

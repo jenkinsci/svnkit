@@ -25,6 +25,8 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  */
 public class FSPathChangeKind implements Serializable {
 
+    private static final long serialVersionUID = 4845L;
+    
     public static final String ACTION_MODIFY = "modify";
     public static final String ACTION_ADD = "add";
     public static final String ACTION_DELETE = "delete";
