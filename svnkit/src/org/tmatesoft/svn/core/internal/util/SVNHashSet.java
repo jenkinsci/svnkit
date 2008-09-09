@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -21,7 +22,9 @@ import java.util.Set;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class SVNHashSet extends AbstractSet implements Set {
+public class SVNHashSet extends AbstractSet implements Set, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Object OBJECT = new Object();
     
