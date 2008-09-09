@@ -149,13 +149,13 @@ public interface ISVNReporter {
      * @param  path 		the local item's path 
      * @param  lockToken    if not <span class="javakeyword">null</span>, it is a lock token 
      *                      for the <code>path</code>
-     * @param  revison 		the local item's revision number 
+     * @param  revision 	the local item's revision number 
      * @param  startEmpty   if <span class="javakeyword">true</span> and if the <code>path</code> is a 
      *                      directory, then means there're no entries yet
      * @throws SVNException in case the repository could not be connected
      * @deprecated          use {@link #linkPath(SVNURL, String, String, long, SVNDepth, boolean)} instead
      */
-    public void linkPath(SVNURL url, String path, String lockToken, long revison, boolean startEmpty) throws SVNException;
+    public void linkPath(SVNURL url, String path, String lockToken, long revision, boolean startEmpty) throws SVNException;
 
     /** 
      * Describes a local path as being at a particular revision
@@ -183,14 +183,14 @@ public interface ISVNReporter {
      * @param  path         the local item's path 
      * @param  lockToken    if not <span class="javakeyword">null</span>, it is a lock token 
      *                      for the <code>path</code>
-     * @param  revison      the local item's revision number 
+     * @param  revision     the local item's revision number 
      * @param  depth        depth of <code>path</code>
      * @param  startEmpty   if <span class="javakeyword">true</span> and if the <code>path</code> is a 
      *                      directory, then means there're no entries yet
      * @throws SVNException in case the repository could not be connected
      * @since               1.2.0, New in Subversion 1.5.0
      */
-    public void linkPath(SVNURL url, String path, String lockToken, long revison, SVNDepth depth, boolean startEmpty) throws SVNException;
+    public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException;
     
     /**
      * Finalizes the report. Must be called when having traversed a local 
