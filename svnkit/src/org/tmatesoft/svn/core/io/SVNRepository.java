@@ -974,6 +974,10 @@ public abstract class SVNRepository {
      * If <code>includeMergedRevisions</code> is set, log information for revisions which have been merged to 
      * <code>targetPahts</code> will also be returned.
      * 
+     * <p/> 
+     * Refer to {@link org.tmatesoft.svn.core.SVNLogEntry#hasChildren()} for additional information on how 
+     * to handle mergeinfo information during a log operation.
+     * 
      * <p/>
      * If <code>revisionProperties</code> is <span class="javakeyword">null</span>, retrieves all revprops; else, 
      * retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
