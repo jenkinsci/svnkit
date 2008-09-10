@@ -47,6 +47,9 @@ public class SVNReporter implements ISVNReporterBaton {
     private ISVNDebugLog myLog;
     private boolean myIsLockOnDemand;
 
+    private long myTotalFilesCount;
+    private long myReportedFilesCount;
+
     public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, 
             boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, ISVNDebugLog log) {
         myInfo = info;
@@ -56,6 +59,8 @@ public class SVNReporter implements ISVNReporterBaton {
         myLog = log;
         myTarget = file;
         myIsLockOnDemand = lockOnDemand;
+        myTotalFilesCount = 0;
+        myReportedFilesCount = 0;
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
@@ -75,6 +80,8 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
                 reporter.deletePath("");
                 reporter.finishReport();
+                myReportedFilesCount++;
+                myTotalFilesCount++;
                 return;
             }
             
@@ -98,7 +105,8 @@ public class SVNReporter implements ISVNReporterBaton {
                 SVNFileType fileType = SVNFileType.getType(myTarget);
                 missing = fileType == SVNFileType.NONE;
             }
-            
+            myTotalFilesCount = 1;
+            myReportedFilesCount = 1;            
             if (targetEntry.isDirectory()) {
                 if (missing) {
                     reporter.deletePath("");
@@ -107,7 +115,7 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
             } else if (targetEntry.isFile()) {
                 if (missing) {
-                    targetArea = restoreFile(targetArea, targetEntry.getName());
+                    restoreFile(targetArea, targetEntry.getName());
                 }
                 // report either linked path or entry path
                 parentEntry = parentEntry == null ? wcAccess.getEntry(myTarget.getParentFile(), false) : parentEntry;
@@ -159,10 +167,12 @@ public class SVNReporter implements ISVNReporterBaton {
             if (adminArea.getThisDirName().equals(entry.getName())) {
                 continue;
             }
+            myTotalFilesCount++;
             String path = "".equals(dirPath) ? entry.getName() : SVNPathUtil.append(dirPath, entry.getName());
             if (entry.isDeleted() || entry.isAbsent()) {
                 if (!reportAll) {
                     reporter.deletePath(path);
+                    myReportedFilesCount++;
                 }
                 continue;
             }
@@ -185,6 +195,7 @@ public class SVNReporter implements ISVNReporterBaton {
                         reporter.linkPath(svnURL, path, entry.getLockToken(), entry.getRevision(), entry.getDepth(), false);
                     } else {
                         reporter.setPath(path, entry.getLockToken(), entry.getRevision(), entry.getDepth(), false);
+                        myReportedFilesCount++;
                     }
                 } else if (!entry.isScheduledForAddition() && !entry.isScheduledForReplacement() && !url.equals(expectedURL)) {
                     // link path
@@ -195,6 +206,7 @@ public class SVNReporter implements ISVNReporterBaton {
                            thisEntry.getDepth() == SVNDepth.EMPTY) {
                     reporter.setPath(path, entry.getLockToken(), entry.getRevision(), 
                                      entry.getDepth(), false);
+                    myReportedFilesCount++;
                 }
             } else if (entry.isDirectory() && (depth.compareTo(SVNDepth.FILES) > 0 || 
                                                depth == SVNDepth.UNKNOWN)) {
@@ -206,6 +218,7 @@ public class SVNReporter implements ISVNReporterBaton {
                     }
                     if (!reportAll) {
                         reporter.deletePath(path);
+                        myReportedFilesCount++;
                     }
                     continue;
                 }
@@ -232,6 +245,7 @@ public class SVNReporter implements ISVNReporterBaton {
                     } else {
                         reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
                                 childEntry.getDepth(), startEmpty);
+                        myReportedFilesCount++;
                     }
                 } else if (!url.equals(expectedURL)) {
                     SVNURL svnURL = SVNURL.parseURIEncoded(url);
@@ -246,6 +260,7 @@ public class SVNReporter implements ISVNReporterBaton {
                             childEntry.getDepth() != SVNDepth.EMPTY)) {
                     reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
                             childEntry.getDepth(), startEmpty);
+                    myReportedFilesCount++;
                 }
 
                 if (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) {
@@ -268,5 +283,13 @@ public class SVNReporter implements ISVNReporterBaton {
         SVNEntry entry = adminArea.getEntry(name, true);
         myInfo.getWCAccess().handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.RESTORE, null, null, null));
         return adminArea;
-    }    
+    }
+
+    public long getReportedFilesCount() {
+        return myReportedFilesCount;
+    }
+
+    public long getTotalFilesCount() {
+        return myTotalFilesCount;
+    }
 }

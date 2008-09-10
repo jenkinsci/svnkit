@@ -403,7 +403,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         int admOpenDepth = getLevelsToLockFromDepth(depth);
         try {
             if (isUpdateLocksOnDemand()) {
-                adminInfo = wcAccess.openAnchor(path, true, 0);
+                wcAccess.openAnchor(path, true, 0);
                 wcAccess.close();
             }
 
@@ -460,7 +460,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
                 dispatchEvent(SVNEventFactory.createSVNEvent(adminInfo.getTarget().getRoot(), 
                         SVNNodeKind.NONE, null, targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, 
-                        null));
+                        null, reporter.getReportedFilesCount(), reporter.getTotalFilesCount()));
             }
             return targetRevision;
         } finally {
@@ -692,7 +692,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             
             dispatchEvent(SVNEventFactory.createSVNEvent(info.getTarget().getRoot(), SVNNodeKind.NONE, null, 
-                    targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null));
+                    targetRevision, SVNEventAction.UPDATE_COMPLETED, null, null, null, reporter.getReportedFilesCount(), reporter.getTotalFilesCount()));
             return targetRevision;
         } finally {
             wcAccess.close();
