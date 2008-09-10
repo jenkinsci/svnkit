@@ -341,6 +341,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
                 SVNNodeKind kind = repository.checkPath("", rev);
                 checkCancelled();
+                SVNReporter reporter = null;
                 if (kind == SVNNodeKind.NONE) {
                     if (!entry.isScheduledForAddition()) {
                         deletedInRepository[0] = true;
@@ -356,14 +357,16 @@ public class SVNStatusClient extends SVNBasicClient {
                     SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                    SVNReporter reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, 
+                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, 
                             getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
                     repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
                 }
                 if (getEventDispatcher() != null) {
-                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null);
+                    long reportedFiles = reporter != null ? reporter.getReportedFilesCount() : 0;
+                    long totalFiles = reporter != null ? reporter.getTotalFilesCount() : 0;
+                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null, reportedFiles, totalFiles);
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
