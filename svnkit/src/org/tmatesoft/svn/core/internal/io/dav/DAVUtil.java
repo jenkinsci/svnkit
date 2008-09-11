@@ -62,7 +62,8 @@ public class DAVUtil {
         return connection.doPropfind(path, header, body, davHandler);
     }
     
-    public static DAVProperties getResourceProperties(DAVConnection connection, String path, String label, DAVElement[] properties) throws SVNException {
+    public static DAVProperties getResourceProperties(DAVConnection connection, String path, String label, 
+            DAVElement[] properties) throws SVNException {
         Map resultMap = new SVNHashMap();
         HTTPStatus status = getProperties(connection, path, DEPTH_ZERO, label, properties, resultMap);
         if (status.getError() != null) {
