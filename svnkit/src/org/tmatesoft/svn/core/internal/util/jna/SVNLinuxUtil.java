@@ -111,14 +111,10 @@ class SVNLinuxUtil {
                 int fuid;
                 int fgid;
                 
-                if (SVNFileUtil.isOSX){
+                if (SVNFileUtil.isOSX || SVNFileUtil.isBSD){
                     mode = ourSharedMemory.getInt(8);
                     fuid = ourSharedMemory.getInt(8 + 4);
                     fgid = ourSharedMemory.getInt(8 + 4 + 4);
-                } else if (SVNFileUtil.isBSD) {
-                    mode = ourSharedMemory.getInt(8);
-                    fuid = ourSharedMemory.getInt(8 + 4 + 4);
-                    fgid = ourSharedMemory.getInt(8 + 4 + 4 + 4);
                 } else {
                     mode = ourSharedMemory.getInt(16);
                     fuid = ourSharedMemory.getInt(16 + 4 + 4);
