@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,6 +133,7 @@ public class SVNSSHConnector implements ISVNConnector {
                     myOutputStream = mySession.getStdin();
                     myOutputStream = new BufferedOutputStream(myOutputStream, 16*1024);
                     myInputStream = mySession.getStdout();
+                    myInputStream = new BufferedInputStream(myInputStream, 16*1024);
                     new StreamGobbler(mySession.getStderr());
                     myConnection = connection;
                     return;
