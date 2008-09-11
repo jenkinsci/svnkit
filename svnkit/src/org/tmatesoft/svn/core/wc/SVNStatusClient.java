@@ -467,7 +467,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         };
-        doStatus(path, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, 
+        doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, 
                 null);
         return result[0];
     }
