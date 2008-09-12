@@ -107,13 +107,20 @@ class SVNLinuxUtil {
                 if (rc < 0) {
                     return null;
                 }
-                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
-                        
-                int fuid = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8 + 4 + 4) : ourSharedMemory.getInt(16 + 4 + 4);
-                int fgid = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8 + 4 + 4 + 4) : ourSharedMemory.getInt(16 + 4 + 4 + 4);
+                int mode;
+                int fuid;
+                int fgid;
+                
+                if (SVNFileUtil.isOSX || SVNFileUtil.isBSD){
+                    mode = ourSharedMemory.getInt(8);
+                    fuid = ourSharedMemory.getInt(8 + 4);
+                    fgid = ourSharedMemory.getInt(8 + 4 + 4);
+                } else {
+                    mode = ourSharedMemory.getInt(16);
+                    fuid = ourSharedMemory.getInt(16 + 4 + 4);
+                    fgid = ourSharedMemory.getInt(16 + 4 + 4 + 4);
+                }
+                
                 int access = mode & 0777;
                 int mask = 0111;
                 if (JNALibraryLoader.getUID() == fuid) {
