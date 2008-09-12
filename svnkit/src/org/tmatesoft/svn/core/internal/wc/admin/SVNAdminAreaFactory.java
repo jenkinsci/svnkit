@@ -111,7 +111,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     
     public static SVNAdminArea open(File path, Level logLevel) throws SVNException {
         SVNErrorMessage error = null;
-        int version = -1;
+        int wcFormatVersion = -1;
         Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
         File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
         File entriesFile = new File(adminDir, "entries");
@@ -119,24 +119,26 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             for (Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
                 SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
                 try {
-                    version = factory.getVersion(path);
-                    if (version > factory.getSupportedVersion()) {
+                    wcFormatVersion = factory.getVersion(path);
+                    if (wcFormatVersion > factory.getSupportedVersion()) {
                         error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
                                 path);
                         SVNErrorManager.error(error, SVNLogType.WC);
-                    } else if (version < factory.getSupportedVersion()) {
+                    } else if (wcFormatVersion < factory.getSupportedVersion()) {
                         error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "Working copy format of {0} is too old ({1}); please check out your working copy again",
-                                new Object[]{path, new Integer(version)});
+                                new Object[]{path, new Integer(wcFormatVersion)});
                         SVNErrorManager.error(error, SVNLogType.WC);
                     }
                 } catch (SVNException e) {
                     error = e.getErrorMessage();
                     continue;
                 }
-                SVNAdminArea adminArea = factory.doOpen(path, version);
+                
+                SVNAdminArea adminArea = factory.doOpen(path, wcFormatVersion);
                 if (adminArea != null) {
+                    adminArea.setWorkingCopyFormatVersion(wcFormatVersion);
                     return adminArea;
                 }
             }

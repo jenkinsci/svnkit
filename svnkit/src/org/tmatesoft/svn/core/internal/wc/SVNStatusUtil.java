@@ -150,19 +150,19 @@ public class SVNStatusUtil {
                 repositoryLock = getLock(repositoryLocks, url, reposRoot);
             }
         }
+        
         if (fileKind == SVNNodeKind.UNKNOWN || fileKind == null) {
             SVNFileType fileType = SVNFileType.getType(file);
             fileKind = SVNFileType.getNodeKind(fileType);
             special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         }
+        
         if (entry == null) {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
-                    SVNRevision.UNDEFINED, SVNRevision.UNDEFINED,
-                    null, null, SVNStatusType.STATUS_NONE,  SVNStatusType.STATUS_NONE, 
-                    SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
-                    false, false, null, null, null, null,
-                    null, SVNRevision.UNDEFINED,
-                    repositoryLock, null, null, null);
+                    SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
+                    SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
+                    false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
+                    null, null, -1);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
             SVNFileType fileType = SVNFileType.getType(file);
@@ -260,15 +260,15 @@ public class SVNStatusUtil {
         File conflictOld = dir != null ? dir.getFile(entry.getConflictOld()) : null;
         File conflictWrk = dir != null ? dir.getFile(entry.getConflictWorking()) : null;
         File conflictProp = dir != null ? dir.getFile(entry.getPropRejectFile()) : null;
+        int wcFormatNumber = dir != null ? dir.getWorkingCopyFormatVersion() : -1;
+        
         SVNStatus status = new SVNStatus(entry.getSVNURL(), file, entry.getKind(),
                 SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
                 SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
-                textStatus,  propStatus, 
-                SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
-                isLocked, entry.isCopied(), isSwitched, 
-                conflictNew, conflictOld, conflictWrk, conflictProp, 
+                textStatus,  propStatus, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
+                isLocked, entry.isCopied(), isSwitched, conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, localLock, entry.asMap(), entry.getChangelistName());
+                repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber);
         status.setEntry(entry);
         return status;
     }

@@ -80,7 +80,8 @@ public abstract class SVNAdminArea {
     private File myDirectory;
     private SVNWCAccess myWCAccess;
     private File myAdminRoot;
-
+    private int myWCFormatVersion;
+    
     public static synchronized void setSafeCleanup(boolean safe) {
         ourIsCleanupSafe = safe;
     }
@@ -1020,6 +1021,14 @@ public abstract class SVNAdminArea {
         return getAdminFile(path);
     }
 
+    public int getWorkingCopyFormatVersion() {
+        return myWCFormatVersion;
+    }
+    
+    public void setWorkingCopyFormatVersion(int wcFormatVersion) {
+        myWCFormatVersion = wcFormatVersion;
+    }
+    
     protected abstract void writeEntries(Writer writer) throws IOException, SVNException;
 
     protected abstract int getFormatVersion();
