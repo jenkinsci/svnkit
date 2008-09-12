@@ -260,6 +260,11 @@ public class SVNMoveClient extends SVNBasicClient {
                     return;
                 }
 
+                if (dstEntry != null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "There is already a versioned item ''{0}''", dst);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+
                 // 2. do manual copy of the file or directory
                 SVNFileUtil.copy(src, dst, false, sameWC);
 
