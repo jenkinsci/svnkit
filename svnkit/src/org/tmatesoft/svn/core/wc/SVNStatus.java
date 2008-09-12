@@ -127,7 +127,7 @@ public class SVNStatus {
     private Date myLocalPropertiesDate;
     private SVNEntry myEntry;
     private String myChangelistName;
-    private int myWorkingCopyFormatNumber;
+    private int myWorkingCopyFormat;
     
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -204,7 +204,7 @@ public class SVNStatus {
         myPropRejectFile = projRejectFile;
         myEntryProperties = entryProperties;
         myChangelistName = changelistName;
-        myWorkingCopyFormatNumber = wcFormatVersion;
+        myWorkingCopyFormat = wcFormatVersion;
     }
     
     /**
@@ -657,7 +657,7 @@ public class SVNStatus {
      * @return working copy format number; <code>-1</code> for remote status
      * @since  1.2
      */
-    public int getWorkingCopyFormatNumber() {
-        return myWorkingCopyFormatNumber;
+    public int getWorkingCopyFormat() {
+        return myWorkingCopyFormat;
     }
 }
