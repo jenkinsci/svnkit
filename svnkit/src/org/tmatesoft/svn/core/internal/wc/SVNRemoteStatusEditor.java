@@ -384,7 +384,8 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 parentEntry = getWCAccess().getEntry(path.getParentFile(), false);
             }
         }
-        return assembleStatus(path, entry != null ? getWCAccess().probeRetrieve(path) : null, entry, parentEntry, SVNNodeKind.UNKNOWN, false, true, false);
+        return assembleStatus(path, entry != null ? getWCAccess().probeRetrieve(path) : null, entry, 
+                parentEntry, SVNNodeKind.UNKNOWN, false, true, false);
     }
     
     public void handleStatus(SVNStatus status) throws SVNException {

@@ -127,7 +127,8 @@ public class SVNStatus {
     private Date myLocalPropertiesDate;
     private SVNEntry myEntry;
     private String myChangelistName;
-
+    private int myWorkingCopyFormatNumber;
+    
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
      * details.  
@@ -160,7 +161,8 @@ public class SVNStatus {
      * @param remoteLock               item's lock in the repository
      * @param localLock                item's local lock
      * @param entryProperties          item's SVN specific '&lt;entry' properties
-     * @param changelistName           changelist name which the item belongs to         
+     * @param changelistName           changelist name which the item belongs to
+     * @param wcFormatVersion          working copy format number         
      */
     public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
@@ -171,7 +173,7 @@ public class SVNStatus {
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
             SVNLock remoteLock, SVNLock localLock, Map entryProperties,
-            String changelistName) {
+            String changelistName, int wcFormatVersion) {
         myURL = url;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;
@@ -202,6 +204,7 @@ public class SVNStatus {
         myPropRejectFile = projRejectFile;
         myEntryProperties = entryProperties;
         myChangelistName = changelistName;
+        myWorkingCopyFormatNumber = wcFormatVersion;
     }
     
     /**
@@ -641,5 +644,20 @@ public class SVNStatus {
      */
     public String getChangelistName() {
         return myChangelistName;
+    }
+
+    /**
+     * Returns the working copy format number for the admin directory 
+     * which the statused item is versioned under.
+     * 
+     * <p/>
+     * If this status object is a result of a remote status operation, the method will return 
+     * <code>-1</code>. 
+     * 
+     * @return working copy format number; <code>-1</code> for remote status
+     * @since  1.2
+     */
+    public int getWorkingCopyFormatNumber() {
+        return myWorkingCopyFormatNumber;
     }
 }
