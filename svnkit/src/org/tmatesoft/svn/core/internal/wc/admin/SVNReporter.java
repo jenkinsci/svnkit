@@ -108,6 +108,10 @@ public class SVNReporter implements ISVNReporterBaton {
             myTotalFilesCount = 1;
             myReportedFilesCount = 1;            
             if (targetEntry.isDirectory()) {
+                if (!missing && !targetEntry.isThisDir()) {
+                    missing = true;
+                }
+                
                 if (missing) {
                     reporter.deletePath("");
                 } else if (myDepth != SVNDepth.EMPTY) {
@@ -208,8 +212,7 @@ public class SVNReporter implements ISVNReporterBaton {
                                      entry.getDepth(), false);
                     myReportedFilesCount++;
                 }
-            } else if (entry.isDirectory() && (depth.compareTo(SVNDepth.FILES) > 0 || 
-                                               depth == SVNDepth.UNKNOWN)) {
+            } else if (entry.isDirectory() && (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN)) {
                 if (missing) {
                     if (myIsRestore && entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
                         // remove dir schedule if it is 'scheduled for deletion' but missing.
@@ -224,6 +227,8 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
                 
                 if (wcAccess.isMissing(adminArea.getFile(entry.getName()))) {
+                    reporter.deletePath(path);
+                    myReportedFilesCount++;
                     continue;
                 }
                 
