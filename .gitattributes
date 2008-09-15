@@ -69,12 +69,13 @@ doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/options.properties eol=lf
+svnkit-eclipse/com.sun.jna/MANIFEST.MF -text
 svnkit-eclipse/com.sun.jna/feature.properties -text
 svnkit-eclipse/com.sun.jna/feature.xml -text
 svnkit-eclipse/org.tmatesoft.svnkit/.options eol=lf
+svnkit-eclipse/org.tmatesoft.svnkit/MANIFEST.MF -text
 svnkit-eclipse/org.tmatesoft.svnkit/feature.properties eol=lf
 svnkit-eclipse/org.tmatesoft.svnkit/feature.xml eol=lf
-svnkit-eclipse/org.tmatesoft.svnkit/plugin.xml eol=lf
 svnkit-eclipse/site.xml eol=lf
 svnkit-test/apache/python.template.conf eol=lf
 svnkit-test/apache/users eol=lf

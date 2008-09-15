@@ -301,8 +301,8 @@
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
         <property name="svnkit.plugin.name" value="plugins/org.tmatesoft.svnkit_${build.number}" />
         <property name="svnkit.feature.name" value="features/org.tmatesoft.svnkit_${build.number}" />
-        <property name="jna.plugin.name" value="plugins/com.sun.jna_3.0.4" />
-        <property name="jna.feature.name" value="features/com.sun.jna_3.0.4" />
+        <property name="jna.plugin.name" value="plugins/com.sun.jna_${jna.version}" />
+        <property name="jna.feature.name" value="features/com.sun.jna_${jna.version}" />
 
         <mkdir dir="build/eclipse/${svnkit.plugin.name}" />
         <mkdir dir="build/eclipse/${svnkit.feature.name}" />
@@ -331,7 +331,7 @@
                 <include name="JAVAHL-LICENSE" />
             </fileset>
             <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
-                <include name="plugin.xml" />
+                <include name="MANIFEST.MF" />
                 <include name=".options" />
             </fileset>
         </copy>
@@ -349,7 +349,7 @@
         </copy>
         <copy todir="build/eclipse/${jna.plugin.name}">
             <fileset dir="svnkit-eclipse/com.sun.jna">
-                <include name="plugin.xml" />
+                <include name="MANIFEST.MF" />
             </fileset>
             <fileset dir="build/lib">
                 <include name="JNA-LICENSE" />
@@ -375,12 +375,22 @@
     	<copy file="svnkit-eclipse/site.xml" todir="build/eclipse/site"/>
 
         <!-- update versions -->
-        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%svnkit.version%" value="${build.number}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%svnkit.version%" value="${build.number}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%jna.version%" value="${jna.version}"/>
         
         <!-- build jars for update site -->
-        <zip destfile="build/eclipse/site/${svnkit.plugin.name}.jar" basedir="build/eclipse/${svnkit.plugin.name}"/>
+        <jar destfile="build/eclipse/site/${svnkit.plugin.name}.jar" manifest="build/eclipse/${svnkit.plugin.name}/MANIFEST.MF">
+        	<fileset dir="build/eclipse/${svnkit.plugin.name}">
+        		<exclude name="MANIFEST.MF"/>
+            </fileset>
+    	</jar>
         <zip destfile="build/eclipse/site/${svnkit.feature.name}.jar" basedir="build/eclipse/${svnkit.feature.name}"/>
-        <zip destfile="build/eclipse/site/${jna.plugin.name}.jar" basedir="build/eclipse/${jna.plugin.name}"/>
+    	
+        <jar destfile="build/eclipse/site/${jna.plugin.name}.jar" manifest="build/eclipse/${jna.plugin.name}/MANIFEST.MF">
+        	<fileset dir="build/eclipse/${jna.plugin.name}">
+        		<exclude name="MANIFEST.MF"/>
+            </fileset>
+    	</jar>
         <zip destfile="build/eclipse/site/${jna.feature.name}.jar" basedir="build/eclipse/${jna.feature.name}"/>
     </target>
 
