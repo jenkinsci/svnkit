@@ -6,7 +6,7 @@
    <feature url="features/org.tmatesoft.svnkit_%svnkit.version%.jar" id="org.tmatesoft.svnkit" version="%svnkit.version%">
       <category name="SVNKit Library"/>
    </feature>
-   <feature url="features/com.sun.jna_3.0.4.jar" id="com.sun.jna" version="3.0.4">
+   <feature url="features/com.sun.jna_%jna.version%.jar" id="com.sun.jna" version="%jna.version%">
       <category name="JNA Library"/>
    </feature>
    
