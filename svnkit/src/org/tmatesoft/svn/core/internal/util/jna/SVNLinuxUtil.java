@@ -15,6 +15,8 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import com.sun.jna.Memory;
 
@@ -38,6 +40,7 @@ class SVNLinuxUtil {
         if (file == null || ourSharedMemory == null) {
             return null;
         }
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA.getFileType");
         String path = file.getAbsolutePath();
         if (path.endsWith("/") && path.length() > 1) {
             path = path.substring(0, path.length() - 1);
