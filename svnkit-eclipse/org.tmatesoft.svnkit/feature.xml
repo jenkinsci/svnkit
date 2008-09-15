@@ -28,6 +28,6 @@
          id="org.tmatesoft.svnkit"
          download-size="0"
          install-size="0"
-         unpack="false"
+         unpack="true"
          version="%svnkit.version%"/>
 </feature>
