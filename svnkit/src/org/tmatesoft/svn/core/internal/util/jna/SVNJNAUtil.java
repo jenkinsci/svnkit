@@ -15,6 +15,8 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -41,6 +43,8 @@ public class SVNJNAUtil {
         }
         String jnaEnabledProperty = System.getProperty("svnkit.useJNA", "true");
         ourIsJNAEnabled = Boolean.valueOf(jnaEnabledProperty).booleanValue();
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA available: " + ourIsJNAPresent);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA enabled: " + ourIsJNAEnabled);
     }
     
     public static void setJNAEnabled(boolean enabled) {
