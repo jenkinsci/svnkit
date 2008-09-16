@@ -11,10 +11,11 @@
  */
 package org.tmatesoft.svn.core;
 
+import org.eclipse.osgi.framework.log.FrameworkLog;
+import org.eclipse.osgi.framework.log.FrameworkLogEntry;
 import org.eclipse.osgi.service.debug.DebugOptions;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.service.log.LogService;
 import org.osgi.util.tracker.ServiceTracker;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
@@ -31,7 +32,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 public class SVNKitActivator implements BundleActivator {
     
     private ServiceTracker myDebugTracker = null;
-    private ServiceTracker myLogTracker = null;
+    private ServiceTracker myFLogTracker = null;
     private String myPluginID;
 
     public void start(BundleContext context) throws Exception {
@@ -43,9 +44,9 @@ public class SVNKitActivator implements BundleActivator {
         
         myDebugTracker = new ServiceTracker(context, DebugOptions.class.getName(), null);
         myDebugTracker.open();
-        
-        myLogTracker = new ServiceTracker(context, LogService.class.getName(), null);
-        myLogTracker.open();
+
+        myFLogTracker = new ServiceTracker(context, FrameworkLog.class.getName(), null);
+        myFLogTracker.open();
 
         ISVNDebugLog debugLog = new SVNKitLog(this);
         SVNDebugLog.setDefaultLog(debugLog);
@@ -59,17 +60,20 @@ public class SVNKitActivator implements BundleActivator {
         if (options != null) {
             option = myPluginID + option;
             String value = options.getOption(option);
-            if (value != null)
-                return value.equalsIgnoreCase("true"); //$NON-NLS-1$
+            return "true".equalsIgnoreCase(value);
         }
         return false;
     }
+    
+    public FrameworkLogEntry createFrameworkLogEntry(int level, String message, Throwable th) {
+        return new FrameworkLogEntry(myPluginID, level, 0, message, 0, th, null);
+    }
 
-    public LogService getLogService() {
-        if (myLogTracker == null) {
+    public FrameworkLog getFrameworkLog() {
+        if (myFLogTracker == null) {
             return null;
         }
-        LogService log = (LogService) myLogTracker.getService();
+        FrameworkLog log = (FrameworkLog) myFLogTracker.getService();
         if (log != null) {
             return log;
         }
@@ -87,11 +91,11 @@ public class SVNKitActivator implements BundleActivator {
             myDebugTracker = null;
         }
         try {
-            if (myLogTracker != null) {
-                myLogTracker.close();
+            if (myFLogTracker != null) {
+                myFLogTracker.close();
             }
         } finally {
-            myLogTracker = null;
+            myFLogTracker = null;
         }
     }
 

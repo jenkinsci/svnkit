@@ -10,8 +10,9 @@ Import-Package: org.osgi.framework;version="1.3.0",
  org.osgi.service.log; version="1.3",
  org.osgi.util.tracker;version="1.3.1"
 Require-Bundle: com.sun.jna;bundle-version="[3.0.0,4.0.0)";resolution:=optional,
- org.eclipse.core.runtime;bundle-version="[3.2.0,3.5.0)";resolution:=optional
-Bundle-ClassPath: svnkit.jar,
+ org.eclipse.core.runtime;bundle-version="[3.0.0,4.0.0)";resolution:=optional
+Bundle-ClassPath: .,
+ svnkit.jar,
  svnkit-javahl.jar,
  trilead.jar
 Export-Package: com.trilead.ssh2,
@@ -63,3 +64,4 @@ Export-Package: com.trilead.ssh2,
  org.tmatesoft.svn.examples.repository,
  org.tmatesoft.svn.examples.wc,
  org.tmatesoft.svn.util
+Bundle-ActivationPolicy: lazy

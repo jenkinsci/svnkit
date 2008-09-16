@@ -16,7 +16,9 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 
-import org.osgi.service.log.LogService;
+import org.eclipse.osgi.framework.log.FrameworkLog;
+import org.eclipse.osgi.framework.log.FrameworkLogEntry;
+import org.osgi.framework.FrameworkEvent;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -113,57 +115,79 @@ public class SVNKitLog extends SVNDebugLogAdapter {
     }
 
     public void log(SVNLogType logType, String message, byte[] data) {
-        LogService log = myActivator.getLogService();
+        FrameworkLog log = myActivator.getFrameworkLog();
         if (log == null) {
             return;
         }
-        try {
-            log.log(LogService.LOG_DEBUG, getMessage(logType, message + " : " +
-                    new String(data, "UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            log.log(LogService.LOG_DEBUG, getMessage(logType, message + " : " +
-                    new String(data)));
+        if (isTraceEnabled()) {
+            FrameworkLogEntry entry = null;
+            String dataMessage = null;
+            try {
+                dataMessage = new String(data, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                dataMessage = new String(data);
+            }
+            message += " : " + dataMessage;
+            message = getMessage(logType, message);
+            entry = myActivator.createFrameworkLogEntry(FrameworkEvent.INFO, message, null);
+            if (entry != null) {
+                log.log(entry);
+            }
         }
     }
 
     public void log(SVNLogType logType, Throwable th, Level logLevel) {
-        LogService log = myActivator.getLogService();
+        FrameworkLog log = myActivator.getFrameworkLog();
         if (log == null) {
             return;
         }
         if (th != null) {
-            if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
-                log.log(LogService.LOG_DEBUG, th.getMessage(), th);
-            } else if (logLevel == Level.INFO && isInfoEnabled()) {
-                log.log(LogService.LOG_INFO, th.getMessage(), th);
-            } else if (logLevel == Level.WARNING && isWarningEnabled()) {
-                log.log(LogService.LOG_WARNING, th.getMessage(), th);
-            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
-                log.log(LogService.LOG_ERROR, th.getMessage(), th);
+            int level = getSeverity(logLevel);
+            if (level >= 0) {
+                String message = getMessage(logType, th.getMessage());
+                FrameworkLogEntry entry = myActivator.createFrameworkLogEntry(FrameworkEvent.ERROR, message, th);
+                if (entry != null) {
+                    log.log(entry);
+                }
             }
         }
     }
 
     public void log(SVNLogType logType, String message, Level logLevel) {
-        LogService log = myActivator.getLogService();
+        FrameworkLog log = myActivator.getFrameworkLog();
         if (log == null) {
             return;
         }
         if (message != null) {
-            message = getMessage(logType, message);
-            if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
-                log.log(LogService.LOG_DEBUG, message);
-            } else if (logLevel == Level.INFO && isInfoEnabled()) {
-                log.log(LogService.LOG_INFO, message);
-            } else if (logLevel == Level.WARNING && isWarningEnabled()) {
-                log.log(LogService.LOG_WARNING, message);
-            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
-                log.log(LogService.LOG_ERROR, message);
+            int level = getSeverity(logLevel);
+            if (level >= 0) {
+                message = getMessage(logType, message);
+                FrameworkLogEntry entry = myActivator.createFrameworkLogEntry(FrameworkEvent.ERROR, message, null);
+                if (entry != null) {
+                    log.log(entry);
+                }
             }
         }
     }
 
+    private int getSeverity(Level logLevel) {
+        int level = -1;
+        if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
+            level = FrameworkEvent.INFO;
+        } else if (logLevel == Level.INFO && isInfoEnabled()) {
+            level = FrameworkEvent.INFO;
+        } else if (logLevel == Level.WARNING && isWarningEnabled()) {
+            level = FrameworkEvent.WARNING;
+        } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+            level = FrameworkEvent.ERROR;
+        }
+        return level;
+    }
+
     private String getMessage(SVNLogType logType, String originalMessage) {
+        if (originalMessage == null) {
+            return logType.getName();
+        }
         return logType.getShortName() + ": " + originalMessage;
     }
 

@@ -335,14 +335,6 @@
                 <include name=".options" />
             </fileset>
         </copy>
-    	<!--
-        <jar destfile="build/eclipse/${svnkit.plugin.name}/svnkitplugin.jar">
-            <fileset dir="svnkit-eclipse/bin" />
-            <fileset dir="${basedir}">
-                <include name="COPYING" />
-            </fileset>
-        </jar>
-        -->
 
     	<copy todir="build/eclipse/${jna.plugin.name}">
             <fileset dir="build/lib">
@@ -387,9 +379,6 @@
             </fileset>
         	<fileset dir="svnkit-eclipse/bin">
         		<include name="**"/>
-            </fileset>
-            <fileset dir="${basedir}">
-                <include name="COPYING" />
             </fileset>
     	</jar>
         <zip destfile="build/eclipse/site/${svnkit.feature.name}.jar" basedir="build/eclipse/${svnkit.feature.name}"/>
