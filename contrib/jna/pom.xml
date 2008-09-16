@@ -5,7 +5,7 @@
   <packaging>jar</packaging>
   <version>%jna.version%</version>
   <name>JNA</name>
-  <description>JNA provides Java programs easy access to native shared libraries (DLLs on Windows) without writing anything but Java code�no JNI or native code is required. This functionality is comparable to Windows' Platform/Invoke and Python's ctypes. Access is dynamic at runtime without code generation.</description>
+  <description>JNA provides Java programs easy access to native shared libraries (DLLs on Windows) without writing anything but Java code no JNI or native code is required. This functionality is comparable to Windows' Platform/Invoke and Python's ctypes. Access is dynamic at runtime without code generation.</description>
   <url>https://jna.dev.java.net/</url>
   <licenses>
     <license>
@@ -13,6 +13,6 @@
     </license>
   </licenses>
   <distributionManagement>
-    <downloadUrl>https://jna.dev.java.net/servlets/ProjectDocumentList?folderID=9501&expandFolder=9501&folderID=0</downloadUrl>
+    <downloadUrl>https://jna.dev.java.net/servlets/ProjectDocumentList?folderID=9501&amp;expandFolder=9501&amp;folderID=0</downloadUrl>
   </distributionManagement>
 </project>
