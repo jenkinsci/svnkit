@@ -216,7 +216,6 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      *                      </ul>
      */
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
-        myIsLastRevisionReported = false;
         SVNProperties propDiff = fileRevision.getPropertiesDelta();
         String newMimeType = propDiff != null ? propDiff.getStringValue(SVNProperty.MIME_TYPE) : null;
         if (!myIsForce && SVNProperty.isBinaryMimeType(newMimeType)) {
@@ -289,6 +288,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
      * @throws SVNException 
      */
     public void textDeltaEnd(String token) throws SVNException {
+	    myIsLastRevisionReported = false;
         myDeltaProcessor.textDeltaEnd();
         
         if (myIncludeMergedRevisions) {
