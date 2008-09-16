@@ -5,7 +5,7 @@
    name="SVNKit Library Plug-in"
    version="1.2.1"
    provider-name="TMate Software"
-   class="org.tmatesoft.svn.core.SVNKitPlugin">
+   class="org.tmatesoft.svn.core.SVNKitActivator">
 
    <runtime>
       <library name="svnkit.jar">
