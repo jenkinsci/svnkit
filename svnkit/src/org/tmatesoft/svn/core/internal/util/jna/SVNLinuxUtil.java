@@ -40,7 +40,6 @@ class SVNLinuxUtil {
         if (file == null || ourSharedMemory == null) {
             return null;
         }
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA.getFileType");
         String path = file.getAbsolutePath();
         if (path.endsWith("/") && path.length() > 1) {
             path = path.substring(0, path.length() - 1);
@@ -67,6 +66,7 @@ class SVNLinuxUtil {
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
                         ourSharedMemory.getShort(8) : ourSharedMemory.getInt(16);
                 int type = mode & 0170000;
+                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA.getFileType: " + type);
                 if (type == 0120000) {
                     return SVNFileType.SYMLINK;
                 } else if (type == 0040000) {
