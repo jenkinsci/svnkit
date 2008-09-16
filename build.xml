@@ -279,8 +279,8 @@
     <target name="build-eclipse" depends="build-library,build-src,compile-eclipse" if="eclipse.present">
         <property name="svnkit.plugin.name" value="plugins/org.tmatesoft.svnkit_${build.number}" />
         <property name="svnkit.feature.name" value="features/org.tmatesoft.svnkit_${build.number}" />
-        <property name="jna.plugin.name" value="plugins/com.sun.jna_3.0.4" />
-        <property name="jna.feature.name" value="features/com.sun.jna_3.0.4" />
+        <property name="jna.plugin.name" value="plugins/com.sun.jna_${jna.version}" />
+        <property name="jna.feature.name" value="features/com.sun.jna_${jna.version}" />
 
         <mkdir dir="build/eclipse/${svnkit.plugin.name}" />
         <mkdir dir="build/eclipse/${svnkit.feature.name}" />
@@ -309,16 +309,10 @@
                 <include name="JAVAHL-LICENSE" />
             </fileset>
             <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
-                <include name="plugin.xml" />
+                <include name="MANIFEST.MF" />
                 <include name=".options" />
             </fileset>
         </copy>
-        <jar destfile="build/eclipse/${svnkit.plugin.name}/svnkitplugin.jar">
-            <fileset dir="svnkit-eclipse/bin" />
-            <fileset dir="${basedir}">
-                <include name="COPYING" />
-            </fileset>
-        </jar>
 
     	<copy todir="build/eclipse/${jna.plugin.name}">
             <fileset dir="build/lib">
@@ -327,7 +321,7 @@
         </copy>
         <copy todir="build/eclipse/${jna.plugin.name}">
             <fileset dir="svnkit-eclipse/com.sun.jna">
-                <include name="plugin.xml" />
+                <include name="MANIFEST.MF" />
             </fileset>
             <fileset dir="build/lib">
                 <include name="JNA-LICENSE" />
@@ -353,12 +347,25 @@
     	<copy file="svnkit-eclipse/site.xml" todir="build/eclipse/site"/>
 
         <!-- update versions -->
-        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml" token="%svnkit.version%" value="${build.number}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%svnkit.version%" value="${build.number}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%jna.version%" value="${jna.version}"/>
         
         <!-- build jars for update site -->
-        <zip destfile="build/eclipse/site/${svnkit.plugin.name}.jar" basedir="build/eclipse/${svnkit.plugin.name}"/>
+        <jar destfile="build/eclipse/site/${svnkit.plugin.name}.jar" manifest="build/eclipse/${svnkit.plugin.name}/MANIFEST.MF">
+        	<fileset dir="build/eclipse/${svnkit.plugin.name}">
+        		<exclude name="MANIFEST.MF"/>
+            </fileset>
+        	<fileset dir="svnkit-eclipse/bin">
+        		<include name="**"/>
+            </fileset>
+    	</jar>
         <zip destfile="build/eclipse/site/${svnkit.feature.name}.jar" basedir="build/eclipse/${svnkit.feature.name}"/>
-        <zip destfile="build/eclipse/site/${jna.plugin.name}.jar" basedir="build/eclipse/${jna.plugin.name}"/>
+    	
+        <jar destfile="build/eclipse/site/${jna.plugin.name}.jar" manifest="build/eclipse/${jna.plugin.name}/MANIFEST.MF">
+        	<fileset dir="build/eclipse/${jna.plugin.name}">
+        		<exclude name="MANIFEST.MF"/>
+            </fileset>
+    	</jar>
         <zip destfile="build/eclipse/site/${jna.feature.name}.jar" basedir="build/eclipse/${jna.feature.name}"/>
     </target>
 
@@ -458,8 +465,12 @@
 
 	<target name="deploy-bundle" depends="init-environment,build-library">
 		<mkdir dir="build/maven"/>
+		<mkdir dir="build/maven/org.tmatesoft.svnkit-${build.number}"/>
+		<mkdir dir="build/maven/com.trilead.ssh2-${trilead.ssh2.version}"/>
+		<mkdir dir="build/maven/com.sun.jna-${jna.version}"/>
 		<mkdir dir="svnkit-eclipse/bin"/>
-		<jar destfile="build/maven/svnkit-${build.number}.jar">
+		
+		<jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}/svnkit.jar">
 			<fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
 			</fileset>
@@ -490,38 +501,35 @@
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
             </fileset>
-            <fileset dir="contrib/jna" >
-                <include name="JNA-LICENSE" />
-            </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
 		</jar>
 
-		<jar destfile="build/maven/svnkit-${build.number}-sources.jar">
-            <fileset dir="build/lib">
+		<zip destfile="build/maven/org.tmatesoft.svnkit-${build.number}/svnkit-src.zip">
+            <zipfileset dir="build/lib">
                 <include name="changelog.txt" />
                 <include name="README.txt" />
-            </fileset>
-			<fileset dir="svnkit/src">
+            </zipfileset>
+			<zipfileset dir="svnkit/src" prefix="src">
 				<exclude name=".svn"/>
 				<exclude name=".svn/**"/>
-			</fileset>
-			<fileset dir="svnkit/src">
+			</zipfileset>
+			<zipfileset dir="svnkit/src" prefix="src">
 				<exclude name=".svn"/>
 				<exclude name=".svn/**"/>
-			</fileset>
-			<fileset dir="contrib/javahl/src">
+			</zipfileset>
+			<zipfileset dir="contrib/javahl/src" prefix="src">
 				<exclude name=".svn"/>
 				<exclude name=".svn/**"/>
                 <exclude name="org/tigris/subversion/javahl/SVNClient.java" />
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin.java" />
                 <exclude name="org/tigris/subversion/javahl/Path.java" />
-			</fileset>
-			<fileset dir="contrib/sequence/src">
+			</zipfileset>
+			<zipfileset dir="contrib/sequence/src" prefix="src">
 				<exclude name=".svn"/>
 				<exclude name=".svn/**"/>
-			</fileset>
+			</zipfileset>
 			<fileset dir="${basedir}" >
                 <include name="COPYING" />
             </fileset>
@@ -531,27 +539,51 @@
             <fileset dir="contrib/javahl" >
                 <include name="JAVAHL-LICENSE" />
             </fileset>
-            <fileset dir="contrib/jna" >
-                <include name="JNA-LICENSE" />
-            </fileset>
             <fileset dir="contrib/sequence" >
                 <include name="SEQUENCE-LICENSE" />
             </fileset>
-		</jar>
+		</zip>
 		
-		<copy file="pom.xml" tofile="build/maven/pom.xml"/>
-		<replace token="%svnkit.version%" value="${build.number}" file="build/maven/pom.xml"/>
-        <jar destfile="build/maven/svnkit-${build.number}-bundle.jar">
-        	<fileset dir="build/maven">
-                <include name="pom.xml" />
-        		<include name="svnkit-${build.number}.jar"/>
-        		<include name="svnkit-${build.number}-sources.jar"/>
+		<copy file="pom.xml" tofile="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
+		<replace token="%svnkit.version%" value="${build.number}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
+		<replace token="%trilead.ssh2.version%" value="${trilead.ssh2.version}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
+        <replace token="%jna.version%" value="${jna.version}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
+
+		<copy file="contrib/trilead/pom.xml" tofile="build/maven/com.trilead.ssh2-${trilead.ssh2.version}/pom.xml"/>
+		<replace token="%trilead.ssh2.version%" value="${trilead.ssh2.version}" file="build/maven/com.trilead.ssh2-${trilead.ssh2.version}/pom.xml"/>
+
+		<copy file="contrib/jna/pom.xml" tofile="build/maven/com.sun.jna-${jna.version}/pom.xml"/>
+		<replace token="%jna.version%" value="${jna.version}" file="build/maven/com.sun.jna-${jna.version}/pom.xml"/>
+		
+        <jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}-bundle.jar">
+        	<fileset dir="build/maven/org.tmatesoft.svnkit-${build.number}">
+                <include name="**" />
 	        </fileset>
         </jar>
-		
-		<delete file="build/maven/pom.xml"/>
-		<delete file="build/maven/svnkit-${build.number}.jar"/>
-		<delete file="build/maven/svnkit-${build.number}-sources.jar"/>
+        <jar destfile="build/maven/com.trilead.ssh2-${trilead.ssh2.version}-bundle.jar">
+        	<fileset dir="contrib/trilead">
+                <exclude name="pom.xml" />
+	        </fileset>
+        	<fileset dir="build/maven/com.trilead.ssh2-${trilead.ssh2.version}">
+                <include name="**" />
+	        </fileset>
+        </jar>
+        <jar destfile="build/maven/com.sun.jna-${jna.version}-bundle.jar">
+        	<fileset dir="contrib/jna">
+                <exclude name="pom.xml" />
+	        </fileset>
+        	<fileset dir="build/maven/com.sun.jna-${jna.version}">
+                <include name="**" />
+	        </fileset>
+        </jar>
+		<delete dir="build/maven" >
+			<include name="org.tmatesoft.svnkit-${build.number}/**"/>
+			<include name="com.trilead.ssh2-${trilead.ssh2.version}/**"/>
+     		<include name="com.sun.jna-${jna.version}/**"/>
+	    </delete>
+		<delete dir="build/maven/org.tmatesoft.svnkit-${build.number}" />
+		<delete dir="build/maven/com.trilead.ssh2-${trilead.ssh2.version}"/>
+ 		<delete dir="build/maven/com.sun.jna-${jna.version}"/>
     </target>
 
     <target name="deploy-eclipse"

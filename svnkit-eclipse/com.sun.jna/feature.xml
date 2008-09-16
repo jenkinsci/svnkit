@@ -2,7 +2,7 @@
 <feature
       id="com.sun.jna"
       label="JNA Library"
-      version="3.0.4">
+      version="%jna.version%">
 
    <description url="http://jna.dev.java.net/">
       JNA provides Java programs easy access to native shared libraries
@@ -29,6 +29,6 @@ at runtime without code generation.
          download-size="0"
          install-size="0"
          unpack="true"
-         version="3.0.4"/>
+         version="%jna.version%"/>
 
 </feature>

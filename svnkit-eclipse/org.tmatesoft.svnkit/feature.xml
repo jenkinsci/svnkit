@@ -20,7 +20,7 @@
 
    <includes
          id="com.sun.jna"
-         version="3.0.4"
+         version="%jna.version%"
          name="JNA Library"
          optional="true"/>
 
