@@ -278,9 +278,7 @@ public class SVNStatusClient extends SVNBasicClient {
      *                                 on items that were set to be ignored (like <i>'--no-ignore'</i> option in the SVN 
      *                                 client's <code>'svn status'</code> command to disregard default and <i>'svn:ignore'</i> property
      *                                 ignores), otherwise <span class="javakeyword">false</span>
-     * @param  collectParentExternals  <span class="javakeyword">false</span> to make the operation ignore information
-     *                                 on externals definitions (like <i>'--ignore-externals'</i> option in the SVN
-     *                                 client's <code>'svn status'</code> command), otherwise <span class="javakeyword">true</span>
+     * @param  collectParentExternals  obsolete (not used)
      * @param  handler                 a caller's status handler that will be involved
      *                                 in processing status information
      * @param  changeLists             collection with changelist names
