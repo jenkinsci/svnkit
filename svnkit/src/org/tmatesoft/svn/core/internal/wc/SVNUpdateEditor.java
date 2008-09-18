@@ -522,6 +522,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         if (!myIsRootOpen) {
+            if (myCurrentDirectory == null) {
+                myCurrentDirectory = createDirectoryInfo(null, "", false);
+            }
             completeDirectory2(myCurrentDirectory);
         }
         if (!myIsTargetDeleted) {
