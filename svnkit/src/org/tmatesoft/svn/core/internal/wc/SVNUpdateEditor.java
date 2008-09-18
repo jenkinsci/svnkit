@@ -181,13 +181,13 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             try {
                 childArea.removeFromRevisionControl(childArea.getThisDirName(), true, true);
             } catch (SVNException svne) {
-                handleLeftLocalModificationsError(svne, log, childArea);
+                handleLeftLocalModificationsError(svne);
             }
         }
         try {
             myCurrentDirectory.runLogs();
         } catch (SVNException svne) {
-            handleLeftLocalModificationsError(svne, log, parentArea);
+            handleLeftLocalModificationsError(svne);
         }
 
         if (isDeleted) {
@@ -202,7 +202,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myWCAccess.handleEvent(event);
     }
 
-    private void handleLeftLocalModificationsError(SVNException originalError, SVNLog log, SVNAdminArea adminArea) throws SVNException {
+    private void handleLeftLocalModificationsError(SVNException originalError) throws SVNException {
         SVNException error = null;
         for (error = originalError; error != null;) {
             if (error.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
@@ -211,9 +211,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             error = (error.getCause() instanceof SVNException) ? (SVNException) error.getCause() : null; 
         }
         if (error != null) {
-            log.delete();
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Won''t delete locally modified directory ''{0}''", adminArea.getRoot());
-            SVNErrorManager.error(err, error, SVNLogType.WC);
+            return;
         }
         throw originalError;
     }
