@@ -2332,7 +2332,8 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
 
-        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, revision, rootEntry, lock);
+        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, SVNRevision.create(revNum[0]), 
+                rootEntry, lock);
         handler.handleInfo(info);
         
         if (depth.compareTo(SVNDepth.EMPTY) > 0 && rootEntry.getKind() == SVNNodeKind.DIR) {
