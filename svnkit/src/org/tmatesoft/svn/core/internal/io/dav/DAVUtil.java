@@ -50,7 +50,8 @@ public class DAVUtil {
         } else if (depth == DEPTH_INFINITE) {
             header.setHeaderValue(HTTPHeader.DEPTH_HEADER, "infinity");
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Invalid PROPFIND depth value: '{0}'", new Integer(depth));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                    "Invalid PROPFIND depth value: '{0}'", new Integer(depth));
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (label != null) {

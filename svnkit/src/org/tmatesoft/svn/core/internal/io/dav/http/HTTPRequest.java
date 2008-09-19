@@ -176,7 +176,8 @@ class HTTPRequest {
                 myStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED ||
                 myStatus.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
             // these errors are always processed by the caller, to allow retry.
-            myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), myStatus, context.getMessageTemplate(), context.getRelatedObjects());
+            myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), path, myStatus, 
+                    context.getMessageTemplate(), context.getRelatedObjects());
             myConnection.skipData(this);
             return;
         } 
@@ -249,7 +250,8 @@ class HTTPRequest {
             contextMessage = "''{0}'' path not found";
             contextObjects = new Object[] {path};
         } 
-        SVNErrorMessage error = createDefaultErrorMessage(myConnection.getHost(), myStatus, contextMessage, contextObjects);
+        SVNErrorMessage error = createDefaultErrorMessage(myConnection.getHost(), path, myStatus, contextMessage, 
+                contextObjects);
         SVNErrorMessage davError = myConnection.readError(this, request, path);
         if (davError != null) {
             if (error != null) {
@@ -360,7 +362,8 @@ class HTTPRequest {
 
     }
     
-    public static SVNErrorMessage createDefaultErrorMessage(SVNURL host, HTTPStatus status, String context, Object[] contextObjects) {
+    public static SVNErrorMessage createDefaultErrorMessage(SVNURL host, String path, HTTPStatus status, String context, 
+            Object[] contextObjects) {
         SVNErrorCode errorCode = SVNErrorCode.RA_DAV_REQUEST_FAILED;
         String message = status != null ? status.getCode() + " " + status.getReason() : "";
         if (status != null && status.getCode() == HttpURLConnection.HTTP_FORBIDDEN || status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -368,6 +371,11 @@ class HTTPRequest {
             message = status.getCode() + " " + status.getReason();
         } else if (status != null && status.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
             errorCode = SVNErrorCode.FS_NOT_FOUND;
+        } else if (status != null && (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || 
+                status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP)) {
+            message = status.getCode() == HttpURLConnection.HTTP_MOVED_PERM ? "Repository moved permanently to ''{0}''; please relocate" : 
+                "Repository moved temporarily to ''{0}''; please relocate";
+            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_RELOCATED, message, path);
         }
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];

@@ -361,6 +361,11 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode RA_DAV_MALFORMED_DATA = new SVNErrorCode(RA_DAV_CATEGORY, 9, "Malformed network data");
     public static final SVNErrorCode RA_DAV_RESPONSE_HEADER_BADNESS = new SVNErrorCode(RA_DAV_CATEGORY, 10, "Unable to extract data from response header");
     
+    /**
+     * @since 1.2.0, SVN 1.5
+     */
+    public static final SVNErrorCode RA_DAV_RELOCATED = new SVNErrorCode(RA_DAV_CATEGORY, 11, "Repository has been moved");
+    
     public static final SVNErrorCode RA_LOCAL_REPOS_NOT_FOUND = new SVNErrorCode(RA_LOCAL_CATEGORY, 0, "Couldn't find a repository");
     public static final SVNErrorCode RA_LOCAL_REPOS_OPEN_FAILED = new SVNErrorCode(RA_LOCAL_CATEGORY, 1, "Couldn't open a repository");
     

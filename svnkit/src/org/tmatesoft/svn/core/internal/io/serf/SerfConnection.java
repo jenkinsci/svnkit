@@ -11,11 +11,53 @@
  */
 package org.tmatesoft.svn.core.internal.io.serf;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
+import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
+import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnection;
+import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
+import org.tmatesoft.svn.core.io.SVNRepository;
+
 
 /**
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class SerfConnection {
+public class SerfConnection extends DAVConnection {
 
+    private IHTTPConnection[] myHttpConnections = new IHTTPConnection[4];
+
+    public SerfConnection(IHTTPConnectionFactory connectionFactory, SVNRepository repository) {
+        super(connectionFactory, repository);
+    }
+    
+    public void open(DAVRepository repository) throws SVNException {
+        if (myHttpConnections[0] == null) {
+            myHttpConnections[0] = myConnectionFactory.createHTTPConnection(repository);
+            exchangeCapabilities();
+        }
+    }
+
+    public void close() {
+        for (int i = 0; i < myHttpConnections.length; i++) {
+            if (myHttpConnections[i] != null) {
+                myHttpConnections[i].close();
+                myHttpConnections[i] = null;
+            }
+        }
+        myLocks = null;
+        myKeepLocks = false;
+    }
+
+    public void clearAuthenticationCache() {
+        for (int i = 0; i < myHttpConnections.length; i++) {
+            if (myHttpConnections[i] != null) {
+                myHttpConnections[i].clearAuthenticationCache();
+            }
+        }        
+    }
+
+    protected IHTTPConnection getConnection() {
+        return myHttpConnections[0];
+    }
 }

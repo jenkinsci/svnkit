@@ -56,7 +56,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class SerfRepository extends DAVRepository {
 
-    private DAVConnection[] myConnections = new DAVConnection[4];
     private DAVProperties myResourcePropertiesCache;
     private String myVCCPath;
     
@@ -64,74 +63,6 @@ public class SerfRepository extends DAVRepository {
         super(connectionFactory, location, options);
     }
     
-    public void setSpoolResponse(boolean spool) {
-        super.setSpoolResponse(spool);
-        for (int i = 1; i < myConnections.length; i++) {
-            DAVConnection connection = myConnections[i];
-            if (connection != null) {
-                connection.setReportResponseSpooled(spool);
-            }
-        }
-    }
-    
-    public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
-        super.setAuthenticationManager(authManager);
-        if (authManager != getAuthenticationManager()) {
-            for (int i = 1; i < myConnections.length; i++) {
-                DAVConnection connection = myConnections[i];
-                if (connection != null) {
-                    connection.clearAuthenticationCache();
-                }
-            }
-        }
-    }
-    
-    protected DAVConnection openConnection() throws SVNException {
-        lock();
-        fireConnectionOpened();
-        if (myConnections[0] == null) {
-            myConnections[0] = new DAVConnection(getConnectionFactory(), this);
-            myConnections[0].setReportResponseSpooled(isSpoolResponse());
-            myConnections[0].open(this);
-        }
-        return myConnections[0];
-    }
-
-    protected void closeConnection() {
-        if (!isKeepCredentials()) {
-            for (int i = 0; i < myConnections.length; i++) {
-                DAVConnection connection = myConnections[i];
-                if (connection != null) {
-                    connection.clearAuthenticationCache();
-                }
-            }
-        }
-        
-        if (!getOptions().keepConnection(this)) {
-            closeSession();
-        }
-        
-        unlock();
-        fireConnectionClosed();
-    }
-
-    public void closeSession() {
-        lock(true);
-        try {
-            for (int i = 0; i < myConnections.length; i++) {
-                if (myConnections[i] != null) {
-                    myConnections[i].close();
-                    myConnections[i] = null;
-                }
-            }
-
-            myResourcePropertiesCache = null;
-            myVCCPath = null;
-        } finally {
-            unlock();
-        }
-    }
-
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs, 
             ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
 //        runReport(getLocation(), revision, target, null, depth, false, false, true, sendCopyFromArgs, true, 
@@ -139,7 +70,7 @@ public class SerfRepository extends DAVRepository {
     }
 
 
-/*    
+    /*
     private void runReport(SVNURL url, long targetRevision, String target, String dstPath, SVNDepth depth, 
             boolean ignoreAncestry, boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs, 
             boolean sendAll, boolean closeEditorOnException, boolean spool, ISVNReporterBaton reporter, 
@@ -149,7 +80,7 @@ public class SerfRepository extends DAVRepository {
             editor = SVNDepthFilterEditor.getDepthFilterEditor(depth, editor, target != null);
         }
         
-        DAVEditorHandler handler = null;
+        SerfEditorHandler handler = null;
         try {
             openConnection();
             Map lockTokens = new SVNHashMap();
@@ -177,11 +108,19 @@ public class SerfRepository extends DAVRepository {
             }
             closeConnection();
         }
+        
+    }
+
+    public String discoverRoot(String path) throws SVNException {
+        if (getVCCPath() != null && path == null) {
+            return getVCCPath();
+        }
+        
+        
     }
 */
-    
-    protected DAVConnection getConnection() {
-        return myConnections[0];
+    protected String getVCCPath() {
+        return myVCCPath;
     }
     
     protected DAVProperties getResourceProperties() {
