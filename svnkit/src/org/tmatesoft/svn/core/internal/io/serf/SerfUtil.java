@@ -35,7 +35,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SerfUtil {
 
-    public static DAVProperties deliverProperties(SerfRepository repository, SerfConnection connection, 
+    public static DAVProperties deliverProperties(SerfRepository repository, DAVConnection connection, 
             String path, String label, DAVElement[] properties, int depth, boolean cacheProps) throws SVNException {
         if (cacheProps) {
             DAVProperties result = new DAVProperties();
@@ -68,15 +68,15 @@ public class SerfUtil {
         return null;
     }
     
-    public static DAVProperties getStartingProperties(SerfRepository repository, SerfConnection connection, 
+    public static DAVProperties getStartingProperties(SerfRepository repository, DAVConnection connection, 
             String path, String label) throws SVNException {
         return deliverProperties(repository, connection, path, label, DAVElement.STARTING_PROPERTIES, 
                 DAVUtil.DEPTH_ZERO, true);
     }
 
-    public static String discoverRoot(SerfRepository repos, SerfConnection connection, String path) throws SVNException {
+    public static DAVProperties findStartingProperties(SerfRepository repos, DAVConnection connection, 
+            String path) throws SVNException {
         DAVProperties props = null;
-        String originalPath = path;
         String loppedPath = "";
         
         do {
@@ -107,15 +107,6 @@ public class SerfUtil {
             
         } while (!"".equals(path));
 
-        String vccPath = null;
-        
-        if (props != null) {
-            SVNPropertyValue vcc = props.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
-            if (vcc != null) {
-                
-            }
-        }
-        /*
         if (props != null) {
             if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
                 repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID).getString());
@@ -123,86 +114,21 @@ public class SerfUtil {
             if (props.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH) != null && repos != null) {
                 String relativePath = props.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH).getString();
                 relativePath = SVNEncodingUtil.uriEncode(relativePath);
-                String rootPath = fullPath.substring(0, fullPath.length() - relativePath.length());
+                String rootPath = path.substring(0, path.length() - relativePath.length());
                 repos.setRepositoryRoot(repos.getLocation().setPath(rootPath, true));
             }
             props.setLoppedPath(loppedPath);
-        } 
-        
-        return props;*/
-        return null;
-        
-    }
-    
-    public static DAVProperties findStartingProperties(SerfConnection connection, SerfRepository repos, 
-            String fullPath) throws SVNException {
-        DAVProperties props = null;
-        String originalPath = fullPath;
-        String loppedPath = "";
-        if ("".equals(fullPath)) {
-            props = getStartingProperties(repos, connection, fullPath, null);
-            if (props != null) {
-                if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
-                    repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID).getString());
-                }
-                props.setLoppedPath(loppedPath);
-            }
-            return props;
         }
-        
-        while(!"".equals(fullPath)) {
-            SVNErrorMessage err = null;
-            SVNException nested=null;
-            try {
-                props = getStartingProperties(repos, connection, fullPath, null);
-            } catch (SVNException e) {
-                if (e.getErrorMessage() == null) {
-                    throw e;
-                }
-                err = e.getErrorMessage();
-            }            
-            if (err == null) {
-                break;
-            }
-            if (err.getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
-            }
-            loppedPath = SVNPathUtil.append(SVNPathUtil.tail(fullPath), loppedPath);
-            int length = fullPath.length();
-            fullPath = "/".equals(fullPath) ? "" : SVNPathUtil.removeTail(fullPath);
-            if (length == fullPath.length()) {
-                SVNErrorMessage err2 = SVNErrorMessage.create(err.getErrorCode(), 
-                        "The path was not part of repository");
-                SVNErrorManager.error(err2, err, nested, SVNLogType.NETWORK);
-            }
-        }        
-        if ("".equals(fullPath)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
-                    "No part of path ''{0}'' was found in repository HEAD", originalPath);
-            SVNErrorManager.error(err, SVNLogType.NETWORK);
-        }
-        if (props != null) {
-            if (props.getPropertyValue(DAVElement.REPOSITORY_UUID) != null && repos != null) {
-                repos.setRepositoryUUID(props.getPropertyValue(DAVElement.REPOSITORY_UUID).getString());
-            }
-            if (props.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH) != null && repos != null) {
-                String relativePath = props.getPropertyValue(DAVElement.BASELINE_RELATIVE_PATH).getString();
-                relativePath = SVNEncodingUtil.uriEncode(relativePath);
-                String rootPath = fullPath.substring(0, fullPath.length() - relativePath.length());
-                repos.setRepositoryRoot(repos.getLocation().setPath(rootPath, true));
-            }
-            props.setLoppedPath(loppedPath);
-        } 
         
         return props;
     }
     
-    public static String getVCCPath(SerfConnection connection, SerfRepository repository, String path) throws SVNException {
-        DAVProperties properties = findStartingProperties(connection, repository, path);
+    public static String getVCCPath(DAVConnection connection, SerfRepository repository, String path) throws SVNException {
+        DAVProperties properties = findStartingProperties(repository, connection, path);
         SVNPropertyValue vcc = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         if (vcc == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
-                    "The VCC property was not found on the resource");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
+                    "The OPTIONS response did not include the requested version-controlled-configuration value");
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return vcc.getString();

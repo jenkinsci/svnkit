@@ -110,17 +110,30 @@ public class SerfRepository extends DAVRepository {
         }
         
     }
-
+*/
+    
     public String discoverRoot(String path) throws SVNException {
         if (getVCCPath() != null && path == null) {
             return getVCCPath();
         }
         
-        
+        String vccPath = SerfUtil.getVCCPath(getConnection(), this, path);
+        if (getVCCPath() == null) {
+            setVCCPath(vccPath);
+        }
+        return vccPath;
     }
-*/
+
+    protected DAVConnection createDAVConnection(IHTTPConnectionFactory connectionFactory, DAVRepository repo) {
+        return new SerfConnection(connectionFactory, repo); 
+    }
+
     protected String getVCCPath() {
         return myVCCPath;
+    }
+
+    protected void setVCCPath(String vccPath) {
+        myVCCPath = vccPath;
     }
     
     protected DAVProperties getResourceProperties() {
