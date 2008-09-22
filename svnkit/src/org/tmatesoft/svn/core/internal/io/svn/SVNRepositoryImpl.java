@@ -1460,9 +1460,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public void update(long revision, String target, SVNDepth depth, boolean sendCopyFromArgs,
                        ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
+        boolean hasTarget = target != null;
         target = target == null ? "" : target;
         boolean recursive = getRecurseFromDepth(depth);
-        editor = getDepthFilterEditor(editor, depth, target != null);
+        editor = getDepthFilterEditor(editor, depth, hasTarget);
         Object[] buffer = new Object[]{"update", getRevisionObject(revision),
                 target, Boolean.valueOf(recursive), SVNDepth.asString(depth), Boolean.valueOf(sendCopyFromArgs)};
 
