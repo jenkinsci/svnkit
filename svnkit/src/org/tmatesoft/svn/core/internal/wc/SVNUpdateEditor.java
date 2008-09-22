@@ -856,10 +856,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         
         int levelsUP = SVNPathUtil.getSegmentsCount(dstReposPath) - SVNPathUtil.getSegmentsCount(ancestorPath);
         File currentWD = dstDir;
-        for (int i = 0; i < levelsUP; i++) {
+        for (int i = 0; i < levelsUP && currentWD != null; i++) {
             currentWD = currentWD.getParentFile();
         }
-        
+        if (currentWD == null) {
+            return null;
+        }
         SVNFileType kind = SVNFileType.getType(currentWD);
         if (kind != SVNFileType.DIRECTORY) {
             return null;
