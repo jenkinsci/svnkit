@@ -124,7 +124,8 @@ public class SerfUtil {
     }
     
     public static String getVCCPath(DAVConnection connection, SerfRepository repository, String path) throws SVNException {
-        DAVProperties properties = findStartingProperties(repository, connection, path);
+        DAVProperties properties = DAVUtil.findStartingProperties(connection, repository, path);
+        //DAVProperties properties = findStartingProperties(repository, connection, path);
         SVNPropertyValue vcc = properties.getPropertyValue(DAVElement.VERSION_CONTROLLED_CONFIGURATION);
         if (vcc == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 

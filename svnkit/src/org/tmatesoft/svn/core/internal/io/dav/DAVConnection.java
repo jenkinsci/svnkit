@@ -487,6 +487,10 @@ public class DAVConnection {
         }
     }
     
+    protected SVNRepository getRepository() {
+        return myRepository;
+    }
+    
     private void parseCapabilities(HTTPStatus status) {
         if (myCapabilities == null) {
             myCapabilities = new SVNHashMap();

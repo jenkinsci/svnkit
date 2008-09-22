@@ -1145,7 +1145,11 @@ public class DAVRepository extends SVNRepository {
     protected DAVConnection getConnection() {
         return myConnection;
     }
-    
+
+    protected IHTTPConnectionFactory getConnectionFactory() {
+        return myConnectionFactory;
+    }
+
     private Map doGetMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, boolean includeDescendants) throws SVNException {
         String path = doGetFullPath("");
         path = SVNEncodingUtil.uriEncode(path);

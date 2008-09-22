@@ -22,6 +22,8 @@ import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
@@ -34,9 +36,12 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVConnection;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepository;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
@@ -48,6 +53,7 @@ import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -70,7 +76,6 @@ public class SerfRepository extends DAVRepository {
     }
 
 
-    /*
     private void runReport(SVNURL url, long targetRevision, String target, String dstPath, SVNDepth depth, 
             boolean ignoreAncestry, boolean resourceWalk, boolean fetchContents, boolean sendCopyFromArgs, 
             boolean sendAll, boolean closeEditorOnException, boolean spool, ISVNReporterBaton reporter, 
@@ -83,22 +88,31 @@ public class SerfRepository extends DAVRepository {
         SerfEditorHandler handler = null;
         try {
             openConnection();
+            SerfConnection connection = (SerfConnection) getConnection();
             Map lockTokens = new SVNHashMap();
-            StringBuffer request = DAVEditorHandler.generateEditorRequest(myConnection, null, 
+            StringBuffer request = SerfEditorHandler.generateEditorRequest(connection, null, 
                     url.toString(), targetRevision, target, dstPath, depth, lockTokens, ignoreAncestry, 
-                    resourceWalk, fetchContents, sendCopyFromArgs, sendAll, reporter);
-            handler = new DAVEditorHandler(myConnectionFactory, this, editor, lockTokens, fetchContents, 
+                    sendCopyFromArgs, reporter);
+            
+            handler = new SerfEditorHandler(getConnectionFactory(), this, editor, lockTokens, fetchContents, 
                     target != null && !"".equals(target));
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             try {
-                bcPath = DAVUtil.getVCCPath(myConnection, this, bcPath);
+                bcPath = SerfUtil.getVCCPath(connection, this, bcPath);
             } catch (SVNException e) {
                 if (closeEditorOnException) {
                     editor.closeEdit();
                 }
                 throw e;
             }
-            HTTPStatus status = myConnection.doReport(bcPath, request, handler, spool);
+            
+            if (bcPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
+                        "The OPTIONS response did not include the requested version-controlled-configuration value");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+            
+            HTTPStatus status = connection.doReport(bcPath, request, handler, spool);
             if (status.getError() != null) {
                 SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
@@ -110,20 +124,23 @@ public class SerfRepository extends DAVRepository {
         }
         
     }
-*/
     
     public String discoverRoot(String path) throws SVNException {
-        if (getVCCPath() != null && path == null) {
+        if (getVCCPath() != null) {
             return getVCCPath();
         }
         
         String vccPath = SerfUtil.getVCCPath(getConnection(), this, path);
-        if (getVCCPath() == null) {
-            setVCCPath(vccPath);
-        }
+        setVCCPath(vccPath);
         return vccPath;
     }
 
+    protected void closeConnection() {
+        super.closeConnection();
+        myVCCPath = null;
+        myResourcePropertiesCache = null;
+    }
+    
     protected DAVConnection createDAVConnection(IHTTPConnectionFactory connectionFactory, DAVRepository repo) {
         return new SerfConnection(connectionFactory, repo); 
     }
