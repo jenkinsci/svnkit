@@ -1375,12 +1375,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public void diff(SVNURL url, long targetRevision, long revision, String target, boolean ignoreAncestry,
                      SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         boolean recursive = getRecurseFromDepth(depth);
+        boolean hasTarget = target != null;
         target = target == null ? "" : target;
         if (url == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"), SVNLogType.NETWORK);
         }
 
-        editor = getDepthFilterEditor(editor, depth, target != null);
+        editor = getDepthFilterEditor(editor, depth, hasTarget);
         Object[] buffer = new Object[]{"diff", getRevisionObject(targetRevision),
                 target, Boolean.valueOf(recursive),
                 Boolean.valueOf(ignoreAncestry), url.toString(),
@@ -1406,8 +1407,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         boolean recursive = getRecurseFromDepth(depth);
+        boolean hasTarget = target != null;
         target = target == null ? "" : target;
-        editor = getDepthFilterEditor(editor, depth, target != null);
+        editor = getDepthFilterEditor(editor, depth, hasTarget);
         Object[] buffer = new Object[]{"status", target,
                 Boolean.valueOf(recursive), getRevisionObject(revision), SVNDepth.asString(depth)};
         try {
@@ -1432,11 +1434,12 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter,
                        ISVNEditor editor) throws SVNException {
         boolean recursive = getRecurseFromDepth(depth);
+        boolean hasTarget = target != null;
         target = target == null ? "" : target;
         if (url == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL can not be NULL"), SVNLogType.NETWORK);
         }
-        editor = getDepthFilterEditor(editor, depth, target != null);
+        editor = getDepthFilterEditor(editor, depth, hasTarget);
         Object[] buffer = new Object[]{"switch", getRevisionObject(revision),
                 target, Boolean.valueOf(recursive), url.toString(), SVNDepth.asString(depth)};
         try {
