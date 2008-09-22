@@ -15,8 +15,6 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 import com.sun.jna.Memory;
 
@@ -66,7 +64,6 @@ class SVNLinuxUtil {
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
                         ourSharedMemory.getShort(8) : ourSharedMemory.getInt(16);
                 int type = mode & 0170000;
-                SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA.getFileType: " + type);
                 if (type == 0120000) {
                     return SVNFileType.SYMLINK;
                 } else if (type == 0040000) {
