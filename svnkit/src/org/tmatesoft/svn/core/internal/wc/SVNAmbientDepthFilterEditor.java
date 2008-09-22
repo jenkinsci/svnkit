@@ -113,8 +113,13 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        myCurrentDirBaton = (DirBaton) myDirs.removeLast();
-        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+        DirBaton closedDir = (SVNAmbientDepthFilterEditor.DirBaton) myDirs.removeLast();
+        if (myDirs.isEmpty()) {
+            myCurrentDirBaton = null;
+        } else {
+            myCurrentDirBaton = (SVNAmbientDepthFilterEditor.DirBaton) myDirs.getLast();
+        }
+        if (closedDir.myIsAmbientlyExcluded) {
             return;
         }
         myDelegate.closeDir();
