@@ -317,6 +317,9 @@ public class SVNStatusClient extends SVNBasicClient {
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
                     info = wcAccess.openAnchor(path, false, SVNDepth.recurseFromDepth(depth) ? -1 : 1);
+                    if (depth == SVNDepth.EMPTY) {
+                        depth = SVNDepth.IMMEDIATES;
+                    }
                 } else {
                     throw svne;
                 }
@@ -465,8 +468,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         };
-        doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, 
-                null);
+        doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
         return result[0];
     }
 }
