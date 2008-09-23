@@ -522,7 +522,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         if (!myIsRootOpen) {
-            completeDirectory2(myCurrentDirectory);
+            if (myCurrentDirectory == null) {
+                myCurrentDirectory = createDirectoryInfo(null, "", false);
+            }
+            completeDirectory(myCurrentDirectory);
         }
         if (!myIsTargetDeleted) {
             File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot(); 
@@ -662,13 +665,13 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 return;
             }
             if (!dirInfo.isSkipped) {
-                completeDirectory2(dirInfo);
+                completeDirectory(dirInfo);
             }
             dirInfo = dirInfo.Parent;
         }        
     }
     
-    private void completeDirectory2(SVNDirectoryInfo dirInfo) throws SVNException {
+    private void completeDirectory(SVNDirectoryInfo dirInfo) throws SVNException {
         if (dirInfo.Parent == null && myTarget != null) {
             return;
         }
