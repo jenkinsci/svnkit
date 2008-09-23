@@ -287,6 +287,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return myIsStoreAuth;
     }
     
+    protected boolean isStorePasswords() {
+        String value = getConfigFile().getPropertyValue("auth", "store-passwords");
+        if (value == null) {
+            return true;
+        }
+        return "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
+    }
+    
     protected ISVNAuthenticationProvider getAuthenticationProvider() {
         return myProviders[3];
     }
@@ -553,18 +561,26 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             Map values = new SVNHashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
-            String cipherType = SVNPasswordCipher.getDefaultCipherType();
-            SVNPasswordCipher cipher = SVNPasswordCipher.getInstance(cipherType);
-
-            if (cipherType != null) {
-                values.put("passtype", cipherType);
-            } 
-            if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+            boolean storePasswords = isStorePasswords();
+            SVNPasswordCipher cipher = null;
+            
+            if (storePasswords) {
+                String cipherType = SVNPasswordCipher.getDefaultCipherType();
+                cipher = SVNPasswordCipher.getInstance(cipherType);
+    
+                if (cipherType != null) {
+                    values.put("passtype", cipherType);
+                }
+            }
+            
+            if (ISVNAuthenticationManager.PASSWORD.equals(kind) && storePasswords) {
                 SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
                 values.put("password", cipher.encrypt(passwordAuth.getPassword()));
             } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                 SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
-                values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                if (storePasswords) { 
+                    values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                }
                 int port = sshAuth.getPortNumber();
                 if (sshAuth.getPortNumber() < 0) {
                     port = getDefaultSSHPortNumber() ;
@@ -572,7 +588,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("port", Integer.toString(port));
                 if (sshAuth.getPrivateKeyFile() != null) { 
                     String path = sshAuth.getPrivateKeyFile().getAbsolutePath();
-                    values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                    if (storePasswords) {
+                        values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                    }
                     values.put("key", path);
                 }
             }
