@@ -58,6 +58,8 @@ public class SVNLook extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNLookInfoCommand());
         AbstractSVNCommand.registerCommand(new SVNLookChangedCommand());
         AbstractSVNCommand.registerCommand(new SVNLookHistoryCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookCatCommand());
+        AbstractSVNCommand.registerCommand(new SVNLookLockCommand());
     }
 
     protected void registerOptions() {

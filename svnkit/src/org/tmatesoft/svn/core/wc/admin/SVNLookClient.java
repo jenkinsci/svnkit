@@ -309,7 +309,8 @@ public class SVNLookClient extends SVNBasicClient {
      */
     public void doCat(File repositoryRoot, String path, SVNRevision revision, OutputStream out) throws SVNException {
         if (path == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing repository path argument");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
+                    "Missing repository path argument");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
