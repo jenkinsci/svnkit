@@ -183,7 +183,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 return false;
             }
             String challenge = (String) (items.size() > 1 ? items.get(1) : null); 
-            if (challenge == null && "CRAM-MD5".equals(mechName) && SVNAuthenticator.SUCCESS.equals(status)) {
+            if (challenge == null && ("CRAM-MD5".equals(mechName) || "GSSAPI".equals(mechName)) && SVNAuthenticator.SUCCESS.equals(status)) {
                 challenge = "";
             }
             if ((!SVNAuthenticator.STEP.equals(status) && !SVNAuthenticator.SUCCESS.equals(status)) || 
