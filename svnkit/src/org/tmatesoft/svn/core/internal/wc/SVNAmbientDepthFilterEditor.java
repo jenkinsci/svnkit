@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -34,24 +35,36 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNAmbientDepthFilterEditor implements ISVNEditor {
 
-    private SVNUpdateEditor myDelegate;
+    private ISVNEditor myDelegate;
     private SVNWCAccess myWCAccess;
     private File myAnchor;
     private String myTarget;
     private DirBaton myCurrentDirBaton;
     private FileBaton myCurrentFileBaton;
     private LinkedList myDirs;
-    
-    public SVNAmbientDepthFilterEditor(SVNUpdateEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
+
+
+    public static ISVNEditor wrap(ISVNEditor editor, SVNAdminAreaInfo info, SVNDepth depth, boolean depthIsSticky) throws SVNException {
+        if (depthIsSticky) {
+            SVNWCAccess wcAccess = info.getWCAccess();
+            SVNEntry targetEntry = wcAccess.getEntry(info.getAnchor().getFile(info.getTargetName()), false);
+            if (targetEntry != null && targetEntry.getDepth().compareTo(depth) > 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                        "Shallowing of working copy depths is not yet supported");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } else {
+            return new SVNAmbientDepthFilterEditor(editor, info.getWCAccess(), info.getAnchor().getRoot(), info.getTargetName());
+        }
+        return editor;
+    }
+
+    public SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
         myDelegate = delegate;
         myWCAccess = wcAccess;
         myAnchor = anchor;
         myTarget = target;
         myDirs = new LinkedList();
-    }
-    
-    public long getTargetRevision() {
-        return myDelegate.getTargetRevision();
     }
 
     public void abortEdit() throws SVNException {
