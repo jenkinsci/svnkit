@@ -1405,7 +1405,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         return info;
     }
 
-    public static ISVNEditor createUpdateEditor(SVNAdminAreaInfo info, String switchURL, 
+    public static SVNUpdateEditor createUpdateEditor(SVNAdminAreaInfo info, String switchURL, 
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, 
             String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
@@ -1422,23 +1422,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
         }
 
-        ISVNEditor editor = 
+        SVNUpdateEditor editor = 
             new SVNUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, 
                     entry != null ? entry.getURL() : null, entry != null ? entry.getRepositoryRoot() : null, fileFetcher, lockOnDemand);
         info.getTarget().closeEntries();
 
-        if (depthIsSticky) {
-            SVNWCAccess wcAccess = info.getWCAccess();
-            SVNEntry targetEntry = wcAccess.getEntry(info.getAnchor().getFile(info.getTargetName()), false);
-            if (targetEntry != null && targetEntry.getDepth().compareTo(depth) > 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
-                        "Shallowing of working copy depths is not yet supported");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        } else {
-            editor = new SVNAmbientDepthFilterEditor((SVNUpdateEditor) editor, info.getWCAccess(), 
-                    info.getAnchor().getRoot(), info.getTargetName());
-        }
         return editor;
     }
     

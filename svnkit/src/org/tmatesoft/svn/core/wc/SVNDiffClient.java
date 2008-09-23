@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -52,6 +53,7 @@ import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -2768,6 +2770,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, 
                     revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
                     depth, changeLists);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depth, false);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
                     false, !serverSupportsDepth, depth, false, getDebugLog());
@@ -2775,7 +2778,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
+                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
             } finally {
                 editor.cleanup();
             }
