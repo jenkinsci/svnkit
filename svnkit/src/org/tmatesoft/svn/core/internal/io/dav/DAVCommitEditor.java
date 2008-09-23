@@ -360,11 +360,12 @@ class DAVCommitEditor implements ISVNEditor {
                 myIsAborted = true;
 		        SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
 		    }
-            // abort edit will not be run if there was an error on MERGE.
-            abortEdit();
 		    return handler.getCommitInfo();
 	    }
 	    finally {
+            // we should run abort edit if exception is thrown
+            // abort edit will not be run if there was an error (from server side) on MERGE.
+            abortEdit();
             // always run close callback to 'unlock' SVNRepository.
             runCloseCallback();            
 	    }
