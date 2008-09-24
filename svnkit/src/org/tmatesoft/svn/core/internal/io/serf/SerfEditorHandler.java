@@ -13,11 +13,13 @@ package org.tmatesoft.svn.core.internal.io.serf;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Stack;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
@@ -34,6 +36,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 
@@ -43,7 +47,7 @@ import org.xml.sax.Attributes;
  * @author  TMate Software Ltd.
  */
 public class SerfEditorHandler extends DAVEditorHandler {
-    
+
     public static StringBuffer generateEditorRequest(final SerfConnection connection, StringBuffer xmlBuffer, 
             String url, long targetRevision, String target, String dstPath, SVNDepth depth, final Map lockTokens, 
             boolean ignoreAncestry, boolean sendCopyFromArgs, ISVNReporterBaton reporterBaton) throws SVNException {
@@ -155,14 +159,22 @@ public class SerfEditorHandler extends DAVEditorHandler {
         SVNXMLUtil.addXMLFooter(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "update-report", xmlBuffer);
         return xmlBuffer;
     }
+
+    private State myCurrentState;
+    private ReportInfo myCurrentReportInfo;
+    private DirInfo myRootDir;
+    private long myTargetRevision;
     
     public SerfEditorHandler(IHTTPConnectionFactory connectionFactory, SerfRepository owner, ISVNEditor editor, 
-            Map lockTokens, boolean fetchContent, boolean hasTarget) {
+            Map lockTokens, boolean fetchContent, boolean hasTarget, long targetRevision) {
         super(connectionFactory, owner, editor, lockTokens, fetchContent, hasTarget);
+        
+        myCurrentState = State.NONE;
+        myTargetRevision = targetRevision;
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
-        if (element == TARGET_REVISION) {
+        if (myCurrentState == State.NONE && element == TARGET_REVISION) {
             String revision = attrs.getValue(REVISION_ATTR);
             if (revision == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
@@ -171,64 +183,340 @@ public class SerfEditorHandler extends DAVEditorHandler {
             }
             long revNumber = Long.parseLong(revision);
             myEditor.targetRevision(revNumber);
-        } else if (element == OPEN_DIRECTORY) {
+        } else if (myCurrentState == State.NONE && element == OPEN_DIRECTORY) {
             String revAttr = attrs.getValue(REVISION_ATTR);
             if (revAttr == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing revision attr in open-directory element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
-            
             long revision = Long.parseLong(revAttr);
-            myIsDirectory = true;
-            if (myPath == null) {
-                myPath = "";
-                myEditor.openRoot(revision);
-            } else {
-                String name = attrs.getValue(NAME_ATTR);
-                if (name == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
-                            "Missing name attr in open-directory element");
-                    SVNErrorManager.error(err, SVNLogType.NETWORK);
-                }
-                myPath = SVNPathUtil.append(myPath, name);
-                myEditor.openDir(myPath, revision);
+
+            ReportInfo info = pushState(State.OPEN_DIR);
+            info.myBaseRevision = revision; 
+            info.myDir.myBaseRevision = revision;
+            info.myIsFetchProps = true;
+            info.myBaseName = info.myDir.myBaseName = "";
+            info.myPath = info.myDir.myPath = "";
+        } else if (myCurrentState == State.NONE) {
+            //..
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && 
+                element == OPEN_DIRECTORY) {
+            String revAttr = attrs.getValue(REVISION_ATTR);
+            if (revAttr == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing revision attr in open-directory element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
-            
-            DirInfo dirInfo = new DirInfo();
-            myDirs.push(dirInfo);
-        } else if (element == ADD_DIRECTORY) {
-            myIsDirectory = true;
+            long revision = Long.parseLong(revAttr);
+
+            String name = attrs.getValue(NAME_ATTR);
+            if (name == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in open-directory element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+
+            ReportInfo info = pushState(State.OPEN_DIR);
+            DirInfo dir = info.myDir;
+            info.myBaseRevision = revision;
+            dir.myBaseRevision = revision;
+            dir.myBaseName = info.myBaseName = name;
+            dir.myPath = SVNPathUtil.append(dir.myParentDir.myPath, name);
+            info.myPath = dir.myPath;
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && 
+                element == ADD_DIRECTORY) {
             String name = attrs.getValue(NAME_ATTR);
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                         "Missing name attr in add-directory element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
+            
             String copyFromPath = attrs.getValue(COPYFROM_PATH_ATTR);
-            long copyFromRev = -1;
+            long copyFromRev = SVNRepository.INVALID_REVISION;
             if (copyFromPath != null) {
                 String copyFromRevString = attrs.getValue(COPYFROM_REV_ATTR);
-                if (copyFromRevString == null) {
+                if (copyFromRevString != null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
                             "Missing copyfrom-rev attr in add-directory element");
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 copyFromRev = Long.parseLong(copyFromRevString);
             }
-            myPath = SVNPathUtil.append(myPath, name);
-            myEditor.addDir(myPath, copyFromPath, copyFromRev);
+
+            ReportInfo info = pushState(State.ADD_DIR);
+            DirInfo dir = info.myDir;
+            dir.myBaseName = info.myBaseName = name;
+            dir.myPath = SVNPathUtil.append(dir.myParentDir.myPath, name);
+            info.myPath = dir.myPath;
             
-            DirInfo dirInfo = new DirInfo(); 
-            dirInfo.myIsFetchProps = true;
-            myDirs.push(dirInfo);
-        }
+            info.myCopyFromPath = copyFromPath;
+            info.myCopyFromRevision = copyFromRev;
+            dir.myIsFetchProps = true;
+            dir.myBaseRevision = info.myBaseRevision = SVNRepository.INVALID_REVISION;
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && element == OPEN_FILE) {
+            String name = attrs.getValue(NAME_ATTR);
+            if (name == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in open-file element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+
+            String revAttr = attrs.getValue(REVISION_ATTR);
+            if (revAttr == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing revision attr in open-file element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+            
+            long revision = Long.parseLong(revAttr);
+            
+            ReportInfo info = pushState(State.OPEN_FILE);
+            info.myBaseRevision = revision;
+            info.myBaseName = name;
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && element == ADD_FILE) {
+            String name = attrs.getValue(NAME_ATTR);
+            if (name == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in add-file element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+
+            String copyFromPath = attrs.getValue(COPYFROM_PATH_ATTR);
+            long copyFromRev = SVNRepository.INVALID_REVISION;
+            if (copyFromPath != null) {
+                String copyFromRevString = attrs.getValue(COPYFROM_REV_ATTR);
+                if (copyFromRevString != null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                            "Missing copyfrom-rev attr in add-file element");
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                }
+                copyFromRev = Long.parseLong(copyFromRevString);
+            }
+            
+            ReportInfo info = pushState(State.ADD_FILE);
+            info.myIsFetchProps = true;
+            info.myIsFetchFile = true;
+            info.myBaseName = name;
+            info.myCopyFromPath = copyFromPath;
+            info.myCopyFromRevision = copyFromRev;
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && 
+                element == DELETE_ENTRY) {
+            String name = attrs.getValue(NAME_ATTR);
+            if (name == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in delete-entry element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+            
+            DirInfo dir = myCurrentReportInfo.myDir; 
+            openDir(dir);
+            myEditor.deleteEntry(SVNPathUtil.append(dir.myPath, name), SVNRepository.INVALID_REVISION);
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && 
+                element == ABSENT_DIRECTORY) {
+            String name = attrs.getValue(NAME_ATTR);
+            if (name == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in absent-directory element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+            
+            DirInfo dir = myCurrentReportInfo.myDir; 
+            openDir(dir);
+            myEditor.absentDir(SVNPathUtil.append(dir.myPath, name));
+        } else if ((myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) && 
+                element == ABSENT_FILE) {
+            String name = attrs.getValue(NAME_ATTR);
+            if (name == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                        "Missing name attr in absent-file element");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+            
+            DirInfo dir = myCurrentReportInfo.myDir; 
+            openDir(dir);
+            myEditor.absentFile(SVNPathUtil.append(dir.myPath, name));
+        } else if (myCurrentState == State.OPEN_DIR || myCurrentState == State.ADD_DIR) {
+            ReportInfo info = null;
+            if (element == DAVElement.CHECKED_IN) {
+                info = pushState(State.IGNORE_PROP_NAME);
+                info.myPropertyNameSpace = element.getNamespace();
+                info.myPropertyName = element.getName();
+            } else if (element == SET_PROP || element == REMOVE_PROP) {
+                info = pushState(State.PROP);
+                String propName = attrs.getValue(NAME_ATTR);
+                if (propName == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                            "Missing name attr in {0} element", element.getName());
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                }
+                
+                int colonIndex = propName.indexOf(':');
+                
+                String propNameSpace = null;
+                if (colonIndex != -1) {
+                    propNameSpace = propName.substring(0, colonIndex);
+                    propName = propName.substring(colonIndex + 1);
+                }
+                
+                info.myPropertyNameSpace = propNameSpace;
+                info.myPropertyName = propName;
+                info.myEncoding = attrs.getValue(ENCODING_ATTR); 
+            } else if (element == DAVElement.PROP) {
+                pushState(State.NEED_PROP_NAME);
+            } else if (element == FETCH_PROPS) {
+                myCurrentReportInfo.myDir.myIsFetchProps = true;
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "aborted in SerfEditorHandler: unexpected element met");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
+        } else if (myCurrentState == State.OPEN_FILE || myCurrentState == State.ADD_FILE) {
+            ReportInfo info = null;
+            if (element == DAVElement.CHECKED_IN) {
+                info = pushState(State.IGNORE_PROP_NAME);
+                info.myPropertyName = element.getName();
+                info.myPropertyNameSpace = element.getNamespace();
+            } else if (element == DAVElement.PROP) {
+                pushState(State.NEED_PROP_NAME);
+            } else if (element == FETCH_PROPS) {
+                myCurrentReportInfo.myIsFetchFile = true;
+            } else if (element == SET_PROP || element == REMOVE_PROP) {
+                info = pushState(State.PROP);
+                String propName = attrs.getValue(NAME_ATTR);
+                if (propName == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
+                            "Missing name attr in {0} element", element.getName());
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
+                }
+                
+                int colonIndex = propName.indexOf(':');
+                
+                String propNameSpace = null;
+                if (colonIndex != -1) {
+                    propNameSpace = propName.substring(0, colonIndex);
+                    propName = propName.substring(colonIndex + 1);
+                }
+                
+                info.myPropertyNameSpace = propNameSpace;
+                info.myPropertyName = propName;
+                info.myEncoding = attrs.getValue(ENCODING_ATTR); 
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "aborted in SerfEditorHandler: unexpected element met");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+                
+            }
+        } else if (myCurrentState == State.IGNORE_PROP_NAME) {
+            pushState(State.PROP);
+        } else if (myCurrentState == State.NEED_PROP_NAME) {
+            ReportInfo info = pushState(State.PROP);
+            info.myPropertyNameSpace = element.getNamespace();
+            info.myPropertyName = element.getName();
+        } 
     }
 
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+        if (myCurrentState == State.NONE) {
+            return;
+        }
+        
+        if ((myCurrentState == State.OPEN_DIR && element == OPEN_DIRECTORY) || 
+                (myCurrentState == State.ADD_DIR && element == ADD_DIRECTORY)) {
+            
+        }
+    }
+    
+    private void openDir(DirInfo dir) throws SVNException {
+        if ("".equals(dir.myBaseName)) {
+            myEditor.openRoot(dir.myBaseRevision);
+        } else {
+            openDir(dir.myParentDir);
+            if (SVNRevision.isValidRevisionNumber(dir.myBaseRevision)) {
+                myEditor.openDir(dir.myPath, dir.myBaseRevision);
+            } else {
+                myEditor.addDir(dir.myPath, null, SVNRepository.INVALID_REVISION);
+            }
+        }
+    }
+    
+    private ReportInfo pushState(State state) {
+        myCurrentState = state;
+        ReportInfo newInfo = null;
+        
+        if (state == State.OPEN_DIR || state == State.ADD_DIR) {
+            newInfo = new ReportInfo();
+            DirInfo dir = new DirInfo(); 
+            newInfo.myDir = dir;
+            dir.myProperties = new SVNProperties();
+            newInfo.myProperties = dir.myProperties;
+            dir.myRemovedProperties = new SVNProperties();
+            if (myCurrentReportInfo != null) {
+                myCurrentReportInfo.myDir.myRefCount++;
+                newInfo.myDir.myParentDir = myCurrentReportInfo.myDir;
+            } else {
+                myRootDir = newInfo.myDir; 
+            }
+            myCurrentReportInfo = newInfo;
+        } else if (state == State.OPEN_FILE || state == State.ADD_FILE) {
+            newInfo = new ReportInfo();
+            newInfo.myDir = myCurrentReportInfo.myDir;
+            myCurrentReportInfo.myDir.myRefCount++;
+            newInfo.myProperties = new SVNProperties();
+            myCurrentReportInfo = newInfo;
+        }
+        return newInfo; 
+    }
+    
+    private class ReportInfo {
+        private String myBaseName;
+        private String myPath;
+        private String myVSNURL;
+        private String myLockToken;
+        private String myPropertyNameSpace;
+        private String myPropertyName;
+        private String myEncoding;
+        private long myBaseRevision;
+        private String myCopyFromPath;
+        private long myCopyFromRevision;
+        private boolean myIsFetchProps;
+        private boolean myIsFetchFile;
+        private SVNProperties myProperties;
+        private DirInfo myDir; 
+    }
+    
     private class DirInfo {
         private boolean myIsFetchProps;
         private Map myChildren;
         private String myVSNURL;
+        private long myBaseRevision;
+        private long myCopyFromRevision;
+        private String myCopyFromPath;
+        private String myBaseName;
+        private String myPath;
+        private int myRefCount;
+        private SVNProperties myProperties;
+        private SVNProperties myRemovedProperties;
+        
+        private DirInfo myParentDir;
+        
     }
 
+    private static class State {
+        private static final State NONE = new State(0);
+        private static final State OPEN_DIR = new State(1);
+        private static final State ADD_DIR = new State(2);
+        private static final State OPEN_FILE = new State(3);
+        private static final State ADD_FILE = new State(4);
+        private static final State PROP = new State(5);
+        private static final State IGNORE_PROP_NAME = new State(6);
+        private static final State NEED_PROP_NAME = new State(7);
+        
+        private int myID;
+        
+        public State(int id) {
+            myID = id;
+        }
+    }
 }
