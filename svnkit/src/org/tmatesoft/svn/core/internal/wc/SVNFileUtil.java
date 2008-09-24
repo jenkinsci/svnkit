@@ -649,8 +649,11 @@ public class SVNFileUtil {
         if (ls == null || ls.lastIndexOf(" -> ") < 0) {
             return null;
         }
-        String[] attributes = ls.split("\\s+");
-        return attributes[attributes.length - 1];
+        int index = ls.lastIndexOf(" -> ") + " -> ".length();
+        if (index <= ls.length()) {
+            return ls.substring(index);
+        }
+        return null;
     }
 
     public static String computeChecksum(String line) {
