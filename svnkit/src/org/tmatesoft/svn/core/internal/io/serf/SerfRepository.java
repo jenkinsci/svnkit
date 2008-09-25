@@ -94,8 +94,8 @@ public class SerfRepository extends DAVRepository {
                     url.toString(), targetRevision, target, dstPath, depth, lockTokens, ignoreAncestry, 
                     sendCopyFromArgs, reporter);
             
-            handler = new SerfEditorHandler(getConnectionFactory(), this, editor, lockTokens, fetchContents, 
-                    target != null && !"".equals(target), targetRevision);
+            handler = new SerfEditorHandler(getConnectionFactory(), connection, this, editor, lockTokens, fetchContents, 
+                    target != null && !"".equals(target), targetRevision, dstPath);
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             try {
                 bcPath = SerfUtil.getVCCPath(connection, this, bcPath);

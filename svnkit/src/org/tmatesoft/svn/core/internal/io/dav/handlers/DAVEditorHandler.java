@@ -196,6 +196,8 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     protected String myPropertyName;
     protected boolean myIsDirectory;
     protected Stack myDirs; 
+    protected Map myLockTokens;
+    protected DAVRepository myOwner;
 
     private String myChecksum;
     private String myEncoding;
@@ -203,7 +205,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     private boolean myIsReceiveAll;
     private DAVConnection myConnection;
     private IHTTPConnectionFactory myConnectionFactory;
-    private DAVRepository myOwner;
     private String myHref;
     private String myCurrentWCPath;
     private boolean myIsInResource;
@@ -211,7 +212,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     private boolean myIsFetchProps;
     private boolean myHasTarget;
     private Map myVersionURLs;
-    private Map myLockTokens;
 
     public DAVEditorHandler(IHTTPConnectionFactory connectionFactory, DAVRepository owner, ISVNEditor editor, 
             Map lockTokens, boolean fetchContent, boolean hasTarget) {

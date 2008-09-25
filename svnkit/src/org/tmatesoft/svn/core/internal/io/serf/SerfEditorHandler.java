@@ -164,13 +164,21 @@ public class SerfEditorHandler extends DAVEditorHandler {
     private ReportInfo myCurrentReportInfo;
     private DirInfo myRootDir;
     private long myTargetRevision;
+    private SerfConnection myConnection;
+    private int myActivePropFinds;
+    private Stack myStates;
+    private String myDstPath;
     
-    public SerfEditorHandler(IHTTPConnectionFactory connectionFactory, SerfRepository owner, ISVNEditor editor, 
-            Map lockTokens, boolean fetchContent, boolean hasTarget, long targetRevision) {
-        super(connectionFactory, owner, editor, lockTokens, fetchContent, hasTarget);
-        
+    public SerfEditorHandler(IHTTPConnectionFactory connectionFactory, SerfConnection connection, 
+            SerfRepository owner, ISVNEditor editor, Map lockTokens, boolean fetchContent, boolean hasTarget, 
+            long targetRevision, String dstPath) {
+        super(connectionFactory, owner, editor, lockTokens, fetchContent, hasTarget);   
+        myConnection = connection;
         myCurrentState = State.NONE;
         myTargetRevision = targetRevision;
+        myActivePropFinds = 0;
+        myDstPath = dstPath;
+        myStates = new Stack();
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
@@ -424,7 +432,50 @@ public class SerfEditorHandler extends DAVEditorHandler {
         
         if ((myCurrentState == State.OPEN_DIR && element == OPEN_DIRECTORY) || 
                 (myCurrentState == State.ADD_DIR && element == ADD_DIRECTORY)) {
+            myCurrentReportInfo.myDir.myIsTagClosed = true;
+            DAVProperties props = myCurrentReportInfo.myDir.myProperties;
+            SVNPropertyValue checkedInURL = props.getPropertyValue(DAVElement.CHECKED_IN); 
+            if (checkedInURL == null && (!SVNRevision.isValidRevisionNumber(myCurrentReportInfo.myDir.myBaseRevision) || 
+                    myCurrentReportInfo.myDir.myIsFetchProps)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
+                        "The OPTIONS response did not include the requested checked-in value");
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            }
             
+            myCurrentReportInfo.myDir.myVSNURL = checkedInURL.getString();
+            if (!SVNRevision.isValidRevisionNumber(myCurrentReportInfo.myDir.myBaseRevision) || 
+                    myCurrentReportInfo.myDir.myIsFetchProps) {
+                myCurrentReportInfo.myDir.myIsFetchProps = true;
+                String label = SVNRevision.isValidRevisionNumber(myTargetRevision) ? Long.toString(myTargetRevision) : null;
+                myCurrentReportInfo.myDir.myProperties = DAVUtil.getResourceProperties(myConnection, 
+                        myCurrentReportInfo.myDir.myVSNURL, label, null);
+                myActivePropFinds++;
+            } else {
+                
+            }
+            myStates.pop();
+            myCurrentState = (State) myStates.peek();
+        } else if (myCurrentState == State.OPEN_FILE && element == OPEN_FILE) {
+            if (myCurrentReportInfo.myPath == null) {
+                myCurrentReportInfo.myPath = SVNPathUtil.append(myCurrentReportInfo.myDir.myPath, 
+                        myCurrentReportInfo.myBaseName);
+            }
+            
+            myCurrentReportInfo.myLockToken = (String) myLockTokens.get(myCurrentReportInfo.myPath);
+            if (myCurrentReportInfo.myLockToken != null && !myCurrentReportInfo.myIsFetchProps) {
+                myCurrentReportInfo.myIsFetchProps = true;
+            }
+            
+            SVNPropertyValue checkedInProp = myCurrentReportInfo.myProperties.getPropertyValue(DAVElement.CHECKED_IN); 
+            String path = checkedInProp.getString();
+            path = path.substring(0, path.length() - myCurrentReportInfo.myPath.length());
+            String reposRoot = myOwner.getRepositoryRoot(true).toDecodedString();
+            if (myDstPath != null && !myDstPath.equals(reposRoot)) {
+                path = path.substring(path.length() - myDstPath.length() + reposRoot.length());
+            }
+            
+            path = SVNPathUtil.removeTail(path);
+            //path = SVNPathUtil.append(path, s)
         }
     }
     
@@ -443,15 +494,17 @@ public class SerfEditorHandler extends DAVEditorHandler {
     
     private ReportInfo pushState(State state) {
         myCurrentState = state;
+        myStates.push(myCurrentState);
+        
         ReportInfo newInfo = null;
         
         if (state == State.OPEN_DIR || state == State.ADD_DIR) {
             newInfo = new ReportInfo();
             DirInfo dir = new DirInfo(); 
             newInfo.myDir = dir;
-            dir.myProperties = new SVNProperties();
+            dir.myProperties = new DAVProperties();
             newInfo.myProperties = dir.myProperties;
-            dir.myRemovedProperties = new SVNProperties();
+            dir.myRemovedProperties = new DAVProperties();
             if (myCurrentReportInfo != null) {
                 myCurrentReportInfo.myDir.myRefCount++;
                 newInfo.myDir.myParentDir = myCurrentReportInfo.myDir;
@@ -463,7 +516,7 @@ public class SerfEditorHandler extends DAVEditorHandler {
             newInfo = new ReportInfo();
             newInfo.myDir = myCurrentReportInfo.myDir;
             myCurrentReportInfo.myDir.myRefCount++;
-            newInfo.myProperties = new SVNProperties();
+            newInfo.myProperties = new DAVProperties();
             myCurrentReportInfo = newInfo;
         }
         return newInfo; 
@@ -482,12 +535,13 @@ public class SerfEditorHandler extends DAVEditorHandler {
         private long myCopyFromRevision;
         private boolean myIsFetchProps;
         private boolean myIsFetchFile;
-        private SVNProperties myProperties;
+        private DAVProperties myProperties;
         private DirInfo myDir; 
     }
     
     private class DirInfo {
         private boolean myIsFetchProps;
+        private boolean myIsTagClosed;
         private Map myChildren;
         private String myVSNURL;
         private long myBaseRevision;
@@ -496,8 +550,8 @@ public class SerfEditorHandler extends DAVEditorHandler {
         private String myBaseName;
         private String myPath;
         private int myRefCount;
-        private SVNProperties myProperties;
-        private SVNProperties myRemovedProperties;
+        private DAVProperties myProperties;
+        private DAVProperties myRemovedProperties;
         
         private DirInfo myParentDir;
         
