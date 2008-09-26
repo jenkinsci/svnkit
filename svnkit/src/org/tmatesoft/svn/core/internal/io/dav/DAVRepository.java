@@ -796,7 +796,7 @@ public class DAVRepository extends SVNRepository {
                 false, false, reporter, editor);
     }
 
-	public boolean hasCapability(SVNCapability capability) throws SVNException {
+    public boolean hasCapability(SVNCapability capability) throws SVNException {
         if (capability == SVNCapability.COMMIT_REVPROPS) {
             return true;
         }

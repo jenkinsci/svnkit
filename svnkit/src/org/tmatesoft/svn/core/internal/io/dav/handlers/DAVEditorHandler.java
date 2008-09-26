@@ -198,6 +198,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     protected Stack myDirs; 
     protected Map myLockTokens;
     protected DAVRepository myOwner;
+    protected boolean myIsFetchContent;
 
     private String myChecksum;
     private String myEncoding;
@@ -208,7 +209,6 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     private String myHref;
     private String myCurrentWCPath;
     private boolean myIsInResource;
-    private boolean myIsFetchContent;
     private boolean myIsFetchProps;
     private boolean myHasTarget;
     private Map myVersionURLs;

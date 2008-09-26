@@ -90,12 +90,13 @@ public class SerfRepository extends DAVRepository {
             openConnection();
             SerfConnection connection = (SerfConnection) getConnection();
             Map lockTokens = new SVNHashMap();
+            String srcPath = url.toString(); 
             StringBuffer request = SerfEditorHandler.generateEditorRequest(connection, null, 
-                    url.toString(), targetRevision, target, dstPath, depth, lockTokens, ignoreAncestry, 
+                    srcPath, targetRevision, target, dstPath, depth, lockTokens, ignoreAncestry, 
                     sendCopyFromArgs, reporter);
             
             handler = new SerfEditorHandler(getConnectionFactory(), connection, this, editor, lockTokens, fetchContents, 
-                    target != null && !"".equals(target), targetRevision, dstPath);
+                    target != null && !"".equals(target), targetRevision, dstPath, srcPath);
             String bcPath = SVNEncodingUtil.uriEncode(getLocation().getPath());
             try {
                 bcPath = SerfUtil.getVCCPath(connection, this, bcPath);
@@ -122,7 +123,6 @@ public class SerfRepository extends DAVRepository {
             }
             closeConnection();
         }
-        
     }
     
     public String discoverRoot(String path) throws SVNException {

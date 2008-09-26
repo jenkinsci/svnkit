@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.io.serf;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
@@ -19,7 +18,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVBaselineInfo;
@@ -168,16 +166,18 @@ public class SerfEditorHandler extends DAVEditorHandler {
     private int myActivePropFinds;
     private Stack myStates;
     private String myDstPath;
+    private String mySrcPath;
     
     public SerfEditorHandler(IHTTPConnectionFactory connectionFactory, SerfConnection connection, 
             SerfRepository owner, ISVNEditor editor, Map lockTokens, boolean fetchContent, boolean hasTarget, 
-            long targetRevision, String dstPath) {
+            long targetRevision, String dstPath, String srcPath) {
         super(connectionFactory, owner, editor, lockTokens, fetchContent, hasTarget);   
         myConnection = connection;
         myCurrentState = State.NONE;
         myTargetRevision = targetRevision;
         myActivePropFinds = 0;
         myDstPath = dstPath;
+        mySrcPath = srcPath;
         myStates = new Stack();
     }
 
@@ -465,17 +465,47 @@ public class SerfEditorHandler extends DAVEditorHandler {
             if (myCurrentReportInfo.myLockToken != null && !myCurrentReportInfo.myIsFetchProps) {
                 myCurrentReportInfo.myIsFetchProps = true;
             }
+
+            //TODO: add get_wc_prop callback equivalent later
             
             SVNPropertyValue checkedInProp = myCurrentReportInfo.myProperties.getPropertyValue(DAVElement.CHECKED_IN); 
             String path = checkedInProp.getString();
             path = path.substring(0, path.length() - myCurrentReportInfo.myPath.length());
-            String reposRoot = myOwner.getRepositoryRoot(true).toDecodedString();
+            String reposRoot = myOwner.getRepositoryRoot(true).toString();
             if (myDstPath != null && !myDstPath.equals(reposRoot)) {
                 path = path.substring(path.length() - myDstPath.length() + reposRoot.length());
             }
             
             path = SVNPathUtil.removeTail(path);
-            //path = SVNPathUtil.append(path, s)
+            path = SVNPathUtil.append(path, Long.toString(myCurrentReportInfo.myBaseRevision));
+            
+            if (!mySrcPath.equals(reposRoot)) {
+                path = SVNPathUtil.append(path, mySrcPath.substring(reposRoot.length() + 1));
+            }
+            
+            path = SVNPathUtil.append(path, myCurrentReportInfo.myPath);
+            myCurrentReportInfo.myDeltaBase = path;
+            
+        }
+    }
+    
+    private void fetchFile(ReportInfo info) throws SVNException {
+        SVNPropertyValue url = info.myProperties.getPropertyValue(DAVElement.CHECKED_IN); 
+        if (url == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
+                    "The OPTIONS response did not include the requested checked-in value");
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
+        }
+        
+        info.myVSNURL = url.getString();
+        if (info.myIsFetchProps) {
+            info.myProperties = DAVUtil.getResourceProperties(myConnection, 
+                    info.myVSNURL, Long.toString(myTargetRevision), null);
+            myActivePropFinds++;
+        }
+        
+        if (info.myIsFetchFile && myIsFetchContent) {
+            
         }
     }
     
@@ -530,6 +560,7 @@ public class SerfEditorHandler extends DAVEditorHandler {
         private String myPropertyNameSpace;
         private String myPropertyName;
         private String myEncoding;
+        private String myDeltaBase;
         private long myBaseRevision;
         private String myCopyFromPath;
         private long myCopyFromRevision;
