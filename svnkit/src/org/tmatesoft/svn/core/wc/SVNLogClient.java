@@ -540,7 +540,9 @@ public class SVNLogClient extends SVNBasicClient {
                 endRevision = SVNRevision.create(0);
             }
         }
-
+        if (limit > Integer.MAX_VALUE) {
+            limit = Integer.MAX_VALUE;
+        }
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
             public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                 checkCancelled();
@@ -770,6 +772,9 @@ public class SVNLogClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
                     "Revision type requires a working copy path, not a URL");
             SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (limit > Integer.MAX_VALUE) {
+            limit = Integer.MAX_VALUE;
         }
         paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
