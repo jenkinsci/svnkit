@@ -884,12 +884,24 @@ public class SVNCopyClient extends SVNBasicClient {
                             if (externalEntry != null) {
                                 externalsWCRevision = SVNRevision.create(externalEntry.getRevision());
                             }
+                            SVNEntry ownerEntry = wcAccess.getEntry(localPath, false);
+                            SVNURL ownerURL = null;
+                            if (ownerEntry != null) {
+                                ownerURL = ownerEntry.getSVNURL();
+                            } 
+                            if (ownerURL == null) {
+                                // there is no entry for the directory that has external 
+                                // property or no url in it?
+                                continue;
+                            }
+                            SVNRevision[] revs = getExternalsHandler().handleExternal(
+                                    externalWC, 
+                                    externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL), 
+                                    externals[k].getRevision(), 
+                                    externals[k].getPegRevision(), 
+                                    externals[k].getRawValue(), 
+                                    externalsWCRevision);
                             
-                            SVNRevision[] revs = getExternalsHandler().handleExternal(externalWC, 
-                                    externals[k].resolveURL(repos.getRepositoryRoot(true), 
-                                            externalEntry.getSVNURL()), externals[k].getRevision(), 
-                                            externals[k].getPegRevision(), externals[k].getRawValue(), 
-                                            externalsWCRevision);
                             if (revs != null && revs[0] == externals[k].getRevision()) {
                                 newExternals.add(externals[k].getRawValue());
                             } else if (revs != null) {
