@@ -81,6 +81,10 @@ public class SerfConnection extends DAVConnection {
         }
     }
 
+    protected IHTTPConnection getCurrentConnection() {
+        return myHttpConnections[myCurrentConnection];
+    }
+    
     protected IHTTPConnection getConnection() {
         return myHttpConnections[0];
     }

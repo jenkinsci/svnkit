@@ -85,8 +85,10 @@ svnkit-test/daemon/template eol=lf
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
+svnkit/src/org/tmatesoft/svn/core/internal/io/serf/ISerfRequest.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfConnection.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfEditorHandler.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfGETRequest.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfRepository.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfUtil.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNCallbackHandler.class -text

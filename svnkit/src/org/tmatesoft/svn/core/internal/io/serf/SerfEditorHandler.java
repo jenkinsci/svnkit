@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.serf;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
@@ -25,6 +26,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
+import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnection;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -167,6 +169,7 @@ public class SerfEditorHandler extends DAVEditorHandler {
     private Stack myStates;
     private String myDstPath;
     private String mySrcPath;
+    private Map myConnectionsToPipes;
     
     public SerfEditorHandler(IHTTPConnectionFactory connectionFactory, SerfConnection connection, 
             SerfRepository owner, ISVNEditor editor, Map lockTokens, boolean fetchContent, boolean hasTarget, 
@@ -179,6 +182,7 @@ public class SerfEditorHandler extends DAVEditorHandler {
         myDstPath = dstPath;
         mySrcPath = srcPath;
         myStates = new Stack();
+        myConnectionsToPipes = new HashMap();
     }
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
@@ -550,6 +554,13 @@ public class SerfEditorHandler extends DAVEditorHandler {
             myCurrentReportInfo = newInfo;
         }
         return newInfo; 
+    }
+    
+    private void createGETRequest(ReportInfo info) {
+        IHTTPConnection connection = myConnection.getCurrentConnection();
+        
+        myConnectionsToPipes.put(connection, info);
+        
     }
     
     private class ReportInfo {
