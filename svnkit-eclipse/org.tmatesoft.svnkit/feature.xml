@@ -5,7 +5,7 @@
       version="%svnkit.version%"
       provider-name="TMate Software">
 
-   <description url="http://svnkit.com/">SVNKit is a pure java Subversion client library that may be used through its own API or serve as a transparent replacement of native javahl bindings.</description>
+   <description url="http://svnkit.com/">%description</description>
 
    <copyright url="http://tmatesoft.com/">
       (c) 2004-2008, TMate Software Ltd.
