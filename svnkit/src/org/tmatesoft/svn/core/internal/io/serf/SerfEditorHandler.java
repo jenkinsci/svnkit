@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
 import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnection;
 import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -488,7 +489,7 @@ public class SerfEditorHandler extends DAVEditorHandler {
             }
             
             path = SVNPathUtil.append(path, myCurrentReportInfo.myPath);
-            myCurrentReportInfo.myDeltaBase = path;
+            myCurrentReportInfo.myDeltaBaseVersionURL = path;
             
         }
     }
@@ -509,7 +510,14 @@ public class SerfEditorHandler extends DAVEditorHandler {
         }
         
         if (info.myIsFetchFile && myIsFetchContent) {
-            
+            HTTPHeader headers = new HTTPHeader();
+            if (SVNRevision.isValidRevisionNumber(info.myBaseRevision) && info.myDeltaBaseVersionURL != null) {
+                headers.setHeaderValue(HTTPHeader.SVN_DELTA_BASE_HEADER, info.myDeltaBaseVersionURL);
+                headers.setHeaderValue(HTTPHeader.ACCEPT_ENCODING_HEADER, "svndiff1;q=0.9,svndiff;q=0.8");
+            } else {
+                headers.setHeaderValue(HTTPHeader.ACCEPT_ENCODING_HEADER, "gzip");
+            }
+            //SerfGETRequest request = new SerfGETRequest(info.myVSNURL, headers, );
         }
     }
     
@@ -556,22 +564,20 @@ public class SerfEditorHandler extends DAVEditorHandler {
         return newInfo; 
     }
     
-    private void createGETRequest(ReportInfo info) {
+    private void createGETRequest(ISerfRequest request) {
         IHTTPConnection connection = myConnection.getCurrentConnection();
-        
-        myConnectionsToPipes.put(connection, info);
-        
+        myConnectionsToPipes.put(connection, request);
     }
     
     private class ReportInfo {
         private String myBaseName;
         private String myPath;
         private String myVSNURL;
+        private String myDeltaBaseVersionURL;
         private String myLockToken;
         private String myPropertyNameSpace;
         private String myPropertyName;
         private String myEncoding;
-        private String myDeltaBase;
         private long myBaseRevision;
         private String myCopyFromPath;
         private long myCopyFromRevision;
@@ -615,4 +621,5 @@ public class SerfEditorHandler extends DAVEditorHandler {
             myID = id;
         }
     }
+    
 }

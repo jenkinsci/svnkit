@@ -262,7 +262,7 @@ public class DAVConnection {
         httpConnection.setSpoolResponse(spool || isReportResponseSpooled());
         try {
             HTTPHeader header = new HTTPHeader();
-            header.addHeaderValue("Accept-Encoding", "svndiff1;q=0.9,svndiff;q=0.8");
+            header.addHeaderValue(HTTPHeader.ACCEPT_ENCODING_HEADER, "svndiff1;q=0.9,svndiff;q=0.8");
             return httpConnection.request("REPORT", path, header, requestBody, -1, 0, null, handler);
         } finally {
             httpConnection.setSpoolResponse(false);
