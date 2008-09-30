@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.util.jna;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import com.sun.jna.Native;
 
@@ -24,6 +26,7 @@ class JNALibraryLoader {
     
     private static ISVNWinCryptLibrary ourWinCryptLibrary;
     private static ISVNKernel32Library ourKenrelLibrary;
+    private static ISVNSecurityLibrary ourSecurityLibrary;
     private static ISVNCLibrary ourCLibrary;
     
     private static volatile int ourUID = -1;
@@ -33,13 +36,21 @@ class JNALibraryLoader {
         // load win32 libraries.
         if (SVNFileUtil.isWindows && !SVNFileUtil.isOS2) {
             try {
-                ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", ISVNWinCryptLibrary.class);
-                ourKenrelLibrary = (ISVNKernel32Library) Native.loadLibrary("Kernel32", ISVNKernel32Library.class);
+                ourWinCryptLibrary = (ISVNWinCryptLibrary) Native.loadLibrary("Crypt32", 
+                        ISVNWinCryptLibrary.class);
+                ourKenrelLibrary = (ISVNKernel32Library) Native.loadLibrary("Kernel32", 
+                        ISVNKernel32Library.class);
+                String securityLibraryName = getSecurityLibraryName();
+                ourSecurityLibrary = securityLibraryName != null ? 
+                        (ISVNSecurityLibrary) Native.loadLibrary(securityLibraryName, 
+                        ISVNSecurityLibrary.class) : null;
             } catch (Throwable th) {
                 ourWinCryptLibrary = null;
                 ourKenrelLibrary = null;
+                ourSecurityLibrary = null;
             }
         }
+        
         if (SVNFileUtil.isOSX || SVNFileUtil.isLinux || SVNFileUtil.isBSD) {
             try {
                 ourCLibrary = (ISVNCLibrary) Native.loadLibrary("c", ISVNCLibrary.class);
@@ -75,7 +86,42 @@ class JNALibraryLoader {
         return ourKenrelLibrary;
     }
 
+    public static synchronized ISVNSecurityLibrary getSecurityLibrary() {
+        return ourSecurityLibrary;
+    }
+    
     public static synchronized ISVNCLibrary getCLibrary() {
         return ourCLibrary;
     }
+
+    private static String getSecurityLibraryName() {
+        ISVNKernel32Library library = getKernelLibrary();
+        if (library == null) {
+            return null;
+        }
+
+        ISVNKernel32Library.OSVERSIONINFO osInfo = null;
+        synchronized (library) {
+            try {
+                osInfo = new ISVNKernel32Library.OSVERSIONINFO();
+                osInfo.write();
+                int rc = library.GetVersionExW(osInfo.getPointer());
+                osInfo.read();
+                if (rc == 0) {
+                    return null;
+                }
+            } catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
+                return null;
+            }
+        }
+
+        if (osInfo.dwPlatformId.intValue() == ISVNKernel32Library.VER_PLATFORM_WIN32_NT) {
+            return "Security";
+        } else if (osInfo.dwPlatformId.intValue() == ISVNKernel32Library.VER_PLATFORM_WIN32_WINDOWS) {
+            return "Secur32";
+        }
+        return null;
+    }
+
 }

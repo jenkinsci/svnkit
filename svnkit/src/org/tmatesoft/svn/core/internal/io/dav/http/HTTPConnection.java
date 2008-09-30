@@ -40,6 +40,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -288,7 +289,8 @@ class HTTPConnection implements IHTTPConnection {
         request.setResponseStream(dst);
         
         SVNErrorMessage err = null;
-
+        boolean authIsRequired = false;
+        boolean proxyAuthIsRequired = false;
         while (true) {
             HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
@@ -305,20 +307,22 @@ class HTTPConnection implements IHTTPConnection {
                     request.reset();
                     request.setProxied(myIsProxied);
                     request.setSecured(myIsSecured);                    
-                    if (myProxyAuthentication != null) {
+                    if (proxyAuthIsRequired && myProxyAuthentication != null) {
                         if (proxyAuthResponse == null) {
                             request.initCredentials(myProxyAuthentication, method, path);
                             proxyAuthResponse = myProxyAuthentication.authenticate();
                         }
                         request.setProxyAuthentication(proxyAuthResponse);
                     }
-                    if (httpAuth != null && myChallengeCredentials != null) {
+                    
+                    if (authIsRequired && myChallengeCredentials != null) {
                         if (httpAuthResponse == null) {
                             request.initCredentials(myChallengeCredentials, method, path);
                             httpAuthResponse = myChallengeCredentials.authenticate();
                         }
                         request.setAuthentication(httpAuthResponse);
                     }
+                    
                     try {
                         request.dispatch(method, path, header, ok1, ok2, context);
                         break;
@@ -350,17 +354,23 @@ class HTTPConnection implements IHTTPConnection {
             } catch (IOException e) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                 if (e instanceof SocketTimeoutException) {
-	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
+	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+	                        "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof UnknownHostException) {
-	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "unknown host", null, SVNErrorMessage.TYPE_ERROR, e);
+	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+	                        "unknown host", null, SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof ConnectException) {
-	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
+	                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+	                        "connection refused by the server", null, 
+	                        SVNErrorMessage.TYPE_ERROR, e);
                 } else if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 } else if (e instanceof SSLException) {                   
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
+                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                            e.getMessage());
                 } else {
-                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e.getMessage());
+                    err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                            e.getMessage());
                 }
             } catch (SVNException e) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, e);
@@ -371,10 +381,12 @@ class HTTPConnection implements IHTTPConnection {
             } finally {
                 finishResponse(request);                
             }
+            
             if (err != null) {
                 close();
                 break;
             }
+            
             if (keyManager != null) {
 	            myKeyManager = keyManager;
 	            myTrustManager = trustManager;
@@ -386,6 +398,7 @@ class HTTPConnection implements IHTTPConnection {
                 close();
                 err = request.getErrorMessage();
             } else if (myIsProxied && status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                proxyAuthIsRequired = true;
                 Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
@@ -413,6 +426,7 @@ class HTTPConnection implements IHTTPConnection {
 
                 break;
             } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                authIsRequired = true;
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
@@ -452,8 +466,9 @@ class HTTPConnection implements IHTTPConnection {
                     continue;
                 }
                 
+                HTTPNTLMAuthentication ntlmAuth = null;
                 if (myChallengeCredentials instanceof HTTPNTLMAuthentication) {
-                    HTTPNTLMAuthentication ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
+                    ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
                     if (ntlmAuth.isInType3State()) {
                         continue;
                     }
@@ -476,17 +491,30 @@ class HTTPConnection implements IHTTPConnection {
                 realm = myChallengeCredentials.getChallengeParameter("realm");
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
+                
+                boolean tryNativeNTLMAuth = false;
                 if (httpAuth == null) {
-                    httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
+                    try {
+                        httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
+                    } catch (SVNAuthenticationException e) {
+                        if (ntlmAuth == null || !ntlmAuth.isNative()) {
+                            throw e;
+                        }
+                        tryNativeNTLMAuth = true;
+                    }
                 } else {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
-                if (httpAuth == null) {
-                    err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP authorization cancelled");
+                
+                if (httpAuth == null && !tryNativeNTLMAuth) {
+                    err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, 
+                            "HTTP authorization cancelled");
                     break;
+                } 
+                if (httpAuth != null) {
+                    myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
                 }
-                myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
                 close();
@@ -512,7 +540,11 @@ class HTTPConnection implements IHTTPConnection {
                 err = request.getErrorMessage();
             } else if (request.getErrorMessage() != null) {
                 err = request.getErrorMessage();
+            } else {
+                proxyAuthIsRequired = false;
+                authIsRequired = false;
             }
+            
             if (err != null) {
                 break;
             }
@@ -532,7 +564,11 @@ class HTTPConnection implements IHTTPConnection {
 	        if (trustManager != null && myRepository.getAuthenticationManager() != null) {
 		        myRepository.getAuthenticationManager().acknowledgeTrustManager(trustManager);
 	        }
-            myLastValidAuth = httpAuth;
+            
+            if (httpAuth != null) {
+                myLastValidAuth = httpAuth;
+            }
+
             status.setHeader(request.getResponseHeader());
             return status;
         }

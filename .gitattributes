@@ -85,6 +85,7 @@ svnkit-test/daemon/template eol=lf
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
+svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNativeNTLMAuthentication.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/ISerfRequest.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfConnection.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/serf/SerfEditorHandler.java -text
@@ -95,6 +96,8 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNC
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNSecurityLibrary.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWinSecurity.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNEventExt.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNMultipleLocationsDiffEditor.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
