@@ -1,3 +1,10 @@
+== version 1.2.0
+
++ Possible NPE on WC to URL copy operation fixed.
++ Log operation didn't work properly with 'limit' options set to value 
+  larger than Integer.MAX_VALUE, fixed. 
++ OSGI manifest fixes.
+
 == version 1.2.0-rc4
 
 + JNA library updated to version 3.0.5.
