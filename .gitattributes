@@ -90,6 +90,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNC
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/util/CountingInputStream.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNSecurityLibrary.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWinSecurity.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNEventExt.java -text

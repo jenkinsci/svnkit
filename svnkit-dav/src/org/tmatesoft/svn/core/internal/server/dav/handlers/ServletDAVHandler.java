@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -177,7 +178,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String deltaBase = getRequestHeader(SVN_DELTA_BASE_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
-        return getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, label, useCheckedIn);
+        return getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
+                label, useCheckedIn);
     }
 
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
@@ -382,20 +384,30 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected void readInput() throws SVNException {
         if (mySAXParser == null) {
+            CountingInputStream stream = null;
             try {
                 mySAXParser = getSAXParserFactory().newSAXParser();
-                XMLReader reader = mySAXParser.getXMLReader();
-                reader.setContentHandler(this);
-                reader.setDTDHandler(this);
-                reader.setErrorHandler(this);
-                reader.setEntityResolver(this);
-                reader.parse(new InputSource(getRequestInputStream()));
+                if (myRequest.getContentLength() > 0) {
+                    XMLReader reader = mySAXParser.getXMLReader();
+                    reader.setContentHandler(this);
+                    reader.setDTDHandler(this);
+                    reader.setErrorHandler(this);
+                    reader.setEntityResolver(this);
+                    stream = new CountingInputStream(getRequestInputStream());
+                    reader.parse(new InputSource(stream));
+                }
             } catch (ParserConfigurationException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+                if (stream == null || stream.getBytesRead() > 0) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+                }
             } catch (SAXException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+                if (stream == null || stream.getBytesRead() > 0) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+                }
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+                if (stream == null || stream.getBytesRead() > 0) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+                }
             }
             getDAVRequest().init();
         }

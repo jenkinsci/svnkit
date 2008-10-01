@@ -79,8 +79,8 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     public void execute() throws SVNException {
         readInput();
-
-        DAVResource resource = getRequestedDAVResource(true, false);
+        
+        DAVResource resource = getRequestedDAVResource(false, false);
         Collection supportedMethods = getSupportedMethods(resource);
 
         StringBuffer body = new StringBuffer();
@@ -178,6 +178,10 @@ public class DAVOptionsHandler extends ServletDAVHandler {
         setResponseHeader(DAV_HEADER, DAV_LEVEL);
         addResponseHeader(DAV_HEADER, VERSION_OPTIONS_FIRST_PART);
         addResponseHeader(DAV_HEADER, VERSION_OPTIONS_SECOND_PART);
+        addResponseHeader(DAV_HEADER, DAVElement.DEPTH_OPTION);
+        addResponseHeader(DAV_HEADER, DAVElement.LOG_REVPROPS_OPTION);
+        addResponseHeader(DAV_HEADER, DAVElement.PARTIAL_REPLAY_OPTION);
+        addResponseHeader(DAV_HEADER, DAVElement.MERGE_INFO_OPTION);
         setResponseHeader(MS_AUTHOR_VIA_HEADER, DAV_HEADER);
         setResponseHeader(ALLOW_HEADER, generateAllowHeaderValue(supportedMethods));
     }
