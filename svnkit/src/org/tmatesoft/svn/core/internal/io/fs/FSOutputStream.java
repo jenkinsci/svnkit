@@ -43,7 +43,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     public static final int WRITE_BUFFER_SIZE = 2*SVN_DELTA_WINDOW_SIZE;
 
     private boolean isHeaderWritten;
-    private CountingStream myTargetFile;
+    private CountingOutputStream myTargetFile;
     private long myDeltaStart;
     private long myRepSize;
     private long myRepOffset;
@@ -58,7 +58,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private boolean myIsCompress;
     private FSWriteLock myTxnLock;
 
-    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, 
+    private FSOutputStream(FSRevisionNode revNode, CountingOutputStream file, InputStream source, long deltaStart, 
             long repSize, long repOffset, FSTransactionRoot txnRoot, boolean compress, FSWriteLock txnLock) throws SVNException {
         myTxnRoot = txnRoot;
         myTargetFile = file;
@@ -83,7 +83,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myIsCompress = compress;
     }
 
-    private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
+    private void reset(FSRevisionNode revNode, CountingOutputStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
         myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
@@ -122,7 +122,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             File targetFile = txnRoot.getTransactionProtoRevFile();
             offset = targetFile.length();
             targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
-            CountingStream revWriter = new CountingStream(targetOS, offset);
+            CountingOutputStream revWriter = new CountingOutputStream(targetOS, offset);
 
             FSRepresentation baseRep = revNode.chooseDeltaBase(txnRoot.getOwner());
             sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), baseRep, txnRoot.getOwner());

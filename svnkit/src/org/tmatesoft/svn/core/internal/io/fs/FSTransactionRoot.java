@@ -429,7 +429,7 @@ public class FSTransactionRoot extends FSRoot {
         changesFile.write("\n".getBytes("UTF-8"));
     }
 
-    public long writeFinalChangedPathInfo(final CountingStream protoFile) throws SVNException, IOException {
+    public long writeFinalChangedPathInfo(final CountingOutputStream protoFile) throws SVNException, IOException {
         long offset = protoFile.getPosition();
         Map changedPaths = getChangedPaths();
 
@@ -485,7 +485,7 @@ public class FSTransactionRoot extends FSRoot {
         getOwner().writeCurrentFile(newRevision, newNodeId, newCopyId);
     }
 
-    public FSID writeFinalRevision(FSID newId, final CountingStream protoFile, long revision, FSID id, 
+    public FSID writeFinalRevision(FSID newId, final CountingOutputStream protoFile, long revision, FSID id, 
             String startNodeId, String startCopyId) throws SVNException, IOException {
         newId = null;
         if (!id.isTxn()) {

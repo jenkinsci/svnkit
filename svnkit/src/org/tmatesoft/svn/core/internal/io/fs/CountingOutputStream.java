@@ -19,11 +19,11 @@ import java.io.OutputStream;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class CountingStream extends FilterOutputStream {
+public class CountingOutputStream extends FilterOutputStream {
 
     private long myPosition;
 
-    public CountingStream(OutputStream stream, long offset) {
+    public CountingOutputStream(OutputStream stream, long offset) {
         super(stream);
         myPosition = offset >= 0 ? offset : 0;
     }
