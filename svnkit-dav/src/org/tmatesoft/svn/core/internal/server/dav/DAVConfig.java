@@ -32,7 +32,8 @@ public class DAVConfig {
     private static final String SVN_ACCESS_FILE_DIRECTIVE = "AuthzSVNAccessFile";
     private static final String SVN_ANONYMOUS_DIRECTIVE = "AuthzSVNAnonymous";
     private static final String SVN_NO_AUTH_IF_ANONYMOUS_ALLOWED_DIRECIVE = "AuthzSVNNoAuthWhenAnonymousAllowed";
-
+    private static final String LIST_PARENT_PATH_DIRECTIVE = "SVNListParentPath";
+    
     private static final String OFF = "off";
     private static final String ON = "on";
 
@@ -43,11 +44,12 @@ public class DAVConfig {
     private boolean myUsingPBA = false;
     private boolean myAnonymous = true;
     private boolean myNoAuthIfAnonymousAllowed = false;
-
+    private boolean myIsListParentPath;
 
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
         String repositoryParentPath = servletConfig.getInitParameter(PARENT_PATH_DIRECIVE);
+        
         if (repositoryPath != null && repositoryParentPath == null) {
             myRepositoryPath = repositoryPath;
             myRepositoryParentPath = null;
@@ -57,9 +59,11 @@ public class DAVConfig {
         } else {
             //repositoryPath == null <=> repositoryParentPath == null.
             if (repositoryPath == null) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Neither SVNPath nor SVNParentPath directive were specified."), SVNLogType.NETWORK);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, 
+                        "Neither SVNPath nor SVNParentPath directive were specified."), SVNLogType.NETWORK);
             } else {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, "Only one of SVNPath and SVNParentPath directives should be specified."), SVNLogType.NETWORK);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE, 
+                        "Only one of SVNPath and SVNParentPath directives should be specified."), SVNLogType.NETWORK);
             }
         }
 
@@ -81,6 +85,11 @@ public class DAVConfig {
         String noAuthIfAnonymousAllowed = servletConfig.getInitParameter(SVN_NO_AUTH_IF_ANONYMOUS_ALLOWED_DIRECIVE);
         if (noAuthIfAnonymousAllowed != null && ON.equals(noAuthIfAnonymousAllowed)) {
             myNoAuthIfAnonymousAllowed = true;
+        }
+        
+        String listParentPath = servletConfig.getInitParameter(LIST_PARENT_PATH_DIRECTIVE);
+        if (listParentPath != null && ON.equals(listParentPath)) {
+            myIsListParentPath = true;
         }
     }
 
@@ -111,4 +120,9 @@ public class DAVConfig {
     public boolean isNoAuthIfAnonymousAllowed() {
         return myNoAuthIfAnonymousAllowed;
     }
+    
+    public boolean isListParentPath() {
+        return myIsListParentPath;
+    }
+
 }

@@ -65,7 +65,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        readInput();
+        readInput(false);
         DAVResource resource = getRequestedDAVResource(true, false);
 
         StringBuffer body = new StringBuffer();

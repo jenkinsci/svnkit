@@ -144,7 +144,7 @@ public class DAVReportHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        readInput();
+        readInput(false);
 
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);

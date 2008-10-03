@@ -52,9 +52,11 @@ public class DAVResource {
     private long myRevision;
     private long myLatestRevision = INVALID_REVISION;
 
-    private boolean myIsExists = false;
+    private boolean myIsExists;
     private boolean myIsCollection;
     private boolean myIsSVNClient;
+    private boolean myChecked;
+    private boolean myIsAutoCheckedOut;
     private String myDeltaBase;
     private long myVersion;
     private String myClientOptions;
@@ -64,8 +66,6 @@ public class DAVResource {
     private SVNProperties mySVNProperties;
     private Collection myDeadProperties;
     private Collection myEntries;
-
-    private boolean myChecked = false;
 
     /**
      * DAVResource  constructor
@@ -120,10 +120,6 @@ public class DAVResource {
         return myResourceURI;
     }
 
-    public void setResourceURI(DAVResourceURI resourceURI) {
-        myResourceURI = resourceURI;
-    }
-
     public SVNRepository getRepository() {
         return myRepository;
     }
@@ -138,16 +134,24 @@ public class DAVResource {
     }
 
     public boolean exists() throws SVNException {
-        if (getResourceURI().getType() == DAVResourceType.REGULAR ||
-                (getResourceURI().getType() == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
+        DAVResourceType type = getType(); 
+        if (type == DAVResourceType.REGULAR || (type == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
             checkPath();
-        } else if (getResourceURI().getType() == DAVResourceType.VERSION ||
-                (getResourceURI().getType() == DAVResourceType.WORKING && getResourceURI().isBaseLined())) {
+        } else if (type == DAVResourceType.VERSION ||
+                (type == DAVResourceType.WORKING && getResourceURI().isBaseLined())) {
             myIsExists = true;
         }
         return myIsExists;
     }
 
+    public DAVResourceType getType() {
+        return getResourceURI().getType();
+    }
+
+    public boolean canBeActivity() throws SVNException {
+        return isAutoCheckedOut() || (getType() == DAVResourceType.ACTIVITY && !exists());
+    }
+    
     private void setExists(boolean isExist) {
         myIsExists = isExist;
     }
@@ -396,4 +400,9 @@ public class DAVResource {
         }
         getRepository().getFile(getResourceURI().getPath(), getRevision(), null, out);
     }
+
+    public boolean isAutoCheckedOut() {
+        return myIsAutoCheckedOut;
+    }
+
 }

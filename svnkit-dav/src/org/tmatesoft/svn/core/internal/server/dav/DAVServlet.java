@@ -37,7 +37,7 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
  */
 public class DAVServlet extends HttpServlet {
 
-    private static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
+    public static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
     private DAVConfig myDAVConfig;
 
@@ -59,6 +59,28 @@ public class DAVServlet extends HttpServlet {
             DAVRepositoryManager repositoryManager = new DAVRepositoryManager(getDAVConfig(), request);
             ServletDAVHandler handler = DAVHandlerFactory.createHandler(repositoryManager, request, response);
             handler.execute();
+        } catch (DAVException de) {
+            response.setContentType(XML_CONTENT_TYPE);
+            StringBuffer errorMessageBuffer = new StringBuffer();
+            errorMessageBuffer.append('\n');
+            errorMessageBuffer.append("<D:error xmlns:D=\"DAV:\"");
+            
+            if (de.getMessage() != null) {
+                errorMessageBuffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");
+            }
+            
+            if (de.getNameSpace() != null) {
+                errorMessageBuffer.append(" xmlns:C=\"");
+                errorMessageBuffer.append(de.getNameSpace());
+                errorMessageBuffer.append("\">\n<C:");
+                errorMessageBuffer.append(de.getTagName());
+                errorMessageBuffer.append("/>");
+            } else {
+                errorMessageBuffer.append(">\n<D:" );
+                errorMessageBuffer.append("/>");
+            }
+            
+            response.sendError(de.getResponseCode(), de.getMessage());
         } catch (Throwable th) {
             StringWriter sw = new StringWriter();
             th.printStackTrace(new PrintWriter(sw));
@@ -75,11 +97,11 @@ public class DAVServlet extends HttpServlet {
                 } else if (errorCode == SVNErrorCode.RA_NOT_AUTHORIZED) {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, msg);
                 } else {
-                    String errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getLocalizedMessage());
+                    String errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getMessage());
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     response.setContentType(XML_CONTENT_TYPE);
                     response.getWriter().print(errorBody);
-                }
+                } 
             } else {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
             }
@@ -109,5 +131,9 @@ public class DAVServlet extends HttpServlet {
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
         return xmlBuffer.toString();
+    }
+    
+    private void handleError(DAVException de) {
+        
     }
 }

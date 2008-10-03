@@ -173,7 +173,12 @@ public class DAVRepositoryManager {
     }
 
     public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, long version, String clientOptions,
-                                         String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
+            String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
+        String fsParentPath = getDAVConfig().getRepositoryParentPath();
+        if (fsParentPath != null && getDAVConfig().isListParentPath()) {
+            //TODO: later here code for parent path resource 
+        }
+        
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
         DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), getResourcePathInfo(), label, useCheckedIn);
         return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);

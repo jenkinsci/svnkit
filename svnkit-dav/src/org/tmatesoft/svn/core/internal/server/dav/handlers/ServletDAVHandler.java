@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -382,7 +383,22 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return encoding;
     }
 
-    protected void readInput() throws SVNException {
+    protected void readInput(boolean ignoreInput) throws SVNException {
+        if (ignoreInput) {
+            InputStream inputStream = null;
+            try {
+                inputStream = getRequestInputStream();
+                while (inputStream.read() != -1) {
+                    continue;
+                }
+            } catch (IOException ioe) {
+                //
+            } finally {
+                SVNFileUtil.closeFile(inputStream);
+            }
+            return;
+        }
+        
         if (mySAXParser == null) {
             CountingInputStream stream = null;
             try {

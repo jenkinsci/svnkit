@@ -78,7 +78,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        readInput();
+        readInput(false);
         
         DAVResource resource = getRequestedDAVResource(false, false);
         Collection supportedMethods = getSupportedMethods(resource);

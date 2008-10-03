@@ -62,6 +62,10 @@ public class DAVHandlerFactory {
         if (METHOD_REPORT.equals(request.getMethod())) {
             return new DAVReportHandler(manager, request, response);
         }
+        if (METHOD_REPORT.equals(METHOD_MKACTIVITY)) {
+            return new DAVMakeActivityHandler(manager, request, response);
+        }
+        
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), SVNLogType.NETWORK);
         return null;
     }
