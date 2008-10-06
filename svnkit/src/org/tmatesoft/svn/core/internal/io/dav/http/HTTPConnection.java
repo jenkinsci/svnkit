@@ -289,8 +289,8 @@ class HTTPConnection implements IHTTPConnection {
         request.setResponseStream(dst);
         
         SVNErrorMessage err = null;
-        boolean authIsRequired = false;
-        boolean proxyAuthIsRequired = false;
+        boolean ntlmAuthIsRequired = false;
+        boolean ntlmProxyAuthIsRequired = false;
         while (true) {
             HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
@@ -307,7 +307,7 @@ class HTTPConnection implements IHTTPConnection {
                     request.reset();
                     request.setProxied(myIsProxied);
                     request.setSecured(myIsSecured);                    
-                    if (proxyAuthIsRequired && myProxyAuthentication != null) {
+                    if (myProxyAuthentication != null && (ntlmProxyAuthIsRequired || !"NTLM".equals(myProxyAuthentication.getAuthenticationScheme()))) {
                         if (proxyAuthResponse == null) {
                             request.initCredentials(myProxyAuthentication, method, path);
                             proxyAuthResponse = myProxyAuthentication.authenticate();
@@ -315,7 +315,8 @@ class HTTPConnection implements IHTTPConnection {
                         request.setProxyAuthentication(proxyAuthResponse);
                     }
                     
-                    if (authIsRequired && myChallengeCredentials != null) {
+                    if (myChallengeCredentials != null && (ntlmAuthIsRequired || (!"NTLM".equals(myChallengeCredentials.getAuthenticationScheme())) && 
+                            httpAuth != null)) {
                         if (httpAuthResponse == null) {
                             request.initCredentials(myChallengeCredentials, method, path);
                             httpAuthResponse = myChallengeCredentials.authenticate();
@@ -398,7 +399,6 @@ class HTTPConnection implements IHTTPConnection {
                 close();
                 err = request.getErrorMessage();
             } else if (myIsProxied && status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                proxyAuthIsRequired = true;
                 Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
                 try {
                     myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
@@ -409,6 +409,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
 
                 if (myProxyAuthentication instanceof HTTPNTLMAuthentication) {
+                    ntlmProxyAuthIsRequired = true;
                     HTTPNTLMAuthentication ntlmProxyAuth = (HTTPNTLMAuthentication)myProxyAuthentication;
                     if (ntlmProxyAuth.isInType3State()) {
                         continue;
@@ -426,7 +427,6 @@ class HTTPConnection implements IHTTPConnection {
 
                 break;
             } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                authIsRequired = true;
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
@@ -468,6 +468,7 @@ class HTTPConnection implements IHTTPConnection {
                 
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (myChallengeCredentials instanceof HTTPNTLMAuthentication) {
+                    ntlmAuthIsRequired = true;
                     ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
                     if (ntlmAuth.isInType3State()) {
                         continue;
@@ -541,8 +542,8 @@ class HTTPConnection implements IHTTPConnection {
             } else if (request.getErrorMessage() != null) {
                 err = request.getErrorMessage();
             } else {
-                proxyAuthIsRequired = false;
-                authIsRequired = false;
+                ntlmProxyAuthIsRequired = false;
+                ntlmAuthIsRequired = false;
             }
             
             if (err != null) {
