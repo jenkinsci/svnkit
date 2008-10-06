@@ -142,7 +142,7 @@ public class SVNWinSecurity {
                                 ltime.getPointer());
 
         if (securityStatus < 0) {
-            endSequence(params, outBufferDescription);
+            endSequence(params);
             return null;
         }
 
@@ -155,7 +155,7 @@ public class SVNWinSecurity {
                     outBufferDescription.getPointer());
             
             if (securityStatus < 0) {
-                endSequence(params, outBufferDescription);
+                endSequence(params);
                 return null;
             }
         }
@@ -166,13 +166,13 @@ public class SVNWinSecurity {
         if (outSecBuffer.cbBuffer.intValue() > 0) {
             result = outSecBuffer.pvBuffer.getByteArray(0, outSecBuffer.cbBuffer.intValue());
             if (lastToken != null) {
-                endSequence(params, outBufferDescription);
+                endSequence(params);
             }
         }
         
         if (securityStatus != ISVNSecurityLibrary.SEC_I_CONTINUE_NEEDED && 
                 securityStatus == ISVNSecurityLibrary.SEC_I_COMPLETE_AND_CONTINUE) {
-            endSequence(params, outBufferDescription);
+            endSequence(params);
         }
         return result;
     }
@@ -224,8 +224,7 @@ public class SVNWinSecurity {
         return null;
     }
 
-    private static void endSequence(SVNNTSecurityParameters params, 
-            SecBufferDesc outBufferDescription) {
+    private static void endSequence(SVNNTSecurityParameters params) {
         ISVNSecurityLibrary library = JNALibraryLoader.getSecurityLibrary();
         if (library == null) {
             return;
@@ -240,8 +239,6 @@ public class SVNWinSecurity {
             library.DeleteSecurityContext(params.myCtxHandle.getPointer());
             params.myCtxHandle = null;
         }
-        
-        library.FreeContextBuffer(outBufferDescription.getPointer());
     }
     
     public static class SVNNTSecurityParameters {
