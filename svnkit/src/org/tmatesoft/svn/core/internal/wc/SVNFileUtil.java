@@ -64,12 +64,16 @@ public class SVNFileUtil {
     private static final String ATTRIB_COMMAND;
     private static final String ENV_COMMAND;
 
-    public final static boolean isWindows;
-    public final static boolean isOS2;
-    public final static boolean isOSX;
-    public final static boolean isBSD;
-    public static boolean isLinux;
-    public final static boolean isOpenVMS;
+    public static final boolean isWindows;
+    public static final boolean isOS2;
+    public static final boolean isOSX;
+    public static final boolean isBSD;
+    public static final boolean isLinux;
+    public static final boolean isSolaris;
+    public static final boolean isOpenVMS;
+    
+    public static final boolean is32Bit;
+    public static final boolean is64Bit;
 
     public static final int STREAM_CHUNK_SIZE = 16384;
 
@@ -98,19 +102,26 @@ public class SVNFileUtil {
 
     static {
         String osName = System.getProperty("os.name");
-        boolean windows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
+        String osNameLC = osName == null ? null : osName.toLowerCase();
+
+        boolean windows = osName != null && osNameLC.indexOf("windows") >= 0;
         if (!windows && osName != null) {
-            windows = osName.toLowerCase().indexOf("os/2") >= 0;
+            windows = osNameLC.indexOf("os/2") >= 0;
             isOS2 = windows;
         } else {
             isOS2 = false;
         }
 
         isWindows = windows;
-        isOSX = !isWindows && osName != null && osName.toLowerCase().indexOf("mac") >= 0;
-        isLinux = !isWindows && osName != null && osName.toLowerCase().indexOf("linux") >= 0;
-        isBSD = !isWindows && !isLinux && osName != null && osName.toLowerCase().indexOf("bsd") >= 0;
-        isOpenVMS = osName != null && !isWindows && !isOSX && osName.toLowerCase().indexOf("openvms") >= 0;
+        isOSX = !isWindows && osName != null && (osNameLC.indexOf("mac") >= 0 || osNameLC.indexOf("darwin") >= 0);
+        isLinux = !isWindows && osName != null && osNameLC.indexOf("linux") >= 0;
+        isBSD = !isWindows && !isLinux && osName != null && osNameLC.indexOf("bsd") >= 0;
+        isSolaris = !isWindows && !isLinux && !isBSD && osName != null && osNameLC.indexOf("solaris") >= 0;
+        isOpenVMS = !isWindows && !isOSX && osName != null && osNameLC.indexOf("openvms") >= 0;
+
+        is32Bit = "32".equals(System.getProperty("sun.arch.data.model", "32"));
+        is64Bit = "64".equals(System.getProperty("sun.arch.data.model", "64"));
+        
         if (isOpenVMS) {
             setAdminDirectoryName("_svn");
         }
@@ -133,6 +144,30 @@ public class SVNFileUtil {
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
+    }
+
+    public static String getIdCommand() {
+        return ID_COMMAND;
+    }
+
+    public static String getLnCommand() {
+        return LN_COMMAND;
+    }
+
+    public static String getLsCommand() {
+        return LS_COMMAND;
+    }
+
+    public static String getChmodCommand() {
+        return CHMOD_COMMAND;
+    }
+
+    public static String getAttribCommand() {
+        return ATTRIB_COMMAND;
+    }
+
+    public static String getEnvCommand() {
+        return ENV_COMMAND;
     }
     
     public static File getParentFile(File file) {
