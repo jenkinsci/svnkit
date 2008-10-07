@@ -163,16 +163,20 @@ public class SVNWinSecurity {
         byte[] result = null;
         outBufferDescription.read();
         outSecBuffer.read();
+        boolean sequenceIsEnded = false;
         if (outSecBuffer.cbBuffer.intValue() > 0) {
             result = outSecBuffer.pvBuffer.getByteArray(0, outSecBuffer.cbBuffer.intValue());
             if (lastToken != null) {
                 endSequence(params);
+                sequenceIsEnded = true;
             }
         }
         
         if (securityStatus != ISVNSecurityLibrary.SEC_I_CONTINUE_NEEDED && 
                 securityStatus == ISVNSecurityLibrary.SEC_I_COMPLETE_AND_CONTINUE) {
-            endSequence(params);
+            if (!sequenceIsEnded) {
+                endSequence(params);
+            }
         }
         return result;
     }
