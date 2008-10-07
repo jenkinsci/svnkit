@@ -22,7 +22,7 @@ import com.sun.jna.Memory;
  * @version 1.2.0
  * @author TMate Software Ltd.
  */
-class SVNLinuxUtil {
+public class SVNLinuxUtil {
 
     private static Memory ourSharedMemory;
     
@@ -62,7 +62,7 @@ class SVNLinuxUtil {
                     return SVNFileType.NONE;
                 }
                 int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getShort(8) : ourSharedMemory.getInt(16);
+                        ourSharedMemory.getShort(getFileModeOffset()) : ourSharedMemory.getInt(getFileModeOffset());
                 int type = mode & 0170000;
                 if (type == 0120000) {
                     return SVNFileType.SYMLINK;
@@ -107,19 +107,10 @@ class SVNLinuxUtil {
                 if (rc < 0) {
                     return null;
                 }
-                int mode;
-                int fuid;
-                int fgid;
-                
-                if (SVNFileUtil.isOSX || SVNFileUtil.isBSD){
-                    mode = ourSharedMemory.getInt(8);
-                    fuid = ourSharedMemory.getInt(8 + 4);
-                    fgid = ourSharedMemory.getInt(8 + 4 + 4);
-                } else {
-                    mode = ourSharedMemory.getInt(16);
-                    fuid = ourSharedMemory.getInt(16 + 4 + 4);
-                    fgid = ourSharedMemory.getInt(16 + 4 + 4 + 4);
-                }
+
+                int mode = ourSharedMemory.getInt(getFileModeOffset());
+                int fuid = ourSharedMemory.getInt(getFileUserIDOffset());
+                int fgid = ourSharedMemory.getInt(getFileGroupIDOffset());
                 
                 int access = mode & 0777;
                 int mask = 0111;
@@ -194,8 +185,8 @@ class SVNLinuxUtil {
                 if (rc < 0) {
                     return false;
                 }
-                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+
+                int mode = ourSharedMemory.getInt(getFileModeOffset());
                 int access = mode & 0777;
                 int mask = 0;
                 if ((access & 0400) != 0) {
@@ -245,8 +236,8 @@ class SVNLinuxUtil {
                 if (rc < 0) {
                     return false;
                 }
-                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+
+                int mode = ourSharedMemory.getInt(getFileModeOffset());
                 int access = mode & 0777;
                 int mask = 0;
                 if ((access & 0400) != 0) {
@@ -296,8 +287,8 @@ class SVNLinuxUtil {
                 if (rc < 0) {
                     return false;
                 }
-                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
+
+                int mode = ourSharedMemory.getInt(getFileModeOffset());
                 int access = mode & 07777;
                 int mask = 02000;
                 if ((access & mask) != 0) {
@@ -337,5 +328,48 @@ class SVNLinuxUtil {
         }
         return false;
     }
-    
+
+    private static int getFileModeOffset() {
+        if (SVNFileUtil.isLinux && SVNFileUtil.is64Bit) {
+            return 24;
+        }
+        if (SVNFileUtil.isLinux && SVNFileUtil.is32Bit) {
+            return 16;
+        }
+        if (SVNFileUtil.isOSX) {
+            return 8;
+        }
+        if (SVNFileUtil.isSolaris) {
+            return 20;
+        }
+        if (SVNFileUtil.isBSD) {
+            return 8;
+        }
+        return 16;
+    }
+
+    private static int getFileUserIDOffset() {
+        int modeOffset = getFileModeOffset();
+        if (SVNFileUtil.isLinux && SVNFileUtil.is64Bit) {
+            return modeOffset + 4;
+        }
+        if (SVNFileUtil.isLinux && SVNFileUtil.is32Bit) {
+            return modeOffset + 8;
+        }
+        if (SVNFileUtil.isOSX) {
+            return modeOffset + 4;
+        }
+        if (SVNFileUtil.isSolaris) {
+            return modeOffset + 8;
+        }
+        if (SVNFileUtil.isBSD) {
+            return modeOffset + 4;
+        }
+
+        return modeOffset + 8;
+    }
+
+    private static int getFileGroupIDOffset() {
+        return getFileUserIDOffset() + 4;
+    }
 }
