@@ -151,6 +151,7 @@ public class SVNWinSecurity {
         
         if (securityStatus == ISVNSecurityLibrary.SEC_I_COMPLETE_NEEDED || 
                 securityStatus == ISVNSecurityLibrary.SEC_I_COMPLETE_AND_CONTINUE) {
+            outBufferDescription.read();
             securityStatus = library.CompleteAuthToken(params.myCtxHandle.getPointer(), 
                     outBufferDescription.getPointer());
             
