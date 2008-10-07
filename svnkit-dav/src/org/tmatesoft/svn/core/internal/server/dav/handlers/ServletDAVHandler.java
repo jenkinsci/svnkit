@@ -36,9 +36,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
+import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -62,7 +64,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 
-    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"UTF-8\"";
+    protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
     protected static final String UTF8_ENCODING = "UTF-8";
     protected static final String BASE64_ENCODING = "base64";    
@@ -429,6 +431,43 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
 
+    protected void handleError(DAVException error, DAVResponse response) {
+        if (response == null) {
+            DAVException stackErr = error;
+            while (stackErr != null && stackErr.getTagName() == null) {
+                stackErr = stackErr.getPreviousException();
+            }
+            
+            if (stackErr != null && stackErr.getTagName() != null) {
+                myResponse.setContentType(DEFAULT_XML_CONTENT_TYPE);
+                
+                StringBuffer errorMessageBuffer = new StringBuffer();
+                errorMessageBuffer.append('\n');
+                errorMessageBuffer.append("<D:error xmlns:D=\"DAV:\"");
+                
+                if (stackErr.getMessage() != null) {
+                    errorMessageBuffer.append(" xmlns:m=\"http://apache.org/dav/xmlns\"");
+                }
+                
+                if (stackErr.getNameSpace() != null) {
+                    errorMessageBuffer.append(" xmlns:C=\"");
+                    errorMessageBuffer.append(stackErr.getNameSpace());
+                    errorMessageBuffer.append("\">\n<C:");
+                    errorMessageBuffer.append(stackErr.getTagName());
+                    errorMessageBuffer.append("/>");
+                } else {
+                    errorMessageBuffer.append(">\n<D:");
+                    errorMessageBuffer.append(stackErr.getTagName());
+                    errorMessageBuffer.append("/>");
+                }
+                
+                if (stackErr.getMessage() != null) {
+                    
+                }
+
+            }
+        }
+    }
 
     private synchronized static SAXParserFactory getSAXParserFactory() {
         if (ourSAXParserFactory == null) {

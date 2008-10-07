@@ -41,11 +41,11 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         DAVResource resource = getRequestedDAVResource(false, false);
         readInput(true);
         if (resource.exists()) {
-            throw new DAVException("<DAV:resource-must-be-null/>", HttpServletResponse.SC_CONFLICT, null);
+            throw new DAVException("<DAV:resource-must-be-null/>", HttpServletResponse.SC_CONFLICT, SVNLogType.NETWORK);
         }
 
         if (!resource.canBeActivity()) {
-            throw new DAVException("<DAV:activity-location-ok/>", HttpServletResponse.SC_FORBIDDEN, null);
+            throw new DAVException("<DAV:activity-location-ok/>", HttpServletResponse.SC_FORBIDDEN, SVNLogType.NETWORK);
         }
         
     }
@@ -54,4 +54,11 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         return null;
     }
 
+    private void makeActivity(DAVResource resource) throws SVNException {
+        
+    }
+    
+    private String createActivity() {
+        return null;
+    }
 }

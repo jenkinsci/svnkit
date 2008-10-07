@@ -73,6 +73,8 @@ svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookCatCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookLockCommand.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVException.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeActivityHandler.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResult.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResponse.java -text
 svnkit-eclipse/com.sun.jna/MANIFEST.MF eol=lf
 svnkit-eclipse/com.sun.jna/feature.properties -text
 svnkit-eclipse/com.sun.jna/feature.xml -text

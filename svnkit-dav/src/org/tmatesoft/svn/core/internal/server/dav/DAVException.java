@@ -16,6 +16,7 @@ import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVResponse;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -29,28 +30,35 @@ public class DAVException extends SVNException {
 
     private String myMessage;
     private int myResponseCode;
-    private DAVException myChild;
+    private int myErrorID;
+    private DAVException myPreviousException;
     private String myTagName;
     private String myNameSpace;
+    private DAVResponse myResponse;
     
-    public DAVException(String message, int responseCode, SVNErrorMessage error, SVNLogType logType, Level level, DAVException child, 
-            String tagName, String nameSpace) {
+    public DAVException(String message, int responseCode, SVNErrorMessage error, SVNLogType logType, Level level, DAVException previousException, 
+            String tagName, String nameSpace, int errorID, DAVResponse response) {
         super(error);
         myMessage = message;
         myResponseCode = responseCode;
-        myChild = child;
+        myPreviousException = previousException;
         myTagName = tagName;
         myNameSpace = nameSpace; 
-        
+        myErrorID = errorID;
+        myResponse = response;
         SVNDebugLog.getDefaultLog().log(logType, message, level);
     }
 
     public DAVException(String message, int responseCode, SVNLogType logType) {
-        this(message, responseCode, null, logType, Level.FINE, null, null, null);
+        this(message, responseCode, null, logType, Level.FINE, null, null, null, 0, null);
     }
 
     public DAVException(String message, int responseCode, SVNLogType logType, String tagName, String nameSpace) {
-        this(message, responseCode, null, logType, Level.FINE, null, tagName, nameSpace);
+        this(message, responseCode, null, logType, Level.FINE, null, tagName, nameSpace, 0, null);
+    }
+
+    public int getErrorID() {
+        return myErrorID;
     }
 
     public String getTagName() {
@@ -65,12 +73,16 @@ public class DAVException extends SVNException {
         return myMessage;
     }
 
-    public DAVException getChild() {
-        return myChild;
+    public DAVException getPreviousException() {
+        return myPreviousException;
     }
 
     public String getNameSpace() {
         return myNameSpace;
+    }
+
+    public DAVResponse getResponse() {
+        return myResponse;
     }
 
 }
