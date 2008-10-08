@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -59,6 +60,8 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
     }
     
     private String createActivity() {
+        SVNProperties properties = new SVNProperties();
+        
         return null;
     }
 }

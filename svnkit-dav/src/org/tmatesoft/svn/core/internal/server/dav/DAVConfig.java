@@ -33,13 +33,16 @@ public class DAVConfig {
     private static final String SVN_ANONYMOUS_DIRECTIVE = "AuthzSVNAnonymous";
     private static final String SVN_NO_AUTH_IF_ANONYMOUS_ALLOWED_DIRECIVE = "AuthzSVNNoAuthWhenAnonymousAllowed";
     private static final String LIST_PARENT_PATH_DIRECTIVE = "SVNListParentPath";
+    private static final String REPOS_NAME = "SVNReposName";
+    private static final String XSLT_INDEX = "SVNIndexXSLT";
     
     private static final String OFF = "off";
     private static final String ON = "on";
 
     private String myRepositoryPath;
     private String myRepositoryParentPath;
-
+    private String myRepositoryName;
+    private String myXSLTIndex;
     private SVNPathBasedAccess mySVNAccess = null;
     private boolean myUsingPBA = false;
     private boolean myAnonymous = true;
@@ -49,6 +52,8 @@ public class DAVConfig {
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
         String repositoryParentPath = servletConfig.getInitParameter(PARENT_PATH_DIRECIVE);
+        myRepositoryName = servletConfig.getInitParameter(REPOS_NAME);
+        myXSLTIndex = servletConfig.getInitParameter(XSLT_INDEX);
         
         if (repositoryPath != null && repositoryParentPath == null) {
             myRepositoryPath = repositoryPath;
@@ -91,6 +96,14 @@ public class DAVConfig {
         if (listParentPath != null && ON.equals(listParentPath)) {
             myIsListParentPath = true;
         }
+    }
+
+    public String getRepositoryName() {
+        return myRepositoryName;
+    }
+    
+    public String getXSLTIndex() {
+        return myXSLTIndex;
     }
 
     public boolean isUsingRepositoryPathDirective() {
