@@ -240,8 +240,9 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 } else if (answerChar == 'e') {
                     if (files.getResultFile() != null) {
                         try {
+                            String resultPath = files.getResultFile().getAbsolutePath();
                             SVNCommandUtil.editFileExternally(mySVNEnvironment, mySVNEnvironment.getEditorCommand(), 
-                                    files.getResultPath());
+                                    resultPath);
                             performedEdit = true;
                         } catch (SVNException svne) {
                             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_EDITOR) {
