@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -101,6 +102,21 @@ public class SVNCommandUtil {
         if (testEnv[0] != null) {
             testEnv = new String[] {"SVNTEST_EDITOR_FUNC=" + (testEnv[2] != null ? testEnv[2] : "")};
         }
+        
+        if (testEnv != null) {
+            LinkedList environment = new LinkedList();
+            for (int i = 0; i < testEnv.length; i++) {
+                if (testEnv[i] != null) {
+                    environment.add(testEnv[i]);
+                }
+            }
+            if (!environment.isEmpty()) {
+                testEnv = (String[]) environment.toArray(new String[environment.size()]);                
+            } else {
+                testEnv = null;
+            }
+        }
+        
         String result = runEditor(editorCommand, new String[] {path}, testEnv);
         if (result == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
