@@ -15,16 +15,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
 import org.tmatesoft.svn.core.wc.SVNCopyClient;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -59,6 +63,7 @@ public class Merge {
             System.out.println(info);
 
             SVNClientManager clientManager = SVNClientManager.newInstance();
+            clientManager.setEventHandler(new EventHandler());
             
             SVNURL reposURL = SVNURL.fromFile(reposRoot);
 
@@ -120,4 +125,15 @@ public class Merge {
         }
     }
 
+    private static class EventHandler implements ISVNEventHandler {
+
+        public void handleEvent(SVNEvent event, double progress) throws SVNException {
+            SVNEventAction action = event.getAction();
+            System.out.println(event.getFile() + " " + action); 
+        }
+
+        public void checkCancelled() throws SVNCancelException {
+        }
+        
+    }
 }
