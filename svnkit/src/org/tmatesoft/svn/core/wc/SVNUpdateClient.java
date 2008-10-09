@@ -423,7 +423,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNRepository repos = createRepository(url, anchorArea.getRoot(), wcAccess, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter reporter = new SVNReporter(adminInfo, path, true, !serverSupportsDepth, 
-                    depth, isUpdateLocksOnDemand(), getDebugLog());
+                    depth, isUpdateLocksOnDemand(), false, getDebugLog());
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, path);
@@ -647,7 +647,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
-            final SVNReporter reporter = new SVNReporter(info, path, true, false, depth, false, getDebugLog());
+            final SVNReporter reporter = new SVNReporter(info, path, true, false, depth, false, false, getDebugLog());
             SVNAdminArea anchorArea = info.getAnchor();
             SVNEntry entry = anchorArea.getVersionedEntry(anchorArea.getThisDirName(), false);
             SVNURL sourceURL = entry.getSVNURL();
