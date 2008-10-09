@@ -798,8 +798,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
             
             try {
-                myRepository1 = createRepository(url1, null, null, false);
-                myRepository2 = createRepository(url2, null, null, false);
+                myRepository1 = ensureRepository(myRepository1, url1);
+                myRepository2 = ensureRepository(myRepository2, url2);
                 myIsTargetHasDummyMergeRange = false;
                 myURL = url2;
                 myConflictedPaths = null;
@@ -829,6 +829,22 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
             }
         }
+    }
+    
+    protected SVNRepository ensureRepository(SVNRepository repository, SVNURL url) throws SVNException {
+        if (repository != null) {
+            try {
+                ensureSessionURL(repository, url);
+                return repository;
+            } catch (SVNException e) {
+                //
+            }
+            repository = null;
+        }
+        if (repository == null) {
+            repository = createRepository(url, null, null, false);
+        }
+        return repository; 
     }
 
     protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2, 
@@ -2131,7 +2147,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             
             boolean indirect[] = { false };
             Map mergeInfo[] = getFullMergeInfo(childEntry, indirect, SVNMergeInfoInheritance.INHERITED, 
-            		null, child.myPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
+            		repository, child.myPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
             child.myPreMergeMergeInfo = mergeInfo[0];
             child.myImplicitMergeInfo = mergeInfo[1];
             child.myIsIndirectMergeInfo = indirect[0];
