@@ -390,8 +390,11 @@ public class SVNUpdateClient extends SVNBasicClient {
      * @throws SVNException 
      * @since 1.2, SVN 1.5
      */
-    public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, 
-            boolean depthIsSticky) throws SVNException {
+    public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
+        return update(path, revision, depth, allowUnversionedObstructions, depthIsSticky, true);
+    }
+
+    private long update(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean sendCopyFrom) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
@@ -443,7 +446,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, adminInfo, depth, depthIsSticky);
 
             try {
-                repos.update(revNumber, target, depth, true, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
+                repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
             } finally {
                 repos2.closeSession();
             }
@@ -845,7 +848,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (kind == SVNFileType.NONE) {
             depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
             SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber, depth);
-            result = doUpdate(dstPath, revision, depth, allowUnversionedObstructions, true);
+            result = update(dstPath, revision, depth, allowUnversionedObstructions, true, false);
         } else if (kind == SVNFileType.DIRECTORY) {
             int formatVersion = SVNAdminAreaFactory.checkWC(dstPath, true);
             if (formatVersion != 0) {
@@ -853,7 +856,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
                 wcAccess.closeAdminArea(dstPath);
                 if (rootEntry.getSVNURL() != null && url.equals(rootEntry.getSVNURL())) {
-                    result = doUpdate(dstPath, revision, depth, allowUnversionedObstructions, true);
+                    result = update(dstPath, revision, depth, allowUnversionedObstructions, true, false);
                 } else {
                     String message = "''{0}'' is already a working copy for a different URL";
                     if (rootEntry.isIncomplete()) {
@@ -865,7 +868,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } else {
                 depth = depth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : depth;
                 SVNAdminAreaFactory.createVersionedDirectory(dstPath, url, repositoryRoot, uuid, revNumber, depth);
-                result = doUpdate(dstPath, revision, depth, allowUnversionedObstructions, true);
+                result = update(dstPath, revision, depth, allowUnversionedObstructions, true, false);
             }
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NODE_KIND_CHANGE, "''{0}'' already exists and is not a directory", dstPath);
