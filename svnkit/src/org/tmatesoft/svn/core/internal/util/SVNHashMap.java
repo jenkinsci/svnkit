@@ -301,7 +301,6 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
 
         while (i.hasNext()) {
             Map.Entry e = (Map.Entry) i.next();
-            System.out.println("key = " + e.getKey() + " | " + "value = " + e.getValue());
             s.writeObject(e.getKey());
             s.writeObject(e.getValue());
         }
