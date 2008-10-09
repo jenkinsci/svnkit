@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.security.Principal;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -37,7 +39,8 @@ public class DAVRepositoryManager {
     private String myResourceRepositoryRoot;
     private String myResourceContext;
     private String myResourcePathInfo;
-
+    private Principal myUserPrincipal;
+    
     public DAVRepositoryManager(DAVConfig config, HttpServletRequest request) throws SVNException {
         if (config == null) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_INVALID_CONFIG_VALUE), SVNLogType.NETWORK);
@@ -48,7 +51,8 @@ public class DAVRepositoryManager {
         myResourceRepositoryRoot = getRepositoryRoot(request.getPathInfo());
         myResourceContext = getResourceContext(request.getContextPath(), request.getPathInfo());
         myResourcePathInfo = getResourcePathInfo(request.getPathInfo());
-
+        myUserPrincipal = request.getUserPrincipal();
+        
         if (config.isUsingPBA()) {
             String path = null;
             if (!DAVHandlerFactory.METHOD_MERGE.equals(request.getMethod())) {
@@ -182,15 +186,15 @@ public class DAVRepositoryManager {
         String uri = resourceURI.getURI();
 
         if (fsParentPath != null && getDAVConfig().isListParentPath()) {
-            //TODO: later here code for parent path resource
             if (uri.endsWith("/")) {
                 uri = uri.substring(0, uri.length() - 1);
             }
-           
+            //TODO: later here code for parent path resource
         }
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-        return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
+        return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
+                myUserPrincipal.getName());
     }
 
     private String getRepositoryRoot(String requestURI) {

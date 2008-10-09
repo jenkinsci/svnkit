@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
  * @version 1.2.0
  */
 public class DAVXMLUtil extends SVNXMLUtil {
+    public static final String SVN_DAV_ERROR_TAG = "error";
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target) {
         return openNamespaceDeclarationTag(prefix, header, namespaces, null, target);

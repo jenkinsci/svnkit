@@ -62,7 +62,7 @@ public class DAVResource {
     private String myClientOptions;
     private String myBaseChecksum;
     private String myResultChecksum;
-
+    private String myUserName;
     private SVNProperties mySVNProperties;
     private Collection myDeadProperties;
     private Collection myEntries;
@@ -85,8 +85,8 @@ public class DAVResource {
         prepare();
     }
 
-    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, String clientOptions,
-                       String baseChecksum, String resultChecksum) throws SVNException {
+    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
+            String clientOptions, String baseChecksum, String resultChecksum, String userName) throws SVNException {
         myRepository = repository;
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
@@ -169,6 +169,10 @@ public class DAVResource {
 
     public boolean isSVNClient() {
         return myIsSVNClient;
+    }
+
+    public String getUserName() {
+        return myUserName;
     }
 
     public String getDeltaBase() {

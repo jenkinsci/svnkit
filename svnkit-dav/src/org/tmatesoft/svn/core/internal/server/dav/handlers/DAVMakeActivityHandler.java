@@ -20,11 +20,15 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -34,12 +38,17 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVMakeActivityHandler extends ServletDAVHandler {
 
+    private FSFS myFSFS;
+    
     public DAVMakeActivityHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
     
     public void execute() throws SVNException {
         DAVResource resource = getRequestedDAVResource(false, false);
+        FSRepository repos = (FSRepository) resource.getRepository();
+        myFSFS = repos.getFSFS();
+ 
         readInput(true);
         if (resource.exists()) {
             throw new DAVException("<DAV:resource-must-be-null/>", HttpServletResponse.SC_CONFLICT, SVNLogType.NETWORK);
@@ -59,9 +68,17 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         
     }
     
-    private String createActivity() {
+    private String createActivity(DAVResource resource) {
         SVNProperties properties = new SVNProperties();
+        properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
+        long revision = SVNRepository.INVALID_REVISION;
+        try {
+            myFSFS.getYoungestRevision();
+        } catch (SVNException svne) {
+            
+        }
         
         return null;
     }
+    
 }

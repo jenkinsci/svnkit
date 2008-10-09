@@ -40,7 +40,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
-import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -59,8 +58,9 @@ import org.xml.sax.XMLReader;
  */
 public abstract class ServletDAVHandler extends BasicDAVHandler {
 
-    protected static final int SC_MULTISTATUS = 207;
-
+    public static final int SC_MULTISTATUS = 207;
+    public static final int SC_HTTP_LOCKED = 423;
+        
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
 

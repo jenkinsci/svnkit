@@ -14,9 +14,14 @@ package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.util.logging.Level;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVResponse;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -83,6 +88,39 @@ public class DAVException extends SVNException {
 
     public DAVResponse getResponse() {
         return myResponse;
+    }
+    
+    private void setPreviousException(DAVException previousException) {
+        myPreviousException = previousException;
+    }
+    
+    public static DAVException convertError(SVNException svne, int statusCode, String message) {
+        SVNErrorMessage err = svne.getErrorMessage();
+        if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+            statusCode = HttpServletResponse.SC_NOT_FOUND;
+        } else if (err.getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
+            statusCode = HttpServletResponse.SC_NOT_IMPLEMENTED;
+        } else if (err.getErrorCode() == SVNErrorCode.FS_PATH_ALREADY_LOCKED) {
+            statusCode = ServletDAVHandler.SC_HTTP_LOCKED;
+        }
+
+        DAVException error = buildErrorChain(err, statusCode);
+        if (message != null && err.getErrorCode() != SVNErrorCode.REPOS_HOOK_FAILURE) {
+            error = new DAVException(message, statusCode, null, SVNLogType.NETWORK, Level.FINE, error, null, null, 
+                    err.getErrorCode().getCode(), null);
+        }
+        
+        return error;
+    }
+    
+    private static DAVException buildErrorChain(SVNErrorMessage err, int statusCode) {
+        DAVException error = new DAVException(err.getMessage(), statusCode, err, SVNLogType.NETWORK, Level.FINE, null, 
+                DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, err.getErrorCode().getCode(), null);
+        if (err.getChildErrorMessage() != null) {
+            error.setPreviousException(buildErrorChain(err.getChildErrorMessage(), statusCode));
+        }
+       
+        return error;
     }
 
 }

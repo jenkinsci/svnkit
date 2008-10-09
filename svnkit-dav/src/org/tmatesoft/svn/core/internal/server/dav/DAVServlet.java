@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 public class DAVServlet extends HttpServlet {
 
     public static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
+    
     private static final Map OUR_STATUS_LINES = new SVNHashMap(); 
      
     static {
@@ -262,7 +263,8 @@ public class DAVServlet extends HttpServlet {
         if (namespace != null) {
             namespaces.add(namespace);
         }
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "error", namespaces, SVNXMLUtil.PREFIX_MAP, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVXMLUtil.SVN_DAV_ERROR_TAG, namespaces, 
+                SVNXMLUtil.PREFIX_MAP, xmlBuffer);
         String prefix = (String) SVNXMLUtil.PREFIX_MAP.get(namespace);
         if (prefix != null) {
             prefix = SVNXMLUtil.DAV_NAMESPACE_PREFIX;
@@ -270,10 +272,11 @@ public class DAVServlet extends HttpServlet {
         if (tagName != null && tagName.length() > 0) {
             SVNXMLUtil.openXMLTag(prefix, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", SVNXMLUtil.XML_STYLE_NORMAL, "errcode", String.valueOf(errorID), xmlBuffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", SVNXMLUtil.XML_STYLE_NORMAL, "errcode", 
+                String.valueOf(errorID), xmlBuffer);
         xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", xmlBuffer);
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "error", xmlBuffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVXMLUtil.SVN_DAV_ERROR_TAG, xmlBuffer);
         return xmlBuffer.toString();
     }
     
