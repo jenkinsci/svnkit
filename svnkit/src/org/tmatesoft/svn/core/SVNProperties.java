@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -110,6 +111,18 @@ public class SVNProperties implements Cloneable, Serializable {
 
     private SVNProperties(Map properties) {
         myProperties = properties;
+    }
+    
+    /**
+     * Returns SVNProperties as Map of String, SVNPropertyValue pairs.
+     * 
+     * @return copy of SVNProperties as Map object
+     */
+    public Map asMap() {
+        if (myProperties == null) {
+            return Collections.unmodifiableMap(Collections.EMPTY_MAP);
+        }
+        return Collections.unmodifiableMap(myProperties);
     }
 
     /**
