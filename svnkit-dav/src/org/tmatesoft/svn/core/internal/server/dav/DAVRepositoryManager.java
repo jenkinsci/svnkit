@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.io.File;
 import java.security.Principal;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +34,7 @@ public class DAVRepositoryManager {
 
     private static final String FILE_PROTOCOL_LINE = "file://";
     private static final String DESTINATION_HEADER = "Destination";
+    private static final String DEFAULT_ACTIVITY_DB = "dav/activities.d";
 
     private DAVConfig myDAVConfig;
 
@@ -40,6 +42,7 @@ public class DAVRepositoryManager {
     private String myResourceContext;
     private String myResourcePathInfo;
     private Principal myUserPrincipal;
+    private File myRepositoryRootDir;
     
     public DAVRepositoryManager(DAVConfig config, HttpServletRequest request) throws SVNException {
         if (config == null) {
@@ -52,7 +55,8 @@ public class DAVRepositoryManager {
         myResourceContext = getResourceContext(request.getContextPath(), request.getPathInfo());
         myResourcePathInfo = getResourcePathInfo(request.getPathInfo());
         myUserPrincipal = request.getUserPrincipal();
-        
+        myRepositoryRootDir = getRepositoryRootDir(request.getPathInfo());
+            
         if (config.isUsingPBA()) {
             String path = null;
             if (!DAVHandlerFactory.METHOD_MERGE.equals(request.getMethod())) {
@@ -143,7 +147,7 @@ public class DAVRepositoryManager {
     public String getResourceRepositoryRoot() {
         return myResourceRepositoryRoot;
     }
-
+    
     public String getResourceContext() {
         return myResourceContext;
     }
@@ -192,6 +196,14 @@ public class DAVRepositoryManager {
             //TODO: later here code for parent path resource
         }
         
+        String activitiesDB = config.getActivitiesDBPath();
+        File activitiesDBDir = null;
+        if (activitiesDB == null) {
+            activitiesDBDir = new File(myRepositoryRootDir, DEFAULT_ACTIVITY_DB); 
+        } else {
+            activitiesDBDir = new File(activitiesDB);
+        }
+        
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
         return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
                 myUserPrincipal.getName());
@@ -209,6 +221,16 @@ public class DAVRepositoryManager {
             repositoryURL.append(DAVPathUtil.head(requestURI));
         }
         return repositoryURL.toString();
+    }
+
+    private File getRepositoryRootDir(String requestURI) {
+        File reposRootDir = null;
+        if (getDAVConfig().isUsingRepositoryPathDirective()) {
+            reposRootDir = new File(getDAVConfig().getRepositoryPath());
+        } else {
+            reposRootDir = new File(getDAVConfig().getRepositoryParentPath(), DAVPathUtil.head(requestURI));
+        }
+        return reposRootDir;
     }
 
     private String getResourcePathInfo(String requestURI) throws SVNException {

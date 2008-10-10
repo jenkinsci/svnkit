@@ -35,7 +35,8 @@ public class DAVConfig {
     private static final String LIST_PARENT_PATH_DIRECTIVE = "SVNListParentPath";
     private static final String REPOS_NAME = "SVNReposName";
     private static final String XSLT_INDEX = "SVNIndexXSLT";
-    
+    private static final String ACTIVITIES_DB = "SVNActivitiesDB"; 
+        
     private static final String OFF = "off";
     private static final String ON = "on";
 
@@ -43,12 +44,13 @@ public class DAVConfig {
     private String myRepositoryParentPath;
     private String myRepositoryName;
     private String myXSLTIndex;
+    private String myActivitiesDBPath;
     private SVNPathBasedAccess mySVNAccess = null;
     private boolean myUsingPBA = false;
     private boolean myAnonymous = true;
     private boolean myNoAuthIfAnonymousAllowed = false;
     private boolean myIsListParentPath;
-
+    
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
         String repositoryParentPath = servletConfig.getInitParameter(PARENT_PATH_DIRECIVE);
@@ -96,6 +98,8 @@ public class DAVConfig {
         if (listParentPath != null && ON.equals(listParentPath)) {
             myIsListParentPath = true;
         }
+        
+        myActivitiesDBPath = servletConfig.getInitParameter(ACTIVITIES_DB);
     }
 
     public String getRepositoryName() {
@@ -137,5 +141,10 @@ public class DAVConfig {
     public boolean isListParentPath() {
         return myIsListParentPath;
     }
+
+    public String getActivitiesDBPath() {
+        return myActivitiesDBPath;
+    }
+
 
 }

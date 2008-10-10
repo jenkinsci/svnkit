@@ -842,6 +842,14 @@ public class FSFS {
         }
     }
 
+    public void changeTransactionProperties(String txnId, SVNProperties txnProperties) throws SVNException {
+        for (Iterator iter = txnProperties.nameSet().iterator(); iter.hasNext();) {
+            String propName = (String) iter.next();
+            SVNPropertyValue propValue = txnProperties.getSVNPropertyValue(propName);
+            setTransactionProperty(txnId, propName, propValue);
+        }
+    }
+    
     public void setTransactionProperty(String txnID, String name, SVNPropertyValue propertyValue) throws SVNException {
         FSRepositoryUtil.validateProperty(name, propertyValue);
         SVNWCProperties revProps = new SVNWCProperties(getTransactionPropertiesFile(txnID), null);

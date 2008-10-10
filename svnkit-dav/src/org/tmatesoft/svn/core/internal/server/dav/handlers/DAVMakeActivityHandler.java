@@ -23,6 +23,8 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -64,21 +66,29 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         return null;
     }
 
-    private void makeActivity(DAVResource resource) throws SVNException {
+    private void makeActivity(DAVResource resource) throws DAVException {
+        FSTransactionInfo txnInfo = createActivity(resource);
         
     }
     
-    private String createActivity(DAVResource resource) {
+    private FSTransactionInfo createActivity(DAVResource resource) throws DAVException {
         SVNProperties properties = new SVNProperties();
         properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
         long revision = SVNRepository.INVALID_REVISION;
         try {
             myFSFS.getYoungestRevision();
         } catch (SVNException svne) {
-            
+            throw DAVException.convertError(svne, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not determine youngest revision");
         }
         
-        return null;
+        FSTransactionInfo txnInfo = null;
+        try {
+            txnInfo = FSTransactionRoot.beginTransactionForCommit(revision, properties, myFSFS);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not begin a transaction");
+        }
+        
+        return txnInfo;
     }
     
 }
