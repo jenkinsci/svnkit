@@ -293,6 +293,32 @@ public class SVNFileUtil {
         }
     }
 
+    public static void writeToFile(File file, String contents, String charSet) throws SVNException {
+        if (contents == null || contents.length() == 0) {
+            return;
+        }
+        
+        OutputStream os = null;
+        try {
+            os = SVNFileUtil.openFileForWriting(file); 
+            if (charSet != null) {
+                os.write(contents.getBytes(charSet));
+            } else {
+                os.write(contents.getBytes());
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Cannot write to file ''{0}'': {1}", new Object[] {file, ioe.getMessage()});
+            SVNErrorManager.error(err, ioe, Level.FINE, SVNLogType.DEFAULT);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Cannot write to file ''{0}''", file);
+            SVNErrorManager.error(err, svne, Level.FINE, SVNLogType.DEFAULT);
+        } finally {
+            SVNFileUtil.closeFile(os);
+        }
+    }
+
     public static void writeVersionFile(File file, int version) throws SVNException {
         if (version < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 

@@ -206,7 +206,7 @@ public class DAVRepositoryManager {
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
         return new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
-                myUserPrincipal.getName());
+                myUserPrincipal.getName(), activitiesDBDir);
     }
 
     private String getRepositoryRoot(String requestURI) {

@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,6 +67,12 @@ public class DAVResource {
     private SVNProperties mySVNProperties;
     private Collection myDeadProperties;
     private Collection myEntries;
+    private File myActivitiesDB;
+
+    
+    public File getActivitiesDB() {
+        return myActivitiesDB;
+    }
 
     /**
      * DAVResource  constructor
@@ -86,7 +93,7 @@ public class DAVResource {
     }
 
     public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
-            String clientOptions, String baseChecksum, String resultChecksum, String userName) throws SVNException {
+            String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws SVNException {
         myRepository = repository;
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
@@ -97,6 +104,8 @@ public class DAVResource {
         myResultChecksum = resultChecksum;
         myRevision = resourceURI.getRevision();
         myIsExists = resourceURI.exists();
+        myUserName = userName;
+        myActivitiesDB = activitiesDB;
         prepare();
     }
 

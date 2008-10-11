@@ -94,8 +94,7 @@ public class DAVException extends SVNException {
         myPreviousException = previousException;
     }
     
-    public static DAVException convertError(SVNException svne, int statusCode, String message) {
-        SVNErrorMessage err = svne.getErrorMessage();
+    public static DAVException convertError(SVNErrorMessage err, int statusCode, String message) {
         if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
             statusCode = HttpServletResponse.SC_NOT_FOUND;
         } else if (err.getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
