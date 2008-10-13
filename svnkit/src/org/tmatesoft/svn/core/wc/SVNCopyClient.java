@@ -960,7 +960,7 @@ public class SVNCopyClient extends SVNBasicClient {
             for (int i = 0; i < commitables.length; i++) {
                 commitables[i].setWCAccess(wcAccess);
             }
-            allCommitables.clear();
+            allCommitables = new TreeMap();
             SVNURL url = SVNCommitUtil.translateCommitables(commitables, allCommitables);
             
             repos = createRepository(url, null, null, true);
