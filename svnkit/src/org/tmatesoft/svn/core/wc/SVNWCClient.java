@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -42,6 +41,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
@@ -1865,7 +1865,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doLock(File[],boolean,String)
      */
     public void doLock(SVNURL[] urls, boolean stealLock, String lockMessage) throws SVNException {
-        Collection paths = new HashSet();
+        Collection paths = new SVNHashSet();
         SVNURL topURL = SVNURLUtil.condenceURLs(urls, paths, false);
         if (paths.isEmpty()) {
             paths.add("");
@@ -1971,7 +1971,7 @@ public class SVNWCClient extends SVNBasicClient {
      * @see #doUnlock(File[],boolean)
      */
     public void doUnlock(SVNURL[] urls, boolean breakLock) throws SVNException {
-        Collection paths = new HashSet();
+        Collection paths = new SVNHashSet();
         SVNURL topURL = SVNURLUtil.condenceURLs(urls, paths, false);
         if (paths.isEmpty()) {
             paths.add("");
@@ -2139,7 +2139,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         Collection changelistsSet = null;
         if (changeLists != null) {
-            changelistsSet = new HashSet();
+            changelistsSet = new SVNHashSet();
             for (Iterator changeListsIter = changeLists.iterator(); changeListsIter.hasNext();) {
                 String changeList = (String) changeListsIter.next();
                 changelistsSet.add(changeList);
@@ -2610,7 +2610,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         
         if (!isIgnoreExternals() && info != null) {
-            Collection processedDirs = new HashSet();
+            Collection processedDirs = new SVNHashSet();
             Map externals = info.getOldExternals();
             // update both old and new externals.
             for (Iterator paths = externals.keySet().iterator(); paths.hasNext();) {
@@ -2867,7 +2867,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         checkCancelled();
         SVNURL[] urls = (SVNURL[]) lockInfo.keySet().toArray(new SVNURL[lockInfo.size()]);
-        Collection urlPaths = new HashSet();
+        Collection urlPaths = new SVNHashSet();
         final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
         if (urlPaths.isEmpty()) {
             urlPaths.add("");

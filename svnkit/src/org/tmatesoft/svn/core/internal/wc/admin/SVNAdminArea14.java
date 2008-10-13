@@ -21,7 +21,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,6 +39,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -73,7 +73,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
     protected static final String KILL_ADM_ONLY = "adm-only";
     protected static final String THIS_DIR = "";
 
-    private static final Set INAPPLICABLE_PROPERTIES = new HashSet();
+    private static final Set INAPPLICABLE_PROPERTIES = new SVNHashSet();
 
     static {
         INAPPLICABLE_PROPERTIES.add(SVNProperty.KEEP_LOCAL);
@@ -329,7 +329,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
 
     public void saveVersionedProperties(SVNLog log, boolean close) throws SVNException {
         SVNProperties command = new SVNProperties();
-        Set processedEntries = new HashSet();
+        Set processedEntries = new SVNHashSet();
         
         Map propsCache = getPropertiesStorage(false);
         if (propsCache != null && !propsCache.isEmpty()) {

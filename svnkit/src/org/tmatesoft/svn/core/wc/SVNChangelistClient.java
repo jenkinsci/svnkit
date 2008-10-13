@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -26,6 +25,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
@@ -310,7 +310,7 @@ public class SVNChangelistClient extends SVNBasicClient {
             File path = paths[i].getAbsoluteFile();
             Collection changelistsSet = null;
             if (changelists != null && changelists.length > 0) {
-                changelistsSet = new HashSet();
+                changelistsSet = new SVNHashSet();
                 for (int j = 0; j < changelists.length; j++) {
                     changelistsSet.add(changelists[j]);
                 }
