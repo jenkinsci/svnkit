@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +23,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -33,17 +35,25 @@ import javax.xml.parsers.SAXParserFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -363,6 +373,74 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return diffCompress;
     }
 
+    protected void storeActivity(DAVResource resource, FSTransactionInfo txnInfo) throws DAVException {
+        DAVResourceURI resourceURI = resource.getResourceURI();
+        String activityID = resourceURI.getActivityID();
+        File activitiesDB = resource.getActivitiesDB();
+        if (!activitiesDB.mkdirs()) {
+            throw new DAVException("could not initialize activity db.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, 
+                    Level.FINE, null, null, null, 0, null);
+        }
+        
+        File finalActivityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);
+        File tmpFile = null;
+        try {
+            tmpFile = SVNFileUtil.createUniqueFile(finalActivityFile.getParentFile(), finalActivityFile.getName(), "tmp", false);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't open activity db");
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not open files.");
+        }
+        
+        StringBuffer activitiesContents = new StringBuffer();
+        activitiesContents.append(txnInfo.getTxnId());
+        activitiesContents.append('\n');
+        activitiesContents.append(activityID);
+        activitiesContents.append('\n');
+        
+        try {
+            SVNFileUtil.writeToFile(tmpFile, activitiesContents.toString(), null);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't write to activity db");
+            try {
+                SVNFileUtil.deleteFile(tmpFile);
+            } catch (SVNException e) {
+            }
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not write files.");
+        }
+        
+        try {
+            SVNFileUtil.rename(tmpFile, finalActivityFile);
+        } catch (SVNException svne) {
+            try {
+                SVNFileUtil.deleteFile(tmpFile);
+            } catch (SVNException e) {
+            }
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not replace files.");
+        }
+    }
+    
+    protected FSTransactionInfo createActivity(DAVResource resource, FSFS fsfs) throws DAVException {
+        SVNProperties properties = new SVNProperties();
+        properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
+        long revision = SVNRepository.INVALID_REVISION;
+        try {
+            fsfs.getYoungestRevision();
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "could not determine youngest revision");
+        }
+        
+        FSTransactionInfo txnInfo = null;
+        try {
+            txnInfo = FSTransactionRoot.beginTransactionForCommit(revision, properties, fsfs);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "could not begin a transaction");
+        }
+        
+        return txnInfo;
+    }
+
     private float getEncodingRange(String encoding) {
         int delimiterIndex = encoding.indexOf(";");
         if (delimiterIndex != -1) {
@@ -495,4 +573,5 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         return ourSAXParserFactory;
     }
+    
 }

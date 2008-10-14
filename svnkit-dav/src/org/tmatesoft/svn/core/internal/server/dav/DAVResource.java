@@ -109,7 +109,8 @@ public class DAVResource {
         prepare();
     }
 
-    private DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum) {
+    private DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
+            long version, String clientOptions, String baseChecksum, String resultChecksum) {
         myResourceURI = resourceURI;
         myRepository = repository;
         myRevision = revision;
@@ -161,15 +162,15 @@ public class DAVResource {
         return isAutoCheckedOut() || (getType() == DAVResourceType.ACTIVITY && !exists());
     }
     
-    private void setExists(boolean isExist) {
-        myIsExists = isExist;
-    }
-
     public boolean isCollection() throws SVNException {
         if (getResourceURI().getType() == DAVResourceType.REGULAR || (getResourceURI().getType() == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
             checkPath();
         }
         return myIsCollection;
+    }
+
+    public void setExists(boolean isExist) {
+        myIsExists = isExist;
     }
 
     private void setCollection(boolean isCollection) {

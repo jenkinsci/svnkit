@@ -11,11 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -143,4 +146,11 @@ public class DAVPathUtil {
         }
         return resultURI.toString();
     }
+    
+    public static File getActivityPath(File activitiesDB, String activityID) {
+        String safeActivityID = SVNFileUtil.computeChecksum(activityID);
+        File finalActivityFile = new File(activitiesDB, safeActivityID);
+        return finalActivityFile;
+    }
+
 }

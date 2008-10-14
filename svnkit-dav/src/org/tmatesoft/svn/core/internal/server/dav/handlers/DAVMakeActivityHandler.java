@@ -71,78 +71,9 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
     }
 
     private void makeActivity(DAVResource resource) throws DAVException {
-        FSTransactionInfo txnInfo = createActivity(resource);
+        FSTransactionInfo txnInfo = createActivity(resource, myFSFS);
         storeActivity(resource, txnInfo);
         
-    }
-    
-    private void storeActivity(DAVResource resource, FSTransactionInfo txnInfo) throws DAVException {
-        DAVResourceURI resourceURI = resource.getResourceURI();
-        String activityID = resourceURI.getActivityID();
-        File activitiesDB = resource.getActivitiesDB();
-        if (!activitiesDB.mkdirs()) {
-            throw new DAVException("could not initialize activity db.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, 
-                    Level.FINE, null, null, null, 0, null);
-        }
-        
-        String safeActivityID = SVNFileUtil.computeChecksum(activityID);
-        File finalActivityFile = new File(activitiesDB, safeActivityID);
-        File tmpFile = null;
-        try {
-            tmpFile = SVNFileUtil.createUniqueFile(activitiesDB, safeActivityID, "tmp", false);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't open activity db");
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not open files.");
-        }
-        
-        StringBuffer activitiesContents = new StringBuffer();
-        activitiesContents.append(txnInfo.getTxnId());
-        activitiesContents.append('\n');
-        activitiesContents.append(activityID);
-        activitiesContents.append('\n');
-        
-        try {
-            SVNFileUtil.writeToFile(tmpFile, activitiesContents.toString(), null);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't write to activity db");
-            try {
-                SVNFileUtil.deleteFile(tmpFile);
-            } catch (SVNException e) {
-            }
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not write files.");
-        }
-        
-        try {
-            SVNFileUtil.rename(tmpFile, finalActivityFile);
-        } catch (SVNException svne) {
-            try {
-                SVNFileUtil.deleteFile(tmpFile);
-            } catch (SVNException e) {
-            }
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not replace files.");
-        }
-    }
-    
-    private FSTransactionInfo createActivity(DAVResource resource) throws DAVException {
-        SVNProperties properties = new SVNProperties();
-        properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
-        long revision = SVNRepository.INVALID_REVISION;
-        try {
-            myFSFS.getYoungestRevision();
-        } catch (SVNException svne) {
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "could not determine youngest revision");
-        }
-        
-        FSTransactionInfo txnInfo = null;
-        try {
-            txnInfo = FSTransactionRoot.beginTransactionForCommit(revision, properties, myFSFS);
-        } catch (SVNException svne) {
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "could not begin a transaction");
-        }
-        
-        return txnInfo;
     }
     
 }

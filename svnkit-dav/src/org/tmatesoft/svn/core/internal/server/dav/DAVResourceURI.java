@@ -39,7 +39,6 @@ public class DAVResourceURI {
     private boolean myIsBaseLined = false;
     private boolean myIsWorking = false;
 
-
     public DAVResourceURI(String context, String uri, String label, boolean useCheckedIn) throws SVNException {
         myURI = uri;
         myContext = context;
@@ -67,10 +66,6 @@ public class DAVResourceURI {
         return myType;
     }
 
-    public void setType(DAVResourceType type) {
-        myType = type;
-    }
-
     public DAVResourceKind getKind() {
         return myKind;
     }
@@ -81,10 +76,6 @@ public class DAVResourceURI {
 
     public long getRevision() {
         return myRevision;
-    }
-
-    private void setRevision(long revisionNumber) {
-        myRevision = revisionNumber;
     }
 
     public String getPath() {
@@ -107,10 +98,6 @@ public class DAVResourceURI {
         return myIsExists;
     }
 
-    private void setExists(boolean isExist) {
-        myIsExists = isExist;
-    }
-
     public boolean isVersioned() {
         return myIsVersioned;
     }
@@ -123,16 +110,28 @@ public class DAVResourceURI {
         return myIsBaseLined;
     }
 
-    public void setBaseLined(boolean isBaseLined) {
-        myIsBaseLined = isBaseLined;
-    }
-
     public boolean isWorking() {
         return myIsWorking;
     }
 
     public void setWorking(boolean isWorking) {
         myIsWorking = isWorking;
+    }
+
+    private void setBaseLined(boolean isBaseLined) {
+        myIsBaseLined = isBaseLined;
+    }
+
+    private void setRevision(long revisionNumber) {
+        myRevision = revisionNumber;
+    }
+
+    private void setType(DAVResourceType type) {
+        myType = type;
+    }
+
+    private void setExists(boolean isExist) {
+        myIsExists = isExist;
     }
 
     private void parseURI(String label, boolean useCheckedIn) throws SVNException {
