@@ -508,6 +508,14 @@ public class SVNFileUtil {
     }
 
     public static File resolveSymlinkToFile(File file) {
+        File targetFile = resolveSymlink(file);
+        if (targetFile == null || !targetFile.isFile()) {
+            return null;
+        }
+        return targetFile;
+    }
+
+    public static File resolveSymlink(File file) {
         File targetFile = file;
         while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {
             String symlinkName = getSymlinkName(targetFile);
@@ -520,12 +528,9 @@ public class SVNFileUtil {
                 targetFile = new File(targetFile.getParentFile(), symlinkName);
             }
         }
-        if (targetFile == null || !targetFile.isFile()) {
-            return null;
-        }
         return targetFile;
     }
-
+    
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
         SVNFileType srcType = SVNFileType.getType(src);
         if (srcType == SVNFileType.FILE) {

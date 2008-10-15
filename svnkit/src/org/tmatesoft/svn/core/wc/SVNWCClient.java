@@ -491,9 +491,15 @@ public class SVNWCClient extends SVNBasicClient {
         if (fType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
+        } else if (fType == SVNFileType.FILE) {
             path = path.getParentFile();
+        } else if (fType == SVNFileType.SYMLINK) {
+            path = SVNFileUtil.resolveSymlink(path);
+            if (SVNFileType.getType(path) == SVNFileType.FILE) {
+                path = path.getParentFile();
+            }
         }
+        
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
@@ -1661,6 +1667,11 @@ public class SVNWCClient extends SVNBasicClient {
             for (int i = 0; i < paths.length; i++) {
                 File path = paths[i];
                 path = path.getAbsoluteFile();
+                
+                SVNFileType fileType = SVNFileType.getType(path);
+                if (fileType == SVNFileType.SYMLINK) {
+                    path = SVNFileUtil.resolveSymlink(path);
+                }
                 SVNWCAccess wcAccess = createWCAccess();
                 try {
                     int admLockLevel = getLevelsToLockFromDepth(depth);
