@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -895,4 +896,52 @@ class HTTPConnection implements IHTTPConnection {
     public void setSpoolResponse(boolean spoolResponse) {
         myIsSpoolResponse = spoolResponse;
     }
+
+    private static class FakeAuthManager implements ISVNAuthenticationManager {
+
+        private ISVNAuthenticationManager myRealAuthManager;
+        
+        public FakeAuthManager(ISVNAuthenticationManager authManager) {
+            myRealAuthManager = authManager;
+        }
+        
+        public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
+        }
+
+        public void acknowledgeTrustManager(TrustManager manager) {
+        }
+
+        public int getConnectTimeout(SVNRepository repository) {
+            return 0;
+        }
+
+        public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
+            return null;
+        }
+
+        public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
+            return null;
+        }
+
+        public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
+            return null;
+        }
+
+        public int getReadTimeout(SVNRepository repository) {
+            return 0;
+        }
+
+        public TrustManager getTrustManager(SVNURL url) throws SVNException {
+            return null;
+        }
+
+        public boolean isAuthenticationForced() {
+            return false;
+        }
+
+        public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
+        }
+        
+    }
+
 }
