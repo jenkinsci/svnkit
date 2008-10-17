@@ -615,6 +615,7 @@ class HTTPConnection implements IHTTPConnection {
                     }
                     // this stream always have to be closed.
                     is = tmpFile.openForReading();
+                    is = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, is);
                 } finally {
                     SVNFileUtil.closeFile(dst);
                 }
