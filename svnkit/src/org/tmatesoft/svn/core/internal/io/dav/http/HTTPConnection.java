@@ -40,13 +40,11 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
@@ -292,6 +290,7 @@ class HTTPConnection implements IHTTPConnection {
         SVNErrorMessage err = null;
         boolean ntlmAuthIsRequired = false;
         boolean ntlmProxyAuthIsRequired = false;
+        int authAttempts = 0;
         while (true) {
             HTTPStatus status = null;
             if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
@@ -428,6 +427,8 @@ class HTTPConnection implements IHTTPConnection {
 
                 break;
             } else if (status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                authAttempts++;//how many times did we try?
+                
                 Collection authHeaderValues = request.getResponseHeader().getHeaderValues(HTTPHeader.AUTHENTICATE_HEADER);
                 if (authHeaderValues == null || authHeaderValues.size() == 0) {
                     err = request.getErrorMessage();
@@ -483,7 +484,16 @@ class HTTPConnection implements IHTTPConnection {
                 }
 
                 myLastValidAuth = null;
-                
+
+                if (ntlmAuth != null && ntlmAuth.isNative() && authAttempts == 1) {
+                    /*
+                     * if this is the first time we get HTTP_UNAUTHORIZED, NTLM is the target auth scheme
+                     * and JNA is available, we should try a native auth mechanism first without calling 
+                     * auth providers. 
+                     */
+                    continue;
+                }
+
                 ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 if (authManager == null) {
                     err = request.getErrorMessage();
@@ -494,22 +504,14 @@ class HTTPConnection implements IHTTPConnection {
                 realm = realm == null ? "" : " " + realm;
                 realm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">" + realm;
                 
-                boolean tryNativeNTLMAuth = false;
                 if (httpAuth == null) {
-                    try {
-                        httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
-                    } catch (SVNAuthenticationException e) {
-                        if (ntlmAuth == null || !ntlmAuth.isNative()) {
-                            throw e;
-                        }
-                        tryNativeNTLMAuth = true;
-                    }
+                    httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 } else {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
                 
-                if (httpAuth == null && !tryNativeNTLMAuth) {
+                if (httpAuth == null) {
                     err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, 
                             "HTTP authorization cancelled");
                     break;
@@ -895,53 +897,6 @@ class HTTPConnection implements IHTTPConnection {
 
     public void setSpoolResponse(boolean spoolResponse) {
         myIsSpoolResponse = spoolResponse;
-    }
-
-    private static class FakeAuthManager implements ISVNAuthenticationManager {
-
-        private ISVNAuthenticationManager myRealAuthManager;
-        
-        public FakeAuthManager(ISVNAuthenticationManager authManager) {
-            myRealAuthManager = authManager;
-        }
-        
-        public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
-        }
-
-        public void acknowledgeTrustManager(TrustManager manager) {
-        }
-
-        public int getConnectTimeout(SVNRepository repository) {
-            return 0;
-        }
-
-        public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-            return null;
-        }
-
-        public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-            return null;
-        }
-
-        public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
-            return null;
-        }
-
-        public int getReadTimeout(SVNRepository repository) {
-            return 0;
-        }
-
-        public TrustManager getTrustManager(SVNURL url) throws SVNException {
-            return null;
-        }
-
-        public boolean isAuthenticationForced() {
-            return false;
-        }
-
-        public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
-        }
-        
     }
 
 }
