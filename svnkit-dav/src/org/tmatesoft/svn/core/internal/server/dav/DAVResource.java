@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -68,11 +70,6 @@ public class DAVResource {
     private Collection myDeadProperties;
     private Collection myEntries;
     private File myActivitiesDB;
-
-    
-    public File getActivitiesDB() {
-        return myActivitiesDB;
-    }
 
     /**
      * DAVResource  constructor
@@ -173,10 +170,6 @@ public class DAVResource {
         myIsExists = isExist;
     }
 
-    private void setCollection(boolean isCollection) {
-        myIsCollection = isCollection;
-    }
-
     public boolean isSVNClient() {
         return myIsSVNClient;
     }
@@ -201,51 +194,12 @@ public class DAVResource {
         return myBaseChecksum;
     }
 
-
     public String getResultChecksum() {
         return myResultChecksum;
     }
 
-    private SVNProperties getSVNProperties() throws SVNException {
-        if (mySVNProperties == null) {
-            mySVNProperties = new SVNProperties();
-            if (getResourceURI().getType() == DAVResourceType.REGULAR) {
-                if (isCollection()) {
-                    getRepository().getDir(getResourceURI().getPath(), getRevision(), mySVNProperties, (ISVNDirEntryHandler) null);
-                } else {
-                    getRepository().getFile(getResourceURI().getPath(), getRevision(), mySVNProperties, null);
-                }
-            }
-        }
-        return mySVNProperties;
-    }
-
-
-    private boolean isChecked() {
-        return myChecked;
-    }
-
-    private void setChecked(boolean checked) {
-        myChecked = checked;
-    }
-
-    private void prepare() throws SVNException {
-        if (getResourceURI().getType() == DAVResourceType.VERSION) {
-            getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
-        } else if (getResourceURI().getType() == DAVResourceType.WORKING) {
-            //TODO: Define filename for ACTIVITY_ID under the repository
-        } else if (getResourceURI().getType() == DAVResourceType.ACTIVITY) {
-            //TODO: Define filename for ACTIVITY_ID under the repository
-        }
-    }
-
-    private void checkPath() throws SVNException {
-        if (!isChecked()) {
-            SVNNodeKind currentNodeKind = getRepository().checkPath(getResourceURI().getPath(), getRevision());
-            setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
-            setCollection(currentNodeKind == SVNNodeKind.DIR);
-            setChecked(true);
-        }
+    public File getActivitiesDB() {
+        return myActivitiesDB;
     }
 
     public Iterator getChildren() throws SVNException {
@@ -278,11 +232,6 @@ public class DAVResource {
             getRepository().getDir(getResourceURI().getPath(), getRevision(), null, SVNDirEntry.DIRENT_KIND, myEntries);
         }
         return myEntries;
-    }
-
-    private boolean lacksETagPotential() throws SVNException {
-        return (!exists() || (getResourceURI().getType() != DAVResourceType.REGULAR && getResourceURI().getType() != DAVResourceType.VERSION)
-                || getResourceURI().getType() == DAVResourceType.VERSION && getResourceURI().isBaseLined());
     }
 
     public long getCreatedRevision() throws SVNException {
@@ -417,6 +366,69 @@ public class DAVResource {
 
     public boolean isAutoCheckedOut() {
         return myIsAutoCheckedOut;
+    }
+
+    private SVNProperties getSVNProperties() throws SVNException {
+        if (mySVNProperties == null) {
+            mySVNProperties = new SVNProperties();
+            if (getResourceURI().getType() == DAVResourceType.REGULAR) {
+                if (isCollection()) {
+                    getRepository().getDir(getResourceURI().getPath(), getRevision(), mySVNProperties, (ISVNDirEntryHandler) null);
+                } else {
+                    getRepository().getFile(getResourceURI().getPath(), getRevision(), mySVNProperties, null);
+                }
+            }
+        }
+        return mySVNProperties;
+    }
+
+    private boolean isChecked() {
+        return myChecked;
+    }
+
+    private void setCollection(boolean isCollection) {
+        myIsCollection = isCollection;
+    }
+
+    private void setChecked(boolean checked) {
+        myChecked = checked;
+    }
+
+    private void prepare() throws SVNException {
+        if (getResourceURI().getType() == DAVResourceType.VERSION) {
+            getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
+        } else if (getResourceURI().getType() == DAVResourceType.WORKING) {
+            //TODO: Define filename for ACTIVITY_ID under the repository
+        } else if (getResourceURI().getType() == DAVResourceType.ACTIVITY) {
+            String txnName = getTxn();
+            setExists(txnName != null);
+            //TODO: Define filename for ACTIVITY_ID under the repository
+        }
+    }
+
+    private String getTxn() {
+        DAVResourceURI resourceURI = getResourceURI();
+        File activityFile = DAVPathUtil.getActivityPath(getActivitiesDB(), resourceURI.getActivityID());
+        try {
+            return DAVServletUtil.readTxn(activityFile);
+        } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e.getMessage());
+        }
+        return null;
+    }
+
+    private void checkPath() throws SVNException {
+        if (!isChecked()) {
+            SVNNodeKind currentNodeKind = getRepository().checkPath(getResourceURI().getPath(), getRevision());
+            setExists(currentNodeKind != SVNNodeKind.NONE && currentNodeKind != SVNNodeKind.UNKNOWN);
+            setCollection(currentNodeKind == SVNNodeKind.DIR);
+            setChecked(true);
+        }
+    }
+
+    private boolean lacksETagPotential() throws SVNException {
+        return (!exists() || (getResourceURI().getType() != DAVResourceType.REGULAR && getResourceURI().getType() != DAVResourceType.VERSION)
+                || getResourceURI().getType() == DAVResourceType.VERSION && getResourceURI().isBaseLined());
     }
 
 }

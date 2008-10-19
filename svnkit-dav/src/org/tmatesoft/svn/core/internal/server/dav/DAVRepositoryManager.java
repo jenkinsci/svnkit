@@ -13,8 +13,6 @@ package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.File;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -22,9 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVActivityResourceTypeHandler;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.IDAVResourceTypeHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
@@ -47,11 +43,6 @@ public class DAVRepositoryManager {
     private String myResourcePathInfo;
     private Principal myUserPrincipal;
     private File myRepositoryRootDir;
-    
-    private static Map ourResourceTypeHandler = new HashMap();
-    static {
-        ourResourceTypeHandler.put(DAVResourceType.ACTIVITY, new DAVActivityResourceTypeHandler());
-    }
     
     public DAVRepositoryManager(DAVConfig config, HttpServletRequest request) throws SVNException {
         if (config == null) {
@@ -214,12 +205,6 @@ public class DAVRepositoryManager {
         }
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-        IDAVResourceTypeHandler resourceTypeHandler = (IDAVResourceTypeHandler) ourResourceTypeHandler.get(resourceURI.getType());
-        if (resourceTypeHandler != null) {
-            return resourceTypeHandler.handleResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, 
-                    baseChecksum, resultChecksum, myUserPrincipal.getName(), activitiesDBDir);
-        }
-        
         DAVResource resource =  new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, 
                 baseChecksum, resultChecksum, myUserPrincipal.getName(), activitiesDBDir);
         return resource;

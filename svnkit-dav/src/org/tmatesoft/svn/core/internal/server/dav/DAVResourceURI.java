@@ -70,10 +70,6 @@ public class DAVResourceURI {
         return myKind;
     }
 
-    public void setKind(DAVResourceKind kind) {
-        myKind = kind;
-    }
-
     public long getRevision() {
         return myRevision;
     }
@@ -82,16 +78,8 @@ public class DAVResourceURI {
         return myPath;
     }
 
-    public void setPath(String path) {
-        myPath = DAVPathUtil.standardize(path);
-    }
-
     public String getActivityID() {
         return myActivityID;
-    }
-
-    public void setActivityID(String activityID) {
-        myActivityID = activityID;
     }
 
     public boolean exists() {
@@ -102,10 +90,6 @@ public class DAVResourceURI {
         return myIsVersioned;
     }
 
-    public void setVersioned(boolean isVersioned) {
-        myIsVersioned = isVersioned;
-    }
-
     public boolean isBaseLined() {
         return myIsBaseLined;
     }
@@ -114,8 +98,24 @@ public class DAVResourceURI {
         return myIsWorking;
     }
 
-    public void setWorking(boolean isWorking) {
+    private void setPath(String path) {
+        myPath = DAVPathUtil.standardize(path);
+    }
+
+    private void setActivityID(String activityID) {
+        myActivityID = activityID;
+    }
+
+    private void setVersioned(boolean isVersioned) {
+        myIsVersioned = isVersioned;
+    }
+
+    private void setWorking(boolean isWorking) {
         myIsWorking = isWorking;
+    }
+
+    private void setKind(DAVResourceKind kind) {
+        myKind = kind;
     }
 
     private void setBaseLined(boolean isBaseLined) {
