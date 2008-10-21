@@ -135,17 +135,7 @@ public class DAVResource {
         return myRepository;
     }
 
-    public long getRevision() throws DAVException {
-        if (getResourceURI().getType() == DAVResourceType.REGULAR || getResourceURI().getType() == DAVResourceType.VERSION) {
-            if (!isValidRevision(myRevision)) {
-                try {
-                    myRevision = getLatestRevision();
-                } catch (SVNException e) {
-                    throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.", null);
-                }
-            }
-        }
+    public long getRevision() {
         return myRevision;
     }
 
@@ -378,10 +368,17 @@ public class DAVResource {
 
     private void prepare() throws DAVException {
         if (getResourceURI().getType() == DAVResourceType.VERSION) {
+            if (!isValidRevision(myRevision)) {
+                try {
+                    myRevision = getLatestRevision();
+                } catch (SVNException e) {
+                    throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.", null);
+                }
+            }
             getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
             setExists(true);
         } else if (getResourceURI().getType() == DAVResourceType.WORKING) {
-            //TODO: Define filename for ACTIVITY_ID under the repository
             String txnName = getTxn();
             if (txnName == null) {
                 throw new DAVException("An unknown activity was specified in the URL. This is generally caused by a problem in the client software.", 
@@ -435,11 +432,23 @@ public class DAVResource {
                         "Could not open the (transaction) root of the repository", null);
             }
             
-            //DAVServletUtil.checkPath(myTxnRoot, path)
+            SVNNodeKind kind = DAVServletUtil.checkPath(myTxnRoot, getResourceURI().getPath());
+            setExists(kind != SVNNodeKind.NONE);
+            setCollection(kind == SVNNodeKind.DIR);
         } else if (getResourceURI().getType() == DAVResourceType.ACTIVITY) {
             String txnName = getTxn();
             setExists(txnName != null);
-            //TODO: Define filename for ACTIVITY_ID under the repository
+        } else if (getResourceURI().getType() == DAVResourceType.REGULAR) {
+            if (!isValidRevision(myRevision)) {
+                try {
+                    myRevision = getLatestRevision();
+                } catch (SVNException e) {
+                    throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "Could not determine the proper revision to access", null);
+                }
+            }
+            
+            
         }
     }
 
