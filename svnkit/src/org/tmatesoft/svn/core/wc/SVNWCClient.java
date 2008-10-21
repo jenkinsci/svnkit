@@ -624,6 +624,78 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
+     * Crawls the working copy at <code>path</code> and calls {@link ISVNPropertyValueProvider#providePropertyValues(java.io.File, org.tmatesoft.svn.core.SVNProperties)}
+     * to get properties to be change on each path being traversed
+     *
+     * <p/>
+     * If <code>depth</code> is {@link org.tmatesoft.svn.core.SVNDepth#EMPTY}, change the properties on <code>path</code>
+     * only; if {@link SVNDepth#FILES}, change the properties on <code>path</code> and its file
+     * children (if any); if {@link SVNDepth#IMMEDIATES}, on <code>path</code> and all
+     * of its immediate children (both files and directories); if
+     * {@link SVNDepth#INFINITY}, on <code>path</code> and everything beneath it.
+     *
+     * <p/>
+     * If <code>skipChecks</code> is <span class="javakeyword">true</span>, this method does no validity
+     * checking of changed properties.  But if <code>skipChecks</code> is <span class="javakeyword">false</span>,
+     * and changed property name is not a valid property for <code>path</code>, it throws an exception,
+     * either with an error code {@link org.tmatesoft.svn.core.SVNErrorCode#ILLEGAL_TARGET}
+     * (if the property is not appropriate for <code>path</code>), or with
+     * {@link org.tmatesoft.svn.core.SVNErrorCode#BAD_MIME_TYPE} (if changed propery name is
+     * <span class="javastring">"svn:mime-type"</span>, but changed property value is not a valid mime-type).
+     *
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist
+     * names, used as a restrictive filter on items whose properties are
+     * set; that is, don't set properties on any item unless it's a member
+     * of one of those changelists.  If <code>changelists</code> is empty (or
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     *
+     * <p>
+     * This method operates only on working copies and does not open any network connection.
+     *
+     * @param path                         working copy path
+     * @param propertyValueProvider        changed properties provider
+     * @param skipChecks                   <span class="javakeyword">true</span> to
+     *                                     force the operation to run without validity checking
+     * @param depth                        working copy tree depth to process
+     * @param handler                      a caller's property handler
+     * @param changeLists                  changelist names
+     * @throws SVNException                <ul>
+     *                                     <li><code>path</code> does not exist
+     *                                     <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code -
+     *                                     if changed property name is a revision property name or not a valid property name or
+     *                                     not a regular property name (one starting with
+     *                                     a <span class="javastring">"svn:entry"</span> or
+     *                                     <span class="javastring">"svn:wc"</span> prefix)
+     *                                     </ul>
+     * @see   #doSetProperty(java.io.File, String, org.tmatesoft.svn.core.SVNPropertyValue, boolean, org.tmatesoft.svn.core.SVNDepth, ISVNPropertyHandler, java.util.Collection) 
+     * @since 1.2, SVN 1.5
+     */
+    public void doSetProperty(File path, ISVNPropertyValueProvider propertyValueProvider, boolean skipChecks,
+            SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+        int admLockLevel = SVNWCAccess.INFINITE_DEPTH;
+        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+            admLockLevel = 0;
+        }
+
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            wcAccess.probeOpen(path, true, admLockLevel);
+            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+            if (SVNDepth.FILES.compareTo(depth) <= 0 && entry.isDirectory()) {
+                PropSetHandlerExt entryHandler = new PropSetHandlerExt(skipChecks, propertyValueProvider, handler, changeLists);
+                wcAccess.walkEntries(path, entryHandler, false, depth);
+            } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
+                SVNAdminArea adminArea = entry.getAdminArea();
+                setLocalProperties(path, entry, adminArea, skipChecks, propertyValueProvider, handler);
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
+
+    /**
      * Sets <code>propName</code> to <code>propValue</code> on <code>path</code>.
      * A <code>propValue</code> of <span class="javakeyword">null</span> will delete 
      * the property.
@@ -3366,6 +3438,52 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
+    private void setLocalProperties(File path, SVNEntry entry, SVNAdminArea adminArea, boolean force,
+             ISVNPropertyValueProvider propertyValueProvider, ISVNPropertyHandler handler) throws SVNException {
+        SVNVersionedProperties entryProperties = adminArea.getProperties(entry.getName());
+        SVNProperties properties = entryProperties.asMap();
+        SVNProperties unmodifiableProperties = SVNProperties.unmodifiableProperties(properties);
+        SVNProperties changedProperties = propertyValueProvider.providePropertyValues(path, unmodifiableProperties);
+        SVNProperties propDiff = properties.compareTo(changedProperties);
+
+        for (Iterator iterator = propDiff.nameSet().iterator(); iterator.hasNext();) {
+            String propName = (String) iterator.next();
+            SVNPropertyValue propValue = propDiff.getSVNPropertyValue(propName);
+
+            if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "Bad property name ''{0}''", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (SVNRevisionProperty.isRevisionProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "Revision property ''{0}'' not allowed in this context", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (SVNProperty.isWorkingCopyProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "''{0}'' is a wcprop, thus not accessible to clients", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (SVNProperty.isEntryProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "Property ''{0}'' is an entry property", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            try {
+                boolean modified = SVNPropertiesManager.setProperty(adminArea.getWCAccess(), path, propName,
+                        propValue, force);
+                if (modified && handler != null) {
+                    handler.handleProperty(path, new SVNPropertyData(propName, propValue, getOptions()));
+                }
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ILLEGAL_TARGET) {
+                    throw svne;
+                }
+            }
+        }
+    }
+
     private Map fetchLockTokens(SVNRepository repository, Map pathsTokensMap) throws SVNException {
         Map tokens = new SVNHashMap();
         for (Iterator paths = pathsTokensMap.keySet().iterator(); paths.hasNext();) {
@@ -3504,6 +3622,42 @@ public class SVNWCClient extends SVNBasicClient {
                     throw svne;
                 }
             }
+        }
+
+        public void handleError(File path, SVNErrorMessage error) throws SVNException {
+            SVNErrorManager.error(error, SVNLogType.WC);
+        }
+    }
+
+    private class PropSetHandlerExt implements ISVNEntryHandler {
+        private boolean myIsForce;
+        private ISVNPropertyValueProvider myPropValueProvider;
+        private ISVNPropertyHandler myPropHandler;
+        private Collection myChangeLists;
+
+        public PropSetHandlerExt(boolean isForce, ISVNPropertyValueProvider propertyValueProvider,
+                ISVNPropertyHandler handler, Collection changeLists) {
+            myIsForce = isForce;
+            myPropValueProvider = propertyValueProvider;
+            myPropHandler = handler;
+            myChangeLists = changeLists;
+        }
+
+        public void handleEntry(File path, SVNEntry entry) throws SVNException {
+            SVNAdminArea adminArea = entry.getAdminArea();
+            if (entry.isDirectory() && !adminArea.getThisDirName().equals(entry.getName())) {
+                return;
+            }
+
+            if (entry.isScheduledForDeletion()) {
+                return;
+            }
+
+            if (!SVNWCAccess.matchesChangeList(myChangeLists, entry)) {
+                return;
+            }
+
+            setLocalProperties(path, entry, adminArea, myIsForce, myPropValueProvider, myPropHandler);
         }
 
         public void handleError(File path, SVNErrorMessage error) throws SVNException {

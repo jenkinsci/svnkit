@@ -94,6 +94,20 @@ public class SVNProperties implements Cloneable, Serializable {
     }
 
     /**
+     * Returns an unmodifiable view of the specified <code>properties</code>.
+     * Any attempt to modify the returned <code>SVNProperties</code> object result in an
+     * <code>UnsupportedOperationException</code>.
+     *
+     * @param   properties  <code>SVNProperties</code> object for which an unmodifiable view is to be returned.
+     * @return              an unmodifiable view of the specified properties.
+     */
+    public static SVNProperties unmodifiableProperties(SVNProperties properties) {
+        Map propertiesMap = properties.myProperties;
+        propertiesMap = Collections.unmodifiableMap(propertiesMap);
+        return new SVNProperties(propertiesMap);
+    }
+
+    /**
      * Creates an empty <code>SVNProperties</code> object.
      */
     public SVNProperties() {
