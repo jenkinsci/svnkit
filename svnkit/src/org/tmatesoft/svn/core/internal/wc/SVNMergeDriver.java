@@ -110,7 +110,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private SVNRepository myRepository1;
     private SVNRepository myRepository2;
     private SVNLogClient myLogClient;
-
+    private List myPathsWithNewMergeInfo;
     private ISVNFileLocationsFinder myFileLocationsFinder;
     
     public SVNMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
@@ -784,6 +784,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         mySkippedPaths = null;
         myAddedPaths = null;
         myChildrenWithMergeInfo = null;
+        myPathsWithNewMergeInfo = null;
         myHasExistingMergeInfo = false;
         
         boolean checkedMergeInfoCapability = false;
@@ -829,6 +830,13 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
             }
         }
+    }
+    
+    protected void addPathWithNewMergeInfo(File path) {
+        if (myPathsWithNewMergeInfo == null) {
+            myPathsWithNewMergeInfo = new LinkedList();
+        }
+        myPathsWithNewMergeInfo.add(path);
     }
     
     protected SVNRepository ensureRepository(SVNRepository repository, SVNURL url) throws SVNException {
@@ -1074,6 +1082,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         }
                     }
                     
+                    processChildrenWithNewMergeInfo();
+                    
                     removeFirstRangeFromRemainingRanges(endRev, myChildrenWithMergeInfo);
                     nextEndRev = getYoungestEndRevision(myChildrenWithMergeInfo, isRollBack);
                     if (SVNRevision.isValidRevisionNumber(nextEndRev) && myConflictedPaths != null && 
@@ -1312,6 +1322,43 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             myLogClient = new SVNLogClient(getRepositoryPool(), getOptions());
         }
         return myLogClient;
+    }
+    
+    private void processChildrenWithNewMergeInfo() throws SVNException {
+        if (myPathsWithNewMergeInfo != null) {
+            for (Iterator pathsIter = myPathsWithNewMergeInfo.iterator(); pathsIter.hasNext();) {
+                File pathWithNewMergeInfo = (File) pathsIter.next();
+                SVNEntry pathEntry = myWCAccess.getVersionedEntry(pathWithNewMergeInfo, false);
+                boolean[] indirect = { false };
+                Map pathExplicitMergeInfo = getWCMergeInfo(pathWithNewMergeInfo, pathEntry, null, SVNMergeInfoInheritance.EXPLICIT, false, 
+                        indirect);
+                
+                SVNURL oldURL = null;
+                if (pathExplicitMergeInfo != null) {
+                    oldURL = ensureSessionURL(myRepository2, pathEntry.getSVNURL());
+                    Map pathInheritedMergeInfo = getWCOrRepositoryMergeInfo(pathWithNewMergeInfo, pathEntry, 
+                            SVNMergeInfoInheritance.NEAREST_ANCESTOR, indirect, false, myRepository2);
+                    
+                    if (pathInheritedMergeInfo != null) {
+                        pathExplicitMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(pathExplicitMergeInfo, pathInheritedMergeInfo);
+                        SVNPropertiesManager.recordWCMergeInfo(pathWithNewMergeInfo, pathExplicitMergeInfo, myWCAccess);
+                    }
+                
+                    MergePath newChild = new MergePath(pathWithNewMergeInfo);
+                    if (!myChildrenWithMergeInfo.contains(newChild)) {
+                        int parentIndex = findNearestAncestor(myChildrenWithMergeInfo.toArray(), false, pathWithNewMergeInfo);
+                        MergePath parent = (MergePath) myChildrenWithMergeInfo.get(parentIndex);
+                        newChild.myRemainingRanges = parent.myRemainingRanges.dup();
+                        myChildrenWithMergeInfo.add(newChild);
+                        Collections.sort(myChildrenWithMergeInfo);
+                    }
+                }
+                
+                if (oldURL != null) {
+                    myRepository2.setLocation(oldURL, false);
+                }
+            }
+        }
     }
     
     private Map splitMergeInfoOnRevision(Map[] mergeInfo, long revision) {
