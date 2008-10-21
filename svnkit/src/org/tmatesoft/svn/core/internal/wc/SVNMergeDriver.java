@@ -59,8 +59,8 @@ import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNLocationSegment;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNFileLocationsFinder;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNFileLocationsFinder;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
@@ -1228,6 +1228,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         if (!honorMergeInfo) {
             return null;
         }
+        SVNEntry targetEntry = myWCAccess.getVersionedEntry(path, false);
+        if (targetEntry.isScheduledForAddition() || targetEntry.isScheduledForReplacement()) {
+            return null;
+        }
         SVNProperties adjustedProperties = new SVNProperties();
         for (Iterator propNamesIter = props.nameSet().iterator(); propNamesIter.hasNext();) {
             String propName = (String) propNamesIter.next();
@@ -1237,7 +1241,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 adjustedProperties.put(propName, propValue);
             } else {
                 SVNURL mergeSourceRootURL = myRepository2.getRepositoryRoot(true);
-                SVNEntry targetEntry = myWCAccess.getVersionedEntry(path, false);
                 SVNURL targetURL = getURL(path);
                 SVNURL oldURL = ensureSessionURL(myRepository2, targetURL);
                 
