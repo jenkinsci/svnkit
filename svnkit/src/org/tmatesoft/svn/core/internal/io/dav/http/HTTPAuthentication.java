@@ -84,9 +84,6 @@ abstract class HTTPAuthentication {
     }
 
     public String getUserName() {
-        if (myUserName == null) {
-            myUserName = System.getProperty("user.name", "");
-        }
         return myUserName;
     }
     

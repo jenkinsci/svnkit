@@ -51,8 +51,7 @@ public class HTTPNativeNTLMAuthentication extends HTTPNTLMAuthentication {
             myNTSecurityParameters = SVNWinSecurity.getSecurityParams(getUserName(), getPassword(), getDomain());
         }
         
-        String response = "NTLM " + SVNWinSecurity.getAuthHeader(myLastToken, 
-                myNTSecurityParameters);
+        String response = "NTLM " + SVNWinSecurity.getAuthHeader(myLastToken, myNTSecurityParameters);
         
         if (myNTSecurityParameters.myCrdHandle == null) {
             myNTSecurityParameters = null;
