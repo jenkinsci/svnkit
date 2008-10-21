@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 
+import java.text.MessageFormat;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
@@ -94,7 +95,7 @@ public class DAVException extends SVNException {
         myPreviousException = previousException;
     }
     
-    public static DAVException convertError(SVNErrorMessage err, int statusCode, String message) {
+    public static DAVException convertError(SVNErrorMessage err, int statusCode, String message, Object[] objects) {
         if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
             statusCode = HttpServletResponse.SC_NOT_FOUND;
         } else if (err.getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
@@ -105,10 +106,12 @@ public class DAVException extends SVNException {
 
         DAVException error = buildErrorChain(err, statusCode);
         if (message != null && err.getErrorCode() != SVNErrorCode.REPOS_HOOK_FAILURE) {
+            if (objects != null) {
+                message = MessageFormat.format(message, objects);
+            }
             error = new DAVException(message, statusCode, null, SVNLogType.NETWORK, Level.FINE, error, null, null, 
                     err.getErrorCode().getCode(), null);
         }
-        
         return error;
     }
     

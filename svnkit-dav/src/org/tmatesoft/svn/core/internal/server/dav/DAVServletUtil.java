@@ -14,6 +14,12 @@ package org.tmatesoft.svn.core.internal.server.dav;
 import java.io.File;
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 
@@ -29,6 +35,18 @@ public class DAVServletUtil {
             txnName = SVNFileUtil.readSingleLine(activityFile);
         }
         return txnName; 
+    }
+    
+    public static SVNNodeKind checkPath(FSRoot root, String path) throws DAVException {
+        try {
+            return root.checkNodeKind(path);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY) {
+                return SVNNodeKind.NONE;
+            }
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Error checking kind of path ''{0}'' in repository", new Object[] { path });
+        }
     }
     
 }

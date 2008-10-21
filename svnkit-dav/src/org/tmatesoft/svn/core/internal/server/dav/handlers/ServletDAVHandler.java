@@ -388,7 +388,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             tmpFile = SVNFileUtil.createUniqueFile(finalActivityFile.getParentFile(), finalActivityFile.getName(), "tmp", false);
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Can't open activity db");
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not open files.");
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not open files.", null);
         }
         
         StringBuffer activitiesContents = new StringBuffer();
@@ -405,7 +405,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 SVNFileUtil.deleteFile(tmpFile);
             } catch (SVNException e) {
             }
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not write files.");
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not write files.", null);
         }
         
         try {
@@ -415,7 +415,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 SVNFileUtil.deleteFile(tmpFile);
             } catch (SVNException e) {
             }
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not replace files.");
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not replace files.", null);
         }
     }
     
@@ -427,7 +427,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             fsfs.getYoungestRevision();
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "could not determine youngest revision");
+                    "could not determine youngest revision", null);
         }
         
         FSTransactionInfo txnInfo = null;
@@ -435,7 +435,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             txnInfo = FSTransactionRoot.beginTransactionForCommit(revision, properties, fsfs);
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "could not begin a transaction");
+                    "could not begin a transaction", null);
         }
         
         return txnInfo;

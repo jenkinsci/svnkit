@@ -142,7 +142,7 @@ public class DAVResource {
                     myRevision = getLatestRevision();
                 } catch (SVNException e) {
                     throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.");
+                            "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.", null);
                 }
             }
         }
@@ -397,7 +397,7 @@ public class DAVResource {
                             HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null); 
                 }
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "An activity was specified and found, but the corresponding SVN FS transaction was not found.");
+                        "An activity was specified and found, but the corresponding SVN FS transaction was not found.", null);
             }
             
             if (getResourceURI().isBaseLined()) {
@@ -411,7 +411,7 @@ public class DAVResource {
                     props = myFSFS.getTransactionProperties(myTxnName);
                 } catch (SVNException svne) {
                     throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Failed to retrieve author of the SVN FS transaction corresponding to the specified activity.");
+                            "Failed to retrieve author of the SVN FS transaction corresponding to the specified activity.", null);
                 }
                 
                 String currentAuthor = props.getStringValue(SVNRevisionProperty.AUTHOR);
@@ -420,7 +420,7 @@ public class DAVResource {
                         myFSFS.setTransactionProperty(myTxnName, SVNRevisionProperty.AUTHOR, SVNPropertyValue.create(myUserName));
                     } catch (SVNException svne) {
                         throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                                "Failed to set the author of the SVN FS transaction corresponding to the specified activity.");
+                                "Failed to set the author of the SVN FS transaction corresponding to the specified activity.", null);
                     }
                 } else if (!currentAuthor.equals(myUserName)) {
                     throw new DAVException("Multi-author commits not supported.", HttpServletResponse.SC_NOT_IMPLEMENTED, null, 
@@ -432,8 +432,10 @@ public class DAVResource {
                 myTxnRoot = myFSFS.createTransactionRoot(txnInfo);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "Could not open the (transaction) root of the repository");
+                        "Could not open the (transaction) root of the repository", null);
             }
+            
+            //DAVServletUtil.checkPath(myTxnRoot, path)
         } else if (getResourceURI().getType() == DAVResourceType.ACTIVITY) {
             String txnName = getTxn();
             setExists(txnName != null);
