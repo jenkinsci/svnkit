@@ -1739,11 +1739,6 @@ public class SVNWCClient extends SVNBasicClient {
             for (int i = 0; i < paths.length; i++) {
                 File path = paths[i];
                 path = path.getAbsoluteFile();
-                
-                SVNFileType fileType = SVNFileType.getType(path);
-                if (fileType == SVNFileType.SYMLINK) {
-                    path = SVNFileUtil.resolveSymlink(path);
-                }
                 SVNWCAccess wcAccess = createWCAccess();
                 try {
                     int admLockLevel = getLevelsToLockFromDepth(depth);
