@@ -55,11 +55,11 @@ public interface ISVNSecurityLibrary extends StdCallLibrary {
     }
     
     public static class SEC_WINNT_AUTH_IDENTITY extends Structure {
-        public String User;
+        public WString User;
         public NativeLong UserLength;
-        public String Domain;
+        public WString Domain;
         public NativeLong DomainLength;
-        public String Password;
+        public WString Password;
         public NativeLong PasswordLength;
         public NativeLong Flags;
     }

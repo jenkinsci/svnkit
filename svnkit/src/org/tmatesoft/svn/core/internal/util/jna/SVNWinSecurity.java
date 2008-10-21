@@ -192,17 +192,17 @@ public class SVNWinSecurity {
         if (user != null || password != null || domain != null) {
             authIdentity = new SEC_WINNT_AUTH_IDENTITY();
             if (user != null) {
-                authIdentity.User = user;
+                authIdentity.User = new WString(user);
                 authIdentity.UserLength = new NativeLong(user.length());
             }
             
             if (password != null) {
-                authIdentity.Password = password;
+                authIdentity.Password = new WString(password);
                 authIdentity.PasswordLength = new NativeLong(password.length());
             }
             
             if (domain != null) {
-                authIdentity.Domain = domain;
+                authIdentity.Domain = new WString(domain);
                 authIdentity.DomainLength = new NativeLong(domain.length());
             }
             authIdentity.Flags = new NativeLong(ISVNSecurityLibrary.SEC_WINNT_AUTH_IDENTITY_UNICODE);
