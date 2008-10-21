@@ -3442,7 +3442,8 @@ public class SVNWCClient extends SVNBasicClient {
              ISVNPropertyValueProvider propertyValueProvider, ISVNPropertyHandler handler) throws SVNException {
         SVNVersionedProperties entryProperties = adminArea.getProperties(entry.getName());
         SVNProperties properties = entryProperties.asMap();
-        SVNProperties changedProperties = propertyValueProvider.providePropertyValues(path, properties);
+        SVNProperties unmodifiableProperties = SVNProperties.unmodifiableProperties(properties);
+        SVNProperties changedProperties = propertyValueProvider.providePropertyValues(path, unmodifiableProperties);
         SVNProperties propDiff = properties.compareTo(changedProperties);
 
         for (Iterator iterator = propDiff.nameSet().iterator(); iterator.hasNext();) {

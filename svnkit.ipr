@@ -18,8 +18,41 @@
     <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
   </component>
   <component name="CodeStyleSettingsManager">
-    <option name="PER_PROJECT_SETTINGS" />
-    <option name="USE_PER_PROJECT_SETTINGS" value="false" />
+    <option name="PER_PROJECT_SETTINGS">
+      <value>
+        <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="0" />
+        <option name="BLANK_LINES_AFTER_CLASS_HEADER" value="1" />
+        <option name="FIELD_NAME_PREFIX" value="my" />
+        <option name="STATIC_FIELD_NAME_PREFIX" value="our" />
+        <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="1000" />
+        <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="1000" />
+        <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+          <value />
+        </option>
+        <option name="IMPORT_LAYOUT_TABLE">
+          <value>
+            <package name="javax" withSubpackages="true" />
+            <emptyLine />
+            <package name="java" withSubpackages="true" />
+            <emptyLine />
+            <package name="org.tmatesoft.svn" withSubpackages="true" />
+            <package name="org.tigris.subversion" withSubpackages="true" />
+            <emptyLine />
+            <package name="" withSubpackages="true" />
+          </value>
+        </option>
+        <ADDITIONAL_INDENT_OPTIONS fileType="js">
+          <option name="INDENT_SIZE" value="4" />
+          <option name="CONTINUATION_INDENT_SIZE" value="8" />
+          <option name="TAB_SIZE" value="4" />
+          <option name="USE_TAB_CHARACTER" value="false" />
+          <option name="SMART_TABS" value="false" />
+          <option name="LABEL_INDENT_SIZE" value="0" />
+          <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+        </ADDITIONAL_INDENT_OPTIONS>
+      </value>
+    </option>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
   </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
@@ -251,6 +284,7 @@
       <module fileurl="file://$PROJECT_DIR$/doc/examples/svnkit-examples.iml" filepath="$PROJECT_DIR$/doc/examples/svnkit-examples.iml" />
       <module fileurl="file://$PROJECT_DIR$/../svnkit-ext/svnkit-ext.iml" filepath="$PROJECT_DIR$/../svnkit-ext/svnkit-ext.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vs-test/vs-test.iml" filepath="$PROJECT_DIR$/../vs-test/vs-test.iml" />
     </modules>
   </component>
   <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="1.4" project-jdk-type="JavaSDK" />
@@ -268,6 +302,9 @@
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="myVersion" value="123" />
+  </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="svn" />
   </component>
@@ -278,6 +315,17 @@
         <list size="0" />
       </value>
     </option>
+  </component>
+  <component name="libraryTable">
+    <library name="repository template">
+      <CLASSES>
+        <root url="jar://$PROJECT_DIR$/svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar!/" />
+        <root url="file://$PROJECT_DIR$/svnkit/src/org/tmatesoft/svn/core/io/repository" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+      <jarDirectory url="file://$PROJECT_DIR$/svnkit/src/org/tmatesoft/svn/core/io/repository" recursive="false" />
+    </library>
   </component>
 </project>
 
