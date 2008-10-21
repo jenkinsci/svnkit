@@ -623,6 +623,30 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
+    public void doSetProperty(File path, ISVNExtendedPropertyHandler extendedPropertyHandler, boolean skipChecks,
+            SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
+        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+        int admLockLevel = SVNWCAccess.INFINITE_DEPTH;
+        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
+            admLockLevel = 0;
+        }
+
+        SVNWCAccess wcAccess = createWCAccess();
+        try {
+            wcAccess.probeOpen(path, true, admLockLevel);
+            SVNEntry entry = wcAccess.getVersionedEntry(path, false);
+            if (SVNDepth.FILES.compareTo(depth) <= 0 && entry.isDirectory()) {
+                PropSetHandlerExt entryHandler = new PropSetHandlerExt(skipChecks, extendedPropertyHandler, handler, changeLists);
+                wcAccess.walkEntries(path, entryHandler, false, depth);
+            } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
+                SVNAdminArea adminArea = entry.getAdminArea();
+                setLocalProperties(path, entry, adminArea, skipChecks, extendedPropertyHandler, handler);
+            }
+        } finally {
+            wcAccess.close();
+        }
+    }
+
     /**
      * Sets <code>propName</code> to <code>propValue</code> on <code>path</code>.
      * A <code>propValue</code> of <span class="javakeyword">null</span> will delete 
@@ -3371,6 +3395,51 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
+    private void setLocalProperties(File path, SVNEntry entry, SVNAdminArea adminArea, boolean force,
+             ISVNExtendedPropertyHandler extPropHandler, ISVNPropertyHandler handler) throws SVNException {
+        SVNVersionedProperties entryProperties = adminArea.getProperties(entry.getName());
+        SVNProperties properties = entryProperties.asMap();
+        SVNProperties changedProperties = extPropHandler.handleProperties(path, properties);
+        SVNProperties propDiff = properties.compareTo(changedProperties);
+
+        for (Iterator iterator = propDiff.nameSet().iterator(); iterator.hasNext();) {
+            String propName = (String) iterator.next();
+            SVNPropertyValue propValue = propDiff.getSVNPropertyValue(propName);
+
+            if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "Bad property name ''{0}''", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (SVNRevisionProperty.isRevisionProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "Revision property ''{0}'' not allowed in this context", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (SVNProperty.isWorkingCopyProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "''{0}'' is a wcprop, thus not accessible to clients", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            } else if (SVNProperty.isEntryProperty(propName)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
+                        "Property ''{0}'' is an entry property", propName);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            try {
+                boolean modified = SVNPropertiesManager.setProperty(adminArea.getWCAccess(), path, propName,
+                        propValue, force);
+                if (modified && handler != null) {
+                    handler.handleProperty(path, new SVNPropertyData(propName, propValue, getOptions()));
+                }
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.ILLEGAL_TARGET) {
+                    throw svne;
+                }
+            }
+        }
+    }
+
     private Map fetchLockTokens(SVNRepository repository, Map pathsTokensMap) throws SVNException {
         Map tokens = new SVNHashMap();
         for (Iterator paths = pathsTokensMap.keySet().iterator(); paths.hasNext();) {
@@ -3509,6 +3578,42 @@ public class SVNWCClient extends SVNBasicClient {
                     throw svne;
                 }
             }
+        }
+
+        public void handleError(File path, SVNErrorMessage error) throws SVNException {
+            SVNErrorManager.error(error, SVNLogType.WC);
+        }
+    }
+
+    private class PropSetHandlerExt implements ISVNEntryHandler {
+        private boolean myIsForce;
+        private ISVNExtendedPropertyHandler myExtPropHandler;
+        private ISVNPropertyHandler myPropHandler;
+        private Collection myChangeLists;
+
+        public PropSetHandlerExt(boolean isForce, ISVNExtendedPropertyHandler extendedPropertyHandler,
+                ISVNPropertyHandler handler, Collection changeLists) {
+            myIsForce = isForce;
+            myExtPropHandler = extendedPropertyHandler;
+            myPropHandler = handler;
+            myChangeLists = changeLists;
+        }
+
+        public void handleEntry(File path, SVNEntry entry) throws SVNException {
+            SVNAdminArea adminArea = entry.getAdminArea();
+            if (entry.isDirectory() && !adminArea.getThisDirName().equals(entry.getName())) {
+                return;
+            }
+
+            if (entry.isScheduledForDeletion()) {
+                return;
+            }
+
+            if (!SVNWCAccess.matchesChangeList(myChangeLists, entry)) {
+                return;
+            }
+
+            setLocalProperties(path, entry, adminArea, myIsForce, myExtPropHandler, myPropHandler);
         }
 
         public void handleError(File path, SVNErrorMessage error) throws SVNException {
