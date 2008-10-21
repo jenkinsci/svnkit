@@ -84,9 +84,6 @@ abstract class HTTPAuthentication {
     }
 
     public String getUserName() {
-        if (myUserName == null) {
-            myUserName = System.getProperty("user.name", "");
-        }
         return myUserName;
     }
     
@@ -102,9 +99,11 @@ abstract class HTTPAuthentication {
         myPassword = password;
     }
     
-    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse, String charset) throws SVNException {
+    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, 
+            HTTPAuthentication prevResponse, String charset) throws SVNException {
         if (authHeaderValues == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Missing HTTP authorization method"); 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Missing HTTP authorization method"); 
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
 
@@ -186,7 +185,13 @@ abstract class HTTPAuthentication {
             } else if ("NTLM".equalsIgnoreCase(method)) {
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (source.length() == 0) {
-                    ntlmAuth = new HTTPNTLMAuthentication(charset);
+                    ntlmAuth = HTTPNativeNTLMAuthentication.newInstance(charset);
+                    if (ntlmAuth != null) {
+                        ntlmAuth.parseChallenge(null);
+                    }
+                    if (ntlmAuth == null) {
+                        ntlmAuth = new HTTPNTLMAuthentication(charset);
+                    }
                     ntlmAuth.setType1State();
                 } else {
                     ntlmAuth = (HTTPNTLMAuthentication)prevResponse;
@@ -199,7 +204,8 @@ abstract class HTTPAuthentication {
         }
 
         if (auth == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", authHeader); 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "HTTP authorization method ''{0}'' is not supported", authHeader); 
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
