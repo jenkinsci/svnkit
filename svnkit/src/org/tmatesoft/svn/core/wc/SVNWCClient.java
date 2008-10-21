@@ -491,9 +491,15 @@ public class SVNWCClient extends SVNBasicClient {
         if (fType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
+        } else if (fType == SVNFileType.FILE) {
             path = path.getParentFile();
+        } else if (fType == SVNFileType.SYMLINK) {
+            path = SVNFileUtil.resolveSymlink(path);
+            if (SVNFileType.getType(path) == SVNFileType.FILE) {
+                path = path.getParentFile();
+            }
         }
+        
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminArea adminArea = wcAccess.open(path, true, true, 0);
