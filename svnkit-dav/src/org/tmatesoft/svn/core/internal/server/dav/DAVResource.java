@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -49,37 +50,38 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class DAVResource {
+public abstract class DAVResource {
 
     public static final long INVALID_REVISION = SVNRepository.INVALID_REVISION;
 
     public static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
     public static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
-    private DAVResourceURI myResourceURI;
+    protected DAVResourceURI myResourceURI;
 
-    private FSRepository myRepository;
-    private long myRevision;
-    private long myLatestRevision = INVALID_REVISION;
+    protected FSRepository myRepository;
+    protected long myRevision;
+    protected long myLatestRevision = INVALID_REVISION;
 
-    private boolean myIsExists;
-    private boolean myIsCollection;
-    private boolean myIsSVNClient;
-    private boolean myChecked;
-    private boolean myIsAutoCheckedOut;
-    private String myDeltaBase;
-    private long myVersion;
-    private String myClientOptions;
-    private String myBaseChecksum;
-    private String myResultChecksum;
-    private String myUserName;
-    private SVNProperties mySVNProperties;
-    private Collection myDeadProperties;
-    private Collection myEntries;
-    private File myActivitiesDB;
-    private FSFS myFSFS;
-    private FSTransactionRoot myTxnRoot;
-    private String myTxnName;
+    protected boolean myIsExists;
+    protected boolean myIsCollection;
+    protected boolean myIsSVNClient;
+    protected boolean myChecked;
+    protected boolean myIsAutoCheckedOut;
+    protected String myDeltaBase;
+    protected long myVersion;
+    protected String myClientOptions;
+    protected String myBaseChecksum;
+    protected String myResultChecksum;
+    protected String myUserName;
+    protected SVNProperties mySVNProperties;
+    protected Collection myDeadProperties;
+    protected Collection myEntries;
+    protected File myActivitiesDB;
+    protected FSFS myFSFS;
+    protected FSTransactionRoot myTxnRoot;
+    protected String myTxnName;
+    protected FSRevisionRoot myRevisionRoot;
     
     /**
      * DAVResource  constructor
@@ -109,7 +111,7 @@ public class DAVResource {
         prepare();
     }
 
-    private DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
+    protected DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
             long version, String clientOptions, String baseChecksum, String resultChecksum) {
         myResourceURI = resourceURI;
         myRepository = (FSRepository) repository;
@@ -165,10 +167,6 @@ public class DAVResource {
         return myIsCollection;
     }
 
-    public void setExists(boolean isExist) {
-        myIsExists = isExist;
-    }
-
     public boolean isSVNClient() {
         return myIsSVNClient;
     }
@@ -217,7 +215,8 @@ public class DAVResource {
                 String childURI = DAVPathUtil.append(getResourceURI().getURI(), entry.getName());
                 try {
                     DAVResourceURI newResourceURI = new DAVResourceURI(getResourceURI().getContext(), childURI, null, false);
-                    return new DAVResource(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), getVersion(), getClientOptions(), null, null);
+                    return DAVResourceFactory.createDAVResourceChild(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
+                            getVersion(), getClientOptions(), null, null);
                 } catch (SVNException e) {
                     return null;
                 }
@@ -366,7 +365,9 @@ public class DAVResource {
         return myIsAutoCheckedOut;
     }
 
-    private void prepare() throws DAVException {
+    protected abstract void prepare() throws DAVException;
+
+/*    protected abstract void prepare() throws DAVException {
         if (getResourceURI().getType() == DAVResourceType.VERSION) {
             if (!isValidRevision(myRevision)) {
                 try {
@@ -374,6 +375,15 @@ public class DAVResource {
                 } catch (SVNException e) {
                     throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                             "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.", null);
+                }
+            }
+            
+            if (myRevisionRoot == null) {
+                try {
+                    myRevisionRoot = myFSFS.createRevisionRoot(myRevision);
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "Could not open a revision root.", null);
                 }
             }
             getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
@@ -451,8 +461,9 @@ public class DAVResource {
             
         }
     }
-
-    private String getTxn() {
+*/
+    
+    protected String getTxn() {
         DAVResourceURI resourceURI = getResourceURI();
         File activityFile = DAVPathUtil.getActivityPath(getActivitiesDB(), resourceURI.getActivityID());
         try {
@@ -481,10 +492,14 @@ public class DAVResource {
         return myChecked;
     }
 
-    private void setCollection(boolean isCollection) {
+    protected void setCollection(boolean isCollection) {
         myIsCollection = isCollection;
     }
 
+    protected void setExists(boolean exists) {
+        myIsExists = exists;
+    }
+    
     private void setChecked(boolean checked) {
         myChecked = checked;
     }

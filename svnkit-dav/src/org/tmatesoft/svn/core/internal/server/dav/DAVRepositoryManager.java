@@ -193,7 +193,7 @@ public class DAVRepositoryManager {
             if (uri.endsWith("/")) {
                 uri = uri.substring(0, uri.length() - 1);
             }
-            //TODO: later here code for parent path resource
+            //TODO: later add code for parent path resource here
         }
         
         String activitiesDB = config.getActivitiesDBPath();
@@ -205,7 +205,7 @@ public class DAVRepositoryManager {
         }
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-        DAVResource resource =  new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, 
+        DAVResource resource = DAVResourceFactory.createDAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, 
                 baseChecksum, resultChecksum, myUserPrincipal.getName(), activitiesDBDir);
         return resource;
     }
