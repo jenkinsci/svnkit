@@ -11,35 +11,24 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.File;
-import java.util.Date;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
-import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DAVMakeActivityHandler extends ServletDAVHandler {
@@ -64,6 +53,15 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
             throw new DAVException("<DAV:activity-location-ok/>", HttpServletResponse.SC_FORBIDDEN, SVNLogType.NETWORK);
         }
         
+        try {
+            makeActivity(resource);
+        } catch (DAVException dave) {
+            throw new DAVException("Could not create activity {0}.", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getURI())}, 
+                    dave.getResponseCode(), null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
+        }
+
+        setResponseHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE);
+        handleDAVCreated(resource, resource.getResourceURI().getURI(), "Activity", false);
     }
 
     protected DAVRequest getDAVRequest() {
@@ -73,7 +71,8 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
     private void makeActivity(DAVResource resource) throws DAVException {
         FSTransactionInfo txnInfo = createActivity(resource, myFSFS);
         storeActivity(resource, txnInfo);
-        
+        resource.setExists(true);
+        resource.setTxnName(txnInfo.getTxnId());
     }
     
 }

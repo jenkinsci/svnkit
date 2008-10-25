@@ -62,7 +62,7 @@ public class DAVHandlerFactory {
         if (METHOD_REPORT.equals(request.getMethod())) {
             return new DAVReportHandler(manager, request, response);
         }
-        if (METHOD_REPORT.equals(METHOD_MKACTIVITY)) {
+        if (METHOD_MKACTIVITY.equals(request.getMethod())) {
             return new DAVMakeActivityHandler(manager, request, response);
         }
         

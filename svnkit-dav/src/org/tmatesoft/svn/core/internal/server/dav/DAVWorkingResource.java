@@ -45,7 +45,7 @@ public class DAVWorkingResource extends DAVResource {
         String txnName = getTxn();
         if (txnName == null) {
             throw new DAVException("An unknown activity was specified in the URL. This is generally caused by a problem in the client software.", 
-                    HttpServletResponse.SC_BAD_REQUEST, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
+                    null, HttpServletResponse.SC_BAD_REQUEST, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
         }
         myTxnName = txnName;
         FSTransactionInfo txnInfo = null;
@@ -54,7 +54,7 @@ public class DAVWorkingResource extends DAVResource {
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_TRANSACTION) {
                 throw new DAVException("An activity was specified and found, but the corresponding SVN FS transaction was not found.", 
-                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null); 
+                        null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null); 
             }
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "An activity was specified and found, but the corresponding SVN FS transaction was not found.", null);
@@ -83,7 +83,7 @@ public class DAVWorkingResource extends DAVResource {
                             "Failed to set the author of the SVN FS transaction corresponding to the specified activity.", null);
                 }
             } else if (!currentAuthor.equals(myUserName)) {
-                throw new DAVException("Multi-author commits not supported.", HttpServletResponse.SC_NOT_IMPLEMENTED, null, 
+                throw new DAVException("Multi-author commits not supported.", null, HttpServletResponse.SC_NOT_IMPLEMENTED, null, 
                         SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
             }
         }

@@ -42,10 +42,10 @@ public class DAVException extends SVNException {
     private String myNameSpace;
     private DAVResponse myResponse;
     
-    public DAVException(String message, int responseCode, SVNErrorMessage error, SVNLogType logType, Level level, DAVException previousException, 
+    public DAVException(String message, Object[] objects, int responseCode, SVNErrorMessage error, SVNLogType logType, Level level, DAVException previousException, 
             String tagName, String nameSpace, int errorID, DAVResponse response) {
         super(error);
-        myMessage = message;
+        myMessage = objects == null ? message : MessageFormat.format(message, objects); 
         myResponseCode = responseCode;
         myPreviousException = previousException;
         myTagName = tagName;
@@ -56,11 +56,11 @@ public class DAVException extends SVNException {
     }
 
     public DAVException(String message, int responseCode, SVNLogType logType) {
-        this(message, responseCode, null, logType, Level.FINE, null, null, null, 0, null);
+        this(message, null, responseCode, null, logType, Level.FINE, null, null, null, 0, null);
     }
 
     public DAVException(String message, int responseCode, SVNLogType logType, String tagName, String nameSpace) {
-        this(message, responseCode, null, logType, Level.FINE, null, tagName, nameSpace, 0, null);
+        this(message, null, responseCode, null, logType, Level.FINE, null, tagName, nameSpace, 0, null);
     }
 
     public int getErrorID() {
@@ -109,14 +109,14 @@ public class DAVException extends SVNException {
             if (objects != null) {
                 message = MessageFormat.format(message, objects);
             }
-            error = new DAVException(message, statusCode, null, SVNLogType.NETWORK, Level.FINE, error, null, null, 
+            error = new DAVException(message, null, statusCode, null, SVNLogType.NETWORK, Level.FINE, error, null, null, 
                     err.getErrorCode().getCode(), null);
         }
         return error;
     }
     
     private static DAVException buildErrorChain(SVNErrorMessage err, int statusCode) {
-        DAVException error = new DAVException(err.getMessage(), statusCode, err, SVNLogType.NETWORK, Level.FINE, null, 
+        DAVException error = new DAVException(err.getMessage(), null, statusCode, err, SVNLogType.NETWORK, Level.FINE, null, 
                 DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, err.getErrorCode().getCode(), null);
         if (err.getChildErrorMessage() != null) {
             error.setPreviousException(buildErrorChain(err.getChildErrorMessage(), statusCode));

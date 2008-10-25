@@ -63,7 +63,7 @@ public abstract class DAVResourceFactory {
     private static DAVResourceFactory getFactory(DAVResourceType resourceType) throws DAVException {
         DAVResourceFactory factoryImpl = (DAVResourceFactory) ourResourceFactories.get(resourceType);
         if (factoryImpl == null) {
-            throw new DAVException("DESIGN FAILURE: unknown resource type", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+            throw new DAVException("DESIGN FAILURE: unknown resource type", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
                     SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
         }
         return factoryImpl;

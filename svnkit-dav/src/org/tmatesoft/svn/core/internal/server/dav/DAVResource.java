@@ -141,14 +141,7 @@ public abstract class DAVResource {
         return myRevision;
     }
 
-    public boolean exists() throws SVNException {
-        DAVResourceType type = getType(); 
-        if (type == DAVResourceType.REGULAR || (type == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
-            checkPath();
-        } else if (type == DAVResourceType.VERSION ||
-                (type == DAVResourceType.WORKING && getResourceURI().isBaseLined())) {
-            myIsExists = true;
-        }
+    public boolean exists() {
         return myIsExists;
     }
 
@@ -156,14 +149,11 @@ public abstract class DAVResource {
         return getResourceURI().getType();
     }
 
-    public boolean canBeActivity() throws SVNException {
+    public boolean canBeActivity() {
         return isAutoCheckedOut() || (getType() == DAVResourceType.ACTIVITY && !exists());
     }
     
     public boolean isCollection() throws SVNException {
-        if (getResourceURI().getType() == DAVResourceType.REGULAR || (getResourceURI().getType() == DAVResourceType.WORKING && !getResourceURI().isBaseLined())) {
-            checkPath();
-        }
         return myIsCollection;
     }
 
@@ -365,6 +355,14 @@ public abstract class DAVResource {
         return myIsAutoCheckedOut;
     }
 
+    public void setExists(boolean exists) {
+        myIsExists = exists;
+    }
+    
+    public void setTxnName(String txnName) {
+        myTxnName = txnName;
+    }
+    
     protected abstract void prepare() throws DAVException;
 
 /*    protected abstract void prepare() throws DAVException {
@@ -496,10 +494,6 @@ public abstract class DAVResource {
         myIsCollection = isCollection;
     }
 
-    protected void setExists(boolean exists) {
-        myIsExists = exists;
-    }
-    
     private void setChecked(boolean checked) {
         myChecked = checked;
     }

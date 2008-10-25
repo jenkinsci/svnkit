@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +27,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
@@ -39,6 +41,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
@@ -49,12 +52,15 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.util.Version;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -73,7 +79,13 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
-
+    
+    protected static final String DAV_RESPONSE_BODY_1 = "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>";
+    protected static final String DAV_RESPONSE_BODY_2 = "</title>\n</head><body>\n<h1>";
+    protected static final String DAV_RESPONSE_BODY_3 = "</h1>\n<p>";
+    protected static final String DAV_RESPONSE_BODY_4 = "</p>\n";
+    protected static final String DAV_RESPONSE_BODY_5 = "</body></html>\n";
+    
     protected static final String DEFAULT_XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
 
     protected static final String UTF8_ENCODING = "UTF-8";
@@ -107,7 +119,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String KEEP_ALIVE_HEADER = "Keep-Alive";
     protected static final String ACCEPT_RANGES_HEADER = "Accept-Ranges";
     protected static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
-
+    protected static final String CACHE_CONTROL_HEADER = "Cache-Control";
+    
     //Supported live properties
     protected static final DAVElement GET_CONTENT_TYPE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getcontenttype");
     protected static final DAVElement GET_LAST_MODIFIED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getlastmodified");
@@ -122,7 +135,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String DIFF_VERSION = "svndiff";
 
     protected static final String ACCEPT_RANGES_DEFAULT_VALUE = "bytes";    
-
+    protected static final String CACHE_CONTROL_VALUE = "no-cache";
+    
     private static final Pattern COMMA = Pattern.compile(",");
 
     //Report related stuff DAVOptionsHandler uses
@@ -276,6 +290,90 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
 
+    protected void handleDAVCreated(DAVResource resource, String location, String what, boolean isReplaced) throws SVNException {
+        if (location == null) {
+            location = resource.getResourceURI().getURI();
+        }
+        
+        if (isReplaced) {
+            return;
+        }
+
+        setResponseHeader(HTTPHeader.LOCATION_HEADER, constructURL(location));
+        String body = what + " " + SVNEncodingUtil.xmlEncodeCDATA(location) + " has been created.";
+        response(body, DAVServlet.getStatusLine(HttpServletResponse.SC_CREATED), HttpServletResponse.SC_CREATED);
+    }
+
+    protected void response(String body, String statusLine, int statusCode) throws SVNException {
+        setResponseStatus(statusCode);
+        setResponseContentType("text/html; charset=ISO-8859-1");
+        StringBuffer responseBuffer = new StringBuffer();
+        responseBuffer.append(DAV_RESPONSE_BODY_1);
+        responseBuffer.append(statusLine);
+        responseBuffer.append(DAV_RESPONSE_BODY_2);
+        responseBuffer.append(statusLine.substring(4));
+        responseBuffer.append(DAV_RESPONSE_BODY_3);
+        responseBuffer.append(body);
+        responseBuffer.append(DAV_RESPONSE_BODY_4);
+        appendServerSignature(responseBuffer, "<hr />\n");
+        responseBuffer.append(DAV_RESPONSE_BODY_5);
+        
+        String responseBody = responseBuffer.toString();
+        try {
+            setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
+        } catch (UnsupportedEncodingException e) {
+            setResponseContentLength(responseBody.getBytes().length);
+        }
+
+        try {
+            getResponseWriter().write(responseBody);
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+        }
+    }
+    
+    protected String constructURL(String location) {
+        StringBuffer url = new StringBuffer ();
+        String scheme = myRequest.getScheme();
+        String host = myRequest.getServerName();
+        
+        url.append(scheme);
+        url.append("://");
+        url.append(host);
+        
+        int port = myRequest.getServerPort();
+        if ((scheme.equals ("http") && port != 80) || (scheme.equals ("https") && port != 443)) {
+            url.append(':');
+            url.append(port);
+        }
+
+        if (!location.startsWith("/")) {
+            url.append('/');
+        }
+        url.append(location);
+        return url.toString();
+    }
+    
+    protected void appendServerSignature(StringBuffer buffer, String prefix) {
+        buffer.append(prefix);
+        buffer.append("<address>");
+        ServletContext context = myRequest.getSession().getServletContext();
+        
+        buffer.append(context.getServerInfo());
+        buffer.append(" ");
+        buffer.append(Version.getVersionString());
+        buffer.append(" ");
+
+        String host = myRequest.getServerName();
+        buffer.append("Server at ");
+        buffer.append(SVNEncodingUtil.xmlEncodeCDATA(host));
+        buffer.append(" Port ");
+
+        int port = myRequest.getServerPort();
+        buffer.append(port);
+        buffer.append("</address>\n");
+    }
+
     protected static Collection getSupportedLiveProperties(DAVResource resource, Collection properties) throws SVNException {
         if (properties == null) {
             properties = new ArrayList();
@@ -378,8 +476,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String activityID = resourceURI.getActivityID();
         File activitiesDB = resource.getActivitiesDB();
         if (!activitiesDB.mkdirs()) {
-            throw new DAVException("could not initialize activity db.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, 
-                    Level.FINE, null, null, null, 0, null);
+            throw new DAVException("could not initialize activity db.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
         }
         
         File finalActivityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);

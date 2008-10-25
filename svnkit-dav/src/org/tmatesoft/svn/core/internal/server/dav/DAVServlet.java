@@ -157,6 +157,7 @@ public class DAVServlet extends HttpServlet {
         response.flushBuffer();
     }
 
+    
     private void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {
         servletResponse.setContentType(XML_CONTENT_TYPE);
 
@@ -233,7 +234,7 @@ public class DAVServlet extends HttpServlet {
             if (propStatsText == null || propStatsText.length() == 0) {
                 SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
                 xmlBuffer.append("HTTP/1.1 ");
-                String statusLine = (String) OUR_STATUS_LINES.get(new Integer(davResponse.getStatusCode()));
+                String statusLine = getStatusLine(davResponse.getStatusCode());
                 xmlBuffer.append(statusLine);
                 SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", xmlBuffer);
             } else {
@@ -280,4 +281,7 @@ public class DAVServlet extends HttpServlet {
         return xmlBuffer.toString();
     }
     
+    public static String getStatusLine(int statusCode) {
+        return (String) OUR_STATUS_LINES.get(new Integer(statusCode));
+    }
 }
