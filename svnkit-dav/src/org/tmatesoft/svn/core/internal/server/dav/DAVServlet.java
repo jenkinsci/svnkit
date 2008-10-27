@@ -42,9 +42,11 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 public class DAVServlet extends HttpServlet {
 
     public static final String XML_CONTENT_TYPE = "text/xml; charset=\"utf-8\"";
+    public static final String DAV_SVN_AUTOVERSIONING_ACTIVITY = "svn-autoversioning-activity";
     
     private static final Map OUR_STATUS_LINES = new SVNHashMap(); 
-     
+    private static final Map OUR_SHARED_CACHE = new SVNHashMap();
+    
     static {
         OUR_STATUS_LINES.put(new Integer(100), "100 Continue");
         OUR_STATUS_LINES.put(new Integer(101), "101 Switching Protocols");
@@ -283,5 +285,11 @@ public class DAVServlet extends HttpServlet {
     
     public static String getStatusLine(int statusCode) {
         return (String) OUR_STATUS_LINES.get(new Integer(statusCode));
+    }
+    
+    public static String getSharedActivity() {
+        synchronized (OUR_SHARED_CACHE) {
+            return (String) OUR_SHARED_CACHE.get(DAV_SVN_AUTOVERSIONING_ACTIVITY);    
+        }
     }
 }

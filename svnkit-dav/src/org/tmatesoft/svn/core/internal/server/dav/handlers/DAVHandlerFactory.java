@@ -50,20 +50,24 @@ public class DAVHandlerFactory {
     public static final String METHOD_MERGE = "MERGE";
 
     public static ServletDAVHandler createHandler(DAVRepositoryManager manager, HttpServletRequest request, HttpServletResponse response) throws SVNException {
-        if (METHOD_PROPFIND.equals(request.getMethod())) {
+        String methodName = request.getMethod();
+        if (METHOD_PROPFIND.equals(methodName)) {
             return new DAVPropfindHandler(manager, request, response);
         }
-        if (METHOD_OPTIONS.equals(request.getMethod())) {
+        if (METHOD_OPTIONS.equals(methodName)) {
             return new DAVOptionsHandler(manager, request, response);
         }
-        if (METHOD_GET.equals(request.getMethod())) {
+        if (METHOD_GET.equals(methodName)) {
             return new DAVGetHandler(manager, request, response);
         }
-        if (METHOD_REPORT.equals(request.getMethod())) {
+        if (METHOD_REPORT.equals(methodName)) {
             return new DAVReportHandler(manager, request, response);
         }
-        if (METHOD_MKACTIVITY.equals(request.getMethod())) {
+        if (METHOD_MKACTIVITY.equals(methodName)) {
             return new DAVMakeActivityHandler(manager, request, response);
+        }
+        if (METHOD_CHECKOUT.equals(methodName)) {
+            return new DAVCheckOutHandler(manager, request, response);
         }
         
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), SVNLogType.NETWORK);

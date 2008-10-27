@@ -60,7 +60,7 @@ public class DAVWorkingResource extends DAVResource {
                     "An activity was specified and found, but the corresponding SVN FS transaction was not found.", null);
         }
         
-        if (getResourceURI().isBaseLined()) {
+        if (isBaseLined()) {
             myIsExists = true;
             return;
         }

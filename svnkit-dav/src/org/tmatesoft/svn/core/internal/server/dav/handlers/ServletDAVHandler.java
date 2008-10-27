@@ -561,7 +561,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return encoding;
     }
 
-    protected void readInput(boolean ignoreInput) throws SVNException {
+    protected long readInput(boolean ignoreInput) throws SVNException {
         if (ignoreInput) {
             InputStream inputStream = null;
             try {
@@ -574,7 +574,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             } finally {
                 SVNFileUtil.closeFile(inputStream);
             }
-            return;
+            return -1;
         }
         
         if (mySAXParser == null) {
@@ -603,8 +603,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }
             }
-            getDAVRequest().init();
+            
+            if (stream.getBytesRead() > 0) {
+                getDAVRequest().init();
+            }
+            return stream.getBytesRead();
         }
+        
+        return 0;
     }
 
     protected void handleError(DAVException error, DAVResponse response) {
