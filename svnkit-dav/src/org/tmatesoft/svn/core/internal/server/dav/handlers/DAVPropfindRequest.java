@@ -37,15 +37,15 @@ public class DAVPropfindRequest extends DAVRequest {
     }
 
     public boolean isAllPropRequest() {
-        return getProperties().keySet().iterator().next() == ALLPROP;
+        return getProperties().containsKey(ALLPROP);
     }
 
     public boolean isPropNameRequest() {
-        return getProperties().keySet().iterator().next() == PROPNAME;
+        return getProperties().containsKey(PROPNAME);
     }
 
     public boolean isPropRequest() {
-        return getProperties().keySet().iterator().next() == DAVElement.PROP;
+        return getProperties().containsKey(DAVElement.PROP);
     }
 
     public Collection getPropertyElements() {
