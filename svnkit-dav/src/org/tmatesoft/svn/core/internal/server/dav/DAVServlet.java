@@ -292,4 +292,10 @@ public class DAVServlet extends HttpServlet {
             return (String) OUR_SHARED_CACHE.get(DAV_SVN_AUTOVERSIONING_ACTIVITY);    
         }
     }
+    
+    public static void setSharedActivity(String sharedActivity) {
+        synchronized (OUR_SHARED_CACHE) {
+            OUR_SHARED_CACHE.put(DAV_SVN_AUTOVERSIONING_ACTIVITY, sharedActivity);
+        }
+    }
 }

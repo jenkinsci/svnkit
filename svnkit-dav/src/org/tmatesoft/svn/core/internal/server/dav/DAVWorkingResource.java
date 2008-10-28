@@ -31,6 +31,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class DAVWorkingResource extends DAVResource {
+    
     public DAVWorkingResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
             String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws SVNException {
         super(repository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, userName, activitiesDB);
@@ -41,6 +42,10 @@ public class DAVWorkingResource extends DAVResource {
         super(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
     }
 
+//    public DAVWorkingResource(DAVResource base, DAVResourceURI resourceURI) {
+        //super(base.getRepository(), resourceURI, );
+//    }
+    
     protected void prepare() throws DAVException {
         String txnName = getTxn();
         if (txnName == null) {

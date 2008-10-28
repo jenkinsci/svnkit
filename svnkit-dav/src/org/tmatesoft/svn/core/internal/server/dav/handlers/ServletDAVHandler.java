@@ -374,7 +374,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         buffer.append("</address>\n");
     }
 
-    protected static Collection getSupportedLiveProperties(DAVResource resource, Collection properties) throws SVNException {
+    protected static Collection getSupportedLiveProperties(DAVResource resource, Collection properties) {
         if (properties == null) {
             properties = new ArrayList();
         }

@@ -46,6 +46,20 @@ public class DAVResourceURI {
         parseURI(label, useCheckedIn);
     }
 
+    public DAVResourceURI(String context, String uri, long revision, DAVResourceKind kind, DAVResourceType type, String activityID, 
+            boolean exists, boolean isVersioned, boolean isBaseLined, boolean isWorking) {
+        myContext = context;
+        myURI = uri;
+        myActivityID = activityID;
+        myRevision = revision;
+        myType = type;
+        myKind = kind;
+        myIsExists = exists;
+        myIsVersioned = isVersioned;
+        myIsBaseLined = isBaseLined;
+        myIsWorking = isWorking;
+    }
+    
     public String getRequestURI() {
         return DAVPathUtil.append(getContext(), getURI());
     }

@@ -21,13 +21,25 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DAVServletUtil {
+    
+    public static String getTxn(File activitiesDB, String activityID) {
+        File activityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);
+        try {
+            return DAVServletUtil.readTxn(activityFile);
+        } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e.getMessage());
+        }
+        return null;
+    }
     
     public static String readTxn(File activityFile) throws IOException {
         String txnName = null;

@@ -24,14 +24,22 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceFactory;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -43,6 +51,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class DAVCheckOutHandler extends ServletDAVHandler {
 
     private DAVCheckOutRequest myDAVRequest;
+    private FSFS myFSFS;
     
     public DAVCheckOutHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
@@ -113,7 +122,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
 
         
         FSRepository repos = (FSRepository) resource.getRepository();
-        //myFSFS = repos.getFSFS();
+        myFSFS = repos.getFSFS();
  
 
     }
@@ -123,7 +132,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
     }
 
     private void checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isForkOK, boolean isCreateActivity, 
-            List activities) throws DAVException {
+            List activities) throws SVNException {
         if (isAutoCheckOut) {
             DAVResourceType resourceType = resource.getResourceURI().getType();
             if (resourceType == DAVResourceType.VERSION && resource.isBaseLined()) {
@@ -142,14 +151,50 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
                         DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
             }
          
-            //TODO: shared activity?
-            String sahredActivity = DAVServlet.getSharedActivity();
-            String sahredActivityName = null;
+            String sharedActivity = DAVServlet.getSharedActivity();
+            String sharedTxnName = null;
+            FSTransactionInfo sharedTxnInfo = null;
+            if (sharedActivity == null) {
+                sharedActivity = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
+                sharedTxnInfo = createActivity(resource, myFSFS);
+                sharedTxnName = sharedTxnInfo.getTxnId();
+                storeActivity(resource, sharedTxnInfo);
+                DAVServlet.setSharedActivity(sharedActivity);
+            }
             
+            if (sharedTxnName == null) {
+                sharedTxnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), sharedActivity);
+                if (sharedTxnName == null) {
+                    throw new DAVException("Cannot look up a txn_name by activity", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+                            SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
+                }
+            }
             
+//            DAVResource workingResource = 
         }
     }
     
+    private static DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) throws DAVException {
+        StringBuffer pathBuffer = new StringBuffer();
+        if (baseResource.isBaseLined()) {
+            pathBuffer.append('/');
+            pathBuffer.append(DAVResourceURI.SPECIAL_URI);
+            pathBuffer.append("/wbl/");
+            pathBuffer.append(activityID);
+            pathBuffer.append('/');
+            pathBuffer.append(baseResource.getRevision());
+        } else {
+            pathBuffer.append('/');
+            pathBuffer.append(DAVResourceURI.SPECIAL_URI);
+            pathBuffer.append("/wrk/");
+            pathBuffer.append(activityID);
+            pathBuffer.append(baseResource.getResourceURI().getPath());
+        }
+        
+        String path = SVNEncodingUtil.uriEncode(pathBuffer.toString());
+        return null;
+    }
+
     private DAVCheckOutRequest getCheckOutRequest() {
         if (myDAVRequest == null) {
             myDAVRequest = new DAVCheckOutRequest();

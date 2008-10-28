@@ -175,7 +175,8 @@ public class DAVRepositoryManager {
         if (uri.startsWith(getResourceContext())) {
             uri = uri.substring(getResourceContext().length());
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()), SVNLogType.NETWORK);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()), 
+                    SVNLogType.NETWORK);
         }
         return uri;
     }
@@ -205,8 +206,8 @@ public class DAVRepositoryManager {
         }
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-        DAVResource resource = DAVResourceFactory.createDAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, clientOptions, 
-                baseChecksum, resultChecksum, myUserPrincipal.getName(), activitiesDBDir);
+        DAVResource resource = DAVResourceFactory.createDAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, 
+                clientOptions, baseChecksum, resultChecksum, myUserPrincipal.getName(), activitiesDBDir);
         return resource;
     }
 

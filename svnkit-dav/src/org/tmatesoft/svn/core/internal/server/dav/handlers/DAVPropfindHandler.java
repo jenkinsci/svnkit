@@ -113,7 +113,8 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             for (Iterator iterator = resource.getChildren(); iterator.hasNext();) {
                 DAVResource child = (DAVResource) iterator.next();
                 if (child == null) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Error while fetching child of ''{0}''", resource.getResourceURI().getPath()), SVNLogType.NETWORK);
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Error while fetching child of ''{0}''", 
+                            resource.getResourceURI().getPath()), SVNLogType.NETWORK);
                 }
                 if (getPropfindRequest().isAllPropRequest()) {
                     properties.clear();
@@ -354,7 +355,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         }
     }
 
-    private boolean getResourceTypeIsCollection(DAVResource resource) throws SVNException {
+    private boolean getResourceTypeIsCollection(DAVResource resource) {
         return resource.isCollection();
     }
 

@@ -63,6 +63,9 @@ public abstract class DAVResource {
     protected boolean myIsSVNClient;
     protected boolean myChecked;
     protected boolean myIsAutoCheckedOut;
+    protected boolean myIsVersioned;
+    protected boolean myIsWorking;
+    protected boolean myIsBaseLined;
     protected String myDeltaBase;
     protected long myVersion;
     protected String myClientOptions;
@@ -101,6 +104,9 @@ public abstract class DAVResource {
         myResultChecksum = resultChecksum;
         myRevision = resourceURI.getRevision();
         myIsExists = resourceURI.exists();
+        myIsVersioned = resourceURI.isVersioned();
+        myIsWorking = resourceURI.isWorking();
+        myIsBaseLined = resourceURI.isBaseLined();
         myUserName = userName;
         myActivitiesDB = activitiesDB;
         prepare();
@@ -118,6 +124,10 @@ public abstract class DAVResource {
         myClientOptions = clientOptions;
         myBaseChecksum = baseChecksum;
         myResultChecksum = resultChecksum;
+        myIsVersioned = myResourceURI.isVersioned();
+        myIsWorking = myResourceURI.isWorking();
+        myIsExists = myResourceURI.exists();
+        myIsBaseLined = myResourceURI.isBaseLined();
     }
 
     public static boolean isValidRevision(long revision) {
@@ -141,15 +151,15 @@ public abstract class DAVResource {
     }
 
     public boolean isVersioned() {
-        return getResourceURI().isVersioned();
+        return myIsVersioned;
     }
     
     public boolean isWorking() {
-        return getResourceURI().isWorking();
+        return myIsWorking;
     }
     
     public boolean isBaseLined() {
-        return getResourceURI().isBaseLined();
+        return myIsBaseLined;
     }
     
     public DAVResourceType getType() {
@@ -372,104 +382,9 @@ public abstract class DAVResource {
     
     protected abstract void prepare() throws DAVException;
 
-/*    protected abstract void prepare() throws DAVException {
-        if (getResourceURI().getType() == DAVResourceType.VERSION) {
-            if (!isValidRevision(myRevision)) {
-                try {
-                    myRevision = getLatestRevision();
-                } catch (SVNException e) {
-                    throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.", null);
-                }
-            }
-            
-            if (myRevisionRoot == null) {
-                try {
-                    myRevisionRoot = myFSFS.createRevisionRoot(myRevision);
-                } catch (SVNException svne) {
-                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Could not open a revision root.", null);
-                }
-            }
-            getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
-            setExists(true);
-        } else if (getResourceURI().getType() == DAVResourceType.WORKING) {
-            String txnName = getTxn();
-            if (txnName == null) {
-                throw new DAVException("An unknown activity was specified in the URL. This is generally caused by a problem in the client software.", 
-                        HttpServletResponse.SC_BAD_REQUEST, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
-            }
-            myTxnName = txnName;
-            FSTransactionInfo txnInfo = null;
-            try {
-                txnInfo = myFSFS.openTxn(myTxnName);
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_TRANSACTION) {
-                    throw new DAVException("An activity was specified and found, but the corresponding SVN FS transaction was not found.", 
-                            HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null); 
-                }
-                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "An activity was specified and found, but the corresponding SVN FS transaction was not found.", null);
-            }
-            
-            if (getResourceURI().isBaseLined()) {
-                setExists(true);
-                return;
-            }
-            
-            if (myUserName != null) {
-                SVNProperties props = null;
-                try {
-                    props = myFSFS.getTransactionProperties(myTxnName);
-                } catch (SVNException svne) {
-                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Failed to retrieve author of the SVN FS transaction corresponding to the specified activity.", null);
-                }
-                
-                String currentAuthor = props.getStringValue(SVNRevisionProperty.AUTHOR);
-                if (currentAuthor == null) {
-                    try {
-                        myFSFS.setTransactionProperty(myTxnName, SVNRevisionProperty.AUTHOR, SVNPropertyValue.create(myUserName));
-                    } catch (SVNException svne) {
-                        throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                                "Failed to set the author of the SVN FS transaction corresponding to the specified activity.", null);
-                    }
-                } else if (!currentAuthor.equals(myUserName)) {
-                    throw new DAVException("Multi-author commits not supported.", HttpServletResponse.SC_NOT_IMPLEMENTED, null, 
-                            SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
-                }
-            }
-            
-            try {
-                myTxnRoot = myFSFS.createTransactionRoot(txnInfo);
-            } catch (SVNException svne) {
-                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "Could not open the (transaction) root of the repository", null);
-            }
-            
-            SVNNodeKind kind = DAVServletUtil.checkPath(myTxnRoot, getResourceURI().getPath());
-            setExists(kind != SVNNodeKind.NONE);
-            setCollection(kind == SVNNodeKind.DIR);
-        } else if (getResourceURI().getType() == DAVResourceType.ACTIVITY) {
-            String txnName = getTxn();
-            setExists(txnName != null);
-        } else if (getResourceURI().getType() == DAVResourceType.REGULAR) {
-            if (!isValidRevision(myRevision)) {
-                try {
-                    myRevision = getLatestRevision();
-                } catch (SVNException e) {
-                    throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                            "Could not determine the proper revision to access", null);
-                }
-            }
-            
-            
-        }
-    }
-*/
-    
     protected String getTxn() {
         DAVResourceURI resourceURI = getResourceURI();
+        DAVServletUtil.getTxn(getActivitiesDB(), resourceURI.getActivityID());
         File activityFile = DAVPathUtil.getActivityPath(getActivitiesDB(), resourceURI.getActivityID());
         try {
             return DAVServletUtil.readTxn(activityFile);
