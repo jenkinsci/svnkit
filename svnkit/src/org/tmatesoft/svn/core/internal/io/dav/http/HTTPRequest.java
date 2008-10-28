@@ -89,6 +89,7 @@ class HTTPRequest {
         if (authentication != null) {
             authentication.setChallengeParameter("method", method);
             authentication.setChallengeParameter("uri", composeRequestURI(method, path));
+            authentication.setChallengeParameter("host", myConnection.getHost().getHost());
         }
     }
     
