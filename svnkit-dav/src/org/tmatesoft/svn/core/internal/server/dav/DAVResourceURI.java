@@ -46,10 +46,11 @@ public class DAVResourceURI {
         parseURI(label, useCheckedIn);
     }
 
-    public DAVResourceURI(String context, String uri, long revision, DAVResourceKind kind, DAVResourceType type, String activityID, 
+    public DAVResourceURI(String context, String uri, String path, long revision, DAVResourceKind kind, DAVResourceType type, String activityID, 
             boolean exists, boolean isVersioned, boolean isBaseLined, boolean isWorking) {
         myContext = context;
         myURI = uri;
+        myPath = path;
         myActivityID = activityID;
         myRevision = revision;
         myType = type;

@@ -36,7 +36,8 @@ public abstract class DAVResourceFactory {
             File activitiesDB) throws SVNException;
 
     protected abstract DAVResource createDAVResourceChildImpl(SVNRepository repository, DAVResourceURI resourceURI, long revision, 
-            boolean isSVNClient, String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum);
+            boolean isSVNClient, String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, 
+            String userName, File activitiesDB);
     
     public static DAVResource createDAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, 
             long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws DAVException {
@@ -53,11 +54,11 @@ public abstract class DAVResourceFactory {
     }
     
     public static DAVResource createDAVResourceChild(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, 
-            String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum) throws DAVException {
+            String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws DAVException {
         DAVResourceType resourceType = resourceURI.getType();
         DAVResourceFactory factoryImpl = getFactory(resourceType);
         return factoryImpl.createDAVResourceChildImpl(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, 
-                baseChecksum, resultChecksum);
+                baseChecksum, resultChecksum, userName, activitiesDB);
     }
     
     private static DAVResourceFactory getFactory(DAVResourceType resourceType) throws DAVException {

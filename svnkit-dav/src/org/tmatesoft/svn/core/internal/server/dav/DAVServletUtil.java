@@ -19,7 +19,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -30,6 +32,21 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class DAVServletUtil {
+    
+    public static FSTransactionInfo openTxn(FSFS fsfs, String txnName) throws SVNException {
+        FSTransactionInfo txnInfo = null;
+        try {
+            txnInfo = fsfs.openTxn(txnName);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_TRANSACTION) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "The transaction specified by the activity does not exist", null);
+            }
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "There was a problem opening the transaction specified by this activity.", null);
+        }
+        return txnInfo;
+    }
     
     public static String getTxn(File activitiesDB, String activityID) {
         File activityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);

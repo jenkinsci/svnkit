@@ -27,7 +27,9 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceFactory;
@@ -133,8 +135,9 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
 
     private void checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isForkOK, boolean isCreateActivity, 
             List activities) throws SVNException {
+        DAVResourceType resourceType = resource.getResourceURI().getType();
+
         if (isAutoCheckOut) {
-            DAVResourceType resourceType = resource.getResourceURI().getType();
             if (resourceType == DAVResourceType.VERSION && resource.isBaseLined()) {
                 return;
             }
@@ -170,11 +173,28 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
                 }
             }
             
-//            DAVResource workingResource = 
+            resource = createWorkingResource(resource, sharedActivity, sharedTxnName);
+            resource.setIsAutoCkeckedOut(true);
+            FSTransactionInfo txnInfo = DAVServletUtil.openTxn(myFSFS, resource.getTxnName());
+            FSTransactionRoot txnRoot = null;
+            try {
+                txnRoot = myFSFS.createTransactionRoot(txnInfo);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not open a (transaction) root in the repository", null);
+            }
+            
+            resource.setTxnInfo(txnInfo);
+            resource.setTxnRoot(txnRoot);
+            return;
+        }
+        
+        if (resourceType != DAVResourceType.VERSION) {
+            
         }
     }
     
-    private static DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) throws DAVException {
+    private DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) throws DAVException {
         StringBuffer pathBuffer = new StringBuffer();
         if (baseResource.isBaseLined()) {
             pathBuffer.append('/');
@@ -191,8 +211,11 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
             pathBuffer.append(baseResource.getResourceURI().getPath());
         }
         
-        String path = SVNEncodingUtil.uriEncode(pathBuffer.toString());
-        return null;
+        String uriPath = SVNEncodingUtil.uriEncode(pathBuffer.toString());
+        DAVResourceURI uri = new DAVResourceURI(baseResource.getResourceURI().getContext(), uriPath, baseResource.getResourceURI().getPath(), 
+                baseResource.getRevision(), baseResource.getResourceURI().getKind(), DAVResourceType.WORKING, 
+                activityID, true, true, baseResource.isBaseLined(), true);
+        return new DAVWorkingResource(baseResource, uri, txnName);
     }
 
     private DAVCheckOutRequest getCheckOutRequest() {

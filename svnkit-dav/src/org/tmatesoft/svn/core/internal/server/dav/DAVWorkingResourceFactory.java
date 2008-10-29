@@ -27,8 +27,9 @@ public class DAVWorkingResourceFactory extends DAVResourceFactory {
     }
 
     protected DAVResource createDAVResourceChildImpl(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, 
-            String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum) {
-        return new DAVWorkingResource(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
+            String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
+        return new DAVWorkingResource(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, 
+                resultChecksum, userName, activitiesDB);
     }
 
     protected DAVResource createDAVResourceImpl(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, 

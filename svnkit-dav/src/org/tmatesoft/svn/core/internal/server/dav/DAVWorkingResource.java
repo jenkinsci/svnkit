@@ -38,13 +38,20 @@ public class DAVWorkingResource extends DAVResource {
     }
 
     public DAVWorkingResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
-            long version, String clientOptions, String baseChecksum, String resultChecksum) {
-        super(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
+            long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
+        super(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, userName, 
+                activitiesDB);
     }
 
-//    public DAVWorkingResource(DAVResource base, DAVResourceURI resourceURI) {
-        //super(base.getRepository(), resourceURI, );
-//    }
+    public DAVWorkingResource(DAVResource baseResource, DAVResourceURI resourceURI, String txnName) {
+        super(baseResource.getRepository(), resourceURI, baseResource.getRevision(), baseResource.isSVNClient(), baseResource.getDeltaBase(), 
+                baseResource.getVersion(), baseResource.getClientOptions(), baseResource.getBaseChecksum(), baseResource.getResultChecksum(), 
+                baseResource.getUserName(), baseResource.getActivitiesDB());
+        myTxnName = txnName;
+        myTxnRoot = baseResource.myTxnRoot;
+        myRevisionRoot = baseResource.myRevisionRoot;
+        myFSFS = baseResource.myFSFS;
+    }
     
     protected void prepare() throws DAVException {
         String txnName = getTxn();

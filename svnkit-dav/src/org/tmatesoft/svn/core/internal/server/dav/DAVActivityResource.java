@@ -29,8 +29,9 @@ public class DAVActivityResource extends DAVResource {
     }
 
     public DAVActivityResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
-            long version, String clientOptions, String baseChecksum, String resultChecksum) {
-        super(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum);
+            long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
+        super(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
+                userName, activitiesDB);
     }
 
     protected void prepare() throws DAVException {

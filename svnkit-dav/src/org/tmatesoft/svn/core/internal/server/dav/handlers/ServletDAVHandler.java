@@ -153,7 +153,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private static SAXParserFactory ourSAXParserFactory;
     private SAXParser mySAXParser;
 
-    private DAVRepositoryManager myRepositoryManager = null;
+    private DAVRepositoryManager myRepositoryManager;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
         

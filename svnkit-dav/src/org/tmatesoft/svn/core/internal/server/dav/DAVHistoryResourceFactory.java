@@ -28,9 +28,9 @@ public class DAVHistoryResourceFactory extends DAVResourceFactory {
     }
     
     protected DAVResource createDAVResourceChildImpl(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, 
-            String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum) {
+            String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
         return new DAVHistoryResource(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, 
-                resultChecksum);
+                resultChecksum, userName, activitiesDB);
     }
 
     protected DAVResource createDAVResourceImpl(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, 

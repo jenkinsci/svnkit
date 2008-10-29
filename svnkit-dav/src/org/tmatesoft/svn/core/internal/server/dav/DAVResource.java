@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -61,7 +62,6 @@ public abstract class DAVResource {
     protected boolean myIsExists;
     protected boolean myIsCollection;
     protected boolean myIsSVNClient;
-    protected boolean myChecked;
     protected boolean myIsAutoCheckedOut;
     protected boolean myIsVersioned;
     protected boolean myIsWorking;
@@ -78,8 +78,10 @@ public abstract class DAVResource {
     protected File myActivitiesDB;
     protected FSFS myFSFS;
     protected FSTransactionRoot myTxnRoot;
+    
     protected String myTxnName;
     protected FSRevisionRoot myRevisionRoot;
+    protected FSTransactionInfo myTxnInfo;
     
     /**
      * DAVResource  constructor
@@ -113,7 +115,7 @@ public abstract class DAVResource {
     }
 
     protected DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
-            long version, String clientOptions, String baseChecksum, String resultChecksum) {
+            long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
         myResourceURI = resourceURI;
         myRepository = (FSRepository) repository;
         myFSFS = myRepository.getFSFS();
@@ -128,6 +130,20 @@ public abstract class DAVResource {
         myIsWorking = myResourceURI.isWorking();
         myIsExists = myResourceURI.exists();
         myIsBaseLined = myResourceURI.isBaseLined();
+        myUserName = userName;
+        myActivitiesDB = activitiesDB;
+    }
+
+    public void setTxnRoot(FSTransactionRoot txnRoot) {
+        myTxnRoot = txnRoot;
+    }
+
+    public FSTransactionInfo getTxnInfo() {
+        return myTxnInfo;
+    }
+    
+    public void setTxnInfo(FSTransactionInfo txnInfo) {
+        myTxnInfo = txnInfo;
     }
 
     public static boolean isValidRevision(long revision) {
@@ -223,7 +239,7 @@ public abstract class DAVResource {
                 try {
                     DAVResourceURI newResourceURI = new DAVResourceURI(getResourceURI().getContext(), childURI, null, false);
                     return DAVResourceFactory.createDAVResourceChild(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
-                            getVersion(), getClientOptions(), null, null);
+                            getVersion(), getClientOptions(), null, null, getUserName(), getActivitiesDB());
                 } catch (SVNException e) {
                     return null;
                 }
@@ -370,6 +386,14 @@ public abstract class DAVResource {
 
     public boolean isAutoCheckedOut() {
         return myIsAutoCheckedOut;
+    }
+
+    public void setIsAutoCkeckedOut(boolean isAutoCheckedOut) {
+        myIsAutoCheckedOut = isAutoCheckedOut;
+    }
+    
+    public String getTxnName() {
+        return myTxnName;
     }
 
     public void setExists(boolean exists) {
