@@ -290,6 +290,7 @@ class HTTPConnection implements IHTTPConnection {
         SVNErrorMessage err = null;
         boolean ntlmAuthIsRequired = false;
         boolean ntlmProxyAuthIsRequired = false;
+        boolean negoAuthIsRequired = false;
         int authAttempts = 0;
         while (true) {
             HTTPStatus status = null;
@@ -315,7 +316,7 @@ class HTTPConnection implements IHTTPConnection {
                         request.setProxyAuthentication(proxyAuthResponse);
                     }
                     
-                    if (myChallengeCredentials != null && (ntlmAuthIsRequired || (!"NTLM".equals(myChallengeCredentials.getAuthenticationScheme())) && 
+                    if (myChallengeCredentials != null && (ntlmAuthIsRequired || negoAuthIsRequired || ((!"NTLM".equals(myChallengeCredentials.getAuthenticationScheme())) && !"Negotiate".equals(myChallengeCredentials.getAuthenticationScheme())) && 
                             httpAuth != null)) {
                         if (httpAuthResponse == null) {
                             request.initCredentials(myChallengeCredentials, method, path);
@@ -323,7 +324,7 @@ class HTTPConnection implements IHTTPConnection {
                         }
                         request.setAuthentication(httpAuthResponse);
                     }
-                    
+
                     try {
                         request.dispatch(method, path, header, ok1, ok2, context);
                         break;
@@ -469,6 +470,7 @@ class HTTPConnection implements IHTTPConnection {
                 }
                 
                 HTTPNTLMAuthentication ntlmAuth = null;
+                HTTPNegotiateAuthentication negoAuth = null;
                 if (myChallengeCredentials instanceof HTTPNTLMAuthentication) {
                     ntlmAuthIsRequired = true;
                     ntlmAuth = (HTTPNTLMAuthentication)myChallengeCredentials;
@@ -481,6 +483,12 @@ class HTTPConnection implements IHTTPConnection {
                         myLastValidAuth = null;
                         continue;
                     }
+                } else if (myChallengeCredentials instanceof HTTPNegotiateAuthentication) {
+                    negoAuthIsRequired = true;
+                    negoAuth = (HTTPNegotiateAuthentication)myChallengeCredentials;
+                    if (negoAuth.isStarted()) {
+                        continue;
+                    }
                 }
 
                 myLastValidAuth = null;
@@ -491,6 +499,10 @@ class HTTPConnection implements IHTTPConnection {
                      * and JNA is available, we should try a native auth mechanism first without calling 
                      * auth providers. 
                      */
+                    continue;
+                }
+
+                if (negoAuth != null) {
                     continue;
                 }
 
@@ -547,6 +559,7 @@ class HTTPConnection implements IHTTPConnection {
             } else {
                 ntlmProxyAuthIsRequired = false;
                 ntlmAuthIsRequired = false;
+                negoAuthIsRequired = false;
             }
             
             if (err != null) {

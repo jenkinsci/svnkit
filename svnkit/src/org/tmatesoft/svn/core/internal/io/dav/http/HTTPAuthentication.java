@@ -120,7 +120,7 @@ abstract class HTTPAuthentication {
             
             if (index <= 0) {
                 index = source.length();
-                if (!"NTLM".equalsIgnoreCase(source.substring(0, index))) {
+                if (!"NTLM".equalsIgnoreCase(source.substring(0, index)) && !"Negotiate".equalsIgnoreCase(source.substring(0, index))) {
                     continue;
                 }
             }
@@ -200,6 +200,18 @@ abstract class HTTPAuthentication {
                 }
                 auth = ntlmAuth;
                 break;
+            } else if ("Negotiate".equalsIgnoreCase(method)) {
+                if (HTTPNegotiateAuthentication.isSupported()) {
+                    HTTPNegotiateAuthentication negoAuth = null;
+                    if (source.length() == 0) {
+                        negoAuth = new HTTPNegotiateAuthentication();
+                        negoAuth.respondTo(null);
+                    } else {
+                        negoAuth = (HTTPNegotiateAuthentication)prevResponse;
+                        negoAuth.respondTo(source);
+                    }
+                    auth = negoAuth;
+                }
             }
         }
 
