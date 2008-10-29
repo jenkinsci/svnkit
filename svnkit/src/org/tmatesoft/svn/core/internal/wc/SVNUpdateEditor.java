@@ -477,7 +477,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     } else if (oldExternal != null && newExternal == null) {
                         myAdminInfo.addExternal(path, oldExternal, newExternal);
                         myAdminInfo.addDepth(path, myCurrentDirectory.myAmbientDepth);
-                    } else if (!oldExternal.equals(newExternal)) {
+                    } else if (oldExternal != null && !oldExternal.equals(newExternal)) {
                         myAdminInfo.addExternal(path, oldExternal, newExternal);
                         myAdminInfo.addDepth(path, myCurrentDirectory.myAmbientDepth);
                     }
