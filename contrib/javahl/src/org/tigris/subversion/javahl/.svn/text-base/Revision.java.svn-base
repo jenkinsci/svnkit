@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2004,2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,6 +15,7 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
 
 import java.text.SimpleDateFormat;
@@ -24,8 +25,17 @@ import java.util.Locale;
 /**
  * Class to specify a revision in a svn command.
  */
-public class Revision
+public class Revision implements java.io.Serializable
 {
+    // Update the serialVersionUID when there is a incompatible change
+    // made to this class.  See any of the following, depending upon
+    // the Java release.
+    // http://java.sun.com/j2se/1.3/docs/guide/serialization/spec/version.doc7.html
+    // http://java.sun.com/j2se/1.4/pdf/serial-spec.pdf
+    // http://java.sun.com/j2se/1.5.0/docs/guide/serialization/spec/version.html#6678
+    // http://java.sun.com/javase/6/docs/platform/serialization/spec/version.html#6678
+    private static final long serialVersionUID = 1L;
+
     /**
      * kind of revision specified
      */
@@ -38,22 +48,20 @@ public class Revision
      */
     public Revision(int kind)
     {
-        if(kind < RevisionKind.unspecified || kind > RevisionKind.head)
-            throw new IllegalArgumentException(
-                    kind+" is not a legel revision kind");
-        revKind = kind;
+        this(kind, true);
     }
 
     /**
      * Internally create a new revision
-     * @param kind      kind of revision
-     * @param marker    marker to differtiate from the public deprecated version
+     * @param kind    kind of revision
+     * @param marker  marker to differentiate from the public deprecated
+     *                version
      */
     protected Revision(int kind, boolean marker)
     {
-        if(kind < RevisionKind.unspecified || kind > RevisionKind.head)
+        if (kind < RevisionKind.unspecified || kind > RevisionKind.head)
             throw new IllegalArgumentException(
-                    kind+" is not a legel revision kind");
+                    kind+" is not a legal revision kind");
         revKind = kind;
     }
 
@@ -82,6 +90,14 @@ public class Revision
         return super.toString();
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    public int hashCode()
+    {
+        return revKind * -1;
+    }
+
     /**
      * compare to revision objects
      * @param target
@@ -93,7 +109,7 @@ public class Revision
         if (!(target instanceof Revision))
             return false;
 
-        return ((Revision)target).revKind == revKind;        
+        return ((Revision)target).revKind == revKind;
     }
 
     /**
@@ -138,26 +154,33 @@ public class Revision
      * last commited revision
      */
     public static final Revision HEAD = new Revision(Kind.head, true);
+
     /**
      * first existing revision
      */
     public static final Revision START = new Revision(Kind.unspecified, true);
+
     /**
      * last committed revision, needs working copy
      */
-    public static final Revision COMMITTED = new Revision(Kind.committed, true);
+    public static final Revision COMMITTED = new Revision(Kind.committed,
+                                                          true);
+
     /**
      * previous committed revision, needs working copy
      */
     public static final Revision PREVIOUS = new Revision(Kind.previous, true);
+
     /**
      * base revision of working copy
      */
     public static final Revision BASE = new Revision(Kind.base, true);
+
     /**
      * working version in working copy
      */
     public static final Revision WORKING = new Revision(Kind.working, true);
+
     /**
      * Marker revision number for no real revision
      */
@@ -168,6 +191,10 @@ public class Revision
      */
     public static class Number extends Revision
     {
+        // Update the serialVersionUID when there is a incompatible
+        // change made to this class.
+        private static final long serialVersionUID = 1L;
+
         /**
          * the revision number
          */
@@ -182,9 +209,9 @@ public class Revision
         public Number(long number)
         {
             super(Kind.number, true);
-            if(number < 0)
-                throw new IllegalArgumentException(
-                        "negative revision numbers are not allowed");
+            if (number < 0)
+                throw new IllegalArgumentException
+                    ("Invalid (negative) revision number: " + number);
             revNumber = number;
         }
 
@@ -214,7 +241,15 @@ public class Revision
             if (!super.equals(target))
                 return false;
 
-            return ((Revision.Number)target).revNumber == revNumber;        
+            return ((Revision.Number)target).revNumber == revNumber;
+        }
+
+        /* (non-Javadoc)
+         * @see org.tigris.subversion.javahl.Revision#hashCode()
+         */
+        public int hashCode()
+        {
+            return (int)(revNumber ^ (revNumber >>> 32));
         }
     }
 
@@ -223,6 +258,10 @@ public class Revision
      */
     public static class DateSpec extends Revision
     {
+        // Update the serialVersionUID when there is a incompatible change
+        // made to this class.
+        private static final long serialVersionUID = 1L;
+
         /**
          * the date
          */
@@ -235,7 +274,7 @@ public class Revision
         public DateSpec(Date date)
         {
             super(Kind.date, true);
-            if(date == null)
+            if (date == null)
                 throw new IllegalArgumentException("a date must be specified");
             revDate = date;
         }
@@ -253,10 +292,10 @@ public class Revision
          * @return english text
          */
         public String toString() {
-            
+
             SimpleDateFormat dateFormat =
                     new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z",
-                            Locale.US);
+                                         Locale.US);
             return '{'+dateFormat.format(revDate)+'}';
         }
 
@@ -269,9 +308,16 @@ public class Revision
             if (!super.equals(target))
                 return false;
 
-            return ((Revision.DateSpec)target).revDate.equals(revDate);        
+            return ((Revision.DateSpec)target).revDate.equals(revDate);
         }
-        
+        /* (non-Javadoc)
+         * @see org.tigris.subversion.javahl.Revision#hashCode()
+         */
+        public int hashCode()
+        {
+            return revDate.hashCode();
+        }
+
     }
 
     /**

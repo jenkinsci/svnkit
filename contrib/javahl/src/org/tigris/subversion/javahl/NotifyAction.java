@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,9 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
+
 /**
  * The type of action triggering the notification
  */
@@ -114,6 +116,42 @@ public interface NotifyAction
     public static final int failed_unlock = 24;
 
     /**
+     * @since 1.5
+     * Tried adding a path that already exists.
+     */
+    public static final int exists = 25;
+
+    /**
+     * @since 1.5
+     * Set the changelist for a path.
+     */
+    public static final int changelist_set = 26;
+
+    /**
+     * @since 1.5
+     * Clear the changelist for a path.
+     */
+    public static final int changelist_clear = 27;
+
+    /**
+     * @since 1.5
+     * A merge operation has begun.
+     */
+    public static final int merge_begin = 28;
+
+    /**
+     * @since 1.5
+     * A merge operation from a foreign repository has begun.
+     */
+   public static final int foreign_merge_begin = 29;
+
+    /**
+     * @since 1.5
+     * Got a replaced in an update.
+     */
+    public static final int update_replaced = 30;
+
+    /**
      * textual representation of the action types
      */
     public static final String[] actionNames =
@@ -143,5 +181,11 @@ public interface NotifyAction
         "unlocked",
         "locking failed",
         "unlocking failed",
+        "path exists",
+        "changelist set",
+        "changelist cleared",
+        "merge begin",
+        "foreign merge begin",
+        "replaced"
     };
 }

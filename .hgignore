@@ -2,5 +2,7 @@ target
 svnkit/bin
 contrib/sequence/bin
 contrib/javahl/bin
+svnkit-cli/bin
+\.orig$
 build
 svnkit.iws

@@ -1353,7 +1353,7 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     private void handleUnsupportedCommand(SVNException e, String message) throws SVNException {
         if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_UNKNOWN_CMD) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, message);
-            SVNErrorManager.error(err, e.getErrorMessage(), SVNLogType.NETWORK);
+            SVNErrorManager.error(err, e.getErrorMessage(), e, SVNLogType.NETWORK);
         }
         throw e;
     }

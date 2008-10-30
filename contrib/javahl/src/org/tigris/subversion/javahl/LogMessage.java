@@ -1,11 +1,7 @@
-package org.tigris.subversion.javahl;
-
-import java.util.Date;
-
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2004 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2004,2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,51 +15,102 @@ import java.util.Date;
  * ====================================================================
  * @endcopyright
  */
+
+package org.tigris.subversion.javahl;
+
+import java.util.Date;
+
 /**
- * this class describes a single subversion revision with log message,
- * author and date
+ * This class describes a single subversion revision with log message,
+ * author and date.
  */
-public class LogMessage
+public class LogMessage implements java.io.Serializable
 {
+    // Update the serialVersionUID when there is a incompatible change
+    // made to this class.  See any of the following, depending upon
+    // the Java release.
+    // http://java.sun.com/j2se/1.3/docs/guide/serialization/spec/version.doc7.html
+    // http://java.sun.com/j2se/1.4/pdf/serial-spec.pdf
+    // http://java.sun.com/j2se/1.5.0/docs/guide/serialization/spec/version.html#6678
+    // http://java.sun.com/javase/6/docs/platform/serialization/spec/version.html#6678
+    private static final long serialVersionUID = 1L;
+
     /**
-     * the log message for the revision
+     * The log message for the revision.
      */
     private String message;
+
     /**
-     * the date of the commit
+     * The time of the commit measured in the number of microseconds
+     * since 00:00:00 January 1, 1970 UTC.
+     */
+    private long timeMicros;
+
+    /**
+     * The date of the commit.
      */
     private Date date;
+
     /**
-     * the number of the revision
+     * The number of the revision.
      */
     private long revision;
+
     /**
-     * the author of the commit
+     * The author of the commit.
      */
     private String author;
 
     /**
-     * the items changed by this commit (only set when
-     * SVNClientInterface.logmessage is used with discoverPaths true.
+     * The items changed by this commit (only set when
+     * SVNClientInterface.logMessages is used with discoverPaths
+     * true).
      */
     private ChangePath[] changedPaths;
 
     /**
-     * this constructor is only called only from JNI code
-     * @param m     the log message text
-     * @param d     the date of the commit
-     * @param r     the number of the revision
-     * @param a     the author of the commit
-     * @param cp    the items changed by this commit
+     * This constructor is the original constructor from Subversion
+     * 1.4 and older.
+     * @param changedPaths the items changed by this commit
+     * @param revision     the number of the revision
+     * @param author       the author of the commit
+     * @param date         the date of the commit
+     * @param message      the log message text
+     * @deprecated         Use the constructor that takes the number
+     *                     of microseconds since 00:00:00 January 1,
+     *                     1970 UTC
      */
-    LogMessage(String m, Date d, long r, String a, ChangePath[] cp)
+    LogMessage(ChangePath[] cp, long r, String a, Date d, String m)
     {
-        message = m;
-        date = d;
+        changedPaths = cp;
         revision = r;
         author = a;
-        changedPaths = cp;
+        timeMicros = 1000 * d.getTime();
+        date = d;
+        message = m;
     }
+
+    /**
+     * This constructor is only called only from the thin wrapper.
+     * @param changedPaths the items changed by this commit
+     * @param revision     the number of the revision
+     * @param author       the author of the commit
+     * @param timeMicros   the time of the commit measured in the
+     *                     number of microseconds since 00:00:00
+     *                     January 1, 1970 UTC
+     * @param message      the log message text
+     * @since 1.5
+     */
+    LogMessage(ChangePath[] cp, long r, String a, long t, String m)
+    {
+        changedPaths = cp;
+        revision = r;
+        author = a;
+        timeMicros = t;
+        date = null;
+        message = m;
+    }
+
     /**
      * Return the log message text
      * @return the log message text
@@ -74,11 +121,37 @@ public class LogMessage
     }
 
     /**
+     * Returns the time of the commit
+     * @return the time of the commit measured in the number of
+     *         microseconds since 00:00:00 January 1, 1970 UTC
+     * @since 1.5
+     */
+    public long getTimeMicros()
+    {
+        return timeMicros;
+    }
+
+    /**
+     * Returns the time of the commit
+     * @return the time of the commit measured in the number of
+     *         milliseconds since 00:00:00 January 1, 1970 UTC
+     * @since 1.5
+     */
+    public long getTimeMillis()
+    {
+        return timeMicros / 1000;
+    }
+
+    /**
      * Returns the date of the commit
      * @return the date of the commit
      */
     public Date getDate()
     {
+        if (date == null)
+        {
+            date = new Date(timeMicros / 1000);
+        }
         return date;
     }
 
@@ -92,7 +165,7 @@ public class LogMessage
     }
 
     /**
-     * Returns the revision as a long  integer
+     * Returns the revision as a long integer
      * @return the revision number as a long integer
      */
     public long getRevisionNumber()

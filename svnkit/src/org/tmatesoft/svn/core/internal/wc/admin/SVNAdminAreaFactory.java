@@ -48,6 +48,8 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     private static ISVNAdminAreaFactorySelector ourSelector;
     private static ISVNAdminAreaFactorySelector ourDefaultSelector = new DefaultSelector();
 
+    public static final int WC_FORMAT_13 = SVNXMLAdminAreaFactory.WC_FORMAT;
+
     static {
         SVNAdminAreaFactory.registerFactory(new SVNAdminArea15Factory());
         SVNAdminAreaFactory.registerFactory(new SVNAdminArea14Factory());
