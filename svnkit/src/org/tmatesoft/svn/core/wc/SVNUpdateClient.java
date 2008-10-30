@@ -1654,7 +1654,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
                 
                 if (fileType == SVNFileType.DIRECTORY && !empty) {
-                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null))).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
                     SVNWCAccess wcAccess = createWCAccess();
                     SVNAdminArea area = wcAccess.open(target, true, 0);
                     SVNEntry entry = area.getEntry(area.getThisDirName(), false);
@@ -1689,14 +1689,14 @@ public class SVNUpdateClient extends SVNBasicClient {
                     }
                     deleteExternal(target);
                     target.mkdirs();
-                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null))).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
                     doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                     return;
                 } 
                 if (fileType != SVNFileType.DIRECTORY) {
                     target.mkdirs();
                 }
-                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null))).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
+                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null).setExternalInfo(externalDiff.oldExternal,externalDiff.newExternal));
                 doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, true);
             }
         } catch (SVNCancelException cancel) {
