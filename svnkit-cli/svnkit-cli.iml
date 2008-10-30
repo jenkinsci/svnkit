@@ -12,5 +12,9 @@
     <orderEntry type="module" module-name="javahl" />
     <orderEntryProperties />
   </component>
+  <component name="PluginUploader.PluginUploadConfigurable">
+    <option name="ARCHIVE_PATH" />
+    <option name="PLUGIN_ID" />
+  </component>
 </module>
 

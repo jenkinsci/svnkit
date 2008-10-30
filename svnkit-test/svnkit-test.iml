@@ -30,6 +30,10 @@
     <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntryProperties />
   </component>
+  <component name="PluginUploader.PluginUploadConfigurable">
+    <option name="ARCHIVE_PATH" />
+    <option name="PLUGIN_ID" />
+  </component>
   <component name="copyright">
     <Base>
       <setting name="state" value="2" />
