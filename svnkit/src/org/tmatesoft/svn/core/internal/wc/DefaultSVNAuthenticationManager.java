@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -23,24 +22,25 @@ import javax.net.ssl.TrustManager;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.internal.wc.ISVNAuthenticationStorage;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager {
@@ -164,7 +164,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                SVNErrorManager.cancel("authentication cancelled");
+                SVNErrorManager.cancel("authentication cancelled", SVNLogType.WC);
             }
         }
         // end of probe. if we were asked for username for ssh and didn't find anything 
@@ -196,7 +196,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                SVNErrorManager.cancel("authentication cancelled");
+                SVNErrorManager.cancel("authentication cancelled", SVNLogType.WC);
             }
         }
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
@@ -285,6 +285,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     
     protected boolean isAuthStorageEnabled() {
         return myIsStoreAuth;
+    }
+    
+    protected boolean isStorePasswords() {
+        String value = getConfigFile().getPropertyValue("auth", "store-passwords");
+        if (value == null) {
+            return true;
+        }
+        return "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
     }
     
     protected ISVNAuthenticationProvider getAuthenticationProvider() {
@@ -458,7 +466,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     /**
-     * @version 1.1.1
+     * @version 1.2.0
      * @author  TMate Software Ltd.
      */
     public interface IPersistentAuthenticationProvider {
@@ -553,18 +561,26 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             Map values = new SVNHashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
-            String cipherType = SVNPasswordCipher.getDefaultCipherType();
-            SVNPasswordCipher cipher = SVNPasswordCipher.getInstance(cipherType);
-
-            if (cipherType != null) {
-                values.put("passtype", cipherType);
-            } 
-            if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+            boolean storePasswords = isStorePasswords();
+            SVNPasswordCipher cipher = null;
+            
+            if (storePasswords) {
+                String cipherType = SVNPasswordCipher.getDefaultCipherType();
+                cipher = SVNPasswordCipher.getInstance(cipherType);
+    
+                if (cipherType != null) {
+                    values.put("passtype", cipherType);
+                }
+            }
+            
+            if (ISVNAuthenticationManager.PASSWORD.equals(kind) && storePasswords) {
                 SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
                 values.put("password", cipher.encrypt(passwordAuth.getPassword()));
             } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                 SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
-                values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                if (storePasswords) { 
+                    values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                }
                 int port = sshAuth.getPortNumber();
                 if (sshAuth.getPortNumber() < 0) {
                     port = getDefaultSSHPortNumber() ;
@@ -572,7 +588,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("port", Integer.toString(port));
                 if (sshAuth.getPrivateKeyFile() != null) { 
                     String path = sshAuth.getPrivateKeyFile().getAbsolutePath();
-                    values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                    if (storePasswords) {
+                        values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                    }
                     values.put("key", path);
                 }
             }

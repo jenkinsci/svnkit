@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -58,7 +58,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * <p>
  * How to get a default auth manager instance see {@link org.tmatesoft.svn.core.wc.SVNWCUtil}. 
  *
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
  */
@@ -107,6 +107,19 @@ public interface ISVNAuthenticationManager {
      */
     public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException;
 
+    /**
+     * Returns a manager which handles trust data for the specified <code>url</code>.
+     *   
+     * <p/>
+     * Note: in pre-1.2.0 versions <code>ISVNAuthenticationManager</code> used to provide <code>ISVNSSLManager</code> 
+     * via a method <code>getSSLManager()</code> which is now replaced by this one. <code>ISVNSSLManager</code> 
+     * is no longer used (replaced by <code>TrustManager</code>).
+     * 
+     * @param  url          repository url                
+     * @return              trust manager
+     * @throws SVNException
+     * @since               1.2.0 
+     */
 	public TrustManager getTrustManager(SVNURL url) throws SVNException;		
 
 	/**
@@ -218,6 +231,13 @@ public interface ISVNAuthenticationManager {
      */
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
 
+    /**
+     * Acknowledges the specified trust manager. This method is called only when a secure connection is 
+     * successfully established with the specified <code>manager</code>. 
+     * 
+     * @param manager trust manager to acknowledge (one returned by {@link #getTrustManager(SVNURL)})
+     * @since         1.2.0
+     */
 	public void acknowledgeTrustManager(TrustManager manager);
 
     /**
@@ -237,13 +257,23 @@ public interface ISVNAuthenticationManager {
     public boolean isAuthenticationForced();
 
     /**
-     * Returns a connection timeout value.
+     * Returns the read timeout value in milliseconds which <code>repository</code> should use in
+     * socket read operations. Socket read operations will block only for this amount of time. 
      * 
      * @param   repository a repository access driver
      * @return             connection timeout value
-     * @since   1.2
+     * @since   1.2.0
      */
     public int getReadTimeout(SVNRepository repository);
     
+    /**
+     * Returns the connection timeout value in milliseconds which <code>repository</code>
+     * should use in network connection operations.
+     *  
+     * @param  repository  repository access object
+     * @return             connection timeout value in milliseconds which will be set 
+     *                     to a socket
+     * @since 1.2.0
+     */
     public int getConnectTimeout(SVNRepository repository);
 }

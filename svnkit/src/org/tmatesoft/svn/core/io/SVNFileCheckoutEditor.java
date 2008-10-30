@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,8 +22,12 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 
 /**
- * @version 1.1.2
+ * The <b>SVNFileCheckoutEditor</b> is an adapter which only handles file contents and properties during a 
+ * checkout and redirects that information to its {@link ISVNFileCheckoutTarget} handler. 
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 class SVNFileCheckoutEditor implements ISVNEditor {
     

@@ -1,5 +1,5 @@
 
-Trilead SSH-2 for Java - build 212
+Trilead SSH-2 for Java - build 213
 ==================================
 
 http://www.trilead.com
@@ -21,4 +21,4 @@ The latest version of the FAQ is available on the website.
 Please feel free to contact us. We welcome feedback of any kind!
 Contact: support@trilead.com or go to the public forum at http://www.trilead.com
 
-Zurich, March 2008
+Zurich, April 2008

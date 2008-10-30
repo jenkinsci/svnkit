@@ -23,34 +23,48 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAmbientDepthFilterEditor implements ISVNEditor {
 
-    private SVNUpdateEditor myDelegate;
+    private ISVNEditor myDelegate;
     private SVNWCAccess myWCAccess;
     private File myAnchor;
     private String myTarget;
     private DirBaton myCurrentDirBaton;
     private FileBaton myCurrentFileBaton;
     private LinkedList myDirs;
-    
-    public SVNAmbientDepthFilterEditor(SVNUpdateEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
+
+
+    public static ISVNEditor wrap(ISVNEditor editor, SVNAdminAreaInfo info, SVNDepth depth, boolean depthIsSticky) throws SVNException {
+        if (depthIsSticky) {
+            SVNWCAccess wcAccess = info.getWCAccess();
+            SVNEntry targetEntry = wcAccess.getEntry(info.getAnchor().getFile(info.getTargetName()), false);
+            if (targetEntry != null && targetEntry.getDepth().compareTo(depth) > 0) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                        "Shallowing of working copy depths is not yet supported");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        } else {
+            return new SVNAmbientDepthFilterEditor(editor, info.getWCAccess(), info.getAnchor().getRoot(), info.getTargetName());
+        }
+        return editor;
+    }
+
+    public SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
         myDelegate = delegate;
         myWCAccess = wcAccess;
         myAnchor = anchor;
         myTarget = target;
         myDirs = new LinkedList();
-    }
-    
-    public long getTargetRevision() {
-        return myDelegate.getTargetRevision();
     }
 
     public void abortEdit() throws SVNException {
@@ -112,8 +126,13 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
-        myCurrentDirBaton = (DirBaton) myDirs.removeLast();
-        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
+        DirBaton closedDir = (SVNAmbientDepthFilterEditor.DirBaton) myDirs.removeLast();
+        if (myDirs.isEmpty()) {
+            myCurrentDirBaton = null;
+        } else {
+            myCurrentDirBaton = (SVNAmbientDepthFilterEditor.DirBaton) myDirs.getLast();
+        }
+        if (closedDir.myIsAmbientlyExcluded) {
             return;
         }
         myDelegate.closeDir();
@@ -214,7 +233,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
         if (path == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "aborting in SVNAmbientDepthFilterEditor.makeFileBation(): path == null");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         FileBaton fileBaton = new FileBaton();
@@ -237,7 +256,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "aborting in SVNAmbientDepthFilterEditor.makeDirBation(): parentBaton != null" +
                     " while path == null");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         if (parentBaton != null && parentBaton.myIsAmbientlyExcluded) {

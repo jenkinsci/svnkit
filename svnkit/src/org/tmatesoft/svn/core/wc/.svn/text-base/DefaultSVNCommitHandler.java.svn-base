@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * special implementation of <b>ISVNCommitHandler</b> is provided into those 
  * classes then <b>DefaultSVNCommitHandler</b> is the one that is used by default.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see		ISVNCommitHandler
  */
@@ -50,6 +50,17 @@ public class DefaultSVNCommitHandler implements ISVNCommitHandler {
         return message == null ? "" : message;
     }
 
+    /**
+     * Returns <code>revisionProperties</code> as is if it's not <span class="javakeyword">null</span>, or
+     * an empty {@link SVNProperties} object if <code>revisionProperties</code> is <span class="javakeyword">null</span>.
+     * 
+     * @param  message                 log message for commit
+     * @param  commitables             paths to commit
+     * @param  revisionProperties      initial revision properties to set
+     * @return                         <code>revisionProperties</code> itself or an empty {@link SVNProperties} 
+     *                                 object if <code>revisionProperties</code> is <span class="javakeyword">null</span> 
+     * @throws SVNException 
+     */
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
         return revisionProperties == null ? new SVNProperties() : revisionProperties;
     }

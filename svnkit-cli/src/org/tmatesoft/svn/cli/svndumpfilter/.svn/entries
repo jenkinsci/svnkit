@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/svndumpfilter
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-08-28T19:30:55.179841Z
+4792
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,33 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
-978d9038d8d1b945f56426607045c7af
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-10-30T04:41:33.000000Z
+ff66e737852bb1ce5a8e00a9ca9391b3
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1944
 
 SVNDumpFilter.java
 file
@@ -44,11 +66,33 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-573ca57e684b6d0c0d369102f500387b
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-10-30T04:41:33.000000Z
+2b8a5b5e5d2bea63c0c2cca081326ed7
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2319
 
 SVNDumpFilterIncludeCommand.java
 file
@@ -56,11 +100,33 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
-9e02f26e6c57b941800d0c060b8f614b
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-10-30T04:41:33.000000Z
+bbb4d3152951e5e1e9c820c2ec5ba289
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4585
 
 SVNDumpFilterCommandEnvironment.java
 file
@@ -68,11 +134,33 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
-acdd20e7c73343d6583e0de110ca5050
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-10-30T04:41:33.000000Z
+f5b1c5f37f1879db731490a7d9d15c4b
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6985
 
 options.properties
 file
@@ -80,11 +168,33 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
+2008-10-30T04:41:33.000000Z
 eb418e71d381d6c81207aba6adbf2754
-2008-07-24T14:53:17.450696Z
-4578
+2008-07-30T16:53:59.266781Z
+4613
 semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+356
 
 SVNDumpFilterHelpCommand.java
 file
@@ -92,11 +202,33 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
-51531b09e823a6c7d6726b37ffb8440f
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-10-30T04:41:33.000000Z
+8f4e31a49c147419544703fd86f80a53
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3955
 
 SVNDumpFilterExcludeCommand.java
 file
@@ -104,11 +236,33 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
-ecc9af068fb507b1387f67ae5e2840e7
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-10-30T04:41:33.000000Z
+fdc008dc95d9ce22db01dade52460b7c
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4584
 
 SVNDumpFilterOption.java
 file
@@ -116,11 +270,33 @@ file
 
 
 
-2008-07-24T04:58:13.000000Z
-56cb7fd5d577c4aadb52f7923206401c
-2008-04-28T11:00:42.797330Z
-4210
-sa
+2008-10-30T04:41:33.000000Z
+3b4e850112c96731de9f7f330f4ba2b4
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1896
 
 commands.properties
 file
@@ -128,9 +304,31 @@ file
 
 
 
-2008-08-02T14:58:26.000000Z
+2008-10-30T04:41:33.000000Z
 25d8d6e6166c312939c97505c0e2f4b8
-2008-07-24T14:53:17.450696Z
-4578
+2008-07-30T16:53:59.266781Z
+4613
 semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+395
 

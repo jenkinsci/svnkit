@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,13 +22,14 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNChangelistClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNChangeListCommand extends SVNCommand {
@@ -58,12 +59,12 @@ public class SVNChangeListCommand extends SVNCommand {
 
         if (getSVNEnvironment().isRemove()) {
             if (targets.size() < 1) { 
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
             }
             changelist = null;
         } else {
             if (targets.size() < 2) { 
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS), SVNLogType.CLIENT);
             }
             changelist = (String) targets.remove(0);
         }
@@ -87,9 +88,9 @@ public class SVNChangeListCommand extends SVNCommand {
         }
         try {
             if (changelist != null) {
-                client.addToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
+                client.doAddToChangelist(files, depth, changelist, getSVNEnvironment().getChangelists());
             } else {
-                client.removeFromChangelist(files, depth, getSVNEnvironment().getChangelists());
+                client.doRemoveFromChangelist(files, depth, getSVNEnvironment().getChangelists());
             }
         } catch (SVNException e) {
             getSVNEnvironment().handleWarning(e.getErrorMessage(), 

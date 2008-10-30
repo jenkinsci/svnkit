@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNLookUUIDCommand extends SVNLookCommand {

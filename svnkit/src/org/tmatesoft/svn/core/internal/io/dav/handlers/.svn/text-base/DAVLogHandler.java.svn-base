@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,12 +28,14 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.Attributes;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class DAVLogHandler extends BasicDAVHandler {
 
@@ -155,7 +157,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             if (myRevPropName == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA,
                         "Missing name attr in revprop element");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
 
         } else if (element == HAS_CHILDREN) {
@@ -189,7 +191,7 @@ public class DAVLogHandler extends BasicDAVHandler {
             if (myLimit > 0 && myCount > myLimit && myNestLevel == 0) {
                 myIsCompatibleMode = true;
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myLogEntryHandler != null) {
                 if (myPaths == null) {

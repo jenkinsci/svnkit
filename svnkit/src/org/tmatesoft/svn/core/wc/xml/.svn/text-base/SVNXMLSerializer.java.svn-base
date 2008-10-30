@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
  * This implementation of <b>ContentHandler</b> can write XML contents to 
  * a specified output stream or writer.  
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNXMLSerializer implements ContentHandler {
@@ -71,6 +71,11 @@ public class SVNXMLSerializer implements ContentHandler {
         myWriter.flush();
     }
 
+    /**
+     * Starts xml document.
+     * 
+     * @throws SAXException 
+     */
     public void startDocument() throws SAXException {
         try {
             myWriter.write("<?xml version=\"1.0\"?>");
@@ -79,6 +84,15 @@ public class SVNXMLSerializer implements ContentHandler {
         }
     }
 
+    /**
+     * Starts an xml element.
+     * 
+     * @param namespaceURI 
+     * @param localName 
+     * @param qName 
+     * @param atts 
+     * @throws SAXException 
+     */
     public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
         try {
             myWriter.write(myEol);
@@ -102,6 +116,14 @@ public class SVNXMLSerializer implements ContentHandler {
         }
     }
 
+    /**
+     * Handles CData characters.
+     * 
+     * @param ch 
+     * @param start 
+     * @param length 
+     * @throws SAXException 
+     */
     public void characters(char[] ch, int start, int length) throws SAXException {
         myCharacters = true;
         try {
@@ -112,6 +134,14 @@ public class SVNXMLSerializer implements ContentHandler {
         }
     }
 
+    /**
+     * Closes the xml element. 
+     * 
+     * @param namespaceURI 
+     * @param localName 
+     * @param qName 
+     * @throws SAXException 
+     */
     public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         if ("against".equals(qName)) {
             return;

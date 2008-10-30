@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,10 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,8 +28,8 @@ import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
@@ -38,6 +39,8 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.internal.util.FixedSizeInputStream;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -47,10 +50,11 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 import org.tmatesoft.svn.core.wc.admin.SVNUUIDAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DefaultLoadHandler implements ISVNLoadHandler {
@@ -83,6 +87,8 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     
     public void closeRevision() throws SVNException {
         if (myCurrentRevisionBaton != null) {
+            myCurrentRevisionBaton.getConsumer().close();
+            
             RevisionBaton baton = myCurrentRevisionBaton;
             myCurrentRevisionBaton = null;
             
@@ -118,13 +124,23 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             if (baton.myDatestamp == null) {
                 myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
             }
+            File revProps = myFSFS.getRevisionPropertiesFile(baton.myRevision);
+            if (!revProps.exists()) {
+                OutputStream os = SVNFileUtil.openFileForWriting(revProps);
+                try {
+                    SVNWCProperties.setProperties(new SVNProperties(), os, SVNWCProperties.SVN_HASH_TERMINATOR);
+                } finally {
+                    SVNFileUtil.closeFile(os);
+                }
+            }
+
             
             if (myIsUsePostCommitHook) {
                 try {
                     FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, "Commit succeeded, but post-commit hook failed");
-                    SVNErrorManager.error(err, svne);
+                    SVNErrorManager.error(err, svne, SVNLogType.FSFS);
                 }
             }
             
@@ -154,7 +170,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 revision = Long.parseLong((String) headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER)); 
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminHelper.DUMPFILE_REVISION_NUMBER));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         
@@ -176,7 +192,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     public void openNode(Map headers) throws SVNException {
         if (myCurrentRevisionBaton.myRevision == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Malformed dumpstream: Revision 0 must not contain node records");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         myCurrentNodeBaton = createNodeBaton(headers);
@@ -199,24 +215,28 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 break;
             case SVNAdminHelper.NODE_ACTION_ADD:
                 message = "     * adding path : " + myCurrentNodeBaton.myPath + " ...";
+                if (maybeAddWithHistory(myCurrentNodeBaton)) {
+                    message += "COPIED...";
+                }
                 if (myProgressHandler != null) {
                     SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.REVISION_LOAD_ADD_PATH, myCurrentNodeBaton.myPath, message); 
                     myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
                 }
-                maybeAddWithHistory(myCurrentNodeBaton);
                 break;
             case SVNAdminHelper.NODE_ACTION_REPLACE:
                 message = "     * replacing path : " + myCurrentNodeBaton.myPath + " ...";
+                myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
+                if (maybeAddWithHistory(myCurrentNodeBaton)) {
+                    message += "COPIED...";
+                }
                 if (myProgressHandler != null) {
                     SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.REVISION_LOAD_REPLACE_PATH, myCurrentNodeBaton.myPath, message); 
                     myProgressHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
                 }
-                myCurrentRevisionBaton.getCommitter().deleteNode(myCurrentNodeBaton.myPath);
-                maybeAddWithHistory(myCurrentNodeBaton);
                 break;
             default:
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_UNRECOGNIZED_DATA, "Unrecognized node-action on node ''{0}''", myCurrentNodeBaton.myPath);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -263,37 +283,42 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             if (contentLength == 0) {
                 getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, fsConsumer, false);
             } else {
-                buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
-                try {
-                    while (contentLength > 0) {
-                        int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? 
-                                SVNFileUtil.STREAM_CHUNK_SIZE : (int) contentLength;
-                        int read = 0;
-                        while(numToRead > 0) {
-                            int numRead = dumpStream.read(buffer, read, numToRead);
-                            if (numRead < 0) {
-                                SVNAdminHelper.generateIncompleteDataError();
+                if (!isDelta) {
+                    // 
+                    InputStream tgt = new FixedSizeInputStream(dumpStream, contentLength);
+                    getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, tgt, fsConsumer, false);
+                } else {
+                    buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
+                    SVNDeltaReader deltaReader = null;
+                    try {
+                        while (contentLength > 0) {
+                            int numToRead = contentLength > SVNFileUtil.STREAM_CHUNK_SIZE ? SVNFileUtil.STREAM_CHUNK_SIZE : (int) contentLength;
+                            int read = 0;
+                            while(numToRead > 0) {
+                                int numRead = dumpStream.read(buffer, read, numToRead);
+                                if (numRead < 0) {
+                                    SVNAdminHelper.generateIncompleteDataError();
+                                }
+                                read += numRead;
+                                numToRead -= numRead;
                             }
-                            read += numRead;
-                            numToRead -= numRead;
-                        }
-                        
-                        if (isDelta) {
-                            SVNDeltaReader deltaReader = getDeltaReader();
+                            deltaReader = getDeltaReader();
                             deltaReader.nextWindow(buffer, 0, read, myCurrentNodeBaton.myPath, fsConsumer);
-                        } else {
-                            getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, buffer, read, fsConsumer);
+                            contentLength -= read;
                         }
-                        contentLength -= read;
+                    } catch (IOException ioe) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
+                        SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
                     }
-                } catch (IOException ioe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
-                    SVNErrorManager.error(err, ioe);
+                    if (deltaReader != null) {
+                        deltaReader.reset(myCurrentNodeBaton.myPath, fsConsumer);
+                    }
+                    fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
                 }
-                fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
             }
         } catch (SVNException svne) {
-            fsConsumer.abort(); 
+            fsConsumer.abort();
+            throw svne;
         }
     }
 
@@ -369,45 +394,47 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         return myDeltaGenerator;
     }
 
-    private void maybeAddWithHistory(NodeBaton nodeBaton) throws SVNException {
+    private boolean maybeAddWithHistory(NodeBaton nodeBaton) throws SVNException {
         if (nodeBaton.myCopyFromPath == null) {
             if (nodeBaton.myKind == SVNNodeKind.FILE) {
                 myCurrentRevisionBaton.getCommitter().makeFile(nodeBaton.myPath);
             } else if (nodeBaton.myKind == SVNNodeKind.DIR) {
                 myCurrentRevisionBaton.getCommitter().makeDir(nodeBaton.myPath);
             }
-        } else {
-            long srcRevision = nodeBaton.myCopyFromRevision - myCurrentRevisionBaton.myRevisionOffset;
-            Long copyFromRevision = new Long(nodeBaton.myCopyFromRevision);
-            
-            if (myRevisionsMap.containsKey(copyFromRevision)) {
-                Long revision = (Long) myRevisionsMap.get(copyFromRevision);
-                srcRevision = revision.longValue();
-            }
-            
-            if (!SVNRevision.isValidRevisionNumber(srcRevision)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Relative source revision {0} is not available in current repository", new Long(srcRevision));
-                SVNErrorManager.error(err);
-            }
-            
-            FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(srcRevision);
-            if (nodeBaton.myCopySourceChecksum != null) {
-                FSRevisionNode revNode = copyRoot.getRevisionNode(nodeBaton.myCopyFromPath);
-                String hexDigest = revNode.getFileChecksum();
-                if (hexDigest != null && !hexDigest.equals(nodeBaton.myCopySourceChecksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
-                            "Copy source checksum mismatch on copy from ''{0}''@{1}\n" +
-                            " to ''{2}'' in rev based on r{3}:\n" +
-                            "   expected:  {4}\n" + 
-                            "     actual:  {5}\n", new Object[] { nodeBaton.myCopyFromPath, 
-                            String.valueOf(srcRevision), nodeBaton.myPath, 
-                            String.valueOf(myCurrentRevisionBaton.myRevision), 
-                            nodeBaton.myCopySourceChecksum, hexDigest });
-                    SVNErrorManager.error(err);
-                }
-            }
-            myCurrentRevisionBaton.getCommitter().makeCopy(copyRoot, nodeBaton.myCopyFromPath, nodeBaton.myPath, true);
+            return false;
+        } 
+        long srcRevision = nodeBaton.myCopyFromRevision - myCurrentRevisionBaton.myRevisionOffset;
+        Long copyFromRevision = new Long(nodeBaton.myCopyFromRevision);
+        
+        if (myRevisionsMap.containsKey(copyFromRevision)) {
+            Long revision = (Long) myRevisionsMap.get(copyFromRevision);
+            srcRevision = revision.longValue();
         }
+        
+        if (!SVNRevision.isValidRevisionNumber(srcRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Relative source revision {0} is not available in current repository", new Long(srcRevision));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(srcRevision);
+        if (nodeBaton.myCopySourceChecksum != null) {
+            FSRevisionNode revNode = copyRoot.getRevisionNode(nodeBaton.myCopyFromPath);
+            String hexDigest = revNode.getFileChecksum();
+            if (hexDigest != null && !hexDigest.equals(nodeBaton.myCopySourceChecksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
+                        "Copy source checksum mismatch on copy from ''{0}''@{1}\n" +
+                        " to ''{2}'' in rev based on r{3}:\n" +
+                        "   expected:  {4}\n" + 
+                        "     actual:  {5}\n", new Object[] { nodeBaton.myCopyFromPath, 
+                        String.valueOf(srcRevision), nodeBaton.myPath, 
+                        String.valueOf(myCurrentRevisionBaton.myRevision), 
+                        nodeBaton.myCopySourceChecksum, hexDigest });
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+        }
+        myCurrentRevisionBaton.getCommitter().makeCopy(copyRoot, nodeBaton.myCopyFromPath, nodeBaton.myPath, true);
+        
+        return true;
     }
     
     private NodeBaton createNodeBaton(Map headers) throws SVNException {
@@ -446,7 +473,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 baton.myCopyFromRevision = Long.parseLong((String) headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)); 
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Cannot parse revision ({0}) in dump file", headers.get(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
         

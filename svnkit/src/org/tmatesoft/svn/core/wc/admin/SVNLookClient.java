@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,9 +25,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
-import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
@@ -39,8 +39,8 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNGNUDiffGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNLookClient</b> class provides API for examining 
@@ -118,7 +119,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
  * </tr>
  * </table>
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
@@ -308,8 +309,9 @@ public class SVNLookClient extends SVNBasicClient {
      */
     public void doCat(File repositoryRoot, String path, SVNRevision revision, OutputStream out) throws SVNException {
         if (path == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing repository path argument");
-            SVNErrorManager.error(err);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
+                    "Missing repository path argument");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         FSFS fsfs = open(repositoryRoot, revision);
@@ -342,7 +344,7 @@ public class SVNLookClient extends SVNBasicClient {
     public void doCat(File repositoryRoot, String path, String transactionName, OutputStream out) throws SVNException {
         if (path == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing repository path argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         FSFS fsfs = open(repositoryRoot, transactionName);
@@ -479,7 +481,7 @@ public class SVNLookClient extends SVNBasicClient {
 
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Transaction ''{0}'' is not based on a revision; how odd", transactionName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
         editor.traverseTree(includeCopyInfo, handler);
@@ -527,7 +529,7 @@ public class SVNLookClient extends SVNBasicClient {
 
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Transaction ''{0}'' is not based on a revision; how odd", transactionName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
         editor.traverseChangedDirs(handler);
@@ -555,6 +557,8 @@ public class SVNLookClient extends SVNBasicClient {
      * @param  revision         a revision number
      * @param  includeIDs       if <span class="javakeyword">true</span> a node 
      *                          revision id is also included for each path 
+     * @param  limit            maximum number of history entries; if <code>&lt;=0</code>, then no limitation 
+     *                          is applied and all history entries are reported   
      * @param  handler          a history handler
      * @throws SVNException     <ul>
      *                          <li>no repository is found at 
@@ -592,7 +596,7 @@ public class SVNLookClient extends SVNBasicClient {
     public SVNLock doGetLock(File repositoryRoot, String path) throws SVNException {
         if (path == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing path argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         FSFS fsfs = open(repositoryRoot, SVNRevision.HEAD);
         return fsfs.getLockHelper(path, false);
@@ -624,6 +628,7 @@ public class SVNLookClient extends SVNBasicClient {
      * @param  revision         a revision number
      * @param  includeIDs       if <span class="javakeyword">true</span> a node 
      *                          revision id is also included for each path
+     * @param  recursive        whether to descend recursively or operate on a single directory only
      * @param  handler          a tree handler
      * @throws SVNException     <ul>
      *                          <li>no repository is found at 
@@ -671,6 +676,7 @@ public class SVNLookClient extends SVNBasicClient {
      * @param  transactionName  a transaction name
      * @param  includeIDs       if <span class="javakeyword">true</span> a node 
      *                          revision id is also included for each path
+     * @param  recursive        whether to descend recursively or operate on a single directory only
      * @param  handler          a tree handler
      * @throws SVNException     <ul>
      *                          <li>no repository is found at 
@@ -726,7 +732,7 @@ public class SVNLookClient extends SVNBasicClient {
         long baseRevision = revNum - 1;
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Invalid base revision {0}", new Long(baseRevision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
         ISVNGNUDiffGenerator generator = getDiffGenerator();
@@ -771,7 +777,7 @@ public class SVNLookClient extends SVNBasicClient {
 
         if (!SVNRevision.isValidRevisionNumber(baseRevision)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Transaction ''{0}'' is not based on a revision; how odd", transactionName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         SVNNodeEditor editor = generateDeltaTree(fsfs, root, baseRevision);
         ISVNGNUDiffGenerator generator = getDiffGenerator();
@@ -1001,11 +1007,11 @@ public class SVNLookClient extends SVNBasicClient {
     private SVNProperties getProperties(File repositoryRoot, String propName, String path, SVNRevision revision, String txnName, boolean singleProp, boolean revProps) throws SVNException {
         if (propName == null && singleProp) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing propname argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (path == null && !revProps) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing repository path argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         FSFS fsfs = txnName == null ? open(repositoryRoot, revision) : open(repositoryRoot, txnName);
@@ -1034,12 +1040,12 @@ public class SVNLookClient extends SVNBasicClient {
         if (!SVNRevision.isValidRevisionNumber(start)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
                     "Invalid start revision {0}", String.valueOf(start));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (!SVNRevision.isValidRevisionNumber(end)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
                     "Invalid end revision {0}", String.valueOf(end));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (start > end) {
@@ -1101,7 +1107,7 @@ public class SVNLookClient extends SVNBasicClient {
         SVNNodeKind kind = verifyPath(root, path);
         if (kind != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Path ''{0}'' is not a file", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (out != null) {
@@ -1117,7 +1123,7 @@ public class SVNLookClient extends SVNBasicClient {
                 } while (len == SVNFileUtil.STREAM_CHUNK_SIZE);
             } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                SVNErrorManager.error(err, ioe);
+                SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
             } finally {
                 SVNFileUtil.closeFile(contents);
             }
@@ -1130,11 +1136,11 @@ public class SVNLookClient extends SVNBasicClient {
             if (SVNPathUtil.isURL(path)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
                         "''{0}'' is a URL, probably should be a path", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
                     "Path ''{0}'' does not exist", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return kind;
     }
@@ -1142,7 +1148,7 @@ public class SVNLookClient extends SVNBasicClient {
     private FSFS open(File repositoryRoot, SVNRevision revision) throws SVNException {
         if (revision == null || !revision.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision number supplied");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return SVNAdminHelper.openRepository(repositoryRoot, true);
     }
@@ -1150,7 +1156,7 @@ public class SVNLookClient extends SVNBasicClient {
     private FSFS open(File repositoryRoot, String transactionName) throws SVNException {
         if (transactionName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Missing transaction name");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         return SVNAdminHelper.openRepository(repositoryRoot, true);

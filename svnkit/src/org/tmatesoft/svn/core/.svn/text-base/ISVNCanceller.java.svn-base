@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,11 +13,21 @@ package org.tmatesoft.svn.core;
 
 
 /**
- * @version 1.1.2
+ * The <b>ISVNCanceller</b> interface is used in <code>SVNKit</code> for cancelling operations. 
+ * To cancel a running operation an implementor should throw an {@link SVNCancelException} from his 
+ * <code>checkCancelled()</code> implementation. This method is called in plenty of <code>SVNKit</code> 
+ * methods to give a user a chance to cancel a current running operation. For example, it could be a GUI 
+ * application where a 'cancel' button would make the implementor's <code>checkCancelled()</code> method 
+ * throw such an exception. 
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public interface ISVNCanceller {
-    
+   
+    /**
+     * Default implementation which never throws an {@link SVNCancelException} (never cancels).
+     */
     public ISVNCanceller NULL = new ISVNCanceller() {
         public void checkCancelled() throws SVNCancelException {
         }
@@ -26,6 +36,10 @@ public interface ISVNCanceller {
     /**
      * Checks if the current operation is cancelled (somehow interrupted)
      * and should throw an <b>SVNCancelException</b>.
+     * 
+     * <p/>
+     * This method is often called during iterations when processing trees of versioned items.
+     * This way the entire operation may be interrupted without waiting till the iteration run out.
      * 
      * @throws SVNCancelException
      */

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,9 +34,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSTransactionRoot extends FSRoot {
@@ -64,7 +65,7 @@ public class FSTransactionRoot extends FSRoot {
     public FSCopyInheritance getCopyInheritance(FSParentPath child) throws SVNException {
         if (child == null || child.getParent() == null || myTxnID == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: invalid txn name or child");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         FSID childID = child.getRevNode().getId();
         FSID parentID = child.getParent().getRevNode().getId();
@@ -213,29 +214,32 @@ public class FSTransactionRoot extends FSRoot {
             if (!uniquePath.exists() && uniquePath.mkdirs()) {
                 return txnId;
             }
+            if (!uniquePath.exists()) {
+                break;
+            }
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNIQUE_NAMES_EXHAUSTED, 
                 "Unable to create transaction directory in ''{0}'' for revision {1}", 
                 new Object[] { parent, new Long(revision) });
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
         return null;    
     }
     
     public void deleteEntry(FSRevisionNode parent, String entryName) throws SVNException {
         if (parent.getType() != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Attempted to delete entry ''{0}'' from *non*-directory node", entryName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!parent.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to delete entry ''{0}'' from immutable directory node", entryName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!SVNPathUtil.isSinglePathComponent(entryName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_SINGLE_PATH_COMPONENT, "Attempted to delete a node with an illegal name ''{0}''", entryName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         Map entries = parent.getDirEntries(getOwner());
@@ -243,7 +247,7 @@ public class FSTransactionRoot extends FSRoot {
 
         if (dirEntry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_ENTRY, "Delete failed--directory has no entry ''{0}''", entryName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         getOwner().getRevisionNode(dirEntry.getId());
         deleteEntryIfMutable(dirEntry.getId());
@@ -254,7 +258,7 @@ public class FSTransactionRoot extends FSRoot {
         if (!node.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, 
                     "Can''t increment mergeinfo count on *immutable* node-revision {0}", node.getId());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (increment == 0) {
             return;
@@ -265,13 +269,13 @@ public class FSTransactionRoot extends FSRoot {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Can''t increment mergeinfo count on node-revision {0} to negative value {1}",
                     new Object[] { node.getId(), new Long(node.getMergeInfoCount()) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (node.getMergeInfoCount() > 1 && node.getType() == SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Can''t increment mergeinfo count on *file* node-revision {0} to {1} (> 1)",
                     new Object[] { node.getId(), new Long(node.getMergeInfoCount()) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         getOwner().putTxnRevisionNode(node.getId(), node);
     }
@@ -299,7 +303,7 @@ public class FSTransactionRoot extends FSRoot {
 
         if (!node.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted removal of immutable node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (node.getPropsRepresentation() != null && node.getPropsRepresentation().isTxn()) {
@@ -316,7 +320,7 @@ public class FSTransactionRoot extends FSRoot {
     public void setProplist(FSRevisionNode node, SVNProperties properties) throws SVNException {
         if (!node.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Can't set proplist on *immutable* node-revision {0}", node.getId());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         File propsFile = getTransactionRevNodePropsFile(node.getId());
@@ -352,12 +356,12 @@ public class FSTransactionRoot extends FSRoot {
     public void setEntry(FSRevisionNode parentRevNode, String entryName, FSID entryId, SVNNodeKind kind) throws SVNException {
         if (parentRevNode.getType() != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Attempted to set entry in non-directory node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!parentRevNode.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to set entry in immutable node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         FSRepresentation textRep = parentRevNode.getTextRepresentation();
@@ -401,7 +405,7 @@ public class FSTransactionRoot extends FSRoot {
         if (!(changeKind == FSPathChangeKind.FS_PATH_CHANGE_ADD || changeKind == FSPathChangeKind.FS_PATH_CHANGE_DELETE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY
                 || changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_RESET)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change type");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String changeString = changeKind.toString();
         String idString = null;
@@ -459,7 +463,7 @@ public class FSTransactionRoot extends FSRoot {
 
         if (delimiterInd == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "next-ids file corrupt");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         ids[0] = idsToParse.substring(0, delimiterInd);
@@ -515,7 +519,7 @@ public class FSTransactionRoot extends FSRoot {
                 } catch (NoSuchAlgorithmException nsae) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
-                    SVNErrorManager.error(err, nsae);
+                    SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
                 }
             }
         } else {
@@ -542,7 +546,7 @@ public class FSTransactionRoot extends FSRoot {
             } catch (NoSuchAlgorithmException nsae) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
-                SVNErrorManager.error(err, nsae);
+                SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
             }
         }
 
@@ -588,12 +592,12 @@ public class FSTransactionRoot extends FSRoot {
     public FSRevisionNode cloneChild(FSRevisionNode parent, String parentPath, String childName, String copyId, boolean isParentCopyRoot) throws SVNException {
         if (!parent.getId().isTxn()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_MUTABLE, "Attempted to clone child of non-mutable node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (!SVNPathUtil.isSinglePathComponent(childName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_SINGLE_PATH_COMPONENT, "Attempted to make a child clone with an illegal name ''{0}''", childName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         FSRevisionNode childNode = parent.getChildDirNode(childName, getOwner());

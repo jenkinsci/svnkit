@@ -23,10 +23,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSRecoverer {
@@ -81,7 +82,7 @@ public class FSRecoverer {
             myOwner.writeCurrentFile(maxRev, nextNodeID, nextCopyID);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
     
@@ -101,7 +102,7 @@ public class FSRecoverer {
         if (nodeKind != SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Recovery encountered a non-directory node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         String textRep = (String) headers.get(FSRevisionNode.HEADER_TEXT);
@@ -122,7 +123,7 @@ public class FSRecoverer {
         if (repState.myIsDelta) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Recovery encountered a deltified directory representation");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         SVNProperties rawEntries = revFile.readProperties(false, false);
@@ -132,7 +133,7 @@ public class FSRecoverer {
             int spaceInd = unparsedEntry.indexOf(' ');
             if (spaceInd == -1 || spaceInd == unparsedEntry.length() - 1 || spaceInd == 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             String kindStr = unparsedEntry.substring(0, spaceInd);
@@ -140,7 +141,7 @@ public class FSRecoverer {
             SVNNodeKind kind = SVNNodeKind.parseKind(kindStr);
             if (kind != SVNNodeKind.DIR && kind != SVNNodeKind.FILE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Directory entry corrupt");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             String rawID = unparsedEntry.substring(spaceInd + 1);

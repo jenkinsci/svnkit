@@ -10,10 +10,14 @@
 ###   http-timeout               Timeout for HTTP requests in seconds
 ###   http-compression           Whether to compress HTTP requests
 ###   neon-debug-mask            Debug mask for Neon HTTP library
+###   http-auth-types            Auth types to use for HTTP library
 ###   ssl-authority-files        List of files, each of a trusted CAs
 ###   ssl-trust-default-ca       Trust the system 'default' CAs
 ###   ssl-client-cert-file       PKCS#12 format client certificate file
 ###   ssl-client-cert-password   Client Key password, if needed.
+###   ssl-pkcs11-provider        Name of PKCS#11 provider to use.
+###   http-library               Which library to use for http/https
+###                              connections (neon or serf)
 ###
 ### HTTP timeouts, if given, are specified in seconds.  A timeout
 ### of 0, i.e. zero, causes a builtin default to be used.
@@ -39,6 +43,7 @@
 # http-proxy-username = blah
 # http-proxy-password = doubleblah
 # http-timeout = 60
+# http-auth-types = basic;digest;negotiate
 # neon-debug-mask = 130
 
 ### Information for the second group:
@@ -70,6 +75,7 @@
 # http-proxy-username = defaultusername
 # http-proxy-password = defaultpassword
 # http-compression = no
+# http-auth-types = basic;digest;negotiate
 # No http-timeout, so just use the builtin default.
 # No neon-debug-mask, so neon debugging is disabled.
 # ssl-authority-files = /path/to/CAcert.pem;/path/to/CAcert2.pem

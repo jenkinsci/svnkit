@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,10 +24,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminCommand extends AbstractSVNCommand {
@@ -51,12 +52,12 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
         }
         if (targets.isEmpty() || index > targets.size() - 1 ) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Repository argument required"));
+                    "Repository argument required"), SVNLogType.CLIENT);
         }
         SVNPath target = new SVNPath((String) targets.get(index));
         if (target.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "'" + target.getTarget() + "' is an URL when it should be a path"));
+                    "'" + target.getTarget() + "' is an URL when it should be a path"), SVNLogType.CLIENT);
         }
         return target.getFile();
     }
@@ -74,11 +75,11 @@ public abstract class SVNAdminCommand extends AbstractSVNCommand {
         } else if (rev.getDate() != null) {
             result = repos.getDatedRevision(rev.getDate());
         } else if (rev != SVNRevision.UNDEFINED) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier"), SVNLogType.CLIENT);
         }
         if (result > latestRevision) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Revisions must not be greater than the youngest revision ("  + latestRevision + ")"));
+                    "Revisions must not be greater than the youngest revision ("  + latestRevision + ")"), SVNLogType.CLIENT);
         }
         return result;
     }

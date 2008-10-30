@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,7 +25,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * XML handler classes which are provided in this package. All 
  * XML output is written to a specified <b>ContentHandler</b>.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractXMLHandler implements Locator {
@@ -104,15 +104,30 @@ public abstract class AbstractXMLHandler implements Locator {
         mySharedAttributes.addAttribute("", "", name, "CDATA", value);
     }
 
+    /**
+     * @return <code>0</code>
+     */
     public int getColumnNumber() {
         return 0;
     }
+
+    /**
+     * @return <code>0</code>
+     */
     public int getLineNumber() {
         return 0;
     }
+
+    /**
+     * @return <span class="javakeyword">null</span>
+     */
     public String getPublicId() {
         return null;
     }
+
+    /**
+     * @return <span class="javakeyword">null</span>
+     */
     public String getSystemId() {
         return null;
     }

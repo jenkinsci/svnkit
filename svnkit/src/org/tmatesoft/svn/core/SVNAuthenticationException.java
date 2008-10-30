@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,11 +17,13 @@ package org.tmatesoft.svn.core;
  * occured exactly during an authentication try. Provides the same kind 
  * of information as its base class does.
  *   
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see		SVNException
  */
 public class SVNAuthenticationException extends SVNException {
+
+    private static final long serialVersionUID = 4845L;
 
     /**
      * Creates a new authentication exception given detailed error 

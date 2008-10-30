@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  * a revision number, the datestamp when the revision was committed, the author 
  * of the revision, a commit log message and all paths changed in that revision. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see 	SVNLogEntryPath
  * @see     ISVNLogEntryHandler
@@ -35,8 +35,18 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  */
 public class SVNLogEntry implements Serializable {
     
-    public static SVNLogEntry EMPTY_ENTRY = new SVNLogEntry(Collections.EMPTY_MAP, SVNRepository.INVALID_REVISION, 
-            null, false);
+    private static final long serialVersionUID = 4845L;
+
+    /**
+     * This is a log entry children stop marker use by the <code>SVNKit</code> internals. Users should not
+     * compare the log entry received in their {@link ISVNLogEntryHandler} implementations with this one.
+     * Instead, to find the end of the log entry children sequence they should check the log entry's revision 
+     * for validity (i.e. that it is not less than <code>0</code>).
+     * 
+     * @since 1.2.0 
+     */
+    public static SVNLogEntry EMPTY_ENTRY = new SVNLogEntry(Collections.EMPTY_MAP, 
+            SVNRepository.INVALID_REVISION, null, false);
 
     private long myRevision;
     private Map myChangedPaths;
@@ -71,6 +81,18 @@ public class SVNLogEntry implements Serializable {
         }
     }
 
+    /**
+     * Constructs an <b>SVNLogEntry</b> object. 
+     * 
+     * @param changedPaths        a map collection which keys are
+     *                            all the paths that were changed in   
+     *                            <code>revision</code>, and values are 
+     *                            <b>SVNLogEntryPath</b> representation objects
+     * @param revision            a revision number
+     * @param revisionProperties  revision properties
+     * @param hasChildren         whether this entry has children or not
+     * @since 1.2.0
+     */
     public SVNLogEntry(Map changedPaths, long revision, SVNProperties revisionProperties, boolean hasChildren) {
         myRevision = revision;
         myChangedPaths = changedPaths;
@@ -78,6 +100,16 @@ public class SVNLogEntry implements Serializable {
         myHasChildren = hasChildren;
     }
 
+    /**
+     * Sets wheteher this log entry has children entries or not.
+     * 
+     * <p/>
+     * Note: this method is not intended for API users.
+     *  
+     * @param hasChildren  whether this entry has has children or not 
+     * @see                #hasChildren()
+     * @since              1.2.0
+     */
     public void setHasChildren(boolean hasChildren) {
         myHasChildren = hasChildren;
     }
@@ -86,9 +118,8 @@ public class SVNLogEntry implements Serializable {
      * Gets a map containing all the paths that were changed in the 
      * revision that this object represents.
      * 
-     * @return 		a map which keys are all the paths 
-     * 				that were changed and values are 
-     * 				<b>SVNLogEntryPath</b> objects
+     * @return 		a <code>String</code> to {@link SVNLogEntryPath} map which keys are all the paths that 
+     *              were changed in the revision and values represent information about each changed path
      * 
      */
     public Map getChangedPaths() {
@@ -123,6 +154,13 @@ public class SVNLogEntry implements Serializable {
         return myRevisionProperties.getStringValue(SVNRevisionProperty.LOG);
     }
     
+    /** 
+     * Returns the requested revision properties, which may be <span class="javakeyword">null</span> if it
+     * would contain no revision properties. 
+     * 
+     * @return   revision properties   
+     * @since    1.2.0 
+     */
     public SVNProperties getRevisionProperties() {
         return myRevisionProperties;
     }
@@ -196,6 +234,29 @@ public class SVNLogEntry implements Serializable {
         }
         return result.toString();
     }
+
+    /**
+     * Tells whether or not this log entry has children.
+     * 
+     * <p/>
+     * When a log operation requests additional merge information, extra log entries may be returned as a 
+     * result of this entry. The new entries, are considered children of the original entry, and will follow it. 
+     * When the HAS_CHILDREN flag is set, the receiver should increment its stack
+     * depth, and wait until an entry is provided with {@link SVNRepository#INVALID_REVISION} which
+     * indicates the end of the children.
+     * 
+     * <p/>
+     * For log operations which do not request additional merge information, the HAS_CHILDREN flag is always 
+     * <span class="javakeyword">false</span>.
+     * 
+     * <p/>
+     * Also for more information see:
+     * <a target="_top" href="http://subversion.tigris.org/merge-tracking/design.html#commutative-reporting">Subversion documentation</a>
+     * 
+     * @return  <span class="javakeyword">true</span> if this log entry has children entries due to 
+     *          merge-tracking information       
+     * @since   1.2.0, new in Subversion 1.5.0
+     */
     
     public boolean hasChildren() {
         return myHasChildren;

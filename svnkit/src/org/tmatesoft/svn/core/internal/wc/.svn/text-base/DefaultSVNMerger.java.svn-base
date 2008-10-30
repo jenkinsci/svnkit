@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 import de.regnis.q.sequence.line.QSequenceLineRAData;
@@ -54,8 +55,9 @@ import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
@@ -179,7 +181,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 os.write(SVNEncodingUtil.fuzzyEscape("\n").getBytes("UTF-8"));
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write properties conflict file: {1}", e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.WC);
             } finally {
                 SVNFileUtil.closeFile(os);
             }
@@ -225,7 +227,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             mergeResult = merger.merge(baseData, localData, latestData, options, result);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
             SVNFileUtil.closeFile(result);
             SVNFileUtil.closeFile(localIS);
@@ -273,7 +275,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 if (result == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
                             "Conflict callback violated API: returned no results.");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 
                 SVNConflictChoice choice = result.getConflictChoice();
@@ -317,7 +319,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     
     protected SVNMergeResult handleChooseWorking(SVNMergeFileSet files) throws SVNException {
         if (files == null) {
-            SVNErrorManager.cancel("");
+            SVNErrorManager.cancel("", SVNLogType.WC);
         }
         return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);        
     }
@@ -694,10 +696,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     	
     }
 
-    private boolean maybeGeneratePropConflict(String localPath, String propName,
-                                              SVNProperties workingProps, SVNPropertyValue oldValue, SVNPropertyValue newValue,
-                                              SVNPropertyValue baseValue, SVNPropertyValue workingValue,
-                                              SVNAdminArea adminArea, SVNLog log, boolean isDir) throws SVNException {
+    private boolean maybeGeneratePropConflict(String localPath, String propName, SVNProperties workingProps, 
+            SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue baseValue, 
+            SVNPropertyValue workingValue, SVNAdminArea adminArea, SVNLog log, boolean isDir) throws SVNException {
         boolean conflictRemains = true;
         if (myConflictCallback == null) {
             return conflictRemains;
@@ -717,7 +718,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                             "Cannot write a working property value file: {1}", e.getLocalizedMessage());
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.WC);
                 } finally {
                     SVNFileUtil.closeFile(os);
                 }
@@ -731,7 +732,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                             "Cannot write a new property value file: {1}", e.getLocalizedMessage());
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.WC);
                 } finally {
                     SVNFileUtil.closeFile(os);
                 }
@@ -747,7 +748,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                             "Cannot write a base property value file: {1}", e.getLocalizedMessage());
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.WC);
                 } finally {
                     SVNFileUtil.closeFile(os);
                 }
@@ -765,7 +766,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                             "Cannot write a base property value file: {1}", e.getLocalizedMessage());
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.WC);
                 } finally {
                     SVNFileUtil.closeFile(os);
                 }
@@ -784,7 +785,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                         merger.merge(baseData, localData, latestData, null, result);
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                        SVNErrorManager.error(err, e);
+                        SVNErrorManager.error(err, e, SVNLogType.WC);
                     } finally {
                         SVNFileUtil.closeFile(result);
                     }
@@ -795,8 +796,8 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             if (!isDir && workingProps != null) {
                 mimeType = workingProps.getStringValue(SVNProperty.MIME_TYPE);
             }
-            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, newFile,
-                    mergedFile, adminArea.getFile(localPath), null, mimeType, SVNProperty.isBinaryMimeType(mimeType));
+            SVNMergeFileSet fileSet = new SVNMergeFileSet(adminArea, log, baseFile, workingFile, localPath, 
+                    newFile, mergedFile, null, mimeType);
 
             SVNConflictAction action = SVNConflictAction.EDIT;
             if (oldValue == null && newValue != null) {
@@ -817,7 +818,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
                         "Conflict callback violated API: returned no results.");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             SVNConflictChoice choice = result.getConflictChoice();
             if (choice == SVNConflictChoice.MINE_FULL) {
@@ -832,7 +833,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 if (mergedFile == null && result.getMergedFile() == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,
                             "Conflict callback violated API: returned no merged file.");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
 
                 String mergedString = SVNFileUtil.readFile(mergedFile != null ? mergedFile : result.getMergedFile());

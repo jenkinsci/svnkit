@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNSubstitutor;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNTranslatorInputStream extends InputStream {
@@ -54,10 +54,12 @@ public class SVNTranslatorInputStream extends InputStream {
     }
 
     public int read(byte[] b, int off, int len) throws IOException {
+        boolean isEOF = false;
         int available = myTranslatedBuffer.position();
         while(available < len) {
             int read = mySource.read(mySourceBuffer, 0, mySourceBuffer.length);
-            if (read <= 0) {
+            if (read < 0) {
+                isEOF = true;
                 try {
                     myTranslatedBuffer = mySubstitutor.translateChunk(null, myTranslatedBuffer);
                 } catch (SVNException svne) {
@@ -79,6 +81,9 @@ public class SVNTranslatorInputStream extends InputStream {
         len = Math.min(myTranslatedBuffer.remaining(), len);
         myTranslatedBuffer.get(b, off, len);
         myTranslatedBuffer.compact();
+        if (isEOF && len == 0) {
+            return -1;
+        }
         return len;
     }
 

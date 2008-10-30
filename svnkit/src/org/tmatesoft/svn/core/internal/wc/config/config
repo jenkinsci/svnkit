@@ -36,6 +36,10 @@
 ### Set diff3-has-program-arg to 'true' or 'yes' if your 'diff3'
 ###   program accepts the '--diff-program' option.
 # diff3-has-program-arg = [true | false]
+### Set merge-tool-cmd to the command used to invoke your external
+### merging tool of choice. Subversion will pass 4 arguments to
+### the specified command: base theirs mine merged
+# merge-tool-cmd = merge_command
 
 ### Section for configuring tunnel agents.
 [tunnels]
@@ -49,10 +53,11 @@
 ### spaces.  The command will be invoked as:
 ###   <command> <hostname> svnserve -t
 ### (If the URL includes a username, then the hostname will be
-### passed to the tunnel agent as <user>@<hostname>.)  If the
-### built-in ssh scheme were not predefined, it could be defined
-### as:
-# ssh = $SVN_SSH ssh
+### passed to the tunnel agent as <user>@<hostname>.)  Here we
+### redefine the built-in 'ssh' scheme to avoid an unfortunate
+### interaction with the "ControlMaster auto" feature (for
+### details, see Debian Bug #413102):
+ssh = $SVN_SSH ssh -o ControlMaster=no
 ### If you wanted to define a new 'rsh' scheme, to be used with
 ### 'svn+rsh:' URLs, you could do so as follows:
 # rsh = rsh
@@ -68,7 +73,9 @@
 ### Set global-ignores to a set of whitespace-delimited globs
 ### which Subversion will ignore in its 'status' output, and
 ### while importing or adding files and directories.
-# global-ignores = *.o *.lo *.la #*# .*.rej *.rej .*~ *~ .#* .DS_Store
+### '*' matches leading dots, e.g. '*.rej' matches '.foo.rej'.
+# global-ignores = *.o *.lo *.la *.al .libs *.so *.so.[0-9]* *.a *.pyc *.pyo
+#   *.rej *~ #*# .#* .*.swp .DS_Store
 ### Set log-encoding to the default encoding for log messages
 # log-encoding = latin1
 ### Set use-commit-times to make checkout/update/switch/revert
@@ -77,19 +84,32 @@
 ### Set no-unlock to prevent 'svn commit' from automatically
 ### releasing locks on files.
 # no-unlock = yes
+### Set mime-types-file to a MIME type registry file, used to
+### provide hints to Subversion's MIME type auto-detection
+### algorithm.
+# mime-types-file = /path/to/mime.types
+### Set preserved-conflict-file-exts to a whitespace-delimited
+### list of patterns matching file extensions which should be
+### preserved in generated conflict file names.  By default,
+### conflict files use custom extensions.
+# preserved-conflict-file-exts = doc ppt xls od?
 ### Set enable-auto-props to 'yes' to enable automatic properties
 ### for 'svn add' and 'svn import', it defaults to 'no'.
 ### Automatic properties are defined in the section 'auto-props'.
 # enable-auto-props = yes
+### Set interactive-conflicts to 'no' to disable interactive
+### conflict resolution prompting.  It defaults to 'yes'.
+# interactive-conflicts = no
 
 ### Section for configuring automatic properties.
 [auto-props]
 ### The format of the entries is:
 ###   file-name-pattern = propname[=value][;propname[=value]...]
 ### The file-name-pattern can contain wildcards (such as '*' and
-### '?').  All entries which match will be applied to the file.
-### Note that auto-props functionality must be enabled, which
-### is typically done by setting the 'enable-auto-props' option.
+### '?').  All entries which match (case-insensitively) will be
+### applied to the file.  Note that auto-props functionality
+### must be enabled, which is typically done by setting the
+### 'enable-auto-props' option.
 # *.c = svn:eol-style=native
 # *.cpp = svn:eol-style=native
 # *.h = svn:eol-style=native

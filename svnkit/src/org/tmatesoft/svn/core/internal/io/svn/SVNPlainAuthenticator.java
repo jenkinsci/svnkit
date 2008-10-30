@@ -21,10 +21,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNPlainAuthenticator extends SVNAuthenticator {
@@ -45,7 +46,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
         SVNURL location = repos.getLocation();
         SVNPasswordAuthentication auth = null;
         if (repos.getExternalUserName() != null && mechs.contains("EXTERNAL")) {
-            getConnection().write("(w(s))", new Object[]{"EXTERNAL", repos.getExternalUserName()});
+            getConnection().write("(w(s))", new Object[]{"EXTERNAL", ""});
             failureReason = readAuthResponse();
         } else if (mechs.contains("ANONYMOUS")) {
             getConnection().write("(w(s))", new Object[]{"ANONYMOUS", ""});
@@ -69,7 +70,7 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                     if (e.getErrorMessage().getErrorCode() == SVNErrorCode.CANCELLED) {
                         throw e;
                     } else if (getLastError() != null) {
-                        SVNErrorManager.error(getLastError());
+                        SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
                     }
                     throw e;
                 }
@@ -104,19 +105,19 @@ public class SVNPlainAuthenticator extends SVNAuthenticator {
                             getConnectionOutputStream().write(response);
                             getConnectionOutputStream().flush();
                         } catch (IOException e) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
                         }
                     }
                 }
             }
         } else {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Cannot negotiate authentication mechanism"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Cannot negotiate authentication mechanism"), SVNLogType.NETWORK);
         }
         if (failureReason != null) {
             if (getLastError() != null) {
-                SVNErrorManager.error(getLastError());
+                SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
             }
-            SVNErrorManager.error(failureReason);
+            SVNErrorManager.error(failureReason, SVNLogType.NETWORK);
         }
     }
     

@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-24T21:18:08.649609Z
-4583
+2008-09-30T18:20:38.652280Z
+4949
 alex
 has-props
 
@@ -29,6 +29,9 @@ svn:special svn:externals svn:needs-lock
 svnkit-cli
 dir
 
+www
+dir
+
 .project
 file
 
@@ -42,21 +45,39 @@ cbc4344022bd9a871d1e7584072a0d63
 alex
 has-props
 
-www
-dir
-
 THIRD-PARTY.txt
 file
 
 
 
 
-2008-07-24T04:49:42.000000Z
-10da4ae76439181821c604fa81add9e6
-2008-06-19T20:15:15.874886Z
-4377
+2008-10-30T04:42:04.000000Z
+a5659852f30094195f606174d5ddc7f1
+2008-09-24T14:07:55.499648Z
+4926
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1082
 
 pom.xml
 file
@@ -64,12 +85,33 @@ file
 
 
 
-2008-07-24T04:58:47.000000Z
-be8c15900ed3fcc9dd80c39d472dffef
-2008-06-19T20:15:15.874886Z
-4377
+2008-10-30T04:42:04.000000Z
+d59de959d4d9f8c71da5319df9723a02
+2008-09-16T17:47:40.986804Z
+4886
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1015
 
 svnkit-test
 dir
@@ -80,12 +122,33 @@ file
 
 
 
-2008-07-24T04:58:47.000000Z
-b11be9737c2aa4e8a505b04b56c434c1
-2008-01-23T16:42:39.168436Z
-3785
+2008-10-30T04:42:04.000000Z
+b69cc6bba7c31dd7aa43247accff59e5
+2008-09-16T17:47:40.986804Z
+4886
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+750
 
 build.xml
 file
@@ -93,12 +156,39 @@ file
 
 
 
-2008-08-02T14:58:31.000000Z
-7f00b609eb2e5933cfeb74d59853f131
-2008-07-05T21:46:55.347509Z
-4500
+2008-10-30T04:42:04.000000Z
+8302f3a9453cdfd174c324056b42df32
+2008-09-16T17:47:40.986804Z
+4886
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+35194
+
+svnkit-eclipse
+dir
+
+contrib
+dir
 
 .classpath
 file
@@ -120,10 +210,7 @@ has-props
 .classpath.2.r4575
 .classpath.mine
 
-contrib
-dir
-
-svnkit-eclipse
+doc
 dir
 
 changelog.txt
@@ -132,15 +219,67 @@ file
 
 
 
-2008-08-02T14:58:31.000000Z
-d7f4f8f19847887aac6df5b9cdac36f6
-2008-07-24T21:18:08.649609Z
-4583
+2008-10-30T04:42:04.000000Z
+d8f87b174a482c3800ab311b877f981d
+2008-09-30T18:20:38.652280Z
+4949
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10870
 
-doc
-dir
+svnkit.build.properties
+file
+
+
+
+
+2008-10-30T04:44:59.000000Z
+3c80a781f143b21729c9ca6984ed059c
+2008-09-30T18:20:38.652280Z
+4949
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+400
 
 svnkit.ipr
 file
@@ -153,19 +292,6 @@ b46fe8c8b7f3cc5a8d080b466356289f
 2008-06-11T14:40:58.084670Z
 4326
 semen
-has-props
-
-svnkit.build.properties
-file
-
-
-
-
-2008-08-02T14:58:31.000000Z
-8f27628f0490bece431620b6ec867ebb
-2008-07-24T21:18:08.649609Z
-4583
-alex
 has-props
 
 COPYING
@@ -200,12 +326,33 @@ file
 
 
 
-2008-07-24T04:58:47.000000Z
-5e7904e456d6edf1ebcb2ff25a55b284
-2008-06-19T20:15:15.874886Z
-4377
+2008-10-30T04:44:59.000000Z
+90a4341fb8b8ec778ef67de800535e31
+2008-09-30T18:20:38.652280Z
+4949
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1810
 
 .settings
 dir

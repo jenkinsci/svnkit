@@ -23,10 +23,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNDumpStreamParser {
@@ -50,7 +51,7 @@ public class SVNDumpStreamParser {
             if (!line.startsWith(SVNAdminHelper.DUMPFILE_MAGIC_HEADER + ":")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                         "Malformed dumpfile header");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             try {
@@ -60,12 +61,12 @@ public class SVNDumpStreamParser {
                 if (version > SVNAdminHelper.DUMPFILE_FORMAT_VERSION) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                             "Unsupported dumpfile version: {0}", new Integer(version));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                         "Malformed dumpfile header");
-                SVNErrorManager.error(err, nfe);
+                SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
             }
         
             while (true) {
@@ -103,12 +104,12 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                             "Unrecognized record type in stream");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 
                 String contentLength = (String) headers.get(SVNAdminHelper.DUMPFILE_CONTENT_LENGTH);
@@ -133,7 +134,7 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse property block length header");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
                     actualPropLength += parsePropertyBlock(dumpStream, handler, decoder, length, foundNode);
                 }
@@ -147,7 +148,7 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse text block length header");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
                     handler.parseTextBlock(dumpStream, length, isDelta);
                 } else if (isOldVersion) {
@@ -157,7 +158,7 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse content length header");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
                     
                     length -= actualPropLength;
@@ -174,7 +175,7 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse content length header");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
 
                     long propertyContentLength = 0;
@@ -184,7 +185,7 @@ public class SVNDumpStreamParser {
                         } catch (NumberFormatException nfe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                     "Malformed dumpfile header: can't parse property block length header");
-                            SVNErrorManager.error(err, nfe);
+                            SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                         }
                     }
                     remaining -= propertyContentLength; 
@@ -196,7 +197,7 @@ public class SVNDumpStreamParser {
                         } catch (NumberFormatException nfe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                     "Malformed dumpfile header: can't parse text block length header");
-                            SVNErrorManager.error(err, nfe);
+                            SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                         }
                     }
                     remaining -= txtContentLength; 
@@ -204,7 +205,7 @@ public class SVNDumpStreamParser {
                     if (remaining < 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Sum of subblock sizes larger than total block content length");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     }
                     
                     byte buf[] = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
@@ -230,7 +231,7 @@ public class SVNDumpStreamParser {
             
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
     }
     
@@ -248,7 +249,7 @@ public class SVNDumpStreamParser {
                 if (line == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                             "Incomplete or unterminated property block");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 
                 //including '\n'
@@ -262,7 +263,7 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse node property key length");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
                     
                     byte[] buff = new byte[len + 1];
@@ -283,7 +284,7 @@ public class SVNDumpStreamParser {
                         } catch (NumberFormatException nfe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                     "Malformed dumpfile header: can't parse node property value length");
-                            SVNErrorManager.error(err, nfe);
+                            SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                         }
     
                         buff = new byte[len + 1];
@@ -304,7 +305,7 @@ public class SVNDumpStreamParser {
                     } catch (NumberFormatException nfe) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                                 "Malformed dumpfile header: can't parse node property key length");
-                        SVNErrorManager.error(err, nfe);
+                        SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
                     }
                     
                     byte[] buff = new byte[len + 1];
@@ -322,7 +323,7 @@ public class SVNDumpStreamParser {
             }
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
         
         return actualLength;
@@ -352,7 +353,7 @@ public class SVNDumpStreamParser {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                         "Dump stream contains a malformed header (with no '':'') at ''{0}''", 
                         header.length() > 20 ? header.substring(0, 19) : header);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         
             String name = header.substring(0, colonInd);
@@ -360,7 +361,7 @@ public class SVNDumpStreamParser {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, 
                         "Dump stream contains a malformed header (with no value) at ''{0}''", 
                         header.length() > 20 ? header.substring(0, 19) : header);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             String value = header.substring(colonInd + 2);
             headers.put(name, value);

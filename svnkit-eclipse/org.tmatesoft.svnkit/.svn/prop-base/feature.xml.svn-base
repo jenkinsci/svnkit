@@ -1,0 +1,10 @@
+K 13
+svn:eol-style
+V 2
+LF
+K 13
+svn:mergeinfo
+V 306
+/branches/1.2.x/svnkit-eclipse/org.tmatesoft.svnkit.feature/feature.xml:4795-4796
+/trunk/svnkit-eclipse/org.tmatesoft.svnkit/feature.xml:4819,4822,4828,4830-4832,4837-4845,4850,4852-4853,4858-4859,4861-4862,4864-4866,4872,4875,4879-4885,4892-4897,4900-4905,4907-4908,4910,4919-4920,4923,4932,4936-4937,4941
+END

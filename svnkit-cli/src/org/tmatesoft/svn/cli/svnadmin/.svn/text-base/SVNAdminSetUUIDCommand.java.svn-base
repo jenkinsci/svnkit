@@ -18,10 +18,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminSetUUIDCommand extends SVNAdminCommand {
@@ -38,7 +39,7 @@ public class SVNAdminSetUUIDCommand extends SVNAdminCommand {
         String uuid = null;
         if (getEnvironment().getArguments().size() > 2) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else if (getEnvironment().getArguments().size() > 1) {
             uuid = (String) getEnvironment().getArguments().get(1);
         }

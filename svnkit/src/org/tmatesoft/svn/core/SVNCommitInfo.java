@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,7 +26,7 @@ import java.util.Date;
  * In addition, this class provides anexception that, if a commit has failed,
  * has got a description of a failure reason.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNCommitInfo {
@@ -108,6 +108,7 @@ public class SVNCommitInfo {
     }
 
     /**
+     * @return exception occurred
      * @deprecated use {@link #getErrorMessage() } instead
      */
     public SVNException getError() {

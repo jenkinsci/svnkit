@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/doc/wiki
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/wiki
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2006-11-14T17:21:49.167818Z
-2803
-sa
+2008-07-30T16:53:59.266781Z
+4613
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -58,11 +58,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-ea938cd00ca2d308f79ec8b2e2349038
-2006-11-09T20:25:08.533496Z
-2776
-alex
+2008-10-30T04:42:01.000000Z
+b15e7f143ad6fb0152b8f7abc8f186f1
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5324
 
 Tree23.png
 file
@@ -109,11 +131,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-ca08dc374a027ad2e561b8f0e86202c7
-2006-11-09T20:08:45.359921Z
-2775
-alex
+2008-10-30T04:42:01.000000Z
+54c84af9522265ee7e753b83aa31e461
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+810
 
 Managing_A_Working_Copy.wp
 file
@@ -121,11 +165,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-b8d6522acee5cecc802767d8eddda624
-2006-11-09T20:25:08.533496Z
-2776
-alex
+2008-10-30T04:42:01.000000Z
+236527d7299ffb50e56f54f36fb39cdc
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+48809
 
 export.vm
 file
@@ -133,11 +199,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-974b674dcdb7d0ced5c3ff3abccfba23
-2006-05-26T17:54:11.029485Z
-2480
-sa
+2008-10-30T04:42:01.000000Z
+4959be043585a04a98dc9b289f904720
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+453
 
 Printing_Out_A_Subversion_Repository_Tree.wp
 file
@@ -145,11 +233,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-84765bcd1dafec41c8991ce690d29ca4
-2006-11-14T17:21:49.167818Z
-2803
-sa
+2008-10-30T04:42:01.000000Z
+519440d25fd58f91fb7ef58b4c96cc84
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6412
 
 svnkit_architecture.png
 file
@@ -196,11 +306,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-82fd0459ff9c1b14333b782d5b42c8a0
-2006-11-09T20:25:08.533496Z
-2776
-alex
+2008-10-30T04:42:01.000000Z
+628a0a9588199127728544662367d089
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3129
 
 main.vm
 file
@@ -208,11 +340,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-a8a1c95728767089aaafc1a4d56eca02
-2006-05-26T17:54:11.029485Z
-2480
-sa
+2008-10-30T04:42:01.000000Z
+e9f2129459016bf8a5fb00c0ab5ddf85
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+452
 
 Update_Tree2.png
 file
@@ -259,24 +413,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-219b8f27d0524b0ef6150122a24da9f5
-2006-11-14T17:21:49.167818Z
-2803
-sa
-
-repository_tree.png
-file
-
-
-
-
-2008-07-24T04:49:43.000000Z
-e835a764d1c1550d347de5f800aaa49f
-2006-06-05T17:20:30.666879Z
-2494
-sa
+2008-10-30T04:42:01.000000Z
+d00bf9f947af4a9f8f81045d9bc804da
+2008-07-30T16:53:59.266781Z
+4613
+semen
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+24090
 
 AuthManager_Architecture.png
 file
@@ -291,29 +454,52 @@ file
 sa
 has-props
 
+repository_tree.png
+file
+
+
+
+
+2008-07-24T04:49:43.000000Z
+e835a764d1c1550d347de5f800aaa49f
+2006-06-05T17:20:30.666879Z
+2494
+sa
+has-props
+
 Printing_Out_File_Contents.wp
 file
 
 
 
 
-2008-07-24T04:49:43.000000Z
-447ef2c4507a722908983ca564f55a06
-2006-11-14T17:21:49.167818Z
-2803
-sa
-
-Setting_Up_A_Subversion_Repository.wp
-file
+2008-10-30T04:42:01.000000Z
+14eb74d15a487ca8f6cf637cdfb518ff
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
 
 
 
 
-2008-07-24T04:49:43.000000Z
-cf99692d53d05cb101cf879b9c0ef82d
-2006-11-14T17:21:49.167818Z
-2803
-sa
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3913
 
 Subversion_Architecture.png
 file
@@ -327,6 +513,40 @@ d5cf54020bcbb99fb12150481d94bffa
 2503
 sa
 has-props
+
+Setting_Up_A_Subversion_Repository.wp
+file
+
+
+
+
+2008-10-30T04:42:01.000000Z
+9c411901cb0277494980bf72403e9668
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7367
 
 AuthProvider_In_Work.png
 file
@@ -367,18 +587,6 @@ f187fd4255ce2d970b2724864d63d0cf
 sa
 has-props
 
-Editing_Operation_Update.wp
-file
-
-
-
-
-2008-07-24T04:49:43.000000Z
-9ee676ff00e8b04916aeea24a4b25970
-2006-11-14T17:21:49.167818Z
-2803
-sa
-
 WC_Example3.png
 file
 
@@ -391,6 +599,40 @@ e47e353a539dacb9bf7f4139b4a0b7e6
 2531
 sa
 has-props
+
+Editing_Operation_Update.wp
+file
+
+
+
+
+2008-10-30T04:42:01.000000Z
+a245b1a091f6147355f6afe5cfa56175
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20674
 
 WC_Example4.png
 file
@@ -424,11 +666,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-a7e8beb55eb738885c6f4091ddf308e4
-2006-11-14T17:21:49.167818Z
-2803
-sa
+2008-10-30T04:42:01.000000Z
+00e4152892c31bf363008549fafab23e
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+17522
 
 Authentication.wp
 file
@@ -436,11 +700,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-0fda909e4d19d6309ae6fc38ac10a377
-2006-11-09T20:25:08.533496Z
-2776
-alex
+2008-10-30T04:42:01.000000Z
+823cbc82aec4375895c03ffea2cda8f4
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12270
 
 Getting_Started_With_SVNKit.wp
 file
@@ -448,11 +734,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-175dd1fad75a969c523e935a22f424ab
-2006-11-14T17:21:49.167818Z
-2803
-sa
+2008-10-30T04:42:01.000000Z
+a05a8dae0aecd600786611cff6562b46
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5299
 
 What_Is_Subversion_For.wp
 file
@@ -460,11 +768,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-97b4da1d4d1bb2071cab1ed76a681588
-2006-11-14T17:21:49.167818Z
-2803
-sa
+2008-10-30T04:42:01.000000Z
+44fbfaaed33f3d5aee9d26b321cd1a79
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5254
 
 Replicator_Diagram.png
 file
@@ -485,11 +815,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
-002ce76ab6b8d2bb5bb9ac28f14383c0
-2006-05-26T17:54:11.029485Z
-2480
-sa
+2008-10-30T04:42:01.000000Z
+8bab91596572ff5714c291c4d338c502
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6461
 
 Structure.txt
 file

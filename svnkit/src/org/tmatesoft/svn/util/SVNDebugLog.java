@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,51 +11,32 @@
  */
 package org.tmatesoft.svn.util;
 
-import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugLogger;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNDebugLog {
     
     private static ISVNDebugLog ourDefaultLog;
-    private static Map ourLogs;
-    
-    static {
-        ourLogs = new SVNHashMap();
-        registerLog(SVNLogType.NETWORK, new DefaultSVNDebugLogger(SVNLogType.NETWORK));
-        registerLog(SVNLogType.WC, new DefaultSVNDebugLogger(SVNLogType.WC));
-        registerLog(SVNLogType.CLIENT, new DefaultSVNDebugLogger(SVNLogType.CLIENT));
-    }
-    
-    public static ISVNDebugLog registerLog(SVNLogType logType, ISVNDebugLog log) {
-        return (ISVNDebugLog) ourLogs.put(logType, log);
-    }
-    
+
     public static void setDefaultLog(ISVNDebugLog log) {
         ourDefaultLog = log;
     }
     
     public static ISVNDebugLog getDefaultLog() {
         if (ourDefaultLog == null) {
-            ourDefaultLog = new DefaultSVNDebugLogger(SVNLogType.DEFAULT);
+            ourDefaultLog = new DefaultSVNDebugLogger();
         }
         return ourDefaultLog;
     }
 
-    public static ISVNDebugLog getLog(SVNLogType logType) {
-        ISVNDebugLog logger = (ISVNDebugLog) ourLogs.get(logType);
-        return logger == null ? getDefaultLog() : logger; 
-    }
-    
-    public static void assertCondition(boolean condition, String message) {
+    public static void assertCondition(SVNLogType logType, boolean condition, String message) {
         if (!condition) {
-            getDefaultLog().logSevere(message);
-            getDefaultLog().logSevere(new Exception(message));
+            getDefaultLog().logSevere(logType, message);
+            getDefaultLog().logSevere(logType, new Exception(message));
         }
     }
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,9 +28,10 @@ import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSInputStream extends InputStream {
@@ -56,7 +57,7 @@ public class FSInputStream extends InputStream {
             myDigest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
-            SVNErrorManager.error(err, nsae);
+            SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
         }
 
         try {
@@ -76,7 +77,7 @@ public class FSInputStream extends InputStream {
             return SVNFileUtil.DUMMY_IN;
         } else if (fileNode.getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get textual contents of a *non*-file node");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         FSRepresentation representation = fileNode.getTextRepresentation();
         if (representation == null) {
@@ -123,7 +124,7 @@ public class FSInputStream extends InputStream {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
                             myHexChecksum, hexDigest
                     });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
         }
@@ -163,7 +164,7 @@ public class FSInputStream extends InputStream {
                         curState.myOffset = curState.myFile.position();
                         if (curState.myOffset >= curState.myEnd) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Reading one svndiff window read beyond the end of the representation");
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.FSFS);
                         }
                     }
                     SVNDiffWindow window = myCombiner.readWindow(curState.myFile, curState.myVersion);
@@ -212,7 +213,7 @@ public class FSInputStream extends InputStream {
                 byte[] header = buffer.array();
                 if (!(header[0] == 'S' && header[1] == 'V' && header[2] == 'N' && r == 4)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed svndiff data in representation");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 repState.myVersion = header[3];
                 repState.myChunkIndex = 0;
@@ -233,7 +234,7 @@ public class FSInputStream extends InputStream {
         } catch (IOException ioe) {
             file.close();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } catch (SVNException svne) {
             file.close();
             throw svne;
@@ -262,14 +263,14 @@ public class FSInputStream extends InputStream {
             int delimiterInd = line.indexOf(' ');
             if (delimiterInd == -1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             String header = line.substring(0, delimiterInd);
 
             if (!FSRepresentation.REP_DELTA.equals(header)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
 
             line = line.substring(delimiterInd + 1);
@@ -278,7 +279,7 @@ public class FSInputStream extends InputStream {
                 delimiterInd = line.indexOf(' ');
                 if (delimiterInd == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 String baseRevision = line.substring(0, delimiterInd);
                 repState.myBaseRevision = Long.parseLong(baseRevision);
@@ -287,7 +288,7 @@ public class FSInputStream extends InputStream {
                 delimiterInd = line.indexOf(' ');
                 if (delimiterInd == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 String baseOffset = line.substring(0, delimiterInd);
                 repState.myBaseOffset = Long.parseLong(baseOffset);
@@ -297,7 +298,7 @@ public class FSInputStream extends InputStream {
                 repState.myBaseLength = Long.parseLong(line);
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed representation header");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             return repState;
         } catch (SVNException svne) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,34 +19,84 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * The <b>SVNMergeRangeList</b> represents an array of merge ranges applied to a single target. 
+ * Provides addition functionality to operate with merge range lists.
+ * 
+ * @version 1.2.0 
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNMergeRangeList {
+    /**
+     * A string that is used in mergeinfo to mark the mergeinfo as being non-inheritable. 
+     */
     public static String MERGE_INFO_NONINHERITABLE_STRING = "*";
     
-    public static SVNMergeRangeList NO_MERGE_INFO_LIST = new SVNMergeRangeList(new SVNMergeRange(SVNRepository.INVALID_REVISION, 
-    		SVNRepository.INVALID_REVISION, false));
-
     private SVNMergeRange[] myRanges;
     
+    /**
+     * Creates a new merge range list initializing it with a single merge range which parameters are passed 
+     * to this constructor.
+     * 
+     * @param start          merge range start revision  
+     * @param end            merge range end revision
+     * @param inheritable    inheritance information
+     */
+    public SVNMergeRangeList(long start, long end, boolean inheritable) {
+        this(new SVNMergeRange(start, end, inheritable));
+    }
+
+    /**
+     * Creates a new merge range list initializing it with the specified single merge range.
+     * 
+     * @param range merge range
+     */
     public SVNMergeRangeList(SVNMergeRange range) {
     	this(new SVNMergeRange[] { range });
     }
 
+    /**
+     * Creates a new merge range list initializing it with an array of merge ranges.
+     * 
+     * <p/>
+     * Note: <code>ranges</code> are not copied to a separate array but stored immediately, as is.
+     * 
+     * @param ranges      merge ranges array 
+     */
+    
     public SVNMergeRangeList(SVNMergeRange[] ranges) {
         myRanges = ranges == null ? new SVNMergeRange[0] : ranges;
     }
     
+    /**
+     * Returns an array of {@link SVNMergeRange} ranges backed by this merge range list object.
+     * 
+     * <p/>
+     * Note: this method does not make a copy of the original array, instead it returns the original array 
+     * itself. If you want a safe copy of merge ranges, use {@link #getRangesAsList()} instead.
+     * 
+     * <p/>
+     * Note: merge ranges returned in the array are not copied. 
+     * 
+     * @return array of merge ranges 
+     */
     public SVNMergeRange[] getRanges() {
         return myRanges;
     }
     
+    /**
+     * Returns a list of merge ranges backed by this merge range list.
+     * 
+     * <p/> 
+     * Note: ranges themselves are not copied but placed in the list as is.
+     * 
+     * @return a new list instance containing all of the ranges stored in this merge range list 
+     */
     public List getRangesAsList() {
     	LinkedList list = new LinkedList();
     	for (int i = 0; i < myRanges.length; i++) {
@@ -56,14 +106,46 @@ public class SVNMergeRangeList {
     	return list;
     }
     
+    /**
+     * Appends a new merge range to the end of the ranges list.
+     * A new {@link SVNMergeRange} is created used the parameters passed to this method.
+     * 
+     * @param start            merge range start revision 
+     * @param end              merge range end revision
+     * @param inheritable      inheritance information
+     */
+    public void pushRange(long start, long end, boolean inheritable) {
+        SVNMergeRange[] ranges = new SVNMergeRange[myRanges.length + 1];
+        ranges[ranges.length - 1] = new SVNMergeRange(start, end, inheritable);
+        System.arraycopy(myRanges, 0, ranges, 0, myRanges.length);
+        myRanges = ranges;
+    }
+    
+    /**
+     * Returns number of merge ranges stored in this merge range list.
+     * 
+     * @return number of merge ranges 
+     */
     public int getSize() {
         return myRanges.length;
     }
     
+    /**
+     * Checks whether this merge range list has no merge ranges.
+     * 
+     * @return  <span class="javakeyword">true</span> if this merge range list is empty;
+     *          otherwise <span class="javakeyword">false</span>
+     */
     public boolean isEmpty() {
         return myRanges.length == 0;
     }
     
+    /**
+     * Makes a copy of this merge range list. All merge ranges stored in this list will be copied 
+     * to a new array which will be covered into a new <code>SVNMergeRangeList</code> instance.
+     * 
+     * @return copy of this merge range list  
+     */
     public SVNMergeRangeList dup() {
         SVNMergeRange[] ranges = new SVNMergeRange[myRanges.length];
         for (int i = 0; i < myRanges.length; i++) {
@@ -73,6 +155,26 @@ public class SVNMergeRangeList {
         return new SVNMergeRangeList(ranges);
     }
     
+    /** 
+     * Merges two range lists placing the results into a new {@link SVNMergeRangeList} object. 
+     * Either range list may be empty.
+     *
+     * <p/>
+     * When intersecting range lists are merged, the inheritability of the resulting {@link SVNMergeRange} 
+     * depends on the inheritability of the operands. If two non-inheritable ranges are merged the result is 
+     * always non-inheritable, in all other cases the resulting range is inheritable.
+     *
+     * <p/>
+     * Note: range lists must be sorted in ascending order. The return range list is guaranteed to remain
+     * in sorted order and be compacted to the minimal number of ranges needed to represent the merged result.
+     *
+     * <p/>
+     * Note: this method does not change the state of this object. Instead it produces a result in a new object.
+     * 
+     * @param  rangeList       range list to merge with 
+     * @return                 resultant range list                 
+     * @throws SVNException 
+     */
     public SVNMergeRangeList merge(SVNMergeRangeList rangeList) throws SVNException {
         int i = 0;
         int j = 0;
@@ -103,7 +205,7 @@ public class SVNMergeRangeList {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "ASSERTION FAILURE in SVNMergeRangeList.merge(): expected to reach the end of at least " +
                     "one range list");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         for (; i < myRanges.length; i++) {
@@ -118,23 +220,11 @@ public class SVNMergeRangeList {
         return SVNMergeRangeList.fromCollection(resultRanges);
     }
     
-/*    public SVNMergeRangeList combineRanges() {
-        Collection combinedRanges = new LinkedList();
-        SVNMergeRange lastRange = null;
-        for (int k = 0; k < myRanges.length; k++) {
-            SVNMergeRange nextRange = myRanges[k];
-            SVNMergeRange combinedRange = lastRange == null ? nextRange : lastRange.combine(nextRange, false); 
-            if (combinedRange != lastRange) {
-                lastRange = combinedRange;
-                combinedRanges.add(lastRange);
-            }
-        }
-        SVNMergeRange[] ranges = (SVNMergeRange[]) combinedRanges.toArray(new SVNMergeRange[combinedRanges.size()]);
-        Arrays.sort(ranges);
-        return new SVNMergeRangeList(ranges);
-    }
-*/
-    
+    /**
+     * Returns a string representation of this object.
+     * 
+     * @return this object as a string
+     */
     public String toString() {
         String output = "";
         for (int i = 0; i < myRanges.length; i++) {
@@ -147,45 +237,39 @@ public class SVNMergeRangeList {
         return output;
     }
 
-    /**
-     * Returns ranges which present in this range list but not in the 
-     * argument range list. 
+
+    /** 
+     * Removes <code>eraserRangeList</code> (the subtrahend) from this range list (the
+     * minuend), and places the resulting difference into a new <code>SVNMergeRangeList</code> object.
+     * 
+     * @param  eraserRangeList          ranges to remove from this range list 
+     * @param  considerInheritance      whether inheritance information should be taken into account
+     * @return                          the resultant difference 
      */
     public SVNMergeRangeList diff(SVNMergeRangeList eraserRangeList, boolean considerInheritance) {
         return removeOrIntersect(eraserRangeList, true, considerInheritance);
     }
     
-    public SVNMergeRangeList intersect(SVNMergeRangeList eraserRangeList, boolean considerInheritance) {
-        return removeOrIntersect(eraserRangeList, false, considerInheritance);
+    /** 
+     * Finds the intersection of this range list and <code>rangeList</code> and places the result into 
+     * a new <code>SVNMergeRangeList</code> object.
+     * 
+     * @param  rangeList               range list to intersect with
+     * @param  considerInheritance     whether inheritance information should be taken into account
+     * @return                         the result of intersection
+     */
+    public SVNMergeRangeList intersect(SVNMergeRangeList rangeList, boolean considerInheritance) {
+        return removeOrIntersect(rangeList, false, considerInheritance);
     }
     
-    public long countRevisions() {
-        long revCount = 0;
-        for (int i = 0; i < myRanges.length; i++) {
-            SVNMergeRange range = myRanges[i];
-            revCount += range.getEndRevision() - range.getStartRevision();
-        }
-        return revCount;
-    }
-    
-    public long[] toRevisionsArray() {
-        List revs = new LinkedList();
-        for (int i = 0; i < myRanges.length; i++) {
-            SVNMergeRange range = myRanges[i];
-            for (long rev = range.getStartRevision() + 1; rev <= range.getEndRevision(); rev ++) {
-                revs.add(new Long(rev));
-            }
-        }
-
-        long[] revisionsArray = new long[revs.size()];
-        int i = 0;
-        for (Iterator revsIter = revs.iterator(); revsIter.hasNext();) {
-            Long revisionObject = (Long) revsIter.next();
-            revisionsArray[i++] = revisionObject.longValue();
-        }
-        return revisionsArray; 
-    }
-    
+    /**
+     * Runs through all merge ranges in this object and says, whether the specified <code>revision</code>
+     * falls between start and end revision of any of those ranges.
+     * 
+     * @param revision revision to find in ranges 
+     * @return <span class="javakeyword">true</span> if one of the ranges in this list includes the 
+     *         specified <code>revision</code>    
+     */
     public boolean includes(long revision) {
         for (int i = 0; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];
@@ -196,6 +280,12 @@ public class SVNMergeRangeList {
         return false;
     }
     
+    /** 
+     * Reverses this range list, and the start and end fields of each
+     * range in this range list, in place.
+     * 
+     * @return this object itself 
+     */
     public SVNMergeRangeList reverse() {
         if (myRanges.length != 0) {
             for (int i = 0; i < myRanges.length/2; i++) {
@@ -212,6 +302,20 @@ public class SVNMergeRangeList {
         return this;
     }
     
+    /** 
+     * Returns a sublist of this range list which excludes all non-inheritable merge ranges. 
+     * If <code>startRev</code> and <code>endRev</code> are 
+     * {@link org.tmatesoft.svn.core.wc.SVNRevision#isValidRevisionNumber(long) valid} 
+     * revisions and <code>startRev</code> is less than or equal to <code>endRev</code>, then excludes only 
+     * the non-inheritable revision ranges that intersect inclusively with the range
+     * defined by <code>startRev</code> and <code>endRev</code>. If this range list contains no elements, 
+     * returns an empty array. 
+     * 
+     * @param startRev     start revision 
+     * @param endRev       end revision
+     * @return             a new <code>SVNMergeRangeList</code> object with only inheritable ranges from 
+     *                     this range list
+     */
     public SVNMergeRangeList getInheritableRangeList(long startRev, long endRev) {
         LinkedList inheritableRanges = new LinkedList();
         if (myRanges.length > 0) {
@@ -237,6 +341,10 @@ public class SVNMergeRangeList {
         return new SVNMergeRangeList(ranges);
     }
     
+    /**
+     * This method is not intended for API users.
+     * @return compacted merge ranges 
+     */
     public SVNMergeRangeList compactMergeRanges() {
     	List additiveSources = new LinkedList();
     	List subtractiveSources = new LinkedList();
@@ -263,7 +371,19 @@ public class SVNMergeRangeList {
     	Collections.sort(compactedSources, new RangeComparator2());
         return SVNMergeRangeList.fromCollection(compactedSources);
     }
-    
+
+    /**
+     * Creates a new <code>SVNMergeRangeList</code> from a collection of 
+     * {@link SVNMergeRange merge ranges}.
+     * 
+     * @param  mergeRanges merge ranges collection 
+     * @return             merge range list containing all the ranges from <code>mergeRanges</code>
+     */
+    public static SVNMergeRangeList fromCollection(Collection mergeRanges) {
+        return new SVNMergeRangeList((SVNMergeRange[]) 
+                mergeRanges.toArray(new SVNMergeRange[mergeRanges.size()]));
+    }
+
     private void removeRedundantRanges(List ranges) {
     	SVNMergeRange range1 = null;
     	SVNMergeRange range2 = null;
@@ -393,8 +513,7 @@ public class SVNMergeRangeList {
         return isCompacted;
     }
     
-    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, 
-            boolean considerInheritance) {
+    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, boolean considerInheritance) {
         Collection ranges = new LinkedList();
         SVNMergeRange lastRange = null;
         SVNMergeRange range1 = null;
@@ -426,13 +545,11 @@ public class SVNMergeRangeList {
                 if (range1.getStartRevision() < range2.getStartRevision()) {
                     SVNMergeRange tmpRange = null;
                     if (remove) {
-                        tmpRange = new SVNMergeRange(range1.getStartRevision(), 
-                                                     range2.getStartRevision(),
-                                                     range1.isInheritable());    
+                        tmpRange = new SVNMergeRange(range1.getStartRevision(), range2.getStartRevision(),
+                                range1.isInheritable());    
                     } else {
-                        tmpRange = new SVNMergeRange(range2.getStartRevision(), 
-                                                     range1.getEndRevision(), 
-                                                     range1.isInheritable());                        
+                        tmpRange = new SVNMergeRange(range2.getStartRevision(),
+                                Math.min(range1.getEndRevision(), range2.getEndRevision()), range1.isInheritable());                        
                     }
 
                     lastRange = combineWithLastRange(ranges, lastRange, tmpRange, true, considerInheritance);
@@ -440,9 +557,8 @@ public class SVNMergeRangeList {
                 
                 if (range1.getEndRevision() > range2.getEndRevision()) {
                     if (!remove) {
-                        SVNMergeRange tmpRange = new SVNMergeRange(range1.getStartRevision(), 
-                                                                   range2.getEndRevision(), 
-                                                                   range1.isInheritable());
+                        SVNMergeRange tmpRange = new SVNMergeRange(Math.max(range1.getStartRevision(), 
+                                range2.getStartRevision()), range2.getEndRevision(), range1.isInheritable());
                         lastRange = combineWithLastRange(ranges, lastRange, tmpRange, true, considerInheritance);
                     }
                     whiteBoardElement.setStartRevision(range2.getEndRevision());
@@ -460,7 +576,7 @@ public class SVNMergeRangeList {
                             ranges.add(lastRange);
                         }
                     } else if (lastRange != null && lastRange.canCombine(range1, considerInheritance)) {
-                        lastRange = lastRange.combine(range1, false, considerInheritance);
+                        lastRange = lastRange.combine(range1, considerInheritance);
                     }
                     i++;
                 }
@@ -628,11 +744,6 @@ public class SVNMergeRangeList {
             lastRange = pushedMRange2;
         }
         return lastRange;
-    }
-    
-    public static SVNMergeRangeList fromCollection(Collection mergeRanges) {
-    	return new SVNMergeRangeList((SVNMergeRange[]) 
-    			mergeRanges.toArray(new SVNMergeRange[mergeRanges.size()]));
     }
     
     private static int compareMergeRanges(Object o1, Object o2) {

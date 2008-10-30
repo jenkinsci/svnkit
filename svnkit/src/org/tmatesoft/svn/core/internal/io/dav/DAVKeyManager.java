@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -20,9 +20,10 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 class DAVKeyManager {
@@ -58,7 +59,7 @@ class DAVKeyManager {
                 keyStore.load(is, passphrase);                    
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(th);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
         } finally {
             if (is != null) {
                 try {
@@ -76,7 +77,7 @@ class DAVKeyManager {
                     ourKeyManagers = kmf.getKeyManagers();
                 }
             } catch (Throwable e) {
-                SVNDebugLog.getDefaultLog().logFine(e);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e);
             } 
         }
         return ourKeyManagers; 

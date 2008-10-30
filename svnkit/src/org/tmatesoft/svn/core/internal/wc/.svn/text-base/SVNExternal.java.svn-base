@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,10 +27,11 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNExternal {
@@ -133,7 +134,7 @@ public class SVNExternal {
         
         if (myURL.indexOf("/../") >= 0 || myURL.startsWith("../") || myURL.endsWith("/..")) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "The external relative URL ''{0}'' cannot have backpaths, i.e. ''..''.", myURL);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
         if (myURL.startsWith("//")) {
@@ -146,7 +147,7 @@ public class SVNExternal {
             return getResolvedURL();
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Unrecognized format for the relative external URL ''{0}''.", myURL);
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.DEFAULT);
         return null;
     }
 
@@ -199,7 +200,26 @@ public class SVNExternal {
             boolean token0isURL = SVNPathUtil.isURL(token0); 
             boolean token1isURL = SVNPathUtil.isURL(token1);
             
-            if (revisionToken == 0 || token0isURL || !token1isURL) {
+            if (token0isURL && token1isURL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, 
+                        "Invalid svn:external property on ''{0}'': cannot use two absolute URLs (''{1}'' and ''{2}'') in an external; " +
+                        "one must be a path where an absolute or relative URL is checked out to", new Object[] {owner, token0, token1});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (revisionToken == 0 && token1isURL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, 
+                        "Invalid svn:external property on ''{0}'': cannot use a URL ''{1}'' as the target directory for an external definition",
+                        new Object[] {owner, token1});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (revisionToken == 1 && token0isURL) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION, 
+                        "Invalid svn:external property on ''{0}'': cannot use a URL ''{1}'' as the target directory for an external definition",
+                        new Object[] {owner, token0});
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            
+            if (revisionToken == 0 || (revisionToken == -1 && (token0isURL || !token1isURL))) {
                 external.myPath = token1;
                 boolean schemeRelative = token0.startsWith("//");
                 if (schemeRelative) {
@@ -237,7 +257,7 @@ public class SVNExternal {
             if (external.myPath.length() == 0 || external.myPath.startsWith("/") || external.myPath.indexOf("/../") > 0 || external.myPath.endsWith("/..")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                         "Invalid {0} property on ''{1}'': target ''{2}'' is an absolute path or involves ''..''", new Object[] {SVNProperty.EXTERNALS, owner, external.myPath});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
             external.myRawValue = line;
@@ -269,12 +289,12 @@ public class SVNExternal {
                     if (revNumber < 0) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
                                 "Negative revision number found parsing ''{0}''", revisionStr);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.DEFAULT);
                     }
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
                             "Invalid revision number found parsing ''{0}''", revisionStr);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 external.myRevision = SVNRevision.create(revNumber);
                 external.myIsRevisionExplicit = true;
@@ -292,7 +312,7 @@ public class SVNExternal {
     private static void reportParsingError(String owner, String line) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.DEFAULT);
     }
 
 }

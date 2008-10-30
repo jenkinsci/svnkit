@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,11 +29,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVNPropertyHandler {
 
@@ -56,12 +57,12 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         if (revision != SVNRevision.HEAD && revision.getDate() == null && revision.getNumber() < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Must specify revision as a number, a date or 'HEAD' when operating on revision property");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (targets.size() != 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Wrong number of targets specified");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         String target = (String) targets.iterator().next();
         return getSVNEnvironment().getURLFromTarget(target);

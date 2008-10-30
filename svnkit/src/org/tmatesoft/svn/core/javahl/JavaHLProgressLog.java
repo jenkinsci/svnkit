@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,11 +18,12 @@ import org.tigris.subversion.javahl.JavaHLObjectFactory;
 import org.tigris.subversion.javahl.ProgressEvent;
 import org.tigris.subversion.javahl.ProgressListener;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class JavaHLProgressLog extends SVNDebugLogAdapter {
 
@@ -34,7 +35,7 @@ public class JavaHLProgressLog extends SVNDebugLogAdapter {
         reset();
     }
 
-    public void log(String message, byte[] data) {
+    public void log(SVNLogType logType, String message, byte[] data) {
         myProgress += data.length;
         ProgressEvent event = JavaHLObjectFactory.createProgressEvent(myProgress, -1L);
         myProgressListener.onProgress(event);
@@ -44,39 +45,9 @@ public class JavaHLProgressLog extends SVNDebugLogAdapter {
         myProgress = 0;
     }
 
-    public void logSevere(String message) {
+    public void log(SVNLogType logType, Throwable th, Level logLevel) {
     }
 
-    public void logSevere(Throwable th) {
-    }
-
-    public void logError(String message) {
-    }
-
-    public void logError(Throwable th) {
-    }
-
-    public void logFine(Throwable th) {
-    }
-
-    public void logFine(String message) {
-    }
-
-    public void logFiner(Throwable th) {
-    }
-
-    public void logFiner(String message) {
-    }
-
-    public void logFinest(Throwable th) {
-    }
-
-    public void logFinest(String message) {
-    }
-
-    public void log(Throwable th, Level logLevel) {
-    }
-
-    public void log(String message, Level logLevel) {
+    public void log(SVNLogType logType, String message, Level logLevel) {
     }
 }

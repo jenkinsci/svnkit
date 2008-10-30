@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,7 +19,7 @@ package org.tmatesoft.svn.core;
  * names, and gives some useful methods to operate with properties (in particular).
  *
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNProperty {
     /**
@@ -27,12 +27,18 @@ public class SVNProperty {
      */
     public static final String SVN_PREFIX = "svn:";
     
+    /**
+     * SVNKit's own property namespace.
+     */
     public static final String SVNKIT_PREFIX = "svnkit:";
     /**
      * An <span class="javastring">"svn:wc:"</span> prefix.
      */
     public static final String SVN_WC_PREFIX = "svn:wc:";
 
+    /**
+     * The namespace for revision properties which are used in repository synching operations.
+     */
     public static final String SVN_SYNC_PREFIX = "svn:sync-";
 
     /**
@@ -126,12 +132,28 @@ public class SVNProperty {
      */
     public static final String PRESENT_PROPS = SVN_ENTRY_PREFIX + "present-props";
 
+    /**
+     * An <span class="javastring">"svn:entry:keep-local"</span> SVN untweakable metaproperty.
+     * @since  1.2.0, new in Subversion 1.5.0
+     */
     public static final String KEEP_LOCAL = SVN_ENTRY_PREFIX + "keep-local";
 
+    /**
+     * An <span class="javastring">"svn:entry:changelist"</span> SVN untweakable metaproperty.
+     * @since  1.2.0, new in Subversion 1.5.0
+     */
     public static final String CHANGELIST = SVN_ENTRY_PREFIX + "changelist";
 
+    /**
+     * An <span class="javastring">"svn:entry:working-size"</span> SVN untweakable metaproperty.
+     * @since  1.2.0, new in Subversion 1.5.0
+     */
     public static final String WORKING_SIZE = SVN_ENTRY_PREFIX + "working-size";
 
+    /**
+     * An <span class="javastring">"svn:entry:depth"</span> SVN untweakable metaproperty.
+     * @since  1.2.0, new in Subversion 1.5.0
+     */
     public static final String DEPTH = SVN_ENTRY_PREFIX + "depth";
 
     /**
@@ -280,14 +302,35 @@ public class SVNProperty {
      */
     public static final String EOL_STYLE_NATIVE = "native";
 
+    /**
+     * LF (line feed) EOL (end of line) byte array.
+     */
     public static final byte[] EOL_LF_BYTES = {'\n'};
 
+    /**
+     * CR (carriage return) and LF (line feed) EOL (end of line) bytes array.
+     */
     public static final byte[] EOL_CRLF_BYTES = {'\r', '\n'};
 
+    /**
+     * CR (carriage return) EOL (end of line) byte array.
+     */
     public static final byte[] EOL_CR_BYTES = {'\r'};
 
+    /**
+     * <code>SVNKit</code> specific property denoting a charset. A user may set this property on files
+     * if he would like to fix the charset of the file. Then when checking out, exporting, updating, etc. 
+     * files with such properties set on them will be translated (encoded) using the charset value of this
+     * property. Note that to take advantage of this property a user must utilize a corresponging version 
+     * of the <code>SVNKit</code> library supporting this property.
+     */
     public static final String CHARSET = SVNKIT_PREFIX + "charset";
 
+    /**
+     * Default value for the {@link #CHARSET} property denoting that the native charset should be used 
+     * to encode a file during translation. The native charset name will be fetched via a call to 
+     * {@link org.tmatesoft.svn.core.wc.ISVNOptions#getNativeCharset()}.
+     */
     public static final String NATIVE = "native";
     
     /**
@@ -306,8 +349,18 @@ public class SVNProperty {
      */
     public static final String SCHEDULE_REPLACE = "replace";
 
+    /**
+     * Default value of the {@link #WORKING_SIZE} property.
+     * @since  1.2.0, new in Subversion 1.5.0
+     */
     public static final long WORKING_SIZE_UNKNOWN = -1;
 
+    /**
+     * Default value for such properties as {@link #EXECUTABLE}, {@link #NEEDS_LOCK}, {@link #SPECIAL}.
+     * Used only by <code>SVNKit</code> internals, never stored in a working copy.
+     * 
+     * @since  1.2.0
+     */
     public static final SVNPropertyValue BOOLEAN_PROPERTY_VALUE = SVNPropertyValue.create("*");
 
     /**
@@ -350,9 +403,12 @@ public class SVNProperty {
     }
 
     /**
-     * Checks if a property is regular. Regular are some <span class="javastring">"svn:"</span>
-     * properties and all user props, i.e. ones stored in the repository filesystem.
-     *
+     * Checks if a property is regular. 
+     * 
+     * <p/>
+     * A property is considered to be regular if it is not <span class="javakeyword">null</span> and 
+     * does not start neither with {@link #SVN_WC_PREFIX} nor with {@link #SVN_ENTRY_PREFIX}.
+     * 
      * @param name a property name
      * @return <span class="javakeyword">true</span> if regular, otherwise
      *         <span class="javakeyword">false</span>
@@ -481,7 +537,8 @@ public class SVNProperty {
      * @since 1.1
      */
     public static SVNPropertyValue getValueOfBooleanProperty(String propName) {
-        if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || SVNProperty.SPECIAL.equals(propName)) {
+        if (SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName) || 
+                SVNProperty.SPECIAL.equals(propName)) {
             return BOOLEAN_PROPERTY_VALUE;
         }
         return null;

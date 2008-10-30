@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -66,7 +66,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that allow you to set your {@link ISVNEventHandler event handler}, 
  * obtain run-time configuration options, and others. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNBasicClient implements ISVNEventHandler {
@@ -91,14 +91,19 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     /**
-     * Gets a run-time configuration area driver used by this object.
+     * Gets run-time configuration options used by this object.
      * 
-     * @return the run-time options driver being in use
+     * @return the run-time options being in use
      */
     public ISVNOptions getOptions() {
         return myOptions;
     }
     
+    /**
+     * Sets run-time global configuration options to this object.
+     * 
+     * @param options  the run-time configuration options 
+     */
     public void setOptions(ISVNOptions options) {
         myOptions = options;
         if (myOptions == null) {
@@ -203,6 +208,11 @@ public class SVNBasicClient implements ISVNEventHandler {
         myEventDispatcher = dispatcher;
     }
 
+    /**
+     * Sets a path list handler implementation to this object.
+     * @param handler  handler implementation
+     * @since          1.2.0
+     */
     public void setPathListHandler(ISVNPathListHandler handler) {
         myPathListHandler = handler;
     }
@@ -228,11 +238,39 @@ public class SVNBasicClient implements ISVNEventHandler {
      */
     public ISVNDebugLog getDebugLog() {
         if (myDebugLog == null) {
-            return SVNDebugLog.getLog(SVNLogType.WC);
+            return SVNDebugLog.getDefaultLog();
         }
         return myDebugLog;
     }
     
+    /**
+     * Returns the root of the repository. 
+     * 
+     * <p/>
+     * If <code>path</code> is not <span class="javakeyword">null</span> and <code>pegRevision</code> is 
+     * either {@link SVNRevision#WORKING} or {@link SVNRevision#BASE}, then attempts to fetch the repository 
+     * root from the working copy represented by <code>path</code>. If these conditions are not met or if the 
+     * repository root is not recorded in the working copy, then a repository connection is established 
+     * and the repository root is fetched from the session. 
+     * 
+     * <p/>
+     * When fetching the repository root from the working copy and if <code>access</code> is 
+     * <span class="javakeyword">null</span>, a new working copy access will be created and the working copy 
+     * will be opened non-recursively for reading only. 
+     * 
+     * <p/>
+     * All necessary cleanup (session or|and working copy close) will be performed automatically as the routine 
+     * finishes. 
+     * 
+     * @param  path           working copy path
+     * @param  url            repository url
+     * @param  pegRevision    revision in which the target is valid
+     * @param  adminArea      working copy administrative area object
+     * @param  access         working copy access object
+     * @return                repository root url
+     * @throws SVNException 
+     * @since                 1.2.0         
+     */
     public SVNURL getReposRoot(File path, SVNURL url, SVNRevision pegRevision, SVNAdminArea adminArea, 
             SVNWCAccess access) throws SVNException {
         SVNURL reposRoot = null;
@@ -303,7 +341,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_UUID_MISMATCH, 
                         "Repository UUID ''{0}'' doesn''t match expected UUID ''{1}''", 
                         new Object[] { reposUUID, uuid });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         
@@ -328,11 +366,11 @@ public class SVNBasicClient implements ISVNEventHandler {
             } catch (SVNException e) {
                 throw e;
             } catch (Throwable th) {
-                SVNDebugLog.getLog(SVNLogType.WC).logSevere(th);
+                SVNDebugLog.getDefaultLog().logSevere(SVNLogType.WC, th);
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "Error while dispatching event: {0}", new Object[] { th.getMessage() }, 
                         SVNErrorMessage.TYPE_ERROR, th);
-                SVNErrorManager.error(err, th);
+                SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
             }
         }
     }
@@ -390,7 +428,17 @@ public class SVNBasicClient implements ISVNEventHandler {
         dispatchEvent(event, progress);
     }
     
-    
+    /**
+     * Handles a next working copy path with the {@link ISVNPathListHandler path list handler} 
+     * if any was provided to this object through {@link #setPathListHandler(ISVNPathListHandler)}.
+     * 
+     * <p/>
+     * Note: used by <code>SVNKit</code> internals.
+     * 
+     * @param  path            working copy path 
+     * @throws SVNException 
+     * @since                  1.2.0
+     */
     public void handlePathListItem(File path) throws SVNException {
         if (myPathListHandler != null && path != null) {
             myPathListHandler.handlePathListItem(path);
@@ -418,7 +466,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             File path) throws SVNException {
         if (repository == null && (revision == SVNRevision.HEAD || revision.getDate() != null)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_RA_ACCESS_REQUIRED);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (revision.getNumber() >= 0) {
             return revision.getNumber();
@@ -439,7 +487,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 revision == SVNRevision.BASE || revision == SVNRevision.PREVIOUS) {
             if (path == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNWCAccess wcAccess = createWCAccess();
             wcAccess.probeOpen(path, false, 0);
@@ -455,12 +503,12 @@ public class SVNBasicClient implements ISVNEventHandler {
             }
             if (entry.getCommittedRevision() < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Path ''{0}'' has no committed revision", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             return revision == SVNRevision.PREVIOUS ? entry.getCommittedRevision() - 1 : entry.getCommittedRevision();            
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Unrecognized revision type requested for ''{0}''", path != null ? path : (Object) repository.getLocation());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return -1;
     }
@@ -472,7 +520,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             if (pathURL == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                         "''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
 
@@ -521,32 +569,29 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (wcElisionLimitPath == null || !wcElisionLimitPath.equals(path)) {
             Map mergeInfo = null;
             Map targetMergeInfo = null;
-            if (!SVNWCManager.isEntrySwitched(path, entry)) {
-                boolean[] inherited = new boolean[1];
 
-                targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath,
-                        SVNMergeInfoInheritance.INHERITED, false, inherited);
-
-                if (inherited[0] || targetMergeInfo == null) {
-                    return;
-                }
-
-                mergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath,
-                                           SVNMergeInfoInheritance.NEAREST_ANCESTOR,
-                                           false, inherited);
-
-                if (mergeInfo == null && wcElisionLimitPath == null) {
-                    mergeInfo = getWCOrRepositoryMergeInfo(path, entry,
-                            SVNMergeInfoInheritance.NEAREST_ANCESTOR, inherited, true, null);
-                }
-
-                if (mergeInfo == null && wcElisionLimitPath != null) {
-                    return;
-                }
-
-                SVNMergeInfoUtil.elideMergeInfo(mergeInfo,
-                        targetMergeInfo, path, null, access);
+            boolean[] inherited = new boolean[1];
+                
+            targetMergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
+                    SVNMergeInfoInheritance.INHERITED, false, inherited);
+                
+            if (inherited[0] || targetMergeInfo == null) {
+                return;
             }
+                
+            mergeInfo = getWCMergeInfo(path, entry, wcElisionLimitPath, 
+                    SVNMergeInfoInheritance.NEAREST_ANCESTOR, false, inherited);
+                
+            if (mergeInfo == null && wcElisionLimitPath == null) {
+                mergeInfo = getWCOrRepositoryMergeInfo(path, entry, SVNMergeInfoInheritance.NEAREST_ANCESTOR, 
+                        inherited, true, null);
+            }
+                
+            if (mergeInfo == null && wcElisionLimitPath != null) {
+                return;
+            }
+                
+            SVNMergeInfoUtil.elideMergeInfo(mergeInfo, targetMergeInfo, path, null, access);
         }
     }
 
@@ -622,7 +667,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     }
     
     /**
-     * @param mergeInfo must not be null!
+     * mergeInfo must not be null!
      */
     protected Map getWCMergeInfo(File path, SVNEntry entry, File limitPath, SVNMergeInfoInheritance inherit, 
             boolean base, boolean[] inherited) throws SVNException {
@@ -641,9 +686,10 @@ public class SVNBasicClient implements ISVNEventHandler {
                     inherit = SVNMergeInfoInheritance.INHERITED;
                 } else {
                     wcMergeInfo = SVNPropertiesManager.parseMergeInfo(path, entry, base);
-                    if (SVNWCManager.isEntrySwitched(path, entry)) {
-                        break;
-                    }
+                }
+
+                if (SVNWCManager.isEntrySwitched(path, entry)) {
+                    break;
                 }
     
                 path = new File(SVNPathUtil.validateFilePath(path.getAbsolutePath())).getAbsoluteFile();
@@ -743,7 +789,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, 
                     "URL ''{0}'' is not a child of repository root URL ''{1}''", new Object[] { url, 
                     reposRootURL});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         absPath = absPath.substring(reposRootPath.length());
         if (!absPath.startsWith("/")) {
@@ -755,7 +801,7 @@ public class SVNBasicClient implements ISVNEventHandler {
     protected SVNRepositoryLocation[] getLocations(SVNURL url, File path, SVNRepository repository, 
     		SVNRevision revision, SVNRevision start, SVNRevision end) throws SVNException {
         if (!revision.isValid() || !start.isValid()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION), SVNLogType.DEFAULT);
         }
         long pegRevisionNumber = -1;
         long startRevisionNumber;
@@ -778,7 +824,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                     		"''{0}'' has no URL", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             } finally {
                 wcAccess.close();
@@ -842,13 +888,13 @@ public class SVNBasicClient implements ISVNEventHandler {
         if (startPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Unable to find repository location for ''{0}'' in revision ''{1}''", new Object[] {source, new Long(startRevisionNumber)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (endPath == null) {
             Object source = path != null ? (Object) path : (Object) url;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "The location for ''{0}'' for revision {1} does not exist in the " +
                     "repository or refers to an unrelated object", new Object[] {source, new Long(endRevisionNumber)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         SVNRepositoryLocation[] result = new SVNRepositoryLocation[2];
@@ -866,7 +912,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         final SVNNodeKind kind = repos.checkPath("", pegRevision);
         if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' doesn't exist at revision {1}", new Object[] {path, new Long(pegRevision)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         long logStart = pegRevision;
         logStart = Math.max(startRevision, logStart);
@@ -884,7 +930,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         
         if (pegPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "path ''{0}'' in revision {1} is an unrelated object", new Object[] {path, new Long(logStart)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         Map result = new SVNHashMap();
         result.put(new Long(startRevision), new SVNLocationEntry(-1, startPath));
@@ -925,7 +971,7 @@ public class SVNBasicClient implements ISVNEventHandler {
                 prevPath = path;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_UNRELATED_RESOURCES, "Missing changed-path information for ''{0}'' in revision {1}", new Object[] {path, new Long(logEntry.getRevision())});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }            
         }
         return prevPath;
@@ -986,7 +1032,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                     "Entry for ''{0}'' has no URL", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         return url;
     }

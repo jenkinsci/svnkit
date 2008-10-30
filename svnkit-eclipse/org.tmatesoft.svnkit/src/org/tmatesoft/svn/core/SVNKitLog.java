@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,17 +16,15 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 
+import org.eclipse.osgi.framework.log.FrameworkLog;
+import org.eclipse.osgi.framework.log.FrameworkLogEntry;
+import org.osgi.framework.FrameworkEvent;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
-
-import org.eclipse.core.runtime.ILog;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.Status;
-import org.osgi.framework.Bundle;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNKitLog extends SVNDebugLogAdapter {
 
@@ -34,145 +32,163 @@ public class SVNKitLog extends SVNDebugLogAdapter {
     private static final String DEBUG_INFO = "/debug/info";
     private static final String DEBUG_WARNING = "/debug/warning";
     private static final String DEBUG_ERROR = "/debug/error";
+    private static final String DEBUG_TRACE = "/debug/trace";
 
-    private boolean myIsFineEnabled;
-    private boolean myIsInfoEnabled;
-    private boolean myIsWarningEnabled;
-    private boolean myIsErrorEnabled;
+    private SVNKitActivator myActivator;
 
-    private ILog myLog;
-    private String myPluginID;
-
-    public SVNKitLog(Bundle bundle, boolean debugEnabled, boolean traceEnabled) {
-        myLog = Platform.getLog(bundle);
-        myPluginID = bundle.getSymbolicName();
-
-        if (traceEnabled) {
-            // enable tracing even when not in debug mode
-            myIsErrorEnabled = true;
-            myIsWarningEnabled = true;
-            myIsInfoEnabled = true;
-            myIsErrorEnabled = true;
-        } else {
-            // enabled even when not in debug mode
-            myIsErrorEnabled = Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_ERROR));
-
-            // debug mode have to be enabled
-            myIsWarningEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_WARNING));
-            myIsInfoEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_INFO));
-            myIsFineEnabled = debugEnabled && Boolean.TRUE.toString().equals(Platform.getDebugOption(myPluginID + DEBUG_FINE));
-        }
+    public SVNKitLog(SVNKitActivator activator) {
+        myActivator = activator;
     }
 
     public boolean isFineEnabled() {
-        return myIsFineEnabled;
+        return myActivator.getDebugOption(DEBUG_FINE);
     }
 
     public boolean isInfoEnabled() {
-        return myIsInfoEnabled;
+        return myActivator.getDebugOption(DEBUG_INFO);
     }
 
     public boolean isWarningEnabled() {
-        return myIsWarningEnabled;
+        return myActivator.getDebugOption(DEBUG_WARNING);
     }
 
     public boolean isErrorEnabled() {
-        return myIsErrorEnabled;
+        return myActivator.getDebugOption(DEBUG_ERROR);
     }
 
-    public InputStream createLogStream(InputStream is) {
-        if (isFineEnabled()) {
-            return super.createLogStream(is);
+    public boolean isTraceEnabled() {
+        return myActivator.getDebugOption(DEBUG_TRACE);
+    }
+
+    public InputStream createLogStream(SVNLogType logType, InputStream is) {
+        if (isTraceEnabled()) {
+            return super.createLogStream(logType, is);
         }
         return is;
     }
 
-    public OutputStream createLogStream(OutputStream os) {
-        if (isFineEnabled()) {
-            return super.createLogStream(os);
+    public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
+        if (isTraceEnabled()) {
+            return super.createLogStream(logType, os);
         }
         return os;
     }
 
-    public void logFinest(Throwable th) {
-        log(th, Level.FINEST);
+    public void logFinest(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINEST);
     }
 
-    public void logFinest(String message) {
-        log(message, Level.FINEST);
+    public void logFinest(SVNLogType logType, String message) {
+        log(logType, message, Level.FINEST);
     }
 
-    public void logFiner(Throwable th) {
-        log(th, Level.FINE);
+    public void logFiner(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINE);
     }
 
-    public void logFiner(String message) {
-        log(message, Level.FINE);
+    public void logFiner(SVNLogType logType, String message) {
+        log(logType, message, Level.FINE);
     }
 
-    public void logFine(Throwable th) {
-        log(th, Level.INFO);
+    public void logFine(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.INFO);
     }
 
-    public void logFine(String message) {
-        log(message, Level.INFO);
+    public void logFine(SVNLogType logType, String message) {
+        log(logType, message, Level.INFO);
     }
 
-    public void logError(String message) {
-        log(message, Level.WARNING);
+    public void logError(SVNLogType logType, String message) {
+        log(logType, message, Level.WARNING);
     }
 
-    public void logError(Throwable th) {
-        log(th, Level.WARNING);
+    public void logError(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.WARNING);
     }
 
-    public void logSevere(String message) {
-        log(message, Level.SEVERE);
+    public void logSevere(SVNLogType logType, String message) {
+        log(logType, message, Level.SEVERE);
     }
 
-    public void logSevere(Throwable th) {
-        log(th, Level.SEVERE);
+    public void logSevere(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.SEVERE);
     }
 
-    public void log(String message, byte[] data) {
-        if (isFineEnabled()) {
+    public void log(SVNLogType logType, String message, byte[] data) {
+        FrameworkLog log = myActivator.getFrameworkLog();
+        if (log == null) {
+            return;
+        }
+        if (isTraceEnabled()) {
+            FrameworkLogEntry entry = null;
+            String dataMessage = null;
             try {
-                myLog.log(createStatus(IStatus.INFO, message + " : " + new String(data, "UTF-8"), null));
+                dataMessage = new String(data, "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                myLog.log(createStatus(IStatus.INFO, message + " : " + new String(data), null));
+                dataMessage = new String(data);
+            }
+            message += " : " + dataMessage;
+            message = getMessage(logType, message);
+            entry = myActivator.createFrameworkLogEntry(FrameworkEvent.INFO, message, null);
+            if (entry != null) {
+                log.log(entry);
             }
         }
     }
 
-    public void log(Throwable th, Level logLevel) {
+    public void log(SVNLogType logType, Throwable th, Level logLevel) {
+        FrameworkLog log = myActivator.getFrameworkLog();
+        if (log == null) {
+            return;
+        }
         if (th != null) {
-            if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
-                myLog.log(createStatus(IStatus.OK, th.getMessage(), th));
-            } else if (logLevel == Level.INFO && isInfoEnabled()) {
-                myLog.log(createStatus(IStatus.INFO, th.getMessage(), th));
-            } else if (logLevel == Level.WARNING && isWarningEnabled()) {
-                myLog.log(createStatus(IStatus.WARNING, th.getMessage(), th));
-            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
-                myLog.log(createStatus(IStatus.ERROR, th.getMessage(), th));
+            int level = getSeverity(logLevel);
+            if (level >= 0) {
+                String message = getMessage(logType, th.getMessage());
+                FrameworkLogEntry entry = myActivator.createFrameworkLogEntry(FrameworkEvent.ERROR, message, th);
+                if (entry != null) {
+                    log.log(entry);
+                }
             }
         }
     }
 
-    public void log(String message, Level logLevel) {
+    public void log(SVNLogType logType, String message, Level logLevel) {
+        FrameworkLog log = myActivator.getFrameworkLog();
+        if (log == null) {
+            return;
+        }
         if (message != null) {
-            if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
-                myLog.log(createStatus(IStatus.OK, message, null));
-            } else if (logLevel == Level.INFO && isInfoEnabled()) {
-                myLog.log(createStatus(IStatus.INFO, message, null));
-            } else if (logLevel == Level.WARNING && isWarningEnabled()) {
-                myLog.log(createStatus(IStatus.WARNING, message, null));
-            } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
-                myLog.log(createStatus(IStatus.ERROR, message, null));
+            int level = getSeverity(logLevel);
+            if (level >= 0) {
+                message = getMessage(logType, message);
+                FrameworkLogEntry entry = myActivator.createFrameworkLogEntry(FrameworkEvent.ERROR, message, null);
+                if (entry != null) {
+                    log.log(entry);
+                }
             }
         }
     }
 
-    private Status createStatus(int severity, String message, Throwable th) {
-        return new Status(severity, myPluginID, IStatus.OK, message == null ? "" : message, th);
+    private int getSeverity(Level logLevel) {
+        int level = -1;
+        if ((logLevel == Level.FINEST || logLevel == Level.FINE) && isFineEnabled()) {
+            level = FrameworkEvent.INFO;
+        } else if (logLevel == Level.INFO && isInfoEnabled()) {
+            level = FrameworkEvent.INFO;
+        } else if (logLevel == Level.WARNING && isWarningEnabled()) {
+            level = FrameworkEvent.WARNING;
+        } else if (logLevel == Level.SEVERE && isErrorEnabled()) {
+            level = FrameworkEvent.ERROR;
+        }
+        return level;
     }
+
+    private String getMessage(SVNLogType logType, String originalMessage) {
+        if (originalMessage == null) {
+            return logType.getName();
+        }
+        return logType.getShortName() + ": " + originalMessage;
+    }
+
 }

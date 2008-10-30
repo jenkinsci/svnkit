@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,9 +41,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 class DAVCommitEditor implements ISVNEditor {
@@ -167,7 +168,7 @@ class DAVCommitEditor implements ISVNEditor {
                     } catch (SVNException inner) {
                     }
                     if (err != null) {
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                 }
                 throw e;
@@ -231,9 +232,9 @@ class DAVCommitEditor implements ISVNEditor {
             }
             if (err == null) {
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_ALREADY_EXISTS, "File ''{0}'' already exists", filePath);
-                SVNErrorManager.error(err);
-            } else if (err.getErrorCode() != SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
+            } else if (err.getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             } 
         }
         // put to have working URL to make PUT or PROPPATCH later (in closeFile())
@@ -297,7 +298,7 @@ class DAVCommitEditor implements ISVNEditor {
             myDeltaFile = null;
             myCurrentDelta = null;
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
             return null;
         }
     }
@@ -357,13 +358,14 @@ class DAVCommitEditor implements ISVNEditor {
                 // DELETE shouldn't be called anymore if there is an error or MERGE.
                 // calling abortEdit will do nothing on closeEdit failure now.
                 myIsAborted = true;
-		        SVNErrorManager.error(status.getError());
+		        SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
 		    }
-            // abort edit will not be run if there was an error on MERGE.
-            abortEdit();
 		    return handler.getCommitInfo();
 	    }
 	    finally {
+            // we should run abort edit if exception is thrown
+            // abort edit will not be run if there was an error (from server side) on MERGE.
+            abortEdit();
             // always run close callback to 'unlock' SVNRepository.
             runCloseCallback();            
 	    }
@@ -430,7 +432,7 @@ class DAVCommitEditor implements ISVNEditor {
         String location = status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER);
         if (location == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The CHECKOUT response did not contain a 'Location:' header");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (myRevProps != null && myRevProps.size() > 0) {
             StringBuffer request = DAVProppatchHandler.generatePropertyRequest(null, myRevProps);
@@ -439,7 +441,7 @@ class DAVCommitEditor implements ISVNEditor {
                 myConnection.doProppatch(null, location, request, null, context);
             } catch (SVNException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "applying log message to {0}", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         }
         return activity;
@@ -459,14 +461,14 @@ class DAVCommitEditor implements ISVNEditor {
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CONFLICT, "File or directory ''{0}'' is out of date; try updating", resource.getPath());
-                SVNErrorManager.error(err, e.getErrorMessage());
+                SVNErrorManager.error(err, e.getErrorMessage(), SVNLogType.NETWORK);
             }
             throw e;
         }
         String location = status != null ? status.getHeader().getFirstHeaderValue(HTTPHeader.LOCATION_HEADER) : null;
         if (location == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The CHECKOUT response did not contain a 'Location:' header");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         resource.setWorkingURL(location);
     }

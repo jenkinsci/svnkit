@@ -32,10 +32,11 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironment {
@@ -101,7 +102,7 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
         if (arguments == null || arguments.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                     "Error: no prefixes supplied.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         myPrefixes = new LinkedList();
@@ -171,7 +172,7 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
                 return "--version";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return commandName;
     }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -38,10 +38,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * packed into a single <b>SVNCommitPacket</b> object. This object is 
  * returned by the method to the caller.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     SVNCommitPacket
- * 
  */
 public class SVNCommitItem {
 
@@ -255,13 +254,15 @@ public class SVNCommitItem {
     
     /**
      * This method is not intended for users (from an API point of view).
+     * @return wc access object 
      */
     public SVNWCAccess getWCAccess() {
         return myWCAccess;
     }
 
     /**
-     * This method is not intended for users (from an API point of view).
+     * Returns properties to commit.
+     * @return properties to commit 
      */
     public Map getOutgoingProperties() {
         return myOutgoingProperties;

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,8 +19,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.Iterator;
 import java.util.Comparator;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -30,11 +30,12 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNCommandUtil {
@@ -71,34 +72,26 @@ public class SVNCommandUtil {
             if (mergeToolCommand.length() == 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL, 
                         "The SVN_MERGE environment variable is empty or consists solely of whitespace. Expected a shell command.");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL, 
                     "The environment variable SVN_MERGE and the merge-tool-cmd run-time configuration option were not set.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
-        String result = null;
+        String merger = mergeToolCommand;
         if (SVNFileUtil.isWindows) {
-            String merger = mergeToolCommand.toLowerCase();
-            if (!(merger.endsWith(".exe") || merger.endsWith(".bat") || merger.endsWith(".cmd"))) {
-                result = SVNFileUtil.execCommand(new String[] { "cmd.exe", "/C", merger, basePath, repositoryPath, 
-                        localPath, mergeResultPath }, testEnvironment, true, null);
-            } else {
-                result = SVNFileUtil.execCommand(new String[] { merger, basePath, repositoryPath, localPath, 
-                        mergeResultPath }, testEnvironment, true, null);
-            }
-        } else {
-            result = SVNFileUtil.execCommand(new String[] { mergeToolCommand, basePath, repositoryPath, localPath, 
-                    mergeResultPath }, testEnvironment, true, null);
+            merger = mergeToolCommand.toLowerCase();
         }
 
+        String result = runEditor(merger, new String[] {basePath, repositoryPath, 
+                localPath, mergeResultPath}, testEnvironment);
         if (result == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
                     mergeToolCommand + " " + basePath + " " + repositoryPath + " " + localPath + " " + 
                     mergeResultPath +  "' failed.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
 
@@ -108,23 +101,11 @@ public class SVNCommandUtil {
         if (testEnv[0] != null) {
             testEnv = new String[] {"SVNTEST_EDITOR_FUNC=" + (testEnv[2] != null ? testEnv[2] : "")};
         }
-        String result = null;
-        if (SVNFileUtil.isWindows) {
-            String editor = editorCommand.trim().toLowerCase();
-            if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, 
-                        path}, testEnv, false, null);
-            } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false, null);
-            }
-        } else {
-            result = SVNFileUtil.execCommand(new String[] {editorCommand, path}, testEnv, false, null);
-        }
-        
+        String result = runEditor(editorCommand, new String[] {path}, testEnv);
         if (result == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
                     editorCommand + " " + path + "' failed.");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     
@@ -137,7 +118,7 @@ public class SVNCommandUtil {
             os.write(existingValue);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } finally {
             SVNFileUtil.closeFile(os);
         }
@@ -151,20 +132,10 @@ public class SVNCommandUtil {
             testEnv = null;
         }
         try {
-            String result = null;
-            if (SVNFileUtil.isWindows) {
-                String editor = editorCommand.trim().toLowerCase();
-                if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
-                    result = SVNFileUtil.execCommand(new String[] {"cmd.exe", "/C", editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
-                } else {
-                    result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
-                }
-            } else {
-                result = SVNFileUtil.execCommand(new String[] {editorCommand, tmpFile.getAbsolutePath()}, testEnv, false, null);
-            }
+            String result = runEditor(editorCommand, new String[] {tmpFile.getAbsolutePath()}, testEnv);
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             // now read from file.
             if (timestamp == tmpFile.lastModified()) {
@@ -184,7 +155,7 @@ public class SVNCommandUtil {
                 }
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             } finally {
                 SVNFileUtil.closeFile(is);
             }
@@ -193,8 +164,63 @@ public class SVNCommandUtil {
             SVNFileUtil.deleteFile(tmpFile);
         }
     }
+
+    private static String runEditor(String editorCommand, String[] args, String[] env) throws SVNException {
+        String result = null;
+        if (SVNFileUtil.isWindows || SVNFileUtil.isOS2) {
+            String editor = editorCommand.trim().toLowerCase();
+            if (!(editor.endsWith(".exe") || editor.endsWith(".bat") || editor.endsWith(".cmd"))) {
+                String[] command = new String[3 + args.length];
+                command[0] = "cmd.exe";
+                command[1] = "/C";
+                command[2] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[3 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            } else {
+                String[] command = new String[1 + args.length];
+                command[0] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[1 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            }
+        } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX){
+            if (env == null) {
+                String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
+                if (shellCommand == null || "".equals(shellCommand.trim())) {
+                    shellCommand = "/bin/sh";
+                }
+                String[] command = new String[3];
+                command[0] = shellCommand;
+                command[1] = "-c";
+                command[2] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[2] += " " + args[i];
+                }
+                command[2] += " < /dev/tty > /dev/tty";
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            } else {
+                // test mode, do not use bash and redirection.
+                String[] command = new String[1 + args.length];
+                command[0] = editorCommand;
+                for (int i = 0; i < args.length; i++) {
+                    command[1 + i] = args[i];
+                }
+                result = SVNFileUtil.execCommand(command, env, false, null);
+            }
+        } else if (SVNFileUtil.isOpenVMS) {
+            String[] command = new String[1 + args.length];
+            command[0] = editorCommand;
+            for (int i = 0; i < args.length; i++) {
+                command[1 + i] = args[i];
+            }
+            result = SVNFileUtil.execCommand(command, env, false, null);
+        } 
+        return result;
+    }
     
-    //TODO: password masking
     public static String prompt(String promptMessage, SVNCommandEnvironment env) throws SVNException {
         System.out.print(promptMessage);
         System.out.flush();
@@ -215,12 +241,12 @@ public class SVNCommandUtil {
             }
         }
         if (reader.getError() != null) {
-            SVNErrorManager.error(reader.getError());
+            SVNErrorManager.error(reader.getError(), SVNLogType.CLIENT);
         }
         if (input == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                         "Can't read stdin: End of file found");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
         } 
         return input;
     }
@@ -255,7 +281,7 @@ public class SVNCommandUtil {
                 "consists solely of whitespace. Expected a shell command.";
         }
         if (errorMessage != null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, errorMessage));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_NO_EXTERNAL_EDITOR, errorMessage), SVNLogType.CLIENT);
         }
         return command;
     }
@@ -359,7 +385,7 @@ public class SVNCommandUtil {
         }
         if (!quiet) {
             message += 
-                "\nCopyright (C) 2004-2007 TMate Software.\n" +
+                "\nCopyright (c) 2004-2008 TMate Software.\n" +
                 "SVNKit is open source (GPL) software, see http://svnkit.com/ for more information.\n" +
                 "SVNKit is pure Java (TM) version of Subversion, see http://subversion.tigris.org/";
         }

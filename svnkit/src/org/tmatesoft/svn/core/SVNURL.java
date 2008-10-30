@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -38,7 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
  * string (like <span class="javastring">"http://userInfo@host:port/path"</span>)
  * to a corresponding <i>parse</i> method of this class. 
  *  
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
@@ -61,8 +62,8 @@ public class SVNURL {
      *                       components) is malformed
      */
     public static SVNURL create(String protocol, String userInfo, String host, int port, String path, boolean uriEncoded) throws SVNException {
-        if (host == null || host.indexOf('@') >= 0) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid host name ''{0}''", host));
+        if ((host == null && !"file".equalsIgnoreCase(protocol)) || (host != null && host.indexOf('@') >= 0)) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Invalid host name ''{0}''", host), SVNLogType.DEFAULT);
         }
         path = path == null ? "/" : path.trim();
         if (!uriEncoded) {
@@ -87,7 +88,7 @@ public class SVNURL {
         }
         if (errorMessage != null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, errorMessage);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         String url = composeURL(protocol, userInfo, host, port, path);
         return new SVNURL(url, true);
@@ -171,6 +172,13 @@ public class SVNURL {
         DEFAULT_PORTS.put("file", new Integer(0));
     }
     
+    /**
+     * Sets the default protocol for a repository access protocol.
+     * 
+     * @param protocolName       protocol name 
+     * @param defaultPort        default port value
+     * @since                    1.2.0
+     */
     public static void registerProtocol(String protocolName, int defaultPort) {
         if (protocolName != null) {
             synchronized (DEFAULT_PORTS) {
@@ -195,7 +203,7 @@ public class SVNURL {
     private SVNURL(String url, boolean uriEncoded) throws SVNException {
         if (url == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL cannot be NULL");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         if (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
@@ -203,14 +211,14 @@ public class SVNURL {
         int index = url.indexOf("://");
         if (index <= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL ''{0}''", url);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         myProtocol = url.substring(0, index);
         myProtocol = myProtocol.toLowerCase();
         synchronized (DEFAULT_PORTS) {
             if (!DEFAULT_PORTS.containsKey(myProtocol) && !myProtocol.startsWith("svn+")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL protocol is not supported ''{0}''", url);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
         if ("file".equals(myProtocol)) {
@@ -219,7 +227,7 @@ public class SVNURL {
             if (slashInd == -1) {
                 //no path, only host - follow subversion behaviour
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "Local URL ''{0}'' contains only a hostname, no path", url);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             
             myPath = normalizedPath.substring(slashInd);
@@ -234,7 +242,7 @@ public class SVNURL {
                 testURL = new URL(myProtocol + "://" + normalizedPath);
             } catch (MalformedURLException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
                 return;
             }
             
@@ -266,7 +274,7 @@ public class SVNURL {
                 httpURL = new URL(testURL);
             } catch (MalformedURLException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}'': {1}", new Object[] {url, e.getLocalizedMessage()});
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
                 return;
             }
             myHost = httpURL.getHost();
@@ -511,7 +519,9 @@ public class SVNURL {
             url.append(userInfo);
             url.append("@");
         }
-        url.append(host);
+        if (host != null) {
+            url.append(host);
+        }
         if (port >= 0) {
             url.append(":");
             url.append(port);
@@ -534,7 +544,7 @@ public class SVNURL {
                 continue;
             } else if ("..".equals(token)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL ''{0}'' contains '..' element", url);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             } else {
                 result.append("/");
                 result.append(token);

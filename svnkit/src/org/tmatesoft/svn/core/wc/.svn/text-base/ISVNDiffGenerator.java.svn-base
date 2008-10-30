@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * contents difference between files in order to be used in 'diff' operations 
  * performed by <b>SVNDiffClient</b>. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     SVNDiffClient
  * @see     DefaultSVNDiffGenerator
@@ -83,8 +83,20 @@ public interface ISVNDiffGenerator {
      */
     public String getEncoding();
 
+    /**
+     * Sets the EOL marker bytes to use in diff output.
+     * 
+     * @param eol     EOL bytes
+     * @since         1.2.0
+     */
     public void setEOL(byte[] eol);
 
+    /**
+     * Returns the EOL marker bytes used in diff output.
+     * 
+     * @return  EOL bytes
+     * @since   1.2.0 
+     */
     public byte[] getEOL();
     
     /**
@@ -270,6 +282,13 @@ public interface ISVNDiffGenerator {
      */
     public void displayAddedDirectory(String path, String rev1, String rev2) throws SVNException;
 
+    /**
+     * Tells whether to force diff even if files are binary.
+     * 
+     * @return <span class="javakeyword">true</span> to force diff for binary files; otherwise 
+     *         <span class="javakeyword">false</span>
+     * @since  1.1.1
+     */
     public boolean isForcedBinaryDiff();
 
 }

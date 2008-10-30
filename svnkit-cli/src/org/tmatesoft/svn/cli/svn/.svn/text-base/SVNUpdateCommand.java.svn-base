@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNUpdateCommand extends SVNCommand {
@@ -81,7 +81,7 @@ public class SVNUpdateCommand extends SVNCommand {
                     targetPaths.add(path.getAbsolutePath());
                 }
             };
-            changelistClient.getChangeListPaths(changeLists, fileTargets, clDepth, handler);
+            changelistClient.doGetChangeListPaths(changeLists, fileTargets, clDepth, handler);
             targets = targetPaths;
         }
         

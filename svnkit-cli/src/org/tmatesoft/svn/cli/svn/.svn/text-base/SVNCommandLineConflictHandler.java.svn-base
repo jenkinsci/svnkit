@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,8 +30,9 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
     private SVNConflictAcceptPolicy myAccept;
@@ -118,7 +119,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             
             boolean performedEdit = false;
             boolean diffAllowed = false;
-            String path = mySVNEnvironment.getRelativePath(files.getTargetFile());
+            String path = mySVNEnvironment.getRelativePath(files.getWCFile());
             path = SVNCommandUtil.getLocalPath(path);
 
             if (conflictDescription.isPropertyConflict()) {
@@ -293,7 +294,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
         } else if (conflictDescription.getConflictAction() == SVNConflictAction.ADD && 
                 conflictDescription.getConflictReason() == SVNConflictReason.OBSTRUCTED) {
             String message = "Conflict discovered when trying to add ''{0}''.";
-            message = MessageFormat.format(message, new Object[] { files.getTargetFile() });
+            message = MessageFormat.format(message, new Object[] { files.getWCFile() });
             mySVNEnvironment.getErr().println(message);
             mySVNEnvironment.getErr().println("An object of the same name already exists.");
             

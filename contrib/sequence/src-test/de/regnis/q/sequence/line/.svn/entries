@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/contrib/sequence/src-test/de/regnis/q/sequence/line
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src-test/de/regnis/q/sequence/line
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-07-30T16:53:59.266781Z
+4613
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-183e626ad1c5cec59444fb87f6256d05
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+011796445bf44bccf78b930e94e0b552
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6962
 
 QSequenceLineReaderTest.java
 file
@@ -44,11 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-eff578f41ef9ed011c62f32b53e72721
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+da6a5cc579300fe78e3b015cac9c28a8
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2328
 
 QSequenceLineSimplifierTest.java
 file

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -35,10 +35,11 @@ import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
@@ -73,7 +74,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
                 printXMLHeader("info");
             }
         } else if (getSVNEnvironment().isIncremental()) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "'incremental' option only valid in XML mode"), SVNLogType.CLIENT);
         }
         SVNDepth depth = getSVNEnvironment().getDepth();
         if (depth == SVNDepth.UNKNOWN) {
@@ -89,7 +90,8 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             try {
                 if (target.isFile()) {
-                    client.doInfo(target.getFile(), pegRevision, getSVNEnvironment().getStartRevision(), depth, getSVNEnvironment().getChangelists(), this);
+                    client.doInfo(target.getFile(), pegRevision, getSVNEnvironment().getStartRevision(), depth, 
+                            getSVNEnvironment().getChangelistsCollection(), this);
                 } else {
                     client.doInfo(target.getURL(), pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
                 }

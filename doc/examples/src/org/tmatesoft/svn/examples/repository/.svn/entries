@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/doc/examples/src/org/tmatesoft/svn/examples/repository
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/repository
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-01-27T19:14:22.740809Z
-3803
-semen
+2008-09-08T14:36:48.049230Z
+4836
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-4393bb17c07676defaf69d5386435a46
-2008-01-27T19:14:22.740809Z
-3803
-semen
+2008-10-30T04:42:02.000000Z
+5b9efb177159c893884eb46578dc6660
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18825
 
 History.java
 file
@@ -44,11 +66,67 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-468623ca5c7af7792d99d4168eed8a33
-2007-01-09T05:54:45.383114Z
-2895
-sa
+2008-10-30T04:42:02.000000Z
+dd0498a6debae527d3ded6e99574cfa2
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11755
+
+FetchPropertiesRecursivelyWithStatus.java
+file
+
+
+
+
+2008-10-30T04:42:02.000000Z
+a7376a6d817b230a7831edbc3b3e61d2
+2008-09-08T14:36:48.049230Z
+4836
+alex
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8471
 
 DisplayFile.java
 file
@@ -56,11 +134,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-c1ad123e6873b4bb9122d3d3b67bbe6d
-2007-12-11T17:26:07.011958Z
-3710
+2008-10-30T04:42:02.000000Z
+04d20726530e0bead0711482b5fc579f
+2008-08-28T19:30:55.179841Z
+4792
 alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9948
 
 DisplayRepositoryTree.java
 file
@@ -68,11 +168,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-4a1aea28219499b183b03a0001b981d8
-2007-01-09T05:54:45.383114Z
-2895
-sa
+2008-10-30T04:42:02.000000Z
+c8f92c06d9ae471c9087c626a1130966
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11068
 
 Commit.java
 file
@@ -80,11 +202,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-d5c9479bf72c204f92dab47d7530e3fe
-2007-01-09T05:54:45.383114Z
-2895
-sa
+2008-10-30T04:42:02.000000Z
+4ff6d624f25e46c6e36d0812f2b1de02
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20659
 
 Replicate.java
 file
@@ -92,10 +236,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-69f70ad70cce6fab095eb827ac3d5d29
-2008-01-27T19:14:22.740809Z
-3803
-semen
+2008-10-30T04:42:02.000000Z
+e816ecd03a08064e597a1886975cf780
+2008-08-28T19:30:55.179841Z
+4792
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+19073
 

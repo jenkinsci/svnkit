@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.2.0
@@ -48,7 +49,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			passphrase = clientCertPassword.toCharArray();
 		}
 		KeyStore keyStore = null;
-		final InputStream is = SVNFileUtil.openFileForReading(clientCertFile);
+		final InputStream is = SVNFileUtil.openFileForReading(clientCertFile, SVNLogType.NETWORK);
 		try {
 			keyStore = KeyStore.getInstance("PKCS12");
 			if (keyStore != null) {
@@ -56,7 +57,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			}
 		}
 		catch (Throwable th) {
-			SVNDebugLog.getDefaultLog().logFine(th);
+			SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
 			throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage(), null, SVNErrorMessage.TYPE_ERROR, th), th);
 		}
 		finally {
@@ -73,7 +74,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 				}
 			}
 			catch (Throwable th) {
-				SVNDebugLog.getDefaultLog().logFine(th);
+				SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th);
 				throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, th.getMessage()), th);
 			}
 		}
@@ -243,7 +244,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 			}
 
 			if (myAuthentication == null) {
-				SVNErrorManager.cancel("SSL authentication with client certificate cancelled");
+				SVNErrorManager.cancel("SSL authentication with client certificate cancelled", SVNLogType.NETWORK);
 			}
 
 			final KeyManager[] keyManagers;

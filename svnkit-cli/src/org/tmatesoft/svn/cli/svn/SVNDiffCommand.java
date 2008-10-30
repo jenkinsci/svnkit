@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -35,10 +35,11 @@ import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandler {
@@ -75,7 +76,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             if (!getSVNEnvironment().isSummarize()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "'--xml' option only valid with '--summarize' option");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             printXMLHeader("diff");
             StringBuffer buffer = openXMLTag("paths", SVNXMLUtil.XML_STYLE_NORMAL, null, null);
@@ -136,7 +137,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         } else if (getSVNEnvironment().getNewTarget() != null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "'--new' option only valid with '--old' option");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else {
             if (targets.isEmpty()) {
                 targets.add("");
@@ -154,7 +155,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             
             if (hasURLs && hasWCs) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Target lists to diff may not contain both working copy paths and URLs");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             start = getSVNEnvironment().getStartRevision();
             end = getSVNEnvironment().getEndRevision();

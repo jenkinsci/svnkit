@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * <b>SVNChangeEntry</b> objects are used to pass path change information to clients.
  * These objects are passed to {@link ISVNChangeEntryHandler}.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
@@ -50,6 +50,7 @@ public class SVNChangeEntry {
      * Constructs a change entry object.
      * 
      * @param path                  the path of a changed item
+     * @param kind                  node kind 
      * @param type                  a change type (one of static fields)
      * @param copyFromPath          a copy-from source path (if the item is copied)
      * @param copyFromRevision      a revision of a copy-from source (if the item is copied)

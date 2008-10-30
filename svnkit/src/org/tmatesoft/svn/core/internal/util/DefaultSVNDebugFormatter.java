@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,7 +21,7 @@ import java.util.logging.LogRecord;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNDebugFormatter extends Formatter {
@@ -33,7 +33,10 @@ public class DefaultSVNDebugFormatter extends Formatter {
         String message = formatMessage(record);
         sb.append("[");
         Date date = new Date(record.getMillis());
-        sb.append(DATE_FORMAT.format(date));
+        
+        synchronized (DATE_FORMAT) {
+            sb.append(DATE_FORMAT.format(date));
+        }
         sb.append("] ");
         sb.append(message);
         sb.append("\n");

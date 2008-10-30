@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-test/src/org/tmatesoft/svn/core/test/daemon
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test/src/org/tmatesoft/svn/core/test/daemon
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-19T16:54:23.052618Z
-4368
-alex
+2008-07-30T16:53:59.266781Z
+4613
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-eee88b1f63736c9e4c4861bb3fcce917
-2008-06-19T12:47:42.020106Z
-4357
-sa
+2008-10-30T04:41:34.000000Z
+aa651c91b0f4a631b0f02f63e9234b31
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7740
 
 SVNCommandDaemonEnvironment.java
 file

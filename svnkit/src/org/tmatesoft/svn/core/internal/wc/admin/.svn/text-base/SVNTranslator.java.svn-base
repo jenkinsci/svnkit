@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,11 +41,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNTranslator {
 
@@ -125,7 +126,7 @@ public class SVNTranslator {
 
     public static void translate(File src, File dst, String charset, byte[] eol, Map keywords, boolean special, boolean expand) throws SVNException {
         if (src == null || dst == null) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS), SVNLogType.DEFAULT);
             return;
         }
         if (src.equals(dst)) {
@@ -152,12 +153,12 @@ public class SVNTranslator {
         }
         OutputStream os = SVNFileUtil.openFileForWriting(dst);
         OutputStream tos = getTranslatingOutputStream(os, charset, eol, true, keywords, expand);
-        InputStream is = SVNFileUtil.openFileForReading(src);
+        InputStream is = SVNFileUtil.openFileForReading(src, SVNLogType.WC);
         try {
             copy(is, tos);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         } finally {
             SVNFileUtil.closeFile(tos);
             SVNFileUtil.closeFile(os);
@@ -174,11 +175,11 @@ public class SVNTranslator {
         File src = adminArea.getFile(name);
         if (special) {
             if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
-                return SVNFileUtil.openFileForReading(src);
+                return SVNFileUtil.openFileForReading(src, SVNLogType.WC);
             }
             if (SVNFileType.getType(src) != SVNFileType.SYMLINK) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", src);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             String linkPath = SVNFileUtil.getSymlinkName(src);
             ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -187,7 +188,7 @@ public class SVNTranslator {
                 os.write(linkPath.getBytes("UTF-8"));
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-                SVNErrorManager.error(err, e);
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
             } finally {
                 SVNFileUtil.closeFile(os);
             }
@@ -199,11 +200,11 @@ public class SVNTranslator {
             if (translateToNormalForm) {
                 if (eolStyle != null && eol == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 Map keywordsMap = computeKeywords(keywords, null, null, null, null, null);
                 boolean repair = (eolStyle != null && eol != null && !SVNProperty.EOL_STYLE_NATIVE.equals(eolStyle)) || repairEOL;
-                return getTranslatingInputStream(SVNFileUtil.openFileForReading(src), charset, eol, repair, keywordsMap, false);
+                return getTranslatingInputStream(SVNFileUtil.openFileForReading(src, SVNLogType.WC), charset, eol, repair, keywordsMap, false);
             }
 
             SVNEntry entry = adminArea.getVersionedEntry(name, false);
@@ -212,9 +213,9 @@ public class SVNTranslator {
             String date = entry.getCommittedDate();
             String rev = Long.toString(entry.getCommittedRevision());
             Map keywordsMap = computeKeywords(keywords, url, author, date, rev, options);
-            return getTranslatingInputStream(SVNFileUtil.openFileForReading(src), charset, eol, true, keywordsMap, true);
+            return getTranslatingInputStream(SVNFileUtil.openFileForReading(src, SVNLogType.WC), charset, eol, true, keywordsMap, true);
         }
-        return SVNFileUtil.openFileForReading(src);
+        return SVNFileUtil.openFileForReading(src, SVNLogType.WC);
     }
 
     public static File getTranslatedFile(SVNAdminArea dir, String name, File src, boolean forceEOLRepair, boolean useGlobalTmp, boolean forceCopy, boolean toNormalFormat) throws SVNException {
@@ -316,7 +317,7 @@ public class SVNTranslator {
         byte[] eol = getBaseEOL(eolStyle);
         if (eolStyle != null && eol == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_UNKNOWN_EOL);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         Map keywordsMap = computeKeywords(keywords, null, null, null, null, null);
@@ -357,18 +358,18 @@ public class SVNTranslator {
         OutputStream translatingStream = null;
         try {
             dst = SVNFileUtil.openFileForWriting(destination);
-            src = SVNFileUtil.openFileForReading(source);
+            src = SVNFileUtil.openFileForReading(source, SVNLogType.WC);
             translatingStream = getTranslatingOutputStream(dst, charset, eol, repair, keywords, expand);
             SVNTranslator.copy(src, translatingStream);
         } catch (IOExceptionWrapper ew) {
             if (ew.getOriginalException().getErrorMessage().getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_INCONSISTENT_EOL, "File ''{0}'' has inconsistent newlines", source);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             throw ew.getOriginalException();
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         } finally {
             if (dst != null) {
                 try {
@@ -389,7 +390,7 @@ public class SVNTranslator {
         }
         InputStream is = null;
         try {
-            is = SVNFileUtil.openFileForReading(file);
+            is = SVNFileUtil.openFileForReading(file, SVNLogType.WC);
             int r;
             byte[] lastFoundEOL = null;
             byte[] currentEOL = null;
@@ -556,7 +557,7 @@ public class SVNTranslator {
         if (!isSupported) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
                     "Charset ''{0}'' is not supported on this computer; change svnkit:charset property value or remove that property for file ''{1}''",
-                    new Object[]{charset, path}));
+                    new Object[]{charset, path}), SVNLogType.DEFAULT);
         }
         return charset;
     }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,8 +13,14 @@ package org.tmatesoft.svn.core.wc;
 
 
 /**
- * @version 1.1.2
+ * The <b>SVNMergeResult</b> represents a result of a text or properties merge operation. 
+ * This class combines the following information about a merge result: a status type indicating how merge 
+ * finished and, if the merge finished with a conflict, the reason of the conflict (why did the conflict ever 
+ * occur?).    
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNMergeResult {
     
@@ -26,6 +32,19 @@ public class SVNMergeResult {
         myConflictReason = conflictReason;
     }
     
+    /**
+     * Creates a new merge result object.
+     * 
+     * <p/>
+     * If <code>status</code> is not {@link SVNStatusType#CONFLICTED}, <code>reason</code> is irrelevant and 
+     * always set to <span class="javakeyword">null</span>. If <code>status</code> is {@link SVNStatusType#CONFLICTED} 
+     * and <code>reason</code> is <span class="javakeyword">null</span>, then <code>reason</code> defaults to 
+     * {@link SVNConflictReason#EDITED}. 
+     * 
+     * @param  status   status of merge operation  
+     * @param  reason   reason of the conflict (if any)
+     * @return          merge result object
+     */
     public static SVNMergeResult createMergeResult(SVNStatusType status, SVNConflictReason reason) {
         if (status == SVNStatusType.CONFLICTED) {
             if (reason == null) {
@@ -37,10 +56,20 @@ public class SVNMergeResult {
         return new SVNMergeResult(status, reason);
     }
     
+    /**
+     * Returns merge status.
+     * 
+     * @return merge status type object. 
+     */
     public SVNStatusType getMergeStatus() {
         return myMergeStatus;
     }
-    
+
+    /**
+     * Returns conflict reason.
+     * 
+     * @return conflict reason object.  
+     */
     public SVNConflictReason getConflictReason() {
         return myConflictReason;
     }

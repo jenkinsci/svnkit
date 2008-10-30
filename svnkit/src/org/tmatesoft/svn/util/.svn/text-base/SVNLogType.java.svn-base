@@ -13,12 +13,13 @@ package org.tmatesoft.svn.util;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNLogType {
     public static final SVNLogType NETWORK = new SVNLogType("svnkit-network", "NETWORK");
     public static final SVNLogType WC = new SVNLogType("svnkit-wc", "WC");
+    public static final SVNLogType FSFS = new SVNLogType("svnkit-fsfs", "FSFS");
     public static final SVNLogType CLIENT = new SVNLogType("svnkit-cli", "CLI");
     public static final SVNLogType DEFAULT = new SVNLogType("svnkit", "DEFAULT");
     

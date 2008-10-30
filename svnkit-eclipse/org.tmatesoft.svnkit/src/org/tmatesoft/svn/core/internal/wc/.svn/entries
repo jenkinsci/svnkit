@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core/internal/wc
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core/internal/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-03-28T02:07:40.780210Z
-4072
+2008-08-28T19:30:55.179841Z
+4792
 alex
 
 
@@ -32,10 +32,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-8038e7d0f3f46350b95467fd4ff0493f
-2008-03-28T02:07:40.780210Z
-4072
+2008-10-30T04:42:00.000000Z
+e44bedd09b6c93de5d0619d1520ab5ec
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7174
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,12 +23,12 @@ import org.tmatesoft.svn.core.SVNProperty;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea15 extends SVNAdminArea14 {
 
-    public static final int WC_FORMAT = 9;
+    public static final int WC_FORMAT = SVNAdminArea15Factory.WC_FORMAT;
 
     protected static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
 

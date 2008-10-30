@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,9 +21,11 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
@@ -52,7 +54,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
         if (repository.getAuthenticationManager() != null) {
             SVNAuthentication auth = repository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.USERNAME, host, repository.getLocation());
             if (auth == null) {
-                SVNErrorManager.cancel("Authentication cancelled");
+                SVNErrorManager.cancel("Authentication cancelled", SVNLogType.NETWORK);
             }
             String userName = auth.getUserName();
             if (userName == null || "".equals(userName.trim())) {
@@ -64,14 +66,14 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
             
             repository.setExternalUserName(userName);
         } 
-
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "tunnel command: " + expandedTunnel);
 	    open(repository, expandedTunnel);
     }
 
     private static String expandTunnelSpec(String name, String tunnelSpec) throws SVNException {
         if (tunnelSpec == null || tunnelSpec.trim().length() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "No tunnel spec foound for ''{0}''", name);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         tunnelSpec = tunnelSpec.trim();
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,11 +12,12 @@
 package org.tmatesoft.svn.core.internal.delta;
 
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNRangeTree {
@@ -193,7 +194,7 @@ public class SVNRangeTree {
                 }
             }
         }
-        SVNDebugLog.assertCondition(false, "assert #6");
+        SVNDebugLog.assertCondition(SVNLogType.DEFAULT, false, "assert #6");
         return tail;
     }
 
@@ -262,7 +263,7 @@ public class SVNRangeTree {
             if (root.left.right == null) {
                 SVNRangeTreeNode node = root.left;
                 root.left = node.right;
-                SVNDebugLog.assertCondition(root.left == null, "not null I");
+                SVNDebugLog.assertCondition(SVNLogType.DEFAULT, root.left == null, "not null I");
                 node.right = root;
                 root = node;
             } else {
@@ -284,7 +285,8 @@ public class SVNRangeTree {
             }
         }
         myRoot = root;
-        SVNDebugLog.assertCondition((offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
+        SVNDebugLog.assertCondition(SVNLogType.DEFAULT, 
+                (offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
     }
     
     public void insert(int offset, int limit, int targetOffset) {
@@ -322,7 +324,7 @@ public class SVNRangeTree {
                 cleanTree(limit);
             }   
         } else if (offset < myRoot.offset) {
-            SVNDebugLog.assertCondition(myRoot.left == null, "assert #5");
+            SVNDebugLog.assertCondition(SVNLogType.DEFAULT, myRoot.left == null, "assert #5");
             SVNRangeTreeNode node = allocateTreeNode(offset, limit, targetOffset);
             
             node.left = node.prev = null;

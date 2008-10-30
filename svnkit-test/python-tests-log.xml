@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PythonTests start="2008.07.24  at 19:31:36 CEST" elapsed="1 hours 31 minutes 40 seconds">
+<PythonTests start="2008.09.30  at 18:31:30 CEST" elapsed="1 hours 16 minutes 51 seconds">
   <server name="file" url="file:///home/builder/agent1ram/python/cmdline">
     <suite name="authz" total="0" passed="0" failed="0">
     </suite>
@@ -108,7 +108,7 @@
       <test name="checkout with peg revision date" id="12" result="PASSED"></test>
       <test name="co handles obstructing paths scheduled for add" id="13" result="PASSED"></test>
     </suite>
-    <suite name="commit" total="55" passed="55" failed="0">
+    <suite name="commit" total="56" passed="56" failed="0">
       <test name="commit one file" id="1" result="PASSED"></test>
       <test name="commit one newly added file" id="2" result="PASSED"></test>
       <test name="commit one newly added binary file" id="3" result="PASSED"></test>
@@ -164,8 +164,9 @@
       <test name="try to commit a file that is out-of-date" id="53" result="PASSED"></test>
       <test name="start-commit hook sees client capabilities" id="54" result="PASSED"></test>
       <test name="'svn commit SOME_URL' should error" id="55" result="PASSED"></test>
+      <test name="commit a missing to-be-added file should fail" id="56" result="PASSED"></test>
     </suite>
-    <suite name="copy" total="70" passed="70" failed="0">
+    <suite name="copy" total="71" passed="71" failed="0">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -236,6 +237,7 @@
       <test name="copy a URL that needs URI encoding to WC" id="68" result="PASSED"></test>
       <test name="copy wc in unversioned parent to other wc" id="69" result="PASSED"></test>
       <test name="update receives copy, but local source is replaced" id="70" result="PASSED"></test>
+      <test name="copy file into absent dir" id="71" result="PASSED"></test>
     </suite>
     <suite name="depth" total="26" passed="26" failed="0">
       <test name="depth-empty checkout" id="1" result="PASSED"></test>
@@ -396,7 +398,7 @@
       <test name="verify recursive info shows lock info" id="33" result="PASSED"></test>
       <test name="unlock file locked by other user" id="34" result="PASSED"></test>
     </suite>
-    <suite name="log" total="26" passed="26" failed="0">
+    <suite name="log" total="27" passed="27" failed="0">
       <test name="'svn log', no args, top of wc" id="1" result="PASSED"></test>
       <test name="'svn log' on an empty repository" id="2" result="PASSED"></test>
       <test name="'svn log -rN some_dir_unchanged_in_N'" id="3" result="PASSED"></test>
@@ -423,8 +425,9 @@
       <test name="test revprop retrieval" id="24" result="PASSED"></test>
       <test name="log --xml escapes non-utf8 data (issue #2866)" id="25" result="PASSED"></test>
       <test name="'svn log -g target_with_bogus_mergeinfo'" id="26" result="PASSED"></test>
+      <test name="log -g and explicit mergeinfo replacing inherited" id="27" result="PASSED"></test>
     </suite>
-    <suite name="merge" total="90" passed="90" failed="0">
+    <suite name="merge" total="99" passed="99" failed="0">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -515,14 +518,24 @@
       <test name="2-url merge from a foreign repository" id="89" result="PASSED"></test>
       <test name="merging an unknown url should return error" id="90" result="PASSED"></test>
       <test name="merges that remove all mergeinfo work" id="91" result="PASSED"></test>
+      <test name="dont merge revs into a subtree that predate it" id="92" result="PASSED"></test>
+      <test name="don't explicitly record implicit mergeinfo" id="93" result="PASSED"></test>
+      <test name="merge with broken symlinks in target" id="94" result="PASSED"></test>
+      <test name="subtree ranges might not intersect with target" id="95" result="PASSED"></test>
+      <test name="merge fails with renamed subtrees with mergeinfo" id="96" result="PASSED"></test>
+      <test name="subtree merge source might not exist" id="97" result="PASSED"></test>
+      <test name="mergeinfo not set on subtree with empty mergeinfo" id="98" result="PASSED"></test>
+      <test name="subtree merges dont cause spurious conflicts" id="100" result="PASSED"></test>
+      <test name="target and subtrees need nonintersecting revs" id="101" result="PASSED"></test>
     </suite>
     <suite name="merge_authz" total="0" passed="0" failed="0">
     </suite>
-    <suite name="mergeinfo" total="4" passed="4" failed="0">
+    <suite name="mergeinfo" total="5" passed="5" failed="0">
       <test name="'mergeinfo' on a URL that lacks mergeinfo" id="1" result="PASSED"></test>
       <test name="'mergeinfo' on a path with mergeinfo" id="2" result="PASSED"></test>
       <test name="'mergeinfo' with source selection" id="3" result="PASSED"></test>
-      <test name="mergeinfo of an unknown url should return error" id="4" result="PASSED"></test>
+      <test name="'mergeinfo' with uninteresting source selection" id="4" result="PASSED"></test>
+      <test name="mergeinfo of an unknown url should return error" id="5" result="PASSED"></test>
     </suite>
     <suite name="prop" total="26" passed="26" failed="0">
       <test name="write/read props in wc only (ps, pl, pdel, pe)" id="1" result="PASSED"></test>
@@ -635,7 +648,7 @@
       <test name="run 'status --depth=X -u' with incoming changes" id="29" result="PASSED"></test>
       <test name="status -u on versioned items whose type changed" id="30" result="PASSED"></test>
     </suite>
-    <suite name="svnadmin" total="14" passed="14" failed="0">
+    <suite name="svnadmin" total="15" passed="15" failed="0">
       <test name="loading of dumpstream with extra headers" id="1" result="PASSED"></test>
       <test name="load success on oversized Content-length" id="2" result="PASSED"></test>
       <test name="load failure on undersized Content-length" id="3" result="PASSED"></test>
@@ -650,8 +663,9 @@
       <test name="'svnadmin load --parent-dir' reparents mergeinfo" id="14" result="PASSED"></test>
       <test name="test 'svnadmin setuuid'" id="15" result="PASSED"></test>
       <test name="reflect dropped renumbered revs in svn:mergeinfo" id="16" result="PASSED"></test>
+      <test name="'svnadmin create /path/to/repo/subdir'" id="17" result="PASSED"></test>
     </suite>
-    <suite name="svnlook" total="9" passed="9" failed="0">
+    <suite name="svnlook" total="10" passed="10" failed="0">
       <test name="test miscellaneous svnlook features" id="1" result="PASSED"></test>
       <test name="delete file in moved dir" id="2" result="PASSED"></test>
       <test name="test the printing of property diffs" id="3" result="PASSED"></test>
@@ -661,6 +675,7 @@
       <test name="history --limit" id="7" result="PASSED"></test>
       <test name="test 'svnlook diff -x -b' and 'svnlook diff -x -w'" id="8" result="PASSED"></test>
       <test name="test 'svnlook diff -x --ignore-eol-style'" id="9" result="PASSED"></test>
+      <test name="test 'svnlook diff' on binary files" id="10" result="PASSED"></test>
     </suite>
     <suite name="svnsync" total="19" passed="19" failed="0">
       <test name="copy and modify" id="1" result="PASSED"></test>
@@ -778,7 +793,7 @@
       <test name="update fails when repos uuid changed" id="44" result="PASSED"></test>
     </suite>
   </server>
-  <server name="svnserve" url="svn://localhost:41835">
+  <server name="svnserve" url="svn://localhost:35009">
     <suite name="authz" total="14" passed="14" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="authz issue #2486 - open directory" id="2" result="PASSED"></test>
@@ -900,7 +915,7 @@
       <test name="checkout with peg revision date" id="12" result="PASSED"></test>
       <test name="co handles obstructing paths scheduled for add" id="13" result="PASSED"></test>
     </suite>
-    <suite name="commit" total="55" passed="55" failed="0">
+    <suite name="commit" total="56" passed="56" failed="0">
       <test name="commit one file" id="1" result="PASSED"></test>
       <test name="commit one newly added file" id="2" result="PASSED"></test>
       <test name="commit one newly added binary file" id="3" result="PASSED"></test>
@@ -956,8 +971,9 @@
       <test name="try to commit a file that is out-of-date" id="53" result="PASSED"></test>
       <test name="start-commit hook sees client capabilities" id="54" result="PASSED"></test>
       <test name="'svn commit SOME_URL' should error" id="55" result="PASSED"></test>
+      <test name="commit a missing to-be-added file should fail" id="56" result="PASSED"></test>
     </suite>
-    <suite name="copy" total="70" passed="70" failed="0">
+    <suite name="copy" total="71" passed="71" failed="0">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -1028,6 +1044,7 @@
       <test name="copy a URL that needs URI encoding to WC" id="68" result="PASSED"></test>
       <test name="copy wc in unversioned parent to other wc" id="69" result="PASSED"></test>
       <test name="update receives copy, but local source is replaced" id="70" result="PASSED"></test>
+      <test name="copy file into absent dir" id="71" result="PASSED"></test>
     </suite>
     <suite name="depth" total="26" passed="26" failed="0">
       <test name="depth-empty checkout" id="1" result="PASSED"></test>
@@ -1188,7 +1205,7 @@
       <test name="verify recursive info shows lock info" id="33" result="PASSED"></test>
       <test name="unlock file locked by other user" id="34" result="PASSED"></test>
     </suite>
-    <suite name="log" total="26" passed="26" failed="0">
+    <suite name="log" total="27" passed="27" failed="0">
       <test name="'svn log', no args, top of wc" id="1" result="PASSED"></test>
       <test name="'svn log' on an empty repository" id="2" result="PASSED"></test>
       <test name="'svn log -rN some_dir_unchanged_in_N'" id="3" result="PASSED"></test>
@@ -1215,8 +1232,9 @@
       <test name="test revprop retrieval" id="24" result="PASSED"></test>
       <test name="log --xml escapes non-utf8 data (issue #2866)" id="25" result="PASSED"></test>
       <test name="'svn log -g target_with_bogus_mergeinfo'" id="26" result="PASSED"></test>
+      <test name="log -g and explicit mergeinfo replacing inherited" id="27" result="PASSED"></test>
     </suite>
-    <suite name="merge" total="90" passed="90" failed="0">
+    <suite name="merge" total="99" passed="99" failed="0">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -1307,15 +1325,25 @@
       <test name="2-url merge from a foreign repository" id="89" result="PASSED"></test>
       <test name="merging an unknown url should return error" id="90" result="PASSED"></test>
       <test name="merges that remove all mergeinfo work" id="91" result="PASSED"></test>
+      <test name="dont merge revs into a subtree that predate it" id="92" result="PASSED"></test>
+      <test name="don't explicitly record implicit mergeinfo" id="93" result="PASSED"></test>
+      <test name="merge with broken symlinks in target" id="94" result="PASSED"></test>
+      <test name="subtree ranges might not intersect with target" id="95" result="PASSED"></test>
+      <test name="merge fails with renamed subtrees with mergeinfo" id="96" result="PASSED"></test>
+      <test name="subtree merge source might not exist" id="97" result="PASSED"></test>
+      <test name="mergeinfo not set on subtree with empty mergeinfo" id="98" result="PASSED"></test>
+      <test name="subtree merges dont cause spurious conflicts" id="100" result="PASSED"></test>
+      <test name="target and subtrees need nonintersecting revs" id="101" result="PASSED"></test>
     </suite>
     <suite name="merge_authz" total="1" passed="1" failed="0">
       <test name="skipped paths get overriding mergeinfo" id="1" result="PASSED"></test>
     </suite>
-    <suite name="mergeinfo" total="4" passed="4" failed="0">
+    <suite name="mergeinfo" total="5" passed="5" failed="0">
       <test name="'mergeinfo' on a URL that lacks mergeinfo" id="1" result="PASSED"></test>
       <test name="'mergeinfo' on a path with mergeinfo" id="2" result="PASSED"></test>
       <test name="'mergeinfo' with source selection" id="3" result="PASSED"></test>
-      <test name="mergeinfo of an unknown url should return error" id="4" result="PASSED"></test>
+      <test name="'mergeinfo' with uninteresting source selection" id="4" result="PASSED"></test>
+      <test name="mergeinfo of an unknown url should return error" id="5" result="PASSED"></test>
     </suite>
     <suite name="prop" total="26" passed="26" failed="0">
       <test name="write/read props in wc only (ps, pl, pdel, pe)" id="1" result="PASSED"></test>
@@ -1428,7 +1456,7 @@
       <test name="run 'status --depth=X -u' with incoming changes" id="29" result="PASSED"></test>
       <test name="status -u on versioned items whose type changed" id="30" result="PASSED"></test>
     </suite>
-    <suite name="svnadmin" total="14" passed="14" failed="0">
+    <suite name="svnadmin" total="15" passed="15" failed="0">
       <test name="loading of dumpstream with extra headers" id="1" result="PASSED"></test>
       <test name="load success on oversized Content-length" id="2" result="PASSED"></test>
       <test name="load failure on undersized Content-length" id="3" result="PASSED"></test>
@@ -1443,8 +1471,9 @@
       <test name="'svnadmin load --parent-dir' reparents mergeinfo" id="14" result="PASSED"></test>
       <test name="test 'svnadmin setuuid'" id="15" result="PASSED"></test>
       <test name="reflect dropped renumbered revs in svn:mergeinfo" id="16" result="PASSED"></test>
+      <test name="'svnadmin create /path/to/repo/subdir'" id="17" result="PASSED"></test>
     </suite>
-    <suite name="svnlook" total="9" passed="9" failed="0">
+    <suite name="svnlook" total="10" passed="10" failed="0">
       <test name="test miscellaneous svnlook features" id="1" result="PASSED"></test>
       <test name="delete file in moved dir" id="2" result="PASSED"></test>
       <test name="test the printing of property diffs" id="3" result="PASSED"></test>
@@ -1454,6 +1483,7 @@
       <test name="history --limit" id="7" result="PASSED"></test>
       <test name="test 'svnlook diff -x -b' and 'svnlook diff -x -w'" id="8" result="PASSED"></test>
       <test name="test 'svnlook diff -x --ignore-eol-style'" id="9" result="PASSED"></test>
+      <test name="test 'svnlook diff' on binary files" id="10" result="PASSED"></test>
     </suite>
     <suite name="svnsync" total="23" passed="23" failed="0">
       <test name="copy and modify" id="1" result="PASSED"></test>
@@ -1575,7 +1605,7 @@
       <test name="update fails when repos uuid changed" id="44" result="PASSED"></test>
     </suite>
   </server>
-  <server name="apache" url="http://localhost:41681">
+  <server name="apache" url="http://localhost:48353">
     <suite name="authz" total="13" passed="13" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="authz issue #2486 - open directory" id="2" result="PASSED"></test>
@@ -1696,7 +1726,7 @@
       <test name="checkout with peg revision date" id="12" result="PASSED"></test>
       <test name="co handles obstructing paths scheduled for add" id="13" result="PASSED"></test>
     </suite>
-    <suite name="commit" total="55" passed="55" failed="0">
+    <suite name="commit" total="56" passed="56" failed="0">
       <test name="commit one file" id="1" result="PASSED"></test>
       <test name="commit one newly added file" id="2" result="PASSED"></test>
       <test name="commit one newly added binary file" id="3" result="PASSED"></test>
@@ -1752,8 +1782,9 @@
       <test name="try to commit a file that is out-of-date" id="53" result="PASSED"></test>
       <test name="start-commit hook sees client capabilities" id="54" result="PASSED"></test>
       <test name="'svn commit SOME_URL' should error" id="55" result="PASSED"></test>
+      <test name="commit a missing to-be-added file should fail" id="56" result="PASSED"></test>
     </suite>
-    <suite name="copy" total="70" passed="70" failed="0">
+    <suite name="copy" total="71" passed="71" failed="0">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -1824,6 +1855,7 @@
       <test name="copy a URL that needs URI encoding to WC" id="68" result="PASSED"></test>
       <test name="copy wc in unversioned parent to other wc" id="69" result="PASSED"></test>
       <test name="update receives copy, but local source is replaced" id="70" result="PASSED"></test>
+      <test name="copy file into absent dir" id="71" result="PASSED"></test>
     </suite>
     <suite name="depth" total="26" passed="26" failed="0">
       <test name="depth-empty checkout" id="1" result="PASSED"></test>
@@ -1984,7 +2016,7 @@
       <test name="verify recursive info shows lock info" id="33" result="PASSED"></test>
       <test name="unlock file locked by other user" id="34" result="PASSED"></test>
     </suite>
-    <suite name="log" total="26" passed="26" failed="0">
+    <suite name="log" total="27" passed="27" failed="0">
       <test name="'svn log', no args, top of wc" id="1" result="PASSED"></test>
       <test name="'svn log' on an empty repository" id="2" result="PASSED"></test>
       <test name="'svn log -rN some_dir_unchanged_in_N'" id="3" result="PASSED"></test>
@@ -2011,8 +2043,9 @@
       <test name="test revprop retrieval" id="24" result="PASSED"></test>
       <test name="log --xml escapes non-utf8 data (issue #2866)" id="25" result="PASSED"></test>
       <test name="'svn log -g target_with_bogus_mergeinfo'" id="26" result="PASSED"></test>
+      <test name="log -g and explicit mergeinfo replacing inherited" id="27" result="PASSED"></test>
     </suite>
-    <suite name="merge" total="90" passed="90" failed="0">
+    <suite name="merge" total="100" passed="100" failed="0">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -2103,15 +2136,26 @@
       <test name="2-url merge from a foreign repository" id="89" result="PASSED"></test>
       <test name="merging an unknown url should return error" id="90" result="PASSED"></test>
       <test name="merges that remove all mergeinfo work" id="91" result="PASSED"></test>
+      <test name="dont merge revs into a subtree that predate it" id="92" result="PASSED"></test>
+      <test name="don't explicitly record implicit mergeinfo" id="93" result="PASSED"></test>
+      <test name="merge with broken symlinks in target" id="94" result="PASSED"></test>
+      <test name="subtree ranges might not intersect with target" id="95" result="PASSED"></test>
+      <test name="merge fails with renamed subtrees with mergeinfo" id="96" result="PASSED"></test>
+      <test name="subtree merge source might not exist" id="97" result="PASSED"></test>
+      <test name="mergeinfo not set on subtree with empty mergeinfo" id="98" result="PASSED"></test>
+      <test name="commits to subtrees added by merge wreak havoc" id="99" result="PASSED"></test>
+      <test name="subtree merges dont cause spurious conflicts" id="100" result="PASSED"></test>
+      <test name="target and subtrees need nonintersecting revs" id="101" result="PASSED"></test>
     </suite>
     <suite name="merge_authz" total="1" passed="1" failed="0">
       <test name="skipped paths get overriding mergeinfo" id="1" result="PASSED"></test>
     </suite>
-    <suite name="mergeinfo" total="4" passed="4" failed="0">
+    <suite name="mergeinfo" total="5" passed="5" failed="0">
       <test name="'mergeinfo' on a URL that lacks mergeinfo" id="1" result="PASSED"></test>
       <test name="'mergeinfo' on a path with mergeinfo" id="2" result="PASSED"></test>
       <test name="'mergeinfo' with source selection" id="3" result="PASSED"></test>
-      <test name="mergeinfo of an unknown url should return error" id="4" result="PASSED"></test>
+      <test name="'mergeinfo' with uninteresting source selection" id="4" result="PASSED"></test>
+      <test name="mergeinfo of an unknown url should return error" id="5" result="PASSED"></test>
     </suite>
     <suite name="prop" total="26" passed="26" failed="0">
       <test name="write/read props in wc only (ps, pl, pdel, pe)" id="1" result="PASSED"></test>
@@ -2224,7 +2268,7 @@
       <test name="run 'status --depth=X -u' with incoming changes" id="29" result="PASSED"></test>
       <test name="status -u on versioned items whose type changed" id="30" result="PASSED"></test>
     </suite>
-    <suite name="svnadmin" total="14" passed="14" failed="0">
+    <suite name="svnadmin" total="15" passed="15" failed="0">
       <test name="loading of dumpstream with extra headers" id="1" result="PASSED"></test>
       <test name="load success on oversized Content-length" id="2" result="PASSED"></test>
       <test name="load failure on undersized Content-length" id="3" result="PASSED"></test>
@@ -2239,8 +2283,9 @@
       <test name="'svnadmin load --parent-dir' reparents mergeinfo" id="14" result="PASSED"></test>
       <test name="test 'svnadmin setuuid'" id="15" result="PASSED"></test>
       <test name="reflect dropped renumbered revs in svn:mergeinfo" id="16" result="PASSED"></test>
+      <test name="'svnadmin create /path/to/repo/subdir'" id="17" result="PASSED"></test>
     </suite>
-    <suite name="svnlook" total="9" passed="9" failed="0">
+    <suite name="svnlook" total="10" passed="10" failed="0">
       <test name="test miscellaneous svnlook features" id="1" result="PASSED"></test>
       <test name="delete file in moved dir" id="2" result="PASSED"></test>
       <test name="test the printing of property diffs" id="3" result="PASSED"></test>
@@ -2250,6 +2295,7 @@
       <test name="history --limit" id="7" result="PASSED"></test>
       <test name="test 'svnlook diff -x -b' and 'svnlook diff -x -w'" id="8" result="PASSED"></test>
       <test name="test 'svnlook diff -x --ignore-eol-style'" id="9" result="PASSED"></test>
+      <test name="test 'svnlook diff' on binary files" id="10" result="PASSED"></test>
     </suite>
     <suite name="svnsync" total="23" passed="23" failed="0">
       <test name="copy and modify" id="1" result="PASSED"></test>

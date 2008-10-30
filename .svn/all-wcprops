@@ -1,29 +1,17 @@
 K 25
 svn:wc:ra_dav:version-url
-V 44
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4
-END
-.classpath
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/.classpath
-END
-changelog.txt
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/changelog.txt
+V 38
+/repos/svnkit/!svn/ver/4949/tags/1.2.0
 END
 svnkit.build.properties
 K 25
 svn:wc:ra_dav:version-url
-V 68
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit.build.properties
+V 62
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit.build.properties
 END
-build.xml
+README.txt
 K 25
 svn:wc:ra_dav:version-url
-V 54
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/build.xml
+V 49
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/README.txt
 END

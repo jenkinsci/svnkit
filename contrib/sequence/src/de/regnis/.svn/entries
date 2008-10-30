@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/contrib/sequence/src/de/regnis
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-05T20:44:33.220049Z
-4295
-alex
+2008-07-30T16:53:59.266781Z
+4613
+semen
 
 
 svn:special svn:externals svn:needs-lock

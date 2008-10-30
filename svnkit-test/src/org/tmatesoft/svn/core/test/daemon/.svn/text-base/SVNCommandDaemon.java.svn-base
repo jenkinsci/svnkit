@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -67,12 +68,12 @@ public class SVNCommandDaemon implements Runnable {
         try {
             serverSocket = new ServerSocket(myPort);
         } catch (IOException e) {
-            log.logSevere("cannot create server socket at port " + myPort);
-            log.logSevere(e);
+            log.logSevere(SVNLogType.DEFAULT, "cannot create server socket at port " + myPort);
+            log.logSevere(SVNLogType.DEFAULT, e);
             return;
         }
         if (serverSocket == null) {
-            log.logSevere("cannot create server socket at port " + myPort);
+            log.logSevere(SVNLogType.DEFAULT, "cannot create server socket at port " + myPort);
             return;
         }
         while(true) {
@@ -80,12 +81,12 @@ public class SVNCommandDaemon implements Runnable {
             try {
                 socket = serverSocket.accept();
             } catch (IOException e) {
-                log.logSevere("cannot accept connection");
-                log.logSevere(e);
+                log.logSevere(SVNLogType.DEFAULT, "cannot accept connection");
+                log.logSevere(SVNLogType.DEFAULT, e);
                 continue;
             }
             if (socket == null) {
-                log.logSevere("cannot accept connection");
+                log.logSevere(SVNLogType.DEFAULT, "cannot accept connection");
                 continue;
             }
             OutputStream os = null;
@@ -99,7 +100,7 @@ public class SVNCommandDaemon implements Runnable {
                 // run!
                 int rc = environment.run();
                 // send back
-                log.logSevere("command exit code: " + rc);
+                log.logSevere(SVNLogType.DEFAULT, "command exit code: " + rc);
                 try {
                     os.write(escape(environment.getStdOut()));
                     os.write(new byte[] {
@@ -112,30 +113,30 @@ public class SVNCommandDaemon implements Runnable {
                     os.write(Integer.toString(rc).getBytes());
                     os.flush();
                 } catch (IOException e) {
-                    log.logSevere("error sending execution results");
-                    log.logSevere(e);
+                    log.logSevere(SVNLogType.DEFAULT, "error sending execution results");
+                    log.logSevere(SVNLogType.DEFAULT, e);
                 }
             } catch (IOException e) {
-                log.logSevere("error processing client request");
-                log.logSevere(e);
+                log.logSevere(SVNLogType.DEFAULT, "error processing client request");
+                log.logSevere(SVNLogType.DEFAULT, e);
             } finally {
                 try {
                     is.close();
                 } catch (IOException e) {
-                    log.logSevere("error closing client stream");
-                    log.logSevere(e);
+                    log.logSevere(SVNLogType.DEFAULT, "error closing client stream");
+                    log.logSevere(SVNLogType.DEFAULT, e);
                 }
                 try {
                     os.close();
                 } catch (IOException e) {
-                    log.logSevere("error closing client stream");
-                    log.logSevere(e);
+                    log.logSevere(SVNLogType.DEFAULT, "error closing client stream");
+                    log.logSevere(SVNLogType.DEFAULT, e);
                 }
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    log.logSevere("error closing client socket");
-                    log.logSevere(e);
+                    log.logSevere(SVNLogType.DEFAULT, "error closing client socket");
+                    log.logSevere(SVNLogType.DEFAULT, e);
                 }
             }
         }

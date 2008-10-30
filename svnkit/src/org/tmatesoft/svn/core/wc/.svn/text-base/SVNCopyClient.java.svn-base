@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -105,10 +105,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Overloaded <b>doCopy()</b> methods of <b>SVNCopyClient</b> are similar to
  * <code>'svn copy'</code> and <code>'svn move'</code> commands of the SVN command line client. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
- * 
  */
 public class SVNCopyClient extends SVNBasicClient {
 
@@ -143,6 +142,24 @@ public class SVNCopyClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNCopyClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNCopyClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -216,10 +233,32 @@ public class SVNCopyClient extends SVNBasicClient {
        return myCommitParameters;
     }
 
+    /**
+     * Sets an externals handler to be used by this client object.
+     * 
+     * @param externalsHandler user's implementation of {@link ISVNExternalsHandler}
+     * @see   #getExternalsHandler()
+     * @since 1.2
+     */
     public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
         myExternalsHandler = externalsHandler;
     }
 
+    /**
+     * Returns an externals handler used by this update client.
+     * 
+     * <p/>
+     * If no user's handler is provided then {@link ISVNExternalsHandler#DEFAULT} is returned and 
+     * used by this client object by default.
+     * 
+     * <p/>
+     * For more information what externals handlers are for, please, refer to {@link ISVNExternalsHandler} and 
+     * {@link #doCopy(SVNCopySource[], SVNURL, boolean, boolean, boolean, String, SVNProperties)}. 
+     * 
+     * @return           externals handler being in use
+     * @see              #setExternalsHandler(ISVNExternalsHandler)
+     * @since            1.2 
+     */
     public ISVNExternalsHandler getExternalsHandler() {
         if (myExternalsHandler == null) {
             myExternalsHandler = ISVNExternalsHandler.DEFAULT;
@@ -227,11 +266,70 @@ public class SVNCopyClient extends SVNBasicClient {
         return myExternalsHandler;
     }
 
+    /** 
+     * Copies each source in <code>sources</code> to <code>dst</code>.
+     *
+     * <p/>
+     * If multiple <code>sources</code> are given, <code>dst</code> must be a directory, and <code>sources</code> 
+     * will be copied as children of <code>dst</code>.
+     *
+     * <p/>
+     * Each <code>src</code> in <code>sources</code> must be files or directories under version control,
+     * or URLs of a versioned item in the repository. If <code>sources</code> has multiple items, they  
+     * must be all repository URLs or all working copy paths.
+     * 
+     * <p/>
+     * The parent of <code>dst</code> must already exist.
+     * 
+     * <p/>
+     * If <code>sources</code> has only one item, attempts to copy it to <code>dst</code>. 
+     * If <code>failWhenDstExists</code> is <span class="javakeyword">false</span> and <code>dst</code> already 
+     * exists, attempts to copy the item as a child of <code>dst</code>. If <code>failWhenDstExists</code> is 
+     * <span class="javakeyword">true</span> and <code>dst</code> already exists, throws an {@link SVNException} 
+     * with the {@link SVNErrorCode#ENTRY_EXISTS} error code.
+     * 
+     * <p/>
+     * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+     * <span class="javakeyword">false</span>, all <code>sources</code> are copied as children of <code>dst</code>. 
+     * If any child of <code>dst</code> already exists with the same name any item in <code>sources</code>,
+     * throws an {@link SVNException} with the {@link SVNErrorCode#ENTRY_EXISTS} error code.
+     * 
+     * <p/>
+     * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+     * <span class="javakeyword">true</span>, throws an {@link SVNException} with the 
+     * {@link SVNErrorCode#CLIENT_MULTIPLE_SOURCES_DISALLOWED}.
+     *
+     * <p/>
+     * This method is just a variant of a local add operation, where <code>sources</code> are scheduled for 
+     * addition as copies. No changes will happen to the repository until a commit occurs. This scheduling can 
+     * be removed with {@link SVNWCClient#doRevert(File[], SVNDepth, Collection)}.
+     * 
+     * <p/>
+     * If <code>makeParents is <span class="javakeyword">true</span>, creates any non-existent parent directories
+     * also.
+     * 
+     * <p/>
+     * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, invokes it  
+     * for each item added at the new location.
+     * 
+     * <p/>
+     * Note: this routine requires repository access only when sources are urls.
+     * 
+     * @param  sources               array of copy sources 
+     * @param  dst                   destination working copy path
+     * @param  isMove                if <span class="javakeyword">true</span>, then it will be a move operation 
+     *                               (delete, then add with history)                 
+     * @param  makeParents           if <span class="javakeyword">true</span>, creates non-existent parent 
+     *                               directories as well
+     * @param  failWhenDstExists     controls whether to fail or not if <code>dst</code> already exists
+     * @throws SVNException          
+     * @since                        1.2, SVN 1.5
+     */
     public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, 
             boolean failWhenDstExists) throws SVNException {
         if (sources.length > 1 && failWhenDstExists) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         sources = expandCopySources(sources);
         if (sources.length == 0) {
@@ -259,11 +357,98 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
-    public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, boolean failWhenDstExists,
-            String commitMessage, SVNProperties revisionProperties) throws SVNException {
+   /** 
+    * Copies each source in <code>sources</code> to <code>dst</code>.
+    *
+    * <p/>
+    * If multiple <code>sources</code> are given, <code>dst</code> must be a directory, and <code>sources</code> 
+    * will be copied as children of <code>dst</code>.
+    *
+    * <p/>
+    * Each <code>src</code> in <code>sources</code> must be files or directories under version control,
+    * or URLs of a versioned item in the repository. If <code>sources</code> has multiple items, they  
+    * must be all repository URLs or all working copy paths.
+    * 
+    * <p/>
+    * The parent of <code>dst</code> must already exist.
+    * 
+    * <p/>
+    * If <code>sources</code> has only one item, attempts to copy it to <code>dst</code>. 
+    * If <code>failWhenDstExists</code> is <span class="javakeyword">false</span> and <code>dst</code> already 
+    * exists, attempts to copy the item as a child of <code>dst</code>. If <code>failWhenDstExists</code> is 
+    * <span class="javakeyword">true</span> and <code>dst</code> already exists, throws an {@link SVNException} 
+    * with the {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
+    * 
+    * <p/>
+    * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+    * <span class="javakeyword">false</span>, all <code>sources</code> are copied as children of <code>dst</code>. 
+    * If any child of <code>dst</code> already exists with the same name any item in <code>sources</code>,
+    * throws an {@link SVNException} with the {@link SVNErrorCode#FS_ALREADY_EXISTS} error code.
+    * 
+    * <p/>
+    * If <code>sources</code> has multiple items, and <code>failWhenDstExists</code> is 
+    * <span class="javakeyword">true</span>, throws an {@link SVNException} with the 
+    * {@link SVNErrorCode#CLIENT_MULTIPLE_SOURCES_DISALLOWED}.
+    *
+    * <p/>
+    * {@link ISVNAuthenticationManager Authentication manager} (whether provided directly through the 
+    * appropriate constructor or in an {@link ISVNRepositoryPool} instance) and {@link #getCommitHandler() commit handler} 
+    * are used to immediately attempt to commit the copy action in the repository. 
+    *
+    * <p/>
+    * If <code>makeParents is <span class="javakeyword">true</span>, creates any non-existent parent directories
+    * also.
+    * 
+    * <p/>
+    * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> is an object holding 
+    * additional, custom revision properties (<code>String</code> to {@link SVNPropertyValue} mappings) to be 
+    * set on the new revision. This table cannot contain any standard Subversion properties.
+    * 
+    * <p/>
+    * If the caller's {@link ISVNEventHandler} is non-<span class="javakeyword">null</span>, invokes it  
+    * for each item added at the new location.
+    * 
+    * <p/>
+    * When performing a wc-to-url copy (tagging|branching from a working copy) it's possible to fix 
+    * revisions of external working copies (if any) which are located within the working copy being copied.
+    * For example, imagine you have a working copy and on one of its subdirecotries you set an 
+    * <span class="javastring">"svn:externals"</span> property which does not contain a revision number. 
+    * Suppose you have made a tag from your working copy and in some period of time a user checks out 
+    * that tag. It could have happened that the external project has evolved since the tag creation moment 
+    * and the tag version is nomore compatible with it. So, the user has a broken project since it will not 
+    * compile because of the API incompatibility between the two versions of the external project: the HEAD 
+    * one and the one existed in the moment of the tag creation. That is why it appears useful to fix externals 
+    * revisions during a wc-to-url copy. To enable externals revision fixing a user should implement 
+    * {@link ISVNExternalsHandler}. The user's implementation 
+    * {@link ISVNExternalsHandler#handleExternal(File, SVNURL, SVNRevision, SVNRevision, String, SVNRevision)} 
+    * method will be called on every external that will be met in the working copy. If the user's implementation 
+    * returns non-<span class="javakeyword">null</span> external revision, it's compared with the revisions 
+    * fetched from the external definition. If they are different, the user's revision will be written in 
+    * the external definition of the tag. Otherwise if the returned revision is equal to the revision from 
+    * the external definition or if the user's implementation returns <span class="javakeyword">null</span> for 
+    * that external, it will be skipped (i.e. left as is, unprocessed).        
+    * 
+    * <p/>
+    * Note: this routine requires repository access.
+    * 
+    * @param  sources               array of copy sources 
+    * @param  dst                   destination url
+    * @param  isMove                if <span class="javakeyword">true</span>, then it will be a move operation 
+    *                               (delete, then add with history)                 
+    * @param  makeParents           if <span class="javakeyword">true</span>, creates non-existent parent 
+    *                               directories as well
+    * @param  failWhenDstExists     controls whether to fail or not if <code>dst</code> already exists
+    * @param  commitMessage         commit log message
+    * @param  revisionProperties    custom revision properties
+    * @return                       information about the new committed revision 
+    * @throws SVNException          
+    * @since                        1.2, SVN 1.5
+    */
+    public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, 
+            boolean failWhenDstExists, String commitMessage, SVNProperties revisionProperties) throws SVNException {
         if (sources.length > 1 && failWhenDstExists) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         sources = expandCopySources(sources);
         if (sources.length == 0) {
@@ -292,7 +477,32 @@ public class SVNCopyClient extends SVNBasicClient {
     }
 
     /**
-     * Converts a disjoint wc to a copied one.
+     * Converts a disjoint working copy to a copied one.
+     * 
+     * <p/>
+     * Note: this routine does not require repository access. However if it's performed on an old format 
+     * working copy where repository root urls were not written, the routine will connect to the repository 
+     * to fetch the repository root url. 
+     * 
+     * @param  nestedWC      the root of the working copy located in another working copy (disjoint wc)
+     * @throws SVNException  in the following cases:
+     *                       <ul>
+     *                       <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                       if <code>nestedWC</code> is either not a directory, or has no parent at all;
+     *                       if the current local filesystem parent of <code>nestedWC</code> is actually a 
+     *                       child of it in the repository
+     *                       <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -  
+     *                       if <code>nestedWC</code> is not a disjoint working copy, i.e. there is already
+     *                       a versioned item under the parent path of <code>nestedWC</code>;
+     *                       if <code>nestedWC</code> is not in the repository yet (has got a schedule for 
+     *                       addition flag)
+     *                       <li/>exception with {@link SVNErrorCode#WC_INVALID_SCHEDULE} error code - 
+     *                       if <code>nestedWC</code> is not from the same repository as the parent directory;
+     *                       if the parent of <code>nestedWC</code> is scheduled for deletion;
+     *                       if <code>nestedWC</code> is scheduled for deletion
+     *                       <li/>
+     *                       </ul>
+     * @since                1.2.0 
      */
     public void doCopy(File nestedWC) throws SVNException {
         copyDisjointWCToWC(nestedWC);
@@ -344,7 +554,7 @@ public class SVNCopyClient extends SVNBasicClient {
         } else {
             if (wcAccess.isWCRoot(path)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             uuid = getUUIDFromPath(wcAccess, path.getParentFile());
         }
@@ -405,7 +615,7 @@ public class SVNCopyClient extends SVNBasicClient {
                   source.getPegRevision() == SVNRevision.PREVIOUS)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
                         "Revision type requires a working copy path, not URL");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         boolean srcIsURL = sources[0].isURL();
@@ -420,7 +630,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 if (SVNPathUtil.isURL(pair.mySource) != srcIsURL) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                             "Cannot mix repository and working copy sources");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 String baseName = source.getName();
                 if (srcIsURL && !dstIsURL) {
@@ -448,7 +658,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                             "Cannot copy path ''{0}'' into its own child ''{1}",
                             new Object[] { srcPath, dstPath });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         }
@@ -461,13 +671,13 @@ public class SVNCopyClient extends SVNBasicClient {
                     if (srcPath.equals(dstPath)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                                 "Cannot move path ''{0}'' into itself", srcPath);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Moves between the working copy and the repository are not supported");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         } else {
             if (!srcIsURL) {
@@ -499,7 +709,7 @@ public class SVNCopyClient extends SVNBasicClient {
                             if (url == null) {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                                         "''{0}'' does not have a URL associated with it", new File(pair.mySource));
-                                SVNErrorManager.error(err);
+                                SVNErrorManager.error(err, SVNLogType.WC);
                             }
                             pair.mySource = url.toString();
                             if (!needReposPegRevision || pair.mySourcePegRevision == SVNRevision.BASE) {
@@ -579,7 +789,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 if (kind != SVNNodeKind.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, 
                             "Path ''{0}'' already exists", SVNURL.parseURIEncoded(pair.myDst));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
             // create commit items list to fetch log messages.
@@ -674,12 +884,24 @@ public class SVNCopyClient extends SVNBasicClient {
                             if (externalEntry != null) {
                                 externalsWCRevision = SVNRevision.create(externalEntry.getRevision());
                             }
+                            SVNEntry ownerEntry = wcAccess.getEntry(localPath, false);
+                            SVNURL ownerURL = null;
+                            if (ownerEntry != null) {
+                                ownerURL = ownerEntry.getSVNURL();
+                            } 
+                            if (ownerURL == null) {
+                                // there is no entry for the directory that has external 
+                                // property or no url in it?
+                                continue;
+                            }
+                            SVNRevision[] revs = getExternalsHandler().handleExternal(
+                                    externalWC, 
+                                    externals[k].resolveURL(repos.getRepositoryRoot(true), ownerURL), 
+                                    externals[k].getRevision(), 
+                                    externals[k].getPegRevision(), 
+                                    externals[k].getRawValue(), 
+                                    externalsWCRevision);
                             
-                            SVNRevision[] revs = getExternalsHandler().handleExternal(externalWC, 
-                                    externals[k].resolveURL(repos.getRepositoryRoot(true), 
-                                            externalEntry.getSVNURL()), externals[k].getRevision(), 
-                                            externals[k].getPegRevision(), externals[k].getRawValue(), 
-                                            externalsWCRevision);
                             if (revs != null && revs[0] == externals[k].getRevision()) {
                                 newExternals.add(externals[k].getRawValue());
                             } else if (revs != null) {
@@ -758,7 +980,7 @@ public class SVNCopyClient extends SVNBasicClient {
         } catch (SVNException e) {
             // wrap error message.
             SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } finally {
             if (tmpFiles != null) {
                 for (Iterator files = tmpFiles.iterator(); files.hasNext();) {
@@ -771,7 +993,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 try {
                     commitEditor.abortEdit();
                 } catch (SVNException e) {
-                    SVNDebugLog.getLog(SVNLogType.WC).logFine(e);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, e);
                 }
             }
             if (wcAccess != null) {
@@ -811,7 +1033,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNURL url1 = SVNURL.parseURIEncoded(((CopyPair) copyPairs.get(0)).mySource);
             SVNURL url2 = SVNURL.parseURIEncoded(((CopyPair) copyPairs.get(0)).myDst);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source and dest appear not to be in the same repository (src: ''{0}''; dst: ''{1}'')", new Object[] {url1, url2});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         for (int i = 0; i < copyPairs.size(); i++) {
             CopyPair pair = (CopyPair) copyPairs.get(i);
@@ -877,19 +1099,19 @@ public class SVNCopyClient extends SVNBasicClient {
             }
             if ("".equals(srcRelative) && isMove) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot move URL ''{0}'' into itself", SVNURL.parseURIEncoded(pair.mySource));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             info.mySourceKind = topRepos.checkPath(srcRelative, pair.mySourceRevisionNumber);
             if (info.mySourceKind == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
                         "Path ''{0}'' does not exist in revision {1}", new Object[] {SVNURL.parseURIEncoded(pair.mySource), new Long(pair.mySourceRevisionNumber)});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNNodeKind dstKind = topRepos.checkPath(dstRelative, latestRevision);
             if (dstKind != SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_ALREADY_EXISTS, 
                         "Path ''{0}'' already exists", dstRelative);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             info.mySource = pair.mySource;
             info.mySourcePath = srcRelative;
@@ -969,13 +1191,13 @@ public class SVNCopyClient extends SVNBasicClient {
             throw cancel;
         } catch (SVNException e) {
             SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         } finally {
             if (commitEditor != null && result == null) {
                 try {
                     commitEditor.abortEdit();
                 } catch (SVNException e) {
-                    SVNDebugLog.getLog(SVNLogType.WC).logFine(e);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, e);
                 }
             }
         }
@@ -1029,13 +1251,13 @@ public class SVNCopyClient extends SVNBasicClient {
                         err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' not found in head revision", 
                                 SVNURL.parseURIEncoded(pair.mySource));
                     }
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 pair.mySourceKind = kind;
                 SVNFileType dstType = SVNFileType.getType(new File(pair.myDst));
                 if (dstType != SVNFileType.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Path ''{0}'' already exists", new File(pair.myDst));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 String dstParent = SVNPathUtil.removeTail(pair.myDst);
                 SVNFileType dstParentFileType = SVNFileType.getType(new File(dstParent));
@@ -1044,7 +1266,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     addLocalParents(new File(dstParent), getEventDispatcher());
                 } else if (dstParentFileType != SVNFileType.DIRECTORY) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Path ''{0}'' is not a directory", dstParent);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
             SVNWCAccess dstAccess = createWCAccess();
@@ -1056,7 +1278,7 @@ public class SVNCopyClient extends SVNBasicClient {
                     if (dstEntry != null && !dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
                                 "Entry for ''{0}'' exists (though the working file is missing)", new File(pair.myDst)); 
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }
                 String srcUUID = null;
@@ -1125,7 +1347,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 extendWCMergeInfo(dstFile, dstRootEntry, srcMergeInfo, dstAccess);
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Source URL ''{0}'' is from foreign repository; leaving it as a disjoint WC", url);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         } else if (pair.mySourceKind == SVNNodeKind.FILE) {
             String srcURL = pair.mySource;
@@ -1169,13 +1391,13 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcFileType == SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
                         "Path ''{0}'' does not exist", new File(pair.mySource));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNFileType dstFileType = SVNFileType.getType(new File(pair.myDst));
             if (dstFileType != SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
                         "Path ''{0}'' already exists", new File(pair.myDst));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             File dstParent = new File(SVNPathUtil.removeTail(pair.myDst));
             pair.myBaseName = SVNPathUtil.tail(pair.myDst);
@@ -1186,7 +1408,7 @@ public class SVNCopyClient extends SVNBasicClient {
             } else if (dstParentFileType != SVNFileType.DIRECTORY) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, 
                         "Path ''{0}'' is not a directory", dstParent);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
         if (isMove) {
@@ -1201,7 +1423,7 @@ public class SVNCopyClient extends SVNBasicClient {
         if (nestedWCType != SVNFileType.DIRECTORY) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "This kind of copy can be run on a root of a disjoint wc directory only");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         nestedWC = new File(nestedWC.getAbsolutePath().replace(File.separatorChar, '/'));
@@ -1209,7 +1431,7 @@ public class SVNCopyClient extends SVNBasicClient {
         if (nestedWCParent == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "{0} seems to be not a disjoint wc since it has no parent", nestedWC);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         SVNWCAccess parentWCAccess = createWCAccess();
@@ -1221,7 +1443,7 @@ public class SVNCopyClient extends SVNBasicClient {
             if (srcEntryInParent != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
                         "Entry ''{0}'' already exists in parent directory", nestedWC.getName());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
 
             SVNAdminArea nestedArea = nestedWCAccess.open(nestedWC, false, SVNWCAccess.INFINITE_DEPTH);
@@ -1239,19 +1461,19 @@ public class SVNCopyClient extends SVNBasicClient {
                         "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''",
                         new Object[] { nestedWCParent, nestedWCThisEntry.getRepositoryRootURL(), 
                         parentThisEntry.getRepositoryRootURL() });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             if (parentThisEntry.isScheduledForDeletion()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, 
                         "Cannot copy to ''{0}'', as it is scheduled for deletion", nestedWCParent); 
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
 
             if (nestedWCThisEntry.isScheduledForDeletion()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, 
                         "Cannot copy ''{0}'', as it is scheduled for deletion", nestedWC); 
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             SVNURL nestedWCReposRoot = getReposRoot(nestedWC, null, SVNRevision.WORKING, nestedArea, 
@@ -1266,7 +1488,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                         "Cannot copy path ''{0}'' into its own child ''{1}",
                         new Object[] { nestedWCPath, parentPath });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
 
             if ((nestedWCThisEntry.isScheduledForAddition() && !nestedWCThisEntry.isCopied()) || 
@@ -1274,7 +1496,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
                         "Cannot copy or move ''{0}'': it is not in repository yet; " +
                         "try committing first", nestedWC);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
 
             boolean[] extend = { false };
@@ -1414,7 +1636,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 // delete src.
                 SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), sourceFile, true, true);
             } finally {
-                if (dstAccess != srcAccess) {
+                if (dstAccess != null && dstAccess != srcAccess) {
                     dstAccess.close();
                 }
                 srcAccess.close();
@@ -1470,12 +1692,12 @@ public class SVNCopyClient extends SVNBasicClient {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE,                        
                         "Cannot copy to ''{0}'', as it is not from repository ''{1}''; it is from ''{2}''",
                         new Object[] {dstParent, srcEntry.getRepositoryRootURL(), dstEntry.getRepositoryRootURL()});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (dstEntry.isScheduledForDeletion()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SCHEDULE, 
                         "Cannot copy to ''{0}'', as it is scheduled for deletion", dstParent); 
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNFileType srcType = SVNFileType.getType(src);
             if (srcType == SVNFileType.FILE || srcType == SVNFileType.SYMLINK) {
@@ -1501,20 +1723,18 @@ public class SVNCopyClient extends SVNBasicClient {
         SVNFileType dstType = SVNFileType.getType(dst);
         if (dstType != SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' already exists and is in the way", dst);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-        if (dstEntry != null && dstEntry.isFile()) {
-            if (!dstEntry.isScheduledForDeletion()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "There is already a versioned item ''{0}''", dst);
-                SVNErrorManager.error(err);
-            }
+        if (dstEntry != null && !dstEntry.isScheduledForDeletion()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "There is already a versioned item ''{0}''", dst);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNEntry srcEntry = srcAccess.getVersionedEntry(src, false);
         if ((srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) || srcEntry.getURL() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "Cannot copy or move ''{0}'': it is not in repository yet; " +
             		"try committing first", src);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         String copyFromURL = null;
         long copyFromRevision = -1;
@@ -1567,7 +1787,7 @@ public class SVNCopyClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, 
                     "Cannot copy or move ''{0}'': it is not in repository yet; " +
                     "try committing first", src);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNFileUtil.copyDirectory(src, dst, true, getEventDispatcher());
         SVNWCClient wcClient = new SVNWCClient((ISVNAuthenticationManager) null, null);
@@ -1724,7 +1944,7 @@ public class SVNCopyClient extends SVNBasicClient {
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                             "Entry for ''{0}'' has no URL", srcFile);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         } else {

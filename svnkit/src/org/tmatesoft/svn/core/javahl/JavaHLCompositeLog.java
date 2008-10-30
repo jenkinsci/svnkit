@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,93 +11,85 @@
  */
 package org.tmatesoft.svn.core.javahl;
 
-import java.util.HashSet;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
 import java.util.logging.Level;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class JavaHLCompositeLog extends SVNDebugLogAdapter {
 
-    Set myLoggers;
+    Map myLoggers;
 
     public JavaHLCompositeLog() {
-        myLoggers = new HashSet();
+        myLoggers = new HashMap();
     }
 
     public void addLogger(ISVNDebugLog debugLog) {
-        myLoggers.add(debugLog);
+        Boolean needTracing = checkTracing(debugLog);
+        myLoggers.put(debugLog, needTracing);
     }
 
     public void removeLogger(ISVNDebugLog debugLog) {
         myLoggers.remove(debugLog);        
     }
 
-    public void logError(String message) {
-        log(message, Level.INFO);
+    private static Boolean checkTracing(ISVNDebugLog log) {
+        InputStream is = log.createLogStream(SVNLogType.NETWORK, SVNFileUtil.DUMMY_IN);
+        OutputStream os = log.createLogStream(SVNLogType.NETWORK, SVNFileUtil.DUMMY_OUT);
+        if (is == SVNFileUtil.DUMMY_IN && os == SVNFileUtil.DUMMY_OUT) {
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
-    public void logError(Throwable th) {
-        log(th, Level.INFO);
+    public InputStream createLogStream(SVNLogType logType, InputStream is) {
+        if (myLoggers.containsValue(Boolean.TRUE)) {
+            return super.createLogStream(logType, is);
+        }
+        return is;
     }
 
-    public void logSevere(String message) {
-        log(message, Level.SEVERE);
+    public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
+        if (myLoggers.containsValue(Boolean.TRUE)) {
+            return super.createLogStream(logType, os);            
+        }
+        return os;
     }
 
-    public void logSevere(Throwable th) {
-        log(th, Level.SEVERE);
-    }
-
-    public void log(String message, byte[] data) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
-            ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.log(message, data);
+    public void log(SVNLogType logType, String message, byte[] data) {
+        for (Iterator iterator = myLoggers.entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            ISVNDebugLog log = (ISVNDebugLog) entry.getKey();
+            Boolean needTracing = (Boolean) entry.getValue();
+            if (needTracing.booleanValue()) {
+                log.log(logType, message, data);                
+            }
         }
     }
 
-    public void logFine(Throwable th) {
-        log(th, Level.FINE);
-    }
-
-    public void logFine(String message) {
-        log(message, Level.FINE);
-    }
-
-    public void logFiner(Throwable th) {
-        log(th, Level.FINER);
-    }
-
-    public void logFiner(String message) {
-        log(message, Level.FINER);
-    }
-
-    public void logFinest(Throwable th) {
-        log(th, Level.FINEST);
-    }
-
-    public void logFinest(String message) {
-        log(message, Level.FINEST);
-    }
-
-    public void log(Throwable th, Level logLevel) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+    public void log(SVNLogType logType, Throwable th, Level logLevel) {
+        for (Iterator iterator = myLoggers.keySet().iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.log(th, logLevel);
+            log.log(logType, th, logLevel);
         }
     }
 
-    public void log(String message, Level logLevel) {
-        for (Iterator iterator = myLoggers.iterator(); iterator.hasNext();) {
+    public void log(SVNLogType logType, String message, Level logLevel) {
+        for (Iterator iterator = myLoggers.keySet().iterator(); iterator.hasNext();) {
             ISVNDebugLog log = (ISVNDebugLog) iterator.next();
-            log.log(message, logLevel);
+            log.log(logType, message, logLevel);
         }
     }
 

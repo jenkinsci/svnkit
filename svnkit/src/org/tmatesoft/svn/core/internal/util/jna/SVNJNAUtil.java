@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,14 +15,17 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNJNAUtil {
     
+    private static boolean ourIsJNAEnabled;
     private static boolean ourIsJNAPresent;
     private static final String JNA_CLASS_NAME = "com.sun.jna.Library";
     
@@ -38,10 +41,24 @@ public class SVNJNAUtil {
         } catch (ClassNotFoundException e) {
             ourIsJNAPresent = false;
         }
+        String jnaEnabledProperty = System.getProperty("svnkit.useJNA", "true");
+        ourIsJNAEnabled = Boolean.valueOf(jnaEnabledProperty).booleanValue();
+
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA available: " + ourIsJNAPresent);
+        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA enabled: " + ourIsJNAEnabled);
+
+    }
+    
+    public static void setJNAEnabled(boolean enabled) {
+        synchronized (SVNJNAUtil.class) {
+            ourIsJNAEnabled = enabled;
+        }
     }
     
     public static boolean isJNAPresent() {
-        return ourIsJNAPresent;
+        synchronized (SVNJNAUtil.class) {
+            return ourIsJNAPresent && ourIsJNAEnabled;
+        }
     }
 
     // linux.

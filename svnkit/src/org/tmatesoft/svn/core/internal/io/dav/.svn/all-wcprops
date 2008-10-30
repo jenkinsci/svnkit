@@ -1,5 +1,65 @@
 K 25
 svn:wc:ra_dav:version-url
-V 94
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/dav
+V 88
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav
+END
+DAVRepositoryFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVRepositoryFactory.java
+END
+DAVResource.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVResource.java
+END
+DAVElement.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVElement.java
+END
+DAVProperties.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVProperties.java
+END
+DAVUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVUtil.java
+END
+DAVBaselineInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVBaselineInfo.java
+END
+DAVCommitEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVCommitEditor.java
+END
+DAVConnection.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVConnection.java
+END
+DAVRepository.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVRepository.java
+END
+DAVKeyManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/DAVKeyManager.java
 END

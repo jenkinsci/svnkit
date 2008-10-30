@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,11 +31,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class SVNPropEditCommand extends SVNPropertiesCommand {
 
@@ -57,12 +58,12 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
         String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (!SVNPropertiesManager.isValidPropertyName(propertyName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "''{0}'' is not a valid Subversion property name", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
         Collection targets = new ArrayList();
@@ -94,12 +95,12 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot specify revision for editing versioned property ''{0}''", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else {
             if (targets.isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS,
                         "Explicit target argument required", propertyName);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
@@ -109,16 +110,18 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                     if (getSVNEnvironment().getMessage() != null || getSVNEnvironment().getFileData() != null || getSVNEnvironment().getRevisionProperties() != null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_UNNECESSARY_LOG_MESSAGE,
                                 "Local, non-commit operations do not take a log message or revision properties");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
-                    SVNPropertyData property = client.doGetProperty(target.getFile(), propertyName, SVNRevision.UNDEFINED, SVNRevision.WORKING, false);
+                    SVNPropertyData property = client.doGetProperty(target.getFile(), propertyName, 
+                            SVNRevision.UNDEFINED, SVNRevision.WORKING);
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create("");
                     byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);                   
                     byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
                     SVNPropertyValue newPropertyValue = SVNPropertyValue.create(propertyName, bytes);
                     if (newPropertyValue != null && !newPropertyValue.equals(propertyValue)) {
                         checkBooleanProperty(propertyName, newPropertyValue);
-                        client.doSetProperty(target.getFile(), propertyName, newPropertyValue, getSVNEnvironment().isForce(), false, this);
+                        client.doSetProperty(target.getFile(), propertyName, newPropertyValue, 
+                                getSVNEnvironment().isForce(), SVNDepth.EMPTY, this, null);
                         String message = "Set new value for property ''{0}'' on ''{1}''";
                         String path = SVNCommandUtil.getLocalPath(targetName);
                         message = MessageFormat.format(message, new Object[]{propertyName, path});
@@ -130,7 +133,8 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                         getSVNEnvironment().getOut().println(message);
                     }
                 } else {
-                    SVNPropertyData property = client.doGetProperty(target.getURL(), propertyName, SVNRevision.UNDEFINED, SVNRevision.HEAD, false);
+                    SVNPropertyData property = client.doGetProperty(target.getURL(), propertyName, 
+                            SVNRevision.UNDEFINED, SVNRevision.HEAD);
                     SVNPropertyValue propertyValue = property != null ? property.getValue() : SVNPropertyValue.create("");
                     byte[] propBytes = SVNPropertyValue.getPropertyAsBytes(propertyValue);                                       
                     byte[] bytes = SVNCommandUtil.runEditor(getSVNEnvironment(), getSVNEnvironment().getEditorCommand(), propBytes, "svn-prop");
@@ -141,7 +145,7 @@ public class SVNPropEditCommand extends SVNPropertiesCommand {
                         SVNCommitInfo info = client.doSetProperty(target.getURL(), propertyName,
                                 newPropertyValue, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
                                 getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(),
-                                SVNDepth.EMPTY, this);
+                                this);
                         String message = "Set new value for property ''{0}'' on ''{1}''";
                         message = MessageFormat.format(message, new Object[]{propertyName, targetName});
                         getSVNEnvironment().getOut().println(message);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -44,7 +44,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor, ISVNStatusHandler {
@@ -212,7 +212,7 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
             }
         } else if (SVNProperty.COMMITTED_DATE.equals(name) && value != null) {
             myFileInfo.myRemoteDate = SVNDate.parseDate(value.getString());
-        } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+        } else if (SVNProperty.LAST_AUTHOR.equals(name) && value != null) {
             myFileInfo.myRemoteAuthor = value.getString();
         }
     }
@@ -384,7 +384,8 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                 parentEntry = getWCAccess().getEntry(path.getParentFile(), false);
             }
         }
-        return assembleStatus(path, entry != null ? getWCAccess().probeRetrieve(path) : null, entry, parentEntry, SVNNodeKind.UNKNOWN, false, true, false);
+        return assembleStatus(path, entry != null ? getWCAccess().probeRetrieve(path) : null, entry, 
+                parentEntry, SVNNodeKind.UNKNOWN, false, true, false);
     }
     
     public void handleStatus(SVNStatus status) throws SVNException {

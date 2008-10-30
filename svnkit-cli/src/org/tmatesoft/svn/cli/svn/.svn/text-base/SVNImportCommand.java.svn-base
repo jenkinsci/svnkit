@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,13 +21,14 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNImportCommand extends SVNCommand {
@@ -59,10 +60,10 @@ public class SVNImportCommand extends SVNCommand {
         SVNPath src = null;
         if (targets.isEmpty()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS,
-                    "Repository URL required when importing"));
+                    "Repository URL required when importing"), SVNLogType.CLIENT);
         } else if (targets.size() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
-                "Too many arguments to import command"));
+                "Too many arguments to import command"), SVNLogType.CLIENT);
         } else if (targets.size() == 1) {
             src = new SVNPath("");
             url = new SVNPath((String) targets.get(0));
@@ -72,7 +73,7 @@ public class SVNImportCommand extends SVNCommand {
         }
         if (!url.isURL()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
-                    "Invalid URL ''{0}''", url.getTarget()));
+                    "Invalid URL ''{0}''", url.getTarget()), SVNLogType.CLIENT);
         }
         SVNCommitClient client = getSVNEnvironment().getClientManager().getCommitClient();
         if (!getSVNEnvironment().isQuiet()) {

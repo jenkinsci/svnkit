@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -26,7 +26,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 class HTTPRequest {
@@ -367,7 +367,7 @@ class HTTPRequest {
             errorCode = SVNErrorCode.RA_NOT_AUTHORIZED;
             message = status.getCode() + " " + status.getReason();
         } else if (status != null && status.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-            errorCode = SVNErrorCode.RA_DAV_PATH_NOT_FOUND;
+            errorCode = SVNErrorCode.FS_NOT_FOUND;
         }
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];

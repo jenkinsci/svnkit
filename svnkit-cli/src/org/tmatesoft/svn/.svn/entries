@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-cli/src/org/tmatesoft/svn
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-24T17:07:51.204272Z
-4582
-semen
+2008-09-23T16:58:29.147992Z
+4922
+alex
 
 
 svn:special svn:externals svn:needs-lock

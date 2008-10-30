@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -33,7 +33,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNPropListCommand extends SVNPropertiesCommand {
@@ -121,7 +121,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                     if (target.isURL()) {
                         client.doGetProperty(target.getURL(), null, pegRevision, getSVNEnvironment().getStartRevision(), depth, this);
                     } else {
-                        client.doGetPropertyList(target.getFile(), null, pegRevision, 
+                        client.doGetProperty(target.getFile(), null, pegRevision, 
                                 getSVNEnvironment().getStartRevision(), depth, this, changeLists);
                     }
                 } catch (SVNException e) {

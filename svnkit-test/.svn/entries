@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-test
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-24T21:18:08.649609Z
-4583
+2008-09-30T18:20:38.652280Z
+4949
 alex
 has-props
 
@@ -32,11 +32,33 @@ file
 
 
 
-2008-08-02T14:58:30.000000Z
-764efa74e6c2a1f07fad077fc314fca8
-2008-07-24T21:18:08.649609Z
-4583
+2008-10-30T04:41:35.000000Z
+cea962f16a10e44a280eb2128b90688d
+2008-09-30T18:20:38.652280Z
+4949
 alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+204320
 
 patch
 dir
@@ -53,11 +75,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-b3e4375c403c891cfcdc23ddce66459c
-2008-06-19T12:47:42.020106Z
-4357
-sa
+2008-10-30T04:41:35.000000Z
+b8bc9688625d6c21d6af601560b21fd0
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+465
 
 test.windows.properties
 file
@@ -97,11 +141,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-51076080c404eef561045a3a5db5f976
-2008-06-19T12:47:42.020106Z
-4357
-sa
+2008-10-30T04:41:35.000000Z
+02724fddec940b34f0254dd16f28021b
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+459
 
 test.mac.properties
 file

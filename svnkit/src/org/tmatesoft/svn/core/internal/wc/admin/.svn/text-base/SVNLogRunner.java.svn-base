@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -24,17 +23,19 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNLogRunner {
@@ -60,7 +61,7 @@ public class SVNLogRunner {
                             childDir.extendLockToTree();
                             childDir.removeFromRevisionControl(childDir.getThisDirName(), true, false);
                         } else {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED));
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED), SVNLogType.DEFAULT);
                         }
                     } catch (SVNException e) {
                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
@@ -131,7 +132,7 @@ public class SVNLogRunner {
                             } catch (SecurityException se) {
                                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                                 SVNErrorMessage err = SVNErrorMessage.create(code, "Error getting file size on ''{0}''", file);
-                                SVNErrorManager.error(err, se);
+                                SVNErrorManager.error(err, se, SVNLogType.WC);
                             }
                         }
                     }
@@ -148,7 +149,7 @@ public class SVNLogRunner {
                 } catch (SVNException svne) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Error modifying entry for ''{0}''", fileName);
-                    SVNErrorManager.error(err, svne);
+                    SVNErrorManager.error(err, svne, SVNLogType.WC);
                 }
                 setEntriesChanged(true);
             } catch (SVNException svne) {
@@ -214,7 +215,7 @@ public class SVNLogRunner {
             InputStream is = null;
             try {
                 os = SVNFileUtil.openFileForWriting(dst, true);
-                is = SVNFileUtil.openFileForReading(src);
+                is = SVNFileUtil.openFileForReading(src, SVNLogType.WC);
                 while (true) {
                     int r = is.read();
                     if (r < 0) {
@@ -242,7 +243,7 @@ public class SVNLogRunner {
                 if (timestamp == null) {
                     SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing 'timestamp' attribute in ''{0}''", adminArea.getRoot());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 Date time = SVNDate.parseDate(timestamp);
                 //TODO: what about special files (do not set for them).
@@ -262,14 +263,14 @@ public class SVNLogRunner {
             try {
                 if (format == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Invalid 'format' attribute");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 int number = -1;
                 try {
                     number = Integer.parseInt(format);
                 } catch (NumberFormatException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Invalid 'format' attribute");
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.WC);
                 }
                 adminArea.postUpgradeFormat(number);
                 setEntriesChanged(true);
@@ -360,12 +361,12 @@ public class SVNLogRunner {
                 String leftPath = attributes.getStringValue(SVNLog.ATTR1);
                 if (leftPath == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing 'left' attribute in ''{0}''", adminArea.getRoot());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 String rightPath = attributes.getStringValue(SVNLog.ATTR2);
                 if (rightPath == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing 'right' attribute in ''{0}''", adminArea.getRoot());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 String leftLabel = attributes.getStringValue(SVNLog.ATTR3);
                 leftLabel = leftLabel == null ? ".old" : leftLabel;
@@ -403,13 +404,13 @@ public class SVNLogRunner {
                 SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
                 if (attributes.getStringValue(SVNLog.REVISION_ATTR) == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Missing revision attribute for ''{0}''", fileName);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 
                 SVNEntry entry = adminArea.getEntry(fileName, true);
                 if (entry == null || (!adminArea.getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Log command for directory ''{0}'' is mislocated", adminArea.getRoot()); 
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 boolean implicit = attributes.getStringValue("implicit") != null && entry.isCopied();
                 setEntriesChanged(true);
@@ -421,13 +422,13 @@ public class SVNLogRunner {
         } else {
             SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
             SVNErrorMessage err = SVNErrorMessage.create(code, "Unrecognized logfile element ''{0}'' in ''{1}''", new Object[]{name, adminArea.getRoot()});
-            SVNErrorManager.error(err.wrap("In directory ''{0}''", adminArea.getRoot()));
+            SVNErrorManager.error(err.wrap("In directory ''{0}''", adminArea.getRoot()), SVNLogType.WC);
         }
         
         if (error != null) {
             SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
             SVNErrorMessage err = SVNErrorMessage.create(code, "Error processing command ''{0}'' in ''{1}''", new Object[]{name, adminArea.getRoot()});
-            SVNErrorManager.error(err, error);
+            SVNErrorManager.error(err, error, SVNLogType.WC);
         }
     }
 

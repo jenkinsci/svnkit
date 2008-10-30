@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,11 +14,9 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
@@ -31,7 +29,6 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
@@ -48,8 +45,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNLogClient</b> class is intended for such purposes as getting
@@ -76,7 +73,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * </tr>
  * </table>
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  */
 public class SVNLogClient extends SVNBasicClient {
@@ -110,6 +107,25 @@ public class SVNLogClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNLogClient</b> object
+     * with the specified run-time configuration and authentication 
+     * drivers.
+     * 
+     * <p>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNLogClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the 
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).  
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNLogClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -142,14 +158,9 @@ public class SVNLogClient extends SVNBasicClient {
      * (using a Working Copy path to get a corresponding URL) and passes it to a 
      * provided annotation handler. 
      * 
-     * <p>
-     * If <code>startRevision</code> is invalid (for example, 
-     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
-     * it's set to revision 1.
-     * 
-     * <p>
-     * Calling this method is equivalent to 
-     * <code>doAnnotate(path, pegRevision, startRevision, endRevision, false, handler)</code>.
+     * <p/>
+     * This method is equivalent to a call to 
+     * <code>doAnnotate(path, pegRevision, startRevision, endRevision, false, false, handler, null)</code>.
      * 
      * @param  path           a WC file item to be annotated
      * @param  pegRevision    a revision in which <code>path</code> is first looked up
@@ -158,10 +169,10 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  endRevision    a revision for an operation to stop at
      * @param  handler        a caller's handler to process annotation information
      * @throws SVNException   if <code>startRevision > endRevision</code>
-     * @see                   #doAnnotate(SVNURL, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler)
+     * @see                   #doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, boolean, boolean, ISVNAnnotateHandler, String)
      */
     public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
-        doAnnotate(path, pegRevision, startRevision, endRevision, false, handler);
+        doAnnotate(path, pegRevision, startRevision, endRevision, false, false, handler, null);
     }
 
     /**
@@ -169,49 +180,94 @@ public class SVNLogClient extends SVNBasicClient {
      * (using a Working Copy path to get a corresponding URL) and passes it to a 
      * provided annotation handler. 
      * 
-     * <p>
-     * If <code>startRevision</code> is invalid (for example, 
-     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
-     * it's set to revision 1.
+     * <p/>
+     * This method is equivalent to a call to 
+     * <code>doAnnotate(path, pegRevision, startRevision, endRevision, ignoreMimeType, false, handler, null)</code>.
      * 
-     * @param  path           a WC file item to be annotated
-     * @param  pegRevision    a revision in which <code>path</code> is first looked up
-     *                        in the repository
-     * @param  startRevision  a revision for an operation to start from
-     * @param  endRevision    a revision for an operation to stop at
-     * @param  force          forces operation to run (all files to be treated as 
-     *                        text, no matter what SVNKit has inferred from the mime-type 
-     *                        property) 
-     * @param  handler        a caller's handler to process annotation information
+     * @param  path            a WC file item to be annotated
+     * @param  pegRevision     a revision in which <code>path</code> is first looked up
+     *                         in the repository
+     * @param  startRevision   a revision for an operation to start from
+     * @param  endRevision     a revision for an operation to stop at
+     * @param  ignoreMimeType  forces operation to run (all files to be treated as 
+     *                         text, no matter what SVNKit has inferred from the mime-type 
+     *                         property) 
+     * @param  handler         a caller's handler to process annotation information
      * @throws SVNException
-     * @since                 1.1
+     * @see                    #doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, boolean, boolean, ISVNAnnotateHandler, String)
+     * @since                  1.1
      */
-    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, 
-                           SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler) throws SVNException {
-        doAnnotate(path, pegRevision, startRevision, endRevision, force, false, handler, null);
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, 
+            ISVNAnnotateHandler handler) throws SVNException {
+        doAnnotate(path, pegRevision, startRevision, endRevision, ignoreMimeType, false, handler, null);
     }
 
-    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, 
-                           SVNRevision endRevision, boolean force, boolean includeMergedRevisions, 
-                           ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+    /**
+     * Invokes <code>handler</code> on each line-blame item associated with revision <code>endRevision</code> of 
+     * <code>path</code>, using <code>startRevision</code> as the default source of all blame. 
+     * 
+     * <p/>
+     * <code>pegRevision</code> indicates in which revision <code>path</code> is valid.  If <code>pegRevision</code>
+     * is {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
+     * 
+     * <p/>
+     * If <code>startRevision</code> is <span class="javakeyword">null</span> or {@link SVNRevision#isValid() invalid},
+     * then it defaults to revision 1. If <code>endRevision</code> is <span class="javakeyword">null</span> or 
+     * {@link SVNRevision#isValid() invalid}, then in defaults to {@link SVNRevision#HEAD}.
+     * 
+     *  <p/>
+     *  Note: this routine requires repository access.
+     *  
+     * @param  path                        a WC file item to be annotated              
+     * @param  pegRevision                 a revision in which <code>path</code> is first looked up
+     *                                     in the repository
+     * @param  startRevision               a revision for an operation to start from
+     * @param  endRevision                 a revision for an operation to stop at
+     * @param  ignoreMimeType              forces operation to run (all files to be treated as 
+     *                                     text, no matter what SVNKit has inferred from the mime-type 
+     *                                     property) 
+     * @param  includeMergedRevisions      if <span class="javakeyword">true</span>, then also returns data based upon revisions which have 
+     *                                     been merged to <code>path</code>
+     * @param  handler                     a caller's handler to process annotation information
+     * @param  inputEncoding               character set to decode input bytes with
+     * @throws SVNException                in the following cases:
+     *                                     <ul>
+     *                                     <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if both 
+     *                                     <code>startRevision</code> and <code>endRevision</code> are either <span class="javakeyword">null</span> 
+     *                                     or {@link SVNRevision#isValid() invalid} 
+     *                                     <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if either of 
+     *                                     <code>startRevision</code> or <code>endRevision</code> is {@link SVNRevision#WORKING} 
+     *                                     <li/>exception with {@link SVNErrorCode#CLIENT_IS_BINARY_FILE} error code - if any of the 
+     *                                     revisions of <code>path</code> have a binary mime-type, unless <code>ignoreMimeType</code> is 
+     *                                     <span class="javakeyword">true</span>, in which case blame information will be generated regardless 
+     *                                     of the MIME types of the revisions   
+     *                                     </ul>
+     * @since  1.2, SVN 1.5
+     */
+    public void doAnnotate(File path, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, 
+            boolean includeMergedRevisions, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = pegRevision;
         }
+        if (startRevision == SVNRevision.WORKING || endRevision == SVNRevision.WORKING) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Blame of the WORKING revision is not supported");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         SVNRepository repos = createRepository(null, path, null, pegRevision, endRevision, null);
         long endRev = getRevisionNumber(endRevision, repos, path);
         long startRev = getRevisionNumber(startRevision, repos, path);
         if (endRev < startRev) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Start revision must precede end revision"), SVNLogType.DEFAULT);
         }
         File tmpFile = new File(path.getParentFile(), SVNFileUtil.getAdminDirectoryName());
         tmpFile = new File(tmpFile, "tmp/text-base");
         if (!tmpFile.isDirectory()) {
             tmpFile = SVNFileUtil.createTempDirectory("annotate");
         }
-        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, force, handler, 
+        doAnnotate(path.getAbsolutePath(), startRev, tmpFile, repos, endRev, ignoreMimeType, handler, 
                    inputEncoding, includeMergedRevisions);
     }
 
@@ -220,13 +276,7 @@ public class SVNLogClient extends SVNBasicClient {
      * and passes it to a provided annotation handler. 
      * 
      * <p>
-     * If <code>startRevision</code> is invalid (for example, 
-     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
-     * it's set to revision 1.
-     * 
-     * <p>
-     * Calling this method is equivalent to  
-     * <code>doAnnotate(url, pegRevision, startRevision, endRevision, handler, null)</code>.
+     * This method is equivalent to a call to <code>doAnnotate(url, pegRevision, startRevision, endRevision, false, false, handler, null)</code>.
      * 
      * @param  url            a URL of a text file that is to be annotated 
      * @param  pegRevision    a revision in which <code>path</code> is first looked up
@@ -235,10 +285,10 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  endRevision    a revision for an operation to stop at
      * @param  handler        a caller's handler to process annotation information
      * @throws SVNException   if <code>startRevision > endRevision</code>
-     * @see                   #doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler)
+     * @see                   #doAnnotate(SVNURL, SVNRevision, SVNRevision, SVNRevision, boolean, boolean, ISVNAnnotateHandler, String)
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler) throws SVNException {
-        doAnnotate(url, pegRevision, startRevision, endRevision, handler, null);
+        doAnnotate(url, pegRevision, startRevision, endRevision, false, false, handler, null);
     }
 
     /**
@@ -246,13 +296,7 @@ public class SVNLogClient extends SVNBasicClient {
      * and passes it to a provided annotation handler. 
      * 
      * <p>
-     * If <code>startRevision</code> is invalid (for example, 
-     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
-     * it's set to revision 1.
-     * 
-     * <p>
-     * Calling this method is equivalent to  
-     * <code>doAnnotate(url, pegRevision, startRevision, endRevision, false, handler, inputEncoding)</code>.
+     * This method is equivalent to a call to <code>doAnnotate(url, pegRevision, startRevision, endRevision, false, false, handler, inputEncoding)</code>.
      * 
      * @param  url            a URL of a text file that is to be annotated 
      * @param  pegRevision    a revision in which <code>path</code> is first looked up
@@ -262,157 +306,224 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  handler        a caller's handler to process annotation information
      * @param  inputEncoding  a desired character set (encoding) of text lines
      * @throws SVNException
+     * @see                   #doAnnotate(SVNURL, SVNRevision, SVNRevision, SVNRevision, boolean, boolean, ISVNAnnotateHandler, String)
      */
     public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
-        doAnnotate(url, pegRevision, startRevision, endRevision, false, handler, inputEncoding);
+        doAnnotate(url, pegRevision, startRevision, endRevision, false, false, handler, inputEncoding);
     }
 
     /**
-     * Obtains annotation information for each file text line from a repository
-     * and passes it to a provided annotation handler. 
+     * Obtains annotation information for each file text line from a repository and passes it to a provided annotation handler. 
      * 
      * <p>
-     * If <code>startRevision</code> is invalid (for example, 
-     * <code>startRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED}) then
-     * it's set to revision 1.
-     *
-     * <p>
-     * If <code>inputEncoding</code> is <span class="javakeyword">null</span> then 
-     * <span class="javastring">"file.encoding"</span> system property is used.
+     * This method is equivalent to a call to <code>doAnnotate(url, pegRevision, startRevision, endRevision, ignoreMimeType, false, handler, inputEncoding)</code>.
      *  
      * @param  url            a URL of a text file that is to be annotated 
      * @param  pegRevision    a revision in which <code>path</code> is first looked up
      *                        in the repository
      * @param  startRevision  a revision for an operation to start from
      * @param  endRevision    a revision for an operation to stop at
-     * @param  force          forces operation to run (all files to be treated as 
+     * @param  ignoreMimeType forces operation to run (all files to be treated as 
      *                        text, no matter what SVNKit has inferred from the mime-type 
      *                        property) 
      * @param  handler        a caller's handler to process annotation information
      * @param  inputEncoding  a desired character set (encoding) of text lines
      * @throws SVNException
+     * @see                   #doAnnotate(SVNURL, SVNRevision, SVNRevision, SVNRevision, boolean, boolean, ISVNAnnotateHandler, String)
      * @since                 1.1
      */
-	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, 
-                           SVNRevision endRevision, boolean force, ISVNAnnotateHandler handler, 
-                           String inputEncoding) throws SVNException {
-	    doAnnotate(url, pegRevision, startRevision, endRevision, force, false, 
-                   handler, inputEncoding);
+	public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, 
+	        ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+	    doAnnotate(url, pegRevision, startRevision, endRevision, ignoreMimeType, false, handler, inputEncoding);
 	}
 
-    public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, 
-                           SVNRevision endRevision, boolean force, boolean includeMergedRevisions, 
-                           ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
+    /**
+     * Invokes <code>handler</code> on each line-blame item associated with revision <code>endRevision</code> of 
+     * <code>url</code>, using <code>startRevision</code> as the default source of all blame. 
+     * 
+     * <p/>
+     * <code>pegRevision</code> indicates in which revision <code>url</code> is valid. If <code>pegRevision</code>
+     * is {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#HEAD}.
+     * 
+     * <p/>
+     * If <code>startRevision</code> is <span class="javakeyword">null</span> or {@link SVNRevision#isValid() invalid},
+     * then it defaults to revision 1. If <code>endRevision</code> is <span class="javakeyword">null</span> or 
+     * {@link SVNRevision#isValid() invalid}, then in defaults to {@link SVNRevision#HEAD}.
+     * 
+     *  <p/>
+     *  Note: this routine requires repository access
+     *  
+     * @param  url                         a URL of a text file that is to be annotated 
+     * @param  pegRevision                 a revision in which <code>url</code> is first looked up
+     *                                     in the repository
+     * @param  startRevision               a revision for an operation to start from
+     * @param  endRevision                 a revision for an operation to stop at
+     * @param  ignoreMimeType              forces operation to run (all files to be treated as 
+     *                                     text, no matter what SVNKit has inferred from the mime-type 
+     *                                     property) 
+     * @param  includeMergedRevisions      if <span class="javakeyword">true</span>, then also returns data based upon revisions which have 
+     *                                     been merged to <code>url</code>
+     * @param  handler                     a caller's handler to process annotation information
+     * @param  inputEncoding               character set to decode input bytes with
+     * @throws SVNException                in the following cases:
+     *                                     <ul>
+     *                                     <li/>exception with {@link SVNErrorCode#CLIENT_BAD_REVISION} error code - if both 
+     *                                     <code>startRevision</code> and <code>endRevision</code> are either <span class="javakeyword">null</span> 
+     *                                     or {@link SVNRevision#isValid() invalid} 
+     *                                     <li/>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - if either of 
+     *                                     <code>startRevision</code> or <code>endRevision</code> is {@link SVNRevision#WORKING} 
+     *                                     <li/>exception with {@link SVNErrorCode#CLIENT_IS_BINARY_FILE} error code - if any of the 
+     *                                     revisions of <code>url</code> have a binary mime-type, unless <code>ignoreMimeType</code> is 
+     *                                     <span class="javakeyword">true</span>, in which case blame information will be generated regardless 
+     *                                     of the MIME types of the revisions   
+     *                                     </ul>
+     * @since  1.2, SVN 1.5
+     */
+    public void doAnnotate(SVNURL url, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean ignoreMimeType, 
+            boolean includeMergedRevisions, ISVNAnnotateHandler handler, String inputEncoding) throws SVNException {
         if (startRevision == null || !startRevision.isValid()) {
             startRevision = SVNRevision.create(1);
         }
         if (endRevision == null || !endRevision.isValid()) {
             endRevision = pegRevision;
         }
+        if (startRevision == SVNRevision.WORKING || endRevision == SVNRevision.WORKING) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Blame of the WORKING revision is not supported");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         SVNRepository repos = createRepository(url, null, null, pegRevision, endRevision, null);
         long endRev = getRevisionNumber(endRevision, repos, null);
         long startRev = getRevisionNumber(startRevision, repos, null);
         if (endRev < startRev) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
-                                                         "Start revision must precede end revision"));
+                                                         "Start revision must precede end revision"), SVNLogType.DEFAULT);
         }
         File tmpFile = SVNFileUtil.createTempDirectory("annotate");
-        doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, force, 
-                   handler, inputEncoding, includeMergedRevisions);
+        doAnnotate(repos.getLocation().toDecodedString(), startRev, tmpFile, repos, endRev, ignoreMimeType, handler, inputEncoding, 
+                includeMergedRevisions);
     
-    }
-    
-    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, 
-                            long endRev, boolean force, ISVNAnnotateHandler handler, 
-                            String inputEncoding, boolean includeMergedRevisions) throws SVNException {
-        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, 
-                                                                      force, includeMergedRevisions,
-                                                                      getDiffOptions(), inputEncoding, handler, this);
-        
-        
-        // always spool HTTP response for non-standard annotation handlers.
-        boolean useSpool = handler != null && !handler.getClass().getName().startsWith("org.tmatesoft.svn.");
-        boolean oldSpool = false;
-        
-        if (useSpool && repos instanceof DAVRepository) {
-            oldSpool = ((DAVRepository) repos).isSpoolResponse();
-            ((DAVRepository) repos).setSpoolResponse(true);
-        }
-        try {
-            repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
-                                   endRev, includeMergedRevisions, generator);
-            if (!generator.isLastRevisionReported()) {
-                generator.reportAnnotations(handler, inputEncoding);
-            }
-        } finally {
-            if (useSpool && repos instanceof DAVRepository) {
-                ((DAVRepository) repos).setSpoolResponse(oldSpool);
-            }
-            generator.dispose();
-            SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);
-        }
     }
     
     /**
-     * Gets commit log messages with other revision specific 
-     * information from a repository (using Working Copy paths to get 
-     * corresponding URLs) and passes them to a log entry handler for
-     * processing. Useful for observing the history of affected paths,
-     * author, date and log comments information per revision.
-     * 
-     * <p>
-     * If <code>paths</code> is not empty then the result will be restricted
-     * to only those revisions from the specified range [<code>startRevision</code>, <code>endRevision</code>], 
-     * where <code>paths</code> were changed in the repository. To cover the
-     * entire range set <code>paths</code> just to an empty array:
-     * <pre class="javacode">
-     *     logClient.doLog(<span class="javakeyword">new</span> File[]{<span class="javastring">""</span>},..);</pre><br />
-     * <p>
-     * If <code>startRevision</code> is valid but <code>endRevision</code> is
-     * not (for example, <code>endRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED})
-     * then <code>endRevision</code> is equated to <code>startRevision</code>.
-     * 
-     * <p>
-     * If <code>startRevision</code> is invalid (for example, {@link SVNRevision#UNDEFINED UNDEFINED}) 
-     * then it's equated to {@link SVNRevision#BASE BASE}. In this case if <code>endRevision</code> is
-     * also invalid, then <code>endRevision</code> is set to revision 0.
+     * Gets commit log messages with other revision specific information from a repository 
+     * (using Working Copy paths to get corresponding URLs) and passes them to a log entry handler for
+     * processing. Useful for observing the history of affected paths, author, date and log comments 
+     * information per revision.
      * 
      * <p>
      * Calling this method is equivalent to 
-     * <code>doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler)</code>.
+     * <code>doLog(paths, startRevision, endRevision, SVNRevision.UNDEFINED, stopOnCopy, discoverChangedPaths, false, limit, null, handler)</code>.
      * 
-     * @param  paths           an array of Working Copy paths,
-     *                         should not be <span class="javakeyword">null</span>
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
-     * @throws SVNException    if one of the following is true:
-     *                         <ul>
-     *                         <li>a path is not under version control
-     *                         <li>can not obtain a URL of a WC path - there's no such
-     *                         entry in the Working Copy
-     *                         <li><code>paths</code> contain entries that belong to
-     *                         different repositories
-     *                         </ul>
-     * @see                    #doLog(SVNURL, String[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, long, ISVNLogEntryHandler)                        
+     * @param  paths                  an array of Working Copy paths,
+     *                                should not be <span class="javakeyword">null</span>
+     * @param  startRevision          a revision for an operation to start from (including
+     *                                this revision)    
+     * @param  endRevision            a revision for an operation to stop at (including
+     *                                this revision)
+     * @param  stopOnCopy             <span class="javakeyword">true</span> not to cross
+     *                                copies while traversing history, otherwise copies history
+     *                                will be also included into processing
+     * @param  discoverChangedPaths   <span class="javakeyword">true</span> to report
+     *                                of all changed paths for every revision being processed 
+     *                                (those paths will be available by calling 
+     *                                {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit                  a maximum number of log entries to be processed 
+     * @param  handler                a caller's log entry handler
+     * @throws SVNException           if one of the following is true:
+     *                                <ul>
+     *                                <li>a path is not under version control
+     *                                <li>can not obtain a URL of a WC path - there's no such
+     *                                entry in the Working Copy
+     *                                <li><code>paths</code> contain entries that belong to
+     *                                different repositories
+     *                                </ul>
+     * @see                           #doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)                                                    
      */
-    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
-        doLog(paths, SVNRevision.UNDEFINED, startRevision, endRevision, stopOnCopy, reportPaths, limit, handler);
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, startRevision, endRevision, SVNRevision.UNDEFINED, stopOnCopy, discoverChangedPaths, false, limit, null, handler);
     }
-    
-    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, SVNRevision pegRevision,
-                      boolean stopOnCopy, boolean reportPaths, boolean includeMergedRevisions, 
-                      long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
+
+    /**
+     * Invokes <code>handler</code> on each log message from <code>startRevision</code> to <code>endRevision</code> in turn, inclusive 
+     * (but never invokes <code>handler</code> on a given log message more than once).
+     * 
+     * <p/>
+     * <code>handler</code> is invoked only on messages whose revisions involved a change to some path in <code>paths</code>. 
+     * <code>pegRevision</code> indicates in which revision <code>paths</code> are valid. If <code>pegRevision</code> is
+     * {@link SVNRevision#isValid() invalid}, it defaults to {@link SVNRevision#WORKING}.
+     * 
+     * <p/>
+     * If <code>limit</code> is non-zero, only invokes <code>handler</code> on the first <code>limit</code> logs.
+     *
+     * <p/>
+     * If <code>discoverChangedPaths</code> is set, then the changed paths <code>Map</code> argument
+     * will be passed to a constructor of {@link SVNLogEntry} on each invocation of <code>handler</code>.
+     *
+     * <p/>
+     * If <code>stopOnCopy</code> is set, copy history (if any exists) will not be traversed while harvesting 
+     * revision logs for each target.
+     * 
+     * <p/>
+     * If <code>includeMergedRevisions</code> is set, log information for revisions which have been merged to 
+     * <code>paths</code> will also be returned.
+     * 
+     * <p/> 
+     * Refer to {@link org.tmatesoft.svn.core.SVNLogEntry#hasChildren()} for additional information on how 
+     * to handle mergeinfo information during a log operation.
+     * 
+     * <p/>
+     * If <code>revisionProperties is <span class="javakeyword">null</span>, retrieves all revision properties; 
+     * else, retrieves only the revprops named in the array (i.e. retrieves none if the array is empty).
+     * 
+     * <p/>
+     * If <code>startRevision</code> is {@link SVNRevision#isValid() valid} but <code>endRevision</code> 
+     * is not, then <code>endRevision</code> defaults to <code>startRevision</code>. If both 
+     * <code>startRevision</code> and <code>endRevision</code> are invalid, then <code>endRevision</code> 
+     * defaults to revision <code>0</code>, and <code>startRevision</code> defaults either to 
+     * <code>pegRevision</code> in case the latter one is valid, or to {@link SVNRevision#BASE}, if it is not.
+     * 
+     * <p/>
+     * Important: to avoid an exception with the {@link SVNErrorCode#FS_NO_SUCH_REVISION} error code  
+     * when invoked against an empty repository (i.e. one not containing a revision 1), callers should specify 
+     * the range {@link SVNRevision#HEAD}:<code>0</code>. 
+     *
+     * <p/>
+     * If the caller has provided a non-<span class="javakeyword">null</span> {@link ISVNEventHandler},
+     * it will be called with the {@link SVNEventAction#SKIP} event action on any unversioned paths. 
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  paths                  an array of Working Copy paths, for which log messages are desired
+     * @param  startRevision          a revision for an operation to start from (including
+     *                                this revision)    
+     * @param  endRevision            a revision for an operation to stop at (including
+     *                                this revision)
+     * @param  pegRevision            a revision in which <code>paths</code> are first looked up
+     *                                in the repository
+     * @param  stopOnCopy             <span class="javakeyword">true</span> not to cross
+     *                                copies while traversing history, otherwise copies history
+     *                                will be also included into processing
+     * @param  discoverChangedPaths   <span class="javakeyword">true</span> to report
+     *                                of all changed paths for every revision being processed 
+     *                                (those paths will be available by calling 
+     *                                {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  includeMergedRevisions if <span class="javakeyword">true</span>, merged revisions will be also 
+     *                                reported
+     * @param  limit                  a maximum number of log entries to be processed 
+     * @param  revisionProperties     names of revision properties to retrieve     
+     * @param  handler                a caller's log entry handler
+     * @throws SVNException           if one of the following is true:
+     *                                <ul>
+     *                                <li>can not obtain a URL of a WC path - there's no such
+     *                                entry in the Working Copy
+     *                                <li><code>paths</code> contain entries that belong to
+     *                                different repositories
+     *                                </ul>
+     * @since                         1.2, SVN 1.5 
+     */
+    public void doLog(File[] paths, SVNRevision startRevision, SVNRevision endRevision, SVNRevision pegRevision, boolean stopOnCopy, 
+            boolean discoverChangedPaths, boolean includeMergedRevisions, long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
         if (paths == null || paths.length == 0 || handler == null) {
             return;
         }
@@ -429,7 +540,9 @@ public class SVNLogClient extends SVNBasicClient {
                 endRevision = SVNRevision.create(0);
             }
         }
-
+        if (limit > Integer.MAX_VALUE) {
+            limit = Integer.MAX_VALUE;
+        }
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
             public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
                 checkCancelled();
@@ -449,7 +562,7 @@ public class SVNLogClient extends SVNBasicClient {
             if (entry.getURL() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                         "Entry ''{0}'' has no URL", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             urls[i] = entry.getSVNURL();
             if (area != null) {
@@ -466,7 +579,7 @@ public class SVNLogClient extends SVNBasicClient {
         if (baseURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, 
                     "target log paths belong to different repositories");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (targets.isEmpty()) {
             targets.add("");
@@ -501,140 +614,167 @@ public class SVNLogClient extends SVNBasicClient {
                 checkCancelled();
                 long startRev = getRevisionNumber(startRevision, repos, paths[i]);
                 long endRev = getRevisionNumber(endRevision, repos, paths[i]);
-                repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+                repos.log(targetPaths, startRev, endRev, discoverChangedPaths, stopOnCopy, limit, 
                           includeMergedRevisions, revisionProperties, wrappingHandler);
             }
         } else {
             long startRev = getRevisionNumber(startRevision, repos, null);
             long endRev = getRevisionNumber(endRevision, repos, null);
-            repos.log(targetPaths, startRev, endRev, reportPaths, stopOnCopy, limit, 
+            repos.log(targetPaths, startRev, endRev, discoverChangedPaths, stopOnCopy, limit, 
                       includeMergedRevisions, revisionProperties, wrappingHandler);
         }
     }
     
     /**
-     * Gets commit log messages with other revision specific 
-     * information from a repository (using Working Copy paths to get 
-     * corresponding URLs) and passes them to a log entry handler for
-     * processing. Useful for observing the history of affected paths,
-     * author, date and log comments information per revision.
+     * Gets commit log messages with other revision specific information from a repository (using Working Copy 
+     * paths to get corresponding URLs) and passes them to a log entry handler for processing. Useful for 
+     * observing the history of affected paths, author, date and log comments information per revision.
      * 
      * <p>
-     * If <code>paths</code> is not empty then the result will be restricted
-     * to only those revisions from the specified range [<code>startRevision</code>, <code>endRevision</code>], 
-     * where <code>paths</code> were changed in the repository. To cover the
-     * entire range set <code>paths</code> just to an empty array:
-     * <pre class="javacode">
-     *     logClient.doLog(<span class="javakeyword">new</span> File[]{<span class="javastring">""</span>},..);</pre><br />
-     * <p>
-     * If <code>startRevision</code> is valid but <code>endRevision</code> is
-     * not (for example, <code>endRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED})
-     * then <code>endRevision</code> is equated to <code>startRevision</code>.
+     * Calling this method is equivalent to 
+     * <code>doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, false, limit, null, handler)</code>.
      * 
-     * <p>
-     * If <code>startRevision</code> is invalid (for example, {@link SVNRevision#UNDEFINED UNDEFINED}) 
-     * then it's equated to {@link SVNRevision#BASE BASE}. In this case if <code>endRevision</code> is
-     * also invalid, then <code>endRevision</code> is set to revision 0.
-     * 
-     * @param  paths           an array of Working Copy paths,
-     *                         should not be <span class="javakeyword">null</span>
-     * @param  pegRevision     a revision in which <code>path</code> is first looked up
-     *                         in the repository
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
-     * @throws SVNException    if one of the following is true:
-     *                         <ul>
-     *                         <li>a path is not under version control
-     *                         <li>can not obtain a URL of a WC path - there's no such
-     *                         entry in the Working Copy
-     *                         <li><code>paths</code> contain entries that belong to
-     *                         different repositories
-     *                         </ul>
+     * @param  paths                 an array of Working Copy paths,
+     *                               should not be <span class="javakeyword">null</span>
+     * @param  pegRevision           a revision in which <code>path</code> is first looked up
+     *                               in the repository
+     * @param  startRevision         a revision for an operation to start from (including
+     *                               this revision)    
+     * @param  endRevision           a revision for an operation to stop at (including
+     *                               this revision)
+     * @param  stopOnCopy            <span class="javakeyword">true</span> not to cross
+     *                               copies while traversing history, otherwise copies history
+     *                               will be also included into processing
+     * @param  discoverChangedPaths  <span class="javakeyword">true</span> to report
+     *                               of all changed paths for every revision being processed 
+     *                               (those paths will be available by calling 
+     *                               {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit                 a maximum number of log entries to be processed 
+     * @param  handler               a caller's log entry handler
+     * @throws SVNException          if one of the following is true:
+     *                               <ul>
+     *                               <li>a path is not under version control
+     *                               <li>can not obtain a URL of a WC path - there's no such
+     *                               entry in the Working Copy
+     *                               <li><code>paths</code> contain entries that belong to
+     *                               different repositories
+     *                               </ul>
+     * @see                          #doLog(File[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)
      */
-    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, 
-            SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, 
-            final ISVNLogEntryHandler handler) throws SVNException {
-        doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, reportPaths, 
-              false, limit, null, handler);
+    public void doLog(File[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, 
+            boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+        doLog(paths, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, false, limit, null, 
+                handler);
     }
     
     /**
-     * Gets commit log messages with other revision specific 
-     * information from a repository and passes them to a log entry 
-     * handler for processing. Useful for observing the history of 
-     * affected paths, author, date and log comments information per revision.
+     * Gets commit log messages with other revision specific information from a repository and passes them to 
+     * a log entry handler for processing. Useful for observing the history of affected paths, author, date and 
+     * log comments information per revision.
      * 
      * <p>
-     * If <code>paths</code> is <span class="javakeyword">null</span> or empty
-     * then <code>url</code> is the target path that is used to restrict the result
-     * to only those revisions from the specified range [<code>startRevision</code>, <code>endRevision</code>], 
-     * where <code>url</code> was changed in the repository. Otherwise if <code>paths</code> is
-     * not empty then <code>url</code> is the root for all those paths (that are
-     * used for restricting the result).
-     * 
-     * <p>
-     * If <code>startRevision</code> is valid but <code>endRevision</code> is
-     * not (for example, <code>endRevision = </code>{@link SVNRevision#UNDEFINED UNDEFINED})
-     * then <code>endRevision</code> is equated to <code>startRevision</code>.
-     * 
-     * <p>
-     * If <code>startRevision</code> is invalid (for example, {@link SVNRevision#UNDEFINED UNDEFINED}) 
-     * then it's equated to {@link SVNRevision#HEAD HEAD}. In this case if <code>endRevision</code> is
-     * also invalid, then <code>endRevision</code> is set to revision 0.
-     * 
-     * 
-     * @param  url             a target URL            
-     * @param  paths           an array of paths relative to the target 
-     *                         <code>url</code>
-     * @param  pegRevision     a revision in which <code>url</code> is first looked up
-     * @param  startRevision   a revision for an operation to start from (including
-     *                         this revision)    
-     * @param  endRevision     a revision for an operation to stop at (including
-     *                         this revision)
-     * @param  stopOnCopy      <span class="javakeyword">true</span> not to cross
-     *                         copies while traversing history, otherwise copies history
-     *                         will be also included into processing
-     * @param  reportPaths     <span class="javakeyword">true</span> to report
-     *                         of all changed paths for every revision being processed 
-     *                         (those paths will be available by calling 
-     *                         {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
-     * @param  limit           a maximum number of log entries to be processed 
-     * @param  handler         a caller's log entry handler
+     * Calling this method is equivalent to 
+     * <code> doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, discoverChangedPaths, false, limit, null, handler)</code>.
+     *  
+     * @param  url                   a target URL            
+     * @param  paths                 an array of paths relative to the target 
+     *                               <code>url</code>
+     * @param  pegRevision           a revision in which <code>url</code> is first looked up
+     * @param  startRevision         a revision for an operation to start from (including
+     *                               this revision)    
+     * @param  endRevision           a revision for an operation to stop at (including
+     *                               this revision)
+     * @param  stopOnCopy            <span class="javakeyword">true</span> not to cross
+     *                               copies while traversing history, otherwise copies history
+     *                               will be also included into processing
+     * @param  discoverChangedPaths  <span class="javakeyword">true</span> to report
+     *                               of all changed paths for every revision being processed 
+     *                               (those paths will be available by calling 
+     *                               {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  limit                 a maximum number of log entries to be processed 
+     * @param  handler               a caller's log entry handler
      * @throws SVNException
-     * @see                    #doLog(File[], SVNRevision, SVNRevision, boolean, boolean, long, ISVNLogEntryHandler)
-     * @since                  1.1, new in Subversion 1.4
+     * @see                          #doLog(SVNURL, String[], SVNRevision, SVNRevision, SVNRevision, boolean, boolean, boolean, long, String[], ISVNLogEntryHandler)
+     * @since                        1.1, new in Subversion 1.4
      */
-    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean reportPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
+    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, long limit, final ISVNLogEntryHandler handler) throws SVNException {
         doLog(url, paths, pegRevision, startRevision, endRevision, stopOnCopy, 
-              reportPaths, false, limit, null, handler);
+              discoverChangedPaths, false, limit, null, handler);
     }
-    
-    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, 
-                      SVNRevision startRevision, SVNRevision endRevision, boolean stopOnCopy, 
-                      boolean reportPaths, boolean includeMergeInfo, long limit, 
-                      String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
-        if (startRevision.isValid() && !endRevision.isValid()) {
-            endRevision = startRevision;
-        } else if (!startRevision.isValid()) {
-            if (!pegRevision.isValid()) {
-                startRevision = SVNRevision.HEAD;
-            } else {
-                startRevision = pegRevision;
-            }
-            if (!endRevision.isValid()) {
-                endRevision = SVNRevision.create(0);
-            }
+
+    /**
+     * Invokes <code>handler</code> on each log message from <code>startRevision</code> to <code>endRevision</code> in turn, inclusive 
+     * (but never invokes <code>handler</code> on a given log message more than once).
+     * 
+     * <p/>
+     * <code>handler</code> is invoked only on messages whose revisions involved a change to some path in <code>paths</code>. 
+     * <code>pegRevision</code> indicates in which revision <code>paths</code> are valid. If <code>pegRevision</code> is
+     * {@link SVNRevision#isValid() invalid}, it defaults to {@link SVNRevision#HEAD}.
+     * 
+     * <p/>
+     * If <code>limit</code> is non-zero, only invokes <code>handler</code> on the first <code>limit</code> logs.
+     *
+     * <p/>
+     * If <code>discoverChangedPaths</code> is set, then the changed paths <code>Map</code> argument
+     * will be passed to a constructor of {@link SVNLogEntry} on each invocation of <code>handler</code>.
+     *
+     * <p/>
+     * If <code>stopOnCopy</code> is set, copy history (if any exists) will not be traversed while harvesting 
+     * revision logs for each target.
+     * 
+     * <p/>
+     * If <code>includeMergedRevisions</code> is set, log information for revisions which have been merged to 
+     * <code>paths</code> will also be returned.
+     * 
+     * <p/>
+     * If <code>revisionProperties is <span class="javakeyword">null</span>, retrieves all revision properties; 
+     * else, retrieves only the revision properties named in the array (i.e. retrieves none if the array is empty).
+     * 
+     * <p/>
+     * Important: to avoid an exception with the {@link SVNErrorCode#FS_NO_SUCH_REVISION} error code  
+     * when invoked against an empty repository (i.e. one not containing a revision 1), callers should specify 
+     * the range {@link SVNRevision#HEAD}:<code>0</code>. 
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url                     repository URL            
+     * @param  paths                   an array of paths relative to <code>url</code>
+     * @param  pegRevision             a revision in which <code>paths</code> are first looked up
+     *                                 in the repository
+     * @param  startRevision           a revision for an operation to start from (including
+     *                                 this revision)    
+     * @param  endRevision             a revision for an operation to stop at (including
+     *                                 this revision)
+     * @param  stopOnCopy              <span class="javakeyword">true</span> not to cross
+     *                                 copies while traversing history, otherwise copies history
+     *                                 will be also included into processing
+     * @param  discoverChangedPaths    <span class="javakeyword">true</span> to report
+     *                                 of all changed paths for every revision being processed 
+     *                                 (those paths will be available by calling 
+     *                                 {@link org.tmatesoft.svn.core.SVNLogEntry#getChangedPaths()})
+     * @param  includeMergedRevisions  if <span class="javakeyword">true</span>, merged revisions will be also 
+     *                                 reported
+     * @param  limit                   a maximum number of log entries to be processed
+     * @param  revisionProperties      names of revision properties to retrieve     
+     * @param  handler                 a caller's log entry handler
+     * @throws SVNException 
+     * @since                          1.2, SVN 1.5 
+     */
+    public void doLog(SVNURL url, String[] paths, SVNRevision pegRevision, SVNRevision startRevision, 
+            SVNRevision endRevision, boolean stopOnCopy, boolean discoverChangedPaths, boolean includeMergedRevisions, 
+            long limit, String[] revisionProperties, final ISVNLogEntryHandler handler) throws SVNException {
+        if (!startRevision.isValid() || !endRevision.isValid()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Missing required revision specification");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.COMMITTED || pegRevision == SVNRevision.PREVIOUS) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
+                    "Revision type requires a working copy path, not a URL");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        if (limit > Integer.MAX_VALUE) {
+            limit = Integer.MAX_VALUE;
         }
         paths = paths == null || paths.length == 0 ? new String[] {""} : paths;
         ISVNLogEntryHandler wrappingHandler = new ISVNLogEntryHandler() {
@@ -656,29 +796,8 @@ public class SVNLogClient extends SVNBasicClient {
         checkCancelled();
         long endRev = getRevisionNumber(endRevision, repos, null);
         checkCancelled();
-        repos.log(paths, startRev, endRev, reportPaths, stopOnCopy, limit, 
-                  includeMergeInfo, revisionProperties, wrappingHandler);
-    }
-    
-    public SVNLocationEntry getCopySource(File path, SVNURL url, SVNRevision revision) throws SVNException {
-        long[] pegRev = { SVNRepository.INVALID_REVISION };
-        SVNRepository repos = createRepository(url, path, null, revision, revision, pegRev);
-        SVNLocationEntry copyFromEntry = null;
-        String targetPath = getPathRelativeToRoot(path, url, null, null, repos);
-        CopyFromReceiver receiver = new CopyFromReceiver(targetPath); 
-            try {
-                repos.log(new String[] { "" }, pegRev[0], 1, true, true, 0, false, new String[0], receiver);
-                copyFromEntry = receiver.getCopyFromLocation();
-            } catch (SVNException e) {
-                SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
-                if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
-                    return new SVNLocationEntry(SVNRepository.INVALID_REVISION, null);
-                }
-                throw e;
-            }
-
-        return copyFromEntry == null ? new SVNLocationEntry(SVNRepository.INVALID_REVISION, null) 
-                                     : copyFromEntry;
+        repos.log(paths, startRev, endRev, discoverChangedPaths, stopOnCopy, limit, includeMergedRevisions, revisionProperties, 
+                wrappingHandler);
     }
     
     /**
@@ -702,13 +821,58 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  handler        a caller's directory entry handler (to process
      *                        info on an entry)
      * @throws SVNException 
-     * @see                   #doList(SVNURL, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)  
+     * 
+     * @deprecated            use {@link #doList(File, SVNRevision, SVNRevision, boolean, SVNDepth, int, ISVNDirEntryHandler)} 
+     *                        instead  
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         doList(path, pegRevision, revision, fetchLocks, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
     
-    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
+    /**
+     * Reports the directory entry, and possibly children, for <code>path</code> at <code>revision</code>. 
+     * The actual node revision selected is determined by the path as it exists in <code>pegRevision</code>. 
+     * If <code>pegRevision</code> is {@link SVNRevision#isValid() invalid}, then it defaults to 
+     * {@link SVNRevision#WORKING}.
+     * 
+     * <p/>
+     * Reports directory entries by invoking <code>handler</code>, 
+     * {@link SVNDirEntry#setRelativePath(String) setting} a relative to <code>path</code> path to the 
+     * {@link SVNDirEntry} object. The directory entry for <code>path</code> is reported using an empty path. 
+     * If <code>path</code> is a directory, also reports its children.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, lists just <code>path</code> itself.
+     * If <code>depth</code> is {@link SVNDepth#FILES}, lists <code>path</code> and its file
+     * entries. If {@link SVNDepth#IMMEDIATES}, lists its immediate file and directory entries. 
+     * If {@link SVNDepth#INFINITY}, lists file entries and recurses (with {@link SVNDepth#INFINITY}) on 
+     * directory entries.
+     * 
+     * <p/>
+     * <code>entryFields</code> controls which fields in the {@link SVNDirEntry} are filled in. 
+     * To have them totally filled in use {@link SVNDirEntry#DIRENT_ALL}, otherwise simply bitwise OR 
+     * together the combination of fields you care about.
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  path           a WC item to get its repository location            
+     * @param  pegRevision    a revision in which the item's URL is first looked up
+     * @param  revision       a target revision
+     * @param  fetchLocks     <span class="javakeyword">true</span>, includes locks when 
+     *                        reporting directory entries
+     * @param  depth          tree depth to process 
+     * @param  entryFields    entry fields to fill
+     * @param  handler        a caller's directory entry handler (to process info on an entry)
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code - 
+     *                        if <code>path</code> is non-existent in the repository 
+     *                        <ul/>
+     * @since                 1.2, SVN 1.5
+     */
+    public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, 
+            SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
         if (revision == null || !revision.isValid()) {
             revision = SVNRevision.BASE;
         }
@@ -735,12 +899,13 @@ public class SVNLogClient extends SVNBasicClient {
      *                        descend recursively (relevant for directories)    
      * @param  handler        a caller's directory entry handler (to process
      *                        info on an entry)
-     * @throws SVNException 
-     * @see                   #doList(SVNURL, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)  
+     * @throws SVNException
+     * @deprecated            use {@link #doList(File, SVNRevision, SVNRevision, boolean, SVNDepth, int, ISVNDirEntryHandler)}
+     *                        instead 
      */
     public void doList(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
-        doList(path, pegRevision, revision, false, recursive, handler);
-        
+        doList(path, pegRevision, revision, false, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, 
+                SVNDirEntry.DIRENT_ALL, handler);
     }
     
     /**
@@ -770,7 +935,50 @@ public class SVNLogClient extends SVNBasicClient {
         doList(url, pegRevision, revision, fetchLocks, recursive ? SVNDepth.INFINITY : SVNDepth.IMMEDIATES, SVNDirEntry.DIRENT_ALL, handler);
     }
     
-    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
+    /**
+     * Reports the directory entry, and possibly children, for <code>url</code> at <code>revision</code>. 
+     * The actual node revision selected is determined by the path as it exists in <code>pegRevision</code>. 
+     * If <code>pegRevision</code> is {@link SVNRevision#isValid() invalid}, then it defaults to 
+     * {@link SVNRevision#HEAD}.
+     * 
+     * <p/>
+     * Reports directory entries by invoking <code>handler</code>, 
+     * {@link SVNDirEntry#setRelativePath(String) setting} a relative to <code>url</code> path to the 
+     * {@link SVNDirEntry} object. The directory entry for <code>url</code> is reported using an empty path. 
+     * If <code>url</code> is a directory, also reports its children.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, lists just <code>url</code> itself.
+     * If <code>depth</code> is {@link SVNDepth#FILES}, lists <code>url</code> and its file
+     * entries. If {@link SVNDepth#IMMEDIATES}, lists its immediate file and directory entries. 
+     * If {@link SVNDepth#INFINITY}, lists file entries and recurses (with {@link SVNDepth#INFINITY}) on 
+     * directory entries.
+     * 
+     * <p/>
+     * <code>entryFields</code> controls which fields in the {@link SVNDirEntry} are filled in. 
+     * To have them totally filled in use {@link SVNDirEntry#DIRENT_ALL}, otherwise simply bitwise OR 
+     * together the combination of fields you care about.
+     *
+     * <p/>
+     * Note: this routine requires repository access.
+     * 
+     * @param  url            a repository url to be "listed"
+     * @param  pegRevision    a revision in which the item's URL is first looked up
+     * @param  revision       a target revision
+     * @param  fetchLocks     <span class="javakeyword">true</span>, includes locks when 
+     *                        reporting directory entries
+     * @param  depth          tree depth to process 
+     * @param  entryFields    entry fields to fill
+     * @param  handler        a caller's directory entry handler (to process info on an entry)
+     * @throws SVNException   in the following cases:
+     *                        <ul>
+     *                        <li/>exception with {@link SVNErrorCode#FS_NOT_FOUND} error code - 
+     *                        if <code>url</code> is non-existent in the repository 
+     *                        <ul/>
+     * @since                 1.2, SVN 1.5
+     */
+    public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean fetchLocks, 
+            SVNDepth depth, int entryFields, ISVNDirEntryHandler handler) throws SVNException {
         long[] pegRev = new long[] {-1};
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, pegRev);
         if (pegRev[0] < 0) {
@@ -798,10 +1006,40 @@ public class SVNLogClient extends SVNBasicClient {
      * @param  handler        a caller's directory entry handler (to process
      *                        info on an entry)
      * @throws SVNException
-     * @see                   #doList(File, SVNRevision, SVNRevision, boolean, ISVNDirEntryHandler)   
+     * @deprecated            use {@link #doList(SVNURL, SVNRevision, SVNRevision, boolean, SVNDepth, int, ISVNDirEntryHandler)} 
+     *                        instead
      */
     public void doList(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNDirEntryHandler handler) throws SVNException {
         doList(url, pegRevision, revision, false, recursive, handler);
+    }
+
+    private void doAnnotate(String path, long startRev, File tmpFile, SVNRepository repos, long endRev, boolean ignoreMimeType, 
+            ISVNAnnotateHandler handler, String inputEncoding, boolean includeMergedRevisions) throws SVNException {
+        SVNAnnotationGenerator generator = new SVNAnnotationGenerator(path, tmpFile, startRev, ignoreMimeType, includeMergedRevisions,
+                getDiffOptions(), inputEncoding, handler, this);
+        
+        
+        // always spool HTTP response for non-standard annotation handlers.
+        boolean useSpool = handler != null && !handler.getClass().getName().startsWith("org.tmatesoft.svn.");
+        boolean oldSpool = false;
+        
+        if (useSpool && repos instanceof DAVRepository) {
+            oldSpool = ((DAVRepository) repos).isSpoolResponse();
+            ((DAVRepository) repos).setSpoolResponse(true);
+        }
+        try {
+            repos.getFileRevisions("", startRev > 0 ? startRev - 1 : startRev, 
+                                   endRev, includeMergedRevisions, generator);
+            if (!generator.isLastRevisionReported()) {
+                generator.reportAnnotations(handler, inputEncoding);
+            }
+        } finally {
+            if (useSpool && repos instanceof DAVRepository) {
+                ((DAVRepository) repos).setSpoolResponse(oldSpool);
+            }
+            generator.dispose();
+            SVNFileUtil.deleteAll(tmpFile, !"text-base".equals(tmpFile.getName()), null);
+        }
     }
 
     private void doList(SVNRepository repos, long rev, final ISVNDirEntryHandler handler, boolean fetchLocks, SVNDepth depth, int entryFields) throws SVNException {
@@ -858,7 +1096,7 @@ public class SVNLogClient extends SVNBasicClient {
         
         if (entry == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "URL ''{0}'' non-existent in that revision", url);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         final Map locksMap = new SVNHashMap();
@@ -917,49 +1155,4 @@ public class SVNLogClient extends SVNBasicClient {
         }
     }
     
-    private static class CopyFromReceiver implements ISVNLogEntryHandler {
-        private String myTargetPath;
-        private SVNLocationEntry myCopyFromLocation;
-        
-        public CopyFromReceiver(String targetPath) {
-            myTargetPath = targetPath;
-        }
-        
-        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-            if (myCopyFromLocation != null) {
-                return;
-            }
-            
-            Map changedPaths = logEntry.getChangedPaths();
-            if (changedPaths != null && !changedPaths.isEmpty()) {
-                TreeMap sortedChangedPaths = new TreeMap(Collections.reverseOrder());
-                sortedChangedPaths.putAll(changedPaths);
-                for (Iterator changedPathsIter = sortedChangedPaths.keySet().iterator(); changedPathsIter.hasNext();) {
-                    String changedPath = (String) changedPathsIter.next();
-                    SVNLogEntryPath logEntryPath = (SVNLogEntryPath) sortedChangedPaths.get(changedPath);
-                    if (logEntryPath.getCopyPath() != null && 
-                        SVNRevision.isValidRevisionNumber(logEntryPath.getCopyRevision()) && 
-                        SVNPathUtil.isAncestor(changedPath, myTargetPath)) {
-                        String copyFromPath = null;
-                        if (changedPath.equals(myTargetPath)) {
-                            copyFromPath = logEntryPath.getCopyPath();
-                        } else {
-                            String relPath = myTargetPath.substring(changedPath.length());
-                            if (relPath.startsWith("/")) {
-                                relPath = relPath.substring(1);
-                            }
-                            copyFromPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(logEntryPath.getCopyPath(), relPath));
-                        }
-                        myCopyFromLocation = new SVNLocationEntry(logEntryPath.getCopyRevision(), copyFromPath);
-                        break;
-                    }
-                }
-            }
-        } 
-
-        public SVNLocationEntry getCopyFromLocation() {
-            return myCopyFromLocation;
-        }
-    }
-
 }

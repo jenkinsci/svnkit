@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/www/kb/examples
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/www/kb/examples
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2007-03-15T15:02:04.241225Z
-2977
-alex
+2008-07-30T16:53:59.266781Z
+4613
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -35,11 +35,33 @@ file
 
 
 
-2008-07-24T04:58:18.000000Z
-3e404d35d8422d5f3bdaa7d17b80d2ab
-2007-03-15T15:02:04.241225Z
-2977
-alex
+2008-10-30T04:41:34.000000Z
+3f8eac243b80a317baf7340a7f0587e4
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2729
 
 index.php
 file
@@ -47,9 +69,31 @@ file
 
 
 
-2008-07-24T04:58:18.000000Z
-9dc0f23c6c4d1f337f3d5a99dd402c6a
-2007-03-15T15:02:04.241225Z
-2977
-alex
+2008-10-30T04:41:34.000000Z
+3739c61c6beeaa287789fe25330d8113
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5834
 

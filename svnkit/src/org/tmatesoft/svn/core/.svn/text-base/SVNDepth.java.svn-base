@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,14 +13,15 @@ package org.tmatesoft.svn.core;
 
 
 /**
- * This class contains enumeration that desribes depth,
- * that is used .
+ * This class contains enumeration that describes depth,
+ * that is used.
  * The order of these depths is important: the higher the number,
  * the deeper it descends.  You can use it to compare two depths
  * numerically to decide which goes deeper.
  *   
  * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public class SVNDepth implements Comparable {
 
@@ -84,6 +85,11 @@ public class SVNDepth implements Comparable {
         return myName;
     }
     
+    /**
+     * Returns a string representation of this object.
+     * 
+     * @return string representation of this object  
+     */
     public String toString() {
         return getName();
     }
@@ -102,6 +108,14 @@ public class SVNDepth implements Comparable {
         return this == INFINITY || this == UNKNOWN;
     }
     
+    /**
+     * Compares this object to another one.
+     * 
+     * @param o  object to compare with 
+     * @return   <code>-1</code> if <code>o</code> is <span class="javakeyword">null</span>, or not an <code>SVNDepth</code>
+     *           instance, or its {@link #getId() id} is greater than this object's id; <code>0</code> if ids this object and <code>o</code> 
+     *           are equal; <code>1</code> if id of this object is greater than the one of <code>o</code>.
+     */
     public int compareTo(Object o) {
         if (o == null || o.getClass() != SVNDepth.class) {
             return -1;
@@ -110,6 +124,12 @@ public class SVNDepth implements Comparable {
         return myId == otherDepth.myId ? 0 : (myId > otherDepth.myId ? 1 : -1);
     }
 
+    /**
+     * Says whether this object and <code>obj</code> are equal.
+     * 
+     * @param obj another object to compare with
+     * @return <span class="javakeyword">true</span> if equal; otherwise <span class="javakeyword">false</span>
+     */
     public boolean equals(Object obj) {
         return compareTo(obj) == 0;
     }

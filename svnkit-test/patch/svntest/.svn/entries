@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-test/patch/svntest
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test/patch/svntest
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-05-27T20:16:14.892395Z
-4275
+2008-08-30T13:49:06.418217Z
+4802
 alex
 
 
@@ -32,10 +32,31 @@ file
 
 
 
-2008-07-24T04:58:18.000000Z
-37a9db6c1148d872c11d10f007fc86d1
-2008-05-27T20:16:14.892395Z
-4275
+2008-10-30T04:41:34.000000Z
+50f5168662769f8409fe1b87739813b2
+2008-08-30T13:49:06.418217Z
+4802
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+47182
 

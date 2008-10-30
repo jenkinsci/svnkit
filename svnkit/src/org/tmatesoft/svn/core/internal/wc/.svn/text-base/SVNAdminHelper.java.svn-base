@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -38,10 +38,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminHelper {
@@ -97,12 +98,12 @@ public class SVNAdminHelper {
             revNumber = fsfs.getDatedRevision(revision.getDate());
         } else if (revision != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision specifier");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (revNumber > youngestRevision) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Revisions must not be greater than the youngest revision ({0})", new Long(youngestRevision));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return revNumber;
     }
@@ -153,7 +154,7 @@ public class SVNAdminHelper {
             dumpStream.write(terminator);
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
     }
     
@@ -167,7 +168,7 @@ public class SVNAdminHelper {
         if (tgtFullPath == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, 
                                                          "Invalid target path");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         String srcFullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcParentDir, srcEntry));
@@ -181,7 +182,7 @@ public class SVNAdminHelper {
         
         if (srcEntry == null && (srcKind != SVNNodeKind.DIR || tgtKind != SVNNodeKind.DIR)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid editor anchoring; at least one of the input paths is not a directory and there was no source entry");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         editor.targetRevision(tgtRoot.getRevision());
@@ -227,15 +228,16 @@ public class SVNAdminHelper {
     }
     
     public static void generateIncompleteDataError() throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(new Exception());
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Premature end of content data in dumpstream");
-        SVNErrorManager.error(err);
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, new Exception());
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, 
+                "Premature end of content data in dumpstream");
+        SVNErrorManager.error(err, SVNLogType.FSFS);
     }
 
     public static void generateStreamMalformedError() throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(new Exception());
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, new Exception());
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.STREAM_MALFORMED_DATA, "Dumpstream data appears to be malformed");
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
     }
 
     public static int readKeyOrValue(InputStream dumpStream, byte[] buffer, int len) throws SVNException, IOException {
@@ -382,7 +384,7 @@ public class SVNAdminHelper {
     
     private static void generateNotADirError(String role, String path) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_DIRECTORY, "Invalid {0} directory ''{1}''", new Object[]{role, path != null ? path : "(null)"});
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.FSFS);
     }
     
     public static final String DUMPFILE_MAGIC_HEADER               = "SVN-fs-dump-format-version";

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -32,33 +33,113 @@ import org.xml.sax.SAXException;
  * that writes XML formatted status information to a specified 
  * <b>ContentHandler</b>. 
  *  
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatusHandler {
     
     private static final String AGAINST_TAG = "against";
     private static final String TARGET_TAG = "target";
+
+    /**
+     * <code>'expires'</code> tag.
+     */
     public static final String EXPIRES_TAG = "expires";
+
+    /**
+     * <code>'created'</code> tag.
+     */
     public static final String CREATED_TAG = "created";
+    
+    /**
+     * <code>'comment'</code> tag.
+     */
     public static final String COMMENT_TAG = "comment";
+
+    /**
+     * <code>'owner'</code> tag.
+     */
     public static final String OWNER_TAG = "owner";
+
+    /**
+     * <code>'token'</code> tag.
+     */
     public static final String TOKEN_TAG = "token";
+
+    /**
+     * <code>'date'</code> tag.
+     */
     public static final String DATE_TAG = "date";
+
+    /**
+     * <code>'author'</code> tag.
+     */
     public static final String AUTHOR_TAG = "author";
-    public static final String REVISION_ATTR = "revision";
-    public static final String SWITCHED_ATTR = "switched";
-    public static final String COPIED_ATTR = "copied";
-    public static final String WC_LOCKED_ATTR = "wc-locked";
-    public static final String PROPS_ATTR = "props";
-    public static final String ITEM_ATTR = "item";
-    public static final String PATH_ATTR = "path";
+
+    /**
+     * <code>'repos-status'</code> tag.
+     */
     public static final String REMOTE_STATUS_TAG = "repos-status";
+
+    /**
+     * <code>'lock'</code> tag.
+     */
     public static final String LOCK_TAG = "lock";
+
+    /**
+     * <code>'commit'</code> tag.
+     */
     public static final String COMMIT_TAG = "commit";
+
+    /**
+     * <code>'wc-status'</code> tag.
+     */
     public static final String WC_STATUS_TAG = "wc-status";
+
+    /**
+     * <code>'entry'</code> tag.
+     */
     public static final String ENTRY_TAG = "entry";
+
+    /**
+     * <code>'status'</code> tag.
+     */
     public static final String STATUS_TAG = "status";
+
+    /**
+     * <code>'revision'</code> attribute.
+     */
+    public static final String REVISION_ATTR = "revision";
+
+    /**
+     * <code>'switched'</code> attribute.
+     */
+    public static final String SWITCHED_ATTR = "switched";
+
+    /**
+     * <code>'copied'</code> attribute.
+     */
+    public static final String COPIED_ATTR = "copied";
+
+    /**
+     * <code>'wc-locked'</code> attribute.
+     */
+    public static final String WC_LOCKED_ATTR = "wc-locked";
+
+    /**
+     * <code>'props'</code> attribute.
+     */
+    public static final String PROPS_ATTR = "props";
+
+    /**
+     * <code>'item'</code> attribute.
+     */
+    public static final String ITEM_ATTR = "item";
+
+    /**
+     * <code>'path'</code> attribute.
+     */
+    public static final String PATH_ATTR = "path";
 
     private static final String TRUE = "true";
 
@@ -97,17 +178,23 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             addAttribute(PATH_ATTR, path.getPath());
             openTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
         }
     }
 
+    /**
+     * Handles a next <code>status</code> object producing corresponding xml.
+     * 
+     * @param  status 
+     * @throws SVNException 
+     */
     public void handleStatus(SVNStatus status) throws SVNException {
         try {
             sendToHandler(status);
         } catch (SAXException th) {
-            getDebugLog().logSevere(th);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, th);
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, th.getLocalizedMessage());
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
         }
     }
     
@@ -127,7 +214,7 @@ public class SVNXMLStatusHandler extends AbstractXMLHandler implements ISVNStatu
             }
             closeTag(TARGET_TAG);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
         }
     }
     

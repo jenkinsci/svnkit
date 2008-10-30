@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,7 +24,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractSVNLauncher {
@@ -86,7 +86,7 @@ public abstract class AbstractSVNLauncher {
             env.dispose();
             success();
         } catch (Throwable th) {
-            SVNDebugLog.getLog(SVNLogType.CLIENT).logSevere(th);            
+            SVNDebugLog.getDefaultLog().logSevere(SVNLogType.CLIENT, th);            
             if (env != null) {
                 env.dispose();
             }

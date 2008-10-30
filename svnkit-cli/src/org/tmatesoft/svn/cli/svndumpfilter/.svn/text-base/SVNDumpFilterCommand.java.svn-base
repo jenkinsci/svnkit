@@ -19,7 +19,7 @@ import org.tmatesoft.svn.cli.AbstractSVNCommand;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {

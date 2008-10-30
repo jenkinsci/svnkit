@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.io.benchmark;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -24,7 +25,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 class SVNCheckoutRoot extends SVNMeasurable implements Runnable, ISVNEditor, ISVNReporterBaton {
@@ -42,7 +43,7 @@ class SVNCheckoutRoot extends SVNMeasurable implements Runnable, ISVNEditor, ISV
 
 
     public void report(ISVNReporter reporter) throws SVNException {
-        reporter.setPath("", null, myLastRevision, true);
+        reporter.setPath("", null, myLastRevision, SVNDepth.INFINITY, true);
         reporter.finishReport();
     }
 

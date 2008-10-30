@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminCreateCommand extends SVNAdminCommand {
@@ -41,7 +41,7 @@ public class SVNAdminCreateCommand extends SVNAdminCommand {
 
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
-        client.doCreateRepository(getLocalRepository(), null, false, false, getSVNAdminEnvironment().isPre14Compatible());
+        client.doCreateRepository(getLocalRepository(), null, false, false, getSVNAdminEnvironment().isPre14Compatible(), getSVNAdminEnvironment().isPre15Compatible());
     }
 
 }

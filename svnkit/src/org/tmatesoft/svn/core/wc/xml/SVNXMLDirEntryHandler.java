@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -34,29 +35,88 @@ import org.xml.sax.SAXException;
  * that writes XML formatted status information to a specified 
  * <b>ContentHandler</b>. 
  *  
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDirEntryHandler, Comparator {
-    
+    /**
+     * <code>'expires'</code> tag.
+     */
     public static final String EXPIRES_TAG = "expires";
+    
+    /**
+     * <code>'created'</code> tag.
+     */
     public static final String CREATED_TAG = "created";
+
+    /**
+     * <code>'comment'</code> tag.
+     */
     public static final String COMMENT_TAG = "comment";
+    
+    /**
+     * <code>'owner'</code> tag.
+     */
     public static final String OWNER_TAG = "owner";
+
+    /**
+     * <code>'tag'</code> tag.
+     */
     public static final String TOKEN_TAG = "token";
+
+    /**
+     * <code>'lock'</code> tag.
+     */
     public static final String LOCK_TAG = "lock";
 
+    /**
+     * <code>'path'</code> attribute.
+     */
     public static final String PATH_ATTR = "path";
+
+    /**
+     * <code>'revision'</code> attribute.
+     */
     public static final String REVISION_ATTR = "revision";
     
+    /**
+     * <code>'lists'</code> tag.
+     */
     public static final String LISTS_TAG = "lists";
-    public static final String LIST_TAG = "list";
-    public static final String ENTRY_TAG = "entry";
-    public static final String NAME_TAG = "name";
-    public static final String SIZE_TAG = "name";
 
+    /**
+     * <code>'list'</code> tag.
+     */
+    public static final String LIST_TAG = "list";
+
+    /**
+     * <code>'entry'</code> tag.
+     */
+    public static final String ENTRY_TAG = "entry";
+
+    /**
+     * <code>'name'</code> tag.
+     */
+    public static final String NAME_TAG = "name";
+
+    /**
+     * <code>'size'</code> tag.
+     */
+    public static final String SIZE_TAG = "size";
+
+    /**
+     * <code>'commit'</code> tag.
+     */
     public static final String COMMIT_TAG = "commit";
+
+    /**
+     * <code>'date'</code> tag.
+     */
     public static final String DATE_TAG = "date";
+
+    /**
+     * <code>'author'</code> tag.
+     */
     public static final String AUTHOR_TAG = "author";
 
     private Collection myDirEntries;
@@ -94,10 +154,16 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             addAttribute(PATH_ATTR, path == null || path.length() == 9 ? "." : path);
             openTag(LIST_TAG);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
         }
     }
 
+    /**
+     * Handles a next dir <code>entry</code>.
+     * 
+     * @param  entry        dir entry 
+     * @throws SVNException 
+     */
     public void handleDirEntry(SVNDirEntry entry) throws SVNException {
         myDirEntries.add(entry);
     }
@@ -115,7 +181,7 @@ public class SVNXMLDirEntryHandler extends AbstractXMLHandler implements ISVNDir
             myDirEntries = null;
             closeTag(LIST_TAG);
         } catch (SAXException e) {
-            getDebugLog().logSevere(e);
+            getDebugLog().logSevere(SVNLogType.DEFAULT, e);
         }
     }
     

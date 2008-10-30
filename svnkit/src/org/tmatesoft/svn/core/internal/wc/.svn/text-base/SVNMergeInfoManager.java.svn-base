@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,10 +31,11 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoManager {
@@ -48,7 +49,7 @@ public class SVNMergeInfoManager {
                     " filesystem ''{1}'' uses only version {2}", 
                     new Object[] { new Integer(FSFS.MIN_MERGE_INFO_FORMAT), root.getOwner().getDBRoot(), 
                     new Integer(root.getOwner().getDBFormat()) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         Map mergeInfoAsHashes = getMergeInfoForPaths(root, paths, inherit, includeDescendants);
         Map mergeInfo = new TreeMap();
@@ -97,7 +98,7 @@ public class SVNMergeInfoManager {
                 if (mergeInfoString == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                             "Node-revision #''{0}'' claims to have mergeinfo but doesn''t", entry.getId());
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 Map kidMergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoString), null);
                 result.put(kidPath, kidMergeInfo);
@@ -146,7 +147,7 @@ public class SVNMergeInfoManager {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Node-revision ''{0}@{1}'' claims to have mergeinfo but doesn''t", 
                     new Object[] { nearestAncestor.getAbsPath(), new Long(revRoot.getRevision()) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
         if (nearestAncestor == parentPath) {

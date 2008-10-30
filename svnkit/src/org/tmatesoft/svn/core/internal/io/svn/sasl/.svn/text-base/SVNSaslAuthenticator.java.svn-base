@@ -47,10 +47,12 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryImpl;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNSaslAuthenticator extends SVNAuthenticator {
@@ -69,25 +71,29 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         myAuthenticationManager = repository.getAuthenticationManager();
         myAuthentication = null;
         
-        for (Iterator mech = mechs.iterator(); mech.hasNext();) {
-            String m = (String) mech.next();
-            if ("ANONYMOUS".equals(m) || "EXTERNAL".equals(m)) {
-                mechs = new ArrayList();
-                mechs.add(m);
-                break;
+        if (mechs.contains("EXTERNAL") && repository.getExternalUserName() != null) {
+            mechs = new ArrayList();
+            mechs.add("EXTERNAL");
+        } else { 
+            for (Iterator mech = mechs.iterator(); mech.hasNext();) {
+                String m = (String) mech.next();
+                if ("ANONYMOUS".equals(m) || "EXTERNAL".equals(m)) {
+                    mechs = new ArrayList();
+                    mechs.add(m);
+                    break;
+                }
             }
         }
-        
         dispose();
         try {
-            myClient = createSaslClient(mechs, realm, repository.getLocation());
+            myClient = createSaslClient(mechs, realm, repository, repository.getLocation());
             while(true) {
                 if (myClient == null) {
                     new SVNPlainAuthenticator(getConnection()).authenticate(mechs, realm, repository);
                     return;
                 }
                 try {
-                    if (tryAuthentication()) {
+                    if (tryAuthentication(repository)) {
                         if (myAuthenticationManager != null && myAuthentication != null) {
                             String realmName = getFullRealmName(repository.getLocation(), realm);
                             myAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realmName, null, myAuthentication);
@@ -97,20 +103,31 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                         setEncryption(repository);
                         break;
                     }
+                    // some sort of authentication error.
                 } catch (SaslException e) {
                     mechs.remove(getMechanismName(myClient));
                 } 
-                if (myAuthenticationManager != null && myAuthentication != null) {
+                if (myAuthenticationManager != null) {
                     SVNErrorMessage error = getLastError();
                     if (error == null) {
                         error = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED);
                         setLastError(error);
                     }
-                    String realmName = getFullRealmName(repository.getLocation(), realm);
-                    myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
+                    if (myAuthentication != null) {
+                        String realmName = getFullRealmName(repository.getLocation(), realm);
+                        myAuthenticationManager.acknowledgeAuthentication(false, myAuthentication.getKind(), realmName, getLastError(), myAuthentication);
+                    } else {
+                        // automatically generated authentication, do not try this mech again, will lead to the same error.
+                        // 
+                        mechs.remove(getMechanismName(myClient));
+                    }
                 }
                 dispose();
-                myClient = createSaslClient(mechs, realm, repository.getLocation());
+                if (mechs.isEmpty()) {
+                    failed = true;
+                    break;
+                }
+                myClient = createSaslClient(mechs, realm, repository, repository.getLocation());
             }
         } finally {
             if (failed) {
@@ -118,7 +135,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
             }
         }
         if (getLastError() != null) {
-            SVNErrorManager.error(getLastError());
+            SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
         }
     }
     
@@ -132,17 +149,19 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
     }
     
-    protected boolean tryAuthentication() throws SaslException, SVNException {
+    protected boolean tryAuthentication(SVNRepositoryImpl repos) throws SaslException, SVNException {
         String initialChallenge = null;
         String mechName = getMechanismName(myClient);
         boolean expectChallenge = !("ANONYMOUS".equals(mechName) || "EXTERNAL".equals(mechName));
-        if (myClient.hasInitialResponse()) {
+        if ("EXTERNAL".equals(mechName) && repos.getExternalUserName() != null) {
+            initialChallenge = "";
+        } else if (myClient.hasInitialResponse()) {
             // compute initial response
             byte[] initialResponse = null;
             initialResponse = myClient.evaluateChallenge(new byte[0]);
             if (initialResponse == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected initial response received from {0}", mechName);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             initialChallenge = toBase64(initialResponse);
         }
@@ -164,13 +183,13 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                 return false;
             }
             String challenge = (String) (items.size() > 1 ? items.get(1) : null); 
-            if (challenge == null && "CRAM-MD5".equals(mechName) && SVNAuthenticator.SUCCESS.equals(status)) {
+            if (challenge == null && ("CRAM-MD5".equals(mechName) || "GSSAPI".equals(mechName)) && SVNAuthenticator.SUCCESS.equals(status)) {
                 challenge = "";
             }
             if ((!SVNAuthenticator.STEP.equals(status) && !SVNAuthenticator.SUCCESS.equals(status)) || 
                     (challenge == null && expectChallenge)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected server response to authentication");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             byte[] challengeBytes = "CRAM-MD5".equals(mechName) ? challenge.getBytes() : fromBase64(challenge);
             byte[] response = null;
@@ -182,7 +201,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
             }
             if (response == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Unexpected response received from {0}", mechName);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (response.length > 0) {
                 String responseStr = "CRAM-MD5".equals(mechName) ? new String(response) : toBase64(response);
@@ -202,22 +221,37 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
         String qop = (String) myClient.getNegotiatedProperty(Sasl.QOP);
         String buffSizeStr = (String) myClient.getNegotiatedProperty(Sasl.MAX_BUFFER);
+        String sendSizeStr = (String) myClient.getNegotiatedProperty(Sasl.RAW_SEND_SIZE);
         
         if ("auth-int".equals(qop) || "auth-conf".equals(qop)) {
-            int buffSize = 8192;
+            int outBuffSize = 1000;
+            int inBuffSize = 1000;
+            if (sendSizeStr != null) {
+                try {
+                    outBuffSize = Integer.parseInt(sendSizeStr);
+                } catch (NumberFormatException nfe) {
+                    outBuffSize = 1000;
+                }
+            }
             if (buffSizeStr != null) {
                 try {
-                    buffSize = Integer.parseInt(buffSizeStr);
+                    inBuffSize = Integer.parseInt(buffSizeStr);
                 } catch (NumberFormatException nfe) {
-                    buffSize = 8192;
+                    inBuffSize = 1000;
                 }
-                buffSize = Math.min(8192, buffSize);
             }
-            OutputStream os = new SaslOutputStream(myClient, buffSize, getPlainOutputStream());
-            os = repository.getDebugLog().createLogStream(os);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "SASL read buffer size: " + inBuffSize);
+            SVNDebugLog.getDefaultLog().logFinest(SVNLogType.NETWORK, "SASL write buffer size: " + outBuffSize);
+            try {
+                getPlainOutputStream().flush();
+            } catch (IOException e) {
+                //
+            }
+            OutputStream os = new SaslOutputStream(myClient, outBuffSize, getPlainOutputStream());
+            os = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, os);
             setOutputStream(os);
-            InputStream is = new SaslInputStream(myClient, buffSize, getPlainInputStream());
-            is = repository.getDebugLog().createLogStream(is);
+            InputStream is = new SaslInputStream(myClient, inBuffSize, getPlainInputStream());
+            is = repository.getDebugLog().createLogStream(SVNLogType.NETWORK, is);
             setInputStream(is);
             getConnection().setEncrypted(this);
         } else {
@@ -225,10 +259,11 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
     }
     
-    protected SaslClient createSaslClient(List mechs, String realm, SVNURL location) throws SVNException {
+    protected SaslClient createSaslClient(List mechs, String realm, SVNRepositoryImpl repos, SVNURL location) throws SVNException {
         Map props = new SVNHashMap();
         props.put(Sasl.QOP, "auth-conf,auth-int,auth");
         props.put(Sasl.MAX_BUFFER, "8192");
+        props.put(Sasl.RAW_SEND_SIZE, "8192");
         props.put(Sasl.POLICY_NOPLAINTEXT, "false");
         props.put(Sasl.REUSE, "false");
         props.put(Sasl.POLICY_NOANONYMOUS, "true");
@@ -246,11 +281,18 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     continue;
                 }
                 SVNAuthentication auth = null;
-                if ("ANONYMOUS".equals(mech) || "EXTERNAL".equals(mech)) {
+                if ("ANONYMOUS".equals(mech)) {
                     auth = new SVNPasswordAuthentication("", "", false);
+                } else if ("EXTERNAL".equals(mech)) {
+                    String name = repos.getExternalUserName();
+                    if (name == null) {
+                        name = "";
+                    }
+                    auth = new SVNPasswordAuthentication(name, "", false);
                 } else {                
                     if (myAuthenticationManager == null) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm),
+                                SVNLogType.NETWORK);
                     }
                     String realmName = getFullRealmName(location, realm);
                     if (myAuthentication != null) {
@@ -260,9 +302,10 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     }
                     if (myAuthentication == null) {
                         if (getLastError() != null) {
-                            SVNErrorManager.error(getLastError());
+                            SVNErrorManager.error(getLastError(), SVNLogType.NETWORK);
                         }
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "Authentication required for ''{0}''", realm),
+                                SVNLogType.NETWORK);
                     }
                     auth = myAuthentication;
                 }

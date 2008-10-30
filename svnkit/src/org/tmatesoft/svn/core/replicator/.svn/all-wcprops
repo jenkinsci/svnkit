@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/replicator
+END
+ISVNReplicationHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/replicator/ISVNReplicationHandler.java
+END
+SVNReplicationEditor.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/replicator/SVNReplicationEditor.java
+END
+SVNRepositoryReplicator.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/replicator/SVNRepositoryReplicator.java
+END

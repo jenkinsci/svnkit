@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -46,11 +46,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
+
 import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DAVConnection {
@@ -113,7 +115,7 @@ public class DAVConnection {
             DAVUtil.findStartingProperties(this, repository, repository.getLocation().getURIEncodedPath());
             if (!repository.hasRepositoryUUID()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NO_REPOS_UUID, "Please upgrade to server 0.19 or later");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         }
     }    
@@ -152,8 +154,8 @@ public class DAVConnection {
         } catch (SVNException e) {
             if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
-                SVNErrorManager.error(err, e.getErrorMessage());
-            } else if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                SVNErrorManager.error(err, e.getErrorMessage(), SVNLogType.NETWORK);
+            } else if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                 return new SVNLock[0];
             }
             throw e;
@@ -161,14 +163,14 @@ public class DAVConnection {
 
         if (status.getCode() == 501) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
-            SVNErrorManager.error(err, status.getError());
+            SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
         } else if (status.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
             return new SVNLock[0];
         } else if (status.getError() != null && status.getError().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) { 
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support locking features");
-            SVNErrorManager.error(err, status.getError());
+            SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
         } else if (status.getError() != null) {
-            SVNErrorManager.error(status.getError());
+            SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
         }
         return handler.getLocks();
     }
@@ -192,14 +194,14 @@ public class DAVConnection {
         SVNErrorMessage context = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Lock request failed");
         HTTPStatus status = myHttpConnection.request("LOCK", path, header, body, -1, 0, null, handler, context);
         if (status.getError() != null) {
-            SVNErrorManager.error(status.getError());
+            SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
         }
         if (status != null) {
             String userName = myHttpConnection.getLastValidCredentials() != null ? myHttpConnection.getLastValidCredentials().getUserName() : null; 
             String created = status.getHeader().getFirstHeaderValue(HTTPHeader.CREATION_DATE_HEADER);
             if (userName == null || created == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Incomplete lock data returned");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             Date createdDate = created != null ? SVNDate.parseDate(created) : null;
             return new SVNLock(info.baselinePath, handler.getID(), userName, comment, createdDate, null);
@@ -215,7 +217,7 @@ public class DAVConnection {
             } 
             if (id == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_LOCKED, "''{0}'' is not locked in the repository", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         }
         HTTPHeader header = new HTTPHeader();
@@ -270,7 +272,7 @@ public class DAVConnection {
         } catch (SVNException e) {
             if (context == null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPPATCH_FAILED, "At least one property change failed; repository is unchanged");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             // handler error.
             throw e;
@@ -407,7 +409,7 @@ public class DAVConnection {
         HTTPStatus status = myHttpConnection.request("COPY", src, header, (StringBuffer) null, -1, 0, null, null, context);
         if (status.getCode() >= 300 && status.getError() != null) {
             SVNErrorMessage err = status.getError();
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }        
     }
 
@@ -457,7 +459,7 @@ public class DAVConnection {
         	SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
         			"OPTIONS request (for capabilities) got HTTP response code {0}", 
         			new Integer(status.getCode()));
-        	SVNErrorManager.error(err);
+        	SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
     }
     
@@ -496,7 +498,7 @@ public class DAVConnection {
         if (myActivityCollectionURL == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED, 
                     "The OPTIONS request did not include the requested activity-collection-set; this often means that the URL is not WebDAV-enabled");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return myActivityCollectionURL;
     }

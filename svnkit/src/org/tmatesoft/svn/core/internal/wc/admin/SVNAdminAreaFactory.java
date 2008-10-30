@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,14 +30,19 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminAreaFactory implements Comparable {
-        
+
+    public static final int WC_FORMAT_13 = 4;
+    public static final int WC_FORMAT_14 = 8;
+    public static final int WC_FORMAT_15 = 9;
+
     private static final Collection ourFactories = new TreeSet();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
     private static ISVNAdminAreaFactorySelector ourSelector;
@@ -88,12 +93,12 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                             "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
                             path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (version < factory.getSupportedVersion()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                             "Working copy format of {0} is too old ({1}); please check out your working copy again", 
                             new Object[] {path, new Integer(version)});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } 
             } catch (SVNException e) {
                 error = e;
@@ -106,37 +111,42 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     
     public static SVNAdminArea open(File path, Level logLevel) throws SVNException {
         SVNErrorMessage error = null;
-        int version = -1;
+        int wcFormatVersion = -1;
         Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
-        
-        for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
-            SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
-            try {
-                version = factory.getVersion(path);
-                if (version > factory.getSupportedVersion()) {
-                    error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
-                            path);
-                    SVNErrorManager.error(error);
-                } else if (version < factory.getSupportedVersion()) {
-                    error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "Working copy format of {0} is too old ({1}); please check out your working copy again", 
-                            new Object[] {path, new Integer(version)});
-                    SVNErrorManager.error(error);
-                } 
-            } catch (SVNException e) {
-                error = e.getErrorMessage() ;
-                continue;
-            }
-            SVNAdminArea adminArea = factory.doOpen(path, version);
-            if (adminArea != null) {
-                return adminArea;
+        File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
+        File entriesFile = new File(adminDir, "entries");
+        if (adminDir.isDirectory() && entriesFile.isFile()) {
+            for (Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
+                SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
+                try {
+                    wcFormatVersion = factory.getVersion(path);
+                    if (wcFormatVersion > factory.getSupportedVersion()) {
+                        error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                                "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
+                                path);
+                        SVNErrorManager.error(error, SVNLogType.WC);
+                    } else if (wcFormatVersion < factory.getSupportedVersion()) {
+                        error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                                "Working copy format of {0} is too old ({1}); please check out your working copy again",
+                                new Object[]{path, new Integer(wcFormatVersion)});
+                        SVNErrorManager.error(error, SVNLogType.WC);
+                    }
+                } catch (SVNException e) {
+                    error = e.getErrorMessage();
+                    continue;
+                }
+                
+                SVNAdminArea adminArea = factory.doOpen(path, wcFormatVersion);
+                if (adminArea != null) {
+                    adminArea.setWorkingCopyFormatVersion(wcFormatVersion);
+                    return adminArea;
+                }
             }
         }
         if (error == null) {
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
         }
-        SVNErrorManager.error(error, logLevel);
+        SVNErrorManager.error(error, logLevel, SVNLogType.WC);
         return null;
     }
 
@@ -168,16 +178,16 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     }
 
     private static SVNAdminAreaFactory getAdminAreaFactory(int wcFormat) throws SVNException {
-        if (wcFormat == SVNXMLAdminArea.WC_FORMAT) {
+        if (wcFormat == SVNXMLAdminAreaFactory.WC_FORMAT) {
             return new SVNXMLAdminAreaFactory();
         }
-        if (wcFormat == SVNAdminArea14.WC_FORMAT) {
+        if (wcFormat == SVNAdminArea14Factory.WC_FORMAT) {
             return new SVNAdminArea14Factory();           
         }
-        if (wcFormat == SVNAdminArea15.WC_FORMAT) {
+        if (wcFormat == SVNAdminArea15Factory.WC_FORMAT) {
             return new SVNAdminArea15Factory();
         }
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT), SVNLogType.DEFAULT);
         return null;
     }
 
@@ -200,7 +210,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (error == null) {
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", adminDir);
         }
-        SVNErrorManager.error(error);
+        SVNErrorManager.error(error, SVNLogType.WC);
         return -1;
     }
 
@@ -224,7 +234,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         File adminDir = new File(dir, SVNFileUtil.getAdminDirectoryName());
         if (adminDir.exists() && !adminDir.isDirectory()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' is not a directory", dir);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (!adminDir.exists()) {
             return false;
         } 
@@ -250,11 +260,11 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             if (!entry.isScheduledForDeletion()) {
                 if (entry.getRevision() != revision) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Revision {0} doesn''t match existing revision {1} in ''{2}''", new Object[]{new Long(revision), new Long(entry.getRevision()), dir});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 if (!url.equals(entry.getURL())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' doesn''t match existing URL ''{1}'' in ''{2}''", new Object[]{url, entry.getURL(), dir});
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         }

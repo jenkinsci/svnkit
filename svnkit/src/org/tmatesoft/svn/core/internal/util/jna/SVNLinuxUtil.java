@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import com.sun.jna.Memory;
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author TMate Software Ltd.
  */
 class SVNLinuxUtil {
@@ -107,13 +107,20 @@ class SVNLinuxUtil {
                 if (rc < 0) {
                     return null;
                 }
-                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8) : ourSharedMemory.getInt(16);
-                        
-                int fuid = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8 + 4 + 4) : ourSharedMemory.getInt(16 + 4 + 4);
-                int fgid = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
-                        ourSharedMemory.getInt(8 + 4 + 4 + 4) : ourSharedMemory.getInt(16 + 4 + 4 + 4);
+                int mode;
+                int fuid;
+                int fgid;
+                
+                if (SVNFileUtil.isOSX || SVNFileUtil.isBSD){
+                    mode = ourSharedMemory.getInt(8);
+                    fuid = ourSharedMemory.getInt(8 + 4);
+                    fgid = ourSharedMemory.getInt(8 + 4 + 4);
+                } else {
+                    mode = ourSharedMemory.getInt(16);
+                    fuid = ourSharedMemory.getInt(16 + 4 + 4);
+                    fgid = ourSharedMemory.getInt(16 + 4 + 4 + 4);
+                }
+                
                 int access = mode & 0777;
                 int mask = 0111;
                 if (JNALibraryLoader.getUID() == fuid) {

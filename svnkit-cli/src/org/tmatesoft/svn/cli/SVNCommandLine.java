@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,10 +21,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNCommandLine {
@@ -101,7 +102,7 @@ public class SVNCommandLine {
                 AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(optionName);
                 if (option == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid option: {0}", optionName);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
                 String value = null;                
                 if (!option.isUnary()) {
@@ -113,7 +114,7 @@ public class SVNCommandLine {
                     }
                     if (value == null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
                 }                  
                 myArgumentIndex++;
@@ -128,7 +129,7 @@ public class SVNCommandLine {
         AbstractSVNOption option = (AbstractSVNOption) ourOptions.get(optionName);
         if (option == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "invalid option: {0}", optionName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         String value = null;                
         if (!option.isUnary()) {
@@ -145,7 +146,7 @@ public class SVNCommandLine {
             myArgumentIndex++;
             if (value == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "missing argument: {0}", optionName);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         }
         if (myArgumentPosition >= argument.length()) {

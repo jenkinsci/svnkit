@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -43,10 +43,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSRepositoryUtil {
@@ -113,7 +114,7 @@ public class FSRepositoryUtil {
             throw ioew.getOriginalException();
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } 
     }
     
@@ -130,11 +131,11 @@ public class FSRepositoryUtil {
     public static boolean areFileContentsChanged(FSRoot root1, String path1, FSRoot root2, String path2) throws SVNException {
         if (root1.checkNodeKind(path1) != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "''{0}'' is not a file", path1);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (root2.checkNodeKind(path2) != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_GENERAL, "''{0}'' is not a file", path2);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         FSRevisionNode revNode1 = root1.getRevisionNode(path1);
         FSRevisionNode revNode2 = root2.getRevisionNode(path2);
@@ -213,7 +214,7 @@ public class FSRepositoryUtil {
             }
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(file1IS);
             SVNFileUtil.closeFile(file2IS);
@@ -259,7 +260,7 @@ public class FSRepositoryUtil {
         if (buffer.get(buffer.limit() - 1) != '\n') {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Revision file lacks trailing newline");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         int spaceIndex = -1;
         int eolIndex = -1;
@@ -275,12 +276,12 @@ public class FSRepositoryUtil {
         if (eolIndex < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Final line in revision file longer than 64 characters");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (spaceIndex < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Final line in revision file missing space");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
         try {
@@ -300,11 +301,11 @@ public class FSRepositoryUtil {
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Final line in revision file missing changes and root offsets");
-            SVNErrorManager.error(err, nfe);
+            SVNErrorManager.error(err, nfe, SVNLogType.FSFS);
         } catch (CharacterCodingException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Final line in revision file missing changes and root offsets");
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
     }
 
@@ -339,7 +340,7 @@ public class FSRepositoryUtil {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "FATAL error: new key length is greater than the threshold {0}", 
                     new Integer(MAX_KEY_SIZE));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         if (carry) {
             System.arraycopy(nextKey, 0, nextKey, 1, oldKey.length());
@@ -354,7 +355,7 @@ public class FSRepositoryUtil {
                     "Expected FS format between ''{0}'' and ''{1}''; found format ''{2}''", 
                     new Object[] {new Integer(FSFS.DB_FORMAT_LOW), new Integer(FSFS.DB_FORMAT), 
                     new Integer(format)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
     
@@ -362,7 +363,7 @@ public class FSRepositoryUtil {
         if (!SVNProperty.isRegularProperty(propertyName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS,
                     "Storage of non-regular property ''{0}'' is disallowed through the repository interface, and could indicate a bug in your client", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         if (SVNProperty.isSVNProperty(propertyName) && propertyValue != null) {
@@ -371,7 +372,7 @@ public class FSRepositoryUtil {
                     SVNDate.parseDateString(propertyValue.getString());
                 } catch (SVNException svne) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_PROPERTY_VALUE);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
         }

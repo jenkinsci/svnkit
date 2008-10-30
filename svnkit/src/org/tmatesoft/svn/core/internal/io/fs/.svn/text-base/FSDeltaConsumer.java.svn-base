@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,10 +27,11 @@ import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSDeltaConsumer implements ISVNDeltaConsumer {
@@ -70,7 +71,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Base checksum mismatch on ''{0}'':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
                         path, baseChecksum, md5HexChecksum
                 });
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
 
@@ -134,6 +135,10 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
 
     public void textDeltaEnd(String path) throws SVNException {
         myDeltaProcessor.textDeltaEnd();
+    }
+    
+    public void close() {
+        abort();
     }
 
     public void abort() {

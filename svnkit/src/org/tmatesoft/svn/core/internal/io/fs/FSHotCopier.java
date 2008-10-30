@@ -20,10 +20,11 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSHotCopier {
@@ -40,7 +41,7 @@ public class FSHotCopier {
                     createReposDir(dstReposLocksDir);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = svne.getErrorMessage().wrap("Creating lock dir");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 createDBLock(dstReposLocksDir);
                 createDBLogsLock(dstReposLocksDir);
@@ -68,7 +69,7 @@ public class FSHotCopier {
             fsTypeStream.write(fsType.getBytes("US-ASCII"));
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         } finally {
             SVNFileUtil.closeFile(fsTypeStream);
         }
@@ -100,7 +101,7 @@ public class FSHotCopier {
             if (dstChildren.length > 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.DIR_NOT_EMPTY, 
                         "''{0}'' exists and is non-empty", dir);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         } else {
             dir.mkdirs();
@@ -113,7 +114,7 @@ public class FSHotCopier {
             "US-ASCII");
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Creating db lock file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -123,7 +124,7 @@ public class FSHotCopier {
             "US-ASCII");
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Creating db logs lock file");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 

@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-eclipse/org.tmatesoft.svnkit
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-eclipse/org.tmatesoft.svnkit
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-10T19:38:40.151581Z
-4512
-semen
+2008-09-28T22:01:01.880794Z
+4942
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -26,8 +26,76 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
+feature.properties
+file
+
+
+
+
+2008-10-30T04:42:00.000000Z
+043c175572aec242431b1dec44966c6d
+2008-09-28T22:01:01.880794Z
+4942
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2941
+
 src
 dir
+
+MANIFEST.MF
+file
+
+
+
+
+2008-10-30T04:42:00.000000Z
+8cc9e9c321a865adf731e56d59b2bec4
+2008-09-28T22:01:01.880794Z
+4942
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1972
 
 .options
 file
@@ -42,16 +110,37 @@ a88d2580e9df1bb8dc0560aec775bf0f
 semen
 has-props
 
-plugin.xml
+feature.xml
 file
 
 
 
 
-2008-07-24T04:49:43.000000Z
-f78a32f2ceb647739e22d2ef81d01b83
-2008-01-23T16:42:39.168436Z
-3785
+2008-10-30T04:42:00.000000Z
+bf38ea109322858adc3f53dd3f6ccf82
+2008-09-28T22:01:01.880794Z
+4942
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+948
 

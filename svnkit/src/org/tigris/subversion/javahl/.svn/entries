@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tigris/subversion/javahl
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tigris/subversion/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-02T00:37:09.052516Z
-4473
+2008-08-28T19:30:55.179841Z
+4792
 alex
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-dbdbb866627ef36fd1e9734ee1b06e9d
-2008-04-08T13:44:35.380164Z
-4132
-semen
+2008-10-30T04:44:26.000000Z
+601ef60248fab2b9cd9d7e5688b2b0ed
+2008-08-28T19:30:55.179841Z
+4792
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22933
 
 JavaHLObjectFactory.java
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-08-02T14:58:31.000000Z
-877a8d4882e6fa2e80528aff9f6b3c16
-2008-07-02T00:37:09.052516Z
-4473
+2008-10-30T04:44:26.000000Z
+b253b24b6dc833c4a28ebe424443fa22
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+36309
 
 JavaHLPropertyData.java
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-a0345a9d86c5bbacba41760a9fc825bc
-2008-06-27T14:43:13.816801Z
-4436
+2008-10-30T04:44:26.000000Z
+c01e5444073a6d953c28b982818544c0
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1757
 
 SVNClient.java
 file
@@ -71,11 +134,33 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-9ee623ca9fc35181f9dcee7660a1d8a6
-2008-05-21T22:20:40.005320Z
-4265
+2008-10-30T04:44:26.000000Z
+6615efce1d80077ed9733a3c61cac3c6
+2008-08-28T19:30:55.179841Z
+4792
 alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+26475
 
 Path.java
 file
@@ -83,10 +168,31 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-10087bf98b32792c70000955ff21dff9
-2008-06-27T14:43:13.816801Z
-4436
+2008-10-30T04:44:26.000000Z
+4b4d74a01b90d6924b10f12d977baffb
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1057
 

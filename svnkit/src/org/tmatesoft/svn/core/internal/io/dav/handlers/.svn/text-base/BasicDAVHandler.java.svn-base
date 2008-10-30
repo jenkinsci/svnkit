@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,7 +32,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public abstract class BasicDAVHandler extends DefaultHandler {
 
@@ -80,7 +80,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         try {
             startElement(getParent(), element, attributes);
         } catch (SVNException e) {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             throw new SAXException(e);
         }
         myParent.push(element);
@@ -93,7 +93,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         try {
             endElement(getParent(), element, myCDATA);
         } catch (SVNException e) {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             throw new SAXException(e);
         }
         myCDATA = null;
@@ -126,7 +126,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
     protected abstract void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException;
 
     protected void invalidXML() throws SVNException {
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"));
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.XML_MALFORMED, "Malformed XML"), SVNLogType.NETWORK);
 
     }
 

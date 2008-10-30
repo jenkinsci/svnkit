@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,13 +25,16 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNDate extends Date {
+
+    private static final long serialVersionUID = 4845L;
 
     public static final SVNDate NULL = new SVNDate(0, 0);
 
@@ -184,7 +187,7 @@ public class SVNDate extends Date {
         try {
             return parseDatestamp(str);
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(th);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
         }
         return NULL;
     }
@@ -196,7 +199,7 @@ public class SVNDate extends Date {
             throw svne;
         } catch (Throwable th) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.DEFAULT);
         }
         return NULL;
     }
@@ -204,7 +207,7 @@ public class SVNDate extends Date {
     private static SVNDate parseDatestamp(String str) throws SVNException {
         if (str == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_DATE);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
 
         int index = 0;
@@ -299,9 +302,17 @@ public class SVNDate extends Date {
                 if (segment.length() == 0) {
                     result[index] = 0;
                 } else if (index + 1 < DATE_SEPARATORS.length) {
-                    result[index] = Integer.parseInt(segment);
+                    try {
+                        result[index] = Integer.parseInt(segment);
+                    } catch (NumberFormatException nfe) {
+                        return -1;
+                    }
                 } else {
-                    result[index] = Integer.parseInt(segment.substring(0, Math.min(3, segment.length())));
+                    try {
+                        result[index] = Integer.parseInt(segment.substring(0, Math.min(3, segment.length())));
+                    } catch (NumberFormatException nfe) {
+                        return -1;
+                    }
                 }
                 startIndex = charIndex + 1;
                 index++;

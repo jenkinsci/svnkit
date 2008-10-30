@@ -24,10 +24,11 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNLookPropListCommand extends SVNLookCommand {
@@ -50,7 +51,7 @@ public class SVNLookPropListCommand extends SVNLookCommand {
         if (!environment.isRevProp() && environment.getFirstArgument() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
                     "Missing repository path argument");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNLookClient client = environment.getClientManager().getLookClient();

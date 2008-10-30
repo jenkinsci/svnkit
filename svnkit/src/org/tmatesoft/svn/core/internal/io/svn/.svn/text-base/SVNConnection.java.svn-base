@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +29,10 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNConnection {
@@ -97,7 +97,7 @@ public class SVNConnection {
             r = getInputStream().read(bytes);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed: ''{0}''", e.getMessage());
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (r >= 0) {
             for (int i = 0; i < r; i++) {
@@ -107,7 +107,7 @@ public class SVNConnection {
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
         return null;
     }
 
@@ -124,17 +124,17 @@ public class SVNConnection {
         Long maxVer = (Long) items.get(1);
         if (minVer.longValue() > 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server requires minimum version {0}", minVer));
+            		"Server requires minimum version {0}", minVer), SVNLogType.NETWORK);
         } else if (maxVer.longValue() < 2) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server requires maximum version {0}", maxVer));
+            		"Server requires maximum version {0}", maxVer), SVNLogType.NETWORK);
         }
 
         List capabilities = (List) items.get(3);
         addCapabilities(capabilities);
         if (!hasCapability(EDIT_PIPELINE)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_BAD_VERSION, 
-            		"Server does not support edit pipelining"));
+            		"Server does not support edit pipelining"), SVNLogType.NETWORK);
         }
         
         
@@ -181,7 +181,7 @@ public class SVNConnection {
                 }
             }
         } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(th.getMessage());
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th.getMessage());
         }
         return new SVNPlainAuthenticator(this);
     }
@@ -198,7 +198,7 @@ public class SVNConnection {
             if (item.getKind() != SVNItem.WORD) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, 
                         "Capability entry is not a word"); 
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             myCapabilities.add(item.getWord());
         }
@@ -213,7 +213,7 @@ public class SVNConnection {
         if (creds != null && creds.size() >= 2 && creds.get(0) != null && creds.get(1) != null) {
             SVNURL rootURL = creds.get(1) != null ? SVNURL.parseURIEncoded(SVNReader.getString(creds, 1)) : null;
             if (rootURL != null && rootURL.toString().length() > repository.getLocation().toString().length()) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Impossibly long repository root from server"), SVNLogType.NETWORK);
             }
             if (repository != null && repository.getRepositoryRoot(false) == null) {
                 repository.updateCredentials(SVNReader.getString(creds, 0), rootURL);
@@ -370,9 +370,9 @@ public class SVNConnection {
     OutputStream getOutputStream() throws SVNException {
         if (myOutputStream == null) {
             try {
-                myOutputStream = myRepository.getDebugLog().createLogStream(myConnector.getOutputStream());
+                myOutputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, myConnector.getOutputStream());
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
             }
         }
         return myOutputStream;
@@ -381,10 +381,11 @@ public class SVNConnection {
     InputStream getInputStream() throws SVNException {
         if (myInputStream == null) {
             try {
-                myInputStream = myRepository.getDebugLog().createLogStream(new BufferedInputStream(myConnector.getInputStream()));
+                InputStream is = myConnector.getInputStream();
+                myInputStream = myRepository.getDebugLog().createLogStream(SVNLogType.NETWORK, is); 
                 myLoggingInputStream = myInputStream;
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getMessage()), e, SVNLogType.NETWORK);
             }
         }
         return myInputStream;
@@ -398,7 +399,7 @@ public class SVNConnection {
     }
 
     void setInputStream(InputStream is) {
-        if (myLoggingInputStream != null) {
+        if (myLoggingInputStream != null) {            
             myRepository.getDebugLog().flushStream(myLoggingInputStream);
         }
         myInputStream = is;

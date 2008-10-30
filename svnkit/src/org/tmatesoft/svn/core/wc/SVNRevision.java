@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
  * can parse strings (that can be anything: string representations of numbers,
  * dates, keywords) to construct an <b>SVNRevision</b> to use. 
  *  
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  */
 public class SVNRevision {
@@ -253,8 +253,8 @@ public class SVNRevision {
      * Checks whether a revision number is valid.
      * 
      * @param   revision a revision number
-     * @return           <span class="javakeyword">true</span> if valid, 
-     *                   otherwise false
+     * @return           <span class="javakeyword">true</span> if valid (<code>&gt;=0</code>), 
+     *                   otherwise <span class="javakeyword">false</span>
      */
     public static boolean isValidRevisionNumber(long revision) {
         return revision >= 0;

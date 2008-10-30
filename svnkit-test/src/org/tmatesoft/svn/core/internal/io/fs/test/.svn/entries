@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test/src/org/tmatesoft/svn/core/internal/io/fs/test
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-19T20:15:15.874886Z
-4377
+2008-08-28T19:30:55.179841Z
+4792
 alex
 
 
@@ -32,11 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-520e3aa6ae21d945e16476d1ad7f7d13
-2008-06-19T20:15:15.874886Z
-4377
+2008-10-30T04:41:35.000000Z
+754ccf12cd95e3bc18c10e9b600da82a
+2008-08-28T19:30:55.179841Z
+4792
 alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+19429
 
 SVNTestUpdateEditor.java
 file
@@ -44,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-4929b1768176f7ace1b00de04d647d3b
-2008-03-28T02:07:40.780210Z
-4072
+2008-10-30T04:41:35.000000Z
+cbd6e1ae1b39c9695b5915d4566ddc51
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5122
 
 UpdateHandler.java
 file
@@ -57,12 +100,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-2f7b1c7ab93001e38b7da0af22a313fa
-2007-11-11T16:35:59.529627Z
-3623
+2008-10-30T04:41:35.000000Z
+2cefaac3b0b7e5b81e06b90769de84ec
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1332
 
 PropertyHandler.java
 file
@@ -70,11 +134,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-849370018d9ec83e972df1e3af023332
-2007-12-11T11:27:48.190155Z
-3707
-semen
+2008-10-30T04:41:35.000000Z
+22e5efd82f2a7ea3552671d3fbbfc4e8
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1426
 
 SVNConcurrentCommitTest.java
 file
@@ -82,12 +168,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-ce460ec55c5db0536e740b8d5e02ac29
-2008-01-27T19:14:22.740809Z
-3803
-semen
+2008-10-30T04:41:35.000000Z
+18b3a239708a77d7b2edd6f91fe1fb07
+2008-08-28T19:30:55.179841Z
+4792
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5867
 
 SVNItem.java
 file
@@ -95,12 +202,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-a2736b7c4a212bdd3a908152b2c3d330
-2007-12-11T11:27:48.190155Z
-3707
-semen
+2008-10-30T04:41:35.000000Z
+7f042a3390f27993bf17c38d7a36b809
+2008-08-28T19:30:55.179841Z
+4792
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2415
 
 SVNImportThread.java
 file
@@ -108,10 +236,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-afc0056fee3fc95850f5856ee07ef466
-2007-01-09T05:54:45.383114Z
-2895
-sa
+2008-10-30T04:41:35.000000Z
+c755452753e4120395cb58ebfecf07cb
+2008-08-28T19:30:55.179841Z
+4792
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1984
 

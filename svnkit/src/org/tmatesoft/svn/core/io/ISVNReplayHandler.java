@@ -16,12 +16,36 @@ import org.tmatesoft.svn.core.SVNProperties;
 
 
 /**
- * @version 1.1.2
+ * The <b>ISVNReplayHandler</b> is used in {@link SVNRepository#replayRange(long, long, long, boolean, ISVNReplayHandler)}
+ * to provide and editor for replaying a revision. 
+ * 
+ * @version 1.2.0
  * @author  TMate Software Ltd.
+ * @since   1.2.0
  */
 public interface ISVNReplayHandler {
 
+    /**
+     * Handles the start of replaying a next revision and returns an editor through which the revision 
+     * will be replayed. 
+     * 
+     * @param  revision               target revision number of the received replay report
+     * @param  revisionProperties     contains key/value pairs for each revision properties for this 
+     *                                <code>revision</code>
+     * @return                        editor for replicating <code>revision</code>
+     * @throws SVNException 
+     */
     public ISVNEditor handleStartRevision(long revision, SVNProperties revisionProperties) throws SVNException;
-    
+
+    /**
+     * Handles the end of replaying a next revision. In this method the implementor should close the 
+     * <code>editor</code>.
+     * 
+     * @param  revision               target revision number of the received replay report
+     * @param  revisionProperties     contains key/value pairs for each revision properties for this 
+     *                                <code>revision</code>
+     * @param  editor                 replication editor   
+     * @throws SVNException 
+     */
     public void handleEndRevision(long revision, SVNProperties revisionProperties, ISVNEditor editor) throws SVNException;
 }

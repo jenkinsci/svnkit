@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -148,12 +148,19 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  *
+ * @version 1.2.0
  * @author TMate Software Ltd.
- * @version 1.1.1
- * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
+ * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNWCClient extends SVNBasicClient {
 
+    /**
+     * Default implementation of {@link ISVNAddParameters} which
+     * <code>onInconsistentEOLs(File file)</code> always returns the 
+     * {@link ISVNAddParameters#REPORT_ERROR} action.
+     * 
+     * @since 1.2
+     */
     public static ISVNAddParameters DEFAULT_ADD_PARAMETERS = new ISVNAddParameters() {
         public Action onInconsistentEOLs(File file) {
             return ISVNAddParameters.REPORT_ERROR;
@@ -190,10 +197,34 @@ public class SVNWCClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNWCClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * <p/>
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNWCClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * <p/>
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
     public SVNWCClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
 
+    /**
+     * Sets custom add parameters to this client object.
+     * 
+     * @param addParameters extra parameters for add operations
+     * @since 1.2
+     */
     public void setAddParameters(ISVNAddParameters addParameters) {
         myAddParameters = addParameters;
     }
@@ -236,7 +267,14 @@ public class SVNWCClient extends SVNBasicClient {
         myCommitHandler = handler;
     }
 
-
+    /**
+     * Returns the add parameters object used by this object.
+     * If no custom object was specified through a call to {@link #setAddParameters(ISVNAddParameters)} 
+     * then {@link #DEFAULT_ADD_PARAMETERS} is returned.
+     * 
+     * @return add parameters object
+     * @since 1.2
+     */
     protected ISVNAddParameters getAddParameters() {
         if (myAddParameters == null) {
             return DEFAULT_ADD_PARAMETERS;
@@ -246,34 +284,39 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Gets contents of a file.
+     * Outputs the content of file identified by <code>path</code> and <code>revision</code> 
+     * to the stream <code>dst</code>. The actual node revision selected
+     * is determined by the path as it exists in <code>pegRevision</code>. If <code>pegRevision</code>
+     * is {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
+     * 
+     * <p/> 
      * If <vode>revision</code> is one of:
      * <ul>
-     * <li>{@link SVNRevision#BASE BASE}
-     * <li>{@link SVNRevision#WORKING WORKING}
-     * <li>{@link SVNRevision#COMMITTED COMMITTED}
+     * <li>{@link SVNRevision#BASE}
+     * <li>{@link SVNRevision#WORKING}
+     * <li>{@link SVNRevision#COMMITTED}
      * </ul>
-     * then the file contents are taken from the Working Copy file item.
-     * Otherwise the file item's contents are taken from the repository
-     * at a particular revision.
+     * then the file contents are taken from the working copy file item (no network connection is needed).
+     * Otherwise the file item's contents are taken from the repository at a particular revision.
      *
-     * @param path           a Working Copy file item
-     * @param pegRevision    a revision in which the file item is first looked up
-     * @param revision       a target revision
+     * @param path           working copy path
+     * @param pegRevision    revision in which the file item is first looked up
+     * @param revision       target revision
      * @param expandKeywords if <span class="javakeyword">true</span> then
      *                       all keywords presenting in the file and listed in
-     *                       the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS svn:keywords}
+     *                       the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS}
      *                       property (if set) will be substituted, otherwise not
      * @param dst            the destination where the file contents will be written to
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li><code>path</code> refers to a directory
-     *                      <li><code>path</code> does not exist
-     *                      <li><code>path</code> is not under version control
-     *                      </ul>
+     * @throws SVNException  if one of the following is true:
+     *                       <ul>
+     *                       <li><code>path</code> refers to a directory
+     *                       <li><code>path</code> does not exist
+     *                       <li><code>path</code> is not under version control
+     *                       </ul>
      * @see #doGetFileContents(SVNURL,SVNRevision,SVNRevision,boolean,OutputStream)
      */
-    public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+    public void doGetFileContents(File path, SVNRevision pegRevision, SVNRevision revision, 
+            boolean expandKeywords, OutputStream dst) throws SVNException {
         if (dst == null) {
             return;
         }
@@ -284,11 +327,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
         if ((!pegRevision.isValid() || pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.WORKING) &&
                 (!revision.isValid() || revision == SVNRevision.BASE || revision == SVNRevision.WORKING)) {
-            if (pegRevision == null || !pegRevision.isValid()) {
-                pegRevision = SVNRevision.BASE;
-            } else if (pegRevision == SVNRevision.COMMITTED) {
-                pegRevision = SVNRevision.BASE;
-            }
             doGetLocalFileContents(path, dst, revision, expandKeywords);
         } else {
             SVNRepository repos = createRepository(null, path, null, pegRevision, revision, null);
@@ -296,8 +334,9 @@ public class SVNWCClient extends SVNBasicClient {
             long revNumber = getRevisionNumber(revision, repos, path);
             SVNNodeKind kind = repos.checkPath("", revNumber);
             if (kind == SVNNodeKind.DIR) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", repos.getLocation());
-                SVNErrorManager.error(err);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, 
+                        "URL ''{0}'' refers to a directory", repos.getLocation());
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             checkCancelled();
             if (!expandKeywords) {
@@ -322,7 +361,7 @@ public class SVNWCClient extends SVNBasicClient {
                     } catch (IOExceptionWrapper ioew) {
                         throw ioew.getOriginalException();
                     } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
                     }
                 } else {
                     repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, getEventDispatcher()));
@@ -331,20 +370,23 @@ public class SVNWCClient extends SVNBasicClient {
             try {
                 dst.flush();
             } catch (IOException e) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
             }
         }
     }
 
     /**
-     * Gets contents of a file of a particular revision from a repository.
-     *
+     * Outputs the content of file identified by <code>url</code> and <code>revision</code> 
+     * to the stream <code>dst</code>. The actual node revision selected
+     * is determined by the path as it exists in <code>pegRevision</code>. If <code>pegRevision</code>
+     * is {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#HEAD}.
+     * 
      * @param url            a file item's repository location
      * @param pegRevision    a revision in which the file item is first looked up
      * @param revision       a target revision
      * @param expandKeywords if <span class="javakeyword">true</span> then
      *                       all keywords presenting in the file and listed in
-     *                       the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS svn:keywords}
+     *                       the file's {@link org.tmatesoft.svn.core.SVNProperty#KEYWORDS}
      *                       property (if set) will be substituted, otherwise not
      * @param dst            the destination where the file contents will be written to
      * @throws SVNException if one of the following is true:
@@ -356,7 +398,8 @@ public class SVNWCClient extends SVNBasicClient {
      *                      </ul>
      * @see #doGetFileContents(File,SVNRevision,SVNRevision,boolean,OutputStream)
      */
-    public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean expandKeywords, OutputStream dst) throws SVNException {
+    public void doGetFileContents(SVNURL url, SVNRevision pegRevision, SVNRevision revision, 
+            boolean expandKeywords, OutputStream dst) throws SVNException {
         revision = revision == null || !revision.isValid() ? SVNRevision.HEAD : revision;
         // now get contents from URL.
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, null);
@@ -367,7 +410,7 @@ public class SVNWCClient extends SVNBasicClient {
         checkCancelled();
         if (nodeKind == SVNNodeKind.DIR) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_IS_DIRECTORY, "URL ''{0}'' refers to a directory", url);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         checkCancelled();
         if (!expandKeywords) {
@@ -391,7 +434,7 @@ public class SVNWCClient extends SVNBasicClient {
                 } catch (IOExceptionWrapper ioew) {
                     throw ioew.getOriginalException();
                 } catch (IOException e) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
                 }
             } else {
                 repos.getFile("", revNumber, null, new SVNCancellableOutputStream(dst, getEventDispatcher()));
@@ -400,36 +443,54 @@ public class SVNWCClient extends SVNBasicClient {
         try {
             dst.flush();
         } catch (IOException e) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
         }
     }
 
     /**
-     * Recursively cleans up the working copy, removing locks and resuming
-     * unfinished operations.
-     * <p/>
-     * <p/>
-     * If you ever get a "working copy locked" error, use this method
-     * to remove stale locks and get your working copy into a usable
-     * state again.
-     *
-     * @param path a WC path to start a cleanup from
+     * Cleans up a working copy.
+     * This method is equivalent to a call to <code>doCleanup(path, false)</code>.
+     *  
+     * @param  path         a WC path to start a cleanup from
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>path</code> does not exist
      *                      <li><code>path</code>'s parent directory
      *                      is not under version control
      *                      </ul>
+     * @see                 #doCleanup(File, boolean)
      */
     public void doCleanup(File path) throws SVNException {
         doCleanup(path, false);
     }
 
+    /**
+     * Recursively cleans up the working copy, removing locks and resuming
+     * unfinished operations.
+     * 
+     * <p/>
+     * If you ever get a "working copy locked" error, use this method
+     * to remove stale locks and get your working copy into a usable
+     * state again.
+     * 
+     * <p>
+     * This method operates only on working copies and does not open any network connection.
+     * 
+     * @param  path                 a WC path to start a cleanup from
+     * @param  deleteWCProperties   if <span class="javakeyword">true</span>, removes DAV specific 
+     *                              <span class="javastring">"svn:wc:"</span> properties from the working copy 
+     * @throws SVNException         if one of the following is true:
+     *                              <ul>
+     *                              <li><code>path</code> does not exist
+     *                              <li><code>path</code>'s parent directory
+     *                              is not under version control
+     *                              </ul>
+     */
     public void doCleanup(File path, boolean deleteWCProperties) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "''{0}'' does not exist", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (fType == SVNFileType.FILE || fType == SVNFileType.SYMLINK) {
             path = path.getParentFile();
         }
@@ -446,8 +507,8 @@ public class SVNWCClient extends SVNBasicClient {
             } else if (!SVNAdminArea.isSafeCleanup()) {
                 throw e;
             }
-            SVNDebugLog.getLog(SVNLogType.WC).logFine("CLEANUP FAILED for " + path);
-            SVNDebugLog.getLog(SVNLogType.WC).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "CLEANUP FAILED for " + path);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, e);
         } finally {
             wcAccess.close();
             sleepForTimeStamp();
@@ -455,40 +516,60 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Sets, edits or deletes a property on a file or directory item(s).
+     * Sets <code>propName</code> to <code>propValue</code> on <code>path</code>.
+     * A <code>propValue</code> of <span class="javakeyword">null</span> will delete 
+     * the property.
+     * 
      * <p/>
+     * If <code>depth</code> is {@link org.tmatesoft.svn.core.SVNDepth#EMPTY}, set the property on <code>path</code>
+     * only; if {@link SVNDepth#FILES}, set it on <code>path</code> and its file
+     * children (if any); if {@link SVNDepth#IMMEDIATES}, on <code>path</code> and all
+     * of its immediate children (both files and directories); if
+     * {@link SVNDepth#INFINITY}, on <code>path</code> and everything beneath it.
+     * 
      * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
-     *
-     * @param path      a WC item which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param recursive <span class="javakeyword">true</span> to
-     *                  descend recursively
-     * @param handler   a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li><code>propName</code> is a revision
-     *                      property
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
+     * If <code>propName</code> is an svn-controlled property (i.e. prefixed with
+     * <span class="javastring">"svn:"</span>), then the caller is responsible for ensuring that
+     * the value uses LF line-endings.
+     * 
+     * <p/>
+     * If <code>skipChecks</code> is <span class="javakeyword">true</span>, this method does no validity 
+     * checking.  But if <code>skipChecks</code> is <span class="javakeyword">false</span>, 
+     * and <code>propName</code> is not a valid property for <code>path</code>, it throws an exception, 
+     * either with an error code {@link org.tmatesoft.svn.core.SVNErrorCode#ILLEGAL_TARGET} 
+     * (if the property is not appropriate for <code>path</code>), or with 
+     * {@link org.tmatesoft.svn.core.SVNErrorCode#BAD_MIME_TYPE} (if <code>propName</code> is 
+     * <span class="javastring">"svn:mime-type"</span>, but <code>propVal</code> is not a valid mime-type).
+     * 
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist
+     * names, used as a restrictive filter on items whose properties are
+     * set; that is, don't set properties on any item unless it's a member
+     * of one of those changelists.  If <code>changelists</code> is empty (or
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     * 
+     * <p>
+     * This method operates only on working copies and does not open any network connection.
+     * 
+     * @param path          working copy path
+     * @param propName      property name
+     * @param propValue     property value
+     * @param skipChecks    <span class="javakeyword">true</span> to
+     *                      force the operation to run without validity checking 
+     * @param depth         working copy tree depth to process   
+     * @param handler       a caller's property handler
+     * @param changeLists   changelist names
+     * @throws SVNException <ul>
+     *                      <li><code>path</code> does not exist
+     *                      <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code - 
+     *                      if <code>propName</code> is a revision property name or not a valid property name or 
+     *                      not a regular property name (one starting with 
+     *                      a <span class="javastring">"svn:entry"</span> or 
+     *                      <span class="javastring">"svn:wc"</span> prefix)
      *                      </ul>
-     * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * @see   #doSetProperty(SVNURL, String, SVNPropertyValue, SVNRevision, String, SVNProperties, boolean, ISVNPropertyHandler)
+     * @since 1.2, SVN 1.5
      */
-    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, boolean recursive,
-                              ISVNPropertyHandler handler) throws SVNException {
-        doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, null);
-    }
-
     public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean skipChecks, 
             SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
@@ -500,21 +581,21 @@ public class SVNWCClient extends SVNBasicClient {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Revision property ''{0}'' not allowed in this context", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         SVNWCAccess wcAccess = createWCAccess();
@@ -536,27 +617,86 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Sets <code>propName</code> to <code>propValue</code> on <code>path</code>.
+     * A <code>propValue</code> of <span class="javakeyword">null</span> will delete 
+     * the property.
+     * 
+     * <p/>
+     * <code>baseRevision</code> must not be null; in this case, the property will only be set
+     * if it has not changed since <code>baseRevision</code>.
+     * 
+     * <p/>
+     * The {@link ISVNAuthenticationManager authentication manager} and 
+     * {@link ISVNCommitHandler commit handler}, either provided by a caller or default ones,
+     * will be used to immediately attempt to commit the property change in the
+     * repository.
+     * 
+     * <p/>
+     * If <code>propName</code> is an svn-controlled property (i.e. prefixed with
+     * <span class="javastring">"svn:"</span>), then the caller is responsible for ensuring that
+     * the value uses LF line-endings.
+     * 
+     * <p/>
+     * If <code>skipChecks</code> is <span class="javakeyword">true</span>, this method does no validity 
+     * checking.  But if <code>skipChecks</code> is <span class="javakeyword">false</span>, 
+     * and <code>propName</code> is not a valid property for <code>path</code>, it throws an exception, 
+     * either with an error code {@link org.tmatesoft.svn.core.SVNErrorCode#ILLEGAL_TARGET} 
+     * (if the property is not appropriate for <code>path</code>), or with 
+     * {@link org.tmatesoft.svn.core.SVNErrorCode#BAD_MIME_TYPE} (if <code>propName</code> is 
+     * <span class="javastring">"svn:mime-type"</span>, but <code>propVal</code> is not a valid mime-type).
+     * 
+     * <p/>
+     * If non-<span class="javakeyword">null</span>, <code>revisionProperties</code> is an 
+     * {@link SVNProperties} object holding additional, custom revision properties 
+     * (<code>String</code> names mapped to <code>String</code> values) to be set on the new revision in
+     * the event that this is a committing operation. This table cannot contain any standard Subversion 
+     * properties.
+     * 
+     * @param url                  versioned item url
+     * @param propName             property name
+     * @param propValue            property value
+     * @param baseRevision         revision to change properties against          
+     * @param commitMessage        commit log message
+     * @param revisionProperties   custom revision properties to set
+     * @param skipChecks           <span class="javakeyword">true</span> to
+     *                             force the operation to run without validity checking 
+     * @param handler              a caller's property handler
+     * @return                     commit information if the commit succeeds
+     * @throws SVNException        <ul>
+     *                             <li><code>url</code> does not exist in <code>baseRevision</code>
+     *                             <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code - 
+     *                             if <code>propName</code> is a revision property name or not a valid property name or 
+     *                             not a regular property name (one starting with 
+     *                             an <span class="javastring">"svn:entry"</span> or 
+     *                             <span class="javastring">"svn:wc"</span> prefix)
+     *                             <li>exception with {@link SVNErrorCode#UNSUPPORTED_FEATURE} error code - 
+     *                             if <code>propName</code> is either equal to {@link SVNProperty#EOL_STYLE} or 
+     *                             {@link SVNProperty#KEYWORDS} or {@link SVNProperty#CHARSET}
+     *                             </ul>
+     * @see                        #doSetProperty(File, String, SVNPropertyValue, boolean, SVNDepth, ISVNPropertyHandler, Collection)
+     * @since                      1.2, SVN 1.5
+     */
     public SVNCommitInfo doSetProperty(SVNURL url, String propName, SVNPropertyValue propValue,
             SVNRevision baseRevision, String commitMessage, SVNProperties revisionProperties,
-            boolean force, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
-        depth = depth == null ? SVNDepth.UNKNOWN : depth;
+            boolean skipChecks, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNRevisionProperty.isRevisionProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Revision property ''{0}'' not allowed in this context", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         final SVNRepository repos = createRepository(url, null, null, true);
         long revNumber = SVNRepository.INVALID_REVISION;
@@ -565,31 +705,29 @@ public class SVNWCClient extends SVNBasicClient {
         } catch (SVNException svne) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION,
                     "Setting property on non-local target ''{0}'' needs a base revision", url);
-            SVNErrorManager.error(err);
-        }
-
-        if (SVNDepth.EMPTY.compareTo(depth) < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                    "Setting property recursively on non-local target ''{0}'' is not supported", url);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (SVNProperty.EOL_STYLE.equals(propName) || SVNProperty.KEYWORDS.equals(propName) || SVNProperty.CHARSET.equals(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Setting property ''{0}'' on non-local target ''{1}'' is not supported",
                     new Object[]{propName, url});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         SVNNodeKind kind = repos.checkPath("", revNumber);
         if (kind == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "Path ''{0}'' does not exist in revision {1}", new Object[]{url.getPath(), new Long(revNumber)});
-            SVNErrorManager.error(err);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, 
+                    "Path ''{0}'' does not exist in revision {1}", 
+                    new Object[]{ url.getPath(), new Long(revNumber) });
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
             final long baseRev = revNumber;
-            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, force, getOptions(), new ISVNFileContentFetcher() {
+            
+            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, 
+                    skipChecks, getOptions(), new ISVNFileContentFetcher() {
 
                 Boolean isBinary = null;
 
@@ -646,98 +784,96 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Sets, edits or deletes an unversioned revision property.
-     * This method uses a Working Copy item to obtain the URL of
-     * the repository which revision properties are to be changed.
+     * Set <code>propName</code> to <code>propValue</code> on revision 
+     * <code>revision</code> in the repository represented by <code>path</code>.
+     * 
      * <p/>
-     * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a revision property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
-     *
-     * @param path      a Working Copy item
-     * @param revision  a revision which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param handler   a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li>the operation can not be performed
-     *                      without forcing
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
-     *                      </ul>
-     * @see #doSetRevisionProperty(SVNURL,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * This method simply obtains a url given a working path and calls 
+     * {@link #doSetRevisionProperty(SVNURL, SVNRevision, String, SVNPropertyValue, boolean, ISVNPropertyHandler)}
+     * passing this url and the rest parameters.
+     * 
+     * @param path            working copy path
+     * @param revision        revision which properties are to be modified
+     * @param propName        property name
+     * @param propValue       property value
+     * @param force           if <span class="javakeyword">true</span> allows newlines in the author property
+     * @param handler         caller's property handler
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>exception with {@link SVNErrorCode#CLIENT_PROPERTY_NAME} error code - if 
+     *                        <code>propName</code> is invalid
+     *                        <li>exceptions thrown by {@link #doSetRevisionProperty(SVNURL, SVNRevision, String, SVNPropertyValue, boolean, ISVNPropertyHandler)}
+     *                        </ul>
      */
-    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(File path, SVNRevision revision, String propName, 
+            SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         SVNURL url = getURL(path);
         doSetRevisionProperty(url, revision, propName, propValue, force, handler);
     }
 
     /**
-     * Sets, edits or deletes an unversioned revision property.
-     * This method uses a URL pointing to a repository which revision
-     * properties are to be changed.
+     * Set <code>propName</code> to <code>propValue</code> on revision 
+     * <code>revision</code> in the repository represented by <code>path</code>.
+     * 
+     * A <code>propValue</code> of <span class="javakeyword">null</span> will delete the
+     * property. The {@link ISVNAuthenticationManager authentication manager}, either provided by a caller 
+     * or a default one, will be used for authentication.
+     * 
      * <p/>
+     * If <code>propName</code> is an svn-controlled property (i.e. prefixed with
+     * <span class="javastring">"svn:"</span>), then the caller is responsible for ensuring that
+     * the value is UTF8-encoded and uses LF line-endings.
+     * 
      * <p/>
-     * To set or edit a property simply provide a <code>propName</code>
-     * and a <code>propValue</code>. To delete a revision property set
-     * <code>propValue</code> to <span class="javakeyword">null</span>
-     * and the property <code>propName</code> will be deleted.
+     * Although this routine accepts a working copy path it doesn't affect the working copy at all;  
+     * it's a pure network operation that changes an *unversioned* property attached to a
+     * revision. This can be used to tweak log messages, dates, authors, and the like. 
+     * Be careful: it's a lossy operation.
+     * 
+     * <p>
+     * Also note that unless the administrator creates a pre-revprop-change hook in the repository, 
+     * this feature will fail.
      *
-     * @param url       a URL pointing to a repository location
-     * @param revision  a revision which properties are to be
-     *                  modified
-     * @param propName  a property name
-     * @param propValue a property value
-     * @param force     <span class="javakeyword">true</span> to
-     *                  force the operation to run
-     * @param handler   a caller's property handler
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li>the operation can not be performed
-     *                      without forcing
-     *                      <li><code>propName</code> starts
-     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
-     *                      svn:wc:} prefix
-     *                      </ul>
-     * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
+     * @param url             repository URL
+     * @param revision        revision which properties are to be modified
+     * @param propName        property name
+     * @param propValue       property value
+     * @param force           if <span class="javakeyword">true</span> allows newlines in the author property
+     * @param handler         caller's property handler
+     * @throws SVNException   if one of the following is true:
+     *                        <ul>
+     *                        <li>the operation can not be performed without forcing
+     *                        <li><code>propName</code> is either invalid or not a regular property name 
+     *                        (one starting with an <span class="javastring">"svn:entry"</span> or 
+     *                        <span class="javastring">"svn:wc"</span> prefix)
+     *                        </ul>
+     * @see #doSetRevisionProperty(File, SVNRevision, String, SVNPropertyValue, boolean, ISVNPropertyHandler)
      */
-    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
+    public void doSetRevisionProperty(SVNURL url, SVNRevision revision, String propName, 
+            SVNPropertyValue propValue, boolean force, ISVNPropertyHandler handler) throws SVNException {
         if (propValue != null && !SVNPropertiesManager.isValidPropertyName(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Bad property name ''{0}''", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (!force && SVNRevisionProperty.AUTHOR.equals(propName) && propValue != null && propValue.isString() && propValue.getString().indexOf('\n') >= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_REVISION_AUTHOR_CONTAINS_NEWLINE, "Value will not be set unless forced");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }         
         SVNRepository repos = createRepository(url, null, null, SVNRevision.UNDEFINED, revision, null);
         long revNumber = getRevisionNumber(revision, repos, null);
@@ -748,27 +884,19 @@ public class SVNWCClient extends SVNBasicClient {
     }
 
     /**
-     * Gets an item's versioned property. It's possible to get either a local
-     * property (from a Working Copy) or a remote one (located in a repository).
-     * If <vode>revision</code> is one of:
-     * <ul>
-     * <li>{@link SVNRevision#BASE BASE}
-     * <li>{@link SVNRevision#WORKING WORKING}
-     * <li>{@link SVNRevision#COMMITTED COMMITTED}
-     * </ul>
-     * then the result is a WC item's property. Otherwise the
-     * property is taken from a repository (using the item's URL).
+     * Gets the value of the property <code>propName</code> for <code>path</code>. 
+     * This method simply creates an implementation of {@link ISVNPropertyHandler} which stores
+     * the value only for <code>path</code> which is then used in the following call to 
+     * <code>doGetProperty(path, propName, pegRevision, revision, SVNDepth.EMPTY, handler, null)</code>.
      *
-     * @param path        a WC item's path
-     * @param propName    an item's property name; if it's
-     *                    <span class="javakeyword">null</span> then
-     *                    all the item's properties will be retrieved
-     *                    but only the first of them returned
-     * @param pegRevision a revision in which the item is first looked up
-     * @param revision    a target revision;
-     * @param recursive   <span class="javakeyword">true</span> to
-     *                    descend recursively
-     * @return the item's property
+     * @param path          a WC item's path
+     * @param propName      an item's property name; if it's
+     *                      <span class="javakeyword">null</span> then
+     *                      all the item's properties will be retrieved
+     *                      but only the first of them returned
+     * @param pegRevision   a revision in which the item is first looked up
+     * @param revision      a target revision;
+     * @return              the item's property
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>propName</code> starts
@@ -776,13 +904,12 @@ public class SVNWCClient extends SVNBasicClient {
      *                      svn:wc:} prefix
      *                      <li><code>path</code> is not under version control
      *                      </ul>
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean,ISVNPropertyHandler)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
+     * @see #doGetProperty(File, String, SVNRevision, SVNRevision, SVNDepth, ISVNPropertyHandler, Collection)
      */
     public SVNPropertyData doGetProperty(final File path, String propName, SVNRevision pegRevision, 
-            SVNRevision revision, boolean recursive) throws SVNException {
+            SVNRevision revision) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        doGetProperty(path, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+        doGetProperty(path, propName, pegRevision, revision, SVNDepth.EMPTY, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
                 if (data[0] == null && path.equals(file)) {
                     data[0] = property;
@@ -794,34 +921,37 @@ public class SVNWCClient extends SVNBasicClient {
 
             public void handleProperty(long revision, SVNPropertyData property) {
             }
-        });
+        }, null);
         return data[0];
     }
 
     /**
-     * Gets an item's versioned property from a repository.
-     * This method is useful when having no Working Copy at all.
+     * Gets the value of the property <code>propName</code> for <code>url</code>. 
+     * This method simply creates an implementation of {@link ISVNPropertyHandler} which stores
+     * the value only for <code>path</code> which is then used in the following call to 
+     * <code>doGetProperty(url, propName, pegRevision, revision, SVNDepth.EMPTY, handler)</code>.
      *
-     * @param url         an item's repository location
-     * @param propName    an item's property name; if it's
-     *                    <span class="javakeyword">null</span> then
-     *                    all the item's properties will be retrieved
-     *                    but only the first of them returned
-     * @param pegRevision a revision in which the item is first looked up
-     * @param revision    a target revision
-     * @param recursive   <span class="javakeyword">true</span> to
-     *                    descend recursively
-     * @return the item's property
-     * @throws SVNException if <code>propName</code> starts
+     * @param url           an item's repository location
+     * @param propName      an item's property name; if it's
+     *                      <span class="javakeyword">null</span> then
+     *                      all the item's properties will be retrieved
+     *                      but only the first of them returned
+     * @param pegRevision   a revision in which the item is first looked up
+     * @param revision      a target revision;
+     * @return              the item's property
+     * @throws SVNException if one of the following is true:
+     *                      <ul>
+     *                      <li><code>propName</code> starts
      *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
      *                      svn:wc:} prefix
-     * @see #doGetProperty(SVNURL,String,SVNRevision,SVNRevision,boolean,ISVNPropertyHandler)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
+     *                      <li><code>path</code> is not under version control
+     *                      </ul>
+     * @see #doGetProperty(SVNURL, String, SVNRevision, SVNRevision, SVNDepth, ISVNPropertyHandler)
      */
     public SVNPropertyData doGetProperty(final SVNURL url, String propName, SVNRevision pegRevision, 
-            SVNRevision revision, boolean recursive) throws SVNException {
+            SVNRevision revision) throws SVNException {
         final SVNPropertyData[] data = new SVNPropertyData[1];
-        doGetProperty(url, propName, pegRevision, revision, recursive, new ISVNPropertyHandler() {
+        doGetProperty(url, propName, pegRevision, revision, SVNDepth.EMPTY, new ISVNPropertyHandler() {
             public void handleProperty(File file, SVNPropertyData property) {
             }
 
@@ -850,17 +980,17 @@ public class SVNWCClient extends SVNBasicClient {
      * then the result is a WC item's property. Otherwise the
      * property is taken from a repository (using the item's URL).
      *
-     * @param path        a WC item's path
-     * @param propName    an item's property name; if it's
-     *                    <span class="javakeyword">null</span> then
-     *                    all the item's properties will be retrieved
-     *                    and passed to <code>handler</code> for
-     *                    processing
-     * @param pegRevision a revision in which the item is first looked up
-     * @param revision    a target revision;
-     * @param recursive   <span class="javakeyword">true</span> to
-     *                    descend recursively
-     * @param handler     a caller's property handler
+     * @param path          a WC item's path
+     * @param propName      an item's property name; if it's
+     *                      <span class="javakeyword">null</span> then
+     *                      all the item's properties will be retrieved
+     *                      and passed to <code>handler</code> for
+     *                      processing
+     * @param pegRevision   a revision in which the item is first looked up
+     * @param revision      a target revision;
+     * @param recursive     <span class="javakeyword">true</span> to
+     *                      descend recursively
+     * @param handler       a caller's property handler
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>propName</code> starts
@@ -868,87 +998,81 @@ public class SVNWCClient extends SVNBasicClient {
      *                      svn:wc:} prefix
      *                      <li><code>path</code> is not under version control
      *                      </ul>
-     * @see #doGetProperty(File,String,SVNRevision,SVNRevision,boolean)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
+     * @deprecated use      {@link #doGetProperty(File, String, SVNRevision, SVNRevision, SVNDepth, ISVNPropertyHandler, Collection)} instead
      */
-    public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
-        doGetProperty(path, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, null);
+    public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
+            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        doGetProperty(path, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), 
+                handler, null);
     }
 
-    public void doGetPropertyList(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
-            SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
-        if (SVNProperty.isWorkingCopyProperty(propName)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                    "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
-        }
-        if (SVNProperty.isEntryProperty(propName)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
-                    "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
-        }         
-
-        if (depth == null || depth == SVNDepth.UNKNOWN) {
-            depth = SVNDepth.EMPTY;
-        }
-
-        if ((revision != SVNRevision.WORKING && revision != SVNRevision.BASE && 
-                revision != SVNRevision.COMMITTED && revision != SVNRevision.UNDEFINED) ||
-                (pegRevision != SVNRevision.WORKING && pegRevision != SVNRevision.BASE && 
-                        pegRevision != SVNRevision.COMMITTED && pegRevision != SVNRevision.UNDEFINED)) {
-            long[] revNum = { SVNRepository.INVALID_REVISION };
-            SVNRepository repository = createRepository(null, path, null, pegRevision, revision, revNum);
-            revision = SVNRevision.create(revNum[0]);
-            doGetRemoteProperty(repository.getLocation(), "", repository, propName, revision, depth, handler);
-        } else {
-            SVNWCAccess wcAccess = createWCAccess();
-            try {
-                int admDepth = getLevelsToLockFromDepth(depth);
-                SVNAdminArea area = wcAccess.probeOpen(path, false, admDepth);
-                SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-
-                boolean base = revision == SVNRevision.BASE || revision == SVNRevision.COMMITTED;
-                if (entry.isDirectory() && SVNDepth.FILES.compareTo(depth) <= 0) {
-                    // area is path itself.
-                    ISVNEntryHandler propListHandler = new PropFetchHandler(changeLists, null, handler, base);
-                    wcAccess.walkEntries(path, propListHandler, false, depth);
-                } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-                    // area could only be path itself or child file in it.
-                    SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : 
-                        area.getProperties(entry.getName());
-                    if (propName != null) {
-                        SVNPropertyValue propValue = properties.getPropertyValue(propName);
-                        if (propValue != null) {
-                            handler.handleProperty(path, new SVNPropertyData(propName, propValue, getOptions()));
-                        }
-                    } else {
-                        SVNProperties allProps = properties.asMap();
-                        for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
-                            String name = (String) names.next();
-                            SVNPropertyValue val = allProps.getSVNPropertyValue(name);
-                            handler.handleProperty(area.getFile(entry.getName()), 
-                                    new SVNPropertyData(name, val, getOptions()));
-                        }
-                    }
-                }
-            } finally {
-                wcAccess.close();
-            }
-        }
-    }
-
+    /**
+     * Invokes <code>handler</code> on paths covered by <code>depth</code> starting with 
+     * the specified <code>path</code>.
+     * 
+     * <p/>
+     * If both <vode>revision</code> and <code>pegRevision</code> are ones of:
+     * <ul>
+     * <li>{@link SVNRevision#BASE BASE}
+     * <li>{@link SVNRevision#WORKING WORKING}
+     * <li>{@link SVNRevision#COMMITTED COMMITTED}
+     * <li>{@link SVNRevision#UNDEFINED}
+     * </ul>
+     * then this method gets properties from the working copy without connecting to the repository. 
+     * Otherwise properties are taken from the repository (using the item's URL).
+     *
+     * <p/>
+     * The actual node revision selected is determined by the path as it exists in <code>pegRevision</code>.
+     * If <code>pegRevision</code> is {@link SVNRevision#UNDEFINED}, then it defaults to 
+     * {@link SVNRevision#WORKING}.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, fetch the property from <code>path</code> only; 
+     * if {@link SVNDepth#FILES}, fetch from <code>path</code> and its file children (if any); 
+     * if {@link SVNDepth#IMMEDIATES}, from <code>path</code> and all of its immediate children (both files and 
+     * directories); if {@link SVNDepth#INFINITY}, from <code>path</code> and everything beneath it.
+     * 
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</tt> changelist
+     * names, used as a restrictive filter on items whose properties are
+     * set; that is, don't set properties on any item unless it's a member
+     * of one of those changelists.  If <code>changeLists</code> is empty (or
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     *
+     * @param path          a WC item's path
+     * @param propName      an item's property name; if it's
+     *                      <span class="javakeyword">null</span> then
+     *                      all the item's properties will be retrieved
+     *                      and passed to <code>handler</code> for
+     *                      processing
+     * @param pegRevision   a revision in which the item is first looked up
+     * @param revision      a target revision
+     * @param depth         tree depth 
+     * @param handler       a caller's property handler
+     * @param changeLists   collection of changelist names
+     * @throws SVNException if one of the following is true:
+     *                      <ul>
+     *                      <li><code>propName</code> starts
+     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX} prefix
+     *                      <li><code>path</code> is not under version control
+     *                      </ul>
+     * @since               1.2, SVN 1.5
+     */
     public void doGetProperty(File path, String propName, SVNRevision pegRevision, SVNRevision revision, 
             SVNDepth depth, ISVNPropertyHandler handler, Collection changeLists) throws SVNException {
         if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }         
+        if (depth == null || depth == SVNDepth.UNKNOWN) {
+            depth = SVNDepth.EMPTY;
+        }
 
         if ((revision != SVNRevision.WORKING && revision != SVNRevision.BASE && revision != SVNRevision.COMMITTED && 
                 revision != SVNRevision.UNDEFINED) || (pegRevision != SVNRevision.WORKING && 
@@ -991,23 +1115,59 @@ public class SVNWCClient extends SVNBasicClient {
      * @throws SVNException if <code>propName</code> starts
      *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
      *                      svn:wc:} prefix
-     * @see #doGetProperty(SVNURL,String,SVNRevision,SVNRevision,boolean)
-     * @see #doSetProperty(File,String,String,boolean,boolean,ISVNPropertyHandler)
+     * @deprecated use {@link #doGetProperty(SVNURL, String, SVNRevision, SVNRevision, SVNDepth, ISVNPropertyHandler)} instead
      */
-    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, 
+            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         doGetProperty(url, propName, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
-    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
+    /**
+     * Invokes <code>handler</code> on paths covered by <code>depth</code> starting with 
+     * the specified <code>path</code>.
+     * 
+     * <p/>
+     * If <code></code> is {@link SVNRevision#UNDEFINED} then get
+     * properties from the repository head. Else get the properties as of <code>revision</code>. 
+     * The actual node revision selected is determined by the path as it exists in <code>pegRevision</code>.
+     * If <code>pegRevision</code> is {@link SVNRevision#UNDEFINED}, then
+     * it defaults to {@link SVNRevision#HEAD}.
+     * 
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, fetch the property from <code>path</code> only; 
+     * if {@link SVNDepth#FILES}, fetch from <code>path</code> and its file children (if any); 
+     * if {@link SVNDepth#IMMEDIATES}, from <code>path</code> and all of its immediate children (both files and 
+     * directories); if {@link SVNDepth#INFINITY}, from <code>path</code> and everything beneath it.
+     * 
+     * @param url           versioned item url
+     * @param propName      an item's property name; if it's
+     *                      <span class="javakeyword">null</span> then
+     *                      all the item's properties will be retrieved
+     *                      and passed to <code>handler</code> for
+     *                      processing
+     * @param pegRevision   a revision in which the item is first looked up
+     * @param revision      a target revision
+     * @param depth         tree depth 
+     * @param handler       a caller's property handler
+     * @throws SVNException if one of the following is true:
+     *                      <ul>
+     *                      <li><code>propName</code> starts
+     *                      with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX} prefix
+     *                      <li><code>path</code> is not under version control
+     *                      </ul>
+     * @since               1.2, SVN 1.5
+     */
+    public void doGetProperty(SVNURL url, String propName, SVNRevision pegRevision, SVNRevision revision, 
+            SVNDepth depth, ISVNPropertyHandler handler) throws SVNException {
         if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }         
         long[] pegRev = new long[]{-1};
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, pegRev);
@@ -1037,22 +1197,21 @@ public class SVNWCClient extends SVNBasicClient {
      *                      svn:wc:} prefix
      *                      </ul>
      * @see #doGetRevisionProperty(SVNURL,String,SVNRevision,ISVNPropertyHandler)
-     * @see #doSetRevisionProperty(File,SVNRevision,String,String,boolean,ISVNPropertyHandler)
      */
     public void doGetRevisionProperty(File path, String propName, SVNRevision revision, ISVNPropertyHandler handler) throws SVNException {
         if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }         
         if (!revision.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Valid revision have to be specified to fetch revision property");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         SVNRepository repository = createRepository(null, path, null, SVNRevision.UNDEFINED, revision, null);
         long revisionNumber = getRevisionNumber(revision, repository, path);
@@ -1063,15 +1222,16 @@ public class SVNWCClient extends SVNBasicClient {
      * Gets an unversioned revision property from a repository and passes
      * it to a provided property handler.
      *
-     * @param url      a URL pointing to a repository location
-     *                 which revision property is to be got
-     * @param propName a revision property name; if this parameter
-     *                 is <span class="javakeyword">null</span> then
-     *                 all the revision properties will be retrieved
-     *                 and passed to <code>handler</code> for
-     *                 processing
-     * @param revision a revision which property is to be retrieved
-     * @param handler  a caller's property handler
+     * @param url           a URL pointing to a repository location
+     *                      which revision property is to be got
+     * @param propName      a revision property name; if this parameter
+     *                      is <span class="javakeyword">null</span> then
+     *                      all the revision properties will be retrieved
+     *                      and passed to <code>handler</code> for
+     *                      processing
+     * @param revision      a revision which property is to be retrieved
+     * @param handler       a caller's property handler
+     * @return              actual revision number to which <code>revision</code> is resolved
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>revision</code> is invalid
@@ -1080,25 +1240,24 @@ public class SVNWCClient extends SVNBasicClient {
      *                      svn:wc:} prefix
      *                      </ul>
      * @see #doGetRevisionProperty(File,String,SVNRevision,ISVNPropertyHandler)
-     * @see #doSetRevisionProperty(SVNURL,SVNRevision,String,String,boolean,ISVNPropertyHandler)
      */
     public long doGetRevisionProperty(SVNURL url, String propName, SVNRevision revision, 
             ISVNPropertyHandler handler) throws SVNException {
         if (SVNProperty.isWorkingCopyProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
                     "''{0}'' is a wcprop, thus not accessible to clients", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (SVNProperty.isEntryProperty(propName)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME,
                     "Property ''{0}'' is an entry property", propName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }         
         
         if (!revision.isValid()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, 
                     "Valid revision have to be specified to fetch revision property");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         SVNRepository repos = createRepository(url, null, null, true);
         long revNumber = getRevisionNumber(revision, repos, null);
@@ -1106,31 +1265,15 @@ public class SVNWCClient extends SVNBasicClient {
         return revNumber;
     }
 
-    private void doGetRevisionProperty(SVNRepository repos, String propName, long revNumber, ISVNPropertyHandler handler) throws SVNException {
-        if (propName != null) {
-            SVNPropertyValue value = repos.getRevisionPropertyValue(revNumber, propName);
-            if (value != null) {
-                handler.handleProperty(revNumber, new SVNPropertyData(propName, value, getOptions()));
-            }
-        } else {
-            SVNProperties props = new SVNProperties();
-            repos.getRevisionProperties(revNumber, props);
-            for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
-                String name = (String) names.next();
-                SVNPropertyValue value = props.getSVNPropertyValue(name);
-                handler.handleProperty(revNumber, new SVNPropertyData(name, value, getOptions()));
-            }
-        }
-    }
-
     /**
      * Schedules a Working Copy item for deletion.
-     *
-     * @param path   a WC item to be deleted
-     * @param force  <span class="javakeyword">true</span> to
-     *               force the operation to run
-     * @param dryRun <span class="javakeyword">true</span> only to
-     *               try the delete operation without actual deleting
+     * This method is equivalent to <code>doDelete(path, force, true, dryRun)</code>.
+     * 
+     * @param path          a WC item to be deleted
+     * @param force         <span class="javakeyword">true</span> to
+     *                      force the operation to run
+     * @param dryRun        <span class="javakeyword">true</span> only to
+     *                      try the delete operation without actual deleting
      * @throws SVNException if one of the following is true:
      *                      <ul>
      *                      <li><code>path</code> is not under version control
@@ -1148,6 +1291,9 @@ public class SVNWCClient extends SVNBasicClient {
      * not. Another version of the {@link #doDelete(File,boolean,boolean) doDelete()}
      * method is similar to the corresponding SVN client's command - <code>'svn delete'</code>
      * as it always deletes files from the filesystem.
+     * 
+     * <p/>
+     * This method deletes only local working copy paths without connecting to the repository.
      *
      * @param path        a WC item to be deleted
      * @param force       <span class="javakeyword">true</span> to
@@ -1216,8 +1362,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li><code>path</code> doesn't exist and
      *                      <code>mkdir</code> is <span class="javakeyword">false</span>
      *                      <li><code>path</code> is the root directory of the Working Copy
+     * @deprecated use {@link #doAdd(File, boolean, boolean, boolean, SVNDepth, boolean, boolean)} instead
      */
-    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive) throws SVNException {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            boolean recursive) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), false, 
                 false);
     }
@@ -1256,13 +1404,66 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li><code>path</code> is the root directory of the Working Copy
      *                      </ul>
      * @since 1.1
+     * @deprecated use {@link #doAdd(File, boolean, boolean, boolean, SVNDepth, boolean, boolean)} instead
      */
-    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, boolean recursive, 
-            boolean includeIgnored) throws SVNException {
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            boolean recursive, boolean includeIgnored) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), 
                 includeIgnored, false);
     }
 
+    /**
+     * Schedules a working copy <code>path</code> for addition to the repository.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, adds just <code>path</code> and nothing
+     * below it. If {@link SVNDepth#FILES}, adds <code>path</code> and any file
+     * children of <code>path</code>. If {@link SVNDepth#IMMEDIATES}, adds <code>path</code>, any
+     * file children, and any immediate subdirectories (but nothing
+     * underneath those subdirectories). If {@link SVNDepth#INFINITY}, adds
+     * <code>path</code> and everything under it fully recursively.
+     *
+     * <p/>
+     * <code>path</code>'s parent must be under revision control already (unless
+     * <code>makeParents</code> is <span class="javakeyword">true</span>), but <code>path</code> is not.  
+     * 
+     * <p/>
+     * If <code>force</code> is set, <code>path</code> is a directory, <code>depth</code> is 
+     * {@link SVNDepth#INFINITY}, then schedules for addition unversioned files and directories
+     * scattered deep within a versioned tree.
+     *
+     * <p/>
+     * If <code>includeIgnored</code> is <span class="javakeyword">false</span>, doesn't add files or 
+     * directories that match ignore patterns.
+     *
+     * <p/>
+     * If <code>makeParents</code> is <span class="javakeyword">true</span>, recurse up <code>path</code>'s 
+     * directory and look for a versioned directory. If found, add all intermediate paths between it
+     * and <code>path</code>. 
+     *
+     * <p/>
+     * Important: this is a *scheduling* operation.  No changes will happen to the repository until a commit 
+     * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
+     * 
+     * @param path                      working copy path
+     * @param force                     if <span class="javakeyword">true</span> 
+     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
+     * @param depth                     tree depth
+     * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
+     *                                  to paths being added
+     * @param makeParents               if <span class="javakeyword">true</span>, climb upper and schedule also
+     *                                  all unversioned paths in the way
+     * @throws SVNException             <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -  
+     *                                  if <code>force</code> is not set and <code>path</code> is already 
+     *                                  under version
+     *                                  <li/>exception with {@link SVNErrorCode#CLIENT_NO_VERSIONED_PARENT} 
+     *                                  error code - if <code>makeParents</code> is 
+     *                                  <span class="javakeyword">true</span> but no unversioned paths stepping 
+     *                                  upper from <code>path</code> are found 
+     * @since 1.2, SVN 1.5
+     */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             SVNDepth depth, boolean includeIgnored, boolean makeParents) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
@@ -1276,7 +1477,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
                     if (path.getParentFile() == null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.WC);
                     } else {
                         doAdd(path.getParentFile(), false, false, climbUnversionedParents, SVNDepth.EMPTY, false, 
                                 makeParents);
@@ -1302,7 +1503,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (!parent.equals(path) && !makeParents) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Cannot create directoy ''{0}'' with non-existent parents", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 firstCreated = parent;
                 parent = parent.getParentFile();
@@ -1316,7 +1517,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNFileUtil.deleteAll(path, true);
                     path = path.getParentFile();
                 }
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             try {
                 doAdd(firstCreated, false, false, climbUnversionedParents, depth, true, makeParents);
@@ -1352,96 +1553,15 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth) throws SVNException {
-        checkCancelled();
-        try {
-            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED);
-        } catch (SVNException e) {
-            if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
-                throw e;
-            }
-        }
-        SVNWCAccess access = parentDir.getWCAccess();
-        SVNAdminArea dir = access.retrieve(path);
-        Collection ignores = Collections.EMPTY_SET;
-        if (!noIgnore) {
-            ignores = SVNStatusEditor.getIgnorePatterns(dir, SVNStatusEditor.getGlobalIgnores(getOptions()));
-        }
-        File[] children = SVNFileListUtil.listFiles(dir.getRoot());
-        for (int i = 0; children != null && i < children.length; i++) {
-            checkCancelled();
-            if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
-                continue;
-            }
-            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i].getName())) {
-                continue;
-            }
-            SVNFileType childType = SVNFileType.getType(children[i]);
-            if (childType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
-                SVNDepth depthBelowHere = depth;
-                if (depth == SVNDepth.IMMEDIATES) {
-                    depthBelowHere = SVNDepth.EMPTY;
-                }
-                addDirectory(children[i], dir, force, noIgnore, depthBelowHere);
-            } else if (childType != SVNFileType.UNKNOWN && childType != SVNFileType.DIRECTORY && 
-                    depth.compareTo(SVNDepth.FILES) >= 0) {
-                try {
-                    addFile(children[i], childType, dir);
-                } catch (SVNException e) {
-                    if (force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS) {
-                        continue;
-                    }
-                    throw e;
-                }
-            }
-        }
-    }
-
-    private void addFile(File path, SVNFileType type, SVNAdminArea dir) throws SVNException {
-        ISVNEventHandler handler = dir.getWCAccess().getEventHandler();
-        dir.getWCAccess().setEventHandler(null);
-        SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
-        dir.getWCAccess().setEventHandler(handler);
-
-        String mimeType = null;
-        if (type == SVNFileType.SYMLINK) {
-            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.SPECIAL,
-                    SVNProperty.getValueOfBooleanProperty(SVNProperty.SPECIAL), false);
-        } else {
-            Map props = SVNPropertiesManager.computeAutoProperties(getOptions(), path, null);
-            for (Iterator names = props.keySet().iterator(); names.hasNext();) {
-                String propName = (String) names.next();
-                String propValue = (String) props.get(propName);
-                try {
-                    SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, SVNPropertyValue.create(propValue), false);
-                } catch (SVNException e) {
-                    if (SVNProperty.EOL_STYLE.equals(propName) &&
-                            e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
-                            e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
-                        ISVNAddParameters.Action action = getAddParameters().onInconsistentEOLs(path);
-                        if (action == ISVNAddParameters.REPORT_ERROR) {
-                            throw e;
-                        } else if (action == ISVNAddParameters.ADD_AS_IS) {
-                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
-                        } else if (action == ISVNAddParameters.ADD_AS_BINARY) {
-                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
-                            mimeType = SVNFileUtil.BINARY_MIME_TYPE;
-                        }
-                    } else {
-                        throw e;
-                    }
-                }
-            }
-            if (mimeType != null) {
-                SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(mimeType), false);
-            } else {
-                mimeType = (String) props.get(SVNProperty.MIME_TYPE);
-            }
-        }
-        SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(path.getName()), SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
-        dispatchEvent(event);
-    }
-
+    /**
+     * Schedules <code>path</code> as being replaced.
+     * This method does not perform any deletion\addition in the filesysem nor does it require a connection to 
+     * the repository. It just marks the current <code>path</code> item as being replaced.  
+     * 
+     * @param  path working copy path to mark as
+     * @throws SVNException
+     * @since 1.2 
+     */
     public void doMarkReplaced(File path) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         path = path.getAbsoluteFile();
@@ -1474,9 +1594,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                      from within the directory itself
      *                      </ul>
      * @see #doRevert(File[],boolean)
+     * @deprecated use {@link #doRevert(File[], SVNDepth, Collection)}
      */
     public void doRevert(File path, boolean recursive) throws SVNException {
-        doRevert(new File[]{path}, recursive);
+        doRevert(new File[] { path }, SVNDepth.getInfinityOrEmptyDepth(recursive), null);
     }
 
     /**
@@ -1496,11 +1617,44 @@ public class SVNWCClient extends SVNBasicClient {
      *                      Exception will not be thrown if there are multiple paths passed.
      *                      Instead caller should process events received by <code>ISVNEventHandler</code>
      *                      instance to get information on whether certain path was reverted or not.
+     * @deprecated use {@link #doRevert(File[], SVNDepth, Collection)} instead
      */
     public void doRevert(File[] paths, boolean recursive) throws SVNException {
         doRevert(paths, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null);
     }
 
+    /**
+     * Restores the pristine version of working copy <code>paths</code>,
+     * effectively undoing any local mods. For each path in <code>paths</code>,
+     * reverts it if it is a file. Else if it is a directory, reverts
+     * according to <code>depth</code>:
+     * 
+     * <p/>
+     * If </code>depth</code> is {@link SVNDepth#EMPTY}, reverts just the properties on
+     * the directory; else if {@link SVNDepth#FILES}, reverts the properties
+     * and any files immediately under the directory; else if
+     * {@link SVNDepth#IMMEDIATES}, reverts all of the preceding plus
+     * properties on immediate subdirectories; else if {@link SVNDepth#INFINITY},
+     * reverts path and everything under it fully recursively.
+     *
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist
+     * names, used as a restrictive filter on items reverted; that is,
+     * doesn't revert any item unless it's a member of one of those
+     * changelists.  If <code>changeLists</code> is empty (or <span class="javakeyword">null</span>),
+     * no changelist filtering occurs.
+     * 
+     * <p/>
+     * If an item specified for reversion is not under version control,
+     * then does not fail with an exception, just invokes {@link ISVNEventHandler} 
+     * using notification code {@link SVNEventAction#SKIP}.
+     * 
+     * @param paths           working copy paths to revert
+     * @param depth           tree depth
+     * @param changeLists     collection with changelist names
+     * @throws SVNException 
+     * @since 1.2, SVN 1.5
+     */
     public void doRevert(File[] paths, SVNDepth depth, Collection changeLists) throws SVNException {
         boolean reverted = false;
         try {
@@ -1514,7 +1668,8 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNEntry entry = wcAccess.getEntry(path, false);
                     if (entry != null && entry.isDirectory() && entry.isScheduledForAddition()) {
                         if (depth != SVNDepth.INFINITY) {
-                            getDebugLog().logFine("Forcing revert on path '" + path + "' to recurse");
+                            getDebugLog().logFine(SVNLogType.WC, 
+                                    "Forcing revert on path '" + path + "' to recurse");
                             depth = SVNDepth.INFINITY;
                             wcAccess.close();
                             info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
@@ -1543,274 +1698,6 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private boolean doRevert(File path, SVNAdminArea parent, SVNDepth depth, boolean useCommitTimes, 
-            Collection changeLists) throws SVNException {
-        checkCancelled();
-        SVNWCAccess wcAccess = parent.getWCAccess();
-        SVNAdminArea dir = wcAccess.probeRetrieve(path);
-        SVNEntry entry = null;
-        try {
-            entry = wcAccess.getVersionedEntry(path, false);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot revert.");
-            SVNErrorManager.error(err);
-        }
-
-        if (entry.getKind() == SVNNodeKind.DIR) {
-            SVNFileType fileType = SVNFileType.getType(path);
-            if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.FAILED_REVERT, null, null, null);
-                dispatchEvent(event);
-                return false;
-            }
-        }
-
-        if (entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                    "Cannot revert ''{0}'': unsupported entry node kind", path);
-            SVNErrorManager.error(err);
-        }
-
-        SVNFileType fileType = SVNFileType.getType(path);
-        if (fileType == SVNFileType.UNKNOWN) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                    "Cannot revert ''{0}'': unsupported node kind in working copy", path);
-            SVNErrorManager.error(err);
-        }
-
-        boolean reverted = false;
-        if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-            if (entry.isScheduledForAddition()) {
-                boolean wasDeleted = false;
-                if (entry.getKind() == SVNNodeKind.FILE) {
-                    wasDeleted = entry.isDeleted();
-                    parent.removeFromRevisionControl(path.getName(), false, false);
-                } else if (entry.getKind() == SVNNodeKind.DIR) {
-                    SVNEntry entryInParent = parent.getEntry(path.getName(), true);
-                    if (entryInParent != null) {
-                        wasDeleted = entryInParent.isDeleted();
-                    }
-                    if (fileType == SVNFileType.NONE || wcAccess.isMissing(path)) {
-                        parent.deleteEntry(path.getName());
-                        parent.saveEntries(false);
-                    } else {
-                        dir.removeFromRevisionControl("", false, false);
-                    }
-                }
-
-                reverted = true;
-                depth = SVNDepth.EMPTY;
-                if (wasDeleted) {
-                    Map attributes = new SVNHashMap();
-                    attributes.put(SVNProperty.KIND, entry.getKind().toString());
-                    attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
-                    parent.modifyEntry(path.getName(), attributes, true, false);
-                }
-            } else if (entry.getSchedule() == null || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
-                if (entry.getKind() == SVNNodeKind.FILE) {
-                    reverted = revert(parent, entry.getName(), entry, useCommitTimes);
-                } else if (entry.getKind() == SVNNodeKind.DIR) {
-                    reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);
-                    if (reverted && parent != dir) {
-                        SVNEntry entryInParent = parent.getEntry(path.getName(), false);
-                        revert(parent, path.getName(), entryInParent, useCommitTimes);
-                    }
-                    if (entry.isScheduledForReplacement()) {
-                        depth = SVNDepth.INFINITY;
-                    }
-                }
-            }
-            if (reverted) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.REVERT, null, null, null);
-                dispatchEvent(event);
-            }
-        }
-        
-        
-        if (entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
-            SVNDepth depthBelowHere = depth;
-            if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
-                depthBelowHere = SVNDepth.EMPTY;
-            }
-            for (Iterator entries = dir.entries(false); entries.hasNext();) {
-                SVNEntry childEntry = (SVNEntry) entries.next();
-                if (dir.getThisDirName().equals(childEntry.getName())) {
-                    continue;
-                }
-                if (depth == SVNDepth.FILES && !childEntry.isFile()) {
-                    continue;
-                }
-                File childPath = new File(path, childEntry.getName());
-                reverted |= doRevert(childPath, dir, depthBelowHere, useCommitTimes, changeLists);
-            }
-        }
-        return reverted;
-    }
-
-    private boolean revert(SVNAdminArea dir, String name, SVNEntry entry, boolean useCommitTime) throws SVNException {
-        SVNLog log = dir.getLog();
-        boolean reverted = false;
-        SVNVersionedProperties baseProperties = null;
-        SVNProperties command = new SVNProperties();
-        boolean revertBase = false;
-
-        if (entry.isScheduledForReplacement()) {
-            revertBase = entry.isCopied();
-            baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
-            if (revertBase) {
-                String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
-                command.put(SVNLog.NAME_ATTR, propRevertPath);
-                log.addCommand(SVNLog.DELETE, command, false);
-                command.clear();
-            }
-            reverted = true;
-        }
-        boolean reinstallWorkingFile = false;
-        if (baseProperties == null) {
-            if (dir.hasPropModifications(name)) {
-                baseProperties = dir.getBaseProperties(name);
-                SVNVersionedProperties propDiff = dir.getProperties(name).compareTo(baseProperties);
-                Collection propNames = propDiff.getPropertyNames(null);
-                reinstallWorkingFile = propNames.contains(SVNProperty.EXECUTABLE) ||
-                        propNames.contains(SVNProperty.KEYWORDS) ||
-                        propNames.contains(SVNProperty.EOL_STYLE) ||
-                        propNames.contains(SVNProperty.CHARSET) ||
-                        propNames.contains(SVNProperty.SPECIAL) ||
-                        propNames.contains(SVNProperty.NEEDS_LOCK);
-            }
-        }
-        if (baseProperties != null) {
-            // save base props both to base and working. 
-            SVNProperties newProperties = baseProperties.asMap();
-            SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
-            SVNVersionedProperties workProperties = dir.getProperties(name);
-            if (entry.isScheduledForReplacement()) {
-                originalBaseProperties.removeAll();
-            }
-            workProperties.removeAll();
-            for (Iterator names = newProperties.nameSet().iterator(); names.hasNext();) {
-                String propName = (String) names.next();
-                if (entry.isScheduledForReplacement()) {
-                    originalBaseProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
-                }
-                workProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
-            }
-            dir.saveVersionedProperties(log, false);
-            reverted = true;
-        }
-        SVNProperties newEntryProperties = new SVNProperties();
-        if (entry.getKind() == SVNNodeKind.FILE) {
-            if (!reinstallWorkingFile) {
-                SVNFileType fileType = SVNFileType.getType(dir.getFile(name));
-                if (fileType == SVNFileType.NONE) {
-                    reinstallWorkingFile = true;
-                }
-            }
-            String basePath = SVNAdminUtil.getTextBasePath(name, false);
-            if (!dir.getFile(basePath).isFile()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error restoring text for ''{0}''", dir.getFile(name));
-                SVNErrorManager.error(err);
-            }
-            File revertFile = dir.getFile(SVNAdminUtil.getTextRevertPath(name, false));
-            if (revertFile.isFile()) {
-                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextRevertPath(name, false));
-                command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getTextBasePath(name, false));
-                log.addCommand(SVNLog.MOVE, command, false);
-                command.clear();
-                reinstallWorkingFile = true;
-            }
-            if (!reinstallWorkingFile) {
-                reinstallWorkingFile = dir.hasTextModifications(name, false, false, false);
-            }
-            if (reinstallWorkingFile) {
-                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
-                command.put(SVNLog.DEST_ATTR, name);
-                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                command.clear();
-                if (useCommitTime && entry.getCommittedDate() != null) {
-                    command.put(SVNLog.NAME_ATTR, name);
-                    command.put(SVNLog.TIMESTAMP_ATTR, entry.getCommittedDate());
-                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
-                    command.clear();
-                } else {
-                    command.put(SVNLog.NAME_ATTR, name);
-                    command.put(SVNLog.TIMESTAMP_ATTR, SVNDate.formatDate(new Date(System.currentTimeMillis())));
-                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
-                    command.clear();
-                }
-                command.put(SVNLog.NAME_ATTR, name);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
-                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-                command.clear();
-                command.put(SVNLog.NAME_ATTR, name);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), SVNLog.WC_WORKING_SIZE);
-                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-                command.clear();
-            }
-            reverted |= reinstallWorkingFile;
-        }
-        if (entry.getConflictNew() != null) {
-            command.put(SVNLog.NAME_ATTR, entry.getConflictNew());
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), (String) null);
-            if (!reverted) {
-                reverted |= dir.getFile(entry.getConflictNew()).exists();
-            }
-        }
-        if (entry.getConflictOld() != null) {
-            command.put(SVNLog.NAME_ATTR, entry.getConflictOld());
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), (String) null);
-            if (!reverted) {
-                reverted |= dir.getFile(entry.getConflictOld()).exists();
-            }
-        }
-        if (entry.getConflictWorking() != null) {
-            command.put(SVNLog.NAME_ATTR, entry.getConflictWorking());
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), (String) null);
-            if (!reverted) {
-                reverted |= dir.getFile(entry.getConflictWorking()).exists();
-            }
-        }
-        if (entry.getPropRejectFile() != null) {
-            command.put(SVNLog.NAME_ATTR, entry.getPropRejectFile());
-            log.addCommand(SVNLog.DELETE, command, false);
-            command.clear();
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), (String) null);
-            if (!reverted) {
-                reverted |= dir.getFile(entry.getPropRejectFile()).exists();
-            }
-        }
-        if (entry.isScheduledForReplacement()) {
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), SVNProperty.toString(false));
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), (String) null);
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION),
-                    SVNProperty.toString(SVNRepository.INVALID_REVISION));
-            if (entry.isFile() && entry.getCopyFromURL() != null) {
-                String basePath = SVNAdminUtil.getTextRevertPath(name, false);
-                File baseFile = dir.getFile(basePath);
-                String digest = SVNFileUtil.computeChecksum(baseFile);
-                newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), digest);
-            }
-        }
-
-        if (entry.getSchedule() != null) {
-            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), (String) null);
-            reverted = true;
-        }
-        if (!newEntryProperties.isEmpty()) {
-            newEntryProperties.put(SVNLog.NAME_ATTR, name);
-            log.addCommand(SVNLog.MODIFY_ENTRY, newEntryProperties, false);
-        }
-        log.save();
-        dir.runLogs();
-        return reverted;
-    }
-
     /**
      * Resolves a 'conflicted' state on a Working Copy item.
      *
@@ -1819,11 +1706,46 @@ public class SVNWCClient extends SVNBasicClient {
      *                  descend recursively (relevant for directories) - this
      *                  will resolve the entire tree
      * @throws SVNException if <code>path</code> is not under version control
+     * @deprecated use {@link #doResolve(File, SVNDepth, SVNConflictChoice)} instead
      */
     public void doResolve(File path, boolean recursive) throws SVNException {
         doResolve(path, SVNDepth.fromRecurse(recursive), SVNConflictChoice.MERGED);
     }
 
+    /**
+     * Performs automatic conflict resolution on a working copy <code>path</code>.
+     * 
+     * <p/> 
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, acts only on <code>path</code>; if
+     * {@link SVNDepth#FILES}, resolves <code>path</code> and its conflicted file
+     * children (if any); if {@link SVNDepth#IMMEDIATES}, resolves <code>path</code> and
+     * all its immediate conflicted children (both files and directories,
+     * if any); if {@link SVNDepth#INFINITY}, resolves <code>path</code> and every
+     * conflicted file or directory anywhere beneath it.
+     * 
+     * <p/>
+     * If <code>conflictChoice</code> is {@link SVNConflictChoice#BASE}, resolves the
+     * conflict with the old file contents; if {@link SVNConflictChoice#MINE_FULL}, uses the original 
+     * working contents; if {@link SVNConflictChoice#THEIRS_FULL}, the new contents; and if
+     * {@link SVNConflictChoice#MERGED}, doesn't change the contents at all, just removes the conflict status, 
+     * which is the pre-1.2 (pre-SVN 1.5) behavior.
+     *
+     * <p/>
+     * {@link SVNConflictChoice#THEIRS_CONFLICT} and {@link SVNConflictChoice#MINE_CONFLICT} are not legal for 
+     * binary files or properties.
+     *
+     * <p/>
+     * If <code>path</code> is not in a state of conflict to begin with, does nothing. If 
+     * <code>path</code>'s conflict state is removed and caller's {@link ISVNEntryHandler} is not 
+     * <span class="javakeyword">null</span>, then an {@link SVNEventAction#RESOLVED} event is 
+     * dispatched to the handler.
+     * 
+     * @param path               working copy path
+     * @param depth              tree depth
+     * @param conflictChoice     choice object for making decision while resolving
+     * @throws SVNException  
+     * @since 1.2, SVN 1.5
+     */
     public void doResolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
         final SVNConflictChoice choice = conflictChoice == null ? SVNConflictChoice.MERGED : conflictChoice;
         path = path.getAbsoluteFile();
@@ -1851,7 +1773,7 @@ public class SVNWCClient extends SVNBasicClient {
                 }
 
                 public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.WC);
                 }
             };
 
@@ -2080,80 +2002,6 @@ public class SVNWCClient extends SVNBasicClient {
         });
     }
 
-    private SVNURL collectLockInfo(SVNWCAccess wcAccess, File[] files, Map lockInfo, Map lockPaths, boolean lock, boolean stealLock) throws SVNException {
-        String[] paths = new String[files.length];
-        for (int i = 0; i < files.length; i++) {
-            paths[i] = files[i].getAbsolutePath();
-            paths[i] = paths[i].replace(File.separatorChar, '/');
-        }
-        Collection condencedPaths = new ArrayList();
-        String commonParentPath = SVNPathUtil.condencePaths(paths, condencedPaths, false);
-        if (condencedPaths.isEmpty()) {
-            condencedPaths.add(SVNPathUtil.tail(commonParentPath));
-            commonParentPath = SVNPathUtil.removeTail(commonParentPath);
-        }
-        if (commonParentPath == null || "".equals(commonParentPath)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "No common parent found, unable to operate on dijoint arguments");
-            SVNErrorManager.error(err);
-        }
-        paths = (String[]) condencedPaths.toArray(new String[condencedPaths.size()]);
-        int depth = 0;
-        for (int i = 0; i < paths.length; i++) {
-            int segments = SVNPathUtil.getSegmentsCount(paths[i]);
-            if (depth < segments) {
-                depth = segments;
-            }
-        }
-        wcAccess.probeOpen(new File(commonParentPath).getAbsoluteFile(), true, depth);
-        for (int i = 0; i < paths.length; i++) {
-            File file = new File(commonParentPath, paths[i]);
-            SVNEntry entry = wcAccess.getVersionedEntry(file, false);
-            if (entry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", file);
-                SVNErrorManager.error(err);
-            }
-            if (lock) {
-                SVNRevision revision = stealLock ? SVNRevision.UNDEFINED : SVNRevision.create(entry.getRevision());
-                lockInfo.put(entry.getSVNURL(), new LockInfo(file, revision));
-            } else {
-                if (!stealLock && entry.getLockToken() == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked in this working copy", file);
-                    SVNErrorManager.error(err);
-                }
-                lockInfo.put(entry.getSVNURL(), new LockInfo(file, entry.getLockToken()));
-            }
-        }
-        checkCancelled();
-        SVNURL[] urls = (SVNURL[]) lockInfo.keySet().toArray(new SVNURL[lockInfo.size()]);
-        Collection urlPaths = new HashSet();
-        final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
-        if (urlPaths.isEmpty()) {
-            urlPaths.add("");
-        }
-        if (topURL == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unable to lock/unlock across multiple repositories");
-            SVNErrorManager.error(err);
-        }
-        // prepare Map for SVNRepository (decoded path : revision/lock token).
-        for (Iterator encodedPaths = urlPaths.iterator(); encodedPaths.hasNext();) {
-            String encodedPath = (String) encodedPaths.next();
-            // get LockInfo for it.
-            SVNURL fullURL = topURL.appendPath(encodedPath, true);
-            LockInfo info = (LockInfo) lockInfo.get(fullURL);
-            encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
-            if (lock) {
-                if (info.myRevision == SVNRevision.UNDEFINED) {
-                    lockPaths.put(encodedPath, null);
-                } else {
-                    lockPaths.put(encodedPath, new Long(info.myRevision.getNumber()));
-                }
-            } else {
-                lockPaths.put(encodedPath, info.myToken);
-            }
-        }
-        return topURL;
-    }
-
     /**
      * Collects information about Working Copy item(s) and passes it to an
      * info handler.
@@ -2177,11 +2025,10 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li>if a remote info: <code>path</code> is an item that does not exist in
      *                      the specified <code>revision</code>
      *                      </ul>
-     * @see #doInfo(File,SVNRevision)
-     * @see #doInfo(SVNURL,SVNRevision,SVNRevision,boolean,ISVNInfoHandler)
+     * @deprecated use {@link #doInfo(File, SVNRevision, SVNRevision, SVNDepth, Collection, ISVNInfoHandler)} instead
      */
     public void doInfo(File path, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        doInfo(path, SVNRevision.UNDEFINED, revision, recursive, handler);
+        doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), null, handler);        
     }
 
     /**
@@ -2209,15 +2056,59 @@ public class SVNWCClient extends SVNBasicClient {
      *                      <li>if a remote info: <code>path</code> is an item that does not exist in
      *                      the specified <code>revision</code>
      *                      </ul>
-     * @see #doInfo(File,SVNRevision)
-     * @see #doInfo(File,SVNRevision,boolean,ISVNInfoHandler)
+     * @deprecated use {@link #doInfo(File, SVNRevision, SVNRevision, SVNDepth, Collection, ISVNInfoHandler)} instead
      */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
         doInfo(path, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), null, handler);
     }
 
+    /**
+     * Invokes <code>handler</code> to return information
+     * about <code>path</code> in <code>revision</code>. The information returned is
+     * system-generated metadata, not the sort of "property" metadata
+     * created by users. See {@link SVNInfo}.
+     * 
+     * <p/>
+     * If both revision arguments are either <span class="javakeyword">null</span> or 
+     * {@link SVNRevision#isLocal() local}, or {@link SVNRevision#isValid() invalid}, then information 
+     * will be pulled solely from the working copy; no network connections will be
+     * made.
+     * 
+     * <p/>
+     * Otherwise, information will be pulled from a repository. The
+     * actual node revision selected is determined by the <code>path</code>
+     * as it exists in <code>pegRevision</code>. If <code>pegRevision</code> is 
+     * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
+     *
+     * <p/>
+     * If <code>path</code> is a file, just invokes <code>handler</code> on it. If it
+     * is a directory, then descends according to <code>depth</code>.  If <code>depth</code> is
+     * {@link SVNDepth#EMPTY}, invokes <code>handler</code> on <code>path</code> and
+     * nothing else; if {@link SVNDepth#FILES}, on <code>path</code> and its
+     * immediate file children; if {@link SVNDepth#IMMEDIATES}, the preceding
+     * plus on each immediate subdirectory; if {@link SVNDepth#INFINITY}, then
+     * recurses fully, invoking <code>handler</code> on <code>path</code> and
+     * everything beneath it.
+     * 
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist
+     * names, used as a restrictive filter on items whose info is
+     * reported; that is, doesn't report info about any item unless
+     * it's a member of one of those changelists.  If <code>changeLists</code> is
+     * empty (or <span class="javakeyword">null</span>), no changelist filtering occurs.
+     * 
+     * @param path           a WC item on which info should be obtained
+     * @param pegRevision    a revision in which <code>path</code> is first
+     *                       looked up
+     * @param revision       a target revision
+     * @param depth          tree depth
+     * @param changeLists    collection changelist names
+     * @param handler        caller's info handler
+     * @throws SVNException 
+     * @since 1.2, SVN 1.5
+     */
     public void doInfo(File path, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
-            String[] changelists, ISVNInfoHandler handler) throws SVNException {
+            Collection changeLists, ISVNInfoHandler handler) throws SVNException {
         if (handler == null) {
             return;
         }
@@ -2236,7 +2127,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (url == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, 
                             "''{0}'' has no URL", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 wcRevision = SVNRevision.create(entry.getRevision());
             } finally {
@@ -2247,46 +2138,14 @@ public class SVNWCClient extends SVNBasicClient {
             return;
         }
         Collection changelistsSet = null;
-        if (changelists != null) {
+        if (changeLists != null) {
             changelistsSet = new HashSet();
-            for (int i = 0; i < changelists.length; i++) {
-                changelistsSet.add(changelists[i]);
+            for (Iterator changeListsIter = changeLists.iterator(); changeListsIter.hasNext();) {
+                String changeList = (String) changeListsIter.next();
+                changelistsSet.add(changeList);
             }
         }
         crawlEntries(path, depth, changelistsSet, handler);
-    }
-
-    private void crawlEntries(File path, SVNDepth depth, final Collection changeLists, 
-            final ISVNInfoHandler handler) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        int admLockLevel = getLevelsToLockFromDepth(depth);
-        try {
-            wcAccess.probeOpen(path, false, admLockLevel);
-            wcAccess.walkEntries(path, new ISVNEntryHandler() {
-                public void handleEntry(File path, SVNEntry entry) throws SVNException {
-                    if (entry.isDirectory() && !entry.isThisDir()) {
-                        return;
-                    }                    
-                    if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-                        reportEntry(path, entry, handler);
-                    }
-                }
-                
-                public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                    SVNErrorManager.error(error);
-                }
-            }, false, depth);
-        } finally {
-            wcAccess.close();
-        }
-
-    }
-    
-    private void reportEntry(File path, SVNEntry entry, ISVNInfoHandler handler) throws SVNException {
-        if (entry.isDirectory() && !"".equals(entry.getName())) {
-            return;
-        }
-        handler.handleInfo(SVNInfo.createInfo(path, entry));
     }
 
     /**
@@ -2302,112 +2161,51 @@ public class SVNWCClient extends SVNBasicClient {
      * @param handler     a caller's info handler
      * @throws SVNException if <code>url</code> is an item that does not exist in
      *                      the specified <code>revision</code>
-     * @see #doInfo(SVNURL,SVNRevision,SVNRevision)
-     * @see #doInfo(File,SVNRevision,boolean,ISVNInfoHandler)
+     * @deprecated use {@link #doInfo(SVNURL, SVNRevision, SVNRevision, SVNDepth, ISVNInfoHandler)} instead 
      */
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = revision;
-        }
-
-        SVNRepository repos = createRepository(url, null, null, pegRevision, revision, null);
-        url = repos.getLocation();
-        long revNum = getRevisionNumber(revision, repos, null);
-        SVNDirEntry rootEntry = null;
-        try {
-            rootEntry = repos.info("", revNum);
-        } catch (SVNException e) {
-            if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
-                // for svnserve older then 1.2.0
-                SVNURL repoRoot = repos.getRepositoryRoot(false);
-                if (repos.getLocation().equals(repoRoot)) {
-                    rootEntry = new SVNDirEntry(url, repoRoot, "", SVNNodeKind.DIR, -1, false, -1, null, null);
-                } else {
-                    String name = SVNPathUtil.tail(url.getPath());
-                    SVNURL location = repos.getLocation();
-                    repos.setLocation(location.removePathTail(), false);
-                    Collection dirEntries = repos.getDir("", revNum, null, (Collection) null);
-                    for (Iterator ents = dirEntries.iterator(); ents.hasNext();) {
-                        SVNDirEntry dirEntry = (SVNDirEntry) ents.next();
-                        // dir entry name may differ from 'name', due to renames...
-                        if (name.equals(dirEntry.getName())) {
-                            rootEntry = dirEntry;
-                            break;
-                        }
-                    }
-                    repos.setLocation(location, false);
-                }
-            } else {
-                throw e;
-            }
-        }
-        if (rootEntry == null || rootEntry.getKind() == SVNNodeKind.NONE) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' non-existent in revision ''{1}''",
-                    new Object[]{url, new Long(revNum)});
-            SVNErrorManager.error(err);
-        }
-        SVNURL reposRoot = repos.getRepositoryRoot(true);
-        String reposUUID = repos.getRepositoryUUID(true);
-        // 1. get locks for this dir and below (only for dir).
-        // and only when pegRev is HEAD.
-        SVNLock[] locks = null;
-        if (pegRevision == SVNRevision.HEAD && rootEntry.getKind() == SVNNodeKind.DIR) {
-            try {
-                locks = repos.getLocks("");
-            } catch (SVNException e) {
-                // may be not supported.
-                if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED) {
-                    locks = new SVNLock[0];
-                } else {
-                    throw e;
-                }
-            }
-        }
-        locks = locks == null ? new SVNLock[0] : locks;
-        Map locksMap = new SVNHashMap();
-        for (int i = 0; i < locks.length; i++) {
-            SVNLock lock = locks[i];
-            locksMap.put(lock.getPath(), lock);
-        }
-        // 2. add lock for this entry, only when it is 'related' to head (and is a file).
-        if (rootEntry.getKind() == SVNNodeKind.FILE) {
-            try {
-                SVNRepositoryLocation[] locations = getLocations(url, null, null, revision, SVNRevision.HEAD, SVNRevision.UNDEFINED);
-                if (locations != null && locations.length > 0) {
-                    SVNURL headURL = locations[0].getURL();
-                    if (headURL.equals(url)) {
-                        // get lock for this item (@headURL).
-                        try {
-                            SVNLock lock = repos.getLock("");
-                            if (lock != null) {
-                                locksMap.put(lock.getPath(), lock);
-                            }
-                        } catch (SVNException e) {
-                            if (!(e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_NOT_IMPLEMENTED)) {
-                                throw e;
-                            }
-                        }
-                    }
-                }
-            } catch (SVNException e) {
-                SVNErrorCode code = e.getErrorMessage().getErrorCode();
-                if (code != SVNErrorCode.FS_NOT_FOUND && code != SVNErrorCode.CLIENT_UNRELATED_RESOURCES) {
-                    throw e;
-                }
-            }
-        }
-
-        String fullPath = url.getPath();
-        String rootPath = fullPath.substring(reposRoot.getPath().length());
-        if (!rootPath.startsWith("/")) {
-            rootPath = "/" + rootPath;
-        }
-        collectInfo(repos, rootEntry, SVNRevision.create(revNum), rootPath, reposRoot, reposUUID, url, locksMap, recursive, handler);
+        doInfo(url, pegRevision, revision, SVNDepth.getInfinityOrEmptyDepth(recursive), handler);
     }
 
+    /**
+     * Invokes <code>handler</code> to return information
+     * about <code>url</code> in <code>revision</code>. The information returned is
+     * system-generated metadata, not the sort of "property" metadata
+     * created by users. See {@link SVNInfo}.
+     * 
+     * <p/>
+     * If <code>revision</code> argument is either <span class="javakeyword">null</span> or 
+     * {@link SVNRevision#isValid() invalid}, it defaults to {@link SVNRevision#HEAD}.
+     * If <code>revision</code> is {@link SVNRevision#PREVIOUS} (or some other kind that requires
+     * a local path), an error will be returned, because the desired
+     * revision cannot be determined.
+     * If <code>pegRevision</code> argument is either <span class="javakeyword">null</span> or 
+     * {@link SVNRevision#isValid() invalid}, it defaults to <code>revision</code>.
+     * 
+     * <p/>
+     * Information will be pulled from the repository. The actual node revision selected is determined by 
+     * the <code>url</code> as it exists in <code>pegRevision</code>. If <code>pegRevision</code> is 
+     * {@link SVNRevision#UNDEFINED}, then it defaults to {@link SVNRevision#WORKING}.
+     *
+     * <p/>
+     * If <code>url</code> is a file, just invokes <code>handler</code> on it. If it
+     * is a directory, then descends according to <code>depth</code>. If <code>depth</code> is
+     * {@link SVNDepth#EMPTY}, invokes <code>handler</code> on <code>url</code> and
+     * nothing else; if {@link SVNDepth#FILES}, on <code>url</code> and its
+     * immediate file children; if {@link SVNDepth#IMMEDIATES}, the preceding
+     * plus on each immediate subdirectory; if {@link SVNDepth#INFINITY}, then
+     * recurses fully, invoking <code>handler</code> on <code>url</code> and
+     * everything beneath it.
+     * 
+     * @param url            versioned item url
+     * @param pegRevision    revision in which <code>path</code> is first
+     *                       looked up
+     * @param revision       target revision
+     * @param depth          tree depth
+     * @param handler        caller's info handler
+     * @throws SVNException 
+     * @since 1.2, SVN 1.5
+     */
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
             ISVNInfoHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
@@ -2420,7 +2218,6 @@ public class SVNWCClient extends SVNBasicClient {
 
         long[] revNum = { SVNRepository.INVALID_REVISION };
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, revNum);
-        //createRepository(url, null, pegRevision, revision);
         
         url = repos.getLocation();
         SVNDirEntry rootEntry = null;
@@ -2466,7 +2263,7 @@ public class SVNWCClient extends SVNBasicClient {
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                             "Server does not support retrieving information about the repository root");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 } 
                 
                 SVNNodeKind urlKind = repos.checkPath("", revNum[0]);
@@ -2474,7 +2271,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
                             "URL ''{0}'' non-existent in revision {1}", 
                             new Object[]{ url, new Long(revNum[0]) });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 
                 SVNRepository parentRepos = createRepository(url.removePathTail(), null, null, false);
@@ -2494,7 +2291,7 @@ public class SVNWCClient extends SVNBasicClient {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
                             "URL ''{0}'' non-existent in revision {1}", 
                             new Object[]{ url, new Long(revNum[0]) });
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.WC);
                 }
             } else {
                 throw e;
@@ -2505,7 +2302,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, 
                     "URL ''{0}'' non-existent in revision ''{1}''",
                     new Object[]{ url, new Long(revNum[0]) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         SVNLock lock = null;
@@ -2535,7 +2332,8 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
 
-        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, revision, rootEntry, lock);
+        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, SVNRevision.create(revNum[0]), 
+                rootEntry, lock);
         handler.handleInfo(info);
         
         if (depth.compareTo(SVNDepth.EMPTY) > 0 && rootEntry.getKind() == SVNNodeKind.DIR) {
@@ -2571,6 +2369,30 @@ public class SVNWCClient extends SVNBasicClient {
     /**
      * Returns the current Working Copy min- and max- revisions as well as
      * changes and switch status within a single string.
+     * 
+     * <p/>
+     * This method is the same as <code>doGetWorkingCopyID(path, trailURL, false)</code>.
+     *
+     * @param path     a local path
+     * @param trailURL optional: if not <span class="javakeyword">null</span>
+     *                 specifies the name of the item that should be met
+     *                 in the URL corresponding to the repository location
+     *                 of the <code>path</code>; if that URL ends with something
+     *                 different than this optional parameter - the Working
+     *                 Copy will be considered "switched"
+     * @return         brief info on the Working Copy or the string
+     *                 "exported" if <code>path</code> is a clean directory
+     * @throws SVNException if <code>path</code> is neither versioned nor
+     *                      even exported
+     * @see #doGetWorkingCopyID(File, String, boolean)
+     */
+    public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
+        return doGetWorkingCopyID(path, trailURL, false);
+    }
+
+    /**
+     * Returns the current Working Copy min- and max- revisions as well as
+     * changes and switch status within a single string.
      * <p/>
      * <p/>
      * A return string has a form of <code>"minR[:maxR][M][S]"</code> where:
@@ -2587,23 +2409,25 @@ public class SVNWCClient extends SVNBasicClient {
      * </ul>
      * If <code>path</code> is a directory - this method recursively descends
      * into the Working Copy, collects and processes local information.
-     *
-     * @param path     a local path
-     * @param trailURL optional: if not <span class="javakeyword">null</span>
-     *                 specifies the name of the item that should be met
-     *                 in the URL corresponding to the repository location
-     *                 of the <code>path</code>; if that URL ends with something
-     *                 different than this optional parameter - the Working
-     *                 Copy will be considered "switched"
-     * @return brief info on the Working Copy or the string
-     *         "exported" if <code>path</code> is a clean directory
+     * 
+     * <p/>
+     * This method operates on local working copies only without accessing a repository.
+     * 
+     * @param path          a local path
+     * @param trailURL      optional: if not <span class="javakeyword">null</span>
+     *                      specifies the name of the item that should be met
+     *                      in the URL corresponding to the repository location
+     *                      of the <code>path</code>; if that URL ends with something
+     *                      different than this optional parameter - the Working
+     *                      Copy will be considered "switched"
+     * @param committed     if <span class="javakeyword">true</span> committed (last chaned) 
+     *                      revisions instead of working copy ones are reported
+     * @return              brief info on the Working Copy or the string
+     *                      "exported" if <code>path</code> is a clean directory
      * @throws SVNException if <code>path</code> is neither versioned nor
      *                      even exported
+     * @since  1.2
      */
-    public String doGetWorkingCopyID(final File path, String trailURL) throws SVNException {
-        return doGetWorkingCopyID(path, trailURL, false);
-    }
-
     public String doGetWorkingCopyID(final File path, String trailURL, final boolean committed) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         try {
@@ -2625,7 +2449,7 @@ public class SVNWCClient extends SVNBasicClient {
         final long[] minRevision = new long[]{-1};
         final boolean[] switched = new boolean[3];
         final String[] wcURL = new String[1];
-        statusClient.doStatus(path, true, false, true, false, false, new ISVNStatusHandler() {
+        statusClient.doStatus(path, SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new ISVNStatusHandler() {
             public void handleStatus(SVNStatus status) {
                 if (status.getEntryProperties() == null || status.getEntryProperties().isEmpty()) {
                     return;
@@ -2648,7 +2472,7 @@ public class SVNWCClient extends SVNBasicClient {
                     wcURL[0] = status.getURL().toString();
                 }
             }
-        });
+        }, null);
         if (!switched[0] && trailURL != null) {
             if (wcURL[0] == null) {
                 switched[0] = true;
@@ -2675,30 +2499,29 @@ public class SVNWCClient extends SVNBasicClient {
 
     /**
      * Collects and returns information on a single Working Copy item.
+     * 
      * <p/>
-     * <p/>
-     * If <code>revision</code> is valid and not {@link SVNRevision#WORKING WORKING}
-     * then information will be collected on remote items (that is taken from
-     * a repository). Otherwise information is gathered on local items not
-     * accessing a repository.
+     * This method is the same as 
+     * <code>doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, null, handler)</code> where
+     * <code>handler</code> just stores {@link SVNInfo} for the <code>path</code> and then returns it to
+     * the caller.
      *
-     * @param path     a WC item on which info should be obtained
-     * @param revision a target revision
-     * @return collected info
-     * @throws SVNException if one of the following is true:
-     *                      <ul>
-     *                      <li><code>path</code> is not under version control
-     *                      <li>can not obtain a URL corresponding to <code>path</code> to
-     *                      get its information from the repository - there's no such entry
-     *                      <li>if a remote info: <code>path</code> is an item that does not exist in
-     *                      the specified <code>revision</code>
-     *                      </ul>
-     * @see #doInfo(File,SVNRevision,boolean,ISVNInfoHandler)
-     * @see #doInfo(SVNURL,SVNRevision,SVNRevision)
+     * @param  path          a WC item on which info should be obtained
+     * @param  revision      a target revision
+     * @return               collected info
+     * @throws SVNException  if one of the following is true:
+     *                       <ul>
+     *                       <li><code>path</code> is not under version control
+     *                       <li>can not obtain a URL corresponding to <code>path</code> to
+     *                       get its information from the repository - there's no such entry
+     *                       <li>if a remote info: <code>path</code> is an item that does not exist in
+     *                       the specified <code>revision</code>
+     *                       </ul>
+     * @see    #doInfo(File, SVNRevision, SVNRevision, SVNDepth, Collection, ISVNInfoHandler)                       
      */
     public SVNInfo doInfo(File path, SVNRevision revision) throws SVNException {
         final SVNInfo[] result = new SVNInfo[1];
-        doInfo(path, revision, false, new ISVNInfoHandler() {
+        doInfo(path, SVNRevision.UNDEFINED, revision, SVNDepth.EMPTY, null, new ISVNInfoHandler() {
             public void handleInfo(SVNInfo info) {
                 if (result[0] == null) {
                     result[0] = info;
@@ -2710,21 +2533,23 @@ public class SVNWCClient extends SVNBasicClient {
 
     /**
      * Collects and returns information on a single item in a repository.
-     *
-     * @param url         a URL of an item which information is to be
-     *                    obtained
-     * @param pegRevision a revision in which the item is first looked up
-     * @param revision    a target revision
-     * @return collected info
-     * @throws SVNException if <code>url</code> is an item that does not exist in
-     *                      the specified <code>revision</code>
-     * @see #doInfo(SVNURL,SVNRevision,SVNRevision,boolean,ISVNInfoHandler)
-     * @see #doInfo(File,SVNRevision)
+     * 
+     * <p/>
+     * This method is the same as <code>doInfo(url, pegRevision, revision, SVNDepth.EMPTY, handler)</code> 
+     * where <code>handler</code> just stores {@link SVNInfo} for the <code>url</code>.
+     * 
+     * @param  url            a URL of an item which information is to be
+     *                        obtained
+     * @param  pegRevision    a revision in which the item is first looked up
+     * @param  revision       a target revision
+     * @return                collected info
+     * @throws SVNException   if <code>url</code> is an item that does not exist in
+     *                        the specified <code>revision</code>
+     * @see    #doInfo(SVNURL, SVNRevision, SVNRevision, SVNDepth, ISVNInfoHandler)
      */
-    public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision,
-                          SVNRevision revision) throws SVNException {
+    public SVNInfo doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision) throws SVNException {
         final SVNInfo[] result = new SVNInfo[1];
-        doInfo(url, pegRevision, revision, false, new ISVNInfoHandler() {
+        doInfo(url, pegRevision, revision, SVNDepth.EMPTY, new ISVNInfoHandler() {
             public void handleInfo(SVNInfo info) {
                 if (result[0] == null) {
                     result[0] = info;
@@ -2734,6 +2559,18 @@ public class SVNWCClient extends SVNBasicClient {
         return result[0];
     }
 
+    /**
+     * Recursively removes all DAV-specific <span class="javakeyword">"svn:wc:"</span> properties
+     * from the <code>directory</code> and beneath. 
+     * 
+     * <p>
+     * This method does not connect to a repository, it's a local operation only. Nor does it change any user's 
+     * versioned data. Changes are made only in administrative version control files.
+     *  
+     * @param  directory     working copy path
+     * @throws SVNException
+     * @since  1.2
+     */
     public void doCleanupWCProperties(File directory) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(this);
         try {
@@ -2747,10 +2584,20 @@ public class SVNWCClient extends SVNBasicClient {
     }
     
     /**
-     * Sets WC format.
+     * Changes working copy format. This method may be used to upgrade\downgrade working copy formats.
      * 
-     * @param directory - working copy directory
-     * @param format - format to set, supported formats are 9 (1.5), 8 (1.4) and 4 (1.2) 
+     * <p>
+     * If externals are not {@link SVNBasicClient#isIgnoreExternals() ignored} then external working copies 
+     * are also converted to the new working copy <code>format</code>.
+     * 
+     * <p>
+     * This method does not connect to a repository, it's a local operation only. Nor does it change any user's 
+     * versioned data. Changes are made only in administrative version control files.
+     * 
+     * @param  directory    working copy directory
+     * @param  format       format to set, supported formats are: 9 (SVN 1.5), 8 (SVN 1.4) and 4 (SVN 1.2)
+     * @throws SVNException 
+     * @since  1.2
      */
     public void doSetWCFormat(File directory, int format) throws SVNException {
         SVNAdminAreaInfo info = null;
@@ -2779,25 +2626,25 @@ public class SVNWCClient extends SVNBasicClient {
                     File externalDir = new File(info.getAnchor().getRoot(), SVNPathUtil.append(path, externalPath));
                     if (processedDirs.add(externalDir)) {
                         //if externalDir is an empty unversioned dir SVNFileType won't help us to avoid 
-                        //getting in an infinite loop
-                        try {
-                            wcAccess.open(externalDir, false, 0);
+                    	//getting in an infinite loop
+                    	try {
+                        	wcAccess.open(externalDir, false, 0);
                         } catch (SVNException svne) {
-                            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                continue;
-                            }
-                            throw svne;
+                        	if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                        		continue;
+                        	}
+                        	throw svne;
                         } finally {
-                            wcAccess.close();
+                        	wcAccess.close();
                         }
 
                         try {
-                            doSetWCFormat(externalDir, format);
+                        	doSetWCFormat(externalDir, format);
                         } catch (SVNException e) {
-                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                continue;
-                            }
-                            throw e;
+                        	if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                        		continue;
+                        	}
+                        	throw e;
                         }
                     }
                 }
@@ -2825,20 +2672,531 @@ public class SVNWCClient extends SVNBasicClient {
                             wcAccess.close();
                         }
 
-                        try {
-                            doSetWCFormat(externalDir, format);
-                        } catch (SVNException e) {
-                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                continue;
-                            }
-                            throw e;
-                        }
+                    	try {
+                    		doSetWCFormat(externalDir, format);
+                    	} catch (SVNException e) {
+                    		if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                    			continue;
+                    		}
+                    		throw e;
+                    	}
                     }
                 }
             }
         }
     }
     
+    /**
+     * This method is deprecated. 
+     * 
+     * @param path           a WC item which properties are to be
+     *                       modified
+     * @param propName       a property name
+     * @param propValue      a property value
+     * @param force          <span class="javakeyword">true</span> to
+     *                       force the operation to run
+     * @param recursive      <span class="javakeyword">true</span> to
+     *                       descend recursively
+     * @param handler        a caller's property handler
+     * @throws SVNException  if one of the following is true:
+     *                       <ul>
+     *                       <li><code>propName</code> is a revision
+     *                       property
+     *                       <li><code>propName</code> starts
+     *                       with the {@link org.tmatesoft.svn.core.SVNProperty#SVN_WC_PREFIX
+     *                       svn:wc:} prefix
+     *                       </ul>
+     * @deprecated use {@link #doSetProperty(File, String, SVNPropertyValue, boolean, SVNDepth, ISVNPropertyHandler, Collection)} 
+     *             instead
+     */
+    public void doSetProperty(File path, String propName, SVNPropertyValue propValue, boolean force, 
+            boolean recursive, ISVNPropertyHandler handler) throws SVNException {
+        doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, 
+                null);
+    }
+
+    private void doGetRevisionProperty(SVNRepository repos, String propName, long revNumber, ISVNPropertyHandler handler) throws SVNException {
+        if (propName != null) {
+            SVNPropertyValue value = repos.getRevisionPropertyValue(revNumber, propName);
+            if (value != null) {
+                handler.handleProperty(revNumber, new SVNPropertyData(propName, value, getOptions()));
+            }
+        } else {
+            SVNProperties props = new SVNProperties();
+            repos.getRevisionProperties(revNumber, props);
+            for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
+                String name = (String) names.next();
+                SVNPropertyValue value = props.getSVNPropertyValue(name);
+                handler.handleProperty(revNumber, new SVNPropertyData(name, value, getOptions()));
+            }
+        }
+    }
+
+    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth) throws SVNException {
+        checkCancelled();
+        try {
+            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED);
+        } catch (SVNException e) {
+            if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
+                throw e;
+            }
+        }
+        SVNWCAccess access = parentDir.getWCAccess();
+        SVNAdminArea dir = access.retrieve(path);
+        Collection ignores = Collections.EMPTY_SET;
+        if (!noIgnore) {
+            ignores = SVNStatusEditor.getIgnorePatterns(dir, SVNStatusEditor.getGlobalIgnores(getOptions()));
+        }
+        File[] children = SVNFileListUtil.listFiles(dir.getRoot());
+        for (int i = 0; children != null && i < children.length; i++) {
+            checkCancelled();
+            if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
+                continue;
+            }
+            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i].getName())) {
+                continue;
+            }
+            SVNFileType childType = SVNFileType.getType(children[i]);
+            if (childType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
+                SVNDepth depthBelowHere = depth;
+                if (depth == SVNDepth.IMMEDIATES) {
+                    depthBelowHere = SVNDepth.EMPTY;
+                }
+                addDirectory(children[i], dir, force, noIgnore, depthBelowHere);
+            } else if (childType != SVNFileType.UNKNOWN && childType != SVNFileType.DIRECTORY && 
+                    depth.compareTo(SVNDepth.FILES) >= 0) {
+                try {
+                    addFile(children[i], childType, dir);
+                } catch (SVNException e) {
+                    if (force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS) {
+                        continue;
+                    }
+                    throw e;
+                }
+            }
+        }
+    }
+
+    private void addFile(File path, SVNFileType type, SVNAdminArea dir) throws SVNException {
+        ISVNEventHandler handler = dir.getWCAccess().getEventHandler();
+        dir.getWCAccess().setEventHandler(null);
+        SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
+        dir.getWCAccess().setEventHandler(handler);
+
+        String mimeType = null;
+        if (type == SVNFileType.SYMLINK) {
+            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.SPECIAL,
+                    SVNProperty.getValueOfBooleanProperty(SVNProperty.SPECIAL), false);
+        } else {
+            Map props = SVNPropertiesManager.computeAutoProperties(getOptions(), path, null);
+            for (Iterator names = props.keySet().iterator(); names.hasNext();) {
+                String propName = (String) names.next();
+                String propValue = (String) props.get(propName);
+                try {
+                    SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, SVNPropertyValue.create(propValue), false);
+                } catch (SVNException e) {
+                    if (SVNProperty.EOL_STYLE.equals(propName) &&
+                            e.getErrorMessage().getErrorCode() == SVNErrorCode.ILLEGAL_TARGET &&
+                            e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
+                        ISVNAddParameters.Action action = getAddParameters().onInconsistentEOLs(path);
+                        if (action == ISVNAddParameters.REPORT_ERROR) {
+                            throw e;
+                        } else if (action == ISVNAddParameters.ADD_AS_IS) {
+                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
+                        } else if (action == ISVNAddParameters.ADD_AS_BINARY) {
+                            SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
+                            mimeType = SVNFileUtil.BINARY_MIME_TYPE;
+                        }
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+            if (mimeType != null) {
+                SVNPropertiesManager.setProperty(dir.getWCAccess(), path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(mimeType), false);
+            } else {
+                mimeType = (String) props.get(SVNProperty.MIME_TYPE);
+            }
+        }
+        SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(path.getName()), SVNNodeKind.FILE, mimeType, SVNRepository.INVALID_REVISION, SVNEventAction.ADD, null, null, null);
+        dispatchEvent(event);
+    }
+
+    private SVNURL collectLockInfo(SVNWCAccess wcAccess, File[] files, Map lockInfo, Map lockPaths, boolean lock, boolean stealLock) throws SVNException {
+        String[] paths = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            paths[i] = files[i].getAbsolutePath();
+            paths[i] = paths[i].replace(File.separatorChar, '/');
+        }
+        Collection condencedPaths = new ArrayList();
+        String commonParentPath = SVNPathUtil.condencePaths(paths, condencedPaths, false);
+        if (condencedPaths.isEmpty()) {
+            condencedPaths.add(SVNPathUtil.tail(commonParentPath));
+            commonParentPath = SVNPathUtil.removeTail(commonParentPath);
+        }
+        if (commonParentPath == null || "".equals(commonParentPath)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "No common parent found, unable to operate on dijoint arguments");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        paths = (String[]) condencedPaths.toArray(new String[condencedPaths.size()]);
+        int depth = 0;
+        for (int i = 0; i < paths.length; i++) {
+            int segments = SVNPathUtil.getSegmentsCount(paths[i]);
+            if (depth < segments) {
+                depth = segments;
+            }
+        }
+        wcAccess.probeOpen(new File(commonParentPath).getAbsoluteFile(), true, depth);
+        for (int i = 0; i < paths.length; i++) {
+            File file = new File(commonParentPath, paths[i]);
+            SVNEntry entry = wcAccess.getVersionedEntry(file, false);
+            if (entry.getURL() == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", file);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (lock) {
+                SVNRevision revision = stealLock ? SVNRevision.UNDEFINED : SVNRevision.create(entry.getRevision());
+                lockInfo.put(entry.getSVNURL(), new LockInfo(file, revision));
+            } else {
+                if (!stealLock && entry.getLockToken() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked in this working copy", file);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                lockInfo.put(entry.getSVNURL(), new LockInfo(file, entry.getLockToken()));
+            }
+        }
+        checkCancelled();
+        SVNURL[] urls = (SVNURL[]) lockInfo.keySet().toArray(new SVNURL[lockInfo.size()]);
+        Collection urlPaths = new HashSet();
+        final SVNURL topURL = SVNURLUtil.condenceURLs(urls, urlPaths, false);
+        if (urlPaths.isEmpty()) {
+            urlPaths.add("");
+        }
+        if (topURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unable to lock/unlock across multiple repositories");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        // prepare Map for SVNRepository (decoded path : revision/lock token).
+        for (Iterator encodedPaths = urlPaths.iterator(); encodedPaths.hasNext();) {
+            String encodedPath = (String) encodedPaths.next();
+            // get LockInfo for it.
+            SVNURL fullURL = topURL.appendPath(encodedPath, true);
+            LockInfo info = (LockInfo) lockInfo.get(fullURL);
+            encodedPath = SVNEncodingUtil.uriDecode(encodedPath);
+            if (lock) {
+                if (info.myRevision == SVNRevision.UNDEFINED) {
+                    lockPaths.put(encodedPath, null);
+                } else {
+                    lockPaths.put(encodedPath, new Long(info.myRevision.getNumber()));
+                }
+            } else {
+                lockPaths.put(encodedPath, info.myToken);
+            }
+        }
+        return topURL;
+    }
+
+    private void crawlEntries(File path, SVNDepth depth, final Collection changeLists, 
+            final ISVNInfoHandler handler) throws SVNException {
+        SVNWCAccess wcAccess = createWCAccess();
+        int admLockLevel = getLevelsToLockFromDepth(depth);
+        try {
+            wcAccess.probeOpen(path, false, admLockLevel);
+            wcAccess.walkEntries(path, new ISVNEntryHandler() {
+                public void handleEntry(File path, SVNEntry entry) throws SVNException {
+                    if (entry.isDirectory() && !entry.isThisDir()) {
+                        return;
+                    }                    
+                    if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
+                        reportEntry(path, entry, handler);
+                    }
+                }
+                
+                public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                    SVNErrorManager.error(error, SVNLogType.WC);
+                }
+            }, false, depth);
+        } finally {
+            wcAccess.close();
+        }
+
+    }
+    
+    private void reportEntry(File path, SVNEntry entry, ISVNInfoHandler handler) throws SVNException {
+        if (entry.isDirectory() && !"".equals(entry.getName())) {
+            return;
+        }
+        handler.handleInfo(SVNInfo.createInfo(path, entry));
+    }
+
+    private boolean doRevert(File path, SVNAdminArea parent, SVNDepth depth, boolean useCommitTimes, 
+            Collection changeLists) throws SVNException {
+        checkCancelled();
+        SVNWCAccess wcAccess = parent.getWCAccess();
+        SVNAdminArea dir = wcAccess.probeRetrieve(path);
+        SVNEntry entry = null;
+        try {
+            entry = wcAccess.getVersionedEntry(path, false);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot revert.");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (entry.getKind() == SVNNodeKind.DIR) {
+            SVNFileType fileType = SVNFileType.getType(path);
+            if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.FAILED_REVERT, null, null, null);
+                dispatchEvent(event);
+                return false;
+            }
+        }
+
+        if (entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                    "Cannot revert ''{0}'': unsupported entry node kind", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        SVNFileType fileType = SVNFileType.getType(path);
+        if (fileType == SVNFileType.UNKNOWN) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                    "Cannot revert ''{0}'': unsupported node kind in working copy", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        boolean reverted = false;
+        if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
+            if (entry.isScheduledForAddition()) {
+                boolean wasDeleted = false;
+                if (entry.getKind() == SVNNodeKind.FILE) {
+                    wasDeleted = entry.isDeleted();
+                    parent.removeFromRevisionControl(path.getName(), false, false);
+                } else if (entry.getKind() == SVNNodeKind.DIR) {
+                    SVNEntry entryInParent = parent.getEntry(path.getName(), true);
+                    if (entryInParent != null) {
+                        wasDeleted = entryInParent.isDeleted();
+                    }
+                    if (fileType == SVNFileType.NONE || wcAccess.isMissing(path)) {
+                        parent.deleteEntry(path.getName());
+                        parent.saveEntries(false);
+                    } else {
+                        dir.removeFromRevisionControl("", false, false);
+                    }
+                }
+
+                reverted = true;
+                depth = SVNDepth.EMPTY;
+                if (wasDeleted) {
+                    Map attributes = new SVNHashMap();
+                    attributes.put(SVNProperty.KIND, entry.getKind().toString());
+                    attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
+                    parent.modifyEntry(path.getName(), attributes, true, false);
+                }
+            } else if (entry.getSchedule() == null || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
+                if (entry.getKind() == SVNNodeKind.FILE) {
+                    reverted = revert(parent, entry.getName(), entry, useCommitTimes);
+                } else if (entry.getKind() == SVNNodeKind.DIR) {
+                    reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);
+                    if (reverted && parent != dir) {
+                        SVNEntry entryInParent = parent.getEntry(path.getName(), false);
+                        revert(parent, path.getName(), entryInParent, useCommitTimes);
+                    }
+                    if (entry.isScheduledForReplacement()) {
+                        depth = SVNDepth.INFINITY;
+                    }
+                }
+            }
+            if (reverted) {
+                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.REVERT, null, null, null);
+                dispatchEvent(event);
+            }
+        }
+        
+        
+        if (entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
+            SVNDepth depthBelowHere = depth;
+            if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
+                depthBelowHere = SVNDepth.EMPTY;
+            }
+            for (Iterator entries = dir.entries(false); entries.hasNext();) {
+                SVNEntry childEntry = (SVNEntry) entries.next();
+                if (dir.getThisDirName().equals(childEntry.getName())) {
+                    continue;
+                }
+                if (depth == SVNDepth.FILES && !childEntry.isFile()) {
+                    continue;
+                }
+                File childPath = new File(path, childEntry.getName());
+                reverted |= doRevert(childPath, dir, depthBelowHere, useCommitTimes, changeLists);
+            }
+        }
+        return reverted;
+    }
+
+    private boolean revert(SVNAdminArea dir, String name, SVNEntry entry, boolean useCommitTime) throws SVNException {
+        SVNLog log = dir.getLog();
+        boolean reverted = false;
+        SVNVersionedProperties baseProperties = null;
+        SVNProperties command = new SVNProperties();
+        boolean revertBase = false;
+
+        if (entry.isScheduledForReplacement()) {
+            revertBase = entry.isCopied();
+            baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
+            if (revertBase) {
+                String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
+                command.put(SVNLog.NAME_ATTR, propRevertPath);
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            }
+            reverted = true;
+        }
+        boolean reinstallWorkingFile = false;
+        if (baseProperties == null) {
+            if (dir.hasPropModifications(name)) {
+                baseProperties = dir.getBaseProperties(name);
+                SVNVersionedProperties propDiff = dir.getProperties(name).compareTo(baseProperties);
+                Collection propNames = propDiff.getPropertyNames(null);
+                reinstallWorkingFile = propNames.contains(SVNProperty.EXECUTABLE) ||
+                        propNames.contains(SVNProperty.KEYWORDS) ||
+                        propNames.contains(SVNProperty.EOL_STYLE) ||
+                        propNames.contains(SVNProperty.CHARSET) ||
+                        propNames.contains(SVNProperty.SPECIAL) ||
+                        propNames.contains(SVNProperty.NEEDS_LOCK);
+            }
+        }
+        if (baseProperties != null) {
+            // save base props both to base and working. 
+            SVNProperties newProperties = baseProperties.asMap();
+            SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
+            SVNVersionedProperties workProperties = dir.getProperties(name);
+            if (entry.isScheduledForReplacement()) {
+                originalBaseProperties.removeAll();
+            }
+            workProperties.removeAll();
+            for (Iterator names = newProperties.nameSet().iterator(); names.hasNext();) {
+                String propName = (String) names.next();
+                if (entry.isScheduledForReplacement()) {
+                    originalBaseProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
+                }
+                workProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
+            }
+            dir.saveVersionedProperties(log, false);
+            reverted = true;
+        }
+        SVNProperties newEntryProperties = new SVNProperties();
+        if (entry.getKind() == SVNNodeKind.FILE) {
+            if (!reinstallWorkingFile) {
+                SVNFileType fileType = SVNFileType.getType(dir.getFile(name));
+                if (fileType == SVNFileType.NONE) {
+                    reinstallWorkingFile = true;
+                }
+            }
+            String basePath = SVNAdminUtil.getTextBasePath(name, false);
+            if (!dir.getFile(basePath).isFile()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error restoring text for ''{0}''", dir.getFile(name));
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            File revertFile = dir.getFile(SVNAdminUtil.getTextRevertPath(name, false));
+            if (revertFile.isFile()) {
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextRevertPath(name, false));
+                command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+                reinstallWorkingFile = true;
+            }
+            if (!reinstallWorkingFile) {
+                reinstallWorkingFile = dir.hasTextModifications(name, false, false, false);
+            }
+            if (reinstallWorkingFile) {
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+                command.put(SVNLog.DEST_ATTR, name);
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+                if (useCommitTime && entry.getCommittedDate() != null) {
+                    command.put(SVNLog.NAME_ATTR, name);
+                    command.put(SVNLog.TIMESTAMP_ATTR, entry.getCommittedDate());
+                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                    command.clear();
+                } else {
+                    command.put(SVNLog.NAME_ATTR, name);
+                    command.put(SVNLog.TIMESTAMP_ATTR, SVNDate.formatDate(new Date(System.currentTimeMillis())));
+                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                    command.clear();
+                }
+                command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
+                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), SVNLog.WC_WORKING_SIZE);
+                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+                command.clear();
+            }
+            reverted |= reinstallWorkingFile;
+        }
+        if (entry.getConflictNew() != null) {
+            command.put(SVNLog.NAME_ATTR, entry.getConflictNew());
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), (String) null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getConflictNew()).exists();
+            }
+        }
+        if (entry.getConflictOld() != null) {
+            command.put(SVNLog.NAME_ATTR, entry.getConflictOld());
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), (String) null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getConflictOld()).exists();
+            }
+        }
+        if (entry.getConflictWorking() != null) {
+            command.put(SVNLog.NAME_ATTR, entry.getConflictWorking());
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), (String) null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getConflictWorking()).exists();
+            }
+        }
+        if (entry.getPropRejectFile() != null) {
+            command.put(SVNLog.NAME_ATTR, entry.getPropRejectFile());
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.PROP_REJECT_FILE), (String) null);
+            if (!reverted) {
+                reverted |= dir.getFile(entry.getPropRejectFile()).exists();
+            }
+        }
+        if (entry.isScheduledForReplacement()) {
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPIED), SVNProperty.toString(false));
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_URL), (String) null);
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.COPYFROM_REVISION),
+                    SVNProperty.toString(SVNRepository.INVALID_REVISION));
+            if (entry.isFile() && entry.getCopyFromURL() != null) {
+                String basePath = SVNAdminUtil.getTextRevertPath(name, false);
+                File baseFile = dir.getFile(basePath);
+                String digest = SVNFileUtil.computeChecksum(baseFile);
+                newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), digest);
+            }
+        }
+
+        if (entry.getSchedule() != null) {
+            newEntryProperties.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), (String) null);
+            reverted = true;
+        }
+        if (!newEntryProperties.isEmpty()) {
+            newEntryProperties.put(SVNLog.NAME_ATTR, name);
+            log.addCommand(SVNLog.MODIFY_ENTRY, newEntryProperties, false);
+        }
+        log.save();
+        dir.runLogs();
+        return reverted;
+    }
+
     private void setWCFormat(SVNAdminAreaInfo info, SVNAdminArea area, int format) throws SVNException {
         if (!isIgnoreExternals()) {
             SVNVersionedProperties props = area.getProperties(area.getThisDirName());
@@ -2896,26 +3254,6 @@ public class SVNWCClient extends SVNBasicClient {
             if (depth == SVNDepth.INFINITY && child.getKind() == SVNNodeKind.DIR) {
                 pushDirInfo(repos, rev, SVNPathUtil.append(path, child.getName()), root, uuid, childURL, 
                         locks, depth, handler);
-            }
-        }
-    }
-
-    private void collectInfo(SVNRepository repos, SVNDirEntry entry,
-                             SVNRevision rev, String path, SVNURL root, String uuid, SVNURL url,
-                             Map locks, boolean recursive, ISVNInfoHandler handler) throws SVNException {
-        checkCancelled();
-        String displayPath = repos.getFullPath(path);
-        displayPath = displayPath.substring(repos.getLocation().getPath().length());
-        if ("".equals(displayPath) || "/".equals(displayPath)) {
-            displayPath = path;
-        }
-        handler.handleInfo(SVNInfo.createInfo(displayPath, root, uuid, url, rev, entry, (SVNLock) locks.get(path)));
-        if (entry.getKind() == SVNNodeKind.DIR && recursive) {
-            Collection children = repos.getDir(path, rev.getNumber(), null, new ArrayList());
-            for (Iterator ents = children.iterator(); ents.hasNext();) {
-                SVNDirEntry child = (SVNDirEntry) ents.next();
-                SVNURL childURL = url.appendPath(child.getName(), false);
-                collectInfo(repos, child, rev, SVNPathUtil.append(path, child.getName()), root, uuid, childURL, locks, recursive, handler);
             }
         }
     }
@@ -2982,18 +3320,17 @@ public class SVNWCClient extends SVNBasicClient {
         } else if (kind == SVNNodeKind.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
                     "''{0}'' does not exist in revision {1}", new Object[] { path, String.valueOf(revNumber) });
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, 
                     "Unknown node kind for ''{0}''", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
 
-    private void doGetLocalProperty(SVNEntry entry, SVNAdminArea area, String propName, boolean base, 
-            ISVNPropertyHandler handler, SVNDepth depth, Collection changeLists) throws SVNException {
+    private void doGetLocalProperty(SVNEntry entry, SVNAdminArea area, String propName, boolean base, ISVNPropertyHandler handler, SVNDepth depth, Collection changeLists) throws SVNException {
         if (depth == null || depth == SVNDepth.UNKNOWN) {
-            depth = SVNDepth.UNKNOWN;
+            depth = SVNDepth.EMPTY;
         }
         
         File target = area.getFile(entry.getName());
@@ -3002,7 +3339,24 @@ public class SVNWCClient extends SVNBasicClient {
         if (SVNDepth.FILES.compareTo(depth) <= 0 && entry.isDirectory()) {
             wcAccess.walkEntries(target, propGetHandler, false, depth);
         } else if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-            propGetHandler.handleEntry(target, entry);
+            if (propName == null) {//proplist hack for compatibility with subvsersion
+                SVNVersionedProperties properties = base ? area.getBaseProperties(entry.getName()) : area.getProperties(entry.getName());
+                if (propName != null) {
+                    SVNPropertyValue propValue = properties.getPropertyValue(propName);
+                    if (propValue != null) {
+                        handler.handleProperty(target, new SVNPropertyData(propName, propValue, getOptions()));
+                    }
+                } else {
+                    SVNProperties allProps = properties.asMap();
+                    for (Iterator names = allProps.nameSet().iterator(); names.hasNext();) {
+                        String name = (String) names.next();
+                        SVNPropertyValue val = allProps.getSVNPropertyValue(name);
+                        handler.handleProperty(area.getFile(entry.getName()), new SVNPropertyData(name, val, getOptions()));
+                    }
+                }
+            } else {
+                propGetHandler.handleEntry(target, entry);
+            }
         }
     }
 
@@ -3013,7 +3367,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNLock lock = repository.getLock(path);
             if (lock == null || lock.getID() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
                 continue;
             }
             tokens.put(path, lock.getID());
@@ -3032,7 +3386,7 @@ public class SVNWCClient extends SVNBasicClient {
             SVNEntry entry = wcAccess.getVersionedEntry(path, false);
             if (entry.getKind() != SVNNodeKind.FILE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "''{0}'' refers to a directory", path);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             String name = path.getName();
             if (revision != SVNRevision.WORKING) {
@@ -3041,7 +3395,7 @@ public class SVNWCClient extends SVNBasicClient {
                 properties = area.getBaseProperties(name);
             } else {
                 // get working version and working props.
-                input = SVNFileUtil.openFileForReading(area.getFile(path.getName()));
+                input = SVNFileUtil.openFileForReading(area.getFile(path.getName()), SVNLogType.WC);
                 hasMods = area.hasPropModifications(name) || area.hasTextModifications(name, true);
                 properties = area.getProperties(name);
             }
@@ -3076,9 +3430,9 @@ public class SVNWCClient extends SVNBasicClient {
                 throw ioew.getOriginalException();
             } catch (IOException e) {
                 if (e instanceof SVNCancellableOutputStream.IOCancelException) {
-                    SVNErrorManager.cancel(e.getMessage());
+                    SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 }
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
             }
         } finally {
             SVNFileUtil.closeFile(input);
@@ -3147,7 +3501,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         public void handleError(File path, SVNErrorMessage error) throws SVNException {
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.WC);
         }
     }
     
@@ -3157,8 +3511,7 @@ public class SVNWCClient extends SVNBasicClient {
         private String myPropName;
         private ISVNPropertyHandler myPropHandler;
         
-        public PropFetchHandler(Collection changeLists, String propName, ISVNPropertyHandler handler, 
-                boolean pristine) {
+        public PropFetchHandler(Collection changeLists, String propName, ISVNPropertyHandler handler, boolean pristine) {
             myChangeLists = changeLists;
             myIsPristine = pristine;
             myPropName = propName;
@@ -3167,7 +3520,8 @@ public class SVNWCClient extends SVNBasicClient {
         
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
             SVNAdminArea adminArea = entry.getAdminArea();
-            if (entry.isDirectory() && !entry.getName().equals(adminArea.getThisDirName())) {
+            
+            if (entry.isDirectory() && !entry.isThisDir()) {
                 return;
             }
             if ((myIsPristine && entry.isScheduledForAddition()) || 
@@ -3177,10 +3531,8 @@ public class SVNWCClient extends SVNBasicClient {
             if (!SVNWCAccess.matchesChangeList(myChangeLists, entry)) {
                 return;
             }
-
-            SVNVersionedProperties properties = myIsPristine ? adminArea.getBaseProperties(entry.getName()) : 
-                adminArea.getProperties(entry.getName());
-
+            
+            SVNVersionedProperties properties = myIsPristine ? adminArea.getBaseProperties(entry.getName()) : adminArea.getProperties(entry.getName());
             if (myPropName != null) {
                 SVNPropertyValue propValue = properties.getPropertyValue(myPropName);
                 if (propValue != null) {
@@ -3197,7 +3549,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
         
         public void handleError(File path, SVNErrorMessage error) throws SVNException {
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.WC);
         }
     }
 }

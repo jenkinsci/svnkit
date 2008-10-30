@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,11 +18,12 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea15Factory extends SVNAdminArea14Factory {
-    public static final int WC_FORMAT = 9;
+
+    public static final int WC_FORMAT = SVNAdminAreaFactory.WC_FORMAT_15;
 
     protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException {
         SVNAdminArea adminArea = new SVNAdminArea15(path); 

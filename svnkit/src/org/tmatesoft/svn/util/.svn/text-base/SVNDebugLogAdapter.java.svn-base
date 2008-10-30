@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,16 +13,58 @@ package org.tmatesoft.svn.util;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.internal.util.SVNLogInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogOutputStream;
 import org.tmatesoft.svn.core.internal.util.SVNLogStream;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
+
+
+    public void logError(SVNLogType logType, String message) {
+        log(logType, message, Level.INFO);
+    }
+
+    public void logError(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.INFO);
+    }
+
+    public void logSevere(SVNLogType logType, String message) {
+        log(logType, message, Level.SEVERE);
+    }
+
+    public void logSevere(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.SEVERE);
+    }
+
+    public void logFine(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINE);
+    }
+
+    public void logFine(SVNLogType logType, String message) {
+        log(logType, message, Level.FINE);
+    }
+
+    public void logFiner(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINER);
+    }
+
+    public void logFiner(SVNLogType logType, String message) {
+        log(logType, message, Level.FINER);
+    }
+
+    public void logFinest(SVNLogType logType, Throwable th) {
+        log(logType, th, Level.FINEST);
+    }
+
+    public void logFinest(SVNLogType logType, String message) {
+        log(logType, message, Level.FINEST);
+    }
 
     public void flushStream(Object stream) {
         if (stream instanceof SVNLogInputStream) {
@@ -34,11 +76,11 @@ public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
         }
     }
 
-    public InputStream createLogStream(InputStream is) {
+    public InputStream createLogStream(SVNLogType logType, InputStream is) {
         return new SVNLogInputStream(is, this);
     }
 
-    public OutputStream createLogStream(OutputStream os) {
+    public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
         return new SVNLogOutputStream(os, this);
     }
 

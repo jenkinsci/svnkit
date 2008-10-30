@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNPlainConnector implements ISVNConnector {
@@ -52,16 +53,16 @@ public class SVNPlainConnector implements ISVNConnector {
             mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout);
         } catch (SocketTimeoutException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         } catch (UnknownHostException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "Unknown host " + e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         } catch (ConnectException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "connection refused by the server", null, SVNErrorMessage.TYPE_ERROR, e);
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e);
+            SVNErrorManager.error(err, e, SVNLogType.NETWORK);
         }
     }
 
@@ -70,7 +71,7 @@ public class SVNPlainConnector implements ISVNConnector {
             try {
                 mySocket.close();
             } catch (IOException ex) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ex.getMessage(), ex));
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, ex.getMessage(), ex), SVNLogType.NETWORK);
             } finally {
                 mySocket = null;
                 myInputStream = null;
@@ -81,13 +82,13 @@ public class SVNPlainConnector implements ISVNConnector {
     
     public boolean isStale() {
         try {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("checking whether connection is stale.");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "checking whether connection is stale.");
             boolean result = mySocket != null && SVNSocketFactory.isSocketStale(mySocket);
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("connection is stale: " + result);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "connection is stale: " + result);
             return result;
         } catch (IOException e) {
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine("failure during stale check");
-            SVNDebugLog.getLog(SVNLogType.NETWORK).logFine(e);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "failure during stale check");
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             return true;
         }
     }
@@ -99,6 +100,7 @@ public class SVNPlainConnector implements ISVNConnector {
     public InputStream getInputStream() throws IOException {
         if (myInputStream == null) {
             myInputStream = mySocket.getInputStream();
+            myInputStream = new BufferedInputStream(myInputStream);
         }
         return myInputStream;
     }

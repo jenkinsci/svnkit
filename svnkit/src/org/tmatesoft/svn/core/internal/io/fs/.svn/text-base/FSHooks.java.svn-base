@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,9 +24,10 @@ import org.tmatesoft.svn.core.internal.util.SVNStreamGobbler;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSHooks {
@@ -116,7 +117,7 @@ public class FSHooks {
             if (isPre) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_DISABLED_FEATURE,
                         "Repository has not been enabled to accept revision propchanges;\nask the administrator to create a pre-revprop-change hook");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             return;
         } 
@@ -171,7 +172,7 @@ public class FSHooks {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
                     hookFile, ioe.getLocalizedMessage()
             });
-            SVNErrorManager.error(err, ioe);
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
         }
         feedHook(hookFile, hookName, hookProc, input);
     }
@@ -180,7 +181,7 @@ public class FSHooks {
     private static void feedHook(File hook, String hookName, Process hookProcess, byte[] stdInValue) throws SVNException {
         if (hookProcess == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook", hook);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
         SVNStreamGobbler inputGobbler = new SVNStreamGobbler(hookProcess.getInputStream());
@@ -211,7 +212,7 @@ public class FSHooks {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to start ''{0}'' hook: {1}", new Object[] {
                     hook, ie.getLocalizedMessage()
             });
-            SVNErrorManager.error(err, ie);
+            SVNErrorManager.error(err, ie, SVNLogType.FSFS);
         } finally {
             errorGobbler.close();
             inputGobbler.close();
@@ -221,7 +222,7 @@ public class FSHooks {
         if (rc == 0 ) {
             if (errorGobbler.getError() != null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "''{0}'' hook succeeded, but error output could not be read", hookName);
-                SVNErrorManager.error(err, errorGobbler.getError());
+                SVNErrorManager.error(err, errorGobbler.getError(), SVNLogType.FSFS);
             }
         } else {
             String actionName = null;
@@ -238,12 +239,14 @@ public class FSHooks {
             String errorMessage = actionName != null ? 
                     actionName + " blocked by {0} hook (exit code {1})" : "{0} hook failed (exit code {1})";
             if (stdErrMessage != null && stdErrMessage.length() > 0) {
-                errorMessage += " with output:\n" + stdErrMessage;
+                errorMessage += " with output:\n{2}";
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, errorMessage, new Object[] {hookName, new Integer(rc), stdErrMessage});
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             } else {
                 errorMessage += " with no output.";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, errorMessage, new Object[] {hookName, new Integer(rc)});
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
@@ -272,7 +275,7 @@ public class FSHooks {
                 File realFile = SVNFileUtil.resolveSymlinkToFile(hookFile);
                 if (realFile == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_HOOK_FAILURE, "Failed to run ''{0}'' hook; broken symlink", hookFile);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
                 return hookFile;
             }

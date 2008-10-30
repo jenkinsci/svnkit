@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,9 +39,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
@@ -171,19 +172,19 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         if (myRevision >= 0 && myTransaction != null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 
                     "The '--transaction' (-t) and '--revision' (-r) arguments can not co-exist");
-            SVNErrorManager.error(err);                    
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         myIsRevision = myTransaction == null;
         
         if (!(myIsHelp || myIsVersion || "help".equals(commandLine.getCommandName()))) {
             if (getArguments().isEmpty()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Repository argument required");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             SVNPath path = new SVNPath((String) getArguments().get(0), false);
             if (path.isURL()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "''{0}'' is URL when it should be a path", path.getTarget());
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             myRepositoryFile = path.getFile();
             myRepository = (FSRepository) SVNRepositoryFactory.create(SVNURL.fromFile(myRepositoryFile));
@@ -220,7 +221,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
             }
             if (revision < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid revision number supplied");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             myRevision = revision;
         } else if (option == SVNLookOption.TRANSACTION) {
@@ -244,15 +245,15 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
                     limit = Long.parseLong(optionValue.getValue());
                 } catch (NumberFormatException nfe) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric limit argument given");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
                 }
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Non-numeric limit argument given");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             if (limit <= 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Argument to --limit must be positive");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
             myLimit = limit;
         } else if (option == SVNLookOption.NO_DIFF_DELETED) {
@@ -289,7 +290,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
         if (!extensions.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INVALID_DIFF_OPTION, 
                     "Invalid argument ''{0}'' in diff options", extensions.get(0));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return new SVNDiffOptions(ignoreAllWS, ignoreAmountOfWS, ignoreEOLStyle);
     }
@@ -329,7 +330,7 @@ public class SVNLookCommandEnvironment extends AbstractSVNCommandEnvironment {
                 return "--version";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return commandName;
     }

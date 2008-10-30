@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,12 +14,13 @@ package org.tmatesoft.svn.core.internal.io.fs.test;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNImportThread extends Thread {
@@ -40,7 +41,8 @@ public class SVNImportThread extends Thread {
         SVNClientManager manager = SVNClientManager.newInstance();
         SVNCommitInfo info = null;
         try {
-            info = manager.getCommitClient().doImport(myDirectory, myURL, myCommitMessage, true);
+            info = manager.getCommitClient().doImport(myDirectory, myURL, myCommitMessage, null, true, false, 
+                    SVNDepth.INFINITY);
         } catch (SVNException svne) {
             System.out.println("Import failed: " + svne.getErrorMessage().getFullMessage());
             svne.printStackTrace();

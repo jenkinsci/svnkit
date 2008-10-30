@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,7 +21,7 @@ import java.util.LinkedList;
  * when it's necessary to say whether a file should be or should not be considered as 
  * changed. 
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @since   1.1.0
  */
@@ -112,6 +112,20 @@ public class SVNDiffOptions {
         myIsIgnoreEOLStyle = isIgnoreEOLStyle;
     }
 
+    /**
+     * Returns a collection containing diff options as <code>String</code> object.
+     * 
+     * <p/>
+     * If {@link #isIgnoreAllWhitespace()} is <span class="javakeyword">true</span>, 
+     * <span class="javastring">"-w"</span> is added to the result. 
+     * If {@link #isIgnoreAmountOfWhitespace()} is <span class="javakeyword">true</span>, 
+     * <span class="javastring">"-b"</span> is added to the result. 
+     * If {@link #isIgnoreEOLStyle()} is <span class="javakeyword">true</span>, 
+     * <span class="javastring">"--ignore-eol-style"</span> is added to the result. 
+     * 
+     * @return    collection with <code>String</code> representations of diff options 
+     * @since     1.2.0 
+     */
     public Collection toOptionsCollection() {
         Collection opts = new LinkedList();
         if (isIgnoreAllWhitespace()) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +31,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNReplicationEditor</b> is an editor implementation used by a 
@@ -48,7 +49,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * the calls of that driver to calls to a commit editor of the destination <b>SVNRepository</b> 
  * driver.   
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
  * @since   1.1.0
@@ -101,11 +102,23 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Saves the target <code>revision</code>.
+     * 
+     * @param  revision         revision 
+     * @throws SVNException 
+     */
     public void targetRevision(long revision) throws SVNException {
         myPreviousRevision = revision - 1;
         myTargetRevision = revision;
     }
 
+    /**
+     * Starts a next replication transaction.
+     * 
+     * @param revision         target revision 
+     * @throws SVNException 
+     */
     public void openRoot(long revision) throws SVNException {
         //open root
         myCommitEditor.openRoot(myPreviousRevision);
@@ -115,27 +128,59 @@ public class SVNReplicationEditor implements ISVNEditor {
 
     }
 
+    /**
+     * Removes <code>path</code> from the paths to be committed.
+     * 
+     * @param path 
+     * @param revision 
+     * @throws SVNException  exception with {@link SVNErrorCode#UNKNOWN} error code - if somehow 
+     *                       chanded paths fetched from the log of the resource repository did not
+     *                       reflect <code>path</code> deletion in <code>revision</code>  
+     * 
+     */
     public void deleteEntry(String path, long revision) throws SVNException {
         String absPath = getSourceRepository().getRepositoryPath(path);
         SVNLogEntryPath deletedPath = (SVNLogEntryPath) myChangedPaths.get(absPath);
-        if (deletedPath != null && 
-                (deletedPath.getType() == SVNLogEntryPath.TYPE_DELETED || deletedPath.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
+        if (deletedPath != null && (deletedPath.getType() == SVNLogEntryPath.TYPE_DELETED || 
+                deletedPath.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
             if (deletedPath.getType() == SVNLogEntryPath.TYPE_DELETED) {
                 myChangedPaths.remove(absPath);
             }
         } else {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Expected that path ''{0}'' is deleted in revision {1}", new Object[]{absPath, new Long(myPreviousRevision)});
-            SVNErrorManager.error(err);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Expected that path ''{0}'' is deleted in revision {1}", 
+                    new Object[]{absPath, new Long(myPreviousRevision)});
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         myCommitEditor.deleteEntry(path, myPreviousRevision);
     }
 
+    /**
+     * Does nothing.
+     * @param path 
+     * @throws SVNException 
+     */
     public void absentDir(String path) throws SVNException {
     }
 
+    /**
+     * Does nothing.
+     * @param path 
+     * @throws SVNException 
+     */
     public void absentFile(String path) throws SVNException {
     }
 
+    /**
+     * Adds a new directory under the specified <code>path</code> to the target repository.
+     * 
+     * @param  path                  target directory path                
+     * @param  copyFromPath          not used
+     * @param  copyFromRevision      not used
+     * @throws SVNException          exception with {@link SVNErrorCode#UNKNOWN} error code - if somehow 
+     *                               chanded paths fetched from the log of the resource repository did not
+     *                               reflect <code>path</code> addition  
+     */
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         String absPath = getSourceRepository().getRepositoryPath(path);
         EntryBaton baton = new EntryBaton(absPath);
@@ -163,10 +208,17 @@ public class SVNReplicationEditor implements ISVNEditor {
             myCommitEditor.openDir(path, myPreviousRevision);
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addDir()");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
+    /**
+     * Opens a corresponding <code>path</code> in the target repository.
+     * 
+     * @param path            target directory path relative to the root of the edit 
+     * @param revision        target directory revision
+     * @throws SVNException 
+     */
     public void openDir(String path, long revision) throws SVNException {
         EntryBaton baton = new EntryBaton(getSourceRepository().getRepositoryPath(path));
         baton.myPropsAct = ACCEPT;
@@ -174,6 +226,13 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.openDir(path, myPreviousRevision);
     }
 
+    /**
+     * Changes a property of the current directory.
+     * 
+     * @param name 
+     * @param value 
+     * @throws SVNException 
+     */
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isRegularProperty(name)) {
             return;
@@ -199,6 +258,11 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Closes the current opened dir.
+     * 
+     * @throws SVNException 
+     */
     public void closeDir() throws SVNException {
         if (myDirsStack.size() > 1 && !myCopiedPaths.isEmpty()) {
             EntryBaton currentDir = (EntryBaton) myDirsStack.peek();
@@ -208,6 +272,14 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.closeDir();
     }
 
+    /**
+     * Adds a new file.
+     * 
+     * @param path 
+     * @param copyFromPath 
+     * @param copyFromRevision 
+     * @throws SVNException 
+     */
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         String absPath = getSourceRepository().getRepositoryPath(path);
         EntryBaton baton = new EntryBaton(absPath);
@@ -241,7 +313,7 @@ public class SVNReplicationEditor implements ISVNEditor {
             SVNLogEntryPath realPath = getFileCopyOrigin(absPath);
             if (realPath == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown error, can't get the copy origin of a file");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             SVNProperties props = new SVNProperties();
             if (areFileContentsEqual(absPath, myTargetRevision, realPath.getCopyPath(), realPath.getCopyRevision(), props)) {
@@ -254,51 +326,17 @@ public class SVNReplicationEditor implements ISVNEditor {
             baton.myTextAct = IGNORE;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Unknown bug in addFile()");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
     }
 
-    private SVNLogEntryPath getFileCopyOrigin(String path) throws SVNException {
-        Object[] paths = myCopiedPaths.keySet().toArray();
-        Arrays.sort(paths, 0, paths.length, SVNPathUtil.PATH_COMPARATOR);
-        SVNLogEntryPath realPath = null;
-        List candidates = new ArrayList();
-        for (int i = 0; i < paths.length; i++) {
-            String copiedPath = (String) paths[i];
-            
-            if (!path.startsWith(copiedPath + "/")) {
-                continue;
-            } else if (path.equals(copiedPath)) {
-                return (SVNLogEntryPath) myCopiedPaths.get(copiedPath);
-            }
-            candidates.add(copiedPath);
-        }
-        // check candidates from the end of the list
-        for(int i = candidates.size() - 1; i >=0; i--) {
-            String candidateParent = (String) candidates.get(i);
-            if (getSourceRepository().checkPath(candidateParent, myTargetRevision) != SVNNodeKind.DIR) {
-                continue;
-            }
-            SVNLogEntryPath changedPath = (SVNLogEntryPath) myCopiedPaths.get(candidateParent);
-            String fileRelativePath = path.substring(candidateParent.length() + 1);
-            fileRelativePath = SVNPathUtil.append(changedPath.getCopyPath(), fileRelativePath);
-            return new SVNLogEntryPath(path, ' ', fileRelativePath, changedPath.getCopyRevision());
-        }
-        return realPath;
-    }
-
-    private boolean areFileContentsEqual(String path1, long rev1, String path2, long rev2, SVNProperties props2) throws SVNException {
-        SVNProperties props1 = new SVNProperties();
-        props2 = props2 == null ? new SVNProperties() : props2;
-
-        SVNRepository repos = getSourceRepository();
-        repos.getFile(path1, rev1, props1, null);
-        repos.getFile(path2, rev2, props2, null);
-        String crc1 = props1.getStringValue(SVNProperty.CHECKSUM);
-        String crc2 = props2.getStringValue(SVNProperty.CHECKSUM);
-        return crc1 != null && crc1.equals(crc2);
-    }
-
+    /**
+     * Opens a file.
+     * 
+     * @param path 
+     * @param revision 
+     * @throws SVNException 
+     */
     public void openFile(String path, long revision) throws SVNException {
         EntryBaton baton = new EntryBaton(getSourceRepository().getRepositoryPath(path));
         baton.myPropsAct = ACCEPT;
@@ -307,6 +345,13 @@ public class SVNReplicationEditor implements ISVNEditor {
         myCommitEditor.openFile(path, myPreviousRevision);
     }
 
+    /**
+     * Starts applying text delta.
+     * 
+     * @param path 
+     * @param baseChecksum 
+     * @throws SVNException 
+     */
     public void applyTextDelta(String path, String baseChecksum) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
@@ -314,6 +359,14 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Applies a next chunk of delta.
+     * 
+     * @param path 
+     * @param diffWindow 
+     * @return                dummy output stream 
+     * @throws SVNException 
+     */
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
@@ -322,6 +375,12 @@ public class SVNReplicationEditor implements ISVNEditor {
         return SVNFileUtil.DUMMY_OUT;
     }
 
+    /**
+     * Handles text delta end.
+     * 
+     * @param path 
+     * @throws SVNException 
+     */
     public void textDeltaEnd(String path) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct == ACCEPT) {
@@ -329,6 +388,14 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Changes file property.
+     * 
+     * @param path 
+     * @param name 
+     * @param value 
+     * @throws SVNException 
+     */
     public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (!SVNProperty.isRegularProperty(name)) {
             return;
@@ -354,6 +421,13 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Closes the current opened file.
+     * 
+     * @param path 
+     * @param textChecksum 
+     * @throws SVNException 
+     */
     public void closeFile(String path, String textChecksum) throws SVNException {
         EntryBaton baton = (EntryBaton) myPathsToFileBatons.get(path);
         if (baton.myTextAct != IGNORE || baton.myTextAct != IGNORE) {
@@ -361,6 +435,11 @@ public class SVNReplicationEditor implements ISVNEditor {
         }
     }
 
+    /**
+     * Commits the transaction.
+     * @return commit info
+     * @throws SVNException 
+     */
     public SVNCommitInfo closeEdit() throws SVNException {
         myCommitInfo = myCommitEditor.closeEdit();
         if (mySourceRepository != null) {
@@ -371,6 +450,11 @@ public class SVNReplicationEditor implements ISVNEditor {
         
     }
 
+    /**
+     * Aborts the transaction. 
+     * 
+     * @throws SVNException 
+     */
     public void abortEdit() throws SVNException {
         if (mySourceRepository != null) {
             mySourceRepository.closeSession();
@@ -446,6 +530,47 @@ public class SVNReplicationEditor implements ISVNEditor {
             myCommitEditor.closeDir();
             currentOpened = SVNPathUtil.removeTail(currentOpened);
         }
+    }
+
+    private SVNLogEntryPath getFileCopyOrigin(String path) throws SVNException {
+        Object[] paths = myCopiedPaths.keySet().toArray();
+        Arrays.sort(paths, 0, paths.length, SVNPathUtil.PATH_COMPARATOR);
+        SVNLogEntryPath realPath = null;
+        List candidates = new ArrayList();
+        for (int i = 0; i < paths.length; i++) {
+            String copiedPath = (String) paths[i];
+            
+            if (!path.startsWith(copiedPath + "/")) {
+                continue;
+            } else if (path.equals(copiedPath)) {
+                return (SVNLogEntryPath) myCopiedPaths.get(copiedPath);
+            }
+            candidates.add(copiedPath);
+        }
+        // check candidates from the end of the list
+        for(int i = candidates.size() - 1; i >=0; i--) {
+            String candidateParent = (String) candidates.get(i);
+            if (getSourceRepository().checkPath(candidateParent, myTargetRevision) != SVNNodeKind.DIR) {
+                continue;
+            }
+            SVNLogEntryPath changedPath = (SVNLogEntryPath) myCopiedPaths.get(candidateParent);
+            String fileRelativePath = path.substring(candidateParent.length() + 1);
+            fileRelativePath = SVNPathUtil.append(changedPath.getCopyPath(), fileRelativePath);
+            return new SVNLogEntryPath(path, ' ', fileRelativePath, changedPath.getCopyRevision());
+        }
+        return realPath;
+    }
+
+    private boolean areFileContentsEqual(String path1, long rev1, String path2, long rev2, SVNProperties props2) throws SVNException {
+        SVNProperties props1 = new SVNProperties();
+        props2 = props2 == null ? new SVNProperties() : props2;
+
+        SVNRepository repos = getSourceRepository();
+        repos.getFile(path1, rev1, props1, null);
+        repos.getFile(path2, rev2, props2, null);
+        String crc1 = props1.getStringValue(SVNProperty.CHECKSUM);
+        String crc2 = props2.getStringValue(SVNProperty.CHECKSUM);
+        return crc1 != null && crc1.equals(crc2);
     }
 
     private static class EntryBaton {

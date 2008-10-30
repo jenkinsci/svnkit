@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -32,14 +31,16 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * <b>SVNRepositoryFactory</b> is an abstract factory that is responsible
@@ -90,7 +91,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
  * Also <b>SVNRepositoryFactory</b> may be used to create local 
  * FSFS-type repositories.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -102,13 +103,17 @@ public abstract class SVNRepositoryFactory {
     
     protected static void registerRepositoryFactory(String protocol, SVNRepositoryFactory factory) {
         if (protocol != null && factory != null) {
-            myFactoriesMap.put(protocol, factory);
+            synchronized (myFactoriesMap) {
+                myFactoriesMap.put(protocol, factory);
+            }
         }
     }
     
     protected static boolean hasRepositoryFactory(String protocol) {
         if (protocol != null) {
-            return myFactoriesMap.get(protocol) != null;
+            synchronized (myFactoriesMap) {
+                return myFactoriesMap.get(protocol) != null;
+            }
         }
         return false;
     }
@@ -186,18 +191,20 @@ public abstract class SVNRepositoryFactory {
      */
     public static SVNRepository create(SVNURL url, ISVNSession options) throws SVNException {
         String urlString = url.toString();
-    	for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
-    		String key = (String) keys.next();
-    		if (Pattern.matches(key, urlString)) {
-    			return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, options);
-    		}
-    	}
+        synchronized (myFactoriesMap) {
+            for(Iterator keys = myFactoriesMap.keySet().iterator(); keys.hasNext();) {
+                String key = (String) keys.next();
+                if (Pattern.matches(key, urlString)) {
+                    return ((SVNRepositoryFactory) myFactoriesMap.get(key)).createRepositoryImpl(url, options);
+                }
+            }
+        }
         if ("file".equalsIgnoreCase(url.getProtocol())) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open an ra_local session to URL");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Unable to create SVNRepository object for ''{0}''", url);
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
         return null;
     }
 
@@ -285,6 +292,9 @@ public abstract class SVNRepositoryFactory {
      * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
      * to be compatible with pre-1.4 servers.
      *  
+     * <p>
+     * Note: this method is identical to <code>createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, false)</code>.
+     * 
      * @param  path                          a repository root location
      * @param  uuid                          a repository's uuid
      * @param  enableRevisionProperties      enables or not revision property 
@@ -295,13 +305,62 @@ public abstract class SVNRepositoryFactory {
      * @return                               a local URL (file:///) of a newly
      *                                       created repository
      * @throws SVNException
-     * @since                               1.1.1
+     * @since                                1.1.1
+     * @see                                  #createLocalRepository(File, String, boolean, boolean, boolean, boolean)
      */
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
         return createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, false);
     }
     
-    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+    /**
+     * Creates a local blank FSFS-type repository. This is just similar to 
+     * the Subversion's command: <code>svnadmin create --fs-type=fsfs REPOS_PATH</code>.
+     * The resultant repository is absolutely format-compatible with Subversion.
+     * 
+     * <p>
+     * If <code>uuid</code> is <span class="javakeyword">null</span> or not 36 chars 
+     * wide, the method generates a new UUID for the repository. This UUID would have 
+     * the same format as if it's generated by Subversion itself.
+     * 
+     * <p>
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>
+     * then the method creates a <code>pre-revprop-change</code> executable file inside 
+     * the <code>"hooks"</code> subdir of the repository tree. This executable file 
+     * simply returns 0 thus allowing revision property modifications, which are not 
+     * permitted, unless one puts such a hook into that very directory.   
+     *
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
+     * exists, deletes that path and creates a repository in its place. 
+     * 
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * to be compatible with pre-1.4 servers.
+     *
+     * <p>
+     * Set <code>pre15Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * to be compatible with pre-1.5 servers.
+     * 
+     * <p>
+     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code>) 
+     * set to <span class="javakeyword">true</span> at a time.
+     * 
+     * @param  path                          a repository root location
+     * @param  uuid                          a repository's uuid
+     * @param  enableRevisionProperties      enables or not revision property 
+     *                                       modifications
+     * @param  force                         forces operation to run               
+     * @param  pre14Compatible               <span class="javakeyword">true</span> to 
+     *                                       create a repository with pre-1.4 format
+     * @param  pre15Compatible               <span class="javakeyword">true</span> to
+     *                                       create a repository with pre-1.5 format
+     * @return                               a local URL (file:///) of a newly
+     *                                       created repository
+     * @throws SVNException
+     * @since                                1.2.0
+     */
+    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, 
+            boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType != SVNFileType.NONE) {
             if (fType == SVNFileType.DIRECTORY) {
@@ -309,7 +368,7 @@ public abstract class SVNRepositoryFactory {
                 if ( children != null && children.length != 0) {
                     if (!force) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     } else {
                         SVNFileUtil.deleteAll(path, true);
                     }
@@ -317,21 +376,27 @@ public abstract class SVNRepositoryFactory {
             } else {
                 if (!force) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' already exists; use ''force'' to overwrite existing files", path);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 } else {
                     SVNFileUtil.deleteAll(path, true);
                 }
             }
         }
         //SVNFileUtil.deleteAll(path, true);
+        // check if path is inside repository
+        File root = FSFS.findRepositoryRoot(path);
+        if (root != null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "''{0}'' is a subdirectory of an existing repository rooted at ''{1}''", new Object[] {path, root});
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
         if (!path.mkdirs() && !path.exists()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not create directory ''{0}''", path);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         InputStream is = SVNRepositoryFactory.class.getResourceAsStream(REPOSITORY_TEMPLATE_PATH);
         if (is == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "No repository template found; should be part of SVNKit library jar");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         File jarFile = SVNFileUtil.createUniqueFile(path, ".template", ".jar", true);
         OutputStream uuidOS = null; 
@@ -360,7 +425,7 @@ public abstract class SVNRepositoryFactory {
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
                                 new Object[] {hookFile, e.getLocalizedMessage()});
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
@@ -373,7 +438,7 @@ public abstract class SVNRepositoryFactory {
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create pre-rev-prop-change hook file at ''{0}'': {1}", 
                                 new Object[] {hookFile, e.getLocalizedMessage()});
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.FSFS);
                     } finally {
                         SVNFileUtil.closeFile(os);
                     }
@@ -393,7 +458,7 @@ public abstract class SVNRepositoryFactory {
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository UUID to ''{0}''", uuidFile);
                 err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
             int fsFormat = FSFS.DB_FORMAT;
@@ -407,7 +472,7 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing repository format to ''{0}''", reposFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
                 
@@ -423,8 +488,14 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
+
+                File davSandboxDir = new File(path, FSFS.DAV_DIR);
+                davSandboxDir.mkdir();
+            } else {
+                final File currentTxnLockFile = new File(path, "db/" + FSFS.TXN_CURRENT_LOCK_FILE);
+                SVNFileUtil.createEmptyFile(currentTxnLockFile);
             }
             
             long maxFilesPerDir = 0;
@@ -459,21 +530,20 @@ public abstract class SVNRepositoryFactory {
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error writing fs format to ''{0}''", fsFormatFile);
                     err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
-            
-            if (fsFormat >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
-                File currentFile = new File(path, "db/" + FSFS.CURRENT_FILE);
-                currentOS = SVNFileUtil.openFileForWriting(currentFile);
-                try {
-                    currentOS.write("0\n".getBytes("US-ASCII"));
-                } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                            "Can not write to ''{0}'' file: {1}", 
-                            new Object[] { currentFile.getName(), e.getLocalizedMessage() });
-                    SVNErrorManager.error(err, e);
-                }
+
+            String currentFileLine = fsFormat >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT ? "0\n" : "0 1 1\n";
+            File currentFile = new File(path, "db/" + FSFS.CURRENT_FILE);
+            currentOS = SVNFileUtil.openFileForWriting(currentFile);
+            try {
+                currentOS.write(currentFileLine.getBytes("US-ASCII"));
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
+                        "Can not write to ''{0}'' file: {1}",
+                        new Object[]{currentFile.getName(), e.getLocalizedMessage()});
+                SVNErrorManager.error(err, e, SVNLogType.FSFS);
             }
             
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
@@ -486,7 +556,7 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                             "Can not write to ''{0}'' file: {1}", 
                             new Object[] { txnCurrentFile.getName(), e.getLocalizedMessage() });
-                    SVNErrorManager.error(err, e);
+                    SVNErrorManager.error(err, e, SVNLogType.FSFS);
                 }
             }
             
@@ -530,7 +600,7 @@ public abstract class SVNRepositoryFactory {
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not copy repository template file to ''{0}''", dstFile);
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } finally {
             SVNFileUtil.closeFile(os);
             SVNFileUtil.closeFile(is);
@@ -539,7 +609,7 @@ public abstract class SVNRepositoryFactory {
 
     private static void extract(File srcFile, File dst) throws SVNException {
         JarInputStream jis = null;
-        InputStream is = SVNFileUtil.openFileForReading(srcFile);
+        InputStream is = SVNFileUtil.openFileForReading(srcFile, SVNLogType.NETWORK);
         byte[] buffer = new byte[16*1024];
         
         JarFile jarFile = null;
@@ -579,7 +649,7 @@ public abstract class SVNRepositoryFactory {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not extract repository files from ''{0}'' to ''{1}''", 
                     new Object[] {srcFile, dst});
             err.setChildErrorMessage(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage()));
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         } finally {
             SVNFileUtil.closeFile(jis);
             SVNFileUtil.closeFile(is);

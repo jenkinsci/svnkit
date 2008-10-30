@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNLookClient;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNLookTreeCommand extends SVNLookCommand implements ISVNTreeHandler {

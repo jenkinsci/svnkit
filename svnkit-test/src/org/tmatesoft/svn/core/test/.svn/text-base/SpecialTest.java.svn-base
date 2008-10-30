@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.test;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -23,7 +24,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SpecialTest {
@@ -95,15 +96,16 @@ public class SpecialTest {
     }
     
     private static void commitWC(File wc) throws SVNException {
-        getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "commit", false, true);
+        getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "commit", null, null, false, false, SVNDepth.INFINITY);
     }
 
     private static void commitLink(File file) throws SVNException {
-        getClientManager().getCommitClient().doCommit(new File[] {file}, false, "commit", false, false);
+        getClientManager().getCommitClient().doCommit(new File[] {file}, false, "commit", null, null, false, false, SVNDepth.FILES);
     }
     
     private static void addSymlink(File wc, String linkPath) throws SVNException {
-        getClientManager().getWCClient().doAdd(new File(wc, linkPath), false, false, false, false);
+        getClientManager().getWCClient().doAdd(new File(wc, linkPath), false, false, false, 
+                SVNDepth.EMPTY, false, false);
     }
 
     private static void createSymlink(File wc, String filePath, String target) {
@@ -112,10 +114,13 @@ public class SpecialTest {
     
     private static void createFixture(SVNURL url, File wc) throws SVNException {
         // checkout from repository, create directories and commit.
-        getClientManager().getUpdateClient().doCheckout(url, wc, SVNRevision.UNDEFINED, SVNRevision.HEAD, true);
-        getClientManager().getWCClient().doAdd(new File(wc, "trunk"), false, true, false, false);
-        getClientManager().getWCClient().doAdd(new File(wc, "linked"), false, true, false, false);
-        getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "import", false, true);        
+        getClientManager().getUpdateClient().doCheckout(url, wc, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNDepth.INFINITY, false);
+        getClientManager().getWCClient().doAdd(new File(wc, "trunk"), false, true, false, SVNDepth.EMPTY, false, 
+                false);
+        getClientManager().getWCClient().doAdd(new File(wc, "linked"), false, true, false, SVNDepth.EMPTY, false, 
+                false);
+        getClientManager().getCommitClient().doCommit(new File[] {wc}, false, "import", null, null, false, false, 
+                SVNDepth.INFINITY);
     }
     
     private static SVNClientManager getClientManager() {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,10 +27,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminSetLogCommand extends SVNAdminCommand {
@@ -48,11 +49,11 @@ public class SVNAdminSetLogCommand extends SVNAdminCommand {
 
     public void run() throws SVNException {
         if (getSVNAdminEnvironment().getStartRevision() == SVNRevision.UNDEFINED) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Missing revision"));
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Missing revision"), SVNLogType.CLIENT);
         } 
         if (getSVNAdminEnvironment().getEndRevision() != SVNRevision.UNDEFINED) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Only one revision allowed"));
+                    "Only one revision allowed"), SVNLogType.CLIENT);
         }
         File repos = getLocalRepository();
         List targets = getEnvironment().combineTargets(null, false);
@@ -61,13 +62,13 @@ public class SVNAdminSetLogCommand extends SVNAdminCommand {
         }
         if (targets.size() != 1) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                "Exactly one file argument required"));
+                "Exactly one file argument required"), SVNLogType.CLIENT);
         }
         
         SVNPath target = new SVNPath((String) targets.get(0));
         if (!target.isFile()) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                "Exactly one file argument required"));
+                "Exactly one file argument required"), SVNLogType.CLIENT);
         }
         SVNPropertyValue propertyValue = SVNPropertyValue.create(SVNRevisionProperty.LOG, getEnvironment().readFromFile(target.getFile()));
         SVNURL url = SVNURL.fromFile(repos);

@@ -1,11 +1,5 @@
 K 25
 svn:wc:ra_dav:version-url
-V 80
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit-eclipse/org.tmatesoft.svnkit
-END
-.options
-K 25
-svn:wc:ra_dav:version-url
-V 89
-/repos/svnkit/!svn/ver/4583/tags/1.2.0-beta4/svnkit-eclipse/org.tmatesoft.svnkit/.options
+V 74
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-eclipse/org.tmatesoft.svnkit
 END

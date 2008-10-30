@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-19T00:26:02.392326Z
-4557
+2008-09-23T16:08:36.310979Z
+4917
 alex
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-3478acf147df80cbb8686cd645549ee0
-2008-06-10T15:29:54.640297Z
-4317
+2008-10-30T04:44:33.000000Z
+39aa34fc1e4e025119d1a8776cec9b87
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2591
 
 SaslInputStream.class
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-ab8fa1520db584d1c74f19a86d2b9b56
-2008-06-10T15:29:54.640297Z
-4317
+2008-10-30T04:44:33.000000Z
+1d82f173add5b1ae27ec98dd731ac108
+2008-09-23T16:08:36.310979Z
+4917
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2118
 
 SaslOutputStream.class
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-34b9cd52482d5e547c2bf1bbd9bd1d22
-2008-06-10T15:29:54.640297Z
-4317
+2008-10-30T04:44:33.000000Z
+cf7cd65f74e0a994888c17e4cbb88775
+2008-07-31T18:09:36.198996Z
+4632
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2080
 
 SVNSaslAuthenticator.java
 file
@@ -71,12 +134,33 @@ file
 
 
 
-2008-08-02T14:58:31.000000Z
-3043737ad09ff6be7cba0705657abdcd
-2008-07-19T00:26:02.392326Z
-4557
+2008-10-30T04:44:33.000000Z
+4ce1cf39c8a92e2531442379b6e76964
+2008-09-23T16:08:36.310979Z
+4917
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18668
 
 SVNSaslAuthenticator.class
 file
@@ -84,12 +168,33 @@ file
 
 
 
-2008-08-02T14:58:31.000000Z
-ebbcab00b13423e20efd8e8cb3322905
-2008-07-19T00:26:02.392326Z
-4557
+2008-10-30T04:44:33.000000Z
+062b5a60a0371250fa3e6b730c76e6db
+2008-09-23T16:08:36.310979Z
+4917
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+13577
 
 SVNSaslAuthenticator$SVNCallbackHandler.class
 file
@@ -97,12 +202,33 @@ file
 
 
 
-2008-08-02T14:58:31.000000Z
-9732ee12b1841e2dfeaa0b47cf901907
-2008-07-19T00:26:02.392326Z
-4557
+2008-10-30T04:44:33.000000Z
+80dd319068ec029afdf57fdaf40bd22c
+2008-09-02T14:51:57.861873Z
+4811
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1969
 
 SaslInputStream.java
 file
@@ -110,10 +236,31 @@ file
 
 
 
-2008-07-24T04:58:26.000000Z
-86d262b6890920da331271b41c979841
-2008-06-10T15:29:54.640297Z
-4317
+2008-10-30T04:44:33.000000Z
+173e0b9e335b6c1e6adbc47cda8487b4
+2008-09-23T16:08:36.310979Z
+4917
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2694
 

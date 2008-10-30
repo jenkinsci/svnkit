@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.tmatesoft.svn.util.ISVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -57,7 +58,7 @@ public class SVNLogStream extends OutputStream {
             return;
         }
         if (myLog != null && myBuffer.size() > 0) {
-            myLog.log(myPrefix, myBuffer.toByteArray());
+            myLog.log(SVNLogType.NETWORK, myPrefix, myBuffer.toByteArray());
         }
         myBuffer.reset();
     }

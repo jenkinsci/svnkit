@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,10 +28,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNPropDelCommand extends SVNPropertiesCommand {
@@ -55,7 +56,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         String propertyName = getSVNEnvironment().popArgument();
         if (propertyName == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
         Collection targets = new ArrayList(); 
@@ -73,7 +74,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
         } else if (getSVNEnvironment().getStartRevision() != SVNRevision.UNDEFINED) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Cannot specify revision for deleting versioned property ''{0}''", propertyName);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         } else {
             SVNDepth depth = getSVNEnvironment().getDepth();
             if (depth == SVNDepth.UNKNOWN) {
@@ -94,7 +95,7 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                         } else {
                             client.setCommitHandler(getSVNEnvironment());
                             client.doSetProperty(target.getURL(), propertyName, null, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
-                                    getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), depth, this);
+                                    getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), this);
                         }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 

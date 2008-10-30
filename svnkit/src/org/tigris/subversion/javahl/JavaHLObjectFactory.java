@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -54,9 +54,10 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class JavaHLObjectFactory {
@@ -250,8 +251,6 @@ public class JavaHLObjectFactory {
             return SVNRevision.create(((Revision.Number)r).getNumber());
         } else if(r.getKind() == RevisionKind.date){
             return SVNRevision.create(((Revision.DateSpec)r).getDate());
-        } else if (r == Revision.START) {
-            return SVNRevision.create(0);
         }
         return (SVNRevision)REVISION_KIND_CONVERSION_MAP.get(new Integer(r.getKind()));
     }
@@ -722,8 +721,9 @@ public class JavaHLObjectFactory {
             code = e.getErrorMessage().getErrorCode().getCode();
         }
         ClientException ec = new ClientException(e.getMessage(), null, code);
-        svnClient.getDebugLog().logFine(ec);
-        svnClient.getDebugLog().logFine(e);
+        ec.initCause(e);
+        svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, ec);
+        svnClient.getDebugLog().logFine(SVNLogType.DEFAULT, e);
         throw ec;
     }
 

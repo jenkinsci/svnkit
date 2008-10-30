@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
-import java.io.OutputStream;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -48,15 +47,19 @@ import org.tmatesoft.svn.core.SVNException;
  *                          });
  *     ...</pre><br />
  * 
- * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see     SVNLogClient
  */
 public interface ISVNAnnotateHandler {
     
 	/**
-     * @deprecated use {@link #handleLine(Date, long, String, String, Date, long, String, String, int)}
+     * @param date 
+	 * @param revision 
+	 * @param author 
+	 * @param line 
+	 * @throws SVNException 
+	 * @deprecated use {@link #handleLine(Date, long, String, String, Date, long, String, String, int)}
      *             instead 
 	 */
     public void handleLine(Date date, long revision, String author, String line) throws SVNException;
@@ -66,28 +69,37 @@ public interface ISVNAnnotateHandler {
      * who last committed (changed) this line, the revision and timestamp when it was last 
      * committed. 
      * 
-     * @param date          the time moment when changes to <code>line</code> were commited
-     *                      to the repository       
-     * @param revision      the revision the changes were commited to
-     * @param author        the person who did those changes
-     * @param line          a text line of the target file (on which 
-     *                      {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
-     *                      was invoked)
-     * @param mergedDate    date when merge changes occurred
-     * @param megedRevision revision in which merge changes occurred
-     * @param mergedAuthor  author of merge
-     * @param mergedPath      
+     * <p/>
+     * Parameters <code>mergedDate</code>, <code>mergedRevision</code>, <code>mergedAuthor</code> and 
+     * <code>mergedPath</code> will be set only if the corresponding method <code>doAnnotate</code> of 
+     * {@link SVNLogClient} was called with <code>includeMergedRevisions</code> set to <span class="javakeyword">true</span>.
+     * Otherwise they are irrelevant.
+     * 
+     * <p/>
+     * Note: if there is no blame information for this line, <code>revision</code> will be
+     * invalid and <code>author</code> and <code>date</code> will be <span class="javakeyword">null</span>.
+     * 
+     * @param date           the time moment when changes to <code>line</code> were commited
+     *                       to the repository       
+     * @param revision       the revision the changes were commited to
+     * @param author         the person who did those changes
+     * @param line           a text line of the target file (on which 
+     *                       {@link SVNLogClient#doAnnotate(File, SVNRevision, SVNRevision, SVNRevision, ISVNAnnotateHandler) doAnnotate()}
+     *                       was invoked)
+     * @param mergedDate     date when merge changes occurred
+     * @param mergedRevision revision in which merge changes occurred
+     * @param mergedAuthor   author of merge
+     * @param mergedPath     absolute repository path of the merged file        
+     * @param lineNumber     number of the file line for which this information is annotated
      * @throws SVNException  
      */
-    public void handleLine(Date date, long revision, String author, String line, 
-                           Date mergedDate, long mergedRevision, String mergedAuthor, 
-                           String mergedPath, int lineNumber) throws SVNException;
+    public void handleLine(Date date, long revision, String author, String line, Date mergedDate, 
+            long mergedRevision, String mergedAuthor, String mergedPath, int lineNumber) throws SVNException;
     
     /**
-     * When non-null OutputStream is returned by this method, caller will write 
-     * contents of the file at revision specified to it. Caller will call {@link OutputStream#close()} 
-     * after file contents is written.
-
+     * Handles file information for a next revision. If this method returns <span class="javakeyword">true</span> 
+     * then file contents will be annotated for <code>revision</code> as well.   
+     * 
      * @param date          the time moment when changes to <code>line</code> were commited
      *                      to the repository       
      * @param revision      the revision the changes were commited to
@@ -95,12 +107,14 @@ public interface ISVNAnnotateHandler {
      * @param contents      temporary file with contents. This file shouldn't be used 
      *                      as persistent reference as it will be overwritten after this method exits
      *                      and eventually deleted.
-     *                       
-     * @return OutputStream to which contents of the file have to be written or null if no contents is needed. 
-     * 
+     * @return              <span class="javakeyword">true</span> to annotate the file for <code>revision</code>
      * @throws SVNException  
      */
     public boolean handleRevision(Date date, long revision, String author, File contents) throws SVNException;
 
+    /**
+     * Handles the EOF met after the document contents.
+     * @since  1.2.0
+     */
     public void handleEOF();
 }

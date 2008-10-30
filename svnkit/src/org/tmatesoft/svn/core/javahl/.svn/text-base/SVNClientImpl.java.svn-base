@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -126,13 +127,13 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.Version;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.util.Version;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNClientImpl implements SVNClientInterface {
 
@@ -166,7 +167,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     /**
      * @author TMate Software Ltd.
-     * @version 1.1.1
+     * @version 1.2.0
      */
     public static final class LogLevel implements SVNClientLogLevel {
     }
@@ -239,8 +240,6 @@ public class SVNClientImpl implements SVNClientInterface {
         if (myDebugLog == null) {
             myDebugLog = new JavaHLCompositeLog();
             myDebugLog.addLogger(SVNDebugLog.getDefaultLog());
-            myDebugLog.addLogger(SVNDebugLog.getLog(SVNLogType.NETWORK));
-            myDebugLog.addLogger(SVNDebugLog.getLog(SVNLogType.WC));
             myDebugLog.addLogger(JavaHLDebugLog.getInstance());
         }
         return myDebugLog;
@@ -394,7 +393,7 @@ public class SVNClientImpl implements SVNClientInterface {
             ((DefaultSVNAuthenticationManager)myAuthenticationManager).setRuntimeStorage(getClientCredentialsStorage());
         }
         if (myClientManager != null) {
-            myClientManager.shutdownConnections(true);
+            myClientManager.dispose();
             myClientManager.setAuthenticationManager(myAuthenticationManager);
             myClientManager.setOptions(myOptions);
         }
@@ -440,8 +439,11 @@ public class SVNClientImpl implements SVNClientInterface {
     private void logMessages(String path, Revision pegRevision, Revision revisionStart, Revision revisionEnd, boolean stopOnCopy, boolean discoverPath, boolean includeMergeInfo, String[] revisionProperties, long limit, ISVNLogEntryHandler logEntryHandler) throws ClientException {
         SVNLogClient client = getSVNLogClient();
         try {
-            if (revisionEnd == null) {
-                revisionEnd = Revision.getInstance(1); 
+            if (revisionEnd == null || revisionEnd.getKind() == RevisionKind.unspecified) {
+                revisionEnd = Revision.HEAD; 
+            }
+            if (revisionStart != null && revisionStart.getKind() == RevisionKind.unspecified) {
+                revisionStart = Revision.getInstance(1);
             }
             if (isURL(path)) {
                 if (revisionStart == null) {
@@ -845,7 +847,7 @@ public class SVNClientImpl implements SVNClientInterface {
             for (int i = 0; i < files.length; i++) {
                 File file = files[i];
                 try {
-                    getSVNWCClient().doAdd(file, false, true, false, false, false);
+                    getSVNWCClient().doAdd(file, false, true, false, SVNDepth.EMPTY, false, false);
                 } catch (SVNException e) {
                     throwException(e);
                 } finally {
@@ -1049,10 +1051,10 @@ public class SVNClientImpl implements SVNClientInterface {
         try {
             if (isURL(path)) {
                 SVNURL url = SVNURL.parseURIEncoded(path);
-                mergeSrcURLs = client.suggestMergeSources(url,
+                mergeSrcURLs = client.doSuggestMergeSources(url,
                         JavaHLObjectFactory.getSVNRevision(pegRevision));
             } else {
-                mergeSrcURLs = client.suggestMergeSources(new File(path).getAbsoluteFile(),
+                mergeSrcURLs = client.doSuggestMergeSources(new File(path).getAbsoluteFile(),
                     JavaHLObjectFactory.getSVNRevision(pegRevision));
             }
             if (mergeSrcURLs != null) {
@@ -1078,10 +1080,10 @@ public class SVNClientImpl implements SVNClientInterface {
         Map mergeInfo = null;
         try {
             if (isURL(path)) {
-                mergeInfo = client.getMergedMergeInfo(SVNURL.parseURIEncoded(path),
+                mergeInfo = client.doGetMergedMergeInfo(SVNURL.parseURIEncoded(path),
                         JavaHLObjectFactory.getSVNRevision(revision));
             } else {
-                mergeInfo = client.getMergedMergeInfo(new File(path).getAbsoluteFile(),
+                mergeInfo = client.doGetMergedMergeInfo(new File(path).getAbsoluteFile(),
                         JavaHLObjectFactory.getSVNRevision(revision));
             }
             return JavaHLObjectFactory.createMergeInfo(mergeInfo);
@@ -1110,16 +1112,16 @@ public class SVNClientImpl implements SVNClientInterface {
             if (isURL(pathOrUrl)) {
                 SVNURL url = SVNURL.parseURIEncoded(pathOrUrl);
                 if (kind == MergeinfoLogKind.eligible) {
-                    client.getLogEligibleMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogEligibleMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 } else if (kind == MergeinfoLogKind.merged) {
-                    client.getLogMergedMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogMergedMergeInfo(url, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 }
             } else {
                 File path = new File(pathOrUrl).getAbsoluteFile();
                 if (kind == MergeinfoLogKind.eligible) {
-                    client.getLogEligibleMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogEligibleMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 } else if (kind == MergeinfoLogKind.merged) {
-                    client.getLogMergedMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
+                    client.doGetLogMergedMergeInfo(path, pegRev, mergeSrcURL, srcPegRev, discoverChangedPaths, revprops, handler);
                 }
             }
         } catch (SVNException e) {
@@ -1210,7 +1212,7 @@ public class SVNClientImpl implements SVNClientInterface {
                SVNProperties revisionProperties = revprops == null ? null : SVNProperties.wrap(revprops);
                client.setCommitHandler(createCommitMessageHandler(true));
                client.doSetProperty(SVNURL.parseURIEncoded(path), name, value, SVNRevision.HEAD,
-                        "", revisionProperties, force, JavaHLObjectFactory.getSVNDepth(depth), ISVNPropertyHandler.NULL);
+                        "", revisionProperties, force, ISVNPropertyHandler.NULL);
            } catch (SVNException e) {
                throwException(e);
            } finally {
@@ -1687,9 +1689,10 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public static void enableLogging(int logLevel, String logFilePath) {
         try {
-            JavaHLDebugLog.getInstance().enableLogging(logLevel, new File(logFilePath), new DefaultSVNDebugFormatter());
+            JavaHLDebugLog.getInstance().enableLogging(logLevel, new File(logFilePath), 
+                    new DefaultSVNDebugFormatter());
         } catch (SVNException e) {
-            JavaHLDebugLog.getInstance().logSevere(e);
+            JavaHLDebugLog.getInstance().logSevere(SVNLogType.DEFAULT, e);
         }
     }
 
@@ -1742,7 +1745,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 public void checkCancelled() throws SVNCancelException {
                     if (myCancelOperation) {
                         myCancelOperation = false;
-                        SVNErrorManager.cancel("operation cancelled");
+                        SVNErrorManager.cancel("operation cancelled", SVNLogType.DEFAULT);
                     }
                 }
             };
@@ -1761,7 +1764,7 @@ public class SVNClientImpl implements SVNClientInterface {
                         try {
                             result = JavaHLObjectFactory.getSVNConflictResult(myConflictResolverCallback.resolve(descriptor));
                         } catch (SubversionException e) {
-                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e), e);
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.UNKNOWN, e), e, SVNLogType.DEFAULT);
                         }
                     }
                     return result;
@@ -1901,7 +1904,7 @@ public class SVNClientImpl implements SVNClientInterface {
         }
 
         try {
-            changelistClient.addToChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelist, changelists);
+            changelistClient.doAddToChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelist, changelists);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1921,7 +1924,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
         SVNChangelistClient changelistClient = getChangelistClient();
         try {
-            changelistClient.removeFromChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelists);
+            changelistClient.doRemoveFromChangelist(files, JavaHLObjectFactory.getSVNDepth(depth), changelists);
         } catch (SVNException e) {
             throwException(e);
         } finally {
@@ -1945,7 +1948,7 @@ public class SVNClientImpl implements SVNClientInterface {
         
         SVNChangelistClient changelistClient = getChangelistClient();
         try {
-            changelistClient.getChangeLists(new File(rootPath).getAbsoluteFile(), 
+            changelistClient.doGetChangeLists(new File(rootPath).getAbsoluteFile(), 
                     JavaHLObjectFactory.getChangeListsCollection(changelists), 
                     JavaHLObjectFactory.getSVNDepth(depth), handler);
         } catch (SVNException e) {
@@ -2072,7 +2075,7 @@ public class SVNClientImpl implements SVNClientInterface {
         File file = null;
         if (relativePath != null) {
             if (isURL(relativePath)) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Relative path ''{0}'' should not be URL", relativePath));                                
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, "Relative path ''{0}'' should not be URL", relativePath), SVNLogType.DEFAULT);
             }
             file = new File(relativePath).getAbsoluteFile();
         }
@@ -2204,10 +2207,14 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNRevision(revision),
                     JavaHLObjectFactory.getSVNDepth(depth), handler);
         } else {
+            Collection changeListsCollection = null;
+            if (changelists != null && changelists.length > 0) {
+                changeListsCollection = Arrays.asList(changelists);
+            }
             client.doInfo(new File(pathOrUrl).getAbsoluteFile(),
                     JavaHLObjectFactory.getSVNRevision(pegRevision),
                     JavaHLObjectFactory.getSVNRevision(revision),
-                    JavaHLObjectFactory.getSVNDepth(depth), changelists, handler);
+                    JavaHLObjectFactory.getSVNDepth(depth), changeListsCollection, handler);
         }
     }
 }

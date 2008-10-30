@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,10 +25,11 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandler {
@@ -49,21 +50,15 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         if (targets.size() < 1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Not enough arguments given");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         if (targets.size() > 2) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                     "Too many arguments given");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         
         SVNPath source = new SVNPath((String) targets.get(0), true);
-        if (!source.isURL()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "Path ''{0}'' is not a URL", source.getTarget());
-            SVNErrorManager.error(err);
-        }
-        
         SVNRevision srcPegRevision = source.getPegRevision();
         if (srcPegRevision == SVNRevision.UNDEFINED) {
             srcPegRevision = SVNRevision.HEAD;
@@ -91,19 +86,39 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
         SVNDiffClient client = getSVNEnvironment().getClientManager().getDiffClient();
         if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.MERGED) {
             if (target.isURL()) {
-                client.getLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                        false, null, this);
+                if (source.isURL()) {
+                    client.doGetLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                            false, null, this);
+                } else {
+                    client.doGetLogMergedMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                            false, null, this);
+                }
             } else {
-                client.getLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
-                        false, null, this);
+                if (source.isURL()) {
+                    client.doGetLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision,
+                            false, null, this);
+                } else {
+                    client.doGetLogMergedMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision,
+                            false, null, this);
+                }
             }
         } else if (getSVNEnvironment().getShowRevisionType() == SVNShowRevisionType.ELIGIBLE) {
             if (target.isURL()) {
-                client.getLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                        false, null, this);
+                if (source.isURL()) {
+                    client.doGetLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                            false, null, this);
+                } else {
+                    client.doGetLogEligibleMergeInfo(target.getURL(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                            false, null, this);
+                }
             } else {
-                client.getLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
-                        false, null, this);
+                if (source.isURL()) {
+                    client.doGetLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getURL(), srcPegRevision, 
+                            false, null, this);
+                } else {
+                    client.doGetLogEligibleMergeInfo(target.getFile(), tgtPegRevision, source.getFile(), srcPegRevision, 
+                            false, null, this);
+                }
             }
         }
     }

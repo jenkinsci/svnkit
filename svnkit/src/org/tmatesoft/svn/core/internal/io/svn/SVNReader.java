@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,11 +29,12 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNReader {
 
@@ -107,7 +108,7 @@ public class SVNReader {
             SVNItem item = (SVNItem) prop.next();
             if (item.getKind() != SVNItem.LIST) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Proplist element not a list");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             List propItems = parseTuple("sb", item.getItems(), null);
             properties.put(getString(propItems, 0), getBytes(propItems, 1));
@@ -128,7 +129,7 @@ public class SVNReader {
             SVNItem item = (SVNItem) iterator.next();
             if (item.getKind() != SVNItem.LIST) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Prop diffs element not a list");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             List values = parseTuple("s(?b)", item.getItems(), null);
             diffs.put(getString(values, 0), getBytes(values, 1));
@@ -240,7 +241,7 @@ public class SVNReader {
             handleFailureStatus(list);
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Unknown status ''{0}'' in command response", word);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return null;
     }
@@ -248,7 +249,7 @@ public class SVNReader {
     public static void handleFailureStatus(List list) throws SVNException {
         if (list.size() == 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Empty error list");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         SVNErrorMessage topError = getErrorMessage((SVNItem) list.get(list.size() - 1));
         SVNErrorMessage parentError = topError;
@@ -258,13 +259,13 @@ public class SVNReader {
             parentError.setChildErrorMessage(error);
             parentError = error;
         }
-        SVNErrorManager.error(topError);
+        SVNErrorManager.error(topError, SVNLogType.NETWORK);
     }
 
     private static SVNErrorMessage getErrorMessage(SVNItem item) throws SVNException {
         if (item.getKind() != SVNItem.LIST) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Malformed error list");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         List errorItems = parseTuple(DEAFAULT_ERROR_TEMPLATE, item.getItems(), null);
         int code = ((Long) errorItems.get(0)).intValue();
@@ -280,7 +281,7 @@ public class SVNReader {
         SVNItem item = readItem(is, null, ch);
         if (item.getKind() != SVNItem.LIST) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return parseTuple(template, item.getItems(), null);
     }
@@ -363,14 +364,14 @@ public class SVNReader {
                         break;
                     default:
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 index++;
             }
         }
         if (index == (template.length() - 1) && template.charAt(index) != ')') {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return index;
     }
@@ -389,7 +390,7 @@ public class SVNReader {
                     value = value * 10 + Character.digit(ch, 10);
                     if (previousValue != value / 10) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Number is larger than maximum");
-                        SVNErrorManager.error(err);
+                        SVNErrorManager.error(err, SVNLogType.NETWORK);
                     }
                     continue;
                 }
@@ -404,13 +405,13 @@ public class SVNReader {
                         int r = is.read(buffer, buffer.length - toRead, toRead);
                         if (r <= 0) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                         toRead -= r;
                     }
                 } catch (IOException e) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 item.setKind(SVNItem.BYTES);
                 item.setLine(buffer);
@@ -450,7 +451,7 @@ public class SVNReader {
         }
         if (!Character.isWhitespace(ch)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return item;
     }
@@ -461,11 +462,11 @@ public class SVNReader {
             r = is.read();
             if (r < 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         return (char) (r & 0xFF);
     }

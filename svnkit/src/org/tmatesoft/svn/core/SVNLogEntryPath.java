@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,12 +25,14 @@ import java.io.Serializable;
  * they are representations of all the changed paths in the revision represented
  * by that <b>SVNLogEntry</b> object.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  * @see 	SVNLogEntry
  */
 public class SVNLogEntryPath implements Serializable {
     
+    private static final long serialVersionUID = 1L;
+
     /**
      * Char <span class="javastring">'A'</span> (item added).
      */

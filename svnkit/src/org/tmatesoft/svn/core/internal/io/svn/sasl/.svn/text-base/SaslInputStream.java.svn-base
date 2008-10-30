@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.svn.sasl;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -19,7 +20,7 @@ import javax.security.sasl.SaslClient;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SaslInputStream extends InputStream {
@@ -28,7 +29,6 @@ public class SaslInputStream extends InputStream {
     private SaslClient myClient;
     private byte[] myReadBuffer;
     
-    private byte[] myLengthBuffer = new byte[4];
     private ByteBuffer myByteBuffer;
 
     public SaslInputStream(SaslClient client, int bufferSize, InputStream in) {
@@ -70,7 +70,7 @@ public class SaslInputStream extends InputStream {
                 if (myByteBuffer.remaining() == 0) {
                     myByteBuffer = null;
                 }
-                return off;
+                return read;
             }
         }
     }
@@ -80,26 +80,12 @@ public class SaslInputStream extends InputStream {
     }
 
     private void fetchDecodedBuffer() throws IOException {
-        int r = mySource.read(myLengthBuffer);
-        if (r != 4) {
-            throw new IOException("Cannot read encoded buffer header");
+        DataInputStream dis = new DataInputStream(mySource);
+        int encodedLength = dis.readInt();
+        if (myReadBuffer.length < encodedLength) {
+            myReadBuffer = new byte[(encodedLength * 3) / 2];
         }
-        int encodedLength = (myLengthBuffer[0] << 24) | 
-                            (myLengthBuffer[1] & 0xFF) << 16 | 
-                            (myLengthBuffer[2] & 0xFF) << 8 | 
-                            (myLengthBuffer[3] & 0xFF);
-        r = 0;
-        while(encodedLength > 0) {
-            int read = mySource.read(myReadBuffer, r, encodedLength);
-            if (read < 0) {
-                throw new IOException("Cannot read encoded buffer");
-            }
-            r += read;
-            encodedLength -= read;
-        }
-        if (encodedLength != 0) {
-            throw new IOException("Cannot read encoded buffer");
-        }
-        myByteBuffer = ByteBuffer.wrap(myClient.unwrap(myReadBuffer, 0, r));
+        dis.readFully(myReadBuffer, 0, encodedLength);
+        myByteBuffer = ByteBuffer.wrap(myClient.unwrap(myReadBuffer, 0, encodedLength));
     }
 }

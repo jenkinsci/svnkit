@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class CountingStream extends FilterOutputStream {
@@ -29,13 +29,18 @@ public class CountingStream extends FilterOutputStream {
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        super.out.write(b, off, len);
+        out.write(b, off, len);
         myPosition += len;
     }
 
     public void write(int b) throws IOException {
-        super.write(b);
+        out.write(b);
         myPosition++;
+    }
+
+    public void write(byte[] b) throws IOException {
+        out.write(b);
+        myPosition += b.length;
     }
 
     public long getPosition() {

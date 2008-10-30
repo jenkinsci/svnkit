@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,11 +24,12 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.1
+ * @version 1.2.0
  */
 public class SVNPathUtil {
 
@@ -59,7 +60,7 @@ public class SVNPathUtil {
             char ch = path.charAt(i);
             if (SVNEncodingUtil.isASCIIControlChar(ch)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Invalid control character ''{0}'' in path ''{1}''", new String[]{"0x" + SVNFormatUtil.getHexNumberFromByte((byte) ch), path});
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
         }
     }
@@ -440,19 +441,12 @@ public class SVNPathUtil {
         if (pathChild.compareTo(path) == 0) {
             return null;
         }
-        int count = 0;
-        for (count = 0; count < path.length() && count < pathChild.length(); count++) {
-            if (path.charAt(count) != pathChild.charAt(count)) {
-                return null;
-            }
-        }
-        if (count == path.length() && count < pathChild.length()) {
-            if (pathChild.charAt(count) == '/') {
-                return pathChild.substring(count + 1);
-            } else if (count == 1 && path.charAt(0) == '/') {
-                return pathChild.substring(1);
-            }
-        }
+	    if (!path.endsWith("/")) { // We don't want to have /foobar being a child of /foo
+		    path = path + "/";
+	    }
+	    if (pathChild.startsWith(path)) {
+		    return pathChild.substring(path.length());
+	    }
         return null;
     }
 

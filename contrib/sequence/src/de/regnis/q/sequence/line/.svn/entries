@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/contrib/sequence/src/de/regnis/q/sequence/line
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/line
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-06-05T20:44:33.220049Z
-4295
-alex
+2008-07-30T16:53:59.266781Z
+4613
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -26,6 +26,40 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
+QSequenceLineResult.java
+file
+
+
+
+
+2008-10-30T04:42:00.000000Z
+d786fd7aafc4ebff6684ca476b9001cf
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1412
+
 QSequenceLineFileSystemCacheSegments.java
 file
 
@@ -39,17 +73,39 @@ file
 alex
 has-props
 
-QSequenceLineResult.java
+QSequenceLineMedia.java
 file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-18da829a1ae2fdbc00509e7f2c75d628
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+cac7afcd9fa8a6991f850e3b8416f244
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9418
 
 QSequenceLine.java
 file
@@ -64,29 +120,39 @@ b84273ac6be5b7b4158353a8ad1a4ba3
 alex
 has-props
 
-QSequenceLineMedia.java
-file
-
-
-
-
-2008-07-24T04:58:24.000000Z
-976ad97c89de337ab44653a6712f7c80
-2008-04-01T17:30:14.226162Z
-4095
-alex
-
 QSequenceLineRAByteData.java
 file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-52e52a73dca79698941086bcdc8e1951
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+ecbc4caa474e3cb2d157f32edfd6797a
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1603
 
 QSequenceLineTempDirectoryFactory.java
 file
@@ -140,17 +206,39 @@ c58011d9d68d324a9a6c813e6001212a
 alex
 has-props
 
-QSequenceLineMemoryCache.java
+QSequenceLineRAFileData.java
 file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-fc7b9b03dd0692f213634c13effc0040
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+906560afe3510ff7805a700640c64c6d
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1509
 
 QSequenceLineRAData.java
 file
@@ -158,39 +246,70 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-aa73b4c2c8118879bcd7e9ef8b9b9b68
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+5d7869d761eb1901fad2c4e744200a13
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+709
 
-QSequenceLineRAFileData.java
+QSequenceLineMemoryCache.java
 file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-926bc2273654cab7927d9a6b550e0cc9
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+021a4ac5bc9575356d90a3992b034a45
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1652
 
 simplifier
 dir
-
-QSequenceLineReader.java
-file
-
-
-
-
-2008-07-24T04:58:24.000000Z
-bb37d33753e48cb7af7998f8a71e5237
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
 
 QSequenceLineFixedTempDirectoryFactory.java
 file
@@ -205,17 +324,52 @@ a033a9b11cce77c01961bb2167811f6f
 alex
 has-props
 
-QSequenceLineCache.java
+QSequenceLineReader.java
 file
 
 
 
 
 2008-07-24T04:58:24.000000Z
-7214e854c97c940fd55c512a7d5a1118
+bb37d33753e48cb7af7998f8a71e5237
 2008-04-01T17:30:14.226162Z
 4095
 alex
+has-props
+
+QSequenceLineCache.java
+file
+
+
+
+
+2008-10-30T04:42:00.000000Z
+9d74fc75f00eeec78e1990bda6866585
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+751
 
 diff
 dir
@@ -226,11 +380,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-bfeaa7b1ad560a9e6f2c901c1e3fb23e
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+f7b5c259ee06e687322c57af894edaa2
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1793
 
 QSequenceLineFileSystemCache.java
 file
@@ -238,9 +414,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-b8b237aa47f1b6eb054807adb614ce33
-2008-04-01T17:30:14.226162Z
-4095
-alex
+2008-10-30T04:42:00.000000Z
+509a6dd054e9b725314b43ae12000a21
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2915
 

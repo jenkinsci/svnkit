@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -770,13 +771,14 @@ public class WorkingCopy {
      * will be added with all its child subdirictories, otherwise the operation will cover
      * only the directory itself (only those files which are located in the directory).  
      */
-    private static SVNCommitInfo importDirectory(File localPath, SVNURL dstURL, String commitMessage, boolean isRecursive) throws SVNException{
+    private static SVNCommitInfo importDirectory(File localPath, SVNURL dstURL, String commitMessage, 
+            boolean isRecursive) throws SVNException{
         /*
          * Returns SVNCommitInfo containing information on the new revision committed 
          * (revision number, etc.) 
          */
-        return ourClientManager.getCommitClient().doImport(localPath, dstURL, commitMessage, isRecursive);
-        
+        return ourClientManager.getCommitClient().doImport(localPath, dstURL, commitMessage, null, true, false, 
+                SVNDepth.fromRecurse(isRecursive));
     }
     /*
      * Committs changes in a working copy to a repository. Like 
@@ -806,8 +808,8 @@ public class WorkingCopy {
          * Returns SVNCommitInfo containing information on the new revision committed 
          * (revision number, etc.) 
          */
-        return ourClientManager.getCommitClient().doCommit(new File[] { wcPath }, keepLocks,
-                commitMessage, false, true);
+        return ourClientManager.getCommitClient().doCommit(new File[] { wcPath }, keepLocks, commitMessage, 
+                null, null, false, false, SVNDepth.INFINITY);
     }
 
     /*
@@ -844,7 +846,8 @@ public class WorkingCopy {
         /*
          * returns the number of the revision at which the working copy is 
          */
-        return updateClient.doCheckout(url, destPath, revision, revision, isRecursive);
+        return updateClient.doCheckout(url, destPath, revision, revision, SVNDepth.fromRecurse(isRecursive), 
+                false);
     }
     
     /*
@@ -862,9 +865,7 @@ public class WorkingCopy {
      * recursive - if true and an entry is a directory then doUpdate(..) recursively 
      * updates the entire directory, otherwise - only child entries of the directory;   
      */
-    private static long update(File wcPath,
-            SVNRevision updateToRevision, boolean isRecursive)
-            throws SVNException {
+    private static long update(File wcPath, SVNRevision updateToRevision, boolean isRecursive) throws SVNException {
 
         SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
         /*
@@ -874,7 +875,7 @@ public class WorkingCopy {
         /*
          * returns the number of the revision wcPath was updated to
          */
-        return updateClient.doUpdate(wcPath, updateToRevision, isRecursive);
+        return updateClient.doUpdate(wcPath, updateToRevision, SVNDepth.fromRecurse(isRecursive), false, false);
     }
     
     /*
@@ -894,9 +895,7 @@ public class WorkingCopy {
      * recursive - if true and an entry (file) is a directory then doSwitch(..) recursively 
      * switches the entire directory, otherwise - only child entries of the directory;   
      */
-    private static long switchToURL(File wcPath,
-            SVNURL url, SVNRevision updateToRevision, boolean isRecursive)
-            throws SVNException {
+    private static long switchToURL(File wcPath, SVNURL url, SVNRevision updateToRevision, boolean isRecursive) throws SVNException {
         SVNUpdateClient updateClient = ourClientManager.getUpdateClient();
         /*
          * sets externals not to be ignored during the switch
@@ -905,8 +904,8 @@ public class WorkingCopy {
         /*
          * returns the number of the revision wcPath was updated to
          */
-        return updateClient.doSwitch(wcPath, url, updateToRevision,
-                isRecursive);
+        return updateClient.doSwitch(wcPath, url, SVNRevision.UNDEFINED, updateToRevision, 
+                SVNDepth.getInfinityOrFilesDepth(isRecursive), false, false);
     }
 
     /*
@@ -945,8 +944,9 @@ public class WorkingCopy {
          * StatusHandler displays status information for each entry in the console (in the 
          * manner of the native Subversion command line client)
          */
-        ourClientManager.getStatusClient().doStatus(wcPath, isRecursive, isRemote, isReportAll,
-                isIncludeIgnored, isCollectParentExternals, new StatusHandler(isRemote));
+        ourClientManager.getStatusClient().doStatus(wcPath, SVNRevision.HEAD, SVNDepth.fromRecurse(isRecursive), 
+                isRemote, isReportAll, isIncludeIgnored, isCollectParentExternals, new StatusHandler(isRemote), 
+                null);
     }
 
     /*
@@ -976,7 +976,8 @@ public class WorkingCopy {
          * InfoHandler displays information for each entry in the console (in the manner of
          * the native Subversion command line client)
          */
-        ourClientManager.getWCClient().doInfo(wcPath, revision, isRecursive, new InfoHandler());
+        ourClientManager.getWCClient().doInfo(wcPath, SVNRevision.UNDEFINED, revision, 
+                SVNDepth.getInfinityOrEmptyDepth(isRecursive), null, new InfoHandler());
     }
     
     /*
@@ -1004,7 +1005,7 @@ public class WorkingCopy {
      * schedules all its inner dir entries for addition as well. 
      */
     private static void addEntry(File wcPath) throws SVNException {
-        ourClientManager.getWCClient().doAdd(wcPath, false, false, false, true);
+        ourClientManager.getWCClient().doAdd(wcPath, false, false, false, SVNDepth.INFINITY, false, false);
     }
     
     /*

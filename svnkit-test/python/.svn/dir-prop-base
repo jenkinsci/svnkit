@@ -1,6 +1,6 @@
 K 13
 svn:externals
 V 77
-cmdline http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/
+cmdline http://svn.collab.net/repos/svn/tags/1.5.2/subversion/tests/cmdline/
 
 END

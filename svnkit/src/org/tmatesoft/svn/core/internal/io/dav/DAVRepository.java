@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -68,9 +68,10 @@ import org.tmatesoft.svn.core.io.ISVNSession;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class DAVRepository extends SVNRepository {
@@ -190,9 +191,9 @@ public class DAVRepository extends SVNRepository {
             if (status.getError() != null) {
                 if (status.getError().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                     SVNErrorMessage err2 = SVNErrorMessage.create(status.getError().getErrorCode(), "Server does not support date-based operations");
-                    SVNErrorManager.error(err2, status.getError());
+                    SVNErrorManager.error(err2, status.getError(), SVNLogType.NETWORK);
                 }
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
     	} finally {
     		closeConnection();
@@ -212,7 +213,7 @@ public class DAVRepository extends SVNRepository {
         } catch (SVNException e) {
             SVNErrorMessage error = e.getErrorMessage();
             while (error != null) {
-                if (error.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                if (error.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                     return kind;
                 }
                 error = error.getChildErrorMessage();
@@ -329,7 +330,7 @@ public class DAVRepository extends SVNRepository {
                 Map dirEntsMap = new SVNHashMap();
                 HTTPStatus status = DAVUtil.getProperties(myConnection, path, DAVUtil.DEPTH_ONE, null, whichProps, dirEntsMap);
                 if (status.getError() != null) {
-                    SVNErrorManager.error(status.getError());
+                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
                 }
                 if (!hasRepositoryRoot()) {
                     myConnection.fetchRepositoryRoot(this);                    
@@ -363,7 +364,7 @@ public class DAVRepository extends SVNRepository {
                             SVNPropertyValue propVal = child.getPropertyValue(DAVElement.DEADPROP_COUNT);
                             if (propVal == null) {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Server response missing the expected deadprop-count property");
-                                SVNErrorManager.error(err);
+                                SVNErrorManager.error(err, SVNLogType.NETWORK);
                             } else {
                                 long propCount = Long.parseLong(propVal.getString());
                                 hasProperties = propCount > 0;
@@ -387,7 +388,7 @@ public class DAVRepository extends SVNRepository {
                             lastRevision = Long.parseLong(revisionStr.toString());
                         } catch (NumberFormatException nfe) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA);
-                            SVNErrorManager.error(err);
+                            SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
                     }
 
@@ -446,7 +447,7 @@ public class DAVRepository extends SVNRepository {
             Map dirEntsMap = new SVNHashMap();
             HTTPStatus status = DAVUtil.getProperties(myConnection, path, DAVUtil.DEPTH_ONE, null, dirProperties, dirEntsMap);
             if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
             for(Iterator dirEnts = dirEntsMap.keySet().iterator(); dirEnts.hasNext();) {
                 String url = (String) dirEnts.next();
@@ -542,13 +543,13 @@ public class DAVRepository extends SVNRepository {
             HTTPStatus status = myConnection.doReport(bcPath, request, davHandler);
             if (status.getCode() == 501) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'get-file-revs' REPORT not implemented");
-                SVNErrorManager.error(err, status.getError());
+                SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
             } else if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
             if (davHandler.getEntriesCount() <= 0) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The file-revs report didn't contain any revisions");
-                SVNErrorManager.error(err);
+                SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             return davHandler.getEntriesCount();
         } finally {
@@ -606,7 +607,7 @@ public class DAVRepository extends SVNRepository {
                 if (!DAVConnection.DAV_CAPABILITY_SERVER_YES.equals(capability) &&
                         !DAVConnection.DAV_CAPABILITY_YES.equals(capability)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "Server does not support custom revprops via log");
-                    SVNErrorManager.error(err);
+                    SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
             }
             long revision = Math.max(startRevision, endRevision);
@@ -616,7 +617,7 @@ public class DAVRepository extends SVNRepository {
             try {
                 HTTPStatus status = myConnection.doReport(path, request, davHandler);
                 if (status.getError() != null) {
-                    SVNErrorManager.error(status.getError());
+                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
                 }
             } catch (SVNException e) {
                 if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.UNKNOWN && davHandler.isCompatibleMode()) {
@@ -677,9 +678,9 @@ public class DAVRepository extends SVNRepository {
             HTTPStatus status = myConnection.doReport(path, request, davHandler);
             if (status.getCode() == 501) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'get-locations' REPORT not implemented");
-                SVNErrorManager.error(err, status.getError());
+                SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
             } else if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
             return davHandler.getEntriesCount();
         } finally {
@@ -714,9 +715,9 @@ public class DAVRepository extends SVNRepository {
             if (status.getCode() == 501) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
                         "'get-location-segments' REPORT not implemented");
-                SVNErrorManager.error(err, status.getError());
+                SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
             } else if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
             return davHandler.getTotalRevisions();
         } finally {
@@ -735,9 +736,9 @@ public class DAVRepository extends SVNRepository {
             if (status.getCode() == 501) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, 
                         "'replay' REPORT not implemented");
-                SVNErrorManager.error(err, status.getError());
+                SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
             } else if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
         } finally {
             closeConnection();
@@ -769,7 +770,7 @@ public class DAVRepository extends SVNRepository {
                 }
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "DAV request failed; it's possible that the repository's " +
                         "pre-revprop-change hook either failed or is non-existent");
-                SVNErrorManager.error(err, requestError);
+                SVNErrorManager.error(err, requestError, SVNLogType.NETWORK);
             }
         } finally {
             closeConnection();
@@ -814,7 +815,7 @@ public class DAVRepository extends SVNRepository {
                 throw (SVNException) th;
             } 
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "can not get commit editor: ''{0}''", th.getLocalizedMessage());
-            SVNErrorManager.error(err, th);
+            SVNErrorManager.error(err, th, SVNLogType.NETWORK);
             return null;
         }
     }
@@ -918,7 +919,7 @@ public class DAVRepository extends SVNRepository {
                     DAVBaselineInfo info = DAVUtil.getBaselineInfo(myConnection, this, path, revision, false, true, null);
                     path = SVNPathUtil.append(info.baselineBase, info.baselinePath);
                 } catch (SVNException e) {
-                    if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                    if (e.getErrorMessage() != null && e.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                         return null;
                     }
                     throw e;
@@ -928,10 +929,10 @@ public class DAVRepository extends SVNRepository {
             Map propsMap = new SVNHashMap();
             HTTPStatus status = DAVUtil.getProperties(myConnection, path, 0, null, elements, propsMap);
             if (status.getError() != null) {
-                if (status.getError().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                if (status.getError().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                     return null;
                 }
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
             if (!propsMap.isEmpty()) {
                 DAVProperties props = (DAVProperties) propsMap.values().iterator().next();
@@ -1025,7 +1026,7 @@ public class DAVRepository extends SVNRepository {
             SVNDepth depth, boolean getContents, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         if (url == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL could not be NULL");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (revision < 0) {
             revision = targetRevision;
@@ -1042,7 +1043,7 @@ public class DAVRepository extends SVNRepository {
     public void update(SVNURL url, long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {
         if (url == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL could not be NULL");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         runReport(getLocation(), revision, target, url.toString(), depth, true, false, true, false, true, true, 
                 false, reporter, editor);
@@ -1065,15 +1066,14 @@ public class DAVRepository extends SVNRepository {
                 if (capability == SVNCapability.MERGE_INFO) {
                     SVNException error = null;
                     try {
-                        doGetMergeInfo(new String[]{""}, 0, SVNMergeInfoInheritance.EXPLICIT, false);
+                        doGetMergeInfo(new String[]{""}, -1, SVNMergeInfoInheritance.EXPLICIT, false);
                     } catch (SVNException svne) {
                         error = svne;
                     }
                     if (error != null){
-                        if (error.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE){
+                        if (error.getErrorMessage().getErrorCode() == SVNErrorCode.UNSUPPORTED_FEATURE) {
                             result = DAVConnection.DAV_CAPABILITY_NO;
-                        } else if (error.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
-                                error.getErrorMessage().getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND){
+                        } else if (error.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
                             result = DAVConnection.DAV_CAPABILITY_YES;
                         } else {
                             throw error;
@@ -1086,7 +1086,7 @@ public class DAVRepository extends SVNRepository {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY,
                             "Don''t know how to handle ''{0}'' for capability ''{1}''",
                             new Object[]{DAVConnection.DAV_CAPABILITY_SERVER_YES, SVNCapability.MERGE_INFO});
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.NETWORK);
                 }
             }
             if (DAVConnection.DAV_CAPABILITY_YES.equals(result)) {
@@ -1097,11 +1097,11 @@ public class DAVRepository extends SVNRepository {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNKNOWN_CAPABILITY,
                         "Don''t know anything about capability ''{0}''",
                         new Object[]{capability});
-                SVNErrorManager.error(error);
+                SVNErrorManager.error(error, SVNLogType.NETWORK);
             } else {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_OPTIONS_REQ_FAILED,
                         "Attempt to fetch capability ''{0}'' resulted in ''{1}''",
-                        new Object[]{capability, result}));
+                        new Object[]{capability, result}), SVNLogType.NETWORK);
             }
         } finally {
             closeConnection();
@@ -1122,7 +1122,7 @@ public class DAVRepository extends SVNRepository {
     protected void replayRangeImpl(long startRevision, long endRevision, long lowRevision, boolean sendDeltas, 
             ISVNReplayHandler handler) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED);
-        SVNErrorManager.error(err);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
     }
 
     private Map doGetMergeInfo(String[] paths, long revision, SVNMergeInfoInheritance inherit, boolean includeDescendants) throws SVNException {
@@ -1139,10 +1139,11 @@ public class DAVRepository extends SVNRepository {
         DAVMergeInfoHandler handler = new DAVMergeInfoHandler();
         HTTPStatus status = myConnection.doReport(path, request, handler);
         if (status.getCode() == 501) {
-            return new SVNHashMap();
+	        SVNErrorMessage err = status.getError() != null ? status.getError() : SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Server does not support mergeinfo");
+	        SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         if (status.getError() != null) {
-            SVNErrorManager.error(status.getError());
+            SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
         }
         Map mergeInfo = handler.getMergeInfo();
         if (mergeInfo == null) {
@@ -1186,7 +1187,7 @@ public class DAVRepository extends SVNRepository {
             }
             HTTPStatus status = myConnection.doReport(bcPath, request, handler, spool);
             if (status.getError() != null) {
-                SVNErrorManager.error(status.getError());
+                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
             }
         } finally {
             if (handler != null) {

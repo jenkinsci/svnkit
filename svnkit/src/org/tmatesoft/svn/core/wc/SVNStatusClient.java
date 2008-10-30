@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNStatusClient</b> class provides methods for obtaining information on the 
@@ -68,7 +69,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * methods are called non-recursively and allow to get status info on a single 
  * item. 
  * 
- * @version 1.1.1
+ * @version 1.2
  * @author  TMate Software Ltd.
  * @see		ISVNStatusHandler
  * @see		SVNStatus
@@ -103,6 +104,25 @@ public class SVNStatusClient extends SVNBasicClient {
         super(authManager, options);
     }
 
+    /**
+     * Constructs and initializes an <b>SVNStatusClient</b> object
+     * with the specified run-time configuration and repository pool object.
+     * 
+     * <p/>
+     * If <code>options</code> is <span class="javakeyword">null</span>,
+     * then this <b>SVNStatusClient</b> will be using a default run-time
+     * configuration driver  which takes client-side settings from the
+     * default SVN's run-time configuration area but is not able to
+     * change those settings (read more on {@link ISVNOptions} and {@link SVNWCUtil}).
+     * 
+     * <p/>
+     * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
+     * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used to create {@link SVNRepository repository access objects}.
+     *
+     * @param repositoryPool   a repository pool object
+     * @param options          a run-time configuration options driver
+     */
+    
     public SVNStatusClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
     }
@@ -132,10 +152,13 @@ public class SVNStatusClient extends SVNBasicClient {
      *                          against
      * @throws SVNException
      * @see	                    ISVNStatusHandler
+     * @deprecated              use {@link #doStatus(File, SVNRevision, SVNDepth, boolean, boolean, boolean, boolean, ISVNStatusHandler, Collection)}
+     *                          instead
      */
-    public long doStatus(File path, boolean recursive, boolean remote,
-                         boolean reportAll, boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
-        return doStatus(path, recursive, remote, reportAll, includeIgnored, false, handler);
+    public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, 
+            boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
+        return doStatus(path, SVNRevision.HEAD, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
+                false, handler, null);
     }
     
     /**
@@ -169,9 +192,13 @@ public class SVNStatusClient extends SVNBasicClient {
      * @return								the revision number the status information was collected
      * 										against
      * @throws SVNException
+     * @deprecated                          use {@link #doStatus(File, SVNRevision, SVNDepth, boolean, boolean, boolean, boolean, ISVNStatusHandler, Collection)}
+     *                                      instead
      */
     public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
-        return doStatus(path, SVNRevision.HEAD, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+        return doStatus(path, SVNRevision.HEAD, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
+                collectParentExternals, handler, null);
+
     }
     
     /**
@@ -203,12 +230,63 @@ public class SVNStatusClient extends SVNBasicClient {
      * @return                              the revision number the status information was collected
      *                                      against
      * @throws SVNException
+     * @deprecated                          use {@link #doStatus(File, SVNRevision, SVNDepth, boolean, boolean, boolean, boolean, ISVNStatusHandler, Collection)}
+     *                                      instead
      */
     public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
         return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
                 collectParentExternals, handler, null);
     }
-    
+
+    /**
+     * Given a <code>path</code> to a working copy directory (or single file), calls <code>handler</code> 
+     * with a set of {@link SVNStatus} objects which describe the status of the <code>path</code>, and its 
+     * children (recursing according to <code>depth</code>).
+     * 
+     * <p/>
+     * If <code>reportAll</code> is set, retrieves all entries; otherwise, retrieves only "interesting" entries 
+     * (local modifications and/or out of date).
+     *
+     * <p/>
+     * If <code>remote</code> is set, contacts the repository and augments the status objects with information 
+     * about out-of-dateness (with respect to <code>revision</code>). 
+     *       
+     * <p/>
+     * If {@link #isIgnoreExternals()} returns <span class="javakeyword">false</span>, then recurses into 
+     * externals definitions (if any exist and <code>depth</code> is either {@link SVNDepth#INFINITY} or 
+     * {@link SVNDepth#UNKNOWN}) after handling the main target. This calls the client notification 
+     * handler ({@link ISVNEventHandler}) with the {@link SVNEventAction#STATUS_EXTERNAL} action before 
+     * handling each externals definition, and with {@link SVNEventAction#STATUS_COMPLETED} after each.
+     *
+     * <p/>
+     * <code>changeLists</code> is a collection of <code>String</code> changelist names, used as a restrictive 
+     * filter on items whose statuses are reported; that is, doesn't report status about any item unless
+     * it's a member of one of those changelists. If <code>changeLists</code> is empty (or 
+     * <span class="javakeyword">null</span>), no changelist filtering occurs.
+     *
+     * @param  path                    working copy path 
+     * @param  revision                if <code>remote</code> is <span class="javakeyword">true</span>,
+     *                                 status is calculated against this revision
+     * @param  depth                   tree depth to process
+     * @param  remote                  <span class="javakeyword">true</span> to check up the status of the item 
+     *                                 in the repository, that will tell if the local item is out-of-date (like 
+     *                                 <i>'-u'</i> option in the SVN client's <code>'svn status'</code> command), 
+     *                                 otherwise <span class="javakeyword">false</span>
+     * @param  reportAll               <span class="javakeyword">true</span> to collect status information on all items including those ones that are in a 
+     *                                 <i>'normal'</i> state (unchanged), otherwise <span class="javakeyword">false</span>
+     * @param  includeIgnored          <span class="javakeyword">true</span> to force the operation to collect information
+     *                                 on items that were set to be ignored (like <i>'--no-ignore'</i> option in the SVN 
+     *                                 client's <code>'svn status'</code> command to disregard default and <i>'svn:ignore'</i> property
+     *                                 ignores), otherwise <span class="javakeyword">false</span>
+     * @param  collectParentExternals  obsolete (not used)
+     * @param  handler                 a caller's status handler that will be involved
+     *                                 in processing status information
+     * @param  changeLists             collection with changelist names
+     * @return                         returns the actual revision against which the working copy was compared;
+     *                                 the return value is not meaningful (-1) unless <code>remote</code> is set 
+     * @throws SVNException 
+     * @since                          1.2, SVN 1.5
+     */
     public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, 
             boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler, 
             final Collection changeLists) throws SVNException {
@@ -239,22 +317,20 @@ public class SVNStatusClient extends SVNBasicClient {
             } catch (SVNException svne) {
                 if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
                     info = wcAccess.openAnchor(path, false, SVNDepth.recurseFromDepth(depth) ? -1 : 1);
+                    if (depth == SVNDepth.EMPTY) {
+                        depth = SVNDepth.IMMEDIATES;
+                    }
                 } else {
                     throw svne;
                 }
             }
             SVNEntry entry = null;
-//            Map externals = null;
-//            if (collectParentExternals) {
-//                // prefetch externals from parent dirs, and pass it to the editor.
-//                externals = collectParentExternals(path, info.getAnchor().getRoot());
-//            }
             if (remote) {
                 SVNAdminArea anchor = info.getAnchor();
                 entry = wcAccess.getVersionedEntry(anchor.getRoot(), false);
                 if (entry.getURL() == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getAnchor().getRoot());
-                    SVNErrorManager.error(error);
+                    SVNErrorManager.error(error, SVNLogType.WC);
                 }
                 SVNURL url = entry.getSVNURL();
                 SVNRepository repository = createRepository(url, anchor.getRoot(), wcAccess, true);
@@ -266,36 +342,36 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
                 SVNNodeKind kind = repository.checkPath("", rev);
                 checkCancelled();
+                SVNReporter reporter = null;
                 if (kind == SVNNodeKind.NONE) {
                     if (!entry.isScheduledForAddition()) {
                         deletedInRepository[0] = true;
                     }
                     editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, 
                             realHandler);
-//                    editor.setExternals(externals);
                     checkCancelled();
                     editor.closeEdit();
                 } else {
                     editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, 
                             depth, realHandler);
-//                    editor.setExternals(externals);
                     // session is closed in SVNStatusReporter.
                     SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                    SVNReporter reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, 
+                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, 
                             getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
                     repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
                 }
                 if (getEventDispatcher() != null) {
-                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null);
+                    long reportedFiles = reporter != null ? reporter.getReportedFilesCount() : 0;
+                    long totalFiles = reporter != null ? reporter.getTotalFilesCount() : 0;
+                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null, reportedFiles, totalFiles);
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
                 editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, handler);
-//                editor.setExternals(externals);
                 editor.closeEdit();
             }         
             if (!isIgnoreExternals() && (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
@@ -392,52 +468,7 @@ public class SVNStatusClient extends SVNBasicClient {
                 }
             }
         };
-        doStatus(absPath, false, remote, true, true, collectParentExternals, handler);
+        doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
         return result[0];
     }
-/*
-    private Map collectParentExternals(File path, File root) throws SVNException {
-        Map externals = new SVNMap();
-        SVNFileType type = SVNFileType.getType(path);
-        if (type != SVNFileType.DIRECTORY) {
-            return externals;
-        }
-        File target = path;
-        SVNWCAccess wcAccess = createWCAccess();
-        while(true) {
-            path = path.getParentFile();
-            if (path == null) {
-                break;
-            }
-            SVNAdminArea area = null;
-            try {
-                area = wcAccess.open(path, false, 0);
-            } catch (SVNException e) {
-                break;
-            }
-            try {
-                SVNVersionedProperties properties = area.getProperties("");
-                String external = properties.getPropertyValue(SVNProperty.EXTERNALS);
-                if (externals != null) {
-                    SVNExternal[] infos = SVNExternal.parseExternals(area.getRoot().getAbsolutePath(), external);
-                    for (int i = 0; i < infos.length; i++) {
-                        // info's path is relative to path, we should make it relative to the root,
-                        // and only if it is child of the root.
-                        File ext = new File(path, infos[i].getPath());
-                        if (SVNPathUtil.isAncestor(target.getAbsolutePath(), ext.getAbsolutePath())) {
-                            // put into the map - path relative to root is a key.
-                            String extPath = ext.getAbsolutePath().replace(File.separatorChar, '/');
-                            String rootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
-                            String relativePath = extPath.substring(rootPath.length() + 1);
-                            externals.put(relativePath, infos[i]);
-                        }
-                    }
-                }
-            } finally {
-                wcAccess.closeAdminArea(path);
-            }
-        }
-        return externals;
-    }
-*/
 }

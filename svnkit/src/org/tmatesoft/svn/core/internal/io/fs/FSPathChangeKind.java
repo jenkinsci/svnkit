@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -20,11 +20,13 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 /**
  * The kind of change that occurred on the path.
  * 
- * @version 1.1.1
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class FSPathChangeKind implements Serializable {
 
+    private static final long serialVersionUID = 4845L;
+    
     public static final String ACTION_MODIFY = "modify";
     public static final String ACTION_ADD = "add";
     public static final String ACTION_DELETE = "delete";

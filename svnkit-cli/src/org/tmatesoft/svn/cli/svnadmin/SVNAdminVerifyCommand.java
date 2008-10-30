@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,10 +28,11 @@ import org.tmatesoft.svn.core.wc.admin.ISVNAdminEventHandler;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEvent;
 import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.1.2
+ * @version 1.2.0
  * @author  TMate Software Ltd.
  */
 public class SVNAdminVerifyCommand extends SVNAdminCommand implements ISVNAdminEventHandler {
@@ -64,7 +65,7 @@ public class SVNAdminVerifyCommand extends SVNAdminCommand implements ISVNAdminE
         }
         if (startRev > endRev) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                    "First revision cannot be higher than second"));
+                    "First revision cannot be higher than second"), SVNLogType.CLIENT);
         }
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
         if (!getSVNAdminEnvironment().isQuiet()) {

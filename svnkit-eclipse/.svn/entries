@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit-eclipse
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-eclipse
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-10T19:38:40.151581Z
-4512
-semen
+2008-09-28T22:01:01.880794Z
+4942
+alex
 has-props
 
 svn:special svn:externals svn:needs-lock
@@ -26,22 +26,43 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
-org.tmatesoft.svnkit.feature
-dir
-
 site.xml
 file
 
 
 
 
-2008-07-24T04:49:43.000000Z
-17eaddd6d8e73b709238b06ee987c529
-2006-11-09T20:08:45.359921Z
-2775
+2008-10-30T04:42:00.000000Z
+5cb865dc0758485df4f995a42cc96714
+2008-09-16T17:47:40.986804Z
+4886
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1121
 
 org.tmatesoft.svnkit
+dir
+
+com.sun.jna
 dir
 

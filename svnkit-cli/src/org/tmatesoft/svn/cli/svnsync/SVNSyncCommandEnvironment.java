@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2007 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,15 +29,16 @@ import org.tmatesoft.svn.cli.SVNOptionValue;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @author TMate Software Ltd.
- * @version 1.1.2
+ * @version 1.2.0
  */
 public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
 
@@ -156,7 +157,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
                 (mySyncUsername != null || mySyncPassword != null)) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR,
                     "Cannot use --username or --password with any of --source-username, --source-password, --sync-username, or --sync-password.");
-            SVNErrorManager.error(error);
+            SVNErrorManager.error(error, SVNLogType.CLIENT);
         }
         if (myUserName != null) {
             mySourceUsername = myUserName;
@@ -203,7 +204,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
                 return "--version";
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Subcommand argument required");
-            SVNErrorManager.error(err);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
         return commandName;
     }

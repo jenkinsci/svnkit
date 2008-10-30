@@ -1,14 +1,14 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/svnkit/src/org/tmatesoft/svn/core/replicator
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/replicator
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-03-28T02:07:40.780210Z
-4072
+2008-08-27T13:16:35.698961Z
+4780
 alex
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-03a34a358547d13bc190ff9c556a5c25
-2007-01-09T05:54:45.383114Z
-2895
-sa
+2008-10-30T04:44:28.000000Z
+952ce98daa96f89f62468f734da2e832
+2008-08-26T22:48:25.933321Z
+4775
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2795
 
 SVNReplicationEditor.java
 file
@@ -45,11 +66,33 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-ea7086afe132caff9075b6d969d2a35c
-2008-03-28T02:07:40.780210Z
-4072
+2008-10-30T04:44:28.000000Z
+9c5afe4cf4e392772d6ad3b460f093b4
+2008-08-27T13:16:35.698961Z
+4780
 alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23755
 
 SVNRepositoryReplicator.java
 file
@@ -57,11 +100,33 @@ file
 
 
 
-2008-07-24T04:58:25.000000Z
-bd3f3b8bfb5c1ed2716e901a590dbe45
-2008-01-27T19:14:22.740809Z
-3803
-semen
+2008-10-30T04:44:28.000000Z
+39c8e4117080f1fbffb58b0d15ea45a8
+2008-08-26T22:48:25.933321Z
+4775
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+15350
 
 package.html
 file

@@ -1,15 +1,15 @@
-8
+9
 
 dir
-4653
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4/.settings
+5060
+http://svn.svnkit.com/repos/svnkit/tags/1.2.0/.settings
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2007-11-09T19:38:33.461558Z
-3619
-sa
+2008-09-09T20:09:53.475184Z
+4846
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:47.000000Z
-f7644e49761c736f9b9297d8ba1d6ad4
-2007-11-09T19:38:33.461558Z
-3619
-sa
+2008-10-30T04:44:26.000000Z
+503369882a1d9eeb34e536117d1ae3a7
+2008-09-09T20:09:53.475184Z
+4846
+alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+26774
 
 org.eclipse.jdt.ui.prefs
 file
