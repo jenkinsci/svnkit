@@ -82,6 +82,7 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResource.jav
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResourceFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVResourceFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVServletUtil.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVURIInfo.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVVersionResource.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVVersionResourceFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVWorkingResource.java -text

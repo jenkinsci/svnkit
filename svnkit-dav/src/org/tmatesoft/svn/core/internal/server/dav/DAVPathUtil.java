@@ -16,9 +16,13 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -107,7 +111,8 @@ public class DAVPathUtil {
 
     public static void testCanonical(String path) throws SVNException {
         if (path != null && !path.equals(SVNPathUtil.canonicalizePath(path))) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", path), SVNLogType.NETWORK);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                    "Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", path), SVNLogType.NETWORK);
         }
     }
 
@@ -153,4 +158,91 @@ public class DAVPathUtil {
         return finalActivityFile;
     }
 
+    public static DAVURIInfo simpleParseURI(String uri, DAVResource relative) throws SVNException {
+        SVNURL parsedURL = null;
+        try {
+            parsedURL = SVNURL.parseURIEncoded(uri);
+        } catch (SVNException e) {
+            throwMalformedURIErrorException();
+        }
+        
+        String path = parsedURL.getPath();
+        if ("".equals(path)) {
+            path = "/";
+        }
+        
+        String reposRoot = relative.getResourceURI().getContext();
+        
+        if (!path.equals(reposRoot) && (!path.startsWith(reposRoot) || path.charAt(reposRoot.length()) != '/')) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.APMOD_MALFORMED_URI, "Unusable URI: it does not refer to this repository");
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
+        }
+        
+        long revision = SVNRepository.INVALID_REVISION;
+        path = path.substring(reposRoot.length());
+        if ("".equals(path) || "/".equals(path)) {
+            return new DAVURIInfo(null, "/", revision);
+        }
+        path = path.substring(1);
+        String specialURI = DAVResourceURI.SPECIAL_URI;
+        
+        if (!path.equals(specialURI) && (!path.startsWith(specialURI) || path.charAt(specialURI.length()) != '/')) {
+            path = !path.startsWith("/") ? "/" + path : path; 
+            return new DAVURIInfo(null, path, revision);
+        }
+        
+        path = path.substring(specialURI.length());
+        if ("".equals(path) || "/".equals(path)) {
+            throwUnhandledFormException();
+        }
+
+        int slashInd = path.indexOf('/', 1);
+        
+        if (slashInd == -1 || slashInd == path.length() -1) {
+            throwUnhandledFormException();
+        }
+        
+        String segment = path.substring(0, slashInd + 1);
+        String activityID = null;
+        String reposPath = null;
+        if ("/act/".equals(segment)) {
+            activityID = path.substring(slashInd + 1);
+        } else if ("/ver/".equals(segment)) {
+            int nextSlashInd = path.indexOf('/', slashInd + 1);
+            if (nextSlashInd == -1) {
+                try {
+                    revision = Long.parseLong(path.substring(slashInd + 1));
+                } catch (NumberFormatException nfe) {
+                    throwMalformedURIErrorException();
+                }
+                reposPath = "/";
+            } else {
+                segment = path.substring(slashInd + 1, nextSlashInd);
+                try {
+                    revision = Long.parseLong(segment);
+                } catch (NumberFormatException nfe) {
+                    throwMalformedURIErrorException();
+                }
+                reposPath = SVNEncodingUtil.uriDecode(path.substring(nextSlashInd));
+            }
+            
+            if (!SVNRevision.isValidRevisionNumber(revision)) {
+                throwMalformedURIErrorException();
+            }
+        } else {
+            throwUnhandledFormException();
+        }
+        
+        return new DAVURIInfo(activityID, reposPath, revision);
+    }
+    
+    private static void throwMalformedURIErrorException() throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.APMOD_MALFORMED_URI, "The specified URI could not be parsed");
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
+    }
+    
+    private static void throwUnhandledFormException() throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unsupported URI form");
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
+    }
 }

@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVURIInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
@@ -62,7 +63,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
     public void execute() throws SVNException {
         long readLength = readInput(false);
         boolean applyToVSN = false;
-        List activities = new LinkedList();
+        List activities = null;
         
         if (readLength > 0) {
             DAVCheckOutRequest davRequest = getCheckOutRequest();
@@ -83,6 +84,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
                 if (activitySetElements.containsKey(DAVCheckOutRequest.NEW)) {
                     createActivity = true;
                 } else {
+                    activities = new LinkedList();
                     for (Iterator activitySetIter = activitySetElements.keySet().iterator(); activitySetIter.hasNext();) {
                         DAVElement element = (DAVElement) activitySetIter.next();
                         if (element == DAVElement.HREF) {
@@ -190,11 +192,54 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
         }
         
         if (resourceType != DAVResourceType.VERSION) {
-            
+            throw new DAVException("CHECKOUT can only be performed on a version resource [at this time].", null, 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
         }
+        
+        if (isCreateActivity) {
+            throw new DAVException("CHECKOUT can not create an activity at this time. Use MKACTIVITY first.", null, 
+                    HttpServletResponse.SC_NOT_IMPLEMENTED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        if (isUnreserved) {
+            throw new DAVException("Unreserved checkouts are not yet available. A version history may not be checked out more than once, into a specific activity.", 
+                    null, HttpServletResponse.SC_NOT_IMPLEMENTED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        if (activities == null) {
+            throw new DAVException("An activity must be provided for checkout.", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
+                    Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.INCOMPLETE_DATA.getCode(), 
+                    null);
+        }
+        
+        if (activities.size() != 1) {
+            throw new DAVException("Only one activity may be specified within the CHECKOUT.", null, HttpServletResponse.SC_CONFLICT, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                    SVNErrorCode.INCORRECT_PARAMS.getCode(), null);
+        }
+        
+        DAVURIInfo parse = null;
+        
+        try {
+            parse = DAVPathUtil.simpleParseURI((String) activities.get(0), resource);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, "The activity href could not be parsed properly.",
+                    null);
+        }
+        
+        if (parse.getActivityID() == null) {
+            throw new DAVException("The provided href is not an activity URI.", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
+                    Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.INCORRECT_PARAMS.getCode(), 
+                    null);
+        }
+        
+        
     }
     
-    private DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) throws DAVException {
+    private DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) {
         StringBuffer pathBuffer = new StringBuffer();
         if (baseResource.isBaseLined()) {
             pathBuffer.append('/');
