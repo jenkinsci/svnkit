@@ -206,6 +206,7 @@ public class SVNWinSecurity {
                 authIdentity.DomainLength = new NativeLong(domain.length());
             }
             authIdentity.Flags = new NativeLong(ISVNSecurityLibrary.SEC_WINNT_AUTH_IDENTITY_UNICODE);
+            authIdentity.write();
         }
         
         SecHandle pCred = new SecHandle();
