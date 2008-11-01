@@ -175,8 +175,13 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Error writing log file for ''{0}''", myCurrentDirectory.getPath());
             SVNErrorManager.error(err, svne, SVNLogType.WC);
         }
-
-        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {            
+        if (myIsLockOnDemand) {
+            SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
+            if (childArea != null && !childArea.isLocked()) {
+                childArea.lock(false);
+            }
+        }
+        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
             SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
             try {
                 childArea.removeFromRevisionControl(childArea.getThisDirName(), true, true);
