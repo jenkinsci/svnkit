@@ -680,11 +680,15 @@ public abstract class SVNAdminArea {
     }
 
     public void extendLockToTree() throws SVNException {
+        final boolean writeLock = isLocked();
         ISVNEntryHandler entryHandler = new ISVNEntryHandler() {
             public void handleEntry(File path, SVNEntry entry) throws SVNException {
                 if (entry.isDirectory() && !entry.getName().equals(getThisDirName())) {
                     try {
-                        getWCAccess().probeTry(path, isLocked(), SVNWCAccess.INFINITE_DEPTH);
+                        SVNAdminArea area = getWCAccess().probeTry(path, isLocked(), SVNWCAccess.INFINITE_DEPTH);
+                        if (writeLock && area != null && !area.isLocked()) {
+                            area.lock(false);
+                        }
                     } catch (SVNException svne) {
                         if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LOCKED) {
                             throw svne;
