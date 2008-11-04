@@ -392,15 +392,18 @@ public class FSFile {
         long revision = readRevisionFromReportFile();
         SVNDepth depth = SVNDepth.INFINITY;
         if (read() == '+') {
-            int id = readNumberFromReportFile();
+            int id = read();
             switch(id) {
-                case 0:
+                case 'X':
+                    depth = SVNDepth.EXCLUDE;
+                    break;
+                case 'E':
                     depth = SVNDepth.EMPTY;
                     break;
-                case 1:
+                case 'F':
                     depth = SVNDepth.FILES;
                     break;
-                case 2:
+                case 'M':
                     depth = SVNDepth.IMMEDIATES;
                     break;
                 default: {
