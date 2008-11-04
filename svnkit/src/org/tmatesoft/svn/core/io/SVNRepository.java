@@ -2854,6 +2854,12 @@ public abstract class SVNRepository {
         if ("".equals(repositoryPath)) {
             return "/";
         }
+
+        //if url does not contain a repos root path component, then it results here in 
+        //a path that lacks leading slash, fix that
+        if (!repositoryPath.startsWith("/")) {
+            repositoryPath = "/" + repositoryPath;
+        }
         return repositoryPath;
     }
     
