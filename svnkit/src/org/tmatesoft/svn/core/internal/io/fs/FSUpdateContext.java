@@ -682,9 +682,9 @@ public class FSUpdateContext {
         }
         String anchorRelativePath = SVNPathUtil.append(getReportTarget(), path);
         String revisionRep = FSRepository.isValidRevision(revision) ? "+" + String.valueOf(revision) + ":" : "-";
-        String depthRep = "-";
+        String depthRep = "-";//infinity by default
         if (depth == SVNDepth.EXCLUDE || depth == SVNDepth.EMPTY || depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
-            depthRep = "+" + getDepthLetter(depth) + ":";
+            depthRep = "+" + getDepthLetter(depth);
         } 
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -714,9 +714,6 @@ public class FSUpdateContext {
         }
         if (depth == SVNDepth.IMMEDIATES) {
             return "M";
-        }
-        if (depth == SVNDepth.INFINITY) {
-            return "-";
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Unsupported report depth ''{0}''", SVNDepth.asString(depth));
