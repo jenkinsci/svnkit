@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.util.Collection;
+import java.util.Iterator;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -167,7 +169,7 @@ class HTTPRequest {
         // this may throw EOFException, then and only then we retry.
         myConnection.readHeader(this);
         // store last time for the next request in case it was keep-alive one.
-        myTimeout = computeTimeout(getResponseHeader());
+        myTimeout = computeTimeout(myStatus, getResponseHeader());
         context = context == null ? SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} of ''{1}''", new Object[] {request, path}) : context; 
         
         // check status.
@@ -214,14 +216,34 @@ class HTTPRequest {
         }
     }
     
-    private static long computeTimeout(HTTPHeader header) {
+    private static long computeTimeout(HTTPStatus status, HTTPHeader header) {
         if (header == null) {
             return -1;
         }
         String keepAlive = header.getFirstHeaderValue("Keep-Alive");
-        if (keepAlive == null) {
+        if (keepAlive == null && status.isHTTP11()) {
+            // HTTP/1.1
+            // no keep-alive header, consider as infinite timeout.
+            return Long.MAX_VALUE;
+        } else if (keepAlive == null) {
+            // HTTP/1.0
+            // keep-alive only if there is Connection: keep-alive header.
+            String value = header.getFirstHeaderValue(HTTPHeader.CONNECTION_HEADER);
+            if (value != null && value.toLowerCase().indexOf("keep-alive") >= 0) {
+                return Long.MAX_VALUE;
+            }
+            Collection connectionHeaders = header.getHeaderValues(HTTPHeader.CONNECTION_HEADER);
+            if (connectionHeaders != null) {
+                for (Iterator headers = connectionHeaders.iterator(); headers.hasNext();) {
+                    value = (String) headers.next();
+                    if (value != null && value.toLowerCase().indexOf("keep-alive") >= 0) {
+                        return Long.MAX_VALUE;
+                    }
+                }
+            }
             return -1;
         }
+        // HTTP/1.1
         String[] fields = keepAlive.split(",");
         for (int i = 0; i < fields.length; i++) {
             int index = fields[i].indexOf('=');
@@ -238,10 +260,11 @@ class HTTPRequest {
                     }
                 } catch (NumberFormatException nfe){                    
                 }
+                // error parsing timeout value, consider no keep-alive.
                 return -1;
             }
         }
-        return -1;
+        return Long.MAX_VALUE;
     }
 
     private SVNErrorMessage readError(String request, String path, SVNErrorMessage context) {

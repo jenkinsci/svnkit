@@ -824,11 +824,18 @@ class HTTPConnection implements IHTTPConnection {
     }
     
     private static boolean hasToCloseConnection(HTTPHeader header) {
-        if (header == null || 
-                "close".equalsIgnoreCase(header.getFirstHeaderValue(HTTPHeader.CONNECTION_HEADER)) || 
-                "close".equalsIgnoreCase(header.getFirstHeaderValue(HTTPHeader.PROXY_CONNECTION_HEADER))) {
+        if (header == null) {
             return true;
         }
+        
+        String connectionHeader = header.getFirstHeaderValue(HTTPHeader.CONNECTION_HEADER);
+        String proxyHeader = header.getFirstHeaderValue(HTTPHeader.PROXY_CONNECTION_HEADER);
+        
+        if (connectionHeader != null && connectionHeader.toLowerCase().indexOf("close") >= 0) {
+            return true;
+        } else if (proxyHeader != null && proxyHeader.toLowerCase().indexOf("close") >= 0) {
+            return true;
+        } 
         return false;
     }
     
