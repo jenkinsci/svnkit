@@ -291,7 +291,7 @@ class HTTPConnection implements IHTTPConnection {
 
         while (true) {
             HTTPStatus status = null;
-            if (myNextRequestTimeout < 0 || System.currentTimeMillis() >= myNextRequestTimeout) {
+            if (System.currentTimeMillis() >= myNextRequestTimeout) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Keep-Alive timeout detected");
                 close();
             }

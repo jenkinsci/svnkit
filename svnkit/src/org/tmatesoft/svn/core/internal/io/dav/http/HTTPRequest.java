@@ -216,9 +216,13 @@ class HTTPRequest {
         if (header == null) {
             return -1;
         }
+        String connection = header.getFirstHeaderValue("Connection");
+        if (connection != null && connection.indexOf("close")>=0) {
+            return -1;
+        }
         String keepAlive = header.getFirstHeaderValue("Keep-Alive");
         if (keepAlive == null) {
-            return -1;
+            return Long.MAX_VALUE;
         }
         String[] fields = keepAlive.split(",");
         for (int i = 0; i < fields.length; i++) {
@@ -239,7 +243,7 @@ class HTTPRequest {
                 return -1;
             }
         }
-        return -1;
+        return Long.MAX_VALUE;
     }
 
     private SVNErrorMessage readError(String request, String path, SVNErrorMessage context) {
