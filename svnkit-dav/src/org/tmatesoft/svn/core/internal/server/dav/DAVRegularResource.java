@@ -47,16 +47,16 @@ public class DAVRegularResource extends DAVResource {
             }
         }
         
-        if (myRevisionRoot == null) {
+        if (myRoot == null) {
             try {
-                myRevisionRoot = myFSFS.createRevisionRoot(myRevision);
+                myRoot = myFSFS.createRevisionRoot(myRevision);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Could not open the root of the repository", null);
             }
         }
         
-        SVNNodeKind kind = DAVServletUtil.checkPath(myRevisionRoot, getResourceURI().getPath());
+        SVNNodeKind kind = DAVServletUtil.checkPath(myRoot, getResourceURI().getPath());
         setExists(kind != SVNNodeKind.NONE);
         setCollection(kind == SVNNodeKind.DIR);
     }

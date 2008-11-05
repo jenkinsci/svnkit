@@ -290,9 +290,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
 
-    protected void handleDAVCreated(DAVResource resource, String location, String what, boolean isReplaced) throws SVNException {
+    protected void handleDAVCreated(String location, String what, boolean isReplaced) throws SVNException {
         if (location == null) {
-            location = resource.getResourceURI().getURI();
+            location = myRequest.getRequestURI();
         }
         
         if (isReplaced) {

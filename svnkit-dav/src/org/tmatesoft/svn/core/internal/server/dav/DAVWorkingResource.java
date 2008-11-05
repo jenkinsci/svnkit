@@ -48,8 +48,7 @@ public class DAVWorkingResource extends DAVResource {
                 baseResource.getVersion(), baseResource.getClientOptions(), baseResource.getBaseChecksum(), baseResource.getResultChecksum(), 
                 baseResource.getUserName(), baseResource.getActivitiesDB());
         myTxnName = txnName;
-        myTxnRoot = baseResource.myTxnRoot;
-        myRevisionRoot = baseResource.myRevisionRoot;
+        myRoot = baseResource.myRoot;
         myFSFS = baseResource.myFSFS;
     }
     
@@ -101,13 +100,13 @@ public class DAVWorkingResource extends DAVResource {
         }
         
         try {
-            myTxnRoot = myFSFS.createTransactionRoot(txnInfo);
+            myRoot = myFSFS.createTransactionRoot(txnInfo);
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "Could not open the (transaction) root of the repository", null);
         }
         
-        SVNNodeKind kind = DAVServletUtil.checkPath(myTxnRoot, getResourceURI().getPath());
+        SVNNodeKind kind = DAVServletUtil.checkPath(myRoot, getResourceURI().getPath());
         setExists(kind != SVNNodeKind.NONE);
         setCollection(kind == SVNNodeKind.DIR);
     }

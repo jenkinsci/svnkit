@@ -46,9 +46,9 @@ public class DAVVersionResource extends DAVResource {
             }
         }
         
-        if (myRevisionRoot == null) {
+        if (myRoot == null) {
             try {
-                myRevisionRoot = myFSFS.createRevisionRoot(myRevision);
+                myRoot = myFSFS.createRevisionRoot(myRevision);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Could not open a revision root.", null);

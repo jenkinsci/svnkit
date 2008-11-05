@@ -32,9 +32,8 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
-import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
-import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -77,10 +76,8 @@ public abstract class DAVResource {
     protected Collection myEntries;
     protected File myActivitiesDB;
     protected FSFS myFSFS;
-    protected FSTransactionRoot myTxnRoot;
-    
     protected String myTxnName;
-    protected FSRevisionRoot myRevisionRoot;
+    protected FSRoot myRoot;
     protected FSTransactionInfo myTxnInfo;
     
     /**
@@ -134,10 +131,14 @@ public abstract class DAVResource {
         myActivitiesDB = activitiesDB;
     }
 
-    public void setTxnRoot(FSTransactionRoot txnRoot) {
-        myTxnRoot = txnRoot;
+    public void setRoot(FSRoot root) {
+        myRoot = root;
     }
 
+    public FSRoot getRoot() {
+        return myRoot;
+    }
+    
     public FSTransactionInfo getTxnInfo() {
         return myTxnInfo;
     }

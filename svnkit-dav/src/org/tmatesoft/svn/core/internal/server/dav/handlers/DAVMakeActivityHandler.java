@@ -61,7 +61,7 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         }
 
         setResponseHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE);
-        handleDAVCreated(resource, resource.getResourceURI().getURI(), "Activity", false);
+        handleDAVCreated(resource.getResourceURI().getURI(), "Activity", false);
     }
 
     protected DAVRequest getDAVRequest() {
