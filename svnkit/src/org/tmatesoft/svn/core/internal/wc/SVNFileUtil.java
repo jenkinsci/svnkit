@@ -1352,8 +1352,9 @@ public class SVNFileUtil {
         InputStream is = null;
         boolean handleOutput = callback != null && callback.isHandleProgramOutput(); 
         StringBuffer result =  handleOutput ? null : new StringBuffer();
+        Process process = null;
         try {
-            Process process = Runtime.getRuntime().exec(commandLine, env);
+            process = Runtime.getRuntime().exec(commandLine, env);
             is = process.getInputStream();
             if (!waitAfterRead) {
                 int rc = process.waitFor();
@@ -1386,6 +1387,9 @@ public class SVNFileUtil {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e);
         } finally {
             closeFile(is);
+            if (process != null) {
+                process.destroy();
+            }
         }
         return null;
     }
