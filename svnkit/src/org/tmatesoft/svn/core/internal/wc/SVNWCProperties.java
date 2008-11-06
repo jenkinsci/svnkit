@@ -483,7 +483,7 @@ public class SVNWCProperties {
             throws IOException {
         os.write((byte) type);
         os.write(' ');
-        os.write(Integer.toString(value.length).getBytes());
+        os.write(Integer.toString(value.length).getBytes("UTF-8"));
         os.write('\n');
         os.write(value);
         os.write('\n');
@@ -493,7 +493,7 @@ public class SVNWCProperties {
             InputStream value, int length) throws IOException {
         os.write((byte) type);
         os.write(' ');
-        os.write(Integer.toString(length).getBytes());
+        os.write(Integer.toString(length).getBytes("UTF-8"));
         os.write('\n');
         for (int i = 0; i < length; i++) {
             int r = value.read();
@@ -509,8 +509,7 @@ public class SVNWCProperties {
             throw new IOException("invalid properties file format");
         }
         // either END\n or K x\n
-        if (buffer[0] == 'E' && buffer[1] == 'N' && buffer[2] == 'D'
-                && buffer[3] == '\n') {
+        if (buffer[0] == 'E' && buffer[1] == 'N' && buffer[2] == 'D' && buffer[3] == '\n') {
             return -1;
         } else if (buffer[0] == type && buffer[1] == ' ') {
             int i = 4;
@@ -528,7 +527,7 @@ public class SVNWCProperties {
             } else {
                 i = 3;
             }
-            String length = new String(buffer, 2, i - 2);
+            String length = new String(buffer, 2, i - 2, "UTF-8");
             return Integer.parseInt(length.trim());
         }
         throw new IOException("invalid properties file format");

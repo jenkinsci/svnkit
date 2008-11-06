@@ -133,6 +133,9 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         myState = UNINITIATED;
         myIsNegotiateLocalCall = false;
         myCharset = charset;
+        if (myCharset == null) {
+            myCharset = "US-ASCII";
+        }
     }
     
     public void setType1State(){
@@ -202,7 +205,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
-        String proto = new String(resultBuffer, 0, 7);
+        String proto;
+        try {
+            proto = new String(resultBuffer, 0, 7, myCharset);
+        } catch (UnsupportedEncodingException e) {
+            proto = new String(resultBuffer, 0, 7);
+        }
         byte[] typeBytes = new byte[4];
         for (int i = 0; i < 4; i++) {
             typeBytes[i] = resultBuffer[8 + i];
@@ -232,7 +240,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         long flags = toLong(flagBytes);
         
         StringBuffer log = new StringBuffer();
-        String base64DecodedMessage = new String(resultBuffer, 0, resultLength);
+        String base64DecodedMessage;
+        try {
+            base64DecodedMessage = new String(resultBuffer, 0, resultLength, myCharset);
+        } catch (UnsupportedEncodingException e) {
+            base64DecodedMessage = new String(resultBuffer, 0, resultLength);
+        }
         log.append("NTLM auth message: " + base64DecodedMessage);
         log.append('\n');
         log.append("Length: " + base64DecodedMessage.length());
@@ -270,7 +283,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         long targetNameOffset = toLong(targetNameOffsetBytes); 
         
         if (targetNameLength > 0) {
-            String targetName = new String(resultBuffer, (int)targetNameOffset, targetNameAllocated);
+            String targetName;
+            try {
+                targetName = new String(resultBuffer, (int)targetNameOffset, targetNameAllocated, myCharset);
+            } catch (UnsupportedEncodingException e) {
+                targetName = new String(resultBuffer, (int)targetNameOffset, targetNameAllocated);
+            }
             log.append("Target Name: " + targetName);
             log.append('\n');
         }
@@ -357,7 +375,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
 
                 String typeDescription = (String)ourTargetInfoTypes.get(new Integer(targetInfoType));
                 if (typeDescription != null) {
-                    String info = new String(resultBuffer, (int)targetInfoOffset, subblockLength);
+                    String info;
+                    try {
+                        info = new String(resultBuffer, (int)targetInfoOffset, subblockLength, myCharset);
+                    } catch (UnsupportedEncodingException e) {
+                        info = new String(resultBuffer, (int)targetInfoOffset, subblockLength);
+                    }
                     log.append(typeDescription + ": " + info);
                     log.append('\n');
                 }
@@ -693,7 +716,12 @@ class HTTPNTLMAuthentication extends HTTPAuthentication {
         }
 
         StringBuffer log = new StringBuffer();
-        String message = new String(myResponse, 0, myPosition);
+        String message = null;
+        try {
+            message = new String(myResponse, 0, myPosition, myCharset);
+        } catch (UnsupportedEncodingException e) {
+            message = new String(myResponse, 0, myPosition);
+        }
         log.append("NTLM auth message: " + message);
         log.append('\n');
         log.append("Length: " + message.length());
