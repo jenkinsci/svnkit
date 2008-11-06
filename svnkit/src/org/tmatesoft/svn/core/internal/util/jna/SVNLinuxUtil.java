@@ -153,6 +153,7 @@ public class SVNLinuxUtil {
                 }
                 byte[] buffer = new byte[rc];
                 ourSharedMemory.read(0, buffer, 0, rc);
+                // intentionally read in system default encoding.
                 return new String(buffer, 0, rc);
             }
         } catch (Throwable th) {
