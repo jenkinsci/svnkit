@@ -82,6 +82,7 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVPrivateResourceFact
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResource.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResourceFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVResourceFactory.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVResourceState.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVServletUtil.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVURIInfo.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVVersionResource.java -text
@@ -90,8 +91,10 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVWorkingResource.jav
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVWorkingResourceFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVCheckOutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVCheckOutRequest.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockInfoProvider.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeActivityHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResult.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResponse.java -text
 svnkit-eclipse/com.sun.jna/MANIFEST.MF eol=lf
 svnkit-eclipse/com.sun.jna/feature.properties -text

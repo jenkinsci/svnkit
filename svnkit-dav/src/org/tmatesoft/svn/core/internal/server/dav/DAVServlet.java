@@ -34,6 +34,8 @@ import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -124,6 +126,7 @@ public class DAVServlet extends HttpServlet {
 
     public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ServletDAVHandler handler = null;
+        logRequest(request);//TODO: remove later
         try {
             DAVRepositoryManager repositoryManager = new DAVRepositoryManager(getDAVConfig(), request);
             handler = DAVHandlerFactory.createHandler(repositoryManager, request, response);
@@ -159,6 +162,42 @@ public class DAVServlet extends HttpServlet {
         response.flushBuffer();
     }
 
+    private void logRequest(HttpServletRequest request) {
+        StringBuffer logBuffer = new StringBuffer();
+        logBuffer.append('\n');
+        logBuffer.append("Request auth type: " + request.getAuthType());
+        logBuffer.append('\n');
+        logBuffer.append("Request character encoding: " + request.getCharacterEncoding());
+        logBuffer.append('\n');
+        logBuffer.append("Request content type: " + request.getContentType());
+        logBuffer.append('\n');
+        logBuffer.append("Request context path: " + request.getContextPath());
+        logBuffer.append('\n');
+        logBuffer.append("Request method: " + request.getMethod());
+        logBuffer.append('\n');
+        logBuffer.append("Request path info: " + request.getPathInfo());
+        logBuffer.append('\n');
+        logBuffer.append("Request path translated: " + request.getPathTranslated());
+        logBuffer.append('\n');
+        logBuffer.append("Request query string: " + request.getQueryString());
+        logBuffer.append('\n');
+        logBuffer.append("Request remote address: " + request.getRemoteAddr());
+        logBuffer.append('\n');
+        logBuffer.append("Request remote host: " + request.getRemoteHost());
+        logBuffer.append('\n');
+        logBuffer.append("Request remote user: " + request.getRemoteUser());
+        logBuffer.append('\n');
+        logBuffer.append("Request URI: " + request.getRequestURI());
+        logBuffer.append('\n');
+        logBuffer.append("Request server name: " + request.getServerName());
+        logBuffer.append('\n');
+        logBuffer.append("Request server port: " + request.getServerPort());
+        logBuffer.append('\n');
+        logBuffer.append("Request servlet path: " + request.getServletPath());
+        logBuffer.append('\n');
+        logBuffer.append("Request URL: " + request.getRequestURL());
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, logBuffer.toString());
+    }
     
     private void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {
         servletResponse.setContentType(XML_CONTENT_TYPE);

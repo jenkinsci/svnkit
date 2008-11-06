@@ -343,6 +343,10 @@ public abstract class DAVResource {
         }
         return getRepository().getLocks(getResourceURI().getPath());
     }
+    
+    public SVNLock getLock() throws SVNException {
+        return getRepository().getLock(getResourceURI().getPath());
+    }
 
     public String getAuthor(long revision) throws SVNException {
         return getRevisionProperty(revision, SVNRevisionProperty.AUTHOR);

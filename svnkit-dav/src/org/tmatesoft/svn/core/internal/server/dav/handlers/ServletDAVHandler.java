@@ -51,6 +51,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
@@ -209,6 +210,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 label, useCheckedIn);
     }
 
+    protected DAVResourceState getResourceState(DAVResource resource) {
+        if (resource.exists()) {
+            return DAVResourceState.EXISTS;
+        }
+
+        DAVLockInfoProvider lockInfoProvider = DAVLockInfoProvider.createLockInfoProvider(this, true);
+        return null;//TODO
+    }
+    
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
         String depth = getRequestHeader(DEPTH_HEADER);
         if (depth == null) {
@@ -235,6 +245,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRequest.getHeader(name);
     }
 
+    protected String getRequestMethod() {
+        return myRequest.getMethod();
+    }
+    
     protected Enumeration getRequestHeaders(String name) {
         return myRequest.getHeaders(name);
     }
@@ -292,7 +306,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected void handleDAVCreated(String location, String what, boolean isReplaced) throws SVNException {
         if (location == null) {
-            location = myRequest.getRequestURI();
+            location = getURI();
         }
         
         if (isReplaced) {
