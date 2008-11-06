@@ -234,8 +234,8 @@ public class SVNMoveClient extends SVNBasicClient {
                     dstParentArea = wcAccess.open(dstParent, true, 0);
                 }
 
-                SVNEntry srcEntry = srcParentArea.getEntry(src.getName(), true);
-                SVNEntry dstEntry = dstParentArea.getEntry(dst.getName(), true);
+                SVNEntry srcEntry = srcParentArea.getEntry(src.getName(), false);
+                SVNEntry dstEntry = dstParentArea.getEntry(dst.getName(), false);
 
                 File srcWCRoot = SVNWCUtil.getWorkingCopyRoot(src, true);
                 File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
