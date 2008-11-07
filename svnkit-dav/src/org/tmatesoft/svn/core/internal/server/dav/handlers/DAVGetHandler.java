@@ -93,7 +93,7 @@ public class DAVGetHandler extends ServletDAVHandler {
         return null;
     }
 
-    protected void checkPreconditions(String eTag, Date lastModified) {
+    protected int checkPreconditions(String eTag, Date lastModified) {
         super.checkPreconditions(eTag, lastModified);
         lastModified = lastModified == null ? new Date() : lastModified;
         boolean isNotModified = false;
@@ -117,6 +117,8 @@ public class DAVGetHandler extends ServletDAVHandler {
         } else {
             //TODO status OK
         }
+        
+        return 0;//TODO
     }
 
     private void setResponseHeaders(DAVResource resource) {
@@ -134,12 +136,10 @@ public class DAVGetHandler extends ServletDAVHandler {
         } catch (SVNException e) {
             //nothing to do we just skip this header
         }
-        try {
-            String eTag = resource.getETag();
-            if (eTag != null) {
-                setResponseHeader(ETAG_HEADER, eTag);
-            }
-        } catch (SVNException e) {
+
+        String eTag = resource.getETag();
+        if (eTag != null) {
+            setResponseHeader(ETAG_HEADER, eTag);
         }
     }
 

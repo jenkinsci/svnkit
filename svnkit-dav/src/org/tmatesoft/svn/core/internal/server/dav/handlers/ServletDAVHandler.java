@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.Attributes;
@@ -216,6 +217,31 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
 
         DAVLockInfoProvider lockInfoProvider = DAVLockInfoProvider.createLockInfoProvider(this, true);
+        
+        try {
+            if (lockInfoProvider.hasLocks(resource)) {
+                return DAVResourceState.LOCK_NULL;
+            }
+        } catch (DAVException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Failed to query lock-null status for " + resource.getResourceURI().getPath());
+            return DAVResourceState.ERROR;
+        }
+        
+        return DAVResourceState.NULL; 
+    }
+    
+    protected DAVResponse validateRequest(DAVResource resource, int depth) {
+        boolean setETag = false;
+        String eTag = getRequestHeader(ETAG_HEADER);
+        if (eTag == null) {
+            eTag = resource.getETag();
+            if (eTag != null && eTag.length() > 0) {
+                setResponseHeader(ETAG_HEADER, eTag);
+                setETag = true;
+            }
+        }
+        
+        DAVResourceState resourceState = getResourceState(resource);
         return null;//TODO
     }
     
@@ -419,27 +445,35 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return properties;
     }
 
-    protected void checkPreconditions(String eTag, Date lastModified) {
+    protected int checkPreconditions(String eTag, Date lastModified) {
         lastModified = lastModified == null ? new Date() : lastModified;
         long lastModifiedTime = lastModified.getTime();
         Enumeration ifMatch = getRequestHeaders(IF_MATCH_HEADER);
         if (ifMatch != null && ifMatch.hasMoreElements()) {
             String first = (String) ifMatch.nextElement();
-            if (!"*".equals(first) && (eTag == null || "W".startsWith(eTag) || !first.equals(eTag))) {
-                if ("W".startsWith(eTag) || !containsValue(ifMatch, eTag, null)) {
-                    //Precondition failed!
-                }
+            if (!first.startsWith("*") && (eTag == null || eTag.startsWith("W") || !first.equals(eTag) || !containsValue(ifMatch, eTag, null))) {
+                return HttpServletResponse.SC_PRECONDITION_FAILED;
             }
         } else {
             long ifUnmodified = getRequestDateHeader(IF_UNMODIFIED_SINCE_HEADER);
             if (ifUnmodified != -1 && lastModifiedTime > ifUnmodified) {
-                //Precondition failed!
+                return HttpServletResponse.SC_PRECONDITION_FAILED;
             }
         }
         Enumeration ifNoneMatch = getRequestHeaders(IF_NONE_MATCH_HEADER);
-        if (ifNoneMatch != null && containsValue(ifNoneMatch, eTag, "*")) {
+        if (ifNoneMatch != null) {
+            String first = (String) ifNoneMatch.nextElement();
+            if (DAVHandlerFactory.METHOD_GET.equals(getRequestMethod())) {
+                if (first.startsWith("*")) {
+                    
+                }
+               
+            }
             //Precondition failed!
+            containsValue(ifNoneMatch, eTag, "*");
         }
+        return 0;//TODO: 
+
     }
 
     protected boolean containsValue(Enumeration values, String stringToFind, String matchAllString) {

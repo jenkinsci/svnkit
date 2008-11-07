@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -183,6 +184,12 @@ public abstract class DAVResource {
         return getResourceURI().getType();
     }
 
+    public boolean lacksETagPotential() {
+        DAVResourceType type = getResourceURI().getType();
+        return !exists() || (type != DAVResourceType.REGULAR && type != DAVResourceType.VERSION) || 
+               (type == DAVResourceType.VERSION && isBaseLined()); 
+    }
+    
     public boolean canBeActivity() {
         return isAutoCheckedOut() || (getType() == DAVResourceType.ACTIVITY && !exists());
     }
@@ -288,14 +295,24 @@ public abstract class DAVResource {
         return SVNDate.parseDate(getRevisionProperty(revision, SVNRevisionProperty.DATE));
     }
 
-    public String getETag() throws SVNException {
+    public String getETag() {
         if (lacksETagPotential()) {
             return null;
         }
+        
+        long createdRevision = -1;
+        try {
+            FSRevisionNode revNode = myRoot.getRevisionNode(getResourceURI().getPath());
+            createdRevision = revNode.getCreatedRevision();
+        } catch (SVNException svne) {
+            return null;
+        }
+        
         StringBuffer eTag = new StringBuffer();
         eTag.append(isCollection() ? "W/" : "");
         eTag.append("\"");
-        eTag.append(getCreatedRevision());
+        
+        eTag.append(createdRevision);
         eTag.append("/");
         eTag.append(SVNEncodingUtil.uriEncode(getResourceURI().getPath()));
         eTag.append("\"");
@@ -439,11 +456,6 @@ public abstract class DAVResource {
 
     protected void setCollection(boolean isCollection) {
         myIsCollection = isCollection;
-    }
-
-    private boolean lacksETagPotential() {
-        return (!exists() || (getResourceURI().getType() != DAVResourceType.REGULAR && getResourceURI().getType() != DAVResourceType.VERSION)
-                || getResourceURI().getType() == DAVResourceType.VERSION && getResourceURI().isBaseLined());
     }
 
 }

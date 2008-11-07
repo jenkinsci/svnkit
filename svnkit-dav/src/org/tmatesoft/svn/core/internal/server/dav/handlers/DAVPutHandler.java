@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -46,6 +47,7 @@ public class DAVPutHandler extends ServletDAVHandler {
             return;
         }
         
+        DAVResourceState resourceState = getResourceState(resource);
         
     }
 
