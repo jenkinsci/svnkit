@@ -230,7 +230,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVResourceState.NULL; 
     }
     
-    protected DAVResponse validateRequest(DAVResource resource, int depth) {
+    protected DAVResponse validateRequest(DAVResource resource, int depth) throws SVNException {
         boolean setETag = false;
         String eTag = getRequestHeader(ETAG_HEADER);
         if (eTag == null) {
@@ -242,7 +242,41 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         DAVResourceState resourceState = getResourceState(resource);
+        int result = meetsCondition(resource, resourceState);
+        
+        if (setETag) {
+            setResponseHeader(ETAG_HEADER, null);
+        }
+        
+        if (result != 0) {
+            throw new DAVException(null, null, result, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
+        }
+       
+        
         return null;//TODO
+    }
+    
+    protected void processIfHeader() {
+        String value = getRequestHeader(HTTPHeader.IF_HEADER);
+        if (value == null) {
+            return;
+        }
+        
+        ListType listType = ListType.UNKNOWN;
+        while (value.length() > 0) {
+            if (value.charAt(0) == '<') {
+                if (listType == ListType.NO_TAGGED) {
+                    value = value.substring(1);
+                    
+                }
+                
+            }
+        }
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (ch == '<') {
+            }
+        }
     }
     
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
@@ -460,20 +494,37 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 return HttpServletResponse.SC_PRECONDITION_FAILED;
             }
         }
+
+        boolean notModified = false;
         Enumeration ifNoneMatch = getRequestHeaders(IF_NONE_MATCH_HEADER);
-        if (ifNoneMatch != null) {
+        if (ifNoneMatch != null && ifNoneMatch.hasMoreElements()) {
             String first = (String) ifNoneMatch.nextElement();
             if (DAVHandlerFactory.METHOD_GET.equals(getRequestMethod())) {
                 if (first.startsWith("*")) {
-                    
+                    notModified = true;
+                } else if (eTag != null) {
+                    if (getRequestHeader(RANGE_HEADER) != null) {
+                        notModified = !eTag.startsWith("W") && containsValue(ifNoneMatch, eTag, null); 
+                    } else {
+                        notModified = containsValue(ifNoneMatch, eTag, null);
+                    }
                 }
-               
+            } else if (first.startsWith("*") || (eTag != null && containsValue(ifNoneMatch, eTag, null))) {
+                return HttpServletResponse.SC_PRECONDITION_FAILED;
             }
-            //Precondition failed!
-            containsValue(ifNoneMatch, eTag, "*");
         }
-        return 0;//TODO: 
+        
+        long ifModifiedSince = getRequestDateHeader(IF_MODIFIED_SINCE_HEADER);
+        if (DAVHandlerFactory.METHOD_GET.equals(getRequestMethod()) && (notModified || ifNoneMatch == null) && ifModifiedSince != -1) {
+            long requestTime = myRequest.getSession().getLastAccessedTime();
+            notModified = ifModifiedSince >= lastModifiedTime && ifModifiedSince <= requestTime;
+        }
+        
+        if (notModified) {
+            return HttpServletResponse.SC_NOT_MODIFIED;
+        }
 
+        return 0; 
     }
 
     protected boolean containsValue(Enumeration values, String stringToFind, String matchAllString) {
@@ -609,6 +660,29 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return encoding;
     }
 
+    private int meetsCondition(DAVResource resource, DAVResourceState resourceState) throws SVNException {
+        Enumeration ifMatch = getRequestHeaders(IF_MATCH_HEADER);
+        if (ifMatch != null && ifMatch.hasMoreElements()) {
+            String first = (String) ifMatch.nextElement();
+            if (first.startsWith("*") && resourceState != DAVResourceState.EXISTS) {
+                return HttpServletResponse.SC_PRECONDITION_FAILED;
+            }
+        }
+        
+        int retVal = checkPreconditions(resource.getETag(), resource.getLastModified());
+        if (retVal == HttpServletResponse.SC_PRECONDITION_FAILED) {
+            Enumeration ifNoneMatch = getRequestHeaders(IF_NONE_MATCH_HEADER);
+            if (ifNoneMatch != null && ifNoneMatch.hasMoreElements()) {
+                String first = (String) ifNoneMatch.nextElement();
+                if (first.startsWith("*") && resourceState != DAVResourceState.EXISTS) {
+                    return 0;
+                }
+            }
+        }
+        
+        return retVal;
+    }
+
     protected long readInput(boolean ignoreInput) throws SVNException {
         if (ignoreInput) {
             InputStream inputStream = null;
@@ -726,4 +800,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return ourSAXParserFactory;
     }
     
+    private static class ListType {
+        public static final ListType NO_TAGGED = new ListType();
+        public static final ListType TAGGED = new ListType();
+        public static final ListType UNKNOWN = new ListType();
+        
+        private ListType() {
+        }
+    }
 }

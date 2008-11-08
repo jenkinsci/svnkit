@@ -33,6 +33,17 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVServletUtil {
     
+    public static String fetchNextToken(StringBuffer string, char term) {
+        String token = string.substring(1);
+        token = token.trim();
+        int ind = -1;
+        if ((ind = token.indexOf(term)) == -1) {
+            return null;
+        }
+         
+        return null;
+    }
+    
     public static FSTransactionInfo openTxn(FSFS fsfs, String txnName) throws DAVException {
         FSTransactionInfo txnInfo = null;
         try {

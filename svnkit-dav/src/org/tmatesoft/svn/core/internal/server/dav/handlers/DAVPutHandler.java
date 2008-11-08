@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Enumeration;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,5 +56,5 @@ public class DAVPutHandler extends ServletDAVHandler {
     protected DAVRequest getDAVRequest() {
         return null;
     }
-
+    
 }
