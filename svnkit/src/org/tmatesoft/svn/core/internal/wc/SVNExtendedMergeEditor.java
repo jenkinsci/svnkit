@@ -82,12 +82,12 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
     public void deleteEntry(String path, long revision) throws SVNException {
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision1);
         SVNAdminArea dir = retrieve(myCurrentDirectory.myWCFile, true);            
-        if (nodeKind == SVNNodeKind.DIR) {
+        if (nodeKind != SVNNodeKind.FILE) {
             deleteEntry(path, nodeKind, dir);
             return;
         }
 
-        SVNURL[] targets = getMergeCallback().getTrueMergeTargets(getSourceURL(path), revision, getTargetURL(path), getTargetRevision(), SVNEditorAction.DELETE);
+        SVNURL[] targets = getMergeCallback().getTrueMergeTargets(getSourceURL(path), revision, Math.max(myRevision1, myRevision2), getTargetURL(path), getTargetRevision(), SVNEditorAction.DELETE);
 
         if (targets == null) {
             deleteEntry(path, nodeKind, dir);
@@ -113,7 +113,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         File deleteTarget = null;
         if (source.getURL() != null) {
             if (source.getRevision() == null || source.getRevision().getNumber() < 0) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Illegal revision number was passed with copy source information");
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Illegal revision number was passed with copy source information");
                 SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
             String sPath = SVNPathUtil.getPathAsChild(mySourceURL.getPath(), source.getURL().getPath());
@@ -151,6 +151,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 SVNVersionedProperties baseProperties = dir.getBaseProperties(file.getName());
                 String baseType = baseProperties.getStringPropertyValue(SVNProperty.MIME_TYPE);
                 File baseFile = dir.getBaseFile(file.getName(), false);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: del " + path);                
                 type = getDiffCallback().fileDeleted(path, baseFile, null, baseType, null, baseProperties.asMap());
             } else if (nodeKind == SVNNodeKind.DIR) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: attempt to delete directory " + path + " skipped");
@@ -162,21 +163,15 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 }
             }
         }
-        if (myEventHandler != null) {
-            KindActionState kas = new KindActionState();
-            kas.myAction = action;
-            kas.myKind = nodeKind;
-            kas.myStatus = type;
-            kas.myExpectedAction = expectedAction;
-            myDeletedPaths.put(file, kas);
-        }
+
+        addDeletedPath(path, nodeKind, type, action, expectedAction);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         SVNURL url = getSourceURL(path);
         long targetRevision = getTargetRevision();
 
-        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), getTargetURL(path), targetRevision, SVNEditorAction.ADD);
+        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), getTargetURL(path), targetRevision, SVNEditorAction.ADD);
         if (mergeURLs == null) {
             super.addFile(path, copyFromPath, copyFromRevision);
             return;
@@ -187,7 +182,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
 
-            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), targetURL, targetRevision);
+            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), targetURL, targetRevision);
             if (copyTask != null) {
                 SVNCopySource copySource = copyTask.getCopySource();
                 getMergeDriver().addMergeSource(path, target, copyTask.getCopySource());
@@ -210,7 +205,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
     public void openFile(String path, long revision) throws SVNException {
         SVNURL url = getSourceURL(path);
         long targetRevision = getTargetRevision();
-        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), getTargetURL(path), targetRevision, SVNEditorAction.MODIFY);
+        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), getTargetURL(path), targetRevision, SVNEditorAction.MODIFY);
 
         if (mergeURLs == null) {
             super.openFile(path, revision);
@@ -221,7 +216,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             SVNURL targetURL = mergeURLs[i];
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
-            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), targetURL, targetRevision);
+            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), targetURL, targetRevision);
             if (copyTask != null) {
 
             }
@@ -505,15 +500,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                     }
                 }
             }
-            if (myEventHandler != null) {
-                File deletedPath = new File(myTarget, myPath);
-                KindActionState kas = new KindActionState();
-                kas.myAction = action;
-                kas.myKind = nodeKind;
-                kas.myStatus = type;
-                kas.myExpectedAction = expectedAction;
-                myDeletedPaths.put(deletedPath, kas);
-            }
+            addDeletedPath(myPath, nodeKind, type, action, expectedAction);
         }
     }
 }

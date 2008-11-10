@@ -2358,7 +2358,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     		SVNEntry entry, final SVNURL sourceRootURL, final long revision1, 
     		final long revision2, final SVNRepository repository, final SVNDepth depth) throws SVNException {
     	final List childrenWithMergeInfo = children == null ? new LinkedList() : children;
-        ISVNEntryHandler handler = getEntryHandler(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, childrenWithMergeInfo);
+        ISVNEntryHandler handler = getMergeInfoEntryHandler(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, childrenWithMergeInfo);
 
         if (entry.isFile()) {
             handler.handleEntry(myTarget, entry);
@@ -2431,7 +2431,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return childrenWithMergeInfo;
     }
 
-    protected ISVNEntryHandler getEntryHandler(String mergeSrcPath, SVNURL sourceRootURL, long revision1, long revision2, SVNRepository repository, SVNDepth depth, List childrenWithMergeInfo) {
+    protected ISVNEntryHandler getMergeInfoEntryHandler(String mergeSrcPath, SVNURL sourceRootURL, long revision1, long revision2, SVNRepository repository, SVNDepth depth, List childrenWithMergeInfo) {
         return new MergeInfoFetcher(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, childrenWithMergeInfo);
     }
 

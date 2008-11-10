@@ -76,7 +76,7 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
         public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
         }
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             if (targetUrl.getPath().endsWith("trunk/A/file2")) {
                 SVNCopySource copySource = new SVNCopySource(SVNRevision.create(targetRevision), SVNRevision.create(targetRevision), getTrunk().appendPath("A/file", false));
                 return SVNCopyTask.create(copySource, true);
@@ -84,7 +84,7 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/A/file2")) {
                 return new SVNURL[]{getTrunk().appendPath("A/file2", false)};
             }
@@ -107,11 +107,11 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             return new SVNURL[0];
         }
 
