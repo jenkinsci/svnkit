@@ -1818,6 +1818,8 @@ public class SVNWCClient extends SVNBasicClient {
      * <span class="javakeyword">null</span>, then an {@link SVNEventAction#RESOLVED} event is 
      * dispatched to the handler.
      * 
+     * <p/>
+     * This is equivalent to calling <code>doResolve(path, depth, true, true, conflictChoice)</code>.
      * @param path               working copy path
      * @param depth              tree depth
      * @param conflictChoice     choice object for making decision while resolving
@@ -1827,7 +1829,43 @@ public class SVNWCClient extends SVNBasicClient {
     public void doResolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
         doResolve(path, depth, true, true, conflictChoice);
     }
-    
+
+    /**
+     * Performs automatic conflict resolution on a working copy <code>path</code>.
+     * 
+     * <p/> 
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, acts only on <code>path</code>; if
+     * {@link SVNDepth#FILES}, resolves <code>path</code> and its conflicted file
+     * children (if any); if {@link SVNDepth#IMMEDIATES}, resolves <code>path</code> and
+     * all its immediate conflicted children (both files and directories,
+     * if any); if {@link SVNDepth#INFINITY}, resolves <code>path</code> and every
+     * conflicted file or directory anywhere beneath it.
+     * 
+     * <p/>
+     * If <code>conflictChoice</code> is {@link SVNConflictChoice#BASE}, resolves the
+     * conflict with the old file contents; if {@link SVNConflictChoice#MINE_FULL}, uses the original 
+     * working contents; if {@link SVNConflictChoice#THEIRS_FULL}, the new contents; and if
+     * {@link SVNConflictChoice#MERGED}, doesn't change the contents at all, just removes the conflict status, 
+     * which is the pre-1.2 (pre-SVN 1.5) behavior.
+     *
+     * <p/>
+     * {@link SVNConflictChoice#THEIRS_CONFLICT} and {@link SVNConflictChoice#MINE_CONFLICT} are not legal for 
+     * binary files or properties.
+     *
+     * <p/>
+     * If <code>path</code> is not in a state of conflict to begin with, does nothing. If 
+     * <code>path</code>'s conflict state is removed and caller's {@link ISVNEntryHandler} is not 
+     * <span class="javakeyword">null</span>, then an {@link SVNEventAction#RESOLVED} event is 
+     * dispatched to the handler.
+     * 
+     * @param path               working copy path
+     * @param depth              tree depth
+     * @param resolveContents    resolve content conflict
+     * @param resolveProperties  resolve property conflict
+     * @param conflictChoice     choice object for making decision while resolving
+     * @throws SVNException  
+     * @since 1.2, SVN 1.5
+     */
     public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, 
             SVNConflictChoice conflictChoice) throws SVNException {
         final SVNConflictChoice choice = conflictChoice == null ? SVNConflictChoice.MERGED : conflictChoice;
