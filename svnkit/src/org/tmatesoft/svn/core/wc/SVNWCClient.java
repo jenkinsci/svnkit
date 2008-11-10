@@ -1825,6 +1825,11 @@ public class SVNWCClient extends SVNBasicClient {
      * @since 1.2, SVN 1.5
      */
     public void doResolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
+        doResolve(path, depth, true, true, conflictChoice);
+    }
+    
+    public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, 
+            SVNConflictChoice conflictChoice) throws SVNException {
         final SVNConflictChoice choice = conflictChoice == null ? SVNConflictChoice.MERGED : conflictChoice;
         path = path.getAbsoluteFile();
         final SVNWCAccess wcAccess = createWCAccess();
@@ -1844,8 +1849,9 @@ public class SVNWCClient extends SVNBasicClient {
 
                     File conflictDir = entry.isDirectory() ? path : path.getParentFile();
                     SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
-                    if (conflictArea.markResolved(entry.getName(), true, true, choice)) {
-                        SVNEvent event = SVNEventFactory.createSVNEvent(conflictArea.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.RESOLVED, null, null, null);
+                    if (conflictArea.markResolved(entry.getName(), resolveContents, resolveProperties, choice)) {
+                        SVNEvent event = SVNEventFactory.createSVNEvent(conflictArea.getFile(entry.getName()), entry.getKind(), null, 
+                                entry.getRevision(), SVNEventAction.RESOLVED, null, null, null);
                         dispatchEvent(event);
                     }
                 }
