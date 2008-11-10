@@ -126,12 +126,13 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     protected void addDeletedPath(String path, SVNNodeKind nodeKind, SVNStatusType type, SVNEventAction action, SVNEventAction expectedAction) {
         if (myEventHandler != null) {
+            File deletedFile = new File(myTarget, path);
             KindActionState kas = new KindActionState();
             kas.myAction = action;
             kas.myKind = nodeKind;
             kas.myStatus = type;
             kas.myExpectedAction = expectedAction;
-            myDeletedPaths.put(path, kas);
+            myDeletedPaths.put(deletedFile, kas);
         }
     }
 
