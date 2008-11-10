@@ -33,10 +33,6 @@
             <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/classes" />
           </containerElement>
-          <containerElement type="module" name="svnkit-cli">
-            <attribute name="method" value="0" />
-            <attribute name="URI" value="/WEB-INF/classes" />
-          </containerElement>
           <containerElement type="module" name="svnkit-dav">
             <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/classes" />

@@ -9,7 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="svnkit" />
-    <orderEntry type="module" module-name="javahl" />
     <orderEntryProperties />
   </component>
 </module>

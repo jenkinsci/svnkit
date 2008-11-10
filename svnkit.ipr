@@ -249,11 +249,12 @@
       <module fileurl="file://$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" filepath="$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-dav/svnkit-dav.iml" filepath="$PROJECT_DIR$/svnkit-dav/svnkit-dav.iml" />
       <module fileurl="file://$PROJECT_DIR$/doc/examples/svnkit-examples.iml" filepath="$PROJECT_DIR$/doc/examples/svnkit-examples.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../svnkit-ext/svnkit-ext.iml" filepath="$PROJECT_DIR$/../svnkit-ext/svnkit-ext.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="1.4" project-jdk-type="JavaSDK" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="1.4" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$" />
+  </component>
   <component name="ResourceManagerContainer">
     <option name="myResourceBundles">
       <value>
@@ -268,8 +269,11 @@
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="myVersion" value="123" />
+  </component>
   <component name="VcsDirectoryMappings">
-    <mapping directory="" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$" vcs="svn" />
   </component>
   <component name="WebServicesPlugin" addRequiredLibraries="true" />
   <component name="com.intellij.jsf.UserDefinedFacesConfigs">
@@ -278,6 +282,15 @@
         <list size="0" />
       </value>
     </option>
+  </component>
+  <component name="libraryTable">
+    <library name="template">
+      <CLASSES>
+        <root url="file://$PROJECT_DIR$/../vs-test/src" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
   </component>
 </project>
 
