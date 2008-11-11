@@ -63,6 +63,14 @@ public class DAVException extends SVNException {
         this(message, null, responseCode, null, logType, Level.FINE, null, tagName, nameSpace, 0, null);
     }
 
+    public DAVException(String message, Object[] objects, int responseCode, int errorID) {
+        this(message, objects, responseCode, null, SVNLogType.NETWORK, Level.FINE, null, null, null, errorID, null);
+    }
+
+    public DAVException(String message, int responseCode, int errorID) {
+        this(message, null, responseCode, errorID);
+    }
+
     public int getErrorID() {
         return myErrorID;
     }

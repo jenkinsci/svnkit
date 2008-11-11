@@ -17,12 +17,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -46,7 +50,11 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
+import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
+import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
+import org.tmatesoft.svn.core.internal.server.dav.DAVIFStateType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -54,6 +62,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
@@ -230,7 +239,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVResourceState.NULL; 
     }
     
-    protected DAVResponse validateRequest(DAVResource resource, int depth) throws SVNException {
+    protected DAVResponse validateRequest(DAVResource resource, int depth, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
         boolean setETag = false;
         String eTag = getRequestHeader(ETAG_HEADER);
         if (eTag == null) {
@@ -252,31 +261,23 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             throw new DAVException(null, null, result, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
         }
        
+        LinkedList ifHeaders = DAVServletUtil.processIfHeader(getRequestHeader(HTTPHeader.IF_HEADER));
         
+        if (lockToken != null) {
+            DAVIFState ifState = new DAVIFState(DAVIFState.IF_CONDITION_NORMAL, null, lockToken, DAVIFStateType.IF_OPAQUE_LOCK);
+            DAVIFHeader ifHeader = new DAVIFHeader(resource.getResourceURI().getURI(), true);
+            ifHeader.addIFState(ifState);
+            ifHeaders.addFirst(ifHeader);
+        }
+        
+        if (lockInfoProvider == null) {
+            lockInfoProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+        }
+        
+        if (resource.exists() && depth > 0) {
+            
+        }
         return null;//TODO
-    }
-    
-    protected void processIfHeader() {
-        String value = getRequestHeader(HTTPHeader.IF_HEADER);
-        if (value == null) {
-            return;
-        }
-        
-        ListType listType = ListType.UNKNOWN;
-        while (value.length() > 0) {
-            if (value.charAt(0) == '<') {
-                if (listType == ListType.NO_TAGGED) {
-                    value = value.substring(1);
-                    
-                }
-                
-            }
-        }
-        for (int i = 0; i < value.length(); i++) {
-            char ch = value.charAt(i);
-            if (ch == '<') {
-            }
-        }
     }
     
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
@@ -800,12 +801,4 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return ourSAXParserFactory;
     }
     
-    private static class ListType {
-        public static final ListType NO_TAGGED = new ListType();
-        public static final ListType TAGGED = new ListType();
-        public static final ListType UNKNOWN = new ListType();
-        
-        private ListType() {
-        }
-    }
 }

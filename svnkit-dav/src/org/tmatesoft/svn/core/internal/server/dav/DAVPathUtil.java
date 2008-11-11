@@ -12,11 +12,12 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -159,14 +160,14 @@ public class DAVPathUtil {
     }
 
     public static DAVURIInfo simpleParseURI(String uri, DAVResource relative) throws SVNException {
-        SVNURL parsedURL = null;
+        URI parsedURI = null;
         try {
-            parsedURL = SVNURL.parseURIEncoded(uri);
-        } catch (SVNException e) {
+            parsedURI = new URI(uri);
+        } catch (URISyntaxException urise) {
             throwMalformedURIErrorException();
         }
         
-        String path = parsedURL.getPath();
+        String path = parsedURI.getPath();
         if ("".equals(path)) {
             path = "/";
         }
