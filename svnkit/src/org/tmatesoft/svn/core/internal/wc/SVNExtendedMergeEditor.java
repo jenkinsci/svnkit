@@ -81,7 +81,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
 
     public void deleteEntry(String path, long revision) throws SVNException {
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision1);
-        SVNAdminArea dir = retrieve(myCurrentDirectory.myWCFile, true);            
+        SVNAdminArea dir = retrieve(myCurrentDirectory.myWCFile, true);
         if (nodeKind != SVNNodeKind.FILE) {
             deleteEntry(path, nodeKind, dir);
             return;
@@ -107,6 +107,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         if (fileInfo != null) {
             fileInfo.delete();
         }
+        myCurrentFile = null;
     }
 
     private File getDeleteTarget(SVNCopySource source) throws SVNException {
@@ -151,7 +152,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 SVNVersionedProperties baseProperties = dir.getBaseProperties(file.getName());
                 String baseType = baseProperties.getStringPropertyValue(SVNProperty.MIME_TYPE);
                 File baseFile = dir.getBaseFile(file.getName(), false);
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: del " + path);                
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: del " + path);
                 type = getDiffCallback().fileDeleted(path, baseFile, null, baseType, null, baseProperties.asMap());
             } else if (nodeKind == SVNNodeKind.DIR) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: attempt to delete directory " + path + " skipped");
@@ -190,12 +191,14 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                     File deleteTarget = getDeleteTarget(copySource);
                     deletePath(deleteTarget);
                 }
-                return;
+                continue;
             }
 
-            if (SVNFileType.getType(target) != SVNFileType.NONE) {
+            SVNWCAccess access = myAdminArea.getWCAccess();
+            SVNEntry entry = access.getEntry(target, false);
+            if (entry != null) {
                 getMergeDriver().addMergeSource(path, target, null);
-                return;
+                continue;
             }
             SVNFileInfoExt fileInfo = getFileInfo(path, -1, SVNEditorAction.ADD, null);
             fileInfo.addTarget(targetPath);
@@ -216,14 +219,18 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             SVNURL targetURL = mergeURLs[i];
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
-            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
-            if (copyTask != null) {
 
-            }
-            SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
+
             boolean mergeInfoConflicts = false;
-            if (copySource != null) {
+            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
+            SVNCopySource copySource = null;
+            if (copyTask != null) {
+                copySource = copyTask.getCopySource();
                 getMergeDriver().copy(copySource, getFile(targetPath));
+                if (copyTask.isMove()) {
+                    File deleteTarget = getDeleteTarget(copySource);
+                    deletePath(deleteTarget);
+                }
             } else {
                 mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(target, targetURL);
             }
@@ -349,7 +356,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         public void loadFromRepository(long revision) throws SVNException {
             if (!myIsLoaded) {
                 super.loadFromRepository(revision);
-                myIsLoaded = true; 
+                myIsLoaded = true;
             }
         }
 

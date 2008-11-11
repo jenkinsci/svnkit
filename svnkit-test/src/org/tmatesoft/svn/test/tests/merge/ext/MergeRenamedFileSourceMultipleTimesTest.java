@@ -110,6 +110,9 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
         }
 
         public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+            if (action == SVNEditorAction.DELETE && sourceUrl.getPath().endsWith("branch/A/file")) {
+                return new SVNURL[0];
+            }
             if (sourceUrl.getPath().endsWith("branch/A/file4")) {
                 return new SVNURL[]{getTrunk().appendPath("A/file", false)};
             }

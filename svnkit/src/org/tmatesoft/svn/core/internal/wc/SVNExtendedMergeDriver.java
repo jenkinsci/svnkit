@@ -100,7 +100,11 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
 
     private void deleteReportFile() throws SVNException {
         if (myReportFile != null) {
-            SVNFileUtil.deleteFile(myReportFile);
+            try {
+                SVNFileUtil.deleteFile(myReportFile);
+            } finally {
+                myReportFile = null;
+            }
         }
     }
 
@@ -263,7 +267,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             super.doDirectoryMerge(url1, revision1, url2, revision2, parentEntry, adminArea, depth);
             return;
         }
-        
+
         if (depth != SVNDepth.INFINITY && depth != SVNDepth.UNKNOWN) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "''{0}'' depth is not allowed for this kind of merge", depth.getName());
             SVNErrorManager.error(error, SVNLogType.WC);
@@ -274,9 +278,14 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         try {
             super.doDirectoryMerge(url1, revision1, url2, revision2, parentEntry, adminArea, depth);
             doAdditionalMerge(url1, revision1, url2, revision2);
+        } catch (Throwable th) {
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNKNOWN,
+                    "Error while processing extended merge: {0}", new Object[]{th.getMessage()},
+                    SVNErrorMessage.TYPE_ERROR, th);
+            SVNErrorManager.error(error, th, SVNLogType.DEFAULT);
         } finally {
             deleteReportFile();
-            getPendingFiles().clear(); 
+            getPendingFiles().clear();
         }
     }
 
@@ -331,9 +340,9 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
 
         myCurrentInheritance = copySource != null ? SVNMergeInfoInheritance.EXPLICIT : null;
         try {
-        doFileMerge(mergeURL1, revision1, mergeURL2, revision2, mergeTarget, targetArea, true);
+            doFileMerge(mergeURL1, revision1, mergeURL2, revision2, mergeTarget, targetArea, true);
         } finally {
-            myCurrentInheritance = null;            
+            myCurrentInheritance = null;
         }
     }
 
