@@ -87,7 +87,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             return;
         }
 
-        SVNURL[] targets = getMergeCallback().getTrueMergeTargets(getSourceURL(path), revision, Math.max(myRevision1, myRevision2), getTargetURL(path), getTargetRevision(), SVNEditorAction.DELETE);
+        SVNURL[] targets = getMergeCallback().getTrueMergeTargets(getSourceURL(path), revision, myRevision1, myRevision2, getTargetURL(path), getTargetRevision(), SVNEditorAction.DELETE);
 
         if (targets == null) {
             deleteEntry(path, nodeKind, dir);
@@ -171,7 +171,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         SVNURL url = getSourceURL(path);
         long targetRevision = getTargetRevision();
 
-        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), getTargetURL(path), targetRevision, SVNEditorAction.ADD);
+        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, getTargetURL(path), targetRevision, SVNEditorAction.ADD);
         if (mergeURLs == null) {
             super.addFile(path, copyFromPath, copyFromRevision);
             return;
@@ -182,7 +182,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
 
-            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), targetURL, targetRevision);
+            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
             if (copyTask != null) {
                 SVNCopySource copySource = copyTask.getCopySource();
                 getMergeDriver().addMergeSource(path, target, copyTask.getCopySource());
@@ -205,7 +205,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
     public void openFile(String path, long revision) throws SVNException {
         SVNURL url = getSourceURL(path);
         long targetRevision = getTargetRevision();
-        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), getTargetURL(path), targetRevision, SVNEditorAction.MODIFY);
+        SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, getTargetURL(path), targetRevision, SVNEditorAction.MODIFY);
 
         if (mergeURLs == null) {
             super.openFile(path, revision);
@@ -216,7 +216,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             SVNURL targetURL = mergeURLs[i];
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
-            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), targetURL, targetRevision);
+            SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
             if (copyTask != null) {
 
             }

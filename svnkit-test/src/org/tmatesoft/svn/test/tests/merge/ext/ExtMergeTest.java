@@ -189,11 +189,11 @@ public class ExtMergeTest implements ISVNExtendedMergeCallback, ISVNEventHandler
         diffClient.doMerge(myBranch, SVNRevision.UNDEFINED, ranges, myWC, SVNDepth.INFINITY, true, false, false, false);
     }
 
-    public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
+    public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
         return null;
     }
 
-    public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) {
+    public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) {
         return null;
     }
 

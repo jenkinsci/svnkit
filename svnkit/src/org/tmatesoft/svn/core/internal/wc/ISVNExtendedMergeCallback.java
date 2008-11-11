@@ -26,9 +26,9 @@ import org.tmatesoft.svn.core.wc.SVNEditorAction;
  */
 public interface ISVNExtendedMergeCallback {
 
-    public SVNURL[] getTrueMergeTargets(SVNURL sourceURL, long sourceRevision, long sourceMergeToRevision, SVNURL targetURL, long targetRevision, SVNEditorAction action) throws SVNException;
+    public SVNURL[] getTrueMergeTargets(SVNURL sourceURL, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetURL, long targetRevision, SVNEditorAction action) throws SVNException;
 
-    public SVNCopyTask getTargetCopySource(SVNURL sourceURL, long sourceRevision, long sourceMergeToRevision, SVNURL targetURL, long targetRevision) throws SVNException ;
+    public SVNCopyTask getTargetCopySource(SVNURL sourceURL, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetURL, long targetRevision) throws SVNException ;
 
     public SVNURL transformLocation(SVNURL sourceURL, long sourceRevision, long targetRevision) throws SVNException;
 }

@@ -69,11 +69,11 @@ public class MergeSwitchedEntriesFailTest extends AbstractExtMergeTest {
         public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
         }
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             return new SVNURL[0];
         }
 
@@ -90,11 +90,11 @@ public class MergeSwitchedEntriesFailTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             return new SVNURL[0];
         }
 

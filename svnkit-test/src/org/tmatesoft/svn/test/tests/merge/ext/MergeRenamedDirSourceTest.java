@@ -88,7 +88,7 @@ public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
         public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
         }
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/B/file3")) {
                 SVNCopySource source = new SVNCopySource(SVNRevision.create(myEndRevision), SVNRevision.create(myEndRevision), getTrunk().appendPath("A/file", false));
                 return SVNCopyTask.create(source, true);
@@ -96,7 +96,7 @@ public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/B/file3")) {
                 return new SVNURL[]{getTrunk().appendPath("A/file3", false)};
             }
@@ -115,11 +115,11 @@ public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
     
     private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/B/file3")) {
                 return new SVNURL[]{getTrunk().appendPath("A/file", false)};
             }

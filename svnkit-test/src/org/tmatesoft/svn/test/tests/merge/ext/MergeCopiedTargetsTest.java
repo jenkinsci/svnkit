@@ -89,11 +89,11 @@ public class MergeCopiedTargetsTest extends AbstractExtMergeTest {
         public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
         }
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             return new SVNURL[0];
         }
 
@@ -106,11 +106,11 @@ public class MergeCopiedTargetsTest extends AbstractExtMergeTest {
     
     private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
             return null;
         }
 
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/A/file")) {
                 return new SVNURL[]{getTrunk().appendPath("file", false), getTrunk().appendPath("B/file", false), getTrunk().appendPath("A/file2", false)};
             }
