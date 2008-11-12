@@ -113,6 +113,10 @@ public class DAVResourceURI {
         return myIsWorking;
     }
 
+    public void setExists(boolean isExist) {
+        myIsExists = isExist;
+    }
+
     private void setPath(String path) {
         myPath = DAVPathUtil.standardize(path);
     }
@@ -143,10 +147,6 @@ public class DAVResourceURI {
 
     private void setType(DAVResourceType type) {
         myType = type;
-    }
-
-    private void setExists(boolean isExist) {
-        myIsExists = isExist;
     }
 
     private void parseURI(String label, boolean useCheckedIn) throws SVNException {

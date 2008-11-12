@@ -39,4 +39,8 @@ public class DAVActivityResource extends DAVResource {
         setExists(txnName != null);
     }
 
+    public DAVResource dup() {
+        return null;
+    }
+
 }

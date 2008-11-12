@@ -100,7 +100,10 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockInfoPr
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeActivityHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResult.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPutHandler.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResourceWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResponse.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVWalkResource.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/IDAVResourceWalkHandler.java -text
 svnkit-eclipse/com.sun.jna/MANIFEST.MF eol=lf
 svnkit-eclipse/com.sun.jna/feature.properties -text
 svnkit-eclipse/com.sun.jna/feature.xml -text

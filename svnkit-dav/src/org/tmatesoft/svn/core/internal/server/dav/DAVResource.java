@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -54,7 +55,6 @@ public abstract class DAVResource {
     public static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
     protected DAVResourceURI myResourceURI;
-
     protected FSRepository myRepository;
     protected long myRevision;
     protected long myLatestRevision = INVALID_REVISION;
@@ -146,10 +146,6 @@ public abstract class DAVResource {
     
     public void setTxnInfo(FSTransactionInfo txnInfo) {
         myTxnInfo = txnInfo;
-    }
-
-    public static boolean isValidRevision(long revision) {
-        return revision >= 0;
     }
 
     public DAVResourceURI getResourceURI() {
@@ -343,7 +339,7 @@ public abstract class DAVResource {
     }
 
     public long getLatestRevision() throws SVNException {
-        if (!isValidRevision(myLatestRevision)) {
+        if (!SVNRevision.isValidRevisionNumber(myLatestRevision)) {
             myLatestRevision = getRepository().getLatestRevision();
         }
         return myLatestRevision;
@@ -420,11 +416,14 @@ public abstract class DAVResource {
 
     public void setExists(boolean exists) {
         myIsExists = exists;
+        myResourceURI.setExists(exists);
     }
     
     public void setTxnName(String txnName) {
         myTxnName = txnName;
     }
+    
+    public abstract DAVResource dup();
     
     protected abstract void prepare() throws DAVException;
 

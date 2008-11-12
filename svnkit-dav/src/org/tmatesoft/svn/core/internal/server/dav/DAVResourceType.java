@@ -22,6 +22,7 @@ public class DAVResourceType {
     public static final DAVResourceType PRIVATE = new DAVResourceType("private");
     public static final DAVResourceType ACTIVITY = new DAVResourceType("activity");
     public static final DAVResourceType HISTORY = new DAVResourceType("history");
+    public static final DAVResourceType WORKSPACE = new DAVResourceType("workspace");
 
     private String myName;
 

@@ -37,4 +37,8 @@ public class DAVPrivateResource extends DAVResource {
     protected void prepare() throws DAVException {
     }
 
+    public DAVResource dup() {
+        return null;
+    }
+
 }

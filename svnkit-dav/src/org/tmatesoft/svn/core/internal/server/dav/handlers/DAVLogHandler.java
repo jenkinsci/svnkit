@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
  * @author TMate Software Ltd.
@@ -149,7 +150,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         StringBuffer xmlBuffer = new StringBuffer();
         switch (logEntryPath.getType()) {
             case SVNLogEntryPath.TYPE_ADDED:
-                if (logEntryPath.getCopyPath() != null && DAVResource.isValidRevision(logEntryPath.getCopyRevision())) {
+                if (logEntryPath.getCopyPath() != null && SVNRevision.isValidRevisionNumber(logEntryPath.getCopyRevision())) {
                     Map attrs = new SVNHashMap();
                     attrs.put(COPYFROM_PATH_ATTR, logEntryPath.getCopyPath());
                     attrs.put(COPYFROM_REVISION_ATTR, String.valueOf(logEntryPath.getCopyRevision()));
@@ -160,7 +161,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
                 break;
             case SVNLogEntryPath.TYPE_REPLACED:
                 Map attrs = null;
-                if (logEntryPath.getCopyPath() != null && DAVResource.isValidRevision(logEntryPath.getCopyRevision())) {
+                if (logEntryPath.getCopyPath() != null && SVNRevision.isValidRevisionNumber(logEntryPath.getCopyRevision())) {
                     attrs = new SVNHashMap();
                     attrs.put(COPYFROM_PATH_ATTR, logEntryPath.getCopyPath());
                     attrs.put(COPYFROM_REVISION_ATTR, String.valueOf(logEntryPath.getCopyRevision()));

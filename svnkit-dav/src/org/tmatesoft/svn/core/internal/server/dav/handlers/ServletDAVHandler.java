@@ -87,7 +87,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     public static final int SC_MULTISTATUS = 207;
     public static final int SC_HTTP_LOCKED = 423;
-        
+    
+    //some flag constants
+    public static final int DAV_VALIDATE_RESOURCE  = 0x0010;
+    public static final int DAV_VALIDATE_PARENT    = 0x0020;
+    public static final int DAV_VALIDATE_ADD_LD    = 0x0040;
+    public static final int DAV_VALIDATE_USE_424   = 0x0080;
+    public static final int DAV_VALIDATE_IS_PARENT = 0x0100;
+    
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
     
@@ -239,7 +246,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVResourceState.NULL; 
     }
     
-    protected DAVResponse validateRequest(DAVResource resource, int depth, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
+    protected DAVResponse validateRequest(DAVResource resource, int depth, int flags, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
         boolean setETag = false;
         String eTag = getRequestHeader(ETAG_HEADER);
         if (eTag == null) {

@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 
@@ -268,7 +269,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
             setDAVResource(getRequestedDAVResource(false, false));
 
-            if (!DAVResource.isValidRevision(getUpdateRequest().getRevision())) {
+            if (!SVNRevision.isValidRevisionNumber(getUpdateRequest().getRevision())) {
                 setRevision(getDAVResource().getLatestRevision());
             } else {
                 setRevision(getUpdateRequest().getRevision());

@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -86,7 +87,7 @@ public class DAVGetLocationsRequest extends DAVRequest {
             }
         }
 
-        if (getPath() == null && !DAVResource.isValidRevision(getPegRevision())) {
+        if (getPath() == null && !SVNRevision.isValidRevisionNumber(getPegRevision())) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Not all parameters passed."), SVNLogType.NETWORK);
         }
     }

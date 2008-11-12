@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
@@ -37,7 +38,7 @@ public class DAVVersionResource extends DAVResource {
     }
 
     protected void prepare() throws DAVException {
-        if (!isValidRevision(myRevision)) {
+        if (!SVNRevision.isValidRevisionNumber(myRevision)) {
             try {
                 myRevision = getLatestRevision();
             } catch (SVNException e) {
@@ -57,5 +58,9 @@ public class DAVVersionResource extends DAVResource {
         
         getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, getRevision(), null));
         setExists(true);
+    }
+
+    public DAVResource dup() {
+        return null;
     }
 }

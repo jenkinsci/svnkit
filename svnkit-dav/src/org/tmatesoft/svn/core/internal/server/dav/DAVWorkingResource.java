@@ -111,4 +111,8 @@ public class DAVWorkingResource extends DAVResource {
         setCollection(kind == SVNNodeKind.DIR);
     }
 
+    public DAVResource dup() {
+        return null;
+    }
+
 }
