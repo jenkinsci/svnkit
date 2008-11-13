@@ -11,18 +11,17 @@
  */
 package org.tmatesoft.svn.test.tests.merge.ext;
 
-import java.util.Collection;
-import java.util.LinkedList;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNCopyTask;
 import org.tmatesoft.svn.core.wc.SVNEditorAction;
-import org.tmatesoft.svn.test.sandboxes.SVNSandboxFile;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
+import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
+import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
 
 /**
  * @author TMate Software Ltd.
@@ -42,10 +41,10 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
         return null;
     }
 
-    public Collection getInitialFS() {
-        Collection fs = new LinkedList();
-        fs.add(new SVNSandboxFile("A"));
-        fs.add(new SVNSandboxFile("A/file", "this is A/file", false));
+    public SVNWCDescriptor getInitialFS() {
+        SVNWCDescriptor fs = new SVNWCDescriptor();
+        fs.addFile(new SVNTestFileDescriptor("A"));
+        fs.addFile(new SVNTestFileDescriptor("A/file", "this is A/file"));
         return fs;
     }
 
@@ -99,6 +98,10 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
         public SVNURL transformLocation(SVNURL sourceUrl, long sourceRevision, long targetRevision) throws SVNException {
             return null;
         }
+
+        public SVNWCDescriptor getExpectedState() throws SVNException {
+            return null;
+        }
     }
 
 // ###############  RELEASE MODE  ###################
@@ -124,6 +127,10 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
         }
 
         public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        }
+
+        public SVNWCDescriptor getExpectedState() throws SVNException {
+            return null;
         }
     }
 }

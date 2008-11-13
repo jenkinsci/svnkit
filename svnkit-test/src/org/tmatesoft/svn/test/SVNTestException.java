@@ -11,23 +11,20 @@
  */
 package org.tmatesoft.svn.test;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class SVNTestScheme {
-
-    public static final SVNTestScheme FILE = new SVNTestScheme("file:///");
-    public static final SVNTestScheme DAV = new SVNTestScheme("http://");
-    public static final SVNTestScheme SVN = new SVNTestScheme("svn://");
-
-    private String myProtocol;
-
-    private SVNTestScheme(String protocol) {
-        myProtocol = protocol;
+public class SVNTestException extends SVNException {
+    
+    public SVNTestException(SVNErrorMessage errorMessage) {
+        super(errorMessage);
     }
 
-    public String toString() {
-        return myProtocol;
+    public SVNTestException(SVNErrorMessage errorMessage, Throwable cause) {
+        super(errorMessage, cause);
     }
 }

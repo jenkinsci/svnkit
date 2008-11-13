@@ -13,18 +13,12 @@ package org.tmatesoft.svn.test.sandboxes;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.Iterator;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
-import org.tmatesoft.svn.test.util.SVNTestDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
 
 /**
  * @author TMate Software Ltd.
@@ -127,8 +121,8 @@ public abstract class AbstractSVNSandbox {
 
     public abstract void init(AbstractSVNTestEnvironment environment) throws SVNException;
 
-    public void fill(Collection sandboxDescirption, AbstractSVNTestEnvironment environment) throws SVNException {
-        if (sandboxDescirption == null) {
+    public void fill(SVNWCDescriptor description, AbstractSVNTestEnvironment environment) throws SVNException {
+        if (description == null) {
             return;
         }
         
@@ -141,11 +135,9 @@ public abstract class AbstractSVNSandbox {
         trunk.mkdir();
         branches.mkdir();
         tags.mkdir();
-        
-        for (Iterator iterator = sandboxDescirption.iterator(); iterator.hasNext();) {
-            SVNSandboxFile sandboxFile = (SVNSandboxFile) iterator.next();
-            sandboxFile.create(trunk);
-        }
+
+        description.dump(trunk);
+
         environment.importDirectory(tmpWC, getRepo(), "import initial structure");
         SVNFileUtil.deleteAll(tmpWC, true);
     }

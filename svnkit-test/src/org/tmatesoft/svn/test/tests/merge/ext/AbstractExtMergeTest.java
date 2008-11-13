@@ -23,11 +23,13 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import org.tmatesoft.svn.test.ISVNTestOptions;
+import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
+import org.tmatesoft.svn.test.wc.SVNWorkingCopyValidator;
 import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
 import org.tmatesoft.svn.test.sandboxes.AbstractSVNSandbox;
 import org.tmatesoft.svn.test.tests.AbstractSVNTest;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
-import org.tmatesoft.svn.test.ISVNTestOptions;
 
 /**
  * @author TMate Software Ltd.
@@ -37,6 +39,22 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
 
     private ISVNTestExtendedMergeCallback myMergeCallback;
     private boolean myIsFeatureMode;
+
+    protected ISVNTestExtendedMergeCallback getMergeCallback() {
+        return myMergeCallback;
+    }
+
+    public void setMergeCallback(ISVNTestExtendedMergeCallback mergeCallback) {
+        myMergeCallback = mergeCallback;
+    }
+
+    protected boolean isFeatureMode() {
+        return myIsFeatureMode;
+    }
+
+    public void setFeatureMode(boolean isFeatureMode) {
+        myIsFeatureMode = isFeatureMode;
+    }
 
     public void init(AbstractSVNSandbox sandbox, AbstractSVNTestEnvironment environment) throws SVNException {
         super.init(sandbox, environment);
@@ -48,13 +66,14 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
 
     public void load(ResourceBundle bundle) throws SVNException {
         String mode = bundle.getString("merge.ext.mode");
-        myIsFeatureMode = "feature".equals(mode);
+        boolean isFeatureMode = "feature".equals(mode);
+        setFeatureMode(isFeatureMode);
     }
 
     public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
-	    if (myMergeCallback != null) {
-	      myMergeCallback.prepareMerge(source, target, start, end);
-	    }
+        if (getMergeCallback() != null) {
+            getMergeCallback().prepareMerge(source, target, start, end);
+        }
     }
 
     public void dispose() throws SVNException {
@@ -69,15 +88,26 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
 
     protected void initializeMergeCallback() {
         ISVNTestExtendedMergeCallback defaultCallback = getDefaultCallback();
-        getEnvironment().setExtendedMergeCallback(myMergeCallback != null ? myMergeCallback : defaultCallback);
+        ISVNTestExtendedMergeCallback callback = getMergeCallback() != null ? getMergeCallback() : defaultCallback;
+        setMergeCallback(callback);
+        getEnvironment().setExtendedMergeCallback(callback);
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
     }
 
     private ISVNTestExtendedMergeCallback getDefaultCallback() {
-        if (myIsFeatureMode) {
+        if (isFeatureMode()) {
             return getFeatureModeCallback();
         }
         return getReleaseModeCallback();
+    }
+
+    protected void validateWC(File wc) throws SVNException {
+        SVNWCDescriptor descriptor = getMergeCallback().getExpectedState();
+        if (descriptor == null) {
+            return;
+        }
+        SVNWorkingCopyValidator validator = createWCValidator(wc, descriptor, true);
+        validator.validate();
     }
 
     protected void mergeLastRevisions(SVNURL url, File wc, long revCount, SVNDepth depth, boolean dryRun, boolean recordOnly) throws SVNException {
@@ -105,10 +135,6 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
 
     public File getBranchFile(String name) {
         return getSecondaryFile(name);
-    }
-
-    public void setMergeCallback(ISVNTestExtendedMergeCallback mergeCallback) {
-        this.myMergeCallback = mergeCallback;
     }
 
     public abstract ISVNTestExtendedMergeCallback getReleaseModeCallback();

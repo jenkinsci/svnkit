@@ -13,9 +13,9 @@ package org.tmatesoft.svn.test.util;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ResourceBundle;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;

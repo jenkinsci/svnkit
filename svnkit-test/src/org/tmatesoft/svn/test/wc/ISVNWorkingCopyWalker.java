@@ -9,25 +9,15 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.test;
+package org.tmatesoft.svn.test.wc;
+
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class SVNTestScheme {
-
-    public static final SVNTestScheme FILE = new SVNTestScheme("file:///");
-    public static final SVNTestScheme DAV = new SVNTestScheme("http://");
-    public static final SVNTestScheme SVN = new SVNTestScheme("svn://");
-
-    private String myProtocol;
-
-    private SVNTestScheme(String protocol) {
-        myProtocol = protocol;
-    }
-
-    public String toString() {
-        return myProtocol;
-    }
+public interface ISVNWorkingCopyWalker {
+    
+    public void handleEntry(AbstractSVNTestFile file) throws SVNException;
 }

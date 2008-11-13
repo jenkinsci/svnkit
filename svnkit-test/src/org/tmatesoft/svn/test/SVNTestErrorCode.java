@@ -11,23 +11,23 @@
  */
 package org.tmatesoft.svn.test;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class SVNTestScheme {
+public class SVNTestErrorCode extends SVNErrorCode {
 
-    public static final SVNTestScheme FILE = new SVNTestScheme("file:///");
-    public static final SVNTestScheme DAV = new SVNTestScheme("http://");
-    public static final SVNTestScheme SVN = new SVNTestScheme("svn://");
+    private static final int ERR_BASE = 120000;
+    private static final int ERR_CATEGORY_SIZE = 5000;
 
-    private String myProtocol;
+    public static final int TEST_CATEGORY = ERR_BASE + 30 * ERR_CATEGORY_SIZE;
 
-    private SVNTestScheme(String protocol) {
-        myProtocol = protocol;
-    }
 
-    public String toString() {
-        return myProtocol;
+    public static final SVNTestErrorCode UNKNOWN = new SVNTestErrorCode(CL_CATEGORY, 1, "Undefined test failure");
+
+    protected SVNTestErrorCode(int category, int index, String description) {
+        super(category, index, description);
     }
 }

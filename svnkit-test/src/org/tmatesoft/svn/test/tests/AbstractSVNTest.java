@@ -12,15 +12,16 @@
 package org.tmatesoft.svn.test.tests;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.test.ISVNTestOptions;
+import org.tmatesoft.svn.test.SVNTestException;
 import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
 import org.tmatesoft.svn.test.sandboxes.AbstractSVNSandbox;
-import org.tmatesoft.svn.test.sandboxes.SVNSandboxFile;
-import org.tmatesoft.svn.test.ISVNTestOptions;
+import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
+import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
+import org.tmatesoft.svn.test.wc.SVNWorkingCopyValidator;
 
 /**
  * @author TMate Software Ltd.
@@ -32,6 +33,7 @@ public abstract class AbstractSVNTest {
 
     private AbstractSVNTestEnvironment myEnvironment;
     private AbstractSVNSandbox mySandbox;
+    private SVNWorkingCopyValidator myWCValidator;
 
     protected AbstractSVNTestEnvironment getEnvironment() {
         return myEnvironment;
@@ -41,12 +43,21 @@ public abstract class AbstractSVNTest {
         return mySandbox;
     }
 
-    public void init(AbstractSVNSandbox sandbox, AbstractSVNTestEnvironment environment) throws SVNException {
-        mySandbox = sandbox;
-        myEnvironment = environment;
+    protected SVNWorkingCopyValidator createWCValidator(File wcRoot, SVNWCDescriptor descriptor, boolean checkExpectedAttributesOnly) throws SVNTestException {
+        if (myWCValidator == null) {
+            myWCValidator = new SVNWorkingCopyValidator(wcRoot, descriptor, checkExpectedAttributesOnly);
+        } else {
+            myWCValidator.reset(wcRoot, descriptor, checkExpectedAttributesOnly);
+        }
+        return myWCValidator;
     }
 
-    public abstract Collection getInitialFS();
+    public void init(AbstractSVNSandbox sandbox, AbstractSVNTestEnvironment environment) throws SVNException {
+        mySandbox = sandbox;
+        myEnvironment = environment;        
+    }
+
+    public abstract SVNWCDescriptor getInitialFS();
 
     public abstract String getDumpFile();
 
@@ -64,6 +75,8 @@ public abstract class AbstractSVNTest {
             getSandbox().fill(getInitialFS(), getEnvironment());
         } else if (getDumpFile() != null) {
             getSandbox().fill(getDumpFile(), getEnvironment());
+        } else {
+            getSandbox().fill(getDefaultFS(), getEnvironment());
         }
     }
 
@@ -123,24 +136,24 @@ public abstract class AbstractSVNTest {
         return getSandbox().getFile(name, i);
     }
 
-    protected Collection getDefaultFS() {
-        Collection structure = new ArrayList();
-        structure.add(new SVNSandboxFile("iota", "This is the file 'iota'.", false));
-        structure.add(new SVNSandboxFile("A"));
-        structure.add(new SVNSandboxFile("A/mu", "This is the file 'A/mu'.", false));
-        structure.add(new SVNSandboxFile("A/B"));
-        structure.add(new SVNSandboxFile("A/B/lambda", "This is the file 'A/B/lambda'.", false));
-        structure.add(new SVNSandboxFile("A/D"));
-        structure.add(new SVNSandboxFile("A/D/gamma", "This is the file 'A/D/gamma'.", false));
-        structure.add(new SVNSandboxFile("A/D/G"));
-        structure.add(new SVNSandboxFile("A/D/G/pi", "This is the file 'A/D/G/pi'.", false));
-        structure.add(new SVNSandboxFile("A/D/G/rho", "This is the file 'A/D/G/rho'.", false));
-        structure.add(new SVNSandboxFile("A/D/G/tau", "This is the file 'A/D/G/tau'.", false));
-        structure.add(new SVNSandboxFile("A/D/H"));
-        structure.add(new SVNSandboxFile("A/D/H/chi", "This is the file 'A/D/H/chi'.", false));
-        structure.add(new SVNSandboxFile("A/D/H/omega", "This is the file 'A/D/H/omega'.", false));
-        structure.add(new SVNSandboxFile("A/D/H/psi", "This is the file 'A/D/H/psi'.", false));
-        structure.add(new SVNSandboxFile("A/B/E"));
+    protected SVNWCDescriptor getDefaultFS() {
+        SVNWCDescriptor structure = new SVNWCDescriptor();
+        structure.addFile(new SVNTestFileDescriptor("iota", "This is the file 'iota'."));
+        structure.addFile(new SVNTestFileDescriptor("A"));
+        structure.addFile(new SVNTestFileDescriptor("A/mu", "This is the file 'A/mu'."));
+        structure.addFile(new SVNTestFileDescriptor("A/B"));
+        structure.addFile(new SVNTestFileDescriptor("A/B/lambda", "This is the file 'A/B/lambda'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D"));
+        structure.addFile(new SVNTestFileDescriptor("A/D/gamma", "This is the file 'A/D/gamma'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D/G"));
+        structure.addFile(new SVNTestFileDescriptor("A/D/G/pi", "This is the file 'A/D/G/pi'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D/G/rho", "This is the file 'A/D/G/rho'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D/G/tau", "This is the file 'A/D/G/tau'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D/H"));
+        structure.addFile(new SVNTestFileDescriptor("A/D/H/chi", "This is the file 'A/D/H/chi'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D/H/omega", "This is the file 'A/D/H/omega'."));
+        structure.addFile(new SVNTestFileDescriptor("A/D/H/psi", "This is the file 'A/D/H/psi'."));
+        structure.addFile(new SVNTestFileDescriptor("A/B/E"));
         return structure;
     }
 

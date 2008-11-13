@@ -11,13 +11,12 @@
  */
 package org.tmatesoft.svn.test.tests.common;
 
-import java.util.Collection;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.test.tests.AbstractSVNTest;
 import org.tmatesoft.svn.test.ISVNTestOptions;
+import org.tmatesoft.svn.test.tests.AbstractSVNTest;
+import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
 
 /**
  * @author TMate Software Ltd.
@@ -25,7 +24,7 @@ import org.tmatesoft.svn.test.ISVNTestOptions;
  */
 public class SimpleCheckoutTest extends AbstractSVNTest {
 
-    public Collection getInitialFS() {
+    public SVNWCDescriptor getInitialFS() {
         return null;
     }
 

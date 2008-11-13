@@ -22,7 +22,6 @@ import org.tmatesoft.svn.test.sandboxes.FSSandboxFactory;
 import org.tmatesoft.svn.test.tests.AbstractSVNTest;
 import org.tmatesoft.svn.test.util.SVNResourceUtil;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
-import org.tmatesoft.svn.test.ISVNTestOptions;
 
 /**
  * @author TMate Software Ltd.
@@ -42,8 +41,7 @@ public class SVNTestRunner {
         while (sandboxes.hasNext()) {
             AbstractSVNSandbox sandbox = (AbstractSVNSandbox) sandboxes.next();
             try {
-                ISVNTestOptions opts = test.getOptions();
-                opts.load(bundle);
+                loadOptions(test, bundle);
                 
                 environment.init();
                 sandbox.init(environment);
@@ -56,6 +54,13 @@ public class SVNTestRunner {
                 disposeSandbox(sandbox, bundle);
                 disposeEnvironment(environment, bundle);
             }
+        }
+    }
+
+    private static void loadOptions(AbstractSVNTest test, ResourceBundle bundle) throws SVNException {
+        ISVNTestOptions opts = test.getOptions();
+        if (opts != null) {
+            opts.load(bundle);
         }
     }
 

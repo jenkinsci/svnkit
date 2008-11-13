@@ -11,23 +11,25 @@
  */
 package org.tmatesoft.svn.test;
 
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.test.util.SVNTestDebugLog;
+
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class SVNTestScheme {
+public abstract class AbstractSVNTestValidator {
 
-    public static final SVNTestScheme FILE = new SVNTestScheme("file:///");
-    public static final SVNTestScheme DAV = new SVNTestScheme("http://");
-    public static final SVNTestScheme SVN = new SVNTestScheme("svn://");
+    public abstract void validate() throws SVNException;
 
-    private String myProtocol;
-
-    private SVNTestScheme(String protocol) {
-        myProtocol = protocol;
+    public void fail(String message, SVNTestErrorCode errorCode) throws SVNException {
+        SVNErrorManager.error(SVNErrorMessage.create(errorCode, "FAILED:\n" + message), SVNLogType.DEFAULT);
     }
 
-    public String toString() {
-        return myProtocol;
+    public void success() {
+        SVNTestDebugLog.log("PASSED");
     }
 }
