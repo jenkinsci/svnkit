@@ -361,7 +361,7 @@ public class SVNMergeInfoUtil {
         return mergeInfo;
     }
     
-    private static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo, String path) throws SVNException {
+    public static SVNMergeRange[] parseRevisionList(StringBuffer mergeInfo, String path) throws SVNException {
         Collection ranges = new LinkedList();
         while (mergeInfo.length() > 0 && mergeInfo.charAt(0) != '\n' && 
                 Character.isWhitespace(mergeInfo.charAt(0))) {

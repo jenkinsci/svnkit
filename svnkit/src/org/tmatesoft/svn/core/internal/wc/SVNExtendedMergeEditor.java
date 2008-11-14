@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNMergeRangeList;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -99,8 +100,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             SVNURL targetURL = targets[i];
             String targetPath = getPath(targetURL);
 
-            myCurrentFile = createFileInfo(path, SVNEditorAction.DELETE, nodeKind);
-            fileInfo = (SVNFileInfoExt) myCurrentFile;
+            fileInfo = getFileInfo(path, revision, SVNEditorAction.DELETE, nodeKind);
             fileInfo.addTarget(targetPath);
         }
 
@@ -170,6 +170,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         SVNURL url = getSourceURL(path);
+        SVNURL expectedTargetURL = getTargetURL(path);
         long targetRevision = getTargetRevision();
 
         SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, getTargetURL(path), targetRevision, SVNEditorAction.ADD);
@@ -183,23 +184,22 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
 
+            SVNMergeRangeList remainingRanges = null;
+            if (!expectedTargetURL.equals(targetURL)) {
+                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, targetURL);
+            }
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
-            if (copyTask != null) {
-                SVNCopySource copySource = copyTask.getCopySource();
-                getMergeDriver().addMergeSource(path, target, copyTask.getCopySource());
-                if (copyTask.isMove()) {
+
+            if (copyTask != null || remainingRanges != null) {
+                SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
+                getMergeDriver().addMergeSource(path, target, remainingRanges, copySource);
+                if (copyTask != null && copyTask.isMove()) {
                     File deleteTarget = getDeleteTarget(copySource);
                     deletePath(deleteTarget);
                 }
                 continue;
             }
 
-            SVNWCAccess access = myAdminArea.getWCAccess();
-            SVNEntry entry = access.getEntry(target, false);
-            if (entry != null) {
-                getMergeDriver().addMergeSource(path, target, null);
-                continue;
-            }
             SVNFileInfoExt fileInfo = getFileInfo(path, -1, SVNEditorAction.ADD, null);
             fileInfo.addTarget(targetPath);
         }
@@ -207,6 +207,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
 
     public void openFile(String path, long revision) throws SVNException {
         SVNURL url = getSourceURL(path);
+        SVNURL expectedTargetURL = getTargetURL(path);
         long targetRevision = getTargetRevision();
         SVNURL[] mergeURLs = getMergeCallback().getTrueMergeTargets(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, getTargetURL(path), targetRevision, SVNEditorAction.MODIFY);
 
@@ -220,27 +221,26 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
 
-
-            boolean mergeInfoConflicts = false;
+            SVNMergeRangeList remainingRanges = null;
+            if (!expectedTargetURL.equals(targetURL)) {
+                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, targetURL);
+            }
+            boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
-            SVNCopySource copySource = null;
-            if (copyTask != null) {
-                copySource = copyTask.getCopySource();
-                getMergeDriver().copy(copySource, getFile(targetPath));
+            SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
+
+            if (copySource != null && !mergeInfoConflicts) {
+                getMergeDriver().copy(copySource, target);
                 if (copyTask.isMove()) {
                     File deleteTarget = getDeleteTarget(copySource);
                     deletePath(deleteTarget);
                 }
-            } else {
-                mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(target, targetURL);
+            } else if (mergeInfoConflicts) {
+                getMergeDriver().addMergeSource(path, target, remainingRanges, copySource);
+                continue;
             }
-
-            if (mergeInfoConflicts) {
-                getMergeDriver().addMergeSource(path, target, copySource);
-            } else {
-                SVNFileInfoExt fileInfo = getFileInfo(path, revision, SVNEditorAction.MODIFY, null);
-                fileInfo.addTarget(targetPath);
-            }
+            SVNFileInfoExt fileInfo = getFileInfo(path, revision, SVNEditorAction.MODIFY, null);
+            fileInfo.addTarget(targetPath);
         }
     }
 
@@ -254,7 +254,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             if (action == SVNEditorAction.ADD) {
                 myCurrentFile.myBaseProperties = new SVNProperties();
                 myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", false);
-            } else {
+            } else if (action == SVNEditorAction.MODIFY) {
                 myCurrentFile.loadFromRepository(revision);
             }
         }

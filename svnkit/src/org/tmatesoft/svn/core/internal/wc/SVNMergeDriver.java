@@ -853,6 +853,36 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return repository; 
     }
 
+    protected Object[] calculateRemainingRangeList(File targetFile, SVNEntry entry, SVNURL sourceRoot, boolean[] indirect,
+                                 SVNURL url1, long revision1, SVNURL url2, long revision2,
+                                 SVNMergeRange range) throws SVNException {
+        SVNMergeRangeList remainingRangeList = null;
+        Map targetMergeInfo = null;
+        Map implicitMergeInfo = null;
+        boolean honorMergeInfo = isHonorMergeInfo();
+        if (honorMergeInfo) {
+            MergePath mergeTarget = new MergePath();
+
+            myRepository1.setLocation(entry.getSVNURL(), false);
+            Map[] fullMergeInfo = getFullMergeInfo(entry, indirect, SVNMergeInfoInheritance.INHERITED,
+                    myRepository1, targetFile, Math.max(revision1, revision2), Math.min(revision1, revision2));
+            targetMergeInfo = fullMergeInfo[0];
+            implicitMergeInfo = fullMergeInfo[1];
+            myRepository1.setLocation(url1, false);
+
+            if (!myIsRecordOnly) {
+                calculateRemainingRanges(null, mergeTarget, sourceRoot, url1, revision1, url2, revision2,
+                        targetMergeInfo, implicitMergeInfo, false, entry, myRepository1);
+                remainingRangeList = mergeTarget.myRemainingRanges;
+            }
+        }
+
+        if (!honorMergeInfo || myIsRecordOnly) {
+            remainingRangeList = new SVNMergeRangeList(range);
+        }
+        return new Object[]{remainingRangeList, targetMergeInfo, implicitMergeInfo};
+    }
+
     protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2, 
             File targetWCPath, SVNAdminArea adminArea, boolean sourcesRelated) throws SVNException {
         boolean isRollBack = revision1 > revision2;
@@ -861,39 +891,27 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         boolean recordMergeInfo = isRecordMergeInfo();
         myIsSingleFileMerge = true;
         boolean[] indirect = { false };
-        Map targetMergeInfo = null;
-        Map implicitMergeInfo = null;
+        Map targetMergeInfo;
+        Map implicitMergeInfo;
+        SVNURL sourceRootURL = null;
         String mergeInfoPath = null;
-        SVNMergeRangeList remainingRangeList = null;
         SVNMergeRange conflictedRange = null;
         
         myWCAccess.probeTry(targetWCPath, true, SVNWCAccess.INFINITE_DEPTH);
         SVNEntry entry = myWCAccess.getVersionedEntry(targetWCPath, false);
-        
-        SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
-        if (honorMergeInfo) {
-            MergePath mergeTarget = new MergePath();
-            SVNURL sourceRootURL = myRepository1.getRepositoryRoot(true);
-            mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, null);
-            
-            myRepository1.setLocation(entry.getSVNURL(), false);
-            Map[] fullMergeInfo = getFullMergeInfo(entry, indirect, SVNMergeInfoInheritance.INHERITED, 
-                    myRepository1, targetWCPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
-            targetMergeInfo = fullMergeInfo[0];
-            implicitMergeInfo = fullMergeInfo[1];
-            myRepository1.setLocation(url1, false);
 
-            if (!myIsRecordOnly) {
-                calculateRemainingRanges(null, mergeTarget, sourceRootURL, url1, revision1, url2, revision2, 
-                        targetMergeInfo, implicitMergeInfo, false, entry, myRepository1);
-                remainingRangeList = mergeTarget.myRemainingRanges;
-            }
-        } 
-        
-        if (!honorMergeInfo || myIsRecordOnly) {
-            remainingRangeList = new SVNMergeRangeList(range);
+        if (honorMergeInfo) {
+            sourceRootURL = myRepository1.getRepositoryRoot(true);
+            mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, null);            
         }
-        
+        SVNMergeRange range = new SVNMergeRange(revision1, revision2, true);
+
+        Object[] mergeInfoBundle = calculateRemainingRangeList(targetWCPath, entry, sourceRootURL, indirect,
+                url1, revision1, url2, revision2, range);
+        SVNMergeRangeList remainingRangeList = (SVNMergeRangeList) mergeInfoBundle[0];
+        targetMergeInfo = (Map) mergeInfoBundle[1];
+        implicitMergeInfo = (Map) mergeInfoBundle[1];
+
         SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
         SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
                 getMergeOptions(), myConflictedPaths, this);
@@ -2574,7 +2592,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
     }
 
-    private void calculateRemainingRanges(MergePath parent, MergePath child, SVNURL sourceRootURL, SVNURL url1, long revision1, 
+    public void calculateRemainingRanges(MergePath parent, MergePath child, SVNURL sourceRootURL, SVNURL url1, long revision1, 
             SVNURL url2, long revision2, Map targetMergeInfo, Map implicitMergeInfo,  
             boolean isSubtree, SVNEntry entry, SVNRepository repository) throws SVNException {
         SVNURL primaryURL = revision1 < revision2 ? url2 : url1;
