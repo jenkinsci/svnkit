@@ -40,6 +40,9 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
     private ISVNTestExtendedMergeCallback myMergeCallback;
     private boolean myIsFeatureMode;
 
+    private long myStartRevision;
+    private long myEndRevision;
+
     protected ISVNTestExtendedMergeCallback getMergeCallback() {
         return myMergeCallback;
     }
@@ -52,8 +55,24 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
         return myIsFeatureMode;
     }
 
-    public void setFeatureMode(boolean isFeatureMode) {
+    protected void setFeatureMode(boolean isFeatureMode) {
         myIsFeatureMode = isFeatureMode;
+    }
+
+    protected long getStartRevision() {
+        return myStartRevision;
+    }
+
+    protected void setStartRevision(long startRevision) {
+        myStartRevision = startRevision;
+    }
+
+    protected long getEndRevision() {
+        return myEndRevision;
+    }
+
+    protected void setEndRevision(long endRevision) {
+        myEndRevision = endRevision;
     }
 
     public void init(AbstractSVNSandbox sandbox, AbstractSVNTestEnvironment environment) throws SVNException {
@@ -118,6 +137,8 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
         final SVNRevision endRevision = SVNRevision.create(headRev);
         ranges.add(new SVNRevisionRange(startRevision, endRevision));
         prepareMerge(url, wc, startRevision, endRevision);
+        setStartRevision(startRevision.getNumber());
+        setEndRevision(endRevision.getNumber());
         getEnvironment().merge(url, wc, ranges, depth, dryRun, recordOnly);
     }
 

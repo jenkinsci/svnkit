@@ -26,7 +26,8 @@ public abstract class AbstractSVNTestValidator {
     public abstract void validate() throws SVNException;
 
     public void fail(String message, SVNTestErrorCode errorCode) throws SVNException {
-        SVNErrorManager.error(SVNErrorMessage.create(errorCode, "FAILED:\n" + message), SVNLogType.DEFAULT);
+//        SVNErrorManager.error(SVNErrorMessage.create(errorCode, "FAILED:\n" + message), SVNLogType.DEFAULT);
+       SVNTestDebugLog.log("FAILED:\n" + message);
     }
 
     public void success() {

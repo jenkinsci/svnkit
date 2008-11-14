@@ -16,11 +16,14 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNCopyTask;
 import org.tmatesoft.svn.core.wc.SVNEditorAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
 import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
+import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
+import org.tmatesoft.svn.test.wc.SVNTestFile;
 
 /**
  * @author TMate Software Ltd.
@@ -42,8 +45,8 @@ public class MergeAddFileFromRenamedSourceTest extends AbstractExtMergeTest {
 
     public SVNWCDescriptor getInitialFS() {
         SVNWCDescriptor fs = new SVNWCDescriptor();
-        fs.addFile(new SVNTestFileDescriptor("A"));
-        fs.addFile(new SVNTestFileDescriptor("A/file", "this is A/file"));
+        fs.addFile("A");
+        fs.addFile("A/file", "this is A/file");
         return fs;
     }
 
@@ -56,38 +59,50 @@ public class MergeAddFileFromRenamedSourceTest extends AbstractExtMergeTest {
         getEnvironment().copy(getBranchFile("A"), SVNRevision.WORKING, getBranchFile("B"), true, false, true);
         getEnvironment().commit(getBranchWC(), "Moved A to B", SVNDepth.INFINITY);
 
-        final File addedFile = getBranchFile("B/new");
-        getEnvironment().addLine(addedFile, "This file has been added in the branch");
-        getEnvironment().add(addedFile, false, SVNDepth.EMPTY, false);
+        SVNTestFile tFile = new SVNTestFile(getBranchWC(), "B/new", "This file has been added in the branch");
+        tFile.dump(getBranchWC());
+        getEnvironment().add(getBranchFile("B/new"), false, SVNDepth.EMPTY, false);
         getEnvironment().commit(getBranchWC(), "Added B/new", SVNDepth.INFINITY);
 
         getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         mergeLastRevisions(getBranch(), getTrunkWC(), 1, SVNDepth.INFINITY, false, false);
-
-        getEnvironment().getFileContents(getTrunkFile("A/new"), System.out);
+        validateWC(getTrunkWC());
     }
+
+//    Implementations are absolutely similar
 
 // ###############  FEATURE MODE  ###################
 
     private class FeatureModeCallback implements ISVNTestExtendedMergeCallback {
-
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
-        }
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             return null;
         }
 
         public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
-            return new SVNURL[0];
+            if (sourceUrl.getPath().endsWith("branch/B/new")) {
+                return new SVNURL[]{getTrunk().appendPath("A/new", false)};
+            }
+
+            return null;
         }
 
         public SVNURL transformLocation(SVNURL sourceUrl, long sourceRevision, long targetRevision) throws SVNException {
             return null;
         }
 
+        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        }
+
         public SVNWCDescriptor getExpectedState() throws SVNException {
-            return null;
+            SVNWCDescriptor descriptor = new SVNWCDescriptor();
+            descriptor.addFile("A").setVersioned(true);
+
+            SVNTestFileDescriptor file = descriptor.addFile("A/new", "This file has been added in the branch");
+            file.setAdded(true);
+            file.setProperties(new SVNProperties());
+            file.setVersioned(true);
+            return descriptor;
         }
     }
 
@@ -115,7 +130,17 @@ public class MergeAddFileFromRenamedSourceTest extends AbstractExtMergeTest {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {
-            return null;
+            SVNWCDescriptor descriptor = new SVNWCDescriptor();
+            descriptor.addFile("A").setVersioned(true);
+
+            SVNTestFileDescriptor file = descriptor.addFile("A/new", "This file has been added in the branch");
+            file.setAdded(true);
+            file.setNodeKind(SVNNodeKind.FILE);
+            file.setConflicted(false);
+            file.setBaseProperties(new SVNProperties());
+            file.setProperties(new SVNProperties());
+            file.setVersioned(true);
+            return descriptor;
         }
     }
 }

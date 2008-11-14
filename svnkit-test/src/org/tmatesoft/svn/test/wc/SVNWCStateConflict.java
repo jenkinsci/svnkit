@@ -108,7 +108,7 @@ public class SVNWCStateConflict {
 
     public String toString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("Workng copy state conflict found on ");
+        buffer.append("\nWorkng copy state conflict detected on ");
         buffer.append(getFile().getPath());
         buffer.append("\n");
         buffer.append("conflicted file attributes are:\n");
@@ -117,8 +117,7 @@ public class SVNWCStateConflict {
             buffer.append(pair.getName());
             buffer.append(": expected = ");
             buffer.append(SVNTestFileAttribute.getAttributeAsString(pair.getName(), pair.getExpectedValue()));
-            buffer.append("; ");
-            buffer.append(": actual = ");
+            buffer.append("; actual = ");
             buffer.append(SVNTestFileAttribute.getAttributeAsString(pair.getName(), pair.getValue()));
             buffer.append("\n");
         }

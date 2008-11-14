@@ -41,6 +41,18 @@ public class SVNWCDescriptor implements ISVNWorkingCopy {
         getPaths().put(fileDescriptor.getPath(), fileDescriptor);
     }
 
+    public SVNTestFileDescriptor addFile(String path) {
+        SVNTestFileDescriptor fileDescriptor = new SVNTestFileDescriptor(path);
+        getPaths().put(path, fileDescriptor);
+        return fileDescriptor;
+    }
+
+    public SVNTestFileDescriptor addFile(String path, String content) {
+        SVNTestFileDescriptor fileDescriptor = new SVNTestFileDescriptor(path, content);
+        getPaths().put(path, fileDescriptor);
+        return fileDescriptor;
+    }
+
     public AbstractSVNTestFile getTestFile(String path) {
         return getDescriptor(path);
     }

@@ -16,6 +16,7 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNCopyTask;
 import org.tmatesoft.svn.core.wc.SVNEditorAction;
@@ -44,8 +45,8 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
 
     public SVNWCDescriptor getInitialFS() {
         SVNWCDescriptor fs = new SVNWCDescriptor();
-        fs.addFile(new SVNTestFileDescriptor("A"));
-        fs.addFile(new SVNTestFileDescriptor("A/file", "this is A/file"));
+        fs.addFile("A");
+        fs.addFile("A/file", "this is A/file");
         return fs;
     }
 
@@ -64,8 +65,7 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
 
         getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         mergeLastRevisions(getBranch(), getTrunkWC(), 2, SVNDepth.INFINITY, false, false);
-
-        getEnvironment().getFileContents(getTrunkFile("A/file2"), System.out);
+        validateWC(getTrunkWC());
     }
 
 // ###############  FEATURE MODE  ###################
@@ -101,31 +101,69 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {
-            return null;
+            SVNWCDescriptor descriptor = new SVNWCDescriptor();
+            descriptor.addFile("A");
+
+            String content = "this is A/file\n" +
+                    "this line added to file file2 at r4.";
+            SVNTestFileDescriptor file = descriptor.addFile("A/file2", content);
+            file.setReplaced(false);
+            file.setDeleted(false);
+            file.setAdded(false);
+            file.setCopyFromLocation(getTrunk().appendPath("A/file", false));
+            file.setProperties(new SVNProperties());
+
+            return descriptor;
         }
     }
 
 // ###############  RELEASE MODE  ###################
 
+    //Release mode for this test is not necessary. Added implementation with no practice aim
+
     private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
-
-        public SVNURL transformLocation(SVNURL sourceUrl, long sourceRevision, long targetRevision) throws SVNException {
-            return null;
-        }
-
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
-            return null;
-        }
-
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
-            return new SVNURL[0];
-        }
 
         public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
         }
 
-        public SVNWCDescriptor getExpectedState() throws SVNException {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+            if (targetUrl.getPath().endsWith("trunk/A/file")) {
+                SVNCopySource copySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.create(getStartRevision()), getBranch().appendPath("A/file2", false));
+                return SVNCopyTask.create(copySource, true);
+            }
             return null;
+        }
+
+        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
+            if (sourceUrl.getPath().endsWith("branch/A/file2")) {
+                return new SVNURL[]{getTrunk().appendPath("A/file", false)};
+            }
+            return null;
+        }
+
+        public SVNURL transformLocation(SVNURL sourceUrl, long sourceRevision, long targetRevision) throws SVNException {
+            if (sourceUrl.getPath().endsWith("branch/A/file2")) {
+                return getBranch().appendPath("A/file", false);
+            }
+            return null;
+        }
+
+        public SVNWCDescriptor getExpectedState() throws SVNException {
+            SVNWCDescriptor descriptor = new SVNWCDescriptor();
+            descriptor.addFile("A");
+
+            String content = "this is A/file\n" +
+                    "this line added to file file2 at r4.";
+            SVNTestFileDescriptor file = descriptor.addFile("A/file", content);
+            file.setReplaced(true);
+            file.setDeleted(false);
+            file.setAdded(false);
+            file.setConflicted(false);
+            file.setCopyFromLocation(getBranch().appendPath("A/file", false));
+            file.setCopyFromRevision(getStartRevision());
+            file.setProperties(new SVNProperties());
+
+            return descriptor;
         }
     }
 }

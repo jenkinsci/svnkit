@@ -90,11 +90,13 @@ public abstract class AbstractSVNTestFile {
 
     public AbstractSVNTestFile(String path, String content) {
         this(path, (byte[]) null);
-        byte[] bytes;
-        try {
-            bytes = content.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            bytes = content.getBytes();
+        byte[] bytes = null;
+        if (content != null) {
+            try {
+                bytes = content.getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                bytes = content.getBytes();
+            }
         }
         setContent(bytes);
     }
@@ -125,7 +127,7 @@ public abstract class AbstractSVNTestFile {
         return myLinkTarget;
     }
 
-    protected void setLinkTarget(String linkTarget) {
+    public void setLinkTarget(String linkTarget) {
         myLinkTarget = linkTarget;
         addAttribute(SVNTestFileAttribute.LINK_TARGET_ATTRIBUTE, linkTarget);
     }
@@ -143,7 +145,7 @@ public abstract class AbstractSVNTestFile {
         return myFileType;
     }
 
-    protected void setFileType(SVNFileType fileType) {
+    public void setFileType(SVNFileType fileType) {
         myFileType = fileType;
         addAttribute(SVNTestFileAttribute.FILE_TYPE_ATTRIBUTE, fileType);
     }
@@ -152,7 +154,7 @@ public abstract class AbstractSVNTestFile {
         return myNodeKind;
     }
 
-    protected void setNodeKind(SVNNodeKind nodeKind) {
+    public void setNodeKind(SVNNodeKind nodeKind) {
         myNodeKind = nodeKind;
         addAttribute(SVNTestFileAttribute.VERSIONED_NODE_KIND_ATTRIBUTE, nodeKind);
     }
@@ -161,7 +163,7 @@ public abstract class AbstractSVNTestFile {
         return myVersioned;
     }
 
-    protected void setVersioned(boolean versioned) {
+    public void setVersioned(boolean versioned) {
         myVersioned = versioned;
         addAttribute(SVNTestFileAttribute.VERSIONED_ATTRIBUTE, Boolean.valueOf(versioned));
     }
@@ -170,7 +172,7 @@ public abstract class AbstractSVNTestFile {
         return myBaseProperties;
     }
 
-    protected void setBaseProperties(SVNProperties baseProperties) {
+    public void setBaseProperties(SVNProperties baseProperties) {
         myBaseProperties = baseProperties;
         addAttribute(SVNTestFileAttribute.BASE_PROPERTIES_ATTRIBUTE, baseProperties);
     }
@@ -179,7 +181,7 @@ public abstract class AbstractSVNTestFile {
         return myProperties;
     }
 
-    protected void setProperties(SVNProperties properties) {
+    public void setProperties(SVNProperties properties) {
         myProperties = properties;
         addAttribute(SVNTestFileAttribute.PROPERTIES_ATTRIBUTE, properties);
     }
@@ -188,7 +190,7 @@ public abstract class AbstractSVNTestFile {
         return myConflicted;
     }
 
-    protected void setConflicted(boolean isConflicted) {
+    public void setConflicted(boolean isConflicted) {
         myConflicted = isConflicted;
         addAttribute(SVNTestFileAttribute.CONFLICTED_ATTRIBUTE, Boolean.valueOf(isConflicted));
     }
@@ -197,7 +199,7 @@ public abstract class AbstractSVNTestFile {
         return SVNProperty.SCHEDULE.equals(getSchedule());
     }
 
-    protected void setReplaced(boolean replaced) {
+    public void setReplaced(boolean replaced) {
         if (replaced) {
             setSchedule(SVNProperty.SCHEDULE_REPLACE);
         } else {
@@ -209,7 +211,7 @@ public abstract class AbstractSVNTestFile {
         return SVNProperty.SCHEDULE_DELETE.equals(getSchedule());
     }
 
-    protected void setDeleted(boolean deleted) {
+    public void setDeleted(boolean deleted) {
         if (deleted) {
             setSchedule(SVNProperty.SCHEDULE_DELETE);
         } else {
@@ -221,7 +223,7 @@ public abstract class AbstractSVNTestFile {
         return SVNProperty.SCHEDULE_ADD.equals(getSchedule());
     }
 
-    protected void setAdded(boolean added) {
+    public void setAdded(boolean added) {
         if (added) {
             setSchedule(SVNProperty.SCHEDULE_ADD);
         } else {
@@ -242,7 +244,7 @@ public abstract class AbstractSVNTestFile {
         return myCopyFromLocation;
     }
 
-    protected void setCopyFromLocation(SVNURL copyFromLocation) {
+    public void setCopyFromLocation(SVNURL copyFromLocation) {
         myCopyFromLocation = copyFromLocation;
         addAttribute(SVNTestFileAttribute.COPY_FROM_LOCATION_ATTRIBUTE, copyFromLocation);
     }
@@ -251,7 +253,7 @@ public abstract class AbstractSVNTestFile {
         return myCopyFromRevision;
     }
 
-    protected void setCopyFromRevision(long copyFromRevision) {
+    public void setCopyFromRevision(long copyFromRevision) {
         myCopyFromRevision = copyFromRevision;
         addAttribute(SVNTestFileAttribute.COPY_FROM_REVISION_ATTRIBUTE, new Long(copyFromRevision));
     }

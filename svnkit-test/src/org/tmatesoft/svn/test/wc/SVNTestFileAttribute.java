@@ -75,7 +75,7 @@ public class SVNTestFileAttribute {
             buffer.append("[ ");
             for (Iterator iterator = props.nameSet().iterator(); iterator.hasNext();) {
                 String propName = (String) iterator.next();
-                SVNPropertyValue propValue = props.getSVNPropertyValue(name);
+                SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
                 buffer.append(propName);
                 buffer.append(" = ");
                 buffer.append(SVNPropertyValue.getPropertyAsString(propValue));
