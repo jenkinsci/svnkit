@@ -16,9 +16,11 @@ import java.io.File;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNCopyTask;
 import org.tmatesoft.svn.core.wc.SVNEditorAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
 import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
 import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
@@ -64,7 +66,7 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
 
         mergeLastRevisions(getBranch(), getTrunkWC(), 1, SVNDepth.INFINITY, false, false);
 
-        getEnvironment().getFileContents(getTrunkFile("A/file2"), System.out);
+        validateWC(getTrunkWC());
     }
 
 // ###############  FEATURE MODE  ###################
@@ -95,7 +97,10 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
     
     private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
+        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
+            if (targetUrl.getPath().endsWith("trunk/A/file2")) {
+                return SVNCopyTask.create(new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.create(targetRevision), getTrunk().appendPath("A/file", false)), false);
+            }
             return null;
         }
 
@@ -114,7 +119,20 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {
-            return null;
+            SVNWCDescriptor descriptor = new SVNWCDescriptor();
+            descriptor.addFile("A");
+
+            String content = "this is A/file\n" +
+                    "this line added to file file at r4.";
+            SVNTestFileDescriptor file = descriptor.addFile("A/file2", content);
+            file.setVersioned(true);
+            file.setConflicted(false);
+            file.setAdded(false);
+            file.setReplaced(false);
+            file.setNodeKind(SVNNodeKind.FILE);
+            file.setCopyFromLocation(getTrunk().appendPath("A/file", false));
+            file.setCopyFromRevision(getEndRevision());
+            return descriptor;
         }
     }
 }

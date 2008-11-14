@@ -230,7 +230,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
 
             if (copySource != null && !mergeInfoConflicts) {
-                getMergeDriver().copy(copySource, target);
+                getMergeDriver().copy(copySource, target, false);
                 if (copyTask.isMove()) {
                     File deleteTarget = getDeleteTarget(copySource);
                     deletePath(deleteTarget);
