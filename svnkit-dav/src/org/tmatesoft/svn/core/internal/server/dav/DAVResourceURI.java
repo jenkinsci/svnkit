@@ -16,6 +16,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -44,6 +45,17 @@ public class DAVResourceURI {
         myContext = context;
         myRevision = DAVResource.INVALID_REVISION;
         parseURI(label, useCheckedIn);
+        
+        StringBuffer logBuffer = new StringBuffer();
+        logBuffer.append('\n');
+        logBuffer.append("Requested URI: " + getRequestURI());
+        logBuffer.append('\n');
+        logBuffer.append("URI: " + getURI());
+        logBuffer.append('\n');
+        logBuffer.append("URI path: " + getPath());
+        logBuffer.append('\n');
+        logBuffer.append("Context: " + getContext());
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, logBuffer.toString());
     }
 
     public DAVResourceURI(String context, String uri, String path, long revision, DAVResourceKind kind, DAVResourceType type, String activityID, 

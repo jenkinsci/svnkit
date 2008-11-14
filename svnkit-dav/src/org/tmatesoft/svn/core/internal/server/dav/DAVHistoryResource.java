@@ -34,11 +34,16 @@ public class DAVHistoryResource extends DAVResource {
                 activitiesDB);
     }
 
+    private DAVHistoryResource() {
+    }
+
     protected void prepare() throws DAVException {
     }
 
     public DAVResource dup() {
-        return null;
+        DAVHistoryResource copy = new DAVHistoryResource();
+        copyTo(copy);
+        return copy;
     }
 
 }

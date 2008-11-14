@@ -34,13 +34,18 @@ public class DAVActivityResource extends DAVResource {
                 userName, activitiesDB);
     }
 
+    private DAVActivityResource() {
+    }
+
     protected void prepare() throws DAVException {
         String txnName = getTxn();
         setExists(txnName != null);
     }
 
     public DAVResource dup() {
-        return null;
+        DAVActivityResource copy = new DAVActivityResource();
+        copyTo(copy);
+        return copy;
     }
 
 }

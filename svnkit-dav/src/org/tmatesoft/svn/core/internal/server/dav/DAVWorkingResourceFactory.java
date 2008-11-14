@@ -22,9 +22,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @author  TMate Software Ltd.
  */
 public class DAVWorkingResourceFactory extends DAVResourceFactory {
-    static {
-        registerFactory(DAVResourceType.WORKING, new DAVWorkingResourceFactory());
-    }
 
     protected DAVResource createDAVResourceChildImpl(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, 
             String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {

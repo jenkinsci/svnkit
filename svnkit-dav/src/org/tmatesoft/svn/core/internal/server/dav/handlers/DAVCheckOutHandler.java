@@ -148,7 +148,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
     }
 
     protected DAVRequest getDAVRequest() {
-        return new DAVCheckOutRequest();
+        return getCheckOutRequest();
     }
 
     private DAVWorkingResource checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isCreateActivity, 

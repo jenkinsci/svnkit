@@ -94,6 +94,7 @@ public abstract class DAVResource {
     protected DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
             String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws SVNException {
         myRepository = (FSRepository) repository;
+        myRepository.testConnection();//this should create an FSFS object
         myFSFS = myRepository.getFSFS();
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
@@ -132,6 +133,9 @@ public abstract class DAVResource {
         myActivitiesDB = activitiesDB;
     }
 
+    protected DAVResource() {
+    }
+    
     public void setRoot(FSRoot root) {
         myRoot = root;
     }
@@ -455,6 +459,34 @@ public abstract class DAVResource {
 
     protected void setCollection(boolean isCollection) {
         myIsCollection = isCollection;
+    }
+
+    protected void copyTo(DAVResource copy) {
+        copy.myResourceURI = myResourceURI;
+        copy.myRepository = myRepository;
+        copy.myRevision = myRevision;
+        copy.myLatestRevision = myLatestRevision;
+        copy.myIsExists = myIsExists;
+        copy.myIsCollection = myIsCollection;
+        copy.myIsSVNClient = myIsCollection;
+        copy.myIsAutoCheckedOut = myIsAutoCheckedOut;
+        copy.myIsVersioned = myIsVersioned;
+        copy.myIsWorking = myIsWorking;
+        copy.myIsBaseLined = myIsBaseLined;
+        copy.myDeltaBase = myDeltaBase;
+        copy.myVersion = myVersion;
+        copy.myClientOptions = myClientOptions;
+        copy.myBaseChecksum = myBaseChecksum;
+        copy.myResultChecksum = myResultChecksum;
+        copy.myUserName = myUserName;
+        copy.mySVNProperties = mySVNProperties;
+        copy.myDeadProperties = myDeadProperties;
+        copy.myEntries = myEntries;
+        copy.myActivitiesDB = myActivitiesDB;
+        copy.myFSFS = myFSFS;
+        copy.myTxnName = myTxnName;
+        copy.myRoot = myRoot;
+        copy.myTxnInfo = myTxnInfo;
     }
 
 }

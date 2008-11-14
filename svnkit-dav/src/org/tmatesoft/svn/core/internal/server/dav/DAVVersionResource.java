@@ -37,6 +37,9 @@ public class DAVVersionResource extends DAVResource {
                 activitiesDB);
     }
 
+    private DAVVersionResource() {
+    }
+
     protected void prepare() throws DAVException {
         if (!SVNRevision.isValidRevisionNumber(myRevision)) {
             try {
@@ -61,6 +64,8 @@ public class DAVVersionResource extends DAVResource {
     }
 
     public DAVResource dup() {
-        return null;
+        DAVVersionResource copy = new DAVVersionResource();
+        copyTo(copy);
+        return copy;
     }
 }

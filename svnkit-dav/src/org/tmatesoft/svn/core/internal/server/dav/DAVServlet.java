@@ -173,6 +173,8 @@ public class DAVServlet extends HttpServlet {
         logBuffer.append('\n');
         logBuffer.append("Request context path: " + request.getContextPath());
         logBuffer.append('\n');
+        logBuffer.append("Request content length: " + request.getContentLength());
+        logBuffer.append('\n');
         logBuffer.append("Request method: " + request.getMethod());
         logBuffer.append('\n');
         logBuffer.append("Request path info: " + request.getPathInfo());
@@ -240,6 +242,7 @@ public class DAVServlet extends HttpServlet {
                 }
                 errorMessageBuffer.append("</D:error>\n");
                 servletResponse.sendError(stackErr.getResponseCode(), errorMessageBuffer.toString());
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, errorMessageBuffer.toString());
                 return;
             }
             servletResponse.sendError(error.getResponseCode(), "");//TODO: FIXME

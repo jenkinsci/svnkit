@@ -23,10 +23,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  */
 public class DAVPrivateResourceFactory extends DAVResourceFactory {
 
-    static {
-        registerFactory(DAVResourceType.PRIVATE, new DAVPrivateResourceFactory());
-    }
-    
     protected DAVResource createDAVResourceChildImpl(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, 
             String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
         return new DAVPrivateResource(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, 

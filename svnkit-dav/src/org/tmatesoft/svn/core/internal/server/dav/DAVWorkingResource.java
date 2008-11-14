@@ -47,9 +47,13 @@ public class DAVWorkingResource extends DAVResource {
         super(baseResource.getRepository(), resourceURI, baseResource.getRevision(), baseResource.isSVNClient(), baseResource.getDeltaBase(), 
                 baseResource.getVersion(), baseResource.getClientOptions(), baseResource.getBaseChecksum(), baseResource.getResultChecksum(), 
                 baseResource.getUserName(), baseResource.getActivitiesDB());
+        
         myTxnName = txnName;
         myRoot = baseResource.myRoot;
         myFSFS = baseResource.myFSFS;
+    }
+    
+    private DAVWorkingResource() {
     }
     
     protected void prepare() throws DAVException {
@@ -112,7 +116,9 @@ public class DAVWorkingResource extends DAVResource {
     }
 
     public DAVResource dup() {
-        return null;
+        DAVWorkingResource copy = new DAVWorkingResource();
+        copyTo(copy);
+        return copy;
     }
 
 }

@@ -34,11 +34,16 @@ public class DAVPrivateResource extends DAVResource {
                 activitiesDB);
     }
     
+    private DAVPrivateResource() {
+    }
+
     protected void prepare() throws DAVException {
     }
 
     public DAVResource dup() {
-        return null;
+        DAVPrivateResource copy = new DAVPrivateResource();
+        copyTo(copy);
+        return copy;
     }
 
 }

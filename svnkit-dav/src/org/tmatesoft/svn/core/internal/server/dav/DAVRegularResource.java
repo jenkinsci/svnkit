@@ -19,6 +19,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -38,6 +40,9 @@ public class DAVRegularResource extends DAVResource {
                 activitiesDB);
     }
 
+    private DAVRegularResource() {
+    }
+
     protected void prepare() throws DAVException {
         if (!SVNRevision.isValidRevisionNumber(myRevision)) {
             try {
@@ -50,6 +55,7 @@ public class DAVRegularResource extends DAVResource {
         
         if (myRoot == null) {
             try {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "myFSFS == null is " + (myFSFS == null));
                 myRoot = myFSFS.createRevisionRoot(myRevision);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
@@ -63,7 +69,9 @@ public class DAVRegularResource extends DAVResource {
     }
 
     public DAVResource dup() {
-        return null;
+        DAVRegularResource copy = new DAVRegularResource();
+        copyTo(copy);
+        return copy;
     }
 
 }

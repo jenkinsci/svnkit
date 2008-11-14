@@ -17,8 +17,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,7 +24,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -50,7 +47,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
-import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
@@ -582,7 +578,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         DAVResourceURI resourceURI = resource.getResourceURI();
         String activityID = resourceURI.getActivityID();
         File activitiesDB = resource.getActivitiesDB();
-        if (!activitiesDB.mkdirs()) {
+        if (!activitiesDB.exists() && !activitiesDB.mkdirs()) {
             throw new DAVException("could not initialize activity db.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
                     SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
         }
@@ -629,7 +625,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
         long revision = SVNRepository.INVALID_REVISION;
         try {
-            fsfs.getYoungestRevision();
+            revision = fsfs.getYoungestRevision();
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "could not determine youngest revision", null);
@@ -706,7 +702,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
             return -1;
         }
-        
+
         if (mySAXParser == null) {
             CountingInputStream stream = null;
             try {
@@ -721,23 +717,28 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                     reader.parse(new InputSource(stream));
                 }
             } catch (ParserConfigurationException e) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e.getMessage());
                 if (stream == null || stream.getBytesRead() > 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }
             } catch (SAXException e) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e.getMessage());
                 if (stream == null || stream.getBytesRead() > 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }
             } catch (IOException e) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e.getMessage());
                 if (stream == null || stream.getBytesRead() > 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }
             }
-            
-            if (stream.getBytesRead() > 0) {
-                getDAVRequest().init();
+
+            if (stream != null) {
+                if (stream.getBytesRead() > 0) {
+                    getDAVRequest().init();
+                }
+                return stream.getBytesRead();
             }
-            return stream.getBytesRead();
         }
         
         return 0;

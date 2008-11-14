@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.Attributes;
@@ -78,10 +79,17 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "in execute() of DAVOptiondsHandler");
+        try {
+        
         readInput(false);
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "read input");
         
         DAVResource resource = getRequestedDAVResource(false, false);
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "got resource");
+
         Collection supportedMethods = getSupportedMethods(resource);
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "got supported methods");
 
         StringBuffer body = new StringBuffer();
         generateOptionsResponse(resource, supportedMethods, body);
@@ -102,6 +110,10 @@ public class DAVOptionsHandler extends ServletDAVHandler {
             getResponseWriter().write(responseBody);
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+        }
+        } catch (SVNException svne) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, svne.getErrorMessage().getFullMessage());
+            throw svne;
         }
     }
 

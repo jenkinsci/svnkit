@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -30,7 +31,15 @@ import org.tmatesoft.svn.util.SVNLogType;
 public abstract class DAVResourceFactory {
 
     private static final Map ourResourceFactories = new HashMap();
-   
+    static {
+        registerFactory(DAVResourceType.WORKING, new DAVWorkingResourceFactory());
+        registerFactory(DAVResourceType.REGULAR, new DAVRegularResourceFactory());
+        registerFactory(DAVResourceType.ACTIVITY, new DAVActivityResourceFactory());
+        registerFactory(DAVResourceType.HISTORY, new DAVHistoryResourceFactory());
+        registerFactory(DAVResourceType.PRIVATE, new DAVPrivateResourceFactory());
+        registerFactory(DAVResourceType.VERSION, new DAVVersionResourceFactory());
+    }
+    
     protected abstract DAVResource createDAVResourceImpl(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, 
             String deltaBase, long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, 
             File activitiesDB) throws SVNException;
@@ -42,8 +51,8 @@ public abstract class DAVResourceFactory {
     public static DAVResource createDAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, 
             long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws DAVException {
         DAVResourceType resourceType = resourceURI.getType();
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "resource type: " + resourceType.toString());
         DAVResourceFactory factoryImpl = getFactory(resourceType);
-        
         try {
             return factoryImpl.createDAVResourceImpl(repository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, 
                     resultChecksum, userName, activitiesDB);

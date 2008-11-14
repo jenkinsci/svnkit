@@ -44,7 +44,7 @@ public class DAVException extends SVNException {
     
     public DAVException(String message, Object[] objects, int responseCode, SVNErrorMessage error, SVNLogType logType, Level level, DAVException previousException, 
             String tagName, String nameSpace, int errorID, DAVResponse response) {
-        super(error);
+        super(error != null ? error : SVNErrorMessage.create(SVNErrorCode.UNKNOWN));
         myMessage = objects == null ? message : MessageFormat.format(message, objects); 
         myResponseCode = responseCode;
         myPreviousException = previousException;
