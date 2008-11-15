@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.LinkedList;
+
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
@@ -19,16 +21,17 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public interface IDAVResourceWalkHandler {
+public class DAVValidateWalker implements IDAVResourceWalkHandler {
 
-    public DAVResponse handleResource(DAVResponse response, DAVResourceWalker callBack, CallType callType) throws DAVException;
-    
-    public static class CallType {
-        public static final CallType MEMBER = new CallType();
-        public static final CallType COLLECTION = new CallType();
-        public static final CallType LOCKNULL = new CallType();
-        
-        private CallType() {
+    public DAVResponse handleResource(DAVResponse response, DAVResourceWalker callBack, CallType callType) throws DAVException {
+        return null;
+    }
+
+    private void validateResourceState(LinkedList ifHeaders, DAVResourceWalker callBack) {
+        LinkedList lockList = null;
+        DAVLockInfoProvider provider = callBack.getLockInfoProvider();
+        if (provider != null) {
+            
         }
     }
 }

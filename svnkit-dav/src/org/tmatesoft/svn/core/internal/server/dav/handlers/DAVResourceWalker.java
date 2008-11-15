@@ -18,6 +18,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
@@ -45,38 +46,34 @@ public class DAVResourceWalker {
     private DAVLockInfoProvider myLockInfoProvider;
     private int myFlags;
     private int myWalkType;
-    private String myReposPath;
-    private String myURI;
-    private String myURIPath;
     private FSRoot myRoot;
-    private boolean myIsCollection;
-    private boolean myExists;
     
     public DAVResponse walk(DAVLockInfoProvider lockInfoProvider, DAVResource resource, LinkedList ifHeaders, int flags, int walkType, 
             IDAVResourceWalkHandler handler, DAVDepth depth, FSRoot root) throws DAVException {
         myIfHeaders = ifHeaders;
         myLockInfoProvider = lockInfoProvider;
-        myResource = resource;
+        myResource = resource.dup();
         myFlags = flags;
         myWalkType = walkType;
         myRoot = root;
-        myIsCollection = resource.isCollection();
-        myExists = resource.exists();
-        myReposPath = resource.getResourceURI().getPath();
-        myURI = resource.getResourceURI().getRequestURI();
-        myURIPath = resource.getResourceURI().getURI();
-        
-        if (myIsCollection && myURI.endsWith("/")) {
-            myURI += '/';
-        }
-        
-        DAVResource resourceCopy = resource.dup();
-        return null;
+        return doWalk(handler, null, depth);
     }
- 
-    private DAVResponse doWalk(IDAVResourceWalkHandler handler, DAVDepth depth) throws DAVException {
-        boolean isDir = myIsCollection;
-        DAVResponse response = handler.handleResource(myResource, isDir ? CallType.COLLECTION : CallType.MEMBER);
+
+    public int getFlags() {
+        return myFlags;
+    }
+
+    public DAVLockInfoProvider getLockInfoProvider() {
+        return myLockInfoProvider;
+    }
+
+    public DAVResource getResource() {
+        return myResource;
+    }
+    
+    private DAVResponse doWalk(IDAVResourceWalkHandler handler, DAVResponse response, DAVDepth depth) throws DAVException {
+        boolean isDir = myResource.isCollection();
+        response = handler.handleResource(response, this, isDir ? CallType.COLLECTION : CallType.MEMBER);
         
         if (depth == DAVDepth.DEPTH_ZERO || !isDir) {
             return response;
@@ -91,20 +88,15 @@ public class DAVResourceWalker {
                     HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
         }
  
-        if (!myURIPath.endsWith("/")) {
-            myURIPath += '/';
-        }
-        
-        if (!myReposPath.endsWith("/")) {
-            myReposPath += '/';
-        }
- 
-        myExists = true;
-        myIsCollection = false;
+
+        //TODO: log here that we are listing a dir
+
+        myResource.setExists(true);
+        myResource.setCollection(false);
         FSRevisionNode node = null;
         Map children = null;
         try {
-            node = myRoot.getRevisionNode(myReposPath);
+            node = myRoot.getRevisionNode(myResource.getResourceURI().getPath());
             children = node.getDirEntries(myRoot.getOwner());
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
@@ -114,14 +106,22 @@ public class DAVResourceWalker {
         for (Iterator childrenIter = children.keySet().iterator(); childrenIter.hasNext(); ) {
             String childName = (String) childrenIter.next();
             FSEntry childEntry = (FSEntry) children.get(childName);
+
+            String uriPath = myResource.getResourceURI().getURI();
+            String reposPath = myResource.getResourceURI().getPath();
             
-            myURIPath = DAVPathUtil.append(myURIPath, childName);
-            myReposPath = DAVPathUtil.append(myURI, childName);
-            myURI = DAVPathUtil.append(myURI, childName);
+            myResource.getResourceURI().setURI(DAVPathUtil.append(uriPath, childName));
+            myResource.getResourceURI().setPath(DAVPathUtil.append(reposPath, childName));
             
+            if (childEntry.getType() == SVNNodeKind.FILE) {
+                response = handler.handleResource(response, this, CallType.MEMBER);
+            } else {
+                myResource.setCollection(true);
+                response = doWalk(handler, response, depth);
+                myResource.setCollection(false);
+            }
         }
-        //TODO: log here that we are listing a dir
-        return null;
+        return response;
     }
-    
+
 }

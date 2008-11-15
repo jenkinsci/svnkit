@@ -423,6 +423,10 @@ public abstract class DAVResource {
         myResourceURI.setExists(exists);
     }
     
+    public void setCollection(boolean isCollection) {
+        myIsCollection = isCollection;
+    }
+    
     public void setTxnName(String txnName) {
         myTxnName = txnName;
     }
@@ -457,12 +461,8 @@ public abstract class DAVResource {
         return mySVNProperties;
     }
 
-    protected void setCollection(boolean isCollection) {
-        myIsCollection = isCollection;
-    }
-
     protected void copyTo(DAVResource copy) {
-        copy.myResourceURI = myResourceURI;
+        copy.myResourceURI = myResourceURI.dup();
         copy.myRepository = myRepository;
         copy.myRevision = myRevision;
         copy.myLatestRevision = myLatestRevision;

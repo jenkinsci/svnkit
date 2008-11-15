@@ -82,6 +82,10 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVHistoryResourceFact
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVIFHeader.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVIFState.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVIFStateType.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLock.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLockRecType.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLockScope.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLockType.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVPrivateResource.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVPrivateResourceFactory.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResource.java -text
@@ -102,6 +106,7 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResul
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResourceWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResponse.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVValidateWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVWalkResource.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/IDAVResourceWalkHandler.java -text
 svnkit-eclipse/com.sun.jna/MANIFEST.MF eol=lf

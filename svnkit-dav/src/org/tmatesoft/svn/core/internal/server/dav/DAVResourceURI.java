@@ -73,6 +73,11 @@ public class DAVResourceURI {
         myIsWorking = isWorking;
     }
     
+    public DAVResourceURI dup() {
+        return new DAVResourceURI(myContext, myURI, myPath, myRevision, myKind, myType, myActivityID, myIsExists, myIsVersioned, myIsBaseLined, 
+                myIsWorking);
+    }
+    
     public String getRequestURI() {
         return DAVPathUtil.append(getContext(), getURI());
     }
@@ -129,7 +134,7 @@ public class DAVResourceURI {
         myIsExists = isExist;
     }
 
-    private void setPath(String path) {
+    public void setPath(String path) {
         myPath = DAVPathUtil.standardize(path);
     }
 
