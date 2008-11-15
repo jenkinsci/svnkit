@@ -103,7 +103,7 @@ public class MergeAlreadyMergedFileTest extends AbstractExtMergeTest {
 
         rangesToMerge.clear();
         rangesToMerge.add(new SVNRevisionRange(SVNRevision.create(start), SVNRevision.create(change4)));
-        prepareMerge(getBranch(), getTrunkWC(), SVNRevision.create(start), SVNRevision.create(change4));
+        prepareMerge(getBranch(), getTrunkWC());
         setStartRevision(start);
         setEndRevision(change4);
         getEnvironment().merge(getBranch(), getTrunkWC(), rangesToMerge, SVNDepth.INFINITY, false, false);
@@ -134,7 +134,7 @@ public class MergeAlreadyMergedFileTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {
@@ -185,7 +185,7 @@ public class MergeAlreadyMergedFileTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {

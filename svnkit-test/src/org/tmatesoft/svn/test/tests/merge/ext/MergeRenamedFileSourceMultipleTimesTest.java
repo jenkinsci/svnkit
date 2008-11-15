@@ -84,7 +84,7 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
 
     private class FeatureModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
@@ -126,7 +126,7 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {

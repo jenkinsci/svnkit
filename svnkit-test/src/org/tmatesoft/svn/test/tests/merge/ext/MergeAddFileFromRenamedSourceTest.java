@@ -91,7 +91,7 @@ public class MergeAddFileFromRenamedSourceTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {
@@ -126,7 +126,7 @@ public class MergeAddFileFromRenamedSourceTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {

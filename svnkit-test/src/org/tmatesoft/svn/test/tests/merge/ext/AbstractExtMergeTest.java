@@ -89,9 +89,9 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
         setFeatureMode(isFeatureMode);
     }
 
-    public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+    public void prepareMerge(SVNURL source, File target) throws SVNException {
         if (getMergeCallback() != null) {
-            getMergeCallback().prepareMerge(source, target, start, end);
+            getMergeCallback().prepareMerge(source, target);
         }
     }
 
@@ -136,7 +136,7 @@ public abstract class AbstractExtMergeTest extends AbstractSVNTest implements IS
         final SVNRevision startRevision = SVNRevision.create(headRev - revCount);
         final SVNRevision endRevision = SVNRevision.create(headRev);
         ranges.add(new SVNRevisionRange(startRevision, endRevision));
-        prepareMerge(url, wc, startRevision, endRevision);
+        prepareMerge(url, wc);
         setStartRevision(startRevision.getNumber());
         setEndRevision(endRevision.getNumber());
         getEnvironment().merge(url, wc, ranges, depth, dryRun, recordOnly);

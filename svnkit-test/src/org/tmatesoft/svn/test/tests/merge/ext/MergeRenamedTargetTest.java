@@ -20,7 +20,6 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.wc.SVNCopyTask;
 import org.tmatesoft.svn.core.wc.SVNEditorAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
 import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
 import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
@@ -73,7 +72,7 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
     
     private class FeatureModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
@@ -98,9 +97,6 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
     private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
-            if (targetUrl.getPath().endsWith("trunk/A/file2")) {
-                return SVNCopyTask.create(new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.create(targetRevision), getTrunk().appendPath("A/file", false)), false);
-            }
             return null;
         }
 
@@ -115,7 +111,7 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {

@@ -60,6 +60,7 @@ public class MergeAlreadyMergedFileTest3 extends AbstractExtMergeTest {
         fill();
 
         createWCs();
+        initializeMergeCallback();
 
         getEnvironment().copy(getTrunkFile("A/file"), SVNRevision.WORKING, getTrunkFile("A/file2"), true, false, true);
         getEnvironment().commit(getTrunkFile("A"), "A/file renamed to A/file2", SVNDepth.INFINITY);
@@ -84,7 +85,7 @@ public class MergeAlreadyMergedFileTest3 extends AbstractExtMergeTest {
         setStartRevision(revision - 1);
         setEndRevision(revision2);
         ranges.add(new SVNRevisionRange(SVNRevision.create(getStartRevision()), SVNRevision.create(getEndRevision())));
-        initializeMergeCallback();
+        prepareMerge(getBranch(), getTrunkWC());
         getEnvironment().merge(getBranch(), getTrunkWC(), ranges, SVNDepth.INFINITY, false, false);
 
         validateWC(getTrunkWC());
@@ -94,7 +95,7 @@ public class MergeAlreadyMergedFileTest3 extends AbstractExtMergeTest {
 
     private class FeatureModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
@@ -119,10 +120,6 @@ public class MergeAlreadyMergedFileTest3 extends AbstractExtMergeTest {
     private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
-            if (targetUrl.getPath().endsWith("trunk/A/file2")) {
-                SVNCopySource source = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.create(targetRevision), getTrunk().appendPath("A/file", false));
-                return SVNCopyTask.create(source, false);
-            }
             return null;
         }
 
@@ -137,7 +134,7 @@ public class MergeAlreadyMergedFileTest3 extends AbstractExtMergeTest {
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {

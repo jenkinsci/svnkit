@@ -13,7 +13,7 @@ import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
  */
 public interface ISVNTestExtendedMergeCallback extends ISVNExtendedMergeCallback {
 
-    public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException;
+    public void prepareMerge(SVNURL source, File target) throws SVNException;
 
     public SVNWCDescriptor getExpectedState() throws SVNException;
 }

@@ -79,7 +79,7 @@ public class MergeReplacedWithoutHistorySourceTest extends AbstractExtMergeTest 
 
     private class FeatureModeCallback implements ISVNTestExtendedMergeCallback {
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
@@ -112,7 +112,11 @@ public class MergeReplacedWithoutHistorySourceTest extends AbstractExtMergeTest 
                 if (sourceUrl.getPath().endsWith("branch/A/file2")) {
                     return new SVNURL[]{getTrunk().appendPath("A/file", false)};
                 }
-
+            }
+            if (action == SVNEditorAction.ADD) {
+                if (sourceUrl.getPath().endsWith("branch/A/file2")) {
+                    return new SVNURL[]{getTrunk().appendPath("A/file2", false)};
+                }
             }
             return null;
         }
@@ -121,7 +125,7 @@ public class MergeReplacedWithoutHistorySourceTest extends AbstractExtMergeTest 
             return null;
         }
 
-        public void prepareMerge(SVNURL source, File target, SVNRevision start, SVNRevision end) throws SVNException {
+        public void prepareMerge(SVNURL source, File target) throws SVNException {
         }
 
         public SVNWCDescriptor getExpectedState() throws SVNException {
