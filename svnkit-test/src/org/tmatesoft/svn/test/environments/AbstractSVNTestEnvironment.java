@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -126,6 +127,8 @@ public abstract class AbstractSVNTestEnvironment {
 
     public abstract void delete(File path) throws SVNException;
 
+    public abstract void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException;
+
     public void createFile(File file, String content) throws SVNException {
         SVNFileUtil.createFile(file, content, "UTF-8");
     }
@@ -165,7 +168,7 @@ public abstract class AbstractSVNTestEnvironment {
         SVNRepository repository = SVNRepositoryFactory.create(url);
         return repository.getLatestRevision();
     }
-    
+
     public void getFileContents(File file, OutputStream outputStream) throws SVNException {
         InputStream is = SVNFileUtil.openFileForReading(file);
         byte[] buffer = new byte[512];

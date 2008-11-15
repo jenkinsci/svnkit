@@ -182,24 +182,17 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         return editor;
     }
 
-    protected void addMergeSource(String mergeSource, File target, SVNMergeRangeList remainingRanges, SVNCopySource targetCopySource) throws SVNException {
+    protected void addMergeSource(String mergeSource, SVNURL[] mergeSources, File target, SVNMergeRangeList remainingRanges, SVNCopySource targetCopySource) throws SVNException {
         if (getPendingFiles().contains(target)) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: skip new additional target " + target.getAbsolutePath());
             return;
         }
         getPendingFiles().add(target);
 
-        SVNURL sourceURL = myPrimaryURL.appendPath(mergeSource, false);
-        SVNURL sourceCopiedFrom = getExtendedMergeCallback().transformLocation(sourceURL, Math.max(myRevision1, myRevision2), Math.min(myRevision1, myRevision2));
-        SVNURL url1;
-        SVNURL url2;
-        if (sourceCopiedFrom != null) {
-            url1 = sourceCopiedFrom;
-            url2 = sourceURL;
-        } else {
-            url1 = sourceURL;
-            url2 = mySecondURL.appendPath(mergeSource, false);
-        }
+        SVNURL sourceURL = myPrimaryURL.appendPath(mergeSource, false);        
+        mergeSources = getMergeSources(sourceURL, mergeSources);
+        SVNURL url1 = mergeSources[0];
+        SVNURL url2 = mergeSources[1];
 
         BufferedWriter writer = createWriter();
         SVNMergeTask mergeTask = new SVNMergeTask(url1, url2, target, remainingRanges, targetCopySource);
@@ -233,7 +226,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         return false;
     }
 
-    protected SVNMergeRangeList calculateRemainingRanges(File file, SVNURL sourceURL, SVNURL targetURL) throws SVNException {
+    protected SVNMergeRangeList calculateRemainingRanges(File file, SVNURL sourceURL, SVNURL[] mergeSources) throws SVNException {
         if (skipExtendedMerge()) {
             return null;
         }
@@ -257,23 +250,34 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             targetMergeInfo = fullMergeInfo[0];
             implicitMergeInfo = fullMergeInfo[1];
 
-            SVNURL sourceCopiedFrom = getExtendedMergeCallback().transformLocation(sourceRoot, Math.max(myRevision1, myRevision2), Math.min(myRevision1, myRevision2));
-            SVNURL url1;
-            SVNURL url2;
-            if (sourceCopiedFrom != null) {
-                url1 = sourceCopiedFrom;
-                url2 = targetURL;
-            } else {
-                url1 = sourceURL;
-                String relativePath = SVNPathUtil.getRelativePath(myPrimaryURL.getPath(), sourceURL.getPath());
-                url2 = mySecondURL.appendPath(relativePath, false);
-            }
+            mergeSources = getMergeSources(sourceURL, mergeSources);
+            SVNURL url1 = mergeSources[0];
+            SVNURL url2 = mergeSources[1];
 
             calculateRemainingRanges(null, mergeTarget, sourceRoot, url1, myRevision1, url2, myRevision2,
                     targetMergeInfo, implicitMergeInfo, false, entry, repository);
             remainingRangeList = mergeTarget.myRemainingRanges;
         }
         return remainingRangeList;
+    }
+
+    private SVNURL[] getMergeSources(SVNURL sourceURL, SVNURL[] mergeSources) throws SVNException {
+        if (mergeSources == null) {
+            mergeSources = new SVNURL[2];
+        }
+        if (mergeSources[0] != null && mergeSources[1] != null) {
+            return mergeSources;
+        }
+        SVNURL sourceCopiedFrom = getExtendedMergeCallback().transformLocation(sourceURL, Math.max(myRevision1, myRevision2), Math.min(myRevision1, myRevision2));
+        if (sourceCopiedFrom != null) {
+            mergeSources[0] = sourceCopiedFrom;
+            mergeSources[1] = sourceURL;
+        } else {
+            mergeSources[0] = sourceURL;
+            String relativePath = SVNPathUtil.getRelativePath(myPrimaryURL.getPath(), sourceURL.getPath());            
+            mergeSources[1] = mySecondURL.appendPath(relativePath, false);
+        }
+        return mergeSources;
     }
 
     protected ISVNEntryHandler getMergeInfoEntryHandler(String mergeSrcPath, SVNURL sourceRootURL, long revision1, long revision2, SVNRepository repository, SVNDepth depth, List childrenWithMergeInfo) {

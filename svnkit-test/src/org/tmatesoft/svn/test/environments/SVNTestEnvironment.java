@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -146,6 +147,10 @@ public class SVNTestEnvironment extends AbstractSVNTestEnvironment {
 
     public void add(File path, boolean mkdir, SVNDepth depth, boolean makeParents) throws SVNException {
         getManager().getWCClient().doAdd(path, false, mkdir, false, depth, false, makeParents);
+    }
+
+    public void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException {
+        getManager().getWCClient().doSetProperty(path, propName, propValue, false, depth, null, null);
     }
 
     public void delete(File path) throws SVNException {

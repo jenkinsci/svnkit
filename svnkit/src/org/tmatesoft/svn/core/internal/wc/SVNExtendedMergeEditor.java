@@ -185,14 +185,15 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             File target = getFile(targetPath);
 
             SVNMergeRangeList remainingRanges = null;
+            SVNURL[] mergeSources = new SVNURL[2];
             if (!expectedTargetURL.equals(targetURL)) {
-                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, targetURL);
+                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             }
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
 
             if (copyTask != null || remainingRanges != null) {
                 SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
-                getMergeDriver().addMergeSource(path, target, remainingRanges, copySource);
+                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, copySource);
                 if (copyTask != null && copyTask.isMove()) {
                     File deleteTarget = getDeleteTarget(copySource);
                     deletePath(deleteTarget);
@@ -222,8 +223,9 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             File target = getFile(targetPath);
 
             SVNMergeRangeList remainingRanges = null;
+            SVNURL[] mergeSources = new SVNURL[2];
             if (!expectedTargetURL.equals(targetURL)) {
-                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, targetURL);
+                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             }
             boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
@@ -236,7 +238,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                     deletePath(deleteTarget);
                 }
             } else if (mergeInfoConflicts) {
-                getMergeDriver().addMergeSource(path, target, remainingRanges, copySource);
+                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, copySource);
                 continue;
             }
             SVNFileInfoExt fileInfo = getFileInfo(path, revision, SVNEditorAction.MODIFY, null);

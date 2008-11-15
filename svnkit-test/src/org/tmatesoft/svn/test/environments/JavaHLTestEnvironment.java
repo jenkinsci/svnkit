@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.ISVNExtendedMergeCallback;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -90,6 +91,9 @@ public class JavaHLTestEnvironment extends AbstractSVNTestEnvironment {
     }
 
     public void add(File path, boolean mkdir, SVNDepth depth, boolean makeParents) throws SVNException {
+    }
+
+    public void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException {
     }
 
     public void delete(File path) throws SVNException {
