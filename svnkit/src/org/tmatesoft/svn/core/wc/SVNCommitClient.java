@@ -1136,7 +1136,8 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          instead
      */
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
-        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), null);
+        SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+        return doCollectCommitItems(paths, keepLocks, force, depth, null);
     }
 
     /**
@@ -1261,7 +1262,8 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, 
             boolean recursive, boolean combinePackets) throws SVNException {
-        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), combinePackets, null);
+        SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+        return doCollectCommitItems(paths, keepLocks, force, depth, combinePackets, null);
     }
     
     /**
