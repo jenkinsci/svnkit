@@ -352,15 +352,8 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
     }
     
     private static int hashCode(Object key) {
-        if (key.getClass() == String.class) {
-            int hash = 0;
-            String str = (String) key;
-            for (int i = 0; i < str.length(); i++) {
-                hash = hash*33 + str.charAt(i);
-            }
-            return hash;
-        } else if (key.getClass() == File.class) {
-            return hashCode(((File) key).getPath());
+        if (key.getClass() == File.class) {
+            return ((File) key).getPath().hashCode();
         }
         return key.hashCode();
     }
