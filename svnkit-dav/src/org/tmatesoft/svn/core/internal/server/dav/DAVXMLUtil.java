@@ -29,10 +29,11 @@ public class DAVXMLUtil extends SVNXMLUtil {
     public static final String SVN_DAV_ERROR_TAG = "error";
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target) {
-        return openNamespaceDeclarationTag(prefix, header, namespaces, null, target);
+        return openNamespaceDeclarationTag(prefix, header, namespaces, null, target, true);
     }
 
-    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map attrs, StringBuffer target) {
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map attrs, StringBuffer target, 
+            boolean addEOL) {
         target = target == null ? new StringBuffer() : target;
         target.append("<");
         target.append(prefix);
@@ -79,7 +80,11 @@ public class DAVXMLUtil extends SVNXMLUtil {
                 target.append("\"");
             }
         }
-        target.append(">\n");
+     
+        target.append(">");
+        if (addEOL) {
+            target.append('\n');
+        }
         return target;
     }
 }

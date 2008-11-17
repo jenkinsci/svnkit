@@ -1213,13 +1213,15 @@ public class FSFS {
         }
     }
 
-    public SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock) throws SVNException {
+    public SVNLock lockPath(String path, String token, String username, String comment, Date expirationDate, long currentRevision, 
+            boolean stealLock, boolean isDAVComment) throws SVNException {
         path = SVNPathUtil.canonicalizeAbsolutePath(path);
         
         String[] paths = { path };
         
         if (username == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, "Cannot lock path ''{0}'', no authenticated username available.", path);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_USER, 
+                    "Cannot lock path ''{0}'', no authenticated username available.", path);
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
 
@@ -1231,7 +1233,7 @@ public class FSFS {
         synchronized (writeLock) {
             try {
                 writeLock.lock();
-                lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock);
+                lock = lock(path, token, username, comment, expirationDate, currentRevision, stealLock, isDAVComment);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
@@ -1625,7 +1627,8 @@ public class FSFS {
         deleteLock(lock);
     }
 
-    private SVNLock lock(String path, String token, String username, String comment, Date expirationDate, long currentRevision, boolean stealLock) throws SVNException {
+    private SVNLock lock(String path, String token, String username, String comment, Date expirationDate, long currentRevision, 
+            boolean stealLock, boolean isDAVComment) throws SVNException {
         long youngestRev = getYoungestRevision();
         FSRevisionRoot root = createRevisionRoot(youngestRev);
         SVNNodeKind kind = root.checkNodeKind(path); 
@@ -1668,9 +1671,9 @@ public class FSFS {
         if (token == null) {
             String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
             token = FSFS.SVN_OPAQUE_LOCK_TOKEN + uuid;
-            lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate);
+            lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
         } else {
-            lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate);
+            lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
         }
         
         setLock(lock);
@@ -1745,7 +1748,8 @@ public class FSFS {
             props.put(FSFS.PATH_LOCK_KEY, lock.getPath());
             props.put(FSFS.OWNER_LOCK_KEY, lock.getOwner());
             props.put(FSFS.TOKEN_LOCK_KEY, lock.getID());
-            props.put(FSFS.IS_DAV_COMMENT_LOCK_KEY, "0");
+            String isDAVCommentValue = lock.isDAVComment() ? "1" : "0";
+            props.put(FSFS.IS_DAV_COMMENT_LOCK_KEY, isDAVCommentValue);
             if (lock.getComment() != null) {
                 props.put(FSFS.COMMENT_LOCK_KEY, lock.getComment());
             }

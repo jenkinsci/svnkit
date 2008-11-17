@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.util.Date;
+
 
 /**
  * @version 1.2.0
@@ -25,5 +27,19 @@ public class DAVLock {
     private String myLockToken;
     private String myOwner;
     private String myAuthUser;
+    private Date myTimeOutDate;
     
+    public DAVLock(String authUser, DAVDepth depth, boolean isLockNull, String lockToken, String owner, DAVLockRecType recType, 
+            DAVLockScope scope, DAVLockType type, Date timeOutDate) {
+        myAuthUser = authUser;
+        myDepth = depth;
+        myIsLockNull = isLockNull;
+        myLockToken = lockToken;
+        myOwner = owner;
+        myRecType = recType;
+        myScope = scope;
+        myType = type;
+        myTimeOutDate = timeOutDate;
+    }
+
 }

@@ -70,7 +70,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         Map attrs = new SVNHashMap();
         attrs.put("send-all", Boolean.toString(sendAll));
         SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "update-report", 
-                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, attrs, xmlBuffer);
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, attrs, xmlBuffer, true);
         
         SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "src-path", url, xmlBuffer);
         if (targetRevision >= 0) {

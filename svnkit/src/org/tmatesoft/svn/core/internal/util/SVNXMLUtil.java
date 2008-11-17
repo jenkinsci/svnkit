@@ -61,7 +61,8 @@ public class SVNXMLUtil {
         return addXMLHeader(target, true);
     }
 
-    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, Map attrs, StringBuffer target) {
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, Map attrs, 
+            StringBuffer target, boolean addEOL) {
         target = target == null ? new StringBuffer() : target;
         target.append("<");
         if (prefix != null) {
@@ -106,12 +107,15 @@ public class SVNXMLUtil {
                 target.append("\"");
             }
         }
-        target.append(">\n");
+        target.append(">");
+        if (addEOL) {
+            target.append('\n');
+        }
         return target;
     }
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, StringBuffer target) {
-        return openNamespaceDeclarationTag(prefix, header, namespaces, prefixMap, null, target);
+        return openNamespaceDeclarationTag(prefix, header, namespaces, prefixMap, null, target, true);
     }
 
     public static StringBuffer addXMLFooter(String prefix, String header, StringBuffer target) {

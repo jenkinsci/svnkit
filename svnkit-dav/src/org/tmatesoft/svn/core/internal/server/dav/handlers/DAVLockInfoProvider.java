@@ -11,12 +11,26 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockRecType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -87,6 +101,29 @@ public class DAVLockInfoProvider {
         return lock != null;
     }
     
+    public LinkedList getLocks(DAVResource resource, GetLocksCallType callType) throws DAVException {
+        LinkedList locks = null;
+        if (resource.getResourceURI().getPath() == null) {
+            return locks;
+        }
+
+        if (DAVHandlerFactory.METHOD_LOCK.equals(myOwner.getRequestMethod())) {
+            return locks;
+        }
+        
+        //TODO: add authz check here later
+        
+        SVNLock lock = null;
+        try {
+            lock = resource.getLock(); 
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Failed to check path for a lock.", null);
+        }
+        
+        return null;
+    }
+    
     public boolean isReadOnly() {
         return myIsReadOnly;
     }
@@ -107,4 +144,37 @@ public class DAVLockInfoProvider {
         return myWorkingRevision;
     }
     
+    private DAVLock convertToDAVLock(SVNLock lock, boolean hideAuthUser, boolean exists) {
+        String authUser = null;
+        StringBuffer owner = null;
+        if (lock.getComment() != null) {
+            owner = new StringBuffer();
+            if (!lock.isDAVComment()) {
+                List namespaces = new ArrayList(1);
+                namespaces.add(DAVElement.DAV_NAMESPACE);
+                owner = DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_OWNER.getName(), namespaces, 
+                        null, owner, false);
+                owner.append(SVNEncodingUtil.xmlEncodeAttr(lock.getComment()));
+                owner = SVNXMLUtil.addXMLFooter(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_OWNER.getName(), owner);
+            } else {
+                owner.append(lock.getComment());
+            }
+        }
+        
+        if (!hideAuthUser) {
+            authUser = lock.getOwner();
+        }
+        
+        return new DAVLock(authUser, DAVDepth.DEPTH_ZERO, exists, lock.getID(), owner != null ? owner.toString() : null, DAVLockRecType.DIRECT, 
+                DAVLockScope.EXCLUSIVE, DAVLockType.WRITE, lock.getExpirationDate());
+    }
+    
+    public static class GetLocksCallType {
+        public static final GetLocksCallType RESOLVED = new GetLocksCallType();
+        public static final GetLocksCallType PARTIAL = new GetLocksCallType();
+        public static final GetLocksCallType COMPLETE = new GetLocksCallType();
+        
+        private GetLocksCallType() {
+        }
+    }
 }
