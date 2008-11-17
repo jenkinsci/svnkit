@@ -125,6 +125,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.NO_DIFF_DELETED);
         SVNCommandLine.registerOption(SVNOption.STOP_ON_COPY);
         SVNCommandLine.registerOption(SVNOption.LIMIT);
+        SVNCommandLine.registerOption(SVNOption.AUTHOR_OF_INTEREST);
         
         SVNCommandLine.registerOption(SVNOption.USERNAME);
         SVNCommandLine.registerOption(SVNOption.PASSWORD);

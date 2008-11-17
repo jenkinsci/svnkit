@@ -50,7 +50,8 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
     private static final String SEPARATOR = "------------------------------------------------------------------------\n";
 
     private LinkedList myMergeStack;
-
+    private String myAuthorOfInterest;
+    
     public SVNLogCommand() {
         super("log", null);
     }
@@ -73,6 +74,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         options.add(SVNOption.LIMIT);
         options.add(SVNOption.WITH_ALL_REVPROPS);
         options.add(SVNOption.WITH_REVPROP);
+        options.add(SVNOption.AUTHOR_OF_INTEREST);
         return options;
     }
 
@@ -138,6 +140,8 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             }
         }
 
+        myAuthorOfInterest = getSVNEnvironment().getAuthorOfInterest();
+        
         SVNLogClient client = getSVNEnvironment().getClientManager().getLogClient();
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
@@ -225,6 +229,10 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
             return;
         }
 
+        if (myAuthorOfInterest != null && !"".equals(myAuthorOfInterest) && !myAuthorOfInterest.equals(logEntry.getAuthor())) {
+            return;
+        }
+        
         SVNProperties revisionProperties = logEntry.getRevisionProperties();
         String author = revisionProperties.getStringValue(SVNRevisionProperty.AUTHOR);
         String message = revisionProperties.getStringValue(SVNRevisionProperty.LOG);
@@ -302,7 +310,11 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         if (logEntry == null) {
             return;
         }
-        
+
+        if (myAuthorOfInterest != null && !"".equals(myAuthorOfInterest) && !myAuthorOfInterest.equals(logEntry.getAuthor())) {
+            return;
+        }
+
         SVNProperties revProps = logEntry.getRevisionProperties();
         String author = revProps.getStringValue(SVNRevisionProperty.AUTHOR);
         String message = revProps.getStringValue(SVNRevisionProperty.LOG);
