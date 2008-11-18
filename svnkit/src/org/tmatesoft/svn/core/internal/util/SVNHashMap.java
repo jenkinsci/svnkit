@@ -36,6 +36,8 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
 
     private static final Object NULL_KEY = new Object();
     private static final int INITIAL_CAPACITY = 16;
+
+    private static boolean ourIsCompatibilityMode = Boolean.getBoolean("svnkit.compatibleHash");
     
     private transient TableEntry[] myTable;
     private transient int myEntryCount;
@@ -352,8 +354,15 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
     }
     
     private static int hashCode(Object key) {
-        if (key.getClass() == File.class) {
-            return ((File) key).getPath().hashCode();
+        if (ourIsCompatibilityMode && String.class == key.getClass()) {
+            int hash = 0;
+            String str = (String) key;
+            for (int i = 0; i < str.length(); i++) {
+                hash = hash*33 + str.charAt(i);
+            }
+            return hash;
+        } else if (key.getClass() == File.class) {
+            return hashCode(((File) key).getPath());
         }
         return key.hashCode();
     }
