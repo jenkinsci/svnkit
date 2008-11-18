@@ -42,4 +42,40 @@ public class DAVLock {
         myTimeOutDate = timeOutDate;
     }
 
+    public DAVLockRecType getRecType() {
+        return myRecType;
+    }
+
+    public DAVLockScope getScope() {
+        return myScope;
+    }
+    
+    public DAVLockType getType() {
+        return myType;
+    }
+    
+    public boolean isLockNull() {
+        return myIsLockNull;
+    }
+
+    public DAVDepth getDepth() {
+        return myDepth;
+    }
+
+    public String getLockToken() {
+        return myLockToken;
+    }
+
+    public String getOwner() {
+        return myOwner;
+    }
+
+    public String getAuthUser() {
+        return myAuthUser;
+    }
+    
+    public Date getTimeOutDate() {
+        return myTimeOutDate;
+    }
+
 }

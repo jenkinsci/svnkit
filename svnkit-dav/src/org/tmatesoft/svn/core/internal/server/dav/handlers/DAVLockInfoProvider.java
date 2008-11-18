@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -101,18 +103,18 @@ public class DAVLockInfoProvider {
         return lock != null;
     }
     
-    public LinkedList getLocks(DAVResource resource, GetLocksCallType callType) throws DAVException {
-        LinkedList locks = null;
+    public DAVLock getLock(DAVResource resource) throws DAVException {
         if (resource.getResourceURI().getPath() == null) {
-            return locks;
+            return null;
         }
 
         if (DAVHandlerFactory.METHOD_LOCK.equals(myOwner.getRequestMethod())) {
-            return locks;
+            return null;
         }
         
         //TODO: add authz check here later
-        
+
+        DAVLock davLock = null;
         SVNLock lock = null;
         try {
             lock = resource.getLock(); 
@@ -121,7 +123,12 @@ public class DAVLockInfoProvider {
                     "Failed to check path for a lock.", null);
         }
         
-        return null;
+        if (lock != null) {
+            davLock = convertToDAVLock(lock, myIsBreakLock, resource.exists());
+            myOwner.setResponseHeader(HTTPHeader.CREATION_DATE_HEADER, SVNDate.formatDate(lock.getCreationDate()));
+            myOwner.setResponseHeader(HTTPHeader.LOCK_OWNER_HEADER, lock.getOwner());
+        }
+        return davLock;
     }
     
     public boolean isReadOnly() {
