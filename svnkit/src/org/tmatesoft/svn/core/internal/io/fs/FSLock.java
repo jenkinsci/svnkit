@@ -9,36 +9,28 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.server.dav;
+package org.tmatesoft.svn.core.internal.io.fs;
 
-import java.util.LinkedList;
+import java.util.Date;
+
+import org.tmatesoft.svn.core.SVNLock;
 
 
 /**
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class DAVIFHeader {
-    private String myURI;
-    private LinkedList myStateList;
-    private boolean myIsDummyHeader;
+public class FSLock extends SVNLock {
+
+    private boolean myIsDAVComment;
     
-    public DAVIFHeader(String uri) {
-        this(uri, false);
+    public FSLock(String path, String id, String owner, String comment, Date created, Date expires, boolean isDAVComment) {
+        super(path, id, owner, comment, created, expires);
+        myIsDAVComment = isDAVComment;
     }
 
-    public DAVIFHeader(String uri, boolean isDummy) {
-        myURI = uri;
-        myStateList = new LinkedList();
-        myIsDummyHeader = isDummy;
-    }
-    
-    public void addIFState(DAVIFState ifState) {
-        myStateList.addFirst(ifState);
-    }
-
-    public boolean isDummyHeader() {
-        return myIsDummyHeader;
+    public boolean isDAVComment() {
+        return myIsDAVComment;
     }
 
 }

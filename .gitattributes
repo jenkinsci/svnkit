@@ -173,6 +173,7 @@ svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
 svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNativeNTLMAuthentication.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/fs/FSLock.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNCallbackHandler.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -text

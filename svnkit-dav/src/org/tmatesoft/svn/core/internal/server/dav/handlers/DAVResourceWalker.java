@@ -73,7 +73,7 @@ public class DAVResourceWalker {
     
     private DAVResponse doWalk(IDAVResourceWalkHandler handler, DAVResponse response, DAVDepth depth) throws DAVException {
         boolean isDir = myResource.isCollection();
-        response = handler.handleResource(response, this, isDir ? CallType.COLLECTION : CallType.MEMBER);
+        response = handler.handleResource(response, myResource, myLockInfoProvider, myFlags, null, isDir ? CallType.COLLECTION : CallType.MEMBER);
         
         if (depth == DAVDepth.DEPTH_ZERO || !isDir) {
             return response;
@@ -114,7 +114,7 @@ public class DAVResourceWalker {
             myResource.getResourceURI().setPath(DAVPathUtil.append(reposPath, childName));
             
             if (childEntry.getType() == SVNNodeKind.FILE) {
-                response = handler.handleResource(response, this, CallType.MEMBER);
+                response = handler.handleResource(response, myResource, myLockInfoProvider, myFlags, null, CallType.MEMBER);
             } else {
                 myResource.setCollection(true);
                 response = doWalk(handler, response, depth);

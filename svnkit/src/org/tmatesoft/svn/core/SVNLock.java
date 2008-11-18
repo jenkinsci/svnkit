@@ -31,7 +31,6 @@ public class SVNLock {
     private String myComment;
     private Date myCreationDate;
     private Date myExpirationDate;
-    private boolean myIsDAVComment;
     
     
     /**
@@ -49,23 +48,14 @@ public class SVNLock {
      * 						unlocked (optional)
      */
     public SVNLock(String path, String id, String owner, String comment, Date created, Date expires) {
-        this(path, id, owner, comment, created, expires, false);
-    }
-    
-    public SVNLock(String path, String id, String owner, String comment, Date created, Date expires, boolean isDAVComment) {
         myPath = path;
         myID = id;
         myOwner = owner;
         myComment = comment;
         myCreationDate = created;
         myExpirationDate = expires;
-        myIsDAVComment = isDAVComment;
     }
-
-    public boolean isDAVComment() {
-        return myIsDAVComment;
-    }
-
+    
     /**
      * Gets the lock comment.
      * 

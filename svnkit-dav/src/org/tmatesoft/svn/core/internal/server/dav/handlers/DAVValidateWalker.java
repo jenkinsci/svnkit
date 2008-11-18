@@ -17,7 +17,9 @@ import java.util.logging.Level;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -28,20 +30,53 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVValidateWalker implements IDAVResourceWalkHandler {
 
-    public DAVResponse handleResource(DAVResponse response, DAVResourceWalker callBack, CallType callType) throws DAVException {
+    public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, int flags, 
+            DAVLockScope lockScope, CallType callType) throws DAVException {
         return null;
     }
 
-    private void validateResourceState(LinkedList ifHeaders, DAVResourceWalker callBack) throws DAVException {
+    private void validateResourceState(LinkedList ifHeaders, DAVResource resource, DAVLockInfoProvider provider, DAVLockScope lockScope, int flags) throws DAVException {
         DAVLock lock = null;
-        DAVLockInfoProvider provider = callBack.getLockInfoProvider();
         if (provider != null) {
             try {
-                lock = provider.getLock(callBack.getResource());
+                lock = provider.getLock(resource);
             } catch (DAVException dave) {
                 throw new DAVException("The locks could not be queried for verification against a possible \"If:\" header.", null, 
                         HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
             }
+        }
+    
+        boolean seenLockToken = false;
+        if (lockScope == DAVLockScope.EXCLUSIVE) {
+            if (lock != null) {
+                throw new DAVException("Existing lock(s) on the requested resource prevent an exclusive lock.", ServletDAVHandler.SC_HTTP_LOCKED, 0);
+            }
+            seenLockToken = true;
+        } else if (lockScope == DAVLockScope.SHARED) {
+            if (lock.getScope() == DAVLockScope.EXCLUSIVE) {
+                throw new DAVException("The requested resource is already locked exclusively.", ServletDAVHandler.SC_HTTP_LOCKED, 0);
+            }
+            seenLockToken = true;
+        } else {
+            seenLockToken = lock == null;
+        }
+        
+        if (ifHeaders == null || ifHeaders.isEmpty()) {
+            if (seenLockToken) {
+                return;
+            }
+            
+            throw new DAVException("This resource is locked and an \"If:\" header was not supplied to allow access to the resource.", 
+                    ServletDAVHandler.SC_HTTP_LOCKED, 0);
+        }
+        
+        DAVIFHeader ifHeader = (DAVIFHeader) ifHeaders.getFirst();
+        if (lock == null && ifHeader.isDummyHeader()) {
+            if ((flags & ServletDAVHandler.DAV_VALIDATE_IS_PARENT) != 0) {
+                return;
+            }
+            throw new DAVException("The locktoken specified in the \"Lock-Token:\" header is invalid because this resource has no outstanding locks.", 
+                    HttpServletResponse.SC_BAD_REQUEST, 0);
         }
         
         

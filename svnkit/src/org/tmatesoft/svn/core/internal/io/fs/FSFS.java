@@ -1043,7 +1043,7 @@ public class FSFS {
                 File digestFile = getDigestFileFromRepositoryPath(reposPath);
                 SVNFileUtil.deleteFile(digestFile);
             } else {
-                writeDigestLockFile(null, children, reposPath);
+                writeDigestLockFile(null, children, reposPath, false);
                 childToKill = null;
             }
 
@@ -1142,7 +1142,7 @@ public class FSFS {
                 expirationDate = SVNDate.parseDateString(expirationTime);
             }
             String comment = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.COMMENT_LOCK_KEY));
-            lock = new SVNLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate);
+            lock = new FSLock(lockPath, lockToken, lockOwner, comment, creationDate, expirationDate, "1".equals(davComment));
         }
         
         String childEntries = SVNPropertyValue.getPropertyAsString(lockProps.getSVNPropertyValue(FSFS.CHILDREN_LOCK_KEY));
@@ -1671,16 +1671,16 @@ public class FSFS {
         if (token == null) {
             String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
             token = FSFS.SVN_OPAQUE_LOCK_TOKEN + uuid;
-            lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
+            lock = new FSLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
         } else {
-            lock = new SVNLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
+            lock = new FSLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
         }
         
-        setLock(lock);
+        setLock(lock, isDAVComment);
         return lock;
     }
 
-    private void setLock(SVNLock lock) throws SVNException {
+    private void setLock(SVNLock lock, boolean isDAVComment) throws SVNException {
         if (lock == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: attempted to set a null lock");
             SVNErrorManager.error(err, SVNLogType.FSFS);
@@ -1703,7 +1703,7 @@ public class FSFS {
                 children.add(lastChild);
             }
             
-            writeDigestLockFile(fetchedLock, children, path);
+            writeDigestLockFile(fetchedLock, children, path, isDAVComment);
             
             if ("/".equals(path)) {
                 break;
@@ -1726,7 +1726,7 @@ public class FSFS {
         return true;
     }
 
-    private void writeDigestLockFile(SVNLock lock, Collection children, String repositoryPath) throws SVNException {
+    private void writeDigestLockFile(SVNLock lock, Collection children, String repositoryPath, boolean isDAVComment) throws SVNException {
         if (!ensureDirExists(getDBLocksDir(), true)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                     "Can''t create a directory at ''{0}''", getDBLocksDir());
@@ -1748,7 +1748,7 @@ public class FSFS {
             props.put(FSFS.PATH_LOCK_KEY, lock.getPath());
             props.put(FSFS.OWNER_LOCK_KEY, lock.getOwner());
             props.put(FSFS.TOKEN_LOCK_KEY, lock.getID());
-            String isDAVCommentValue = lock.isDAVComment() ? "1" : "0";
+            String isDAVCommentValue = isDAVComment ? "1" : "0";
             props.put(FSFS.IS_DAV_COMMENT_LOCK_KEY, isDAVCommentValue);
             if (lock.getComment() != null) {
                 props.put(FSFS.COMMENT_LOCK_KEY, lock.getComment());

@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
@@ -21,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
+import org.tmatesoft.svn.core.internal.io.fs.FSLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
@@ -115,9 +114,9 @@ public class DAVLockInfoProvider {
         //TODO: add authz check here later
 
         DAVLock davLock = null;
-        SVNLock lock = null;
+        FSLock lock = null;
         try {
-            lock = resource.getLock(); 
+            lock = (FSLock) resource.getLock(); 
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "Failed to check path for a lock.", null);
@@ -151,7 +150,7 @@ public class DAVLockInfoProvider {
         return myWorkingRevision;
     }
     
-    private DAVLock convertToDAVLock(SVNLock lock, boolean hideAuthUser, boolean exists) {
+    private DAVLock convertToDAVLock(FSLock lock, boolean hideAuthUser, boolean exists) {
         String authUser = null;
         StringBuffer owner = null;
         if (lock.getComment() != null) {
