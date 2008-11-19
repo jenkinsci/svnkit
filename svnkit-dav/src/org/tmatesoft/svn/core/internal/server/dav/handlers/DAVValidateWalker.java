@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.logging.Level;
 
@@ -18,9 +19,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
+import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
+import org.tmatesoft.svn.core.internal.server.dav.DAVIFStateType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -78,7 +83,46 @@ public class DAVValidateWalker implements IDAVResourceWalkHandler {
             throw new DAVException("The locktoken specified in the \"Lock-Token:\" header is invalid because this resource has no outstanding locks.", 
                     HttpServletResponse.SC_BAD_REQUEST, 0);
         }
+
+        String eTag = resource.getETag();
+        String uri = DAVPathUtil.dropTraillingSlash(resource.getResourceURI().getRequestURI());
         
+        
+        int numThatAppy = 0;
+        for (Iterator ifHeadersIter = ifHeaders.iterator(); ifHeadersIter.hasNext();) {
+            ifHeader = (DAVIFHeader) ifHeadersIter.next();
+            if (ifHeader.getURI() != null && !uri.equals(ifHeader.getURI())) {
+                continue;
+            }
+            
+            ++numThatAppy;
+            LinkedList stateList = ifHeader.getStateList();
+            for (Iterator stateListIter = stateList.iterator(); stateListIter.hasNext();) {
+                DAVIFState state = (DAVIFState) stateListIter.next();
+                if (state.getType() == DAVIFStateType.IF_ETAG) {
+                    String currentETag = null;
+                    String givenETag = null;
+                    String stateETag = state.getETag();
+                    if (stateETag.startsWith("W/")) {
+                        givenETag = stateETag.substring(2);
+                    } else {
+                        givenETag = stateETag;
+                    }
+                    
+                    if (eTag.startsWith("W/")) {
+                        currentETag = eTag.substring(2);
+                    } else {
+                        currentETag = eTag;
+                    }
+                    
+                    boolean eTagsDoNotMatch = !givenETag.equals(currentETag);
+                    
+                    if (state.getCondition() == DAVIFState.IF_CONDITION_NORMAL && eTagsDoNotMatch) {
+                        
+                    }
+                }
+            }
+        }
         
     }
 }

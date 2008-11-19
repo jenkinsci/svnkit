@@ -41,4 +41,12 @@ public class DAVIFHeader {
         return myIsDummyHeader;
     }
 
+    public String getURI() {
+        return myURI;
+    }
+
+    public LinkedList getStateList() {
+        return myStateList;
+    }
+
 }

@@ -33,4 +33,20 @@ public class DAVIFState {
         myLockToken = lockToken;
     }
     
+    public DAVIFStateType getType() {
+        return myType;
+    }
+    
+    public String getLockToken() {
+        return myLockToken;
+    }
+
+    public String getETag() {
+        return myETag;
+    }
+
+    public int getCondition() {
+        return myCondition;
+    }
+    
 }

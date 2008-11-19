@@ -268,7 +268,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         
         if (lockToken != null) {
             DAVIFState ifState = new DAVIFState(DAVIFState.IF_CONDITION_NORMAL, null, lockToken, DAVIFStateType.IF_OPAQUE_LOCK);
-            DAVIFHeader ifHeader = new DAVIFHeader(resource.getResourceURI().getURI(), true);
+            DAVIFHeader ifHeader = new DAVIFHeader(resource.getResourceURI().getRequestURI(), true);
             ifHeader.addIFState(ifState);
             ifHeaders.addFirst(ifHeader);
         }
