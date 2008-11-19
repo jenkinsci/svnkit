@@ -48,4 +48,8 @@ public class DAVActivityResource extends DAVResource {
         return copy;
     }
 
+    public DAVResource getParentResource() {
+        return null;
+    }
+
 }

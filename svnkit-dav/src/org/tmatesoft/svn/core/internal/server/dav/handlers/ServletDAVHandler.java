@@ -277,7 +277,26 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             lockInfoProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
         }
         
+        DAVException exception = null;
+        DAVResponse response = null;
+        DAVValidateWalker validateHandler = new DAVValidateWalker();
         if (resource.exists() && depth > 0) {
+            DAVResourceWalker walker = new DAVResourceWalker();
+            int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL;
+            try {
+                response = walker.walk(lockInfoProvider, resource, ifHeaders, flags, walkType, validateHandler, DAVDepth.DEPTH_INFINITY);
+            } catch (DAVException dave) {
+                exception = dave;
+            }
+        } else {
+            try {
+                validateHandler.validateResourceState(ifHeaders, resource, lockInfoProvider, null, flags);
+            } catch (DAVException dave) {
+                exception = dave;
+            }
+        }
+        
+        if (exception == null && (flags & DAV_VALIDATE_PARENT) != 0) {
             
         }
         return null;//TODO

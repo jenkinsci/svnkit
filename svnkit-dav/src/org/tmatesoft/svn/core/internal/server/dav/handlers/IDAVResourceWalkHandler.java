@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.LinkedList;
+
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -23,7 +25,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 public interface IDAVResourceWalkHandler {
 
     public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, 
-            int flags, DAVLockScope lockScope, CallType callType) throws DAVException;
+            LinkedList ifHeaders, int flags, DAVLockScope lockScope, CallType callType) throws DAVException;
     
     public static class CallType {
         public static final CallType MEMBER = new CallType();

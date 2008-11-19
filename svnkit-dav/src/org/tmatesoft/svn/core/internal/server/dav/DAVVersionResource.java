@@ -68,4 +68,8 @@ public class DAVVersionResource extends DAVResource {
         copyTo(copy);
         return copy;
     }
+
+    public DAVResource getParentResource() {
+        return null;
+    }
 }

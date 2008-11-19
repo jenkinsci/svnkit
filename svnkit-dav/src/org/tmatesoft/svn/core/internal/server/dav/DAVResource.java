@@ -431,7 +431,27 @@ public abstract class DAVResource {
         myTxnName = txnName;
     }
     
+    public boolean equals(Object o) {
+        if (o == null || o.getClass() != this.getClass()) {
+            return false;
+        }
+        
+        if (o == this) {
+            return true;
+        }
+        
+        DAVResource otherResource = (DAVResource) o;
+        File reposRoot1 = myFSFS.getDBRoot();
+        File reposRoot2 = otherResource.myFSFS.getDBRoot();
+        if (!reposRoot1.equals(reposRoot2)) {
+            return false;
+        }
+        return true;
+    }
+    
     public abstract DAVResource dup();
+    
+    public abstract DAVResource getParentResource();
     
     protected abstract void prepare() throws DAVException;
 

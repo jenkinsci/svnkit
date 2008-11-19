@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -35,12 +35,26 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVValidateWalker implements IDAVResourceWalkHandler {
 
-    public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, int flags, 
-            DAVLockScope lockScope, CallType callType) throws DAVException {
-        return null;
+    public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, 
+            int flags, DAVLockScope lockScope, CallType callType) throws DAVException {
+        DAVException exception = null;
+        try {
+            validateResourceState(ifHeaders, resource, lockInfoProvider, lockScope, flags);
+            return response;
+        } catch (DAVException e) {
+            exception = e;
+        }
+        
+        //TODO: I'm not sure what resources we should compare here
+        if (DAVServlet.isHTTPServerError(exception.getResponseCode())) {
+            throw exception;
+        }
+        
+        DAVResponse resp = new DAVResponse(null, resource.getResourceURI().getRequestURI(), response, null, exception.getResponseCode());        
+        return resp;
     }
 
-    private void validateResourceState(LinkedList ifHeaders, DAVResource resource, DAVLockInfoProvider provider, DAVLockScope lockScope, int flags) throws DAVException {
+    public void validateResourceState(LinkedList ifHeaders, DAVResource resource, DAVLockInfoProvider provider, DAVLockScope lockScope, int flags) throws DAVException {
         DAVLock lock = null;
         if (provider != null) {
             try {
@@ -87,9 +101,10 @@ public class DAVValidateWalker implements IDAVResourceWalkHandler {
         String eTag = resource.getETag();
         String uri = DAVPathUtil.dropTraillingSlash(resource.getResourceURI().getRequestURI());
         
-        
         int numThatAppy = 0;
-        for (Iterator ifHeadersIter = ifHeaders.iterator(); ifHeadersIter.hasNext();) {
+        String reason = null;
+        Iterator ifHeadersIter = ifHeaders.iterator();
+        for (;ifHeadersIter.hasNext();) {
             ifHeader = (DAVIFHeader) ifHeadersIter.next();
             if (ifHeader.getURI() != null && !uri.equals(ifHeader.getURI())) {
                 continue;
@@ -97,6 +112,7 @@ public class DAVValidateWalker implements IDAVResourceWalkHandler {
             
             ++numThatAppy;
             LinkedList stateList = ifHeader.getStateList();
+            boolean doContinue = false;
             for (Iterator stateListIter = stateList.iterator(); stateListIter.hasNext();) {
                 DAVIFState state = (DAVIFState) stateListIter.next();
                 if (state.getType() == DAVIFStateType.IF_ETAG) {
@@ -118,11 +134,132 @@ public class DAVValidateWalker implements IDAVResourceWalkHandler {
                     boolean eTagsDoNotMatch = !givenETag.equals(currentETag);
                     
                     if (state.getCondition() == DAVIFState.IF_CONDITION_NORMAL && eTagsDoNotMatch) {
+                        reason = "an entity-tag was specified, but the resource's actual ETag does not match."; 
+                        doContinue = true;
+                        break; 
+                    } else if (state.getCondition() == DAVIFState.IF_CONDITION_NOT && !eTagsDoNotMatch) {
+                        reason = "an entity-tag was specified using the \"Not\" form, but the resource's actual ETag matches the provided entity-tag.";
+                        doContinue = true;
+                        break;
+                    }
+                } else if (state.getType() == DAVIFStateType.IF_OPAQUE_LOCK) {
+                    if (provider == null) {
+                        if (state.getCondition() == DAVIFState.IF_CONDITION_NOT) {
+                            continue;
+                        }
                         
+                        reason = "a State-token was supplied, but a lock database is not available for to provide the required lock.";
+                        doContinue = true;
+                        break;
+                    }
+                    
+                    boolean matched = false;
+                    if (lock != null) {
+                        if (!lock.getLockToken().equals(state.getLockToken())) {
+                            continue;
+                        }
+                        
+                        seenLockToken = true;
+                        
+                        if (state.getCondition() == DAVIFState.IF_CONDITION_NOT) {
+                            reason = "a State-token was supplied, which used a \"Not\" condition. The State-token was found in the locks on this resource";
+                            doContinue = true;
+                            break;
+                        }
+                        
+                        String lockAuthUser = lock.getAuthUser(); 
+                        String requestUser = resource.getUserName();
+                        if (lockAuthUser != null && (requestUser == null || !lockAuthUser.equals(requestUser))) {
+                            throw new DAVException("User \"{0}\" submitted a locktoken created by user \"{1}\".", 
+                                    new Object[] { requestUser, lockAuthUser }, HttpServletResponse.SC_FORBIDDEN, 0);
+                        }
+                        
+                        matched = true;
+                    }
+                    
+                    if (!matched && state.getCondition() == DAVIFState.IF_CONDITION_NORMAL) {
+                        reason = "a State-token was supplied, but it was not found in the locks on this resource.";
+                        doContinue = true;
+                        break;
+                    }
+                } else if (state.getType() == DAVIFStateType.IF_UNKNOWN) {
+                    if (state.getCondition() == DAVIFState.IF_CONDITION_NORMAL) {
+                        reason = "an unknown state token was supplied";
+                        doContinue = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (doContinue) {
+                continue;
+            }
+            
+            if (seenLockToken) {
+                return;
+            }
+            
+            break;
+        }
+        
+        if (!ifHeadersIter.hasNext()) {
+            if (numThatAppy == 0) {
+                if (seenLockToken) {
+                    return;
+                }
+                
+                if (findSubmittedLockToken(ifHeaders, lock)) {
+                    return;
+                }
+                
+                throw new DAVException("This resource is locked and the \"If:\" header did not specify one of the locktokens for this resource's lock(s).", 
+                        ServletDAVHandler.SC_HTTP_LOCKED, 0);
+            }
+            
+            ifHeader = (DAVIFHeader) ifHeaders.getFirst();
+            if (ifHeader.isDummyHeader()) {
+                throw new DAVException("The locktoken specified in the \"Lock-Token:\" header did not specify one of this resource's locktoken(s).", 
+                        HttpServletResponse.SC_BAD_REQUEST, 0);
+            }
+            
+            if (reason == null) {
+                throw new DAVException("The preconditions specified by the \"If:\" header did not match this resource.", 
+                        HttpServletResponse.SC_PRECONDITION_FAILED, 0);
+            }
+
+            throw new DAVException("The precondition(s) specified by the \"If:\" header did not match this resource. At least one failure is because: {0}", 
+                    new Object[] { reason }, HttpServletResponse.SC_PRECONDITION_FAILED, 0);
+        }
+        
+        if (findSubmittedLockToken(ifHeaders, lock)) {
+            return;
+        }
+        
+        if (ifHeader.isDummyHeader()) {
+            throw new DAVException("The locktoken specified in the \"Lock-Token:\" header did not specify one of this resource's locktoken(s).", 
+                    HttpServletResponse.SC_BAD_REQUEST, 0);
+        }
+        
+        throw new DAVException("This resource is locked and the \"If:\" header did not specify one of the locktokens for this resource's lock(s).", 
+                ServletDAVHandler.SC_HTTP_LOCKED, 1);
+    }
+    
+    private boolean findSubmittedLockToken(LinkedList ifHeaders, DAVLock lock) {
+        for (Iterator ifHeadersIter = ifHeaders.iterator(); ifHeadersIter.hasNext();) {
+            DAVIFHeader ifHeader = (DAVIFHeader) ifHeadersIter.next();
+            LinkedList ifStates = ifHeader.getStateList(); 
+            for (Iterator ifStatesIter = ifStates.iterator(); ifStatesIter.hasNext();) {
+                DAVIFState ifState = (DAVIFState) ifStatesIter.next();
+                if (ifState.getType() == DAVIFStateType.IF_OPAQUE_LOCK) {
+                    String lockToken = lock.getLockToken();
+                    String stateLockToken = ifState.getLockToken();
+                    if (lockToken.equals(stateLockToken)) {
+                        return true;
                     }
                 }
             }
         }
-        
+        return false;
     }
+    
 }

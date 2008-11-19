@@ -23,11 +23,12 @@ public class DAVResponse {
     private String myDescription;
     private String myHref;
     
-    public DAVResponse(String description, String href, DAVResponse nextResponse, int statusCode) {
+    public DAVResponse(String description, String href, DAVResponse nextResponse, DAVPropsResult propResult, int statusCode) {
         myDescription = description;
         myHref = href;
         myNextResponse = nextResponse;
         myStatusCode = statusCode;
+        myPropResult = propResult;
     }
 
     public DAVResponse getNextResponse() {

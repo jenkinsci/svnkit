@@ -50,7 +50,6 @@ public class DAVPutHandler extends ServletDAVHandler {
         }
         
         DAVResourceState resourceState = getResourceState(resource);
-        
     }
 
     protected DAVRequest getDAVRequest() {

@@ -340,4 +340,8 @@ public class DAVServlet extends HttpServlet {
             OUR_SHARED_CACHE.put(DAV_SVN_AUTOVERSIONING_ACTIVITY, sharedActivity);
         }
     }
+    
+    public static boolean isHTTPServerError(int statusCode) {
+        return statusCode >= 500 && statusCode < 600;
+    }
 }

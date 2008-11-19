@@ -74,4 +74,11 @@ public class DAVRegularResource extends DAVResource {
         return copy;
     }
 
+    public DAVResource getParentResource() {
+        DAVRegularResource parentResource = new DAVRegularResource();
+        
+        
+        return null;
+    }
+
 }
