@@ -59,6 +59,10 @@ public class DAVException extends SVNException {
         this(message, null, responseCode, null, logType, Level.FINE, null, null, null, 0, null);
     }
 
+    public DAVException(String message, int responseCode, SVNLogType logType, DAVResponse response) {
+        this(message, null, responseCode, null, logType, Level.FINE, null, null, null, 0, response);
+    }
+
     public DAVException(String message, int responseCode, SVNLogType logType, String tagName, String nameSpace) {
         this(message, null, responseCode, null, logType, Level.FINE, null, tagName, nameSpace, 0, null);
     }
@@ -67,8 +71,16 @@ public class DAVException extends SVNException {
         this(message, objects, responseCode, null, SVNLogType.NETWORK, Level.FINE, null, null, null, errorID, null);
     }
 
+    public DAVException(String message, Object[] objects, int responseCode, int errorID, DAVResponse response) {
+        this(message, objects, responseCode, null, SVNLogType.NETWORK, Level.FINE, null, null, null, errorID, response);
+    }
+
     public DAVException(String message, int responseCode, int errorID) {
         this(message, null, responseCode, errorID);
+    }
+
+    public DAVException(String message, int responseCode, int errorID, DAVResponse response) {
+        this(message, null, responseCode, errorID, response);
     }
 
     public int getErrorID() {
@@ -99,6 +111,10 @@ public class DAVException extends SVNException {
         return myResponse;
     }
     
+    public void setResponse(DAVResponse response) {
+        myResponse = response;
+    }
+
     private void setPreviousException(DAVException previousException) {
         myPreviousException = previousException;
     }

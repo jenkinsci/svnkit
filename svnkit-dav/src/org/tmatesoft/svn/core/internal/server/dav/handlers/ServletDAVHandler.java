@@ -83,6 +83,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     public static final int SC_MULTISTATUS = 207;
     public static final int SC_HTTP_LOCKED = 423;
+    public static final int SC_FAILED_DEPENDANCY = 424;
     
     //some flag constants
     public static final int DAV_VALIDATE_RESOURCE  = 0x0010;
@@ -242,7 +243,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVResourceState.NULL; 
     }
     
-    protected DAVResponse validateRequest(DAVResource resource, int depth, int flags, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
+    protected void validateRequest(DAVResource resource, int depth, int flags, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
         boolean setETag = false;
         String eTag = getRequestHeader(ETAG_HEADER);
         if (eTag == null) {
@@ -305,10 +306,45 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
             
             if (exception == null) {
-                //validateHandler.validateResourceState(ifHeaders, parentResource, provider, lockScope, flags)
+                try {
+                    validateHandler.validateResourceState(ifHeaders, parentResource, lockInfoProvider, null, flags | DAV_VALIDATE_IS_PARENT);
+                } catch (DAVException dave) {
+                    exception = dave;
+                }
+                
+                if (exception != null) {
+                    String description = "A validation error has occurred on the parent resource, preventing the operation on the resource specified by the Request-URI.";
+                    if (exception.getMessage() != null) {
+                        description += " The error was: " + exception.getMessage();
+                    }
+                    response = new DAVResponse(description, parentResource.getResourceURI().getRequestURI(), response, null, exception.getResponseCode());
+                    exception = null;
+                }
             }
         }
-        return null;//TODO
+        
+        if (exception == null && response != null) {
+            if ((flags & DAV_VALIDATE_USE_424) != 0) {
+                throw new DAVException("An error occurred on another resource, preventing the requested operation on this resource.", 
+                        SC_FAILED_DEPENDANCY, 0, response);
+            }
+            
+            DAVPropsResult propStat = null;
+            if ((flags & DAV_VALIDATE_ADD_LD) != 0) {
+                propStat = new DAVPropsResult();
+                propStat.addPropStatsText("<D:propstat>\n<D:prop><D:lockdiscovery/></D:prop>\n<D:status>HTTP/1.1 424 Failed Dependency</D:status>\n</D:propstat>\n");
+            }
+            
+            response = new DAVResponse("An error occurred on another resource, preventing the requested operation on this resource.", 
+                    resource.getResourceURI().getRequestURI(), response, propStat, SC_FAILED_DEPENDANCY);
+            
+            throw new DAVException("Error(s) occurred on resources during the validation process.", SC_MULTISTATUS, 0, response);
+        }
+        
+        if (exception != null) {
+            exception.setResponse(response);
+            throw exception;
+        }
     }
     
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
