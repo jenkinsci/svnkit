@@ -121,8 +121,8 @@ public class DAVWorkingResource extends DAVResource {
         return copy;
     }
 
-    public DAVResource getParentResource() {
-        return null;
+    public DAVResource getParentResource() throws DAVException {
+        return DAVPrivateResource.createPrivateResource(this, DAVResourceKind.WORKING);
     }
 
 }

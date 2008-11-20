@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -46,8 +47,26 @@ public class DAVPrivateResource extends DAVResource {
         return copy;
     }
 
-    public DAVResource getParentResource() {
+    public DAVResource getParentResource() throws DAVException {
+        throwIllegalGetParentResourceError();
         return null;
     }
 
+    public static DAVPrivateResource createPrivateResource(DAVResource resource, DAVResourceKind resourceKind) {
+        DAVPrivateResource privateResource = new DAVPrivateResource();
+        resource.copyTo(privateResource);
+        
+        DAVResourceURI resourceURI = privateResource.getResourceURI();
+        resourceURI.setKind(resourceKind);
+        resourceURI.setType(DAVResourceType.PRIVATE);
+
+        String path = "/" + DAVResourceURI.SPECIAL_URI + "/" + resourceKind.toString();
+        resourceURI.setURI(path);
+        resourceURI.setPath(null);
+        
+        privateResource.setCollection(true);
+        privateResource.setExists(true);
+        privateResource.setRevision(SVNRepository.INVALID_REVISION);
+        return privateResource; 
+    }
 }

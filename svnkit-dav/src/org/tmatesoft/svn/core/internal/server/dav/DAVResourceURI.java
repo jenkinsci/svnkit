@@ -138,32 +138,32 @@ public class DAVResourceURI {
         myPath = DAVPathUtil.standardize(path);
     }
 
-    private void setActivityID(String activityID) {
-        myActivityID = activityID;
+    public void setVersioned(boolean isVersioned) {
+        myIsVersioned = isVersioned;
     }
 
-    private void setVersioned(boolean isVersioned) {
-        myIsVersioned = isVersioned;
+    public void setKind(DAVResourceKind kind) {
+        myKind = kind;
+    }
+
+    public void setType(DAVResourceType type) {
+        myType = type;
+    }
+
+    public void setRevision(long revisionNumber) {
+        myRevision = revisionNumber;
+    }
+
+    private void setActivityID(String activityID) {
+        myActivityID = activityID;
     }
 
     private void setWorking(boolean isWorking) {
         myIsWorking = isWorking;
     }
 
-    private void setKind(DAVResourceKind kind) {
-        myKind = kind;
-    }
-
     private void setBaseLined(boolean isBaseLined) {
         myIsBaseLined = isBaseLined;
-    }
-
-    private void setRevision(long revisionNumber) {
-        myRevision = revisionNumber;
-    }
-
-    private void setType(DAVResourceType type) {
-        myType = type;
     }
 
     private void parseURI(String label, boolean useCheckedIn) throws SVNException {

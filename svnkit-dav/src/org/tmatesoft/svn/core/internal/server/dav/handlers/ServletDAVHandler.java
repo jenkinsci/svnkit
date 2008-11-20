@@ -297,7 +297,16 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         if (exception == null && (flags & DAV_VALIDATE_PARENT) != 0) {
+            DAVResource parentResource = null;
+            try {
+                parentResource = resource.getParentResource();
+            } catch (DAVException dave) {
+                exception = dave;
+            }
             
+            if (exception == null) {
+                //validateHandler.validateResourceState(ifHeaders, parentResource, provider, lockScope, flags)
+            }
         }
         return null;//TODO
     }

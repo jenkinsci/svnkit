@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -46,7 +47,7 @@ public class DAVRegularResource extends DAVResource {
     protected void prepare() throws DAVException {
         if (!SVNRevision.isValidRevisionNumber(myRevision)) {
             try {
-                myRevision = getLatestRevision();
+                setRevision(getLatestRevision());
             } catch (SVNException e) {
                 throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Could not determine the proper revision to access", null);
@@ -74,11 +75,22 @@ public class DAVRegularResource extends DAVResource {
         return copy;
     }
 
-    public DAVResource getParentResource() {
+    public DAVResource getParentResource() throws DAVException {
         DAVRegularResource parentResource = new DAVRegularResource();
         
+        copyTo(parentResource);
+
+        DAVResourceURI parentResourceURI = parentResource.getResourceURI();
+        String uri = parentResourceURI.getURI();
+        String path = parentResourceURI.getPath();
         
-        return null;
+        parentResourceURI.setURI(SVNPathUtil.removeTail(uri));
+        parentResourceURI.setPath(SVNPathUtil.removeTail(path));
+        
+        parentResource.setExists(true);
+        parentResource.setCollection(true);
+        parentResource.setVersioned(true);
+        return parentResource;
     }
 
 }

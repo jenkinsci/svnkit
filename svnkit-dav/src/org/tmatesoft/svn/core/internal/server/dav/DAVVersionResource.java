@@ -43,7 +43,7 @@ public class DAVVersionResource extends DAVResource {
     protected void prepare() throws DAVException {
         if (!SVNRevision.isValidRevisionNumber(myRevision)) {
             try {
-                myRevision = getLatestRevision();
+                setRevision(getLatestRevision());
             } catch (SVNException e) {
                 throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Could not fetch 'youngest' revision to enable accessing the latest baseline resource.", null);
@@ -69,7 +69,8 @@ public class DAVVersionResource extends DAVResource {
         return copy;
     }
 
-    public DAVResource getParentResource() {
+    public DAVResource getParentResource() throws DAVException {
+        throwIllegalGetParentResourceError();
         return null;
     }
 }

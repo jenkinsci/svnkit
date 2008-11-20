@@ -20,6 +20,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -201,7 +203,7 @@ public abstract class DAVResource {
     public boolean isSVNClient() {
         return myIsSVNClient;
     }
-
+    
     public String getUserName() {
         return myUserName;
     }
@@ -423,6 +425,11 @@ public abstract class DAVResource {
         myResourceURI.setExists(exists);
     }
     
+    public void setVersioned(boolean isVersioned) {
+        myIsVersioned = isVersioned;
+        myResourceURI.setVersioned(isVersioned);
+    }
+
     public void setCollection(boolean isCollection) {
         myIsCollection = isCollection;
     }
@@ -431,6 +438,11 @@ public abstract class DAVResource {
         myTxnName = txnName;
     }
     
+    public void setRevision(long revision) {
+        myRevision = revision;
+        myResourceURI.setRevision(revision);
+    }
+
     public boolean equals(Object o) {
         if (o == null || o.getClass() != this.getClass()) {
             return false;
@@ -451,7 +463,7 @@ public abstract class DAVResource {
     
     public abstract DAVResource dup();
     
-    public abstract DAVResource getParentResource();
+    public abstract DAVResource getParentResource() throws DAVException;
     
     protected abstract void prepare() throws DAVException;
 
@@ -467,6 +479,11 @@ public abstract class DAVResource {
         return null;
     }
 
+    protected void throwIllegalGetParentResourceError() throws DAVException {
+        throw new DAVException("get_parent_resource was called for {0} (type {1})", new Object[] { myResourceURI.getRequestURI(), 
+                myResourceURI.getType() }, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0); 
+    }
+    
     private SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new SVNProperties();

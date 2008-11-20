@@ -46,7 +46,8 @@ public class DAVHistoryResource extends DAVResource {
         return copy;
     }
 
-    public DAVResource getParentResource() {
+    public DAVResource getParentResource() throws DAVException {
+        throwIllegalGetParentResourceError();
         return null;
     }
 
