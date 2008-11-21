@@ -29,9 +29,11 @@ public class DAVSandboxFactory extends AbstractSVNSandboxFactory {
     private File myApacheConfigsDir;
 
     public static void setup(ResourceBundle bundle) {
-        DAVSandboxFactory sandboxFactory = new DAVSandboxFactory();
-        sandboxFactory.init(bundle);
-        registerSandboxFactory(sandboxFactory);
+        if (Boolean.TRUE.toString().equals(bundle.getString("test.http"))) {
+            DAVSandboxFactory sandboxFactory = new DAVSandboxFactory();
+            sandboxFactory.init(bundle);
+            registerSandboxFactory(sandboxFactory);
+        }
     }
 
     protected void init(ResourceBundle bundle) {

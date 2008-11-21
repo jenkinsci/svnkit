@@ -24,9 +24,11 @@ import org.tmatesoft.svn.test.SVNTestScheme;
 public class FSSandboxFactory extends AbstractSVNSandboxFactory {
 
     public static void setup(ResourceBundle bundle) {
-        FSSandboxFactory sandboxFactory = new FSSandboxFactory();
-        sandboxFactory.init(bundle);
-        registerSandboxFactory(sandboxFactory);
+        if (Boolean.TRUE.toString().equals(bundle.getString("test.file"))) {
+            FSSandboxFactory sandboxFactory = new FSSandboxFactory();
+            sandboxFactory.init(bundle);
+            registerSandboxFactory(sandboxFactory);
+        }
     }
 
     protected void init(ResourceBundle bundle) {

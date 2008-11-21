@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
 import org.tmatesoft.svn.test.sandboxes.AbstractSVNSandbox;
 import org.tmatesoft.svn.test.sandboxes.AbstractSVNSandboxFactory;
+import org.tmatesoft.svn.test.sandboxes.SVNSandboxFactory;
 import org.tmatesoft.svn.test.sandboxes.FSSandboxFactory;
 import org.tmatesoft.svn.test.sandboxes.DAVSandboxFactory;
 import org.tmatesoft.svn.test.tests.AbstractSVNTest;
@@ -35,8 +36,10 @@ public class SVNTestRunner {
         AbstractSVNTestEnvironment environment = SVNResourceUtil.createEnvironment(bundle);
         AbstractSVNTest test = SVNResourceUtil.createTest(bundle);
 
-//        FSSandboxFactory.setup(bundle);
+        FSSandboxFactory.setup(bundle);
         DAVSandboxFactory.setup(bundle);
+        SVNSandboxFactory.setup(bundle);
+
         SVNTestDebugLog.init(bundle);
 
         Iterator sandboxes = AbstractSVNSandboxFactory.create();

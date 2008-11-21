@@ -13,9 +13,9 @@ package org.tmatesoft.svn.test.sandboxes;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -143,7 +143,7 @@ public class DAVSandbox extends AbstractSVNSandbox {
         String apacheModules = root + "/modules";
         config = config.replaceAll("%apache.svn.modules%", apacheModules);
 
-        FileOutputStream os = new FileOutputStream(getConfigFile());
+        OutputStream os = SVNFileUtil.openFileForWriting(getConfigFile());
         os.write(config.getBytes());
         os.close();
     }

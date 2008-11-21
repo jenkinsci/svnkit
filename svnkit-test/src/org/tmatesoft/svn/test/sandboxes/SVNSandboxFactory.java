@@ -27,9 +27,11 @@ public class SVNSandboxFactory extends AbstractSVNSandboxFactory {
     private int myServePort;
 
     public static void setup(ResourceBundle bundle) {
-        SVNSandboxFactory factory = new SVNSandboxFactory();
-        factory.init(bundle);
-        AbstractSVNSandboxFactory.registerSandboxFactory(factory);
+        if (Boolean.TRUE.toString().equals(bundle.getString("test.svn"))) {
+            SVNSandboxFactory factory = new SVNSandboxFactory();
+            factory.init(bundle);
+            AbstractSVNSandboxFactory.registerSandboxFactory(factory);
+        }
     }
 
     protected void init(ResourceBundle bundle) {
