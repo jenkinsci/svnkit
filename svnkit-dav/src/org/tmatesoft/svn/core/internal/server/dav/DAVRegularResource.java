@@ -93,4 +93,29 @@ public class DAVRegularResource extends DAVResource {
         return parentResource;
     }
 
+    public static DAVResource convertToRegular(DAVResource resource) throws DAVException {
+        DAVRegularResource regularResource = new DAVRegularResource();
+        resource.copyTo(regularResource);
+        
+        DAVResourceURI uri = regularResource.getResourceURI();
+        uri.setType(DAVResourceType.REGULAR);
+        
+        regularResource.setWorking(false);
+        String path = null;
+        if (!SVNRevision.isValidRevisionNumber(resource.getRevision())) {
+            SVNRepository repos = resource.getRepository();
+            long rev = SVNRepository.INVALID_REVISION;
+            
+            try {
+                rev = repos.getLatestRevision();
+            } catch (SVNException e) {
+                throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not determine youngest rev.", null);
+            }
+            
+            regularResource.setRevision(rev);
+        }
+        
+        return null;
+    }
 }

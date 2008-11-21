@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -69,8 +70,8 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
     }
 
     private void makeActivity(DAVResource resource) throws DAVException {
-        FSTransactionInfo txnInfo = createActivity(resource, myFSFS);
-        storeActivity(resource, txnInfo);
+        FSTransactionInfo txnInfo = DAVServletUtil.createActivity(resource, myFSFS);
+        DAVServletUtil.storeActivity(resource, txnInfo);
         resource.setExists(true);
         resource.setTxnName(txnInfo.getTxnId());
     }

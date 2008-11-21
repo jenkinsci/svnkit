@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -43,7 +44,10 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
@@ -56,15 +60,21 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVURIInfo;
+import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
+import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.Version;
@@ -243,7 +253,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVResourceState.NULL; 
     }
     
-    protected void validateRequest(DAVResource resource, int depth, int flags, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
+    protected void validateRequest(DAVResource resource, DAVDepth depth, int flags, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
         boolean setETag = false;
         String eTag = getRequestHeader(ETAG_HEADER);
         if (eTag == null) {
@@ -281,7 +291,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         DAVException exception = null;
         DAVResponse response = null;
         DAVValidateWalker validateHandler = new DAVValidateWalker();
-        if (resource.exists() && depth > 0) {
+        if (resource.exists() && depth.getID() > 0) {
             DAVResourceWalker walker = new DAVResourceWalker();
             int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL;
             try {
@@ -344,6 +354,245 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         if (exception != null) {
             exception.setResponse(response);
             throw exception;
+        }
+    }
+    
+    protected DAVWorkingResource checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isCreateActivity, 
+            List activities, FSFS fsfs) throws DAVException {
+        DAVResourceType resourceType = resource.getResourceURI().getType();
+
+        if (isAutoCheckOut) {
+            if (resourceType == DAVResourceType.VERSION && resource.isBaseLined()) {
+                return null;
+            }
+            
+            if (resourceType != DAVResourceType.REGULAR) {
+                throw new DAVException("auto-checkout attempted on non-regular version-controlled resource.", null, 
+                        HttpServletResponse.SC_METHOD_NOT_ALLOWED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                        DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+            }
+            
+            if (resource.isBaseLined()) {
+                new DAVException("auto-checkout attempted on baseline collection, which is not supported.", null, 
+                        HttpServletResponse.SC_METHOD_NOT_ALLOWED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                        DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+            }
+         
+            String sharedActivity = DAVServlet.getSharedActivity();
+            String sharedTxnName = null;
+            FSTransactionInfo sharedTxnInfo = null;
+            if (sharedActivity == null) {
+                try {
+                    sharedActivity = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "cannot generate UUID for a shared activity", null);
+                }
+                
+                sharedTxnInfo = DAVServletUtil.createActivity(resource, fsfs);
+                sharedTxnName = sharedTxnInfo.getTxnId();
+                DAVServletUtil.storeActivity(resource, sharedTxnInfo);
+                DAVServlet.setSharedActivity(sharedActivity);
+            }
+            
+            if (sharedTxnName == null) {
+                sharedTxnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), sharedActivity);
+                if (sharedTxnName == null) {
+                    throw new DAVException("Cannot look up a txn_name by activity", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+                            SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
+                }
+            }
+            
+            resource = DAVWorkingResource.createWorkingResource(resource, sharedActivity, sharedTxnName);
+            resource.setIsAutoCkeckedOut(true);
+            FSTransactionInfo txnInfo = DAVServletUtil.openTxn(fsfs, resource.getTxnName());
+            FSTransactionRoot txnRoot = null;
+            try {
+                txnRoot = fsfs.createTransactionRoot(txnInfo);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not open a (transaction) root in the repository", null);
+            }
+            
+            resource.setTxnInfo(txnInfo);
+            resource.setRoot(txnRoot);
+            return null;
+        }
+        
+        if (resourceType != DAVResourceType.VERSION) {
+            throw new DAVException("CHECKOUT can only be performed on a version resource [at this time].", null, 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        if (isCreateActivity) {
+            throw new DAVException("CHECKOUT can not create an activity at this time. Use MKACTIVITY first.", null, 
+                    HttpServletResponse.SC_NOT_IMPLEMENTED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        if (isUnreserved) {
+            throw new DAVException("Unreserved checkouts are not yet available. A version history may not be checked out more than once, into a specific activity.", 
+                    null, HttpServletResponse.SC_NOT_IMPLEMENTED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        if (activities == null) {
+            throw new DAVException("An activity must be provided for checkout.", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
+                    Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.INCOMPLETE_DATA.getCode(), 
+                    null);
+        }
+        
+        if (activities.size() != 1) {
+            throw new DAVException("Only one activity may be specified within the CHECKOUT.", null, HttpServletResponse.SC_CONFLICT, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                    SVNErrorCode.INCORRECT_PARAMS.getCode(), null);
+        }
+        
+        DAVURIInfo parse = null;
+        
+        try {
+            parse = DAVPathUtil.simpleParseURI((String) activities.get(0), resource);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, "The activity href could not be parsed properly.",
+                    null);
+        }
+        
+        if (parse.getActivityID() == null) {
+            throw new DAVException("The provided href is not an activity URI.", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
+                    Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.INCORRECT_PARAMS.getCode(), 
+                    null);
+        }
+        
+        String txnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), parse.getActivityID());
+        if (txnName == null) {
+            throw new DAVException("The specified activity does not exist.", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
+                    Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                    SVNErrorCode.APMOD_ACTIVITY_NOT_FOUND.getCode(), null);
+        }
+        
+        if (resource.isBaseLined() || !SVNRevision.isValidRevisionNumber(resource.getRevision())) {
+            long youngestRevision = -1;
+            try {
+                youngestRevision = fsfs.getYoungestRevision();
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not determine the youngest revision for verification against the baseline being checked out.", null);
+            }
+            
+            if (resource.getRevision() != youngestRevision) {
+                throw new DAVException("The specified baseline is not the latest baseline, so it may not be checked out.", null, 
+                        HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                        DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.APMOD_BAD_BASELINE.getCode(), null);
+            }
+        } else {
+            FSTransactionInfo txnInfo = DAVServletUtil.openTxn(fsfs, txnName);
+            FSTransactionRoot txnRoot = null;
+            String reposPath = resource.getResourceURI().getPath();
+            
+            try {
+                txnRoot = fsfs.createTransactionRoot(txnInfo);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not open the transaction tree.", null);
+            }
+            
+            long txnCreatedRevision = -1;
+            try {
+                FSRevisionNode node = txnRoot.getRevisionNode(reposPath);
+                txnCreatedRevision = node.getCreatedRevision();
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not get created-rev of transaction node.", null);
+            }
+            
+            if (SVNRevision.isValidRevisionNumber(txnCreatedRevision)) {
+                if (resource.getRevision() < txnCreatedRevision) {
+                    throw new DAVException("resource out of date; try updating", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
+                            Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                            SVNErrorCode.FS_CONFLICT.getCode(), null);
+                } else if (resource.getRevision() > txnCreatedRevision) {
+                    String txnNodeRevID = null;
+                    try {
+                        FSRevisionNode node = txnRoot.getRevisionNode(reposPath);
+                        txnNodeRevID = node.getId().getNodeID();
+                    } catch (SVNException svne) {
+                        SVNErrorMessage err = svne.getErrorMessage();
+                        throw new DAVException("Unable to fetch the node revision id of the version resource within the transaction.", null, 
+                                HttpServletResponse.SC_CONFLICT, err, SVNLogType.FSFS, Level.FINE, null, 
+                                DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, err.getErrorCode().getCode(), null);
+                    }
+                    
+                    String urlNodeRevID = null;
+                    try {
+                        FSRoot root = resource.getRoot();
+                        FSRevisionNode node = root.getRevisionNode(reposPath);
+                        urlNodeRevID = node.getId().getNodeID();
+                    } catch (SVNException svne) {
+                        SVNErrorMessage err = svne.getErrorMessage();
+                        throw new DAVException("Unable to fetch the node revision id of the version resource within the revision.", null, 
+                                HttpServletResponse.SC_CONFLICT, err, SVNLogType.FSFS, Level.FINE, null, 
+                                DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, err.getErrorCode().getCode(), null);
+                    }
+                    
+                    if (!urlNodeRevID.equals(txnNodeRevID)) {
+                        throw new DAVException("version resource newer than txn (restart the commit)", null, HttpServletResponse.SC_CONFLICT, 
+                                null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                                SVNErrorCode.FS_CONFLICT.getCode(), null);
+                    }
+                }
+            }
+        }
+    
+        return DAVWorkingResource.createWorkingResource(resource, parse.getActivityID(), txnName);
+    }
+
+    protected DAVResource uncheckOut(DAVResource resource, FSFS fsfs) throws DAVException {
+        if (resource.getType() != DAVResourceType.WORKING) {
+            throw new DAVException("UNCHECKOUT called on non-working resource.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                    SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        FSTransactionInfo txnInfo = resource.getTxnInfo();
+        if (txnInfo != null) {
+            try {
+                FSCommitter.abortTransaction(fsfs, txnInfo.getTxnId());
+            } catch (SVNException svne) {
+                //ignore
+            }
+        }
+        
+        DAVResourceURI resourceURI = resource.getResourceURI();
+        if (resourceURI.getActivityID() != null) {
+            try {
+                DAVServletUtil.deleteActivity(resource, fsfs);
+            } catch (DAVException dave) {
+                //ignore
+            }
+            DAVServlet.setSharedActivity(null);
+        }
+        
+        resource.setTxnName(null);
+        resource.setTxnInfo(null);
+        resource.setIsAutoCkeckedOut(false);
+        
+        return null;
+    }
+    
+    protected void autoCheckOut(DAVResource resource, boolean isParentOnly) {
+        if (!resource.exists() || isParentOnly) {
+            
+        }
+    }
+    
+    protected void autoCheckIn(DAVResource resource, boolean undo, boolean unlock, DAVAutoVersionInfo info) {
+        if (undo) {
+            if (resource != null) {
+                if (info.isResourceCheckedOut()) {
+                    
+                }
+            }
         }
     }
     
@@ -637,75 +886,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         return diffCompress;
     }
-
-    protected void storeActivity(DAVResource resource, FSTransactionInfo txnInfo) throws DAVException {
-        DAVResourceURI resourceURI = resource.getResourceURI();
-        String activityID = resourceURI.getActivityID();
-        File activitiesDB = resource.getActivitiesDB();
-        if (!activitiesDB.exists() && !activitiesDB.mkdirs()) {
-            throw new DAVException("could not initialize activity db.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
-                    SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
-        }
-        
-        File finalActivityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);
-        File tmpFile = null;
-        try {
-            tmpFile = SVNFileUtil.createUniqueFile(finalActivityFile.getParentFile(), finalActivityFile.getName(), "tmp", false);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't open activity db");
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not open files.", null);
-        }
-        
-        StringBuffer activitiesContents = new StringBuffer();
-        activitiesContents.append(txnInfo.getTxnId());
-        activitiesContents.append('\n');
-        activitiesContents.append(activityID);
-        activitiesContents.append('\n');
-        
-        try {
-            SVNFileUtil.writeToFile(tmpFile, activitiesContents.toString(), null);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't write to activity db");
-            try {
-                SVNFileUtil.deleteFile(tmpFile);
-            } catch (SVNException e) {
-            }
-            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not write files.", null);
-        }
-        
-        try {
-            SVNFileUtil.rename(tmpFile, finalActivityFile);
-        } catch (SVNException svne) {
-            try {
-                SVNFileUtil.deleteFile(tmpFile);
-            } catch (SVNException e) {
-            }
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not replace files.", null);
-        }
-    }
     
-    protected FSTransactionInfo createActivity(DAVResource resource, FSFS fsfs) throws DAVException {
-        SVNProperties properties = new SVNProperties();
-        properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
-        long revision = SVNRepository.INVALID_REVISION;
-        try {
-            revision = fsfs.getYoungestRevision();
-        } catch (SVNException svne) {
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "could not determine youngest revision", null);
-        }
-        
-        FSTransactionInfo txnInfo = null;
-        try {
-            txnInfo = FSTransactionRoot.beginTransactionForCommit(revision, properties, fsfs);
-        } catch (SVNException svne) {
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "could not begin a transaction", null);
-        }
-        
-        return txnInfo;
-    }
-
     private float getEncodingRange(String encoding) {
         int delimiterIndex = encoding.indexOf(";");
         if (delimiterIndex != -1) {
@@ -873,4 +1054,43 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return ourSAXParserFactory;
     }
     
+    protected static class DAVAutoVersionInfo {
+        private boolean myIsResourceVersioned;
+        private boolean myIsResourceCheckedOut;
+        private boolean myIsParentCheckedOut;
+        private DAVResource myParentResource;
+        
+        public boolean isResourceVersioned() {
+            return myIsResourceVersioned;
+        }
+        
+        public void setResourceVersioned(boolean isResourceVersioned) {
+            myIsResourceVersioned = isResourceVersioned;
+        }
+        
+        public boolean isResourceCheckedOut() {
+            return myIsResourceCheckedOut;
+        }
+        
+        public void setResourceCheckedOut(boolean isResourceCheckedOut) {
+            myIsResourceCheckedOut = isResourceCheckedOut;
+        }
+        
+        public boolean isParentCheckedOut() {
+            return myIsParentCheckedOut;
+        }
+        
+        public void setParentCheckedOut(boolean isParentCheckedOut) {
+            myIsParentCheckedOut = isParentCheckedOut;
+        }
+        
+        public DAVResource getParentResource() {
+            return myParentResource;
+        }
+        
+        public void setParentResource(DAVResource parentResource) {
+            myParentResource = parentResource;
+        }
+        
+    }
 }

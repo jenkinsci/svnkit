@@ -16,17 +16,23 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
+import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -36,6 +42,112 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVServletUtil {
     
+    public static void deleteActivity(DAVResource resource, FSFS fsfs) throws DAVException {
+        DAVResourceURI resourceURI = resource.getResourceURI();
+        String activityID = resourceURI.getActivityID();
+        File activitiesDB = resource.getActivitiesDB();
+        String txnName = getTxn(activitiesDB, activityID);
+        if (txnName == null) {
+            throw new DAVException("could not find activity.", HttpServletResponse.SC_NOT_FOUND, 0);
+        }
+        
+        FSTransactionInfo txn = null;
+        if (txnName != null) {
+            try {
+                txn = fsfs.openTxn(txnName);
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.FS_NO_SUCH_TRANSACTION) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "could not open transaction.", null);
+                }
+            }
+            
+            if (txn != null) {
+                try {
+                    FSCommitter.abortTransaction(fsfs, txn.getTxnId());
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "could not abort transaction.", null);
+                }
+            }
+        }
+        
+        try {
+            SVNFileUtil.deleteFile(DAVPathUtil.getActivityPath(activitiesDB, activityID));
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "unable to remove activity.", null);
+        }
+    }
+    
+    public static void storeActivity(DAVResource resource, FSTransactionInfo txnInfo) throws DAVException {
+        DAVResourceURI resourceURI = resource.getResourceURI();
+        String activityID = resourceURI.getActivityID();
+        File activitiesDB = resource.getActivitiesDB();
+        if (!activitiesDB.exists() && !activitiesDB.mkdirs()) {
+            throw new DAVException("could not initialize activity db.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
+        }
+        
+        File finalActivityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);
+        File tmpFile = null;
+        try {
+            tmpFile = SVNFileUtil.createUniqueFile(finalActivityFile.getParentFile(), finalActivityFile.getName(), "tmp", false);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't open activity db");
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not open files.", null);
+        }
+        
+        StringBuffer activitiesContents = new StringBuffer();
+        activitiesContents.append(txnInfo.getTxnId());
+        activitiesContents.append('\n');
+        activitiesContents.append(activityID);
+        activitiesContents.append('\n');
+        
+        try {
+            SVNFileUtil.writeToFile(tmpFile, activitiesContents.toString(), null);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Can't write to activity db");
+            try {
+                SVNFileUtil.deleteFile(tmpFile);
+            } catch (SVNException e) {
+            }
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not write files.", null);
+        }
+        
+        try {
+            SVNFileUtil.rename(tmpFile, finalActivityFile);
+        } catch (SVNException svne) {
+            try {
+                SVNFileUtil.deleteFile(tmpFile);
+            } catch (SVNException e) {
+            }
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not replace files.", null);
+        }
+    }
+
+    public static FSTransactionInfo createActivity(DAVResource resource, FSFS fsfs) throws DAVException {
+        SVNProperties properties = new SVNProperties();
+        properties.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
+        long revision = SVNRepository.INVALID_REVISION;
+        try {
+            revision = fsfs.getYoungestRevision();
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "could not determine youngest revision", null);
+        }
+        
+        FSTransactionInfo txnInfo = null;
+        try {
+            txnInfo = FSTransactionRoot.beginTransactionForCommit(revision, properties, fsfs);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "could not begin a transaction", null);
+        }
+        
+        return txnInfo;
+    }
+
     public static LinkedList processIfHeader(String value) throws DAVException {
         if (value == null) {
             return null;
@@ -142,18 +254,17 @@ public class DAVServletUtil {
     
     public static String getTxn(File activitiesDB, String activityID) {
         File activityFile = DAVPathUtil.getActivityPath(activitiesDB, activityID);
-        try {
-            return DAVServletUtil.readTxn(activityFile);
-        } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e.getMessage());
-        }
-        return null;
+        return DAVServletUtil.readTxn(activityFile);
     }
     
-    public static String readTxn(File activityFile) throws IOException {
+    public static String readTxn(File activityFile) {
         String txnName = null;
         for (int i = 0; i < 10; i++) {
-            txnName = SVNFileUtil.readSingleLine(activityFile);
+            try {
+                txnName = SVNFileUtil.readSingleLine(activityFile);
+            } catch (IOException e) {
+                //ignore
+            }
         }
         return txnName; 
     }

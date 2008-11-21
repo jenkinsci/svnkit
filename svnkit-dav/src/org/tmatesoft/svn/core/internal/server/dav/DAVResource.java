@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +41,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -61,13 +59,13 @@ public abstract class DAVResource {
     protected long myRevision;
     protected long myLatestRevision = INVALID_REVISION;
 
-    protected boolean myIsExists;
     protected boolean myIsCollection;
     protected boolean myIsSVNClient;
     protected boolean myIsAutoCheckedOut;
-    protected boolean myIsVersioned;
-    protected boolean myIsWorking;
-    protected boolean myIsBaseLined;
+//  protected boolean myIsExists;
+//  protected boolean myIsVersioned;
+//  protected boolean myIsWorking;
+//  protected boolean myIsBaseLined;
     protected String myDeltaBase;
     protected long myVersion;
     protected String myClientOptions;
@@ -106,10 +104,10 @@ public abstract class DAVResource {
         myBaseChecksum = baseChecksum;
         myResultChecksum = resultChecksum;
         myRevision = resourceURI.getRevision();
-        myIsExists = resourceURI.exists();
-        myIsVersioned = resourceURI.isVersioned();
-        myIsWorking = resourceURI.isWorking();
-        myIsBaseLined = resourceURI.isBaseLined();
+//        myIsExists = resourceURI.exists();
+//        myIsVersioned = resourceURI.isVersioned();
+//        myIsWorking = resourceURI.isWorking();
+//        myIsBaseLined = resourceURI.isBaseLined();
         myUserName = userName;
         myActivitiesDB = activitiesDB;
         prepare();
@@ -127,10 +125,10 @@ public abstract class DAVResource {
         myClientOptions = clientOptions;
         myBaseChecksum = baseChecksum;
         myResultChecksum = resultChecksum;
-        myIsVersioned = myResourceURI.isVersioned();
-        myIsWorking = myResourceURI.isWorking();
-        myIsExists = myResourceURI.exists();
-        myIsBaseLined = myResourceURI.isBaseLined();
+//        myIsVersioned = myResourceURI.isVersioned();
+//        myIsWorking = myResourceURI.isWorking();
+//        myIsExists = myResourceURI.exists();
+//        myIsBaseLined = myResourceURI.isBaseLined();
         myUserName = userName;
         myActivitiesDB = activitiesDB;
     }
@@ -167,19 +165,23 @@ public abstract class DAVResource {
     }
 
     public boolean exists() {
-        return myIsExists;
+        //return myIsExists;
+        return myResourceURI.exists();
     }
 
     public boolean isVersioned() {
-        return myIsVersioned;
+        //return myIsVersioned;
+        return myResourceURI.isVersioned();
     }
     
     public boolean isWorking() {
-        return myIsWorking;
+        //return myIsWorking;
+        return myResourceURI.isWorking();
     }
     
     public boolean isBaseLined() {
-        return myIsBaseLined;
+        //return myIsBaseLined;
+        return myResourceURI.isBaseLined();
     }
     
     public DAVResourceType getType() {
@@ -421,15 +423,19 @@ public abstract class DAVResource {
     }
 
     public void setExists(boolean exists) {
-        myIsExists = exists;
+        //myIsExists = exists;
         myResourceURI.setExists(exists);
     }
     
     public void setVersioned(boolean isVersioned) {
-        myIsVersioned = isVersioned;
+//        myIsVersioned = isVersioned;
         myResourceURI.setVersioned(isVersioned);
     }
 
+    public void setWorking(boolean isWorking) {
+        myResourceURI.setWorking(isWorking);
+    }
+    
     public void setCollection(boolean isCollection) {
         myIsCollection = isCollection;
     }
@@ -469,14 +475,7 @@ public abstract class DAVResource {
 
     protected String getTxn() {
         DAVResourceURI resourceURI = getResourceURI();
-        DAVServletUtil.getTxn(getActivitiesDB(), resourceURI.getActivityID());
-        File activityFile = DAVPathUtil.getActivityPath(getActivitiesDB(), resourceURI.getActivityID());
-        try {
-            return DAVServletUtil.readTxn(activityFile);
-        } catch (IOException e) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e.getMessage());
-        }
-        return null;
+        return DAVServletUtil.getTxn(getActivitiesDB(), resourceURI.getActivityID());
     }
 
     protected void throwIllegalGetParentResourceError() throws DAVException {
@@ -503,13 +502,13 @@ public abstract class DAVResource {
         copy.myRepository = myRepository;
         copy.myRevision = myRevision;
         copy.myLatestRevision = myLatestRevision;
-        copy.myIsExists = myIsExists;
+  //      copy.myIsExists = myIsExists;
         copy.myIsCollection = myIsCollection;
         copy.myIsSVNClient = myIsCollection;
         copy.myIsAutoCheckedOut = myIsAutoCheckedOut;
-        copy.myIsVersioned = myIsVersioned;
-        copy.myIsWorking = myIsWorking;
-        copy.myIsBaseLined = myIsBaseLined;
+    //    copy.myIsVersioned = myIsVersioned;
+    //    copy.myIsWorking = myIsWorking;
+    //    copy.myIsBaseLined = myIsBaseLined;
         copy.myDeltaBase = myDeltaBase;
         copy.myVersion = myVersion;
         copy.myClientOptions = myClientOptions;

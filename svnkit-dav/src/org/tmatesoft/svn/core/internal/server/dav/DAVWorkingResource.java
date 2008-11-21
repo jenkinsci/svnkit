@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -76,7 +77,8 @@ public class DAVWorkingResource extends DAVResource {
         }
         
         if (isBaseLined()) {
-            myIsExists = true;
+            setExists(true);
+            //myIsExists = true;
             return;
         }
         
@@ -123,6 +125,30 @@ public class DAVWorkingResource extends DAVResource {
 
     public DAVResource getParentResource() throws DAVException {
         return DAVPrivateResource.createPrivateResource(this, DAVResourceKind.WORKING);
+    }
+
+    public static DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) {
+        StringBuffer pathBuffer = new StringBuffer();
+        if (baseResource.isBaseLined()) {
+            pathBuffer.append('/');
+            pathBuffer.append(DAVResourceURI.SPECIAL_URI);
+            pathBuffer.append("/wbl/");
+            pathBuffer.append(activityID);
+            pathBuffer.append('/');
+            pathBuffer.append(baseResource.getRevision());
+        } else {
+            pathBuffer.append('/');
+            pathBuffer.append(DAVResourceURI.SPECIAL_URI);
+            pathBuffer.append("/wrk/");
+            pathBuffer.append(activityID);
+            pathBuffer.append(baseResource.getResourceURI().getPath());
+        }
+        
+        String uriPath = SVNEncodingUtil.uriEncode(pathBuffer.toString());
+        DAVResourceURI uri = new DAVResourceURI(baseResource.getResourceURI().getContext(), uriPath, baseResource.getResourceURI().getPath(), 
+                baseResource.getRevision(), baseResource.getResourceURI().getKind(), DAVResourceType.WORKING, 
+                activityID, true, true, baseResource.isBaseLined(), true);
+        return new DAVWorkingResource(baseResource, uri, txnName);
     }
 
 }

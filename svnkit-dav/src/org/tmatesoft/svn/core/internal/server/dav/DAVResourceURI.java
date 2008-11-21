@@ -154,12 +154,12 @@ public class DAVResourceURI {
         myRevision = revisionNumber;
     }
 
-    private void setActivityID(String activityID) {
-        myActivityID = activityID;
+    public void setWorking(boolean isWorking) {
+        myIsWorking = isWorking;
     }
 
-    private void setWorking(boolean isWorking) {
-        myIsWorking = isWorking;
+    private void setActivityID(String activityID) {
+        myActivityID = activityID;
     }
 
     private void setBaseLined(boolean isBaseLined) {

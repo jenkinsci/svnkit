@@ -26,7 +26,7 @@ public class DAVDepth {
 
     public static final DAVDepth DEPTH_ZERO = new DAVDepth(0, "0");
     public static final DAVDepth DEPTH_ONE = new DAVDepth(1, "1");
-    public static final DAVDepth DEPTH_INFINITY = new DAVDepth(-1, "Infinity");
+    public static final DAVDepth DEPTH_INFINITY = new DAVDepth(Integer.MAX_VALUE, "Infinity");
 
     private int myID;
     private String myName;
