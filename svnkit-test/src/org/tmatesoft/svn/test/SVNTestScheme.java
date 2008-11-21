@@ -17,9 +17,9 @@ package org.tmatesoft.svn.test;
  */
 public class SVNTestScheme {
 
-    public static final SVNTestScheme FILE = new SVNTestScheme("file:///");
-    public static final SVNTestScheme DAV = new SVNTestScheme("http://");
-    public static final SVNTestScheme SVN = new SVNTestScheme("svn://");
+    public static final SVNTestScheme FILE = new SVNTestScheme("fs");
+    public static final SVNTestScheme DAV = new SVNTestScheme("dav");
+    public static final SVNTestScheme SVN = new SVNTestScheme("svn");
 
     private String myProtocol;
 

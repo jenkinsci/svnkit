@@ -58,7 +58,6 @@ public class MergeRemovedFileFromRenamedSourceTest extends AbstractExtMergeTest 
         getEnvironment().delete(getBranchFile("B/file"));
         getEnvironment().commit(getBranchWC(), "Removed B/file", SVNDepth.INFINITY);
 
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         mergeLastRevisions(getBranch(), getTrunkWC(), 1, SVNDepth.INFINITY, false, false);
     }
 

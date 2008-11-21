@@ -65,7 +65,6 @@ public class MergeRenamedFileSourceMultipleTimesTest extends AbstractExtMergeTes
         getEnvironment().copy(getBranchFile("A/file3"), SVNRevision.WORKING, getBranchFile("A/file4"), true, false, true);
         getEnvironment().commit(getBranchWC(), "A/file3 renamed to A/file4", SVNDepth.INFINITY);
         getEnvironment().modifyAndCommit(getBranchFile("A/file4"));
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
 
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 

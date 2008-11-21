@@ -63,7 +63,6 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
 
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         mergeLastRevisions(getBranch(), getTrunkWC(), 2, SVNDepth.INFINITY, false, false);
         validateWC(getTrunkWC());
     }

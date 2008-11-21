@@ -61,7 +61,6 @@ public class MergeCopiedTargetsTest extends AbstractExtMergeTest {
         getEnvironment().commit(getTrunkWC(), "made several copies of A/file", SVNDepth.INFINITY);
 
         getEnvironment().modifyAndCommit(getBranchFile("A/file"));
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
 
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 

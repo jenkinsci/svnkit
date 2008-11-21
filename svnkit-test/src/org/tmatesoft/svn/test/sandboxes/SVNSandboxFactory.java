@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.test.SVNTestScheme;
 
 /**
  * @author TMate Software Ltd.
@@ -23,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 public class SVNSandboxFactory extends AbstractSVNSandboxFactory {
 
     private String mySVNServePath;
+    private int myServePort;
 
     public static void setup(ResourceBundle bundle) {
         SVNSandboxFactory factory = new SVNSandboxFactory();
@@ -32,15 +34,22 @@ public class SVNSandboxFactory extends AbstractSVNSandboxFactory {
 
     protected void init(ResourceBundle bundle) {
         super.init(bundle);
+        String servePort = bundle.getString("svnserve.port");
+        myServePort = Integer.parseInt(servePort);
         mySVNServePath = bundle.getString("svnserve.path");
+        setScheme(SVNTestScheme.SVN);
     }
 
     private String getServePath() {
         return mySVNServePath;
     }
 
+    private int getServePort() {
+        return myServePort;
+    }
+
     protected AbstractSVNSandbox createSandbox(File tmp) throws SVNException {
         tmp = tmp == null ? getDefaultTMP() : tmp;
-        return new SVNSandbox(tmp, getDumpsDir(), getServePath());
+        return new SVNSandbox(tmp, getDumpsDir(), getServePath(), getServePort());
     }
 }

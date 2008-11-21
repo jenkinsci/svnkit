@@ -57,7 +57,6 @@ public class MergeSwitchedEntriesFailTest extends AbstractExtMergeTest {
         getEnvironment().modifyAndCommit(getBranchFile("A/file"));
         getEnvironment().switchPath(getTrunkFile("B"), getBranch().appendPath("B", false), SVNRevision.HEAD, SVNDepth.INFINITY);
 
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         mergeLastRevisions(getBranch(), getTrunkWC(), 1, SVNDepth.INFINITY, false, false);
     }
 

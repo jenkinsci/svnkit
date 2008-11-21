@@ -66,7 +66,6 @@ public class MergeReplacedWithoutHistorySourceTest extends AbstractExtMergeTest 
         getEnvironment().add(getBranchFile("A/file2"), false, SVNDepth.UNKNOWN, false);
         long end = getEnvironment().commit(getBranchWC(), "A/file2 added", SVNDepth.INFINITY);
 
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 
         mergeLastRevisions(getBranch(), getTrunkWC(), end - start, SVNDepth.INFINITY, false, false);

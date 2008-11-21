@@ -13,12 +13,14 @@ package org.tmatesoft.svn.test.sandboxes;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
 import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
+import org.tmatesoft.svn.test.util.SVNTestDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -145,12 +147,44 @@ public abstract class AbstractSVNSandbox {
     public void fill(String dumpFileName, AbstractSVNTestEnvironment environment) throws SVNException {
         File dumpFile = getDumpFile(dumpFileName);
         InputStream dumpStream = SVNFileUtil.openFileForReading(dumpFile);
-        environment.load(getRepoPath(), dumpStream);
+        try {
+            environment.load(getRepoPath(), dumpStream);
+        } finally {
+            SVNFileUtil.closeFile(dumpStream);
+        }
     }
 
     public abstract void dispose() throws SVNException;
 
     protected void deleteTMP() throws SVNException {
         SVNFileUtil.deleteAll(getTMP(), true);
+    }
+
+
+
+    protected Process execCommand(String[] command, boolean wait) throws IOException {
+        Process process = Runtime.getRuntime().exec(command);
+        if (process != null) {
+            try {
+                SVNTestDebugLog.createReader(process.getInputStream()).start();
+                SVNTestDebugLog.createReader(process.getErrorStream()).start();
+                if (wait) {
+                    int code = process.waitFor();
+                    if (code != 0) {
+                        StringBuffer commandLine = new StringBuffer();
+                        for (int i = 0; i < command.length; i++) {
+                            commandLine.append(command[i]);
+                            if (i + 1 != command.length) {
+                                commandLine.append(' ');
+                            }
+                        }
+                        throw new IOException("process '"  +  commandLine + "' exit code is not 0 : " + code);
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new IOException("interrupted");
+            }
+        }
+        return process;
     }
 }

@@ -78,7 +78,6 @@ public class MergeAlreadyMergedFileTest2 extends AbstractExtMergeTest {
         getEnvironment().merge(getBranch().appendPath("A/file", false), getTrunkFile("A/file2"), ranges, SVNDepth.INFINITY, false, false);
         getEnvironment().commit(getTrunkWC(), "A/file content modifications merged to A/file2", SVNDepth.INFINITY);
 
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 
         ranges.clear();

@@ -18,6 +18,7 @@ import java.util.LinkedList;
 import java.util.ResourceBundle;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.test.SVNTestScheme;
 
 /**
  * @author TMate Software Ltd.
@@ -25,14 +26,16 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public abstract class AbstractSVNSandboxFactory {
 
-    private static Collection ourFactories = new LinkedList();
+    private static final Collection ourFactories = new LinkedList();
 
     protected static void registerSandboxFactory(AbstractSVNSandboxFactory factory) {
-        ourFactories.add(factory);
+        synchronized (ourFactories) {
+            ourFactories.add(factory);
+        }
     }
 
     public static Iterator create() {
-        return create(null);
+        return create((File) null);
     }
 
     public static Iterator create(final File tmp) {
@@ -57,20 +60,48 @@ public abstract class AbstractSVNSandboxFactory {
         };
     }
 
+    public static AbstractSVNSandbox create(final File tmp, SVNTestScheme scheme) throws SVNException {
+        Iterator iterator = create(tmp);
+        while (iterator.hasNext()) {
+            AbstractSVNSandboxFactory factory = (AbstractSVNSandboxFactory) iterator.next();
+            if (factory.supports(scheme)) {
+                return factory.createSandbox(tmp);
+            }
+        }
+        return null;
+    }
+
+    public static AbstractSVNSandbox create(SVNTestScheme scheme) throws SVNException {
+        return create(null, scheme);
+    }
+
     private File myDefaultTMP;
     private File myDumpsDir;
+    private SVNTestScheme myScheme;
 
     public File getDumpsDir() {
         return myDumpsDir;
     }
 
     public File getDefaultTMP() {
-        return myDefaultTMP;
+        return new File(myDefaultTMP, getScheme().toString());
     }
 
     protected void init(ResourceBundle bundle) {
         myDefaultTMP = new File(bundle.getString("test.tmp.dir"));
         myDumpsDir = new File(bundle.getString("test.dumps.dir"));
+    }
+
+    protected SVNTestScheme getScheme() {
+        return myScheme;
+    }
+
+    protected void setScheme(SVNTestScheme scheme) {
+        myScheme = scheme;
+    }
+
+    protected boolean supports(SVNTestScheme scheme) {
+        return scheme != null && scheme.equals(getScheme());
     }
 
     protected abstract AbstractSVNSandbox createSandbox(File tmp) throws SVNException;

@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.test.SVNTestScheme;
 
 /**
  * @author TMate Software Ltd.
@@ -30,6 +31,7 @@ public class FSSandboxFactory extends AbstractSVNSandboxFactory {
 
     protected void init(ResourceBundle bundle) {
         super.init(bundle);
+        setScheme(SVNTestScheme.FILE);
     }
 
     protected AbstractSVNSandbox createSandbox(File tmp) throws SVNException {

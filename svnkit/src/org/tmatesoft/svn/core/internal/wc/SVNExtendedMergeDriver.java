@@ -57,7 +57,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
     private SVNCopyDriver myCopyDriver;
     private SVNURL myPrimaryURL;
     private SVNURL mySecondURL;
-    private long myTargetRevision;
     private long myRevision1;
     private long myRevision2;
     private File myTempDirectory;
@@ -69,12 +68,10 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
 
     public SVNExtendedMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
-        myTargetRevision = -1;
     }
 
     protected SVNExtendedMergeDriver(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
-        myTargetRevision = -1;
     }
 
     public ISVNExtendedMergeCallback getExtendedMergeCallback() {
@@ -131,10 +128,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             myRepository.setLocation(url, false);
         }
         return myRepository;
-    }
-
-    protected long getTargetRevision() {
-        return myTargetRevision;
     }
 
     protected SVNCopyDriver getCopyDriver() {
@@ -378,13 +371,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         return new Object[]{myCurrentRemainingRanges, targetMergeInfo, implicitMergeInfo};
     }
 
-    private SVNRevision processLocalRevision(SVNRevision revision) {
-        if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
-            return SVNRevision.create(myTargetRevision);
-        }
-        return revision;
-    }
-
     private static SVNAdminArea retrieve(SVNWCAccess access, File target) throws SVNException {
         SVNAdminArea area = access.getAdminArea(target);
         if (area == null) {
@@ -419,7 +405,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             String path = reader.readLine();
             SVNRevision pegRevision = SVNRevision.parse(reader.readLine());
             SVNRevision revision = SVNRevision.parse(reader.readLine());
-            revision = processLocalRevision(revision);
             reader.readLine();
 
             if (path.length() == 0) {
@@ -554,12 +539,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         }
 
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
-            if (path.equals(myTarget)) {
-                myTargetRevision = entry.getRevision();
-                super.handleEntry(path, entry);
-                return;
-            }
-
             if (entry.isScheduledForAddition() || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
                 super.handleEntry(path, entry);
                 return;
@@ -571,14 +550,8 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
 
-            long entryRevision = entry.getRevision();
-            if (entryRevision != -1 && myTargetRevision != entry.getRevision()) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "Mixed revision working copy is not allowed for this kind of merge. Please run update on the working copy root");
-                SVNErrorManager.error(error, SVNLogType.WC);
-            }
-
             SVNURL entryURL = entry.getSVNURL();
-            if (entryURL != null) {
+            if (entryURL != null && !myTarget.equals(path)) {
                 SVNEntry parentEntry = myWCAccess.getVersionedEntry(path.getParentFile(), false);
                 SVNURL expectedURL = parentEntry.getSVNURL().appendPath(SVNPathUtil.tail(path.getAbsolutePath().replace(File.separatorChar, '/')), false);
                 if (!entryURL.equals(expectedURL)) {

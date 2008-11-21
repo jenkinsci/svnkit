@@ -23,14 +23,20 @@ import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
 public class SVNSandbox extends AbstractSVNSandbox {
 
     private String mySVNServePath;
+    private int mySVNServePort;
 
-    protected SVNSandbox(File tmp, File dumpsDir, String servePath) throws SVNException {
+    protected SVNSandbox(File tmp, File dumpsDir, String servePath, int servePort) throws SVNException {
         super(tmp, dumpsDir);
         mySVNServePath = servePath;
+        mySVNServePort = servePort;
     }
 
     public String getServePath() {
         return mySVNServePath;
+    }
+
+    public int getServePort() {
+        return mySVNServePort;
     }
 
     public void init(AbstractSVNTestEnvironment environment) throws SVNException {

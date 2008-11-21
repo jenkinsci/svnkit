@@ -64,7 +64,6 @@ public class MergeAddFileFromRenamedSourceTest extends AbstractExtMergeTest {
         getEnvironment().add(getBranchFile("B/new"), false, SVNDepth.EMPTY, false);
         getEnvironment().commit(getBranchWC(), "Added B/new", SVNDepth.INFINITY);
 
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
         mergeLastRevisions(getBranch(), getTrunkWC(), 1, SVNDepth.INFINITY, false, false);
         validateWC(getTrunkWC());
     }

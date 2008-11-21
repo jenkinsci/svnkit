@@ -67,7 +67,6 @@ public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
 
         getEnvironment().copy(getBranchFile("B/file2"), SVNRevision.WORKING, getBranchFile("B/file3"), true, false, true);
         getEnvironment().commit(getBranchWC(), "B/file2 renamed to B/file3", SVNDepth.INFINITY);
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
 
         long endRevision = getEnvironment().modifyAndCommit(getBranchFile("B/file3"));
 

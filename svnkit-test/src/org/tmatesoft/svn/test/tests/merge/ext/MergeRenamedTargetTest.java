@@ -59,7 +59,6 @@ public class MergeRenamedTargetTest extends AbstractExtMergeTest {
         getEnvironment().commit(getTrunkFile("A"), "A/file renamed to A/file2", SVNDepth.INFINITY);
 
         getEnvironment().modifyAndCommit(getBranchFile("A/file"));
-        getEnvironment().update(getTrunkWC(), SVNRevision.HEAD, SVNDepth.INFINITY);
 
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 

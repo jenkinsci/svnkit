@@ -13,6 +13,8 @@ package org.tmatesoft.svn.test.util;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.ResourceBundle;
@@ -162,5 +164,29 @@ public class SVNTestDebugLog extends SVNDebugLogAdapter implements ISVNEventHand
     }
 
     public void checkCancelled() throws SVNCancelException {
+    }
+
+    public static Thread createReader(InputStream is) {
+        return new Thread(new LogReader(is));
+    }
+
+    private static class LogReader implements Runnable {
+
+        private InputStream myInput;
+
+        private LogReader(InputStream input) {
+            myInput = input;
+        }
+
+        public void run() {
+            int read = 0;
+            while (read >= 0) {
+                try {
+                    read = myInput.read();
+                } catch (IOException e) {
+                    log(e);
+                }
+            }
+        }
     }
 }
