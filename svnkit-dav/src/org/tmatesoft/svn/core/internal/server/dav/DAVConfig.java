@@ -36,7 +36,7 @@ public class DAVConfig {
     private static final String REPOS_NAME = "SVNReposName";
     private static final String XSLT_INDEX = "SVNIndexXSLT";
     private static final String ACTIVITIES_DB = "SVNActivitiesDB"; 
-        
+    private static final String AUTOVERSIONING = "SVNAutoversioning";
     private static final String OFF = "off";
     private static final String ON = "on";
 

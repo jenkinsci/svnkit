@@ -17,6 +17,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -102,8 +105,9 @@ public class DAVRegularResource extends DAVResource {
         
         regularResource.setWorking(false);
         String path = null;
+        FSRepository repos = (FSRepository) resource.getRepository();
+        FSFS fsfs = repos.getFSFS();
         if (!SVNRevision.isValidRevisionNumber(resource.getRevision())) {
-            SVNRepository repos = resource.getRepository();
             long rev = SVNRepository.INVALID_REVISION;
             
             try {
@@ -114,8 +118,19 @@ public class DAVRegularResource extends DAVResource {
             }
             
             regularResource.setRevision(rev);
+            path = uri.getPath();
+        } else {
+            path = DAVPathUtil.buildURI(uri.getContext(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), uri.getPath());
         }
         
-        return null;
+        path = SVNEncodingUtil.uriEncode(path);
+        uri.setURI(path);
+        try {
+            regularResource.myRoot = fsfs.createRevisionRoot(regularResource.getRevision());
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not open revision root.", null);
+        }
+        return regularResource;
     }
 }

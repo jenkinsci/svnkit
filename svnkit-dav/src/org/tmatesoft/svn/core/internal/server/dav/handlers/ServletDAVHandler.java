@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFStateType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVRegularResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
@@ -577,7 +578,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         resource.setTxnInfo(null);
         resource.setIsAutoCkeckedOut(false);
         
-        return null;
+        return DAVRegularResource.convertToRegular(resource);
     }
     
     protected void autoCheckOut(DAVResource resource, boolean isParentOnly) {
@@ -586,14 +587,32 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
-    protected void autoCheckIn(DAVResource resource, boolean undo, boolean unlock, DAVAutoVersionInfo info) {
+    protected void autoCheckIn(DAVResource resource, boolean undo, boolean unlock, DAVAutoVersionInfo info, FSFS fsfs) throws DAVException {
         if (undo) {
             if (resource != null) {
                 if (info.isResourceCheckedOut()) {
+                    try {
+                        resource = uncheckOut(resource, fsfs);
+                    } catch (DAVException dave) {
+                        throw new DAVException("Unable to undo auto-checkout of resource {0}.", 
+                                new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
+                                HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
+                    }
+                }
+                
+                if (info.isResourceVersioned()) {
                     
                 }
             }
         }
+    }
+    
+    protected DAVResponse removeResponse(DAVResource resource) throws DAVException {
+        DAVResourceType resourceType = resource.getResourceURI().getType();
+        if (resourceType != DAVResourceType.REGULAR && resourceType != DAVResourceType.WORKING && resourceType != DAVResourceType.ACTIVITY) {
+            throw new DAVException("DELETE called on invalid resource type.", HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+        }
+        return null;
     }
     
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
