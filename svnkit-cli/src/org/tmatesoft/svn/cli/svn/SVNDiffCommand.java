@@ -183,6 +183,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
         diffGenerator.setDiffDeleted(!getSVNEnvironment().isNoDiffDeleted());
         diffGenerator.setForcedBinaryDiff(getSVNEnvironment().isForce());
         diffGenerator.setBasePath(new File("").getAbsoluteFile());
+        diffGenerator.setFallbackToAbsolutePath(true);
         diffGenerator.setOptions(client.getOptions());
         client.setDiffGenerator(diffGenerator);
         

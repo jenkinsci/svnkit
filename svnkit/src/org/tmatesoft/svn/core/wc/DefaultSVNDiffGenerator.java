@@ -80,6 +80,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private SVNDiffOptions myDiffOptions;
     private Collection myRawDiffOptions;
     private String myDiffCommand;
+    private boolean myIsUseAbsolutePaths;
     
     /**
      * Constructs a <b>DefaultSVNDiffGenerator</b>.
@@ -151,6 +152,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     public void setBasePath(File basePath) {
         myBasePath = basePath;
     }
+    
+    /**
+     * Controls whether error is reported on failure to compute relative display path, 
+     * or absolute path is used instead.
+     * 
+     * @param fallback true to make generator use absolute path when relative path could not
+     *                 be computed.
+     */
+    public void setFallbackToAbsolutePath(boolean fallback) {
+        myIsUseAbsolutePaths = fallback;
+    }
 
     /**
      * Enables or disables diffing deleted files.
@@ -219,7 +231,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myDiffOptions;
     }
 
-    protected String getDisplayPath(String path) {
+    protected String getDisplayPath(String path) throws SVNException {
         if (myBasePath == null) {
             return path;
         }
@@ -237,8 +249,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         String relativePath = SVNPathUtil.getPathAsChild(basePath, path);
         if (relativePath == null) {
-            // return absolute path, no real reason to fail here.
-            return path;
+            if (myIsUseAbsolutePaths) {
+                return path;
+            }
+            createBadRelativePathError(path);
         }
         if (relativePath.startsWith("./")) {
             relativePath = relativePath.substring("./".length());
@@ -823,5 +837,12 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             baos.write(rangeList.toString().getBytes(getEncoding()));
             baos.write(getEOL());
         }
+    }
+    
+    private void createBadRelativePathError(String path) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, 
+                "Path ''{0}'' must be an immediate child of the directory ''{1}''", 
+                new Object[] { path, myBasePath });
+        SVNErrorManager.error(err, SVNLogType.DEFAULT);
     }
 }
