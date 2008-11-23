@@ -238,8 +238,8 @@ public class SVNCommandUtil {
     }
     
     public static String prompt(String promptMessage, SVNCommandEnvironment env) throws SVNException {
-        System.out.print(promptMessage);
-        System.out.flush();
+        System.err.print(promptMessage);
+        System.err.flush();
         String input = null;
         InputReader reader = new InputReader(System.in);
         Thread readerThread = new Thread(reader);
