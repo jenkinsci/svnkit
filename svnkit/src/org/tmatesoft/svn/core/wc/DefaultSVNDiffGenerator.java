@@ -219,7 +219,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return myDiffOptions;
     }
 
-    protected String getDisplayPath(String path) throws SVNException {
+    protected String getDisplayPath(String path) {
         if (myBasePath == null) {
             return path;
         }
@@ -237,7 +237,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         String relativePath = SVNPathUtil.getPathAsChild(basePath, path);
         if (relativePath == null) {
-            createBadRelativePathError(path);
+            // return absolute path, no real reason to fail here.
+            return path;
         }
         if (relativePath.startsWith("./")) {
             relativePath = relativePath.substring("./".length());
@@ -822,12 +823,5 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             baos.write(rangeList.toString().getBytes(getEncoding()));
             baos.write(getEOL());
         }
-    }
-    
-    private void createBadRelativePathError(String path) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_RELATIVE_PATH, 
-                "Path ''{0}'' must be an immediate child of the directory ''{1}''", 
-                new Object[] { path, myBasePath });
-        SVNErrorManager.error(err, SVNLogType.DEFAULT);
     }
 }
