@@ -93,6 +93,7 @@ import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimpl
 public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
 
     private File myTmpDirectory;
+    private boolean myIsTmpDirCreated;
     private String myPath;
 
     private long myCurrentRevision;
@@ -192,8 +193,11 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myCancelBaton = cancelBaton;
         myPath = path;
         myIsForce = force;
+        
+        // TODO fail if file has been specified.
         if (!myTmpDirectory.isDirectory()) {
             myTmpDirectory.mkdirs();
+            myIsTmpDirCreated = true;
         }
         myMergeBlameChunks = new LinkedList();
         myBlameChunks = new LinkedList();
@@ -445,18 +449,19 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
     public void dispose() {
         myIsCurrentResultOfMerge = false;
         if (myCurrentFile != null) {
-            myCurrentFile.delete();
-            myCurrentFile = null;
+            SVNFileUtil.deleteAll(myCurrentFile, true);
         }
         if (myPreviousFile != null) {
-            myPreviousFile.delete();
+            SVNFileUtil.deleteAll(myPreviousFile, true);
             myPreviousFile = null;
         }
         if (myPreviousOriginalFile != null) {
-            myPreviousOriginalFile.delete();
+            SVNFileUtil.deleteAll(myPreviousOriginalFile, true);
             myPreviousOriginalFile = null;
         }
-        
+        if (myIsTmpDirCreated) {
+            SVNFileUtil.deleteAll(myTmpDirectory, true);
+        }        
         myBlameChunks.clear();
         myMergeBlameChunks.clear();
     }
@@ -501,18 +506,10 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
         } finally {
             if (left != null) {
-                try {
-                    left.close();
-                } catch (IOException e) {
-                    //
-                }
+                SVNFileUtil.closeFile(left);
             }
             if (right != null) {
-                try {
-                    right.close();
-                } catch (IOException e) {
-                    //
-                }
+                SVNFileUtil.closeFile(right);
             }
         }
 
@@ -631,7 +628,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             if (nextChunk.blockStart < nextMergedChunk.blockStart) {
                 nextMergedChunk.blockStart = nextChunk.blockStart;
             }
-            if (nextChunk.blockStart < nextMergedChunk.blockStart) {
+            if (nextChunk.blockStart > nextMergedChunk.blockStart) {
                 nextChunk.blockStart = nextMergedChunk.blockStart;
             }
         }
