@@ -73,6 +73,9 @@ public class DAVResourceURI {
         myIsWorking = isWorking;
     }
     
+    public DAVResourceURI() {
+    }
+    
     public DAVResourceURI dup() {
         return new DAVResourceURI(myContext, myURI, myPath, myRevision, myKind, myType, myActivityID, myIsExists, myIsVersioned, myIsBaseLined, 
                 myIsWorking);
@@ -158,11 +161,11 @@ public class DAVResourceURI {
         myIsWorking = isWorking;
     }
 
-    private void setActivityID(String activityID) {
+    public void setActivityID(String activityID) {
         myActivityID = activityID;
     }
 
-    private void setBaseLined(boolean isBaseLined) {
+    public void setBaseLined(boolean isBaseLined) {
         myIsBaseLined = isBaseLined;
     }
 

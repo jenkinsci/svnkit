@@ -19,8 +19,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -40,46 +38,39 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public abstract class DAVResource {
+public class DAVResource {
 
     public static final long INVALID_REVISION = SVNRepository.INVALID_REVISION;
 
     public static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
     public static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
-    protected DAVResourceURI myResourceURI;
-    protected FSRepository myRepository;
-    protected long myRevision;
-    protected long myLatestRevision = INVALID_REVISION;
-
-    protected boolean myIsCollection;
-    protected boolean myIsSVNClient;
-    protected boolean myIsAutoCheckedOut;
-//  protected boolean myIsExists;
-//  protected boolean myIsVersioned;
-//  protected boolean myIsWorking;
-//  protected boolean myIsBaseLined;
-    protected String myDeltaBase;
-    protected long myVersion;
-    protected String myClientOptions;
-    protected String myBaseChecksum;
-    protected String myResultChecksum;
-    protected String myUserName;
-    protected SVNProperties mySVNProperties;
-    protected Collection myDeadProperties;
-    protected Collection myEntries;
-    protected File myActivitiesDB;
-    protected FSFS myFSFS;
-    protected String myTxnName;
-    protected FSRoot myRoot;
-    protected FSTransactionInfo myTxnInfo;
+    private DAVResourceURI myResourceURI;
+    private FSRepository myRepository;
+    private long myRevision;
+    private long myVersion;
+    private boolean myIsCollection;
+    private boolean myIsSVNClient;
+    private boolean myIsAutoCheckedOut;
+    private String myDeltaBase;
+    private String myClientOptions;
+    private String myBaseChecksum;
+    private String myResultChecksum;
+    private String myUserName;
+    private SVNProperties mySVNProperties;
+    private Collection myDeadProperties;
+    private Collection myEntries;
+    private File myActivitiesDB;
+    private FSFS myFSFS;
+    private String myTxnName;
+    private FSRoot myRoot;
+    private FSTransactionInfo myTxnInfo;
     
     /**
      * DAVResource  constructor
@@ -91,7 +82,7 @@ public abstract class DAVResource {
      * @param useCheckedIn special case for VCC resource
      * @throws SVNException if an error occurs while fetching repository properties.
      */
-    protected DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
+    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
             String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws SVNException {
         myRepository = (FSRepository) repository;
         myRepository.testConnection();//this should create an FSFS object
@@ -104,16 +95,12 @@ public abstract class DAVResource {
         myBaseChecksum = baseChecksum;
         myResultChecksum = resultChecksum;
         myRevision = resourceURI.getRevision();
-//        myIsExists = resourceURI.exists();
-//        myIsVersioned = resourceURI.isVersioned();
-//        myIsWorking = resourceURI.isWorking();
-//        myIsBaseLined = resourceURI.isBaseLined();
         myUserName = userName;
         myActivitiesDB = activitiesDB;
         prepare();
     }
 
-    protected DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
+    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
             long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
         myResourceURI = resourceURI;
         myRepository = (FSRepository) repository;
@@ -125,15 +112,11 @@ public abstract class DAVResource {
         myClientOptions = clientOptions;
         myBaseChecksum = baseChecksum;
         myResultChecksum = resultChecksum;
-//        myIsVersioned = myResourceURI.isVersioned();
-//        myIsWorking = myResourceURI.isWorking();
-//        myIsExists = myResourceURI.exists();
-//        myIsBaseLined = myResourceURI.isBaseLined();
         myUserName = userName;
         myActivitiesDB = activitiesDB;
     }
 
-    protected DAVResource() {
+    public DAVResource() {
     }
     
     public void setRoot(FSRoot root) {
@@ -165,22 +148,18 @@ public abstract class DAVResource {
     }
 
     public boolean exists() {
-        //return myIsExists;
         return myResourceURI.exists();
     }
 
     public boolean isVersioned() {
-        //return myIsVersioned;
         return myResourceURI.isVersioned();
     }
     
     public boolean isWorking() {
-        //return myIsWorking;
         return myResourceURI.isWorking();
     }
     
     public boolean isBaseLined() {
-        //return myIsBaseLined;
         return myResourceURI.isBaseLined();
     }
     
@@ -250,7 +229,7 @@ public abstract class DAVResource {
                 String childURI = DAVPathUtil.append(getResourceURI().getURI(), entry.getName());
                 try {
                     DAVResourceURI newResourceURI = new DAVResourceURI(getResourceURI().getContext(), childURI, null, false);
-                    return DAVResourceFactory.createDAVResourceChild(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
+                    return new DAVResource(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
                             getVersion(), getClientOptions(), null, null, getUserName(), getActivitiesDB());
                 } catch (SVNException e) {
                     return null;
@@ -285,9 +264,14 @@ public abstract class DAVResource {
             SVNDirEntry currentEntry = getRepository().getDir(path, revision, false, null);
             return currentEntry.getRevision();
         }
-
     }
 
+    public long getCreatedRevisionUsingFS(String path) throws SVNException {
+        path = path == null ? getResourceURI().getPath() : path;
+        FSRevisionNode node = myRoot.getRevisionNode(path);
+        return node.getCreatedRevision();
+    }
+    
     public Date getLastModified() throws SVNException {
         if (lacksETagPotential()) {
             return null;
@@ -347,10 +331,7 @@ public abstract class DAVResource {
     }
 
     public long getLatestRevision() throws SVNException {
-        if (!SVNRevision.isValidRevisionNumber(myLatestRevision)) {
-            myLatestRevision = getRepository().getLatestRevision();
-        }
-        return myLatestRevision;
+        return getRepository().getLatestRevision();
     }
 
     public long getContentLength() throws SVNException {
@@ -423,17 +404,19 @@ public abstract class DAVResource {
     }
 
     public void setExists(boolean exists) {
-        //myIsExists = exists;
         myResourceURI.setExists(exists);
     }
     
     public void setVersioned(boolean isVersioned) {
-//        myIsVersioned = isVersioned;
         myResourceURI.setVersioned(isVersioned);
     }
 
     public void setWorking(boolean isWorking) {
         myResourceURI.setWorking(isWorking);
+    }
+    
+    public void setBaseLined(boolean isBaseLined) {
+        myResourceURI.setBaseLined(isBaseLined);
     }
     
     public void setCollection(boolean isCollection) {
@@ -447,6 +430,10 @@ public abstract class DAVResource {
     public void setRevision(long revision) {
         myRevision = revision;
         myResourceURI.setRevision(revision);
+    }
+    
+    public void setResourceURI(DAVResourceURI resourceURI) {
+        myResourceURI = resourceURI;
     }
 
     public boolean equals(Object o) {
@@ -467,22 +454,25 @@ public abstract class DAVResource {
         return true;
     }
     
-    public abstract DAVResource dup();
+    public DAVResource dup() {
+        DAVResource copy = new DAVResource();
+        copyTo(copy);
+        return copy;
+    }
     
-    public abstract DAVResource getParentResource() throws DAVException;
-    
-    protected abstract void prepare() throws DAVException;
+    public void prepare() throws DAVException {
+        DAVResourceHelper.prepareResource(this);
+    }
 
-    protected String getTxn() {
+    public FSFS getFSFS() {
+        return myFSFS;
+    }
+    
+    public String getTxn() {
         DAVResourceURI resourceURI = getResourceURI();
         return DAVServletUtil.getTxn(getActivitiesDB(), resourceURI.getActivityID());
     }
 
-    protected void throwIllegalGetParentResourceError() throws DAVException {
-        throw new DAVException("get_parent_resource was called for {0} (type {1})", new Object[] { myResourceURI.getRequestURI(), 
-                myResourceURI.getType() }, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0); 
-    }
-    
     private SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new SVNProperties();
@@ -501,14 +491,9 @@ public abstract class DAVResource {
         copy.myResourceURI = myResourceURI.dup();
         copy.myRepository = myRepository;
         copy.myRevision = myRevision;
-        copy.myLatestRevision = myLatestRevision;
-  //      copy.myIsExists = myIsExists;
         copy.myIsCollection = myIsCollection;
         copy.myIsSVNClient = myIsCollection;
         copy.myIsAutoCheckedOut = myIsAutoCheckedOut;
-    //    copy.myIsVersioned = myIsVersioned;
-    //    copy.myIsWorking = myIsWorking;
-    //    copy.myIsBaseLined = myIsBaseLined;
         copy.myDeltaBase = myDeltaBase;
         copy.myVersion = myVersion;
         copy.myClientOptions = myClientOptions;

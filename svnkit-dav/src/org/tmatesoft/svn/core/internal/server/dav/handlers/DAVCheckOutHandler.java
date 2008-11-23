@@ -20,32 +20,18 @@ import java.util.logging.Level;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
-import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
-import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
-import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
-import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
-import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
-import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
-import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
-import org.tmatesoft.svn.core.internal.server.dav.DAVURIInfo;
-import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResource;
-import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -129,7 +115,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
         FSRepository repos = (FSRepository) resource.getRepository();
         myFSFS = repos.getFSFS();
 
-        DAVWorkingResource workingResource = null;
+        DAVResource workingResource = null;
         try {
             workingResource = checkOut(resource, false, isUnreserved, createActivity, activities, myFSFS);
         } catch (DAVException dave) {

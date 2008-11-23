@@ -47,90 +47,10 @@ public class DAVRegularResource extends DAVResource {
     private DAVRegularResource() {
     }
 
-    protected void prepare() throws DAVException {
-        if (!SVNRevision.isValidRevisionNumber(myRevision)) {
-            try {
-                setRevision(getLatestRevision());
-            } catch (SVNException e) {
-                throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "Could not determine the proper revision to access", null);
-            }
-        }
-        
-        if (myRoot == null) {
-            try {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "myFSFS == null is " + (myFSFS == null));
-                myRoot = myFSFS.createRevisionRoot(myRevision);
-            } catch (SVNException svne) {
-                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "Could not open the root of the repository", null);
-            }
-        }
-        
-        SVNNodeKind kind = DAVServletUtil.checkPath(myRoot, getResourceURI().getPath());
-        setExists(kind != SVNNodeKind.NONE);
-        setCollection(kind == SVNNodeKind.DIR);
-    }
-
     public DAVResource dup() {
         DAVRegularResource copy = new DAVRegularResource();
         copyTo(copy);
         return copy;
     }
 
-    public DAVResource getParentResource() throws DAVException {
-        DAVRegularResource parentResource = new DAVRegularResource();
-        
-        copyTo(parentResource);
-
-        DAVResourceURI parentResourceURI = parentResource.getResourceURI();
-        String uri = parentResourceURI.getURI();
-        String path = parentResourceURI.getPath();
-        
-        parentResourceURI.setURI(SVNPathUtil.removeTail(uri));
-        parentResourceURI.setPath(SVNPathUtil.removeTail(path));
-        
-        parentResource.setExists(true);
-        parentResource.setCollection(true);
-        parentResource.setVersioned(true);
-        return parentResource;
-    }
-
-    public static DAVResource convertToRegular(DAVResource resource) throws DAVException {
-        DAVRegularResource regularResource = new DAVRegularResource();
-        resource.copyTo(regularResource);
-        
-        DAVResourceURI uri = regularResource.getResourceURI();
-        uri.setType(DAVResourceType.REGULAR);
-        
-        regularResource.setWorking(false);
-        String path = null;
-        FSRepository repos = (FSRepository) resource.getRepository();
-        FSFS fsfs = repos.getFSFS();
-        if (!SVNRevision.isValidRevisionNumber(resource.getRevision())) {
-            long rev = SVNRepository.INVALID_REVISION;
-            
-            try {
-                rev = repos.getLatestRevision();
-            } catch (SVNException e) {
-                throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                        "Could not determine youngest rev.", null);
-            }
-            
-            regularResource.setRevision(rev);
-            path = uri.getPath();
-        } else {
-            path = DAVPathUtil.buildURI(uri.getContext(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), uri.getPath());
-        }
-        
-        path = SVNEncodingUtil.uriEncode(path);
-        uri.setURI(path);
-        try {
-            regularResource.myRoot = fsfs.createRevisionRoot(regularResource.getRevision());
-        } catch (SVNException svne) {
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "Could not open revision root.", null);
-        }
-        return regularResource;
-    }
 }

@@ -37,6 +37,7 @@ public class DAVConfig {
     private static final String XSLT_INDEX = "SVNIndexXSLT";
     private static final String ACTIVITIES_DB = "SVNActivitiesDB"; 
     private static final String AUTOVERSIONING = "SVNAutoversioning";
+    private static final String ALLOW_BULK_UPDATES = "SVNAllowBulkUpdates";
     private static final String OFF = "off";
     private static final String ON = "on";
 
@@ -49,7 +50,9 @@ public class DAVConfig {
     private boolean myUsingPBA = false;
     private boolean myAnonymous = true;
     private boolean myNoAuthIfAnonymousAllowed = false;
-    private boolean myIsListParentPath;
+    private boolean myIsListParentPath = false;
+    private boolean myIsAutoVersioning = false;
+    private boolean myIsAllowBulkUpdates = false;
     
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
@@ -99,6 +102,16 @@ public class DAVConfig {
             myIsListParentPath = true;
         }
         
+        String autoversioning = servletConfig.getInitParameter(AUTOVERSIONING);
+        if (autoversioning != null && ON.equals(autoversioning)) {
+            myIsAutoVersioning = true;
+        }
+        
+        String allowBulkUpdates = servletConfig.getInitParameter(ALLOW_BULK_UPDATES);
+        if (allowBulkUpdates != null && ON.equals(allowBulkUpdates)) {
+            myIsAllowBulkUpdates = true;
+        }
+        
         myActivitiesDBPath = servletConfig.getInitParameter(ACTIVITIES_DB);
     }
 
@@ -146,5 +159,12 @@ public class DAVConfig {
         return myActivitiesDBPath;
     }
 
+    public boolean isAutoVersioning() {
+        return myIsAutoVersioning;
+    }
+
+    public boolean isAllowBulkUpdates() {
+        return myIsAllowBulkUpdates;
+    }
 
 }

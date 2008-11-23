@@ -140,7 +140,7 @@ public class DAVRepositoryManager {
 
     }
 
-    private DAVConfig getDAVConfig() {
+    public DAVConfig getDAVConfig() {
         return myDAVConfig;
     }
 
@@ -206,7 +206,7 @@ public class DAVRepositoryManager {
         }
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
-        DAVResource resource = DAVResourceFactory.createDAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, 
+        DAVResource resource = new DAVResource(resourceRepository, resourceURI, isSVNClient, deltaBase, version, 
                 clientOptions, baseChecksum, resultChecksum, myUserPrincipal != null ? myUserPrincipal.getName() : null, activitiesDBDir);
         return resource;
     }

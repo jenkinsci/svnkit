@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,6 +24,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -39,8 +39,6 @@ import javax.xml.parsers.SAXParserFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
@@ -50,15 +48,16 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFStateType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
-import org.tmatesoft.svn.core.internal.server.dav.DAVRegularResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
@@ -66,10 +65,11 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVURIInfo;
-import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -205,6 +205,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRepositoryManager;
     }
 
+    protected DAVConfig getConfig() {
+        return myRepositoryManager.getDAVConfig();
+    }
+
     public abstract void execute() throws SVNException;
 
     protected abstract DAVRequest getDAVRequest();
@@ -311,7 +315,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         if (exception == null && (flags & DAV_VALIDATE_PARENT) != 0) {
             DAVResource parentResource = null;
             try {
-                parentResource = resource.getParentResource();
+                parentResource = DAVResourceHelper.createParentResource(resource);
             } catch (DAVException dave) {
                 exception = dave;
             }
@@ -358,7 +362,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
-    protected DAVWorkingResource checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isCreateActivity, 
+    protected DAVResource checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isCreateActivity, 
             List activities, FSFS fsfs) throws DAVException {
         DAVResourceType resourceType = resource.getResourceURI().getType();
 
@@ -404,7 +408,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 }
             }
             
-            resource = DAVWorkingResource.createWorkingResource(resource, sharedActivity, sharedTxnName);
+            resource = DAVWorkingResourceHelper.createWorkingResource(resource, sharedActivity, sharedTxnName, true);
             resource.setIsAutoCkeckedOut(true);
             FSTransactionInfo txnInfo = DAVServletUtil.openTxn(fsfs, resource.getTxnName());
             FSTransactionRoot txnRoot = null;
@@ -545,10 +549,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
     
-        return DAVWorkingResource.createWorkingResource(resource, parse.getActivityID(), txnName);
+        return DAVWorkingResourceHelper.createWorkingResource(resource, parse.getActivityID(), txnName, false);
     }
 
-    protected DAVResource uncheckOut(DAVResource resource, FSFS fsfs) throws DAVException {
+    protected void uncheckOut(DAVResource resource, FSFS fsfs) throws DAVException {
         if (resource.getType() != DAVResourceType.WORKING) {
             throw new DAVException("UNCHECKOUT called on non-working resource.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
                     SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
@@ -578,7 +582,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         resource.setTxnInfo(null);
         resource.setIsAutoCkeckedOut(false);
         
-        return DAVRegularResource.convertToRegular(resource);
+        DAVResourceHelper.convertToRegular(resource);
     }
     
     protected void autoCheckOut(DAVResource resource, boolean isParentOnly) {
@@ -592,7 +596,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             if (resource != null) {
                 if (info.isResourceCheckedOut()) {
                     try {
-                        resource = uncheckOut(resource, fsfs);
+                        uncheckOut(resource, fsfs);
                     } catch (DAVException dave) {
                         throw new DAVException("Unable to undo auto-checkout of resource {0}.", 
                                 new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
@@ -607,12 +611,57 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
-    protected DAVResponse removeResponse(DAVResource resource) throws DAVException {
-        DAVResourceType resourceType = resource.getResourceURI().getType();
+    protected void removeResource(DAVResource resource, FSFS fsfs) throws DAVException {
+        DAVResourceURI uri = resource.getResourceURI();
+        DAVResourceType resourceType = uri.getType();
         if (resourceType != DAVResourceType.REGULAR && resourceType != DAVResourceType.WORKING && resourceType != DAVResourceType.ACTIVITY) {
             throw new DAVException("DELETE called on invalid resource type.", HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
         }
-        return null;
+        
+        DAVConfig config = getConfig();
+        if (resourceType == DAVResourceType.REGULAR && !config.isAutoVersioning()) {
+            throw new DAVException("DELETE called on regular resource, but autoversioning is not active.", 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+        }
+        
+        if (resourceType == DAVResourceType.ACTIVITY) {
+            DAVServletUtil.deleteActivity(resource, fsfs);
+            return;
+        }
+        
+        if (resourceType == DAVResourceType.REGULAR) {
+            checkOut(resource, true, false, false, null, fsfs);
+        }
+        
+        if (SVNRevision.isValidRevisionNumber(resource.getVersion())) {
+            long createdRevision = SVNRepository.INVALID_REVISION;
+            try {
+                createdRevision = resource.getCreatedRevisionUsingFS(null);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not get created rev of resource", null);
+            }
+            
+            if (resource.getVersion() < createdRevision) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_OUT_OF_DATE, "Item ''{0}'' is out of date", 
+                        uri.getPath());
+                throw DAVException.convertError(err, HttpServletResponse.SC_CONFLICT, "Can''t DELETE out-of-date resource", null);
+            }
+        }
+        
+        //TODO: lock pushing?
+        
+        FSCommitter committer = new FSCommitter(fsfs, (FSTransactionRoot) resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
+        try {
+            committer.deleteNode(uri.getPath());
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not delete the resource", null);
+        }
+        
+        if (resource.isAutoCheckedOut()) {
+            
+        }
     }
     
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {

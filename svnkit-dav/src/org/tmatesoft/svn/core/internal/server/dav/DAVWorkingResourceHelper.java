@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
-import java.io.File;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
@@ -22,51 +21,32 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
+
 
 /**
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class DAVWorkingResource extends DAVResource {
-    
-    public DAVWorkingResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
-            String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws SVNException {
-        super(repository, resourceURI, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, userName, activitiesDB);
-    }
+public class DAVWorkingResourceHelper extends DAVResourceHelper {
 
-    public DAVWorkingResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
-            long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
-        super(repository, resourceURI, revision, isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, userName, 
-                activitiesDB);
-    }
-
-    public DAVWorkingResource(DAVResource baseResource, DAVResourceURI resourceURI, String txnName) {
-        super(baseResource.getRepository(), resourceURI, baseResource.getRevision(), baseResource.isSVNClient(), baseResource.getDeltaBase(), 
-                baseResource.getVersion(), baseResource.getClientOptions(), baseResource.getBaseChecksum(), baseResource.getResultChecksum(), 
-                baseResource.getUserName(), baseResource.getActivitiesDB());
-        
-        myTxnName = txnName;
-        myRoot = baseResource.myRoot;
-        myFSFS = baseResource.myFSFS;
-    }
-    
-    private DAVWorkingResource() {
-    }
-    
-    protected void prepare() throws DAVException {
-        String txnName = getTxn();
+    protected void prepare(DAVResource resource) throws DAVException {
+        String txnName = resource.getTxn();
         if (txnName == null) {
             throw new DAVException("An unknown activity was specified in the URL. This is generally caused by a problem in the client software.", 
                     null, HttpServletResponse.SC_BAD_REQUEST, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
         }
-        myTxnName = txnName;
+
+        resource.setTxnName(txnName);
+        
+        FSFS fsfs = resource.getFSFS(); 
         FSTransactionInfo txnInfo = null;
         try {
-            txnInfo = myFSFS.openTxn(myTxnName);
+            txnInfo = fsfs.openTxn(txnName);
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_TRANSACTION) {
                 throw new DAVException("An activity was specified and found, but the corresponding SVN FS transaction was not found.", 
@@ -76,16 +56,16 @@ public class DAVWorkingResource extends DAVResource {
                     "An activity was specified and found, but the corresponding SVN FS transaction was not found.", null);
         }
         
-        if (isBaseLined()) {
-            setExists(true);
-            //myIsExists = true;
+        if (resource.isBaseLined()) {
+            resource.setExists(true);
             return;
         }
         
-        if (myUserName != null) {
+        String userName = resource.getUserName();
+        if (resource.getUserName() != null) {
             SVNProperties props = null;
             try {
-                props = myFSFS.getTransactionProperties(myTxnName);
+                props = fsfs.getTransactionProperties(txnName);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Failed to retrieve author of the SVN FS transaction corresponding to the specified activity.", null);
@@ -94,40 +74,36 @@ public class DAVWorkingResource extends DAVResource {
             String currentAuthor = props.getStringValue(SVNRevisionProperty.AUTHOR);
             if (currentAuthor == null) {
                 try {
-                    myFSFS.setTransactionProperty(myTxnName, SVNRevisionProperty.AUTHOR, SVNPropertyValue.create(myUserName));
+                    fsfs.setTransactionProperty(txnName, SVNRevisionProperty.AUTHOR, SVNPropertyValue.create(userName));
                 } catch (SVNException svne) {
                     throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                             "Failed to set the author of the SVN FS transaction corresponding to the specified activity.", null);
                 }
-            } else if (!currentAuthor.equals(myUserName)) {
+            } else if (!currentAuthor.equals(userName)) {
                 throw new DAVException("Multi-author commits not supported.", null, HttpServletResponse.SC_NOT_IMPLEMENTED, null, 
                         SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
             }
         }
         
+        FSRoot root = null;
         try {
-            myRoot = myFSFS.createTransactionRoot(txnInfo);
+            root = fsfs.createTransactionRoot(txnInfo);
+            resource.setRoot(root);
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "Could not open the (transaction) root of the repository", null);
         }
         
-        SVNNodeKind kind = DAVServletUtil.checkPath(myRoot, getResourceURI().getPath());
-        setExists(kind != SVNNodeKind.NONE);
-        setCollection(kind == SVNNodeKind.DIR);
+        SVNNodeKind kind = DAVServletUtil.checkPath(root, resource.getResourceURI().getPath());
+        resource.setExists(kind != SVNNodeKind.NONE);
+        resource.setCollection(kind == SVNNodeKind.DIR);
     }
 
-    public DAVResource dup() {
-        DAVWorkingResource copy = new DAVWorkingResource();
-        copyTo(copy);
-        return copy;
+    protected DAVResource getParentResource(DAVResource resource) throws DAVException {
+        return DAVPrivateResourceHelper.createPrivateResource(resource, DAVResourceKind.WORKING);
     }
 
-    public DAVResource getParentResource() throws DAVException {
-        return DAVPrivateResource.createPrivateResource(this, DAVResourceKind.WORKING);
-    }
-
-    public static DAVWorkingResource createWorkingResource(DAVResource baseResource, String activityID, String txnName) {
+    public static DAVResource createWorkingResource(DAVResource baseResource, String activityID, String txnName, boolean inPlace) {
         StringBuffer pathBuffer = new StringBuffer();
         if (baseResource.isBaseLined()) {
             pathBuffer.append('/');
@@ -145,10 +121,26 @@ public class DAVWorkingResource extends DAVResource {
         }
         
         String uriPath = SVNEncodingUtil.uriEncode(pathBuffer.toString());
-        DAVResourceURI uri = new DAVResourceURI(baseResource.getResourceURI().getContext(), uriPath, baseResource.getResourceURI().getPath(), 
-                baseResource.getRevision(), baseResource.getResourceURI().getKind(), DAVResourceType.WORKING, 
-                activityID, true, true, baseResource.isBaseLined(), true);
-        return new DAVWorkingResource(baseResource, uri, txnName);
+        DAVResource resource = null;
+        if (inPlace) {
+            resource = baseResource;
+        } else {
+            resource = new DAVResource();
+            baseResource.copyTo(resource);
+        }
+         
+        
+        resource.setTxnName(txnName);
+        resource.setExists(true);
+        resource.setVersioned(true);
+        resource.setWorking(true);
+        
+        DAVResourceURI uri = resource.getResourceURI();
+        uri.setType(DAVResourceType.WORKING);
+        uri.setURI(uriPath);
+        uri.setActivityID(activityID);
+        return resource;
     }
 
+ 
 }
