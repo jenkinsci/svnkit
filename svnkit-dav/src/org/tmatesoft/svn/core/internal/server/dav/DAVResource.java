@@ -167,6 +167,10 @@ public class DAVResource {
         return getResourceURI().getType();
     }
 
+    public String getActivityID() {
+        return myResourceURI.getActivityID();
+    }
+    
     public boolean lacksETagPotential() {
         DAVResourceType type = getResourceURI().getType();
         return !exists() || (type != DAVResourceType.REGULAR && type != DAVResourceType.VERSION) || 
@@ -468,11 +472,6 @@ public class DAVResource {
         return myFSFS;
     }
     
-    public String getTxn() {
-        DAVResourceURI resourceURI = getResourceURI();
-        return DAVServletUtil.getTxn(getActivitiesDB(), resourceURI.getActivityID());
-    }
-
     private SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new SVNProperties();

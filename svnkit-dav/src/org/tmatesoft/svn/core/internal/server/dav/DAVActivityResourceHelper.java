@@ -19,7 +19,7 @@ package org.tmatesoft.svn.core.internal.server.dav;
 public class DAVActivityResourceHelper extends DAVResourceHelper {
     
     protected void prepare(DAVResource resource) throws DAVException {
-        String txnName = resource.getTxn();
+        String txnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), resource.getResourceURI().getActivityID());
         resource.setExists(txnName != null);
     }
 

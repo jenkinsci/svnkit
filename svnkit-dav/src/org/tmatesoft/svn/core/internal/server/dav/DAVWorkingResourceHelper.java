@@ -35,7 +35,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class DAVWorkingResourceHelper extends DAVResourceHelper {
 
     protected void prepare(DAVResource resource) throws DAVException {
-        String txnName = resource.getTxn();
+        String txnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), resource.getResourceURI().getActivityID());
         if (txnName == null) {
             throw new DAVException("An unknown activity was specified in the URL. This is generally caused by a problem in the client software.", 
                     null, HttpServletResponse.SC_BAD_REQUEST, null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);

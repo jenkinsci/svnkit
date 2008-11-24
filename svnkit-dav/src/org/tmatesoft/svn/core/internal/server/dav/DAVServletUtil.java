@@ -42,6 +42,28 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVServletUtil {
     
+    public static void setAutoRevisionProperties(DAVResource resource) throws DAVException {
+        if (!(resource.getType() == DAVResourceType.WORKING && resource.isAutoCheckedOut())) {
+            throw new DAVException("Set_auto_revprops called on invalid resource.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
+        }
+        
+        try {
+            attachAutoRevisionProperties(resource.getTxnInfo(), resource.getResourceURI().getPath(), resource.getFSFS());
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Error setting a revision property ", null);
+        }
+        
+    }
+    
+    public static void attachAutoRevisionProperties(FSTransactionInfo txn, String path, FSFS fsfs) throws SVNException {
+        String logMessage = "Autoversioning commit:  a non-deltaV client made a change to\n" + path;
+        SVNProperties props = new SVNProperties();
+        props.put(SVNRevisionProperty.LOG, logMessage);
+        props.put(SVNRevisionProperty.AUTOVERSIONED, "*");
+        fsfs.changeTransactionProperties(txn.getTxnId(), props);
+    }
+    
     public static void deleteActivity(DAVResource resource, FSFS fsfs) throws DAVException {
         DAVResourceURI resourceURI = resource.getResourceURI();
         String activityID = resourceURI.getActivityID();

@@ -552,6 +552,34 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVWorkingResourceHelper.createWorkingResource(resource, parse.getActivityID(), txnName, false);
     }
 
+    protected DAVResource checkIn(DAVResource resource, boolean keepCheckedOut) throws DAVException {
+        if (resource.getType() != DAVResourceType.WORKING) {
+            throw new DAVException("CHECKIN called on non-working resource.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                    SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
+        String sharedActivity = DAVServlet.getSharedActivity();
+        if (sharedActivity != null && sharedActivity.equals(resource.getActivityID())) {
+            String sharedTxnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), sharedActivity);
+            if (sharedTxnName == null) {
+                throw new DAVException("Cannot look up a txn_name by activity", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
+            }
+            
+            if (resource.getTxnName() != null && !sharedTxnName.equals(resource.getTxnName())) {
+                throw new DAVException("Internal txn_name doesn't match autoversioning transaction.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
+            }
+            
+            if (resource.getTxnInfo() == null) {
+                throw new DAVException("Autoversioning txn isn't open when it should be.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
+            }
+            
+            DAVServletUtil.setAutoRevisionProperties(resource);
+            
+        }
+        return null;
+    }
+    
     protected void uncheckOut(DAVResource resource, FSFS fsfs) throws DAVException {
         if (resource.getType() != DAVResourceType.WORKING) {
             throw new DAVException("UNCHECKOUT called on non-working resource.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
