@@ -357,7 +357,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             }
             long revision = -1;
             try {
-                Long.parseLong(revAttr);
+                revision = Long.parseLong(revAttr);
             } catch (NumberFormatException nfe) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
             }
