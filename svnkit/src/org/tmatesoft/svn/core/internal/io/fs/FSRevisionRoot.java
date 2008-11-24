@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -147,7 +149,11 @@ public class FSRevisionRoot extends FSRoot {
         
         int dashIndex = nodeID.indexOf('-');
         if (dashIndex != -1 && dashIndex != nodeID.length() - 1) {
-            return Long.parseLong(nodeID.substring(dashIndex + 1));
+            try {
+                return Long.parseLong(nodeID.substring(dashIndex + 1));
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, nfe), SVNLogType.FSFS);
+            }
         }
         
         String cachedOriginID = fsfs.getNodeOrigin(nodeID);

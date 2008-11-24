@@ -16,6 +16,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -32,7 +34,9 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -54,7 +58,7 @@ public class DAVLockInfoProvider {
     private long myWorkingRevision;
     private ServletDAVHandler myOwner;
     
-    public static DAVLockInfoProvider createLockInfoProvider(ServletDAVHandler owner, boolean readOnly) {
+    public static DAVLockInfoProvider createLockInfoProvider(ServletDAVHandler owner, boolean readOnly) throws SVNException {
         String clientOptions = owner.getRequestHeader(ServletDAVHandler.SVN_OPTIONS_HEADER);
         
         DAVLockInfoProvider provider = new DAVLockInfoProvider();
@@ -76,7 +80,11 @@ public class DAVLockInfoProvider {
         String versionName = owner.getRequestHeader(ServletDAVHandler.SVN_VERSION_NAME_HEADER);
         provider.myWorkingRevision = SVNRepository.INVALID_REVISION;
         if (versionName != null) {
-            provider.myWorkingRevision = Long.parseLong(versionName);
+            try {
+                provider.myWorkingRevision = Long.parseLong(versionName);
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+            }
         }
         
         return provider;

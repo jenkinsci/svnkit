@@ -254,7 +254,12 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 myIsReceiveAll = true;
             }
         } else if (element == TARGET_REVISION) {
-            long revision = Long.parseLong(attrs.getValue(REVISION_ATTR));
+            long revision = -1;
+            try {
+                revision = Long.parseLong(attrs.getValue(REVISION_ATTR));
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
             myEditor.targetRevision(revision);
         } else if (element == ABSENT_DIRECTORY) {
             String name = attrs.getValue(NAME_ATTR);
@@ -270,7 +275,12 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             
-            long revision = Long.parseLong(revAttr);
+            long revision = -1;
+            try {
+                revision = Long.parseLong(revAttr);
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
             myIsDirectory = true;
             if (myPath == null) {
                 myPath = "";
@@ -305,7 +315,11 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                             "Missing copyfrom-rev attr in add-directory element");
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
-                copyFromRev = Long.parseLong(copyFromRevString);
+                try {
+                    copyFromRev = Long.parseLong(copyFromRevString);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
             }
             myPath = SVNPathUtil.append(myPath, name);
             myEditor.addDir(myPath, copyFromPath, copyFromRev);
@@ -341,7 +355,12 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                         "Missing rev attr in open-file element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
-            long revision = Long.parseLong(revAttr);
+            long revision = -1;
+            try {
+                Long.parseLong(revAttr);
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
             String name = attrs.getValue(NAME_ATTR);
             if (name == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, 
@@ -369,7 +388,11 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
                             "Missing copyfrom-rev attr in add-file element");
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
-                copyFromRev = Long.parseLong(copyFromRevisionAttr);
+                try {
+                    copyFromRev = Long.parseLong(copyFromRevisionAttr);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
             }
             myEditor.addFile(myPath, copyFromPath, copyFromRev);
             myIsFetchProps = true;

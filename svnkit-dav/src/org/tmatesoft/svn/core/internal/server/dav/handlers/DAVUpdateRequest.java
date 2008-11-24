@@ -173,7 +173,11 @@ public class DAVUpdateRequest extends DAVRequest {
                 String value = property.getFirstValue();
                 if (element == TARGET_REVISION) {
                     assertNullCData(element, property);
-                    setRevision(Long.parseLong(value));
+                    try {
+                        setRevision(Long.parseLong(value));
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                    }
                 } else if (element == SRC_PATH) {
                     assertNullCData(element, property);
                     DAVPathUtil.testCanonical(value);

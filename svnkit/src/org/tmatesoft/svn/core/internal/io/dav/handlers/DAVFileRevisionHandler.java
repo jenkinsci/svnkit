@@ -90,7 +90,11 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             if (revString == null) {
                 missingAttributeError(element, "rev");
             }
-            myRevision = Long.parseLong(revString);
+            try {
+                myRevision = Long.parseLong(revString);
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         } else if (element == REVISION_PROPERTY || element == SET_PROPERTY || element == DELETE_PROPERTY) {
             myPropertyName = attrs.getValue("name");
             if (myPropertyName == null) {

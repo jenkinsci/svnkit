@@ -70,10 +70,18 @@ public class DAVReplayRequest extends DAVRequest {
             DAVElementProperty property = (DAVElementProperty) entry.getValue();
             if (element == REVISION) {
                 assertNullCData(element, property);
-                setRevision(Long.parseLong(property.getFirstValue()));
+                try {
+                    setRevision(Long.parseLong(property.getFirstValue()));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == LOW_WATER_MARK) {
                 assertNullCData(element, property);
-                setLowRevision(Long.parseLong(property.getFirstValue()));
+                try {
+                    setLowRevision(Long.parseLong(property.getFirstValue()));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == SEND_DELTAS) {
                 assertNullCData(element, property);
                 int sendDeltas = Integer.parseInt(property.getFirstValue());

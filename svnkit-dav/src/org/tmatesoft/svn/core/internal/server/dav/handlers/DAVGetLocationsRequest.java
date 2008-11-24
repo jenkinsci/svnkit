@@ -75,13 +75,20 @@ public class DAVGetLocationsRequest extends DAVRequest {
                 setPath(path);
             } else if (element == PEG_REVISION) {
                 String pegRevisionString = property.getFirstValue();
-                setPegRevision(Long.parseLong(pegRevisionString));
+                try {
+                    setPegRevision(Long.parseLong(pegRevisionString));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == LOCATION_REVISION) {
                 long[] revisions = new long[property.getValues().size()];
                 int i = 0;
                 for (Iterator revisionsIterator = property.getValues().iterator(); revisionsIterator.hasNext(); i++) {
-                    long currentRevision = Long.parseLong((String) revisionsIterator.next());
-                    revisions[i] = currentRevision;
+                    try {
+                        revisions[i] = Long.parseLong((String) revisionsIterator.next());
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                    }
                 }
                 setRevisions(revisions);
             }

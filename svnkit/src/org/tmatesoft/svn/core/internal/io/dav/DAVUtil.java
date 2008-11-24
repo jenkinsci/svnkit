@@ -184,7 +184,11 @@ public class DAVUtil {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'DAV:version-name' not present on the baseline resource");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
-            info.revision = Long.parseLong(version.getString());
+            try {
+                info.revision = Long.parseLong(version.getString());
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         }
         if (includeType) {
             Map propsMap = new SVNHashMap();

@@ -15,10 +15,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -62,7 +66,11 @@ public class DAVMergeInfoRequest extends DAVRequest {
             DAVElement element = (DAVElement) entry.getKey();
             DAVElementProperty property = (DAVElementProperty) entry.getValue();
             if (element == REVISION) {
-                setRevision(Long.parseLong(property.getFirstValue()));
+                try {
+                    setRevision(Long.parseLong(property.getFirstValue()));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == INHERIT) {
                 setInherit(parseInheritance(property.getFirstValue()));
                 if (getInherit() == null) {

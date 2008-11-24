@@ -316,7 +316,11 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             if (revisionString == null) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Missing XML attribute: rev"), SVNLogType.NETWORK);
             }
-            setEntryRevision(Long.parseLong(revisionString));
+            try {
+                setEntryRevision(Long.parseLong(revisionString));
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+            }
             setDepth(SVNDepth.fromString(attrs.getValue(DEPTH_ATTR)));
             if (attrs.getValue(START_EMPTY_ATTR) != null) {
                 setEntryStartEmpty(true);

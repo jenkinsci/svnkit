@@ -82,11 +82,19 @@ public class DAVLocationSegmentsHandler extends BasicDAVHandler {
             }
             String revStr = attrs.getValue("range-start");
             if (revStr != null) {
-                rangeStart = Long.parseLong(revStr);
+                try {
+                    rangeStart = Long.parseLong(revStr);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
             }
             revStr = attrs.getValue("range-end");
             if (revStr != null) {
-                rangeEnd = Long.parseLong(revStr);
+                try {
+                    rangeEnd = Long.parseLong(revStr);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
             }
             
             if (SVNRevision.isValidRevisionNumber(rangeStart) && SVNRevision.isValidRevisionNumber(rangeEnd)) {

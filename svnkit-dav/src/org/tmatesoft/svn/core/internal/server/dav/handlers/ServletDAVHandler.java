@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -69,7 +68,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -239,7 +237,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 label, useCheckedIn);
     }
 
-    protected DAVResourceState getResourceState(DAVResource resource) {
+    protected DAVResourceState getResourceState(DAVResource resource) throws SVNException {
         if (resource.exists()) {
             return DAVResourceState.EXISTS;
         }

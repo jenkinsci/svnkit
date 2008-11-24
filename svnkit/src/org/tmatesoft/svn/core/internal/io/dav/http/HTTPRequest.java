@@ -155,7 +155,11 @@ class HTTPRequest {
         } else if (myRequestStream instanceof ByteArrayInputStream) {
             length = ((ByteArrayInputStream) myRequestStream).available();
         } else if (header != null && header.hasHeader(HTTPHeader.CONTENT_LENGTH_HEADER)) {
-            length = Long.parseLong(header.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER));
+            try {
+                length = Long.parseLong(header.getFirstHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER));
+            } catch (NumberFormatException nfe) {
+                throw new IOException(nfe.getMessage());
+            }
         }
         StringBuffer headerText = composeHTTPHeader(request, path, header, length, myIsKeepAlive);
         myConnection.sendData(headerText.toString().getBytes(myCharset));

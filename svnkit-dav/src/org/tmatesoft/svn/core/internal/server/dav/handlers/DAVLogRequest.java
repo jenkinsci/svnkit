@@ -15,10 +15,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -143,10 +147,18 @@ public class DAVLogRequest extends DAVRequest {
                 setOmitLogText(true);
             } else if (element == START_REVISION) {
                 String revisionString = property.getFirstValue();
-                setStartRevision(Long.parseLong(revisionString));
+                try {
+                    setStartRevision(Long.parseLong(revisionString));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == END_REVISION) {
                 String revisionString = property.getFirstValue();
-                setEndRevision(Long.parseLong(revisionString));
+                try {
+                    setEndRevision(Long.parseLong(revisionString));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == LIMIT) {
                 String limitString = property.getFirstValue();
                 setLimit(Integer.parseInt(limitString));

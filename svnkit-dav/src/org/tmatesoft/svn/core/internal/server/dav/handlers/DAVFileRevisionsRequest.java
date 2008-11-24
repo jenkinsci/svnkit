@@ -14,10 +14,14 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -63,9 +67,17 @@ public class DAVFileRevisionsRequest extends DAVRequest {
                 DAVPathUtil.testCanonical(path);
                 setPath(path);
             } else if (element == START_REVISION) {
-                setStartRevision(Long.parseLong(property.getFirstValue()));
+                try {
+                    setStartRevision(Long.parseLong(property.getFirstValue()));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             } else if (element == END_REVISION) {
-                setEndRevision(Long.parseLong(property.getFirstValue()));
+                try {
+                    setEndRevision(Long.parseLong(property.getFirstValue()));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
+                }
             }
         }
     }
