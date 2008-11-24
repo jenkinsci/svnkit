@@ -621,10 +621,14 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      * @return charset name 
      */
     public String getEncoding() {
-        if (myEncoding != null) {
+        if (hasEncoding()) {
             return myEncoding;
         }
         return getOptions().getNativeCharset();
+    }
+
+    public boolean hasEncoding() {
+        return myEncoding != null;
     }
 
     /**
