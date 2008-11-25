@@ -117,7 +117,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
 
         DAVResource workingResource = null;
         try {
-            workingResource = checkOut(resource, false, isUnreserved, createActivity, activities, myFSFS);
+            workingResource = checkOut(resource, false, isUnreserved, createActivity, activities);
         } catch (DAVException dave) {
             throw new DAVException("Could not CHECKOUT resource {0}.", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(getURI()) }, 
                     HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);

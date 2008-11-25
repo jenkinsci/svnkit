@@ -64,7 +64,7 @@ public class DAVServletUtil {
         fsfs.changeTransactionProperties(txn.getTxnId(), props);
     }
     
-    public static void deleteActivity(DAVResource resource, FSFS fsfs) throws DAVException {
+    public static void deleteActivity(DAVResource resource) throws DAVException {
         DAVResourceURI resourceURI = resource.getResourceURI();
         String activityID = resourceURI.getActivityID();
         File activitiesDB = resource.getActivitiesDB();
@@ -73,6 +73,7 @@ public class DAVServletUtil {
             throw new DAVException("could not find activity.", HttpServletResponse.SC_NOT_FOUND, 0);
         }
         
+        FSFS fsfs = resource.getFSFS();
         FSTransactionInfo txn = null;
         if (txnName != null) {
             try {

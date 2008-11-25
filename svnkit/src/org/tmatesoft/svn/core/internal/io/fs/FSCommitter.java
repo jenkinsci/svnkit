@@ -61,6 +61,14 @@ public class FSCommitter {
         myAuthor = author;
     }
 
+    public void reset(FSFS fsfs, FSTransactionRoot txnRoot, FSTransactionInfo txn, Collection lockTokens, String author) {
+        myFSFS = fsfs;
+        myTxnRoot = txnRoot;
+        myTxn = txn;
+        myLockTokens = lockTokens != null ? lockTokens : Collections.EMPTY_LIST;
+        myAuthor = author;
+    }
+    
     public void deleteNode(String path) throws SVNException {
         FSParentPath parentPath = myTxnRoot.openPath(path, true, true);
         if (parentPath.getParent() == null) {
@@ -256,7 +264,11 @@ public class FSCommitter {
         }
     }
 
-    public long commitTxn() throws SVNException {
+    public long commitTxn(boolean runPreCommitHook, boolean runPostCommitHook, SVNErrorMessage[] postCommitHookError) throws SVNException {
+        if (runPreCommitHook) {
+            FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), myTxn.getTxnId());
+        }
+
         long newRevision = SVNRepository.INVALID_REVISION;
 
         while (true) {
@@ -288,8 +300,24 @@ public class FSCommitter {
                     FSWriteLock.release(writeLock);
                 }
             }
-            return newRevision;
+            break;
         }
+        
+        if (runPostCommitHook) {
+            try {
+                FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
+             } catch (SVNException svne) {
+                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, 
+                         "Commit succeeded, but post-commit hook failed", SVNErrorMessage.TYPE_WARNING);
+                 errorMessage.setChildErrorMessage(svne.getErrorMessage());
+                 if (postCommitHookError != null && postCommitHookError.length > 0) {
+                     postCommitHookError[0] = errorMessage;
+                 } else {
+                     SVNErrorManager.error(errorMessage, SVNLogType.FSFS);
+                 }
+             }
+        }
+        return newRevision;
     }
 
     public void makePathMutable(FSParentPath parentPath, String errorPath) throws SVNException {

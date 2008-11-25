@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.io.fs.FSHooks;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
@@ -97,22 +96,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
             
             long oldRevision = baton.myRevision;
-            if (myIsUsePreCommitHook) {
-                try {
-                    FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), baton.myTxn.getTxnId());
-                } catch (SVNException svne) {
-                    try {
-                        FSCommitter.abortTransaction(myFSFS, baton.myTxn.getTxnId());
-                    } catch (SVNException svne2) {
-                        //
-                    }
-                    throw svne;
-                }
-            }
-            
             long newRevision = -1;
             try {
-                newRevision = baton.getCommitter().commitTxn();
+                newRevision = baton.getCommitter().commitTxn(myIsUsePreCommitHook, myIsUsePostCommitHook, null);
             } catch (SVNException svne) {
                 try {
                     FSCommitter.abortTransaction(myFSFS, baton.myTxn.getTxnId());
@@ -121,6 +107,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
                 throw svne;
             }
+            
             if (baton.myDatestamp == null) {
                 myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
             }
@@ -134,16 +121,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
             }
 
-            
-            if (myIsUsePostCommitHook) {
-                try {
-                    FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
-                } catch (SVNException svne) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, "Commit succeeded, but post-commit hook failed");
-                    SVNErrorManager.error(err, svne, SVNLogType.FSFS);
-                }
-            }
-            
             myRevisionsMap.put(new Long(oldRevision), new Long(newRevision));
             if (baton.myDatestamp != null) {
                 myFSFS.setRevisionProperty(newRevision, SVNRevisionProperty.DATE, baton.myDatestamp);

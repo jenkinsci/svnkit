@@ -180,7 +180,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private DAVRepositoryManager myRepositoryManager;
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
-        
+    private FSCommitter myCommitter;
+    
     static {
         REPORT_ELEMENTS.add(UPDATE_REPORT);
         REPORT_ELEMENTS.add(LOG_REPORT);
@@ -361,9 +362,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
     
     protected DAVResource checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isCreateActivity, 
-            List activities, FSFS fsfs) throws DAVException {
+            List activities) throws DAVException {
         DAVResourceType resourceType = resource.getResourceURI().getType();
-
+        FSFS fsfs = resource.getFSFS();
         if (isAutoCheckOut) {
             if (resourceType == DAVResourceType.VERSION && resource.isBaseLined()) {
                 return null;
@@ -573,12 +574,31 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
             
             DAVServletUtil.setAutoRevisionProperties(resource);
+            FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
+            
+            long newRev = SVNRepository.INVALID_REVISION;
+            try {
+                newRev = committer.commitTxn(true, true, null);
+            } catch (SVNException svne) {
+                try {
+                    FSCommitter.abortTransaction(resource.getFSFS(), resource.getTxnInfo().getTxnId());
+                } catch (SVNException svne2) {
+                    //
+                }
+                String message = null;
+                Object[] objects = null;
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
+                    message = "A conflict occurred during the CHECKIN processing. The problem occurred with  the \"{0}\" resource.";
+                    //objects = new Object[] { }
+                }
+
+            }
             
         }
         return null;
     }
     
-    protected void uncheckOut(DAVResource resource, FSFS fsfs) throws DAVException {
+    protected void uncheckOut(DAVResource resource) throws DAVException {
         if (resource.getType() != DAVResourceType.WORKING) {
             throw new DAVException("UNCHECKOUT called on non-working resource.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
                     SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
@@ -588,7 +608,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         FSTransactionInfo txnInfo = resource.getTxnInfo();
         if (txnInfo != null) {
             try {
-                FSCommitter.abortTransaction(fsfs, txnInfo.getTxnId());
+                FSCommitter.abortTransaction(resource.getFSFS(), txnInfo.getTxnId());
             } catch (SVNException svne) {
                 //ignore
             }
@@ -597,7 +617,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         DAVResourceURI resourceURI = resource.getResourceURI();
         if (resourceURI.getActivityID() != null) {
             try {
-                DAVServletUtil.deleteActivity(resource, fsfs);
+                DAVServletUtil.deleteActivity(resource);
             } catch (DAVException dave) {
                 //ignore
             }
@@ -617,12 +637,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
-    protected void autoCheckIn(DAVResource resource, boolean undo, boolean unlock, DAVAutoVersionInfo info, FSFS fsfs) throws DAVException {
+    protected void autoCheckIn(DAVResource resource, boolean undo, boolean unlock, DAVAutoVersionInfo info) throws DAVException {
         if (undo) {
             if (resource != null) {
                 if (info.isResourceCheckedOut()) {
                     try {
-                        uncheckOut(resource, fsfs);
+                        uncheckOut(resource);
                     } catch (DAVException dave) {
                         throw new DAVException("Unable to undo auto-checkout of resource {0}.", 
                                 new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
@@ -637,7 +657,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
-    protected void removeResource(DAVResource resource, FSFS fsfs) throws DAVException {
+    protected void removeResource(DAVResource resource) throws DAVException {
         DAVResourceURI uri = resource.getResourceURI();
         DAVResourceType resourceType = uri.getType();
         if (resourceType != DAVResourceType.REGULAR && resourceType != DAVResourceType.WORKING && resourceType != DAVResourceType.ACTIVITY) {
@@ -651,12 +671,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         if (resourceType == DAVResourceType.ACTIVITY) {
-            DAVServletUtil.deleteActivity(resource, fsfs);
+            DAVServletUtil.deleteActivity(resource);
             return;
         }
         
         if (resourceType == DAVResourceType.REGULAR) {
-            checkOut(resource, true, false, false, null, fsfs);
+            checkOut(resource, true, false, false, null);
         }
         
         if (SVNRevision.isValidRevisionNumber(resource.getVersion())) {
@@ -677,7 +697,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         
         //TODO: lock pushing?
         
-        FSCommitter committer = new FSCommitter(fsfs, (FSTransactionRoot) resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
+        FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
         try {
             committer.deleteNode(uri.getPath());
         } catch (SVNException svne) {
@@ -979,6 +999,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
         return diffCompress;
+    }
+    
+    private FSCommitter getCommitter(FSFS fsfs, FSRoot root, FSTransactionInfo txn, Collection lockTokens, String userName) {
+        if (myCommitter == null) {
+            myCommitter = new FSCommitter(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
+        } else {
+            myCommitter.reset(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
+        }
+        return myCommitter;
     }
     
     private float getEncodingRange(String encoding) {

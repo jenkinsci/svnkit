@@ -351,19 +351,18 @@ public class FSCommitEditor implements ISVNEditor {
             }
     
             long committedRev = -1;
-            SVNErrorMessage errorMessage = null;
-            committedRev = finalizeCommit();
-            try {
-               FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), committedRev);
-            } catch (SVNException svne) {
-                errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, svne.getErrorMessage().getFullMessage(), SVNErrorMessage.TYPE_WARNING);
+            if (myDeltaConsumer != null) {
+                myDeltaConsumer.close();
             }
-    
+            
+            SVNErrorMessage[] errorMessage = new SVNErrorMessage[1];
+            committedRev = myCommitter.commitTxn(true, true, errorMessage);
+                
             SVNProperties revProps = myFSFS.getRevisionProperties(committedRev);
             String dateProp = revProps.getStringValue(SVNRevisionProperty.DATE);
             Date datestamp = dateProp != null ? SVNDate.parseDateString(dateProp) : null;
             
-            SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage);
+            SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage[0]);
             releaseLocks();
             return info;
         } finally {
@@ -385,14 +384,6 @@ public class FSCommitEditor implements ISVNEditor {
                 }
             }
         }
-    }
-
-    private long finalizeCommit() throws SVNException {
-        FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), myTxn.getTxnId());
-        if (myDeltaConsumer != null) {
-            myDeltaConsumer.close();
-        }
-        return myCommitter.commitTxn();
     }
 
     public void abortEdit() throws SVNException {
