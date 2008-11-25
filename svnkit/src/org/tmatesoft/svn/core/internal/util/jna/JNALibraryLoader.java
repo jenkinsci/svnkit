@@ -28,6 +28,7 @@ class JNALibraryLoader {
     private static ISVNKernel32Library ourKenrelLibrary;
     private static ISVNSecurityLibrary ourSecurityLibrary;
     private static ISVNCLibrary ourCLibrary;
+    private static ISVNWin32Library ourWin32Library;
     
     private static volatile int ourUID = -1;
     private static volatile int ourGID = -1;
@@ -44,10 +45,12 @@ class JNALibraryLoader {
                 ourSecurityLibrary = securityLibraryName != null ? 
                         (ISVNSecurityLibrary) Native.loadLibrary(securityLibraryName, 
                         ISVNSecurityLibrary.class) : null;
+                ourWin32Library = (ISVNWin32Library) Native.loadLibrary("Shell32", ISVNWin32Library.class);
             } catch (Throwable th) {
                 ourWinCryptLibrary = null;
                 ourKenrelLibrary = null;
                 ourSecurityLibrary = null;
+                ourWin32Library = null;
             }
         }
         
@@ -80,6 +83,10 @@ class JNALibraryLoader {
     
     public static synchronized ISVNWinCryptLibrary getWinCryptLibrary() {
         return ourWinCryptLibrary;
+    }
+
+    public static synchronized ISVNWin32Library getWin32Library() {
+        return ourWin32Library;
     }
 
     public static synchronized ISVNKernel32Library getKernelLibrary() {

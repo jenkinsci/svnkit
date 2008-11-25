@@ -141,4 +141,11 @@ public class SVNJNAUtil {
     public synchronized static boolean isWinCryptEnabled() {
         return isJNAPresent() && SVNWinCrypt.isEnabled();
     }
+    
+    public static String getApplicationDataPath(boolean common) {
+        if (isJNAPresent()) {
+            return SVNWin32Util.getApplicationDataPath(common);
+        }
+        return null;
+    }
 }

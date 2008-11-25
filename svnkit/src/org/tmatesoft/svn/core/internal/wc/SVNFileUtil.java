@@ -1432,9 +1432,16 @@ public class SVNFileUtil {
         if (ourAppDataPath != null) {
             return ourAppDataPath;
         }
+        String jnaAppData = SVNJNAUtil.getApplicationDataPath(false);
+        if (jnaAppData != null) {
+            ourAppDataPath = new File(jnaAppData);
+            return ourAppDataPath;
+        }
+        
         String envAppData = getEnvironmentVariable("APPDATA");
         if (envAppData == null) {
-            ourAppDataPath = new File(new File(System.getProperty("user.home")), "Application Data");
+            // no appdata for that user, fallback to system one.
+            ourAppDataPath = getSystemApplicationDataPath();
         } else {
             ourAppDataPath = new File(envAppData);
         }
@@ -1443,6 +1450,11 @@ public class SVNFileUtil {
 
     public static File getSystemApplicationDataPath() {
         if (ourSystemAppDataPath != null) {
+            return ourSystemAppDataPath;
+        }
+        String jnaAppData = SVNJNAUtil.getApplicationDataPath(true);
+        if (jnaAppData != null) {
+            ourSystemAppDataPath = new File(jnaAppData);
             return ourSystemAppDataPath;
         }
         String envAppData = getEnvironmentVariable("ALLUSERSPROFILE");
