@@ -501,7 +501,6 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         }
 
         protected void addTarget(String targetPath) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: new target " + targetPath);
             SVNDeltaProcessor processor;
             if (myAction == SVNEditorAction.DELETE) {
                 processor = null;
@@ -509,6 +508,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 processor = getTargets().size() == 0 ? myDeltaProcessor : new SVNDeltaProcessor();
             }
             MergeTarget target = new MergeTarget(targetPath, processor);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: " + target.toString());
             getTargets().add(target);
         }
 
@@ -634,6 +634,20 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 }
             }
             addDeletedPath(myPath, nodeKind, type, action, expectedAction);
+        }
+
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
+            buffer.append("[merge target: path = ");
+            buffer.append(myPath);
+            buffer.append("; wc file = ");
+            buffer.append(myWCFile);
+            buffer.append("; file = ");
+            buffer.append(myFile);
+            buffer.append("; base file = ");
+            buffer.append(myCurrentFile.myBaseFile);
+            buffer.append("]");
+            return buffer.toString();
         }
     }
 }
