@@ -1635,6 +1635,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 		}
     }
     
+    public boolean isSameRepository() {
+        return myIsSameRepository;
+    }
+    
     protected boolean isHonorMergeInfo() {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsIgnoreAncestry;
     }

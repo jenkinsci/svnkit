@@ -304,6 +304,11 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (SVNProperty.isWorkingCopyProperty(propName)) {
                 continue;
             }
+            if (!myMergeDriver.isSameRepository()) {
+                if (!SVNProperty.isRegularProperty(propName)) {
+                    continue;
+                }
+            }
             SVNPropertyValue propValue = diff.getSVNPropertyValue(propName);
             newProps.put(propName, propValue);
         }

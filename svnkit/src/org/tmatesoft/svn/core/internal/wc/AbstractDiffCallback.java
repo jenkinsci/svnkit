@@ -79,11 +79,11 @@ public abstract class AbstractDiffCallback {
         }
         for(Iterator propNames = original.nameSet().iterator(); propNames.hasNext();) {
             String name = (String) propNames.next();
-            if (SVNProperty.isRegularProperty(name) && regular != null) {
+            if (regular != null && SVNProperty.isRegularProperty(name)) {
                 regular.put(name, original.getSVNPropertyValue(name));
-            } else if (SVNProperty.isEntryProperty(name) && entry != null) {
+            } else if (entry != null && SVNProperty.isEntryProperty(name)) {
                 entry.put(name, original.getSVNPropertyValue(name));
-            } else if (SVNProperty.isWorkingCopyProperty(name) && wc != null) {
+            } else if (wc != null && SVNProperty.isWorkingCopyProperty(name)) {
                 wc.put(name, original.getSVNPropertyValue(name));
             }
         }
