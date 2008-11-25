@@ -137,8 +137,7 @@ public class SVNWCManager {
                 ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, SVNDepth.INFINITY);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
-                String uuid = parentEntry.getUUID();
-                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, copyFromRev, SVNDepth.INFINITY);
+                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, null, copyFromRev, SVNDepth.INFINITY);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
