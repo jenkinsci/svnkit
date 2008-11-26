@@ -62,6 +62,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     private File myTempDirectory;
     private Collection myTempFiles;
     private Map myDeletedPaths;
+    private boolean myIsUseGlobalTmp;
     
     public SVNRemoteDiffEditor(SVNAdminArea adminArea, File target, AbstractDiffCallback callback,
                                SVNRepository repos, long revision1, long revision2, boolean dryRun, 
@@ -233,7 +234,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentFile = new SVNFileInfo(path, true);
         myCurrentFile.myBaseProperties = new SVNProperties();
-        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", false);
+        myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", myIsUseGlobalTmp);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -412,8 +413,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             myTempFiles.add(tmpFile);
             return tmpFile;
         }
-        return SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", false);
+        return SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", myIsUseGlobalTmp);
         
+    }
+
+    public void setUseGlobalTmp(boolean global) {
+        myIsUseGlobalTmp = global;
     }
 
     private class SVNDirectoryInfo {
@@ -451,7 +456,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
 
         public void loadFromRepository(long revision) throws SVNException {
-            myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", false);
+            myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", myIsUseGlobalTmp);
             OutputStream os = null;
             myBaseProperties = new SVNProperties();
             try {

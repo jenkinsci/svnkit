@@ -2871,6 +2871,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
             callback.setBasePath(basePath);
             editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
+            editor.setUseGlobalTmp(true);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     //TODO(sd): dynamic depth here
