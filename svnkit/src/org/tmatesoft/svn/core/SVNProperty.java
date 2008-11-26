@@ -450,6 +450,17 @@ public class SVNProperty {
     }
 
     /**
+     * Says if the given charset is the name of UTF-8 encoding.
+     *
+     * @param charset a value of a file {@link #CHARSET} property
+     * @return <span class="javakeyword">true</span> if <code>charset</code>
+     *         is the name of UTF-8 encoding
+     */
+    public static boolean isUTF8(String charset) {
+        return charset != null && charset.equalsIgnoreCase("UTF-8");
+    }
+
+    /**
      * Converts a string representation of a boolean value to boolean.
      * Useful to convert values of the {@link #COPIED} property.
      *

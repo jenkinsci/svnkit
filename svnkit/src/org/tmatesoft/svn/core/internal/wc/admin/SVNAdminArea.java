@@ -1539,7 +1539,7 @@ public abstract class SVNAdminArea {
         SVNPropertyValue charsetProp = baseProps.getPropertyValue(SVNProperty.CHARSET);
         String currentCharset = charsetProp == null ? null : charsetProp.getString();
         currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
-        if (currentCharset != null && !"UTF-8".equals(currentCharset)) {
+        if (currentCharset != null && !SVNProperty.isUTF8(currentCharset)) {
             File detranslatedFile = SVNAdminUtil.createTmpFile(this, "detranslated", ".tmp", true);
             String detranslatedPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), detranslatedFile.getAbsolutePath());
             File tmpCharsetPropFile = SVNAdminUtil.createTmpFile(this, "props", ".tmp", true);
