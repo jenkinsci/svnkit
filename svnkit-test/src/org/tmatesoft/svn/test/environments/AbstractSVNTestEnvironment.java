@@ -129,6 +129,8 @@ public abstract class AbstractSVNTestEnvironment {
 
     public abstract void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException;
 
+    public abstract SVNPropertyValue getProperty(File path, String propName, SVNRevision revision) throws SVNException;
+
     public void createFile(File file, String content) throws SVNException {
         SVNFileUtil.createFile(file, content, "UTF-8");
     }

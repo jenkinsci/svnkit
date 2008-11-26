@@ -1643,7 +1643,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsIgnoreAncestry;
     }
 
-    private boolean isRecordMergeInfo() {
+    protected boolean isRecordMergeInfo() {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsIgnoreAncestry && !myIsDryRun;
     }
     
@@ -2267,7 +2267,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
         }
 
-        editor = getMergeReportEditor(defaultStart, revision2, adminArea, mergeCallback, editor);
+        editor = getMergeReportEditor(defaultStart, revision2, adminArea, depth, mergeCallback, editor);
 
         SVNURL oldURL = ensureSessionURL(myRepository2, url1);
         try {
@@ -2356,7 +2356,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return editor;
     }
 
-    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
         if (editor == null) {
             editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
                     defaultStart, revision, myIsDryRun, this, this);

@@ -138,6 +138,8 @@ svnkit-test/src/org/tmatesoft/svn/test/tests/AbstractSVNTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/common/SimpleCheckoutTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/AbstractExtMergeTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ChangeMergeTargetCopyFromPathTest.java -text
+svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ElideFileMergedMergeinfoSourceTest.java -text
+svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ElideFileMergedMergeinfoTargetTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ISVNTestExtendedMergeCallback.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeAddFileFromRenamedSourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeAlreadyMergedFileTest.java -text
@@ -152,6 +154,7 @@ svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeRenamedSourceTest.ja
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeRenamedTargetTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeReplacedWithoutHistorySourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeSwitchedEntriesFailTest.java -text
+svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeWithDepthSupportTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/util/SVNResourceUtil.java -text
 svnkit-test/src/org/tmatesoft/svn/test/util/SVNTestDebugLog.java -text
 svnkit-test/src/org/tmatesoft/svn/test/util/test.default.properties -text

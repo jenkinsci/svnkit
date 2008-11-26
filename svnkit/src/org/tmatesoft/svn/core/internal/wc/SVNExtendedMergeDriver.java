@@ -63,6 +63,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
     private File myReportFile;
     private Set myPendingTargets;
     private SVNMergeRangeList myCurrentRemainingRanges;
+    private Boolean myRecordMergeInfo;
 
     private SVNRepository myRepository;
 
@@ -160,13 +161,13 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         }
     }
 
-    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
         if (skipExtendedMerge()) {
-            return super.getMergeReportEditor(defaultStart, revision, adminArea, mergeCallback, editor);
+            return super.getMergeReportEditor(defaultStart, revision, adminArea, depth, mergeCallback, editor);
         }
         if (editor == null) {
             editor = new SVNExtendedMergeEditor(this, getExtendedMergeCallback(), adminArea, adminArea.getRoot(),
-                    mergeCallback, myPrimaryURL, myRepository2, defaultStart, revision, myIsDryRun, this, this);
+                    mergeCallback, myPrimaryURL, myRepository2, defaultStart, revision, myIsDryRun, depth, this, this);
         } else {
             editor.reset(defaultStart, revision);
         }
@@ -175,7 +176,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         return editor;
     }
 
-    protected void addMergeSource(String mergeSource, SVNURL[] mergeSources, File target, SVNMergeRangeList remainingRanges, SVNCopySource targetCopySource) throws SVNException {
+    protected void addMergeSource(String mergeSource, SVNURL[] mergeSources, File target, SVNMergeRangeList remainingRanges, boolean adjustMergeInfo, SVNCopySource targetCopySource) throws SVNException {
         if (getPendingFiles().contains(target)) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: skip new additional target " + target.getAbsolutePath());
             return;
@@ -188,7 +189,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         SVNURL url2 = mergeSources[1];
 
         BufferedWriter writer = createWriter();
-        SVNMergeTask mergeTask = new SVNMergeTask(url1, url2, target, remainingRanges, targetCopySource);
+        SVNMergeTask mergeTask = new SVNMergeTask(url1, url2, target, remainingRanges, adjustMergeInfo, targetCopySource);
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: " + mergeTask.toString());
         try {
             mergeTask.writeTo(writer);
@@ -286,10 +287,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             return;
         }
 
-        if (depth != SVNDepth.INFINITY && depth != SVNDepth.UNKNOWN) {
-            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "''{0}'' depth is not allowed for this kind of merge", depth.getName());
-            SVNErrorManager.error(error, SVNLogType.WC);
-        }
         myPrimaryURL = revision1 < revision2 ? url1 : url2;
         mySecondURL = revision1 < revision2 ? url2 : url1;
         myRevision1 = revision1;
@@ -333,6 +330,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         SVNURL mergeSource2 = mergeTask.getMergeSource2();
         File mergeTarget = mergeTask.getMergeTarget();
         SVNMergeRangeList remainingRanges = mergeTask.getRemainingRanges();
+        boolean updateWCMergeInfo = mergeTask.isUpdateWCMergeInfo();
         SVNCopySource copySource = mergeTask.getTargetCopySource();
         if (copySource != null) {
             copy(copySource, mergeTarget, true);
@@ -345,11 +343,22 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         SVNAdminArea targetArea = retrieve(myWCAccess, mergeTarget.getParentFile());
 
         myCurrentRemainingRanges = remainingRanges;
+        myRecordMergeInfo = Boolean.valueOf(updateWCMergeInfo);
         try {
             doFileMerge(mergeURL1, revision1, mergeURL2, revision2, mergeTarget, targetArea, true);
         } finally {
             myCurrentRemainingRanges = null;
+            myRecordMergeInfo = null;
         }
+    }
+
+    protected boolean isRecordMergeInfo() {
+        boolean defaultOption =  super.isRecordMergeInfo();
+        if (skipExtendedMerge()) {
+            return defaultOption;
+        }
+        boolean recordMergeInfo = myRecordMergeInfo == null ? true : myRecordMergeInfo.booleanValue();
+        return recordMergeInfo && defaultOption;
     }
 
     protected Object[] calculateRemainingRangeList(File targetFile, SVNEntry entry, SVNURL sourceRoot, boolean[] indirect,
@@ -384,6 +393,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         SVNURL sourceURL2 = null;
         File target = null;
         SVNMergeRangeList remainingRanges = null;
+        boolean updateWCMergeInfo = true;
         SVNCopySource copySource = null;
 
         try {
@@ -402,6 +412,8 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
                 remainingRanges = new SVNMergeRangeList(ranges);
             }
 
+            updateWCMergeInfo = Boolean.TRUE.toString().equals(reader.readLine());
+
             String path = reader.readLine();
             SVNRevision pegRevision = SVNRevision.parse(reader.readLine());
             SVNRevision revision = SVNRevision.parse(reader.readLine());
@@ -417,7 +429,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.DEFAULT);
         }
-        return new SVNMergeTask(sourceURL, sourceURL2, target, remainingRanges, copySource);
+        return new SVNMergeTask(sourceURL, sourceURL2, target, remainingRanges, updateWCMergeInfo, copySource);
     }
 
     private BufferedReader createReader() throws SVNException {
@@ -442,13 +454,15 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         private SVNURL myMergeSource2;
         private File myMergeTarget;
         private SVNMergeRangeList myRemainingRanges;
+        private boolean myUpdateWCMergeInfo;
         private SVNCopySource myTargetCopySource;
 
-        protected SVNMergeTask(SVNURL mergeSource, SVNURL mergeSource2, File mergeTarget, SVNMergeRangeList remainingRanges, SVNCopySource targetCopySource) {
+        protected SVNMergeTask(SVNURL mergeSource, SVNURL mergeSource2, File mergeTarget, SVNMergeRangeList remainingRanges, boolean updateWCMergeInfo, SVNCopySource targetCopySource) {
             myMergeSource = mergeSource;
             myMergeSource2 = mergeSource2;
             myMergeTarget = mergeTarget;
             myRemainingRanges = remainingRanges;
+            myUpdateWCMergeInfo = updateWCMergeInfo;
             myTargetCopySource = targetCopySource;
         }
 
@@ -468,6 +482,10 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             return myRemainingRanges;
         }
 
+        protected boolean isUpdateWCMergeInfo() {
+            return myUpdateWCMergeInfo;
+        }
+
         protected SVNCopySource getTargetCopySource() {
             return myTargetCopySource;
         }
@@ -485,6 +503,9 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             if (getRemainingRanges() != null) {
                 writer.write(getRemainingRanges().toString());
             }
+            writer.newLine();
+
+            writer.write(String.valueOf(isUpdateWCMergeInfo()));
             writer.newLine();
 
             SVNCopySource source = getTargetCopySource();
@@ -539,17 +560,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         }
 
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
-            if (entry.isScheduledForAddition() || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
-                super.handleEntry(path, entry);
-                return;
-            }
-
-            SVNDepth entryDepth = entry.getDepth();
-            if (entryDepth != SVNDepth.INFINITY && entryDepth != SVNDepth.UNKNOWN) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "''{0}'' entry has ''{1}'' depth. Sparse working copy is not allowed for this kind of merge", new Object[]{path, entryDepth.getName()});
-                SVNErrorManager.error(error, SVNLogType.WC);
-            }
-
             SVNURL entryURL = entry.getSVNURL();
             if (entryURL != null && !myTarget.equals(path)) {
                 SVNEntry parentEntry = myWCAccess.getVersionedEntry(path.getParentFile(), false);

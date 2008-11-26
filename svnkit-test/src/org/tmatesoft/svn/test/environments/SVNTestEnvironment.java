@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 /**
  * @author TMate Software Ltd.
@@ -151,6 +152,11 @@ public class SVNTestEnvironment extends AbstractSVNTestEnvironment {
 
     public void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException {
         getManager().getWCClient().doSetProperty(path, propName, propValue, false, depth, null, null);
+    }
+
+    public SVNPropertyValue getProperty(File path, String propName, SVNRevision revision) throws SVNException {
+        SVNPropertyData propertyData = getManager().getWCClient().doGetProperty(path, propName, SVNRevision.UNDEFINED, revision);
+        return propertyData == null ? null : propertyData.getValue();
     }
 
     public void delete(File path) throws SVNException {

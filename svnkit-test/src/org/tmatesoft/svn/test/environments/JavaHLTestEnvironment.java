@@ -96,6 +96,10 @@ public class JavaHLTestEnvironment extends AbstractSVNTestEnvironment {
     public void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException {
     }
 
+    public SVNPropertyValue getProperty(File path, String propName, SVNRevision revision) throws SVNException {
+        return null;
+    }
+
     public void delete(File path) throws SVNException {
     }
 }

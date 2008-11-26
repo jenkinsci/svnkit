@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -54,6 +55,8 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
 
     private ISVNExtendedMergeCallback myMergeCallback;
     private SVNExtendedMergeDriver myMergeDriver;
+    private SVNWCAccess myWCAccess;
+    private SVNDepth myDepth;
 
     private SVNURL mySourceURL;
     private SVNURL myTargetURL;
@@ -61,11 +64,14 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
     private Stack myDirectories;
 
     public SVNExtendedMergeEditor(SVNExtendedMergeDriver mergeDriver, ISVNExtendedMergeCallback mergeCallback, SVNAdminArea adminArea, File target, AbstractDiffCallback callback,
-                                  SVNURL sourceURL, SVNRepository repos, long revision1, long revision2, boolean dryRun, ISVNEventHandler handler,
+                                  SVNURL sourceURL, SVNRepository repos, long revision1, long revision2, boolean dryRun, SVNDepth depth, ISVNEventHandler handler,
                                   ISVNEventHandler cancelHandler) throws SVNException {
         super(adminArea, target, callback, repos, revision1, revision2, dryRun, handler, cancelHandler);
 
-        String url = adminArea.getEntry(adminArea.getThisDirName(), false).getURL();
+        SVNEntry rootEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
+        String url = rootEntry.getURL();
+        myWCAccess = adminArea.getWCAccess();
+        myDepth = depth;
         myTargetURL = SVNURL.parseURIEncoded(url);
         myMergeCallback = mergeCallback;
         myMergeDriver = mergeDriver;
@@ -90,6 +96,70 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         return myDirectories;
     }
 
+    protected boolean checkDepth(File path, SVNEntry entry, SVNNodeKind kind) throws SVNException {
+        if (path.equals(myTarget)) {
+            return true;
+        }
+        boolean reportDepthAllows = checkReportDepth(path, kind);
+        if (!reportDepthAllows) {
+            return false;
+        }
+        return checkSparseWC(path, entry, kind);
+    }
+
+    private boolean checkReportDepth(File path, SVNNodeKind kind) throws SVNException {
+        if (myDepth == SVNDepth.EMPTY) {
+            return false;
+        }
+        if ((myDepth == SVNDepth.IMMEDIATES || myDepth == SVNDepth.FILES) && !myTarget.equals(path.getParentFile())) {
+            return false;
+        }
+        if (myDepth == SVNDepth.FILES && kind == SVNNodeKind.DIR) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkSparseWC(File path, SVNEntry entry, SVNNodeKind kind) throws SVNException {
+        if (entry != null) {
+            return true;
+        }
+        entry = myWCAccess.getEntry(path, true);
+        if (entry != null) {
+            return true;
+        }
+        File parentPath = path.getParentFile();
+        SVNEntry parentEntry = myWCAccess.getEntry(parentPath, true);
+        if (parentEntry != null) {
+            SVNDepth parentDepth = parentEntry.getDepth();
+            return checkEntryDepth(parentDepth, kind);
+        }
+        return walkToTarget(parentPath);
+    }
+
+    private boolean walkToTarget(File path) throws SVNException {
+        if (myTarget.equals(path)) {
+            return true;
+        }
+        File parentPath = path.getParentFile();
+        SVNEntry parentEntry = myWCAccess.getEntry(parentPath, true);
+        if (parentEntry != null) {
+            SVNDepth parentDepth = parentEntry.getDepth();
+            return checkEntryDepth(parentDepth, SVNNodeKind.DIR);
+        }
+        return walkToTarget(parentPath);
+    }
+
+    private static boolean checkEntryDepth(SVNDepth parentDepth, SVNNodeKind kind) {
+        if (parentDepth == SVNDepth.EMPTY) {
+            return false;
+        }
+        if (parentDepth == SVNDepth.FILES && kind != SVNNodeKind.FILE) {
+            return false;
+        }
+        return true;
+    }
+
     public void deleteEntry(String path, long revision) throws SVNException {
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision1);
         SVNAdminArea dir = retrieve(myCurrentDirectory.myWCFile, true);
@@ -99,7 +169,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         }
 
         long targetRevision = getTargetRevision(path);
-        SVNURL[] targets = getMergeCallback().getTrueMergeTargets(getSourceURL(path), revision, myRevision1, myRevision2, getTargetURL(path), targetRevision, SVNEditorAction.DELETE);
+        SVNURL[] targets = getMergeCallback().getTrueMergeTargets(getSourceURL(path), myRevision1, myRevision1, myRevision2, getTargetURL(path), targetRevision, SVNEditorAction.DELETE);
 
         if (targets == null) {
             deleteEntry(path, nodeKind, dir);
@@ -107,9 +177,17 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         }
 
         SVNFileInfoExt fileInfo = null;
+        File expectedTarget = getFile(path);
         for (int i = 0; i < targets.length; i++) {
             SVNURL targetURL = targets[i];
             String targetPath = getPath(targetURL);
+            File target = getFile(targetPath);
+            if (!expectedTarget.equals(target)) {
+                boolean depthAllows = checkDepth(target, null, nodeKind);
+                if (!depthAllows) {
+                    continue;
+                }
+            }
 
             fileInfo = getFileInfo(path, revision, SVNEditorAction.DELETE, nodeKind);
             fileInfo.addTarget(targetPath);
@@ -150,8 +228,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         SVNEventAction action = SVNEventAction.SKIP;
         SVNEventAction expectedAction = SVNEventAction.UPDATE_DELETE;
 
-        SVNWCAccess access = myAdminArea.getWCAccess();
-        SVNEntry entry = access.getEntry(file, false);
+        SVNEntry entry = myWCAccess.getEntry(file, false);
         if (entry == null) {
             return;
         }
@@ -196,8 +273,14 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             File target = getFile(targetPath);
 
             SVNMergeRangeList remainingRanges = null;
-            SVNURL[] mergeSources = new SVNURL[2];
+            SVNURL[] mergeSources = null;
             if (!expectedTargetURL.equals(targetURL)) {
+                boolean depthAllows = checkDepth(target, null, SVNNodeKind.FILE);
+                if (!depthAllows) {
+                    continue;
+                }
+                
+                mergeSources = new SVNURL[2];
                 remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             }
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
@@ -205,10 +288,14 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             if (copyTask != null || remainingRanges != null) {
                 SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
                 copySource = processCopySource(copySource, targetRevision);
-                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, copySource);
+                boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
+                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, mergeInfoConflicts, copySource);
                 if (copyTask != null && copyTask.isMove()) {
                     File deleteTarget = getDeleteTarget(copySource);
-                    deletePath(deleteTarget);
+                    boolean depthAllows = checkDepth(deleteTarget, null, SVNNodeKind.FILE);
+                    if (depthAllows) {
+                        deletePath(deleteTarget);
+                    }
                 }
                 continue;
             }
@@ -235,8 +322,14 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             File target = getFile(targetPath);
 
             SVNMergeRangeList remainingRanges = null;
-            SVNURL[] mergeSources = new SVNURL[2];
+            SVNURL[] mergeSources = null;
             if (!expectedTargetURL.equals(targetURL)) {
+                boolean depthAllows = checkDepth(target, null, SVNNodeKind.FILE);
+                if (!depthAllows) {
+                    continue;
+                }
+
+                mergeSources = new SVNURL[2];
                 remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             }
             boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
@@ -246,13 +339,16 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             if (copySource != null && !mergeInfoConflicts) {
                 getMergeDriver().copy(copySource, target, false);
             } else if (mergeInfoConflicts) {
-                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, copySource);
+                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, true, copySource);
                 continue;
             }
 
             if (copyTask != null && copyTask.isMove()) {
                 File deleteTarget = getDeleteTarget(copySource);
-                deletePath(deleteTarget);
+                boolean depthAllows = checkDepth(deleteTarget, null, SVNNodeKind.FILE);
+                if (depthAllows) {
+                    deletePath(deleteTarget);
+                }
             }
 
             SVNFileInfoExt fileInfo = getFileInfo(path, revision, SVNEditorAction.MODIFY, null);
@@ -282,10 +378,9 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
     }
 
     private long getTargetRevision(String path) throws SVNException {
-        SVNWCAccess access = myAdminArea.getWCAccess();
         File file = getFile(path);
-        SVNEntry entry = access.getEntry(file, true);
-        return calculateTargetRevision(access, entry, file);
+        SVNEntry entry = myWCAccess.getEntry(file, true);
+        return calculateTargetRevision(myWCAccess, entry, file);
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -300,10 +395,9 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
 
     private void processDir(String path, boolean remoteAdd) throws SVNException {
         File dir = getFile(path);
-        SVNWCAccess access = myAdminArea.getWCAccess();
-        SVNEntry dirEntry = access.getEntry(dir, true);
+        SVNEntry dirEntry = myWCAccess.getEntry(dir, true);
 
-        long dirRevision = calculateTargetRevision(access, dirEntry, dir);
+        long dirRevision = calculateTargetRevision(myWCAccess, dirEntry, dir);
         boolean skipped = dirEntry == null;
         boolean added = dirEntry != null && (dirEntry.isScheduledForAddition() || dirEntry.isScheduledForReplacement());
 
