@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.util.jna;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.internal.util.jna.ISVNWin32Library.HRESULT;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import com.sun.jna.NativeLong;
@@ -85,6 +86,30 @@ class SVNWin32Util {
             }
         }
         return false;
+    }
+    
+    public static String getApplicationDataPath(boolean common) {
+        ISVNWin32Library library = JNALibraryLoader.getWin32Library(); 
+        if (library == null) {
+            return null;
+        }
+        final char[] commonAppDataPath = new char[1024];
+        int type = common ? ISVNWin32Library.CSIDL_COMMON_APPDATA : ISVNWin32Library.CSIDL_APPDATA;
+        HRESULT result = library.SHGetFolderPathW(null, type, null, ISVNWin32Library.SHGFP_TYPE_DEFAULT, commonAppDataPath);
+        if (result == null || result.longValue() != 0) {
+            return null;
+        }
+        int length = commonAppDataPath.length;
+        for (int i = 0; i < commonAppDataPath.length; i++) {
+            if (commonAppDataPath[i] == '\0') {
+                length = i;
+                break;
+            }
+        }
+        String path = new String(commonAppDataPath, 0, length);
+        path = path.replace(File.separatorChar, '/');
+        return path;
+        
     }
 
 }
