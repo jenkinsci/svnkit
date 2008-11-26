@@ -80,6 +80,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     private SVNDiffOptions myDiffOptions;
     private Collection myRawDiffOptions;
     private String myDiffCommand;
+    private boolean myIsUseAbsolutePaths;
     
     /**
      * Constructs a <b>DefaultSVNDiffGenerator</b>.
@@ -150,6 +151,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public void setBasePath(File basePath) {
         myBasePath = basePath;
+    }
+    
+    /**
+     * Controls whether error is reported on failure to compute relative display path, 
+     * or absolute path is used instead.
+     * 
+     * @param fallback true to make generator use absolute path when relative path could not
+     *                 be computed.
+     */
+    public void setFallbackToAbsolutePath(boolean fallback) {
+        myIsUseAbsolutePaths = fallback;
     }
 
     /**
@@ -237,6 +249,9 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         }
         String relativePath = SVNPathUtil.getPathAsChild(basePath, path);
         if (relativePath == null) {
+            if (myIsUseAbsolutePaths) {
+                return path;
+            }
             createBadRelativePathError(path);
         }
         if (relativePath.startsWith("./")) {
