@@ -354,7 +354,11 @@ public class DAVRepository extends SVNRepository {
                     if ((entryFields & SVNDirEntry.DIRENT_SIZE) != 0) {
                     SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
                         if (sizeValue != null) {
-                            size = Long.parseLong(sizeValue.getString());
+                            try {
+                                size = Long.parseLong(sizeValue.getString());
+                            } catch (NumberFormatException nfe) {
+                                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                            }
                         }
                     }
 
@@ -366,7 +370,12 @@ public class DAVRepository extends SVNRepository {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Server response missing the expected deadprop-count property");
                                 SVNErrorManager.error(err, SVNLogType.NETWORK);
                             } else {
-                                long propCount = Long.parseLong(propVal.getString());
+                                long propCount = -1;
+                                try {
+                                    propCount = Long.parseLong(propVal.getString());
+                                } catch (NumberFormatException nfe) {
+                                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                                }
                                 hasProperties = propCount > 0;
                             }
                         } else {
@@ -459,9 +468,21 @@ public class DAVRepository extends SVNRepository {
                 }
                 SVNNodeKind kind = SVNNodeKind.FILE;
                 Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
-                long lastRevision = Long.parseLong(revisionStr.toString());
+                long lastRevision = -1;
+                try {
+                    lastRevision = Long.parseLong(revisionStr.toString());
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
                 SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-                long size = sizeValue == null ? 0 : Long.parseLong(sizeValue.getString());
+                long size = 0;
+                if (sizeValue != null) {
+                    try {
+                        size = Long.parseLong(sizeValue.getString());
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
+                }
                 if (child.isCollection()) {
                     kind = SVNNodeKind.DIR;
                 }

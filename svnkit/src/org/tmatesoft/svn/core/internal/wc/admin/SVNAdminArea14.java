@@ -1487,7 +1487,13 @@ public class SVNAdminArea14 extends SVNAdminArea {
     }
 
     protected boolean writeRevision(Writer writer, String rev, int emptyFields) throws IOException {
-        if (rev != null && rev.length() > 0 && Long.parseLong(rev) >= 0) {
+        long revValue = -1;
+        try {
+            revValue = Long.parseLong(rev);
+        } catch (NumberFormatException nfe) {
+            //
+        }
+        if (rev != null && rev.length() > 0 && revValue >= 0) {
             for (int i = 0; i < emptyFields; i++) {
                 writer.write('\n');
             }

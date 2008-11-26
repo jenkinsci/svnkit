@@ -414,7 +414,12 @@ public class SVNLogRunner {
                 }
                 boolean implicit = attributes.getStringValue("implicit") != null && entry.isCopied();
                 setEntriesChanged(true);
-                long revisionNumber = Long.parseLong(attributes.getStringValue(SVNLog.REVISION_ATTR));
+                long revisionNumber = -1;
+                try {
+                    revisionNumber = Long.parseLong(attributes.getStringValue(SVNLog.REVISION_ATTR));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, nfe), SVNLogType.WC);
+                }
                 adminArea.postCommit(fileName, revisionNumber, implicit, code);
             } catch (SVNException svne) {
                 error = svne;
