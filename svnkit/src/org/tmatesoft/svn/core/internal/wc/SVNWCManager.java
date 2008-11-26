@@ -133,7 +133,8 @@ public class SVNWCManager {
                 SVNEntry pEntry = wcAccess.getEntry(path.getParentFile(), false);
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
                 SVNURL rootURL = pEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, null, 0, SVNDepth.INFINITY);
+                String uuid = pEntry.getUUID();
+                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, SVNDepth.INFINITY);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
                 ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, null, copyFromRev, SVNDepth.INFINITY);
