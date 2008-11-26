@@ -1534,16 +1534,18 @@ public class SVNUpdateClient extends SVNBasicClient {
         // now we have diff.
         for (Iterator diffPaths = diff.iterator(); diffPaths.hasNext();) {
             String diffPath = (String) diffPaths.next();
-            SVNDepth depth = depths == Collections.EMPTY_MAP ? SVNDepth.INFINITY : (SVNDepth) depths.get(diffPath);
-            if (depth == null) {
+            SVNDepth ambientDepth = depths == Collections.EMPTY_MAP ? SVNDepth.INFINITY : (SVNDepth) depths.get(diffPath);
+            if (ambientDepth == null) {
                 // TODO convert diffpath to full path.
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Traversal of ''{0}'' found no ambient depth", diffPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            if ((requestedDepth.getId() < SVNDepth.INFINITY.getId() && requestedDepth != SVNDepth.UNKNOWN) ||
-                    (depth.getId() < SVNDepth.INFINITY.getId() && requestedDepth.getId() < SVNDepth.INFINITY.getId())) {
+            if (!ambientDepth.isRecursive() || !requestedDepth.isRecursive()) {
+                // skip externals - either folder depth is not recursive,
+                // or requested depth is not recursive.
                 continue;
             }
+
             String oldValue = (String) oldExternals.get(diffPath);
             String newValue = (String) newExternals.get(diffPath);
 
