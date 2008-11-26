@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -96,6 +97,8 @@ public class SVNFileUtil {
     private static String ourAdminDirectoryName;
     private static File ourSystemAppDataPath;
     
+    private static Method ourSetWritableMethod;
+    
     private static volatile boolean ourIsSleepForTimeStamp = true;
     
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
@@ -144,6 +147,12 @@ public class SVNFileUtil {
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
+        
+        try {
+            ourSetWritableMethod = File.class.getMethod("setWritable", new Class[] {Boolean.TYPE});
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        }
     }
 
     public static String getIdCommand() {
@@ -434,6 +443,16 @@ public class SVNFileUtil {
         }
         if (readonly) {
             return file.setReadOnly();
+        } else if (ourSetWritableMethod != null) {
+            try {
+                Object result = ourSetWritableMethod.invoke(file, new Object[] {Boolean.TRUE});
+                if (Boolean.TRUE.equals(result)) {
+                    return true;
+                }
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException e) {
+            }
         }
         if (isWindows) {
             if (SVNJNAUtil.setWritable(file)) {
@@ -448,21 +467,13 @@ public class SVNFileUtil {
             return true;
         }
         try {
-            if (file.length() < 1024 * 100) {
-                // faster way for small files.
-                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro", true);
-                copyFile(file, tmp, false);
-                copyFile(tmp, file, false);
-                deleteFile(tmp);
+            if (isWindows) {
+                Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
+                p.waitFor();
             } else {
-                if (isWindows) {
-                    Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
-                    p.waitFor();
-                } else {
-                    execCommand(new String[] {
-                            CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
-                    });
-                }
+                execCommand(new String[] {
+                        CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
+                });
             }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
