@@ -146,7 +146,7 @@ public class SVNTranslator {
             }
             return;
         }
-        if ((charset == null || "UTF-8".equals(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
+        if ((charset == null || SVNProperty.isUTF8(charset)) && eol == null && (keywords == null || keywords.isEmpty())) {
             // no expansion, fast copy.
             SVNFileUtil.copyFile(src, dst, false);
             return;
@@ -432,7 +432,7 @@ public class SVNTranslator {
     }
 
     public static OutputStream getTranslatingOutputStream(OutputStream out, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
-        if (charset == null || "UTF-8".equals(charset)) {
+        if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
         if (expand) {
@@ -444,7 +444,7 @@ public class SVNTranslator {
     }
 
     public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
-        if (charset == null || "UTF-8".equals(charset)) {
+        if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
         }
         if (expand) {
