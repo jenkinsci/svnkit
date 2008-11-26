@@ -356,7 +356,7 @@ public class FSCommitEditor implements ISVNEditor {
             }
             
             SVNErrorMessage[] errorMessage = new SVNErrorMessage[1];
-            committedRev = myCommitter.commitTxn(true, true, errorMessage);
+            committedRev = myCommitter.commitTxn(true, true, errorMessage, null);
                 
             SVNProperties revProps = myFSFS.getRevisionProperties(committedRev);
             String dateProp = revProps.getStringValue(SVNRevisionProperty.DATE);

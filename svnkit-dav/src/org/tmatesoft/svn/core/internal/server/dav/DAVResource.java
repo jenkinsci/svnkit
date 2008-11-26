@@ -19,6 +19,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.tmatesoft.svn.core.ISVNDirEntryHandler;
 import org.tmatesoft.svn.core.SVNDirEntry;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -51,6 +53,7 @@ public class DAVResource {
     public static final String DEFAULT_COLLECTION_CONTENT_TYPE = "text/html; charset=\"utf-8\"";
     public static final String DEFAULT_FILE_CONTENT_TYPE = "text/plain";
 
+    private DAVRepositoryManager myRepositoryManager;
     private DAVResourceURI myResourceURI;
     private FSRepository myRepository;
     private long myRevision;
@@ -82,10 +85,17 @@ public class DAVResource {
      * @param useCheckedIn special case for VCC resource
      * @throws SVNException if an error occurs while fetching repository properties.
      */
-    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
-            String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws SVNException {
+    public DAVResource(SVNRepository repository, DAVRepositoryManager manager, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
+            String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws DAVException {
+        myRepositoryManager = manager;
         myRepository = (FSRepository) repository;
-        myRepository.testConnection();//this should create an FSFS object
+        try {
+            myRepository.testConnection();//this should create an FSFS object
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Error occurred while accessing a repository at {0}", new Object[] { myRepository.getLocation() });
+        }
+        
         myFSFS = myRepository.getFSFS();
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
@@ -97,11 +107,12 @@ public class DAVResource {
         myRevision = resourceURI.getRevision();
         myUserName = userName;
         myActivitiesDB = activitiesDB;
-        prepare();
+        DAVResourceHelper.prepareResource(this);
     }
 
-    public DAVResource(SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
+    public DAVResource(DAVRepositoryManager manager, SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
             long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
+        myRepositoryManager = manager;
         myResourceURI = resourceURI;
         myRepository = (FSRepository) repository;
         myFSFS = myRepository.getFSFS();
@@ -189,6 +200,24 @@ public class DAVResource {
         return myIsSVNClient;
     }
     
+    public DAVAutoVersion getAutoVersion() {
+        if (getType() == DAVResourceType.VERSION && isBaseLined()) {
+            return DAVAutoVersion.ALWAYS;
+        }
+        
+        DAVConfig config = myRepositoryManager.getDAVConfig(); 
+        if (config.isAutoVersioning()) {
+            if (getType() == DAVResourceType.REGULAR) {
+                return DAVAutoVersion.ALWAYS;
+            }
+            
+            if (getType() == DAVResourceType.WORKING && isAutoCheckedOut()) {
+                return DAVAutoVersion.ALWAYS;
+            }
+        }
+        return DAVAutoVersion.NEVER;
+    }
+    
     public String getUserName() {
         return myUserName;
     }
@@ -233,7 +262,7 @@ public class DAVResource {
                 String childURI = DAVPathUtil.append(getResourceURI().getURI(), entry.getName());
                 try {
                     DAVResourceURI newResourceURI = new DAVResourceURI(getResourceURI().getContext(), childURI, null, false);
-                    return new DAVResource(getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
+                    return new DAVResource(myRepositoryManager, getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
                             getVersion(), getClientOptions(), null, null, getUserName(), getActivitiesDB());
                 } catch (SVNException e) {
                     return null;
@@ -464,14 +493,14 @@ public class DAVResource {
         return copy;
     }
     
-    public void prepare() throws DAVException {
-        DAVResourceHelper.prepareResource(this);
-    }
-
     public FSFS getFSFS() {
         return myFSFS;
     }
     
+    public DAVRepositoryManager getRepositoryManager() {
+        return myRepositoryManager;
+    }
+
     private SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new SVNProperties();
@@ -487,6 +516,7 @@ public class DAVResource {
     }
 
     protected void copyTo(DAVResource copy) {
+        copy.myRepositoryManager = myRepositoryManager;
         copy.myResourceURI = myResourceURI.dup();
         copy.myRepository = myRepository;
         copy.myRevision = myRevision;

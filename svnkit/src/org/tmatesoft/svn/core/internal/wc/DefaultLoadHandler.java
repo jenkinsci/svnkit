@@ -98,7 +98,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             long oldRevision = baton.myRevision;
             long newRevision = -1;
             try {
-                newRevision = baton.getCommitter().commitTxn(myIsUsePreCommitHook, myIsUsePostCommitHook, null);
+                newRevision = baton.getCommitter().commitTxn(myIsUsePreCommitHook, myIsUsePostCommitHook, null, null);
             } catch (SVNException svne) {
                 try {
                     FSCommitter.abortTransaction(myFSFS, baton.myTxn.getTxnId());

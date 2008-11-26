@@ -264,7 +264,7 @@ public class FSCommitter {
         }
     }
 
-    public long commitTxn(boolean runPreCommitHook, boolean runPostCommitHook, SVNErrorMessage[] postCommitHookError) throws SVNException {
+    public long commitTxn(boolean runPreCommitHook, boolean runPostCommitHook, SVNErrorMessage[] postCommitHookError, StringBuffer conflictPath) throws SVNException {
         if (runPreCommitHook) {
             FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), myTxn.getTxnId());
         }
@@ -277,7 +277,7 @@ public class FSCommitter {
 
             FSRevisionNode youngishRootNode = youngishRoot.getRevisionNode("/");
 
-            mergeChanges(null, youngishRootNode);
+            mergeChanges(null, youngishRootNode, conflictPath);
 
             myTxn.setBaseRevision(youngishRev);
 
@@ -519,7 +519,7 @@ public class FSCommitter {
         return newRevision;
     }
 
-    private void mergeChanges(FSRevisionNode ancestorNode, FSRevisionNode sourceNode) throws SVNException {
+    private void mergeChanges(FSRevisionNode ancestorNode, FSRevisionNode sourceNode, StringBuffer conflictPath) throws SVNException {
         String txnId = myTxn.getTxnId();
         FSRevisionNode txnRootNode = myTxnRoot.getRootRevisionNode();
 
@@ -531,11 +531,12 @@ public class FSCommitter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "FATAL error: no changes in transaction to commit");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         } else {
-            merge("/", txnRootNode, sourceNode, ancestorNode, txnId);
+            merge("/", txnRootNode, sourceNode, ancestorNode, txnId, conflictPath);
         }
     }
 
-    private long merge(String targetPath, FSRevisionNode target, FSRevisionNode source, FSRevisionNode ancestor, String txnId) throws SVNException {
+    private long merge(String targetPath, FSRevisionNode target, FSRevisionNode source, FSRevisionNode ancestor, String txnId, 
+            StringBuffer conflictPath) throws SVNException {
         FSID sourceId = source.getId();
         FSID targetId = target.getId();
         FSID ancestorId = ancestor.getId();
@@ -553,11 +554,11 @@ public class FSCommitter {
         }
 
         if (source.getType() != SVNNodeKind.DIR || target.getType() != SVNNodeKind.DIR || ancestor.getType() != SVNNodeKind.DIR) {
-            SVNErrorManager.error(FSErrors.errorConflict(targetPath), SVNLogType.FSFS);
+            SVNErrorManager.error(FSErrors.errorConflict(targetPath, conflictPath), SVNLogType.FSFS);
         }
 
         if (!FSRepresentation.compareRepresentations(target.getPropsRepresentation(), ancestor.getPropsRepresentation())) {
-            SVNErrorManager.error(FSErrors.errorConflict(targetPath), SVNLogType.FSFS);
+            SVNErrorManager.error(FSErrors.errorConflict(targetPath, conflictPath), SVNLogType.FSFS);
         }
 
         Map sourceEntries = source.getDirEntries(myFSFS);
@@ -593,26 +594,28 @@ public class FSCommitter {
             } else {
                 
                 if (sourceEntry == null || targetEntry == null) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName))), SVNLogType.FSFS);
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)), 
+                            conflictPath), SVNLogType.FSFS);
                 }
 
                 if (sourceEntry.getType() == SVNNodeKind.FILE || targetEntry.getType() == SVNNodeKind.FILE || ancestorEntry.getType() == SVNNodeKind.FILE) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName))), SVNLogType.FSFS);
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)), 
+                            conflictPath), SVNLogType.FSFS);
                 }
 
                 if (!sourceEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) || 
                         !sourceEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID()) || 
                         !targetEntry.getId().getNodeID().equals(ancestorEntry.getId().getNodeID()) || 
                         !targetEntry.getId().getCopyID().equals(ancestorEntry.getId().getCopyID())) {
-                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName))), SVNLogType.FSFS);
+                    SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, ancestorEntryName)), 
+                            conflictPath), SVNLogType.FSFS);
                 }
 
                 FSRevisionNode sourceEntryNode = myFSFS.getRevisionNode(sourceEntry.getId());
                 FSRevisionNode targetEntryNode = myFSFS.getRevisionNode(targetEntry.getId());
                 FSRevisionNode ancestorEntryNode = myFSFS.getRevisionNode(ancestorEntry.getId());
                 String childTargetPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName()));
-                long subMergeInfoIncrement = merge(childTargetPath, targetEntryNode, sourceEntryNode, 
-                        ancestorEntryNode, txnId);
+                long subMergeInfoIncrement = merge(childTargetPath, targetEntryNode, sourceEntryNode, ancestorEntryNode, txnId, conflictPath);
                 if (myFSFS.supportsMergeInfo()) {
                     mergeInfoIncrement += subMergeInfoIncrement;
                 }
@@ -629,7 +632,8 @@ public class FSCommitter {
             FSEntry sourceEntry = (FSEntry) sourceEntries.get(sourceEntryName);
             FSEntry targetEntry = (FSEntry) targetEntries.get(sourceEntryName);
             if (targetEntry != null) {
-                SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName()))), SVNLogType.FSFS);
+                SVNErrorManager.error(FSErrors.errorConflict(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(targetPath, targetEntry.getName())), 
+                        conflictPath), SVNLogType.FSFS);
             }
             if (myFSFS.supportsMergeInfo()) {
                 FSRevisionNode sourceEntryNode = myFSFS.getRevisionNode(sourceEntry.getId());

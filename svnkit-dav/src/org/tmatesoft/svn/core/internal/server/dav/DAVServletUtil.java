@@ -64,9 +64,7 @@ public class DAVServletUtil {
         fsfs.changeTransactionProperties(txn.getTxnId(), props);
     }
     
-    public static void deleteActivity(DAVResource resource) throws DAVException {
-        DAVResourceURI resourceURI = resource.getResourceURI();
-        String activityID = resourceURI.getActivityID();
+    public static void deleteActivity(DAVResource resource, String activityID) throws DAVException {
         File activitiesDB = resource.getActivitiesDB();
         String txnName = getTxn(activitiesDB, activityID);
         if (txnName == null) {

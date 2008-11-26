@@ -65,7 +65,7 @@ public abstract class DAVResourceHelper {
                 uri.getType() }, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0); 
     }
 
-    public static void convertToRegular(DAVResource resource) throws DAVException {
+    public static void convertWorkingToRegular(DAVResource resource) throws DAVException {
         DAVResourceURI uri = resource.getResourceURI();
         uri.setType(DAVResourceType.REGULAR);
         

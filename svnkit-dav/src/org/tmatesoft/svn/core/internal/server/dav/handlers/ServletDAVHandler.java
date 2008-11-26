@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.internal.server.dav.DAVAutoVersion;
 import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
@@ -64,6 +65,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVURIInfo;
+import org.tmatesoft.svn.core.internal.server.dav.DAVVersionResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
@@ -551,13 +553,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVWorkingResourceHelper.createWorkingResource(resource, parse.getActivityID(), txnName, false);
     }
 
-    protected DAVResource checkIn(DAVResource resource, boolean keepCheckedOut) throws DAVException {
+    protected DAVResource checkIn(DAVResource resource, boolean keepCheckedOut, boolean createVersionResource) throws DAVException {
         if (resource.getType() != DAVResourceType.WORKING) {
             throw new DAVException("CHECKIN called on non-working resource.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, 
                     SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
                     SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
         }
         
+        DAVResource versionResource = null;
+        DAVResourceURI resourceURI = resource.getResourceURI();
         String sharedActivity = DAVServlet.getSharedActivity();
         if (sharedActivity != null && sharedActivity.equals(resource.getActivityID())) {
             String sharedTxnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), sharedActivity);
@@ -576,26 +580,45 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             DAVServletUtil.setAutoRevisionProperties(resource);
             FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
             
+            StringBuffer conflictPath = new StringBuffer(); 
             long newRev = SVNRepository.INVALID_REVISION;
             try {
-                newRev = committer.commitTxn(true, true, null);
+                newRev = committer.commitTxn(true, true, null, conflictPath);
             } catch (SVNException svne) {
                 try {
                     FSCommitter.abortTransaction(resource.getFSFS(), resource.getTxnInfo().getTxnId());
                 } catch (SVNException svne2) {
-                    //
+                    //ignore
                 }
                 String message = null;
                 Object[] objects = null;
                 if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
                     message = "A conflict occurred during the CHECKIN processing. The problem occurred with  the \"{0}\" resource.";
-                    //objects = new Object[] { }
+                    objects = new Object[] { conflictPath.toString() };
+                } else {
+                    message = "An error occurred while committing the transaction.";
                 }
-
+                
+                DAVServletUtil.deleteActivity(resource, sharedActivity);
+                DAVServlet.setSharedActivity(null);
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, message, objects);
             }
             
+            DAVServletUtil.deleteActivity(resource, sharedActivity);
+            if (createVersionResource) {
+                String uri = DAVPathUtil.buildURI(resourceURI.getContext(), DAVResourceKind.VERSION, newRev, resourceURI.getPath());
+                versionResource = DAVVersionResourceHelper.createVersionResource(resource, uri);
+            }
         }
-        return null;
+        
+        resource.setTxnName(null);
+        resource.setTxnInfo(null);
+        
+        if (!keepCheckedOut) {
+            resource.setIsAutoCkeckedOut(false);
+            DAVResourceHelper.convertWorkingToRegular(resource);
+        }
+        return versionResource;
     }
     
     protected void uncheckOut(DAVResource resource) throws DAVException {
@@ -617,7 +640,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         DAVResourceURI resourceURI = resource.getResourceURI();
         if (resourceURI.getActivityID() != null) {
             try {
-                DAVServletUtil.deleteActivity(resource);
+                DAVServletUtil.deleteActivity(resource, resourceURI.getActivityID());
             } catch (DAVException dave) {
                 //ignore
             }
@@ -628,12 +651,19 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         resource.setTxnInfo(null);
         resource.setIsAutoCkeckedOut(false);
         
-        DAVResourceHelper.convertToRegular(resource);
+        DAVResourceHelper.convertWorkingToRegular(resource);
     }
     
-    protected void autoCheckOut(DAVResource resource, boolean isParentOnly) {
+    protected void autoCheckOut(DAVResource resource, boolean isParentOnly) throws DAVException {
+        DAVAutoVersionInfo info = null;
         if (!resource.exists() || isParentOnly) {
-            
+            DAVResource parentResource = null;
+            try {
+                parentResource = DAVResourceHelper.createParentResource(resource);
+            } catch (DAVException dave) {
+                autoCheckIn(resource, true, false, info);
+                throw dave;
+            }
         }
     }
     
@@ -651,7 +681,51 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 }
                 
                 if (info.isResourceVersioned()) {
-                    
+                    try {
+                        removeResource(resource);
+                    } catch (DAVException dave) {
+                        throw new DAVException("Unable to undo auto-version-control of resource {0}.", 
+                                new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
+                                HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
+                    }
+                }
+            }
+            
+            if (info.getParentResource() != null && info.isParentCheckedOut()) {
+                try {
+                    uncheckOut(info.getParentResource());
+                } catch (DAVException dave) {
+                    throw new DAVException("Unable to undo auto-checkout of parent collection {0}.", 
+                            new Object[] { SVNEncodingUtil.xmlEncodeCDATA(info.getParentResource().getResourceURI().getRequestURI()) }, 
+                            HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
+                }
+            }
+            return;
+        }
+        
+        if (resource != null && resource.isWorking() && (unlock || info.isResourceCheckedOut())) {
+            DAVAutoVersion autoVersion = resource.getAutoVersion();
+            if (autoVersion == DAVAutoVersion.ALWAYS || (unlock && autoVersion == DAVAutoVersion.LOCKED)) {
+                try {
+                    checkIn(resource, false, false);
+                } catch (DAVException dave) {
+                    throw new DAVException("Unable to auto-checkin resource {0}.", 
+                            new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
+                            HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
+                }
+            }
+        }
+        
+        if (!unlock && info.isParentCheckedOut() && info.getParentResource() != null && 
+                info.getParentResource().getType() == DAVResourceType.WORKING) {
+            DAVAutoVersion autoVersion = info.getParentResource().getAutoVersion();
+            if (autoVersion == DAVAutoVersion.ALWAYS) {
+                try {
+                    checkIn(info.getParentResource(), false, false);
+                } catch (DAVException dave) {
+                    throw new DAVException("Unable to auto-checkin parent collection {0}.", 
+                            new Object[] { SVNEncodingUtil.xmlEncodeCDATA(info.getParentResource().getResourceURI().getRequestURI()) }, 
+                            HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
                 }
             }
         }
@@ -671,7 +745,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         if (resourceType == DAVResourceType.ACTIVITY) {
-            DAVServletUtil.deleteActivity(resource);
+            DAVServletUtil.deleteActivity(resource, uri.getActivityID());
             return;
         }
         
@@ -706,7 +780,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         if (resource.isAutoCheckedOut()) {
-            
+            checkIn(resource, false, false);
         }
     }
     

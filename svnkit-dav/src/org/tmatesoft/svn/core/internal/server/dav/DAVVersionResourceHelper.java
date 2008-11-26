@@ -57,4 +57,18 @@ public class DAVVersionResourceHelper extends DAVResourceHelper {
         return null;
     }
 
+    public static DAVResource createVersionResource(DAVResource resource, String uri) throws DAVException {
+        DAVResourceURI regularResourceURI = null;
+        
+        try {
+            regularResourceURI = new DAVResourceURI(resource.getResourceURI().getContext(), uri, null, false);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not parse version resource uri.", null);
+        }
+        
+        return new DAVResource(resource.getRepository(), resource.getRepositoryManager(), regularResourceURI, resource.isSVNClient(), 
+                resource.getDeltaBase(), resource.getVersion(), resource.getClientOptions(), resource.getBaseChecksum(), 
+                resource.getResultChecksum(), resource.getUserName(), resource.getActivitiesDB());
+    }
 }

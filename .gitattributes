@@ -74,6 +74,7 @@ svnkit-cli/src/org/tmatesoft/svn/cli/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookCatCommand.java -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookLockCommand.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVActivityResourceHelper.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVAutoVersion.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVErrorCode.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVException.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVHistoryResourceHelper.java -text
@@ -85,7 +86,6 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLockRecType.java -t
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLockScope.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVLockType.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVPrivateResourceHelper.java -text
-svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResource.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVRegularResourceHelper.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVResourceHelper.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVResourceState.java -text
