@@ -114,6 +114,9 @@ public class SVNCopyClient extends SVNBasicClient {
     private ISVNCommitHandler myCommitHandler;
     private ISVNCommitParameters myCommitParameters;
     private ISVNExternalsHandler myExternalsHandler;
+    
+    private static final boolean ourNoMergeInfo = Boolean.getBoolean("svnkit.wccopy.nomergeinfo");
+
 
     /**
      * Constructs and initializes an <b>SVNCopyClient</b> object
@@ -1504,8 +1507,9 @@ public class SVNCopyClient extends SVNBasicClient {
 
             copyDisjointDir(nestedWC, parentWCAccess, nestedWCParent);
             parentWCAccess.probeTry(nestedWC, true, SVNWCAccess.INFINITE_DEPTH);
-            propagateMegeInfo(nestedWC, mergeInfo, extend, parentWCAccess);
-
+            if (!ourNoMergeInfo) {
+                propagateMegeInfo(nestedWC, mergeInfo, extend, parentWCAccess);
+            }
         } finally {
             parentWCAccess.close();
             nestedWCAccess.close();
@@ -1567,30 +1571,34 @@ public class SVNCopyClient extends SVNBasicClient {
                 String srcParent = SVNPathUtil.removeTail(pair.mySource);
                 SVNFileType srcType = SVNFileType.getType(new File(pair.mySource));
                 try {
-                    if (srcParent.equals(dstParentPath)) {
-                        if (srcType == SVNFileType.DIRECTORY) {
-                            srcAccess = createWCAccess();
-                            srcAccess.open(new File(pair.mySource), false, -1);
-                        } else {
-                            srcAccess = dstAccess;
-                        }
-                    } else {
-                        try {
-                            srcAccess = createWCAccess();
-                            srcAccess.open(new File(srcParent), false, srcType == SVNFileType.DIRECTORY ? -1 : 0);
-                        } catch (SVNException e) {
-                            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                srcAccess = null;
+                    if (!ourNoMergeInfo) {
+                        if (srcParent.equals(dstParentPath)) {
+                            if (srcType == SVNFileType.DIRECTORY) {
+                                srcAccess = createWCAccess();
+                                srcAccess.open(new File(pair.mySource), false, -1);
                             } else {
-                                throw e;
+                                srcAccess = dstAccess;
+                            }
+                        } else {
+                            try {
+                                srcAccess = createWCAccess();
+                                srcAccess.open(new File(srcParent), false, srcType == SVNFileType.DIRECTORY ? -1 : 0);
+                            } catch (SVNException e) {
+                                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                                    srcAccess = null;
+                                } else {
+                                    throw e;
+                                }
                             }
                         }
                     }
                     // do real copy.
                     File sourceFile = new File(pair.mySource);
                     copyFiles(sourceFile, new File(dstParentPath), dstAccess, pair.myBaseName);
-                    if (srcAccess != null) {
-                        propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
+                    if (!ourNoMergeInfo) {
+                        if (srcAccess != null) {
+                            propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
+                        }
                     }
                 } finally {
                     if (srcAccess != null && srcAccess != dstAccess) {
@@ -1632,7 +1640,9 @@ public class SVNCopyClient extends SVNBasicClient {
                     }
                 }
                 copyFiles(sourceFile, dstParent, dstAccess, pair.myBaseName);
-                propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
+                if (!ourNoMergeInfo) {
+                    propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
+                }
                 // delete src.
                 SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), sourceFile, true, true);
             } finally {
