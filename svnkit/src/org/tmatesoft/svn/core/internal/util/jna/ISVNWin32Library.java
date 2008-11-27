@@ -11,11 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.util.jna;
 
-import com.sun.jna.FromNativeContext;
 import com.sun.jna.IntegerType;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
 import com.sun.jna.win32.StdCallLibrary;
 
 /**
@@ -23,18 +21,6 @@ import com.sun.jna.win32.StdCallLibrary;
  * @author TMate Software Ltd.
  */
 public interface ISVNWin32Library extends StdCallLibrary {
-
-    class HANDLE extends PointerType {
-        public Object fromNative(Object nativeValue, FromNativeContext context) {
-            Object o = super.fromNative(nativeValue, context);
-            if (INVALID_HANDLE_VALUE.equals(o)) {
-                return INVALID_HANDLE_VALUE;
-            }
-            return o;
-        }
-    }
-
-    class HWND extends HANDLE { }
 
     class DWORD extends IntegerType {
         
@@ -49,19 +35,12 @@ public interface ISVNWin32Library extends StdCallLibrary {
         private static final long serialVersionUID = 1L;
     }
 
-    HANDLE INVALID_HANDLE_VALUE = new HANDLE() { 
-        { super.setPointer(Pointer.createConstant(-1)); }
-        public void setPointer(Pointer p) { 
-            throw new UnsupportedOperationException("Immutable reference");
-        }
-    };
-
     DWORD SHGFP_TYPE_CURRENT = new DWORD(0);         
     DWORD SHGFP_TYPE_DEFAULT = new DWORD(1);
 
     int CSIDL_APPDATA = 0x001a;
     int CSIDL_COMMON_APPDATA = 0x0023;
 
-    HRESULT SHGetFolderPathW(HWND hwndOwner, int nFolder, HANDLE hToken, DWORD dwFlags, char[] pszPath);
+    HRESULT SHGetFolderPathW(Pointer hwndOwner, int nFolder, Pointer hToken, DWORD dwFlags, char[] pszPath);
 
 }
