@@ -463,9 +463,6 @@ public class SVNFileUtil {
                 return true;
             }
         }
-        if (file.canWrite()) {
-            return true;
-        }
         try {
             if (isWindows) {
                 Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
