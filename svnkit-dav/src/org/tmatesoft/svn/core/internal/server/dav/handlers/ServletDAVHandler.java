@@ -939,7 +939,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         range = range.toLowerCase(); 
-        if (!range.startsWith("bytes ") || !range.contains("-") || !range.contains("/")) {
+        if (!range.startsWith("bytes ") || range.indexOf("-") < 0 || range.indexOf("/") < 0) {
             return null;
         }
         
