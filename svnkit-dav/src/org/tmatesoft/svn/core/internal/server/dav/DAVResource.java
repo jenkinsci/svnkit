@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,6 +32,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
@@ -246,6 +248,18 @@ public class DAVResource {
         return myActivitiesDB;
     }
 
+    public void versionControl(String target) throws DAVException {
+        if (exists()) {
+            throw new DAVException("vsn_control called on already-versioned resource.", HttpServletResponse.SC_BAD_REQUEST, 0);
+        }
+        
+        if (target != null) {
+            throw new DAVException("vsn_control called with non-null target.", null, HttpServletResponse.SC_NOT_IMPLEMENTED, null, 
+                    SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
+                    SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+    }
+    
     public Iterator getChildren() throws SVNException {
         return new Iterator() {
             Iterator entriesIterator = getEntries().iterator();

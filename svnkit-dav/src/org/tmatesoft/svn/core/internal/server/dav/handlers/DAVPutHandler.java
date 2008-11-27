@@ -54,6 +54,7 @@ public class DAVPutHandler extends ServletDAVHandler {
         validateRequest(resource, DAVDepth.DEPTH_ZERO, resourceState == DAVResourceState.NULL ? DAV_VALIDATE_PARENT : DAV_VALIDATE_RESOURCE, 
                 null, null);
         
+        DAVAutoVersionInfo avInfo = autoCheckOut(resource, false);
         
     }
 

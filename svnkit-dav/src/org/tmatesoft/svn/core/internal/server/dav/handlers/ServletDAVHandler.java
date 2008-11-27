@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFStateType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -654,8 +655,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         DAVResourceHelper.convertWorkingToRegular(resource);
     }
     
-    protected void autoCheckOut(DAVResource resource, boolean isParentOnly) throws DAVException {
-        DAVAutoVersionInfo info = null;
+    protected DAVAutoVersionInfo autoCheckOut(DAVResource resource, boolean isParentOnly) throws DAVException {
+        DAVAutoVersionInfo info = new DAVAutoVersionInfo();
+        DAVLockInfoProvider[] lockProvider = new DAVLockInfoProvider[0];
         if (!resource.exists() || isParentOnly) {
             DAVResource parentResource = null;
             try {
@@ -664,7 +666,115 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 autoCheckIn(resource, true, false, info);
                 throw dave;
             }
+            
+            if (parentResource == null || !parentResource.exists()) {
+                autoCheckIn(resource, true, false, info);
+                throw new DAVException("Missing one or more intermediate collections. Cannot create resource {0}.", 
+                        new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
+                        HttpServletResponse.SC_CONFLICT, 0);
+            }
+            
+            info.setParentResource(parentResource);
+            
+            if (parentResource.isVersioned() && !parentResource.isWorking()) {
+                boolean checkOutParent = false;
+                try {
+                    checkOutParent = canAutoCheckOut(parentResource, lockProvider, parentResource.getAutoVersion());
+                } catch (DAVException dave) {
+                    autoCheckIn(resource, true, false, info);
+                    throw dave;
+                }
+                
+                if (!checkOutParent) {
+                    autoCheckIn(resource, true, false, info);
+                    throw new DAVException("<DAV:cannot-modify-checked-in-parent>", HttpServletResponse.SC_CONFLICT, 0);
+                }
+               
+                try {
+                    checkOut(parentResource, true, false, false, null);
+                } catch (DAVException dave) {
+                    autoCheckIn(resource, true, false, info);
+                    throw new DAVException("Unable to auto-checkout parent collection. Cannot create resource {0}.", 
+                            new Object[] { resource.getResourceURI().getRequestURI() }, HttpServletResponse.SC_CONFLICT, dave, 0);
+                }
+                
+                info.setParentCheckedOut(true);
+            }
         }
+        
+        if (isParentOnly) {
+            return info;
+        }
+        
+        if (!resource.exists() && resource.getAutoVersion() == DAVAutoVersion.ALWAYS) {
+            try {
+                resource.versionControl(null);
+            } catch (DAVException dave) {
+                autoCheckIn(resource, true, false, info);
+                throw new DAVException("Unable to create versioned resource {0}.", 
+                        new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
+                        HttpServletResponse.SC_CONFLICT, dave, 0); 
+            }
+            
+            info.setResourceVersioned(true);
+        }
+        
+        if (resource.isVersioned() && !resource.isWorking()) {
+            boolean checkOutResource = false;
+            try {
+                checkOutResource = canAutoCheckOut(resource, lockProvider, resource.getAutoVersion());
+            } catch (DAVException dave) {
+                autoCheckIn(resource, true, false, info);
+                throw dave;
+            }
+            
+            if (!checkOutResource) {
+                autoCheckIn(resource, true, false, info);
+                throw new DAVException("<DAV:cannot-modify-version-controlled-content>", HttpServletResponse.SC_CONFLICT, 0);
+            }
+            
+            try {
+                checkOut(resource, true, false, false, null);
+            } catch (DAVException dave) {
+                autoCheckIn(resource, true, false, info);
+                throw new DAVException("Unable to checkout resource {0}.", 
+                        new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getRequestURI()) }, 
+                        HttpServletResponse.SC_CONFLICT, 0);
+            }
+            
+            info.setResourceCheckedOut(true);
+        }
+        return info;
+    }
+    
+    protected boolean canAutoCheckOut(DAVResource resource, DAVLockInfoProvider[] lockProvider, DAVAutoVersion autoVersion) throws DAVException {
+        boolean autoCheckOut = false;
+        DAVLock lock = null;
+        if (autoVersion == DAVAutoVersion.ALWAYS) {
+            autoCheckOut = true;
+        } else if (autoVersion == DAVAutoVersion.LOCKED) {
+            if (lockProvider[0] == null) {
+                try {
+                    lockProvider[0] = DAVLockInfoProvider.createLockInfoProvider(this, false);
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "Cannot open lock database to determine auto-versioning behavior.", null);
+                }
+            }
+            
+            try {
+                lock = lockProvider[0].getLock(resource);
+            } catch (DAVException dave) {
+                throw new DAVException("The locks could not be queried for determining auto-versioning behavior.", null, 
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, dave, 0);
+            }
+            
+            if (lock != null) {
+                autoCheckOut = true;
+            }
+        }
+        
+        return autoCheckOut;
     }
     
     protected void autoCheckIn(DAVResource resource, boolean undo, boolean unlock, DAVAutoVersionInfo info) throws DAVException {
@@ -822,6 +932,35 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRequest.getDateHeader(name);
     }
 
+    protected long[] parseRange() {
+        String range = getRequestHeader(HTTPHeader.CONTENT_RANGE_HEADER);
+        if (range == null) {
+            return null;
+        }
+        
+        range = range.toLowerCase(); 
+        if (!range.startsWith("bytes ") || !range.contains("-") || !range.contains("/")) {
+            return null;
+        }
+        
+        range = range.substring("bytes ".length()).trim();
+        int ind = range.indexOf('-');
+        String rangeStartSubstring = range.substring(0, ind);
+        long rangeStart = -1;
+        try {
+            rangeStart = Long.parseLong(rangeStartSubstring);
+        } catch (NumberFormatException nfe) {
+            return null;
+        }
+        
+        range = range.substring(ind + 1);
+        ind = range.indexOf('/');
+        
+        //String rangeEndSubstring
+        
+        return null;
+    }
+    
     protected InputStream getRequestInputStream() throws SVNException {
         try {
             return myRequest.getInputStream();
