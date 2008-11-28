@@ -102,6 +102,7 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResul
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResourceWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResponse.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVUnlockWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVValidateWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVWalkResource.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/IDAVResourceWalkHandler.java -text

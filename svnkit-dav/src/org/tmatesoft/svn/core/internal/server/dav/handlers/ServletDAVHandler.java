@@ -364,6 +364,35 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
+    protected int unlock(DAVResource resource, String lockToken) {
+        DAVLockInfoProvider lockProvider = null;
+        try {
+            lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+        } catch (SVNException svne) {
+            return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        }
+        
+        DAVResource lockResource = null;
+        if (lockToken != null) {
+            try {
+                lockResource = DAVResourceHelper.getDirectResource(lockProvider, lockToken, resource);
+            } catch (DAVException dave) {
+                return dave.getResponseCode();
+            }
+        }
+        
+        int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL; 
+        DAVResourceWalker walker = new DAVResourceWalker();
+        DAVUnlockWalker unlockHandler = new DAVUnlockWalker(lockToken, this);
+        try {
+            walker.walk(lockProvider, lockResource, null, 0, walkType, unlockHandler, DAVDepth.DEPTH_INFINITY);
+        } catch (DAVException dave) {
+            return dave.getResponseCode();
+        }
+        
+        return HttpServletResponse.SC_OK;
+    }
+    
     protected DAVResource checkOut(DAVResource resource, boolean isAutoCheckOut, boolean isUnreserved, boolean isCreateActivity, 
             List activities) throws DAVException {
         DAVResourceType resourceType = resource.getResourceURI().getType();

@@ -12,7 +12,9 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,12 +26,14 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.fs.FSLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
+import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockRecType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -136,6 +140,70 @@ public class DAVLockInfoProvider {
             myOwner.setResponseHeader(HTTPHeader.LOCK_OWNER_HEADER, lock.getOwner());
         }
         return davLock;
+    }
+    
+    public DAVLock findLock(DAVResource resource, String lockToken) throws DAVException {
+        //TODO: add here authz check later
+        
+        DAVLock davLock = null;
+        FSLock lock = null;
+        try {
+            lock = (FSLock) resource.getLock(); 
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Failed to look up lock by path.", null);
+        }
+        
+        if (lock != null) {
+            if (!lockToken.equals(lock.getID())) {
+                throw new DAVException("Incoming token doesn't match existing lock.", HttpServletResponse.SC_BAD_REQUEST, 
+                        DAVErrorCode.LOCK_SAVE_LOCK);
+            }
+            davLock = convertToDAVLock(lock, false, resource.exists());
+            myOwner.setResponseHeader(HTTPHeader.CREATION_DATE_HEADER, SVNDate.formatDate(lock.getCreationDate()));
+            myOwner.setResponseHeader(HTTPHeader.LOCK_OWNER_HEADER, lock.getOwner());
+        }
+        return davLock;
+    }
+        
+    public void removeLock(DAVResource resource, String lockToken) throws DAVException {
+        DAVResourceURI resourceURI = resource.getResourceURI();
+        if (resourceURI.getPath() == null) {
+            return;
+        }
+        
+        if (isKeepLocks()) {
+            return;
+        }
+        
+        //TODO: add here authz check later
+        String token = null;
+        SVNLock lock = null;
+        if (lockToken == null) {
+            try {
+                lock = resource.getLock();
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Failed to check path for a lock.", null);
+            }
+            token = lock.getID();
+        } else {
+            token = lockToken;
+        }
+        
+        if (token != null) {
+            try {
+                resource.unlock(token, isBreakLock());
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_USER) {
+                    throw new DAVException("Anonymous lock removal is not allowed.", HttpServletResponse.SC_UNAUTHORIZED, 
+                            DAVErrorCode.LOCK_SAVE_LOCK);
+                }
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Failed to remove a lock.", null);
+            }
+            //TODO: add logging here
+        }
     }
     
     public boolean isReadOnly() {

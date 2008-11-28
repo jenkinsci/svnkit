@@ -17,7 +17,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.server.dav.DAVAutoVersion;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -67,6 +66,11 @@ public class DAVDeleteHandler extends ServletDAVHandler {
         }
         
         //TODO: here comes dav locking
+        int respCode = unlock(resource, null);
+        if (respCode != HttpServletResponse.SC_OK) {
+            setResponseStatus(respCode);
+            return;
+        }
         
         DAVAutoVersionInfo avInfo = autoCheckOut(resource, true);
         try {

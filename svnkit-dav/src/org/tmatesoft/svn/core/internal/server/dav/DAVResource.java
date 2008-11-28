@@ -16,8 +16,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
@@ -397,6 +399,12 @@ public class DAVResource {
         return getRepository().getLock(getResourceURI().getPath());
     }
 
+    public void unlock(String token, boolean force) throws SVNException {
+        Map pathsToTokens = new HashMap();
+        pathsToTokens.put(getResourceURI().getPath(), token);
+        getRepository().unlock(pathsToTokens, force, null);
+    }
+    
     public String getAuthor(long revision) throws SVNException {
         return getRevisionProperty(revision, SVNRevisionProperty.AUTHOR);
     }

@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVLockInfoProvider;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -57,6 +58,24 @@ public abstract class DAVResourceHelper {
         DAVResourceType resourceType = resourceURI.getType();
         DAVResourceHelper helperImpl = getHelper(resourceType);
         return helperImpl.getParentResource(resource);
+    }
+    
+    public static DAVResource getDirectResource(DAVLockInfoProvider lockProvider, String lockToken, DAVResource resource) throws DAVException {
+        while (resource == null) {
+            DAVLock lock = lockProvider.findLock(resource, lockToken);
+            if (lock == null) {
+                throw new DAVException("The specified locktoken does not correspond to an existing lock on this resource.", 
+                        HttpServletResponse.SC_BAD_REQUEST, 0);
+            }
+            
+            if (lock.getRecType() == DAVLockRecType.DIRECT) {
+                return resource;
+            }
+            
+            resource = createParentResource(resource);
+        }
+        throw new DAVException("The lock database is corrupt. A direct lock could not be found for the corresponding indirect lock on this resource.", 
+                HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
     }
     
     public static void throwIllegalGetParentResourceError(DAVResource resource) throws DAVException {
