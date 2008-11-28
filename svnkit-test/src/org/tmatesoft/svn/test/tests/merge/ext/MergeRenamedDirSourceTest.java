@@ -88,7 +88,7 @@ public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/B/file3")) {
-                SVNCopySource source = new SVNCopySource(SVNRevision.create(myEndRevision), SVNRevision.create(myEndRevision), getTrunk().appendPath("A/file", false));
+                SVNCopySource source = new SVNCopySource(SVNRevision.create(targetRevision), SVNRevision.create(targetRevision), getTrunk().appendPath("A/file", false));
                 return SVNCopyTask.create(source, true);
             }
             return null;
