@@ -96,7 +96,7 @@ public class SVNTestEnvironment extends AbstractSVNTestEnvironment {
     }
 
     public void createRepository(File path, String uuid) throws SVNException {
-        getManager().getAdminClient().doCreateRepository(path, uuid, false, false, false, true);
+        getManager().getAdminClient().doCreateRepository(path, uuid, false, false, false, false);
     }
 
     public void load(File path, InputStream dumpStream) throws SVNException {
