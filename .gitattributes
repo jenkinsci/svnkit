@@ -107,7 +107,6 @@ svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/AbstractExtMergeTest.java
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ChangeMergeTargetCopyFromPathTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ElideFileMergedMergeinfoSourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ElideFileMergedMergeinfoTargetTest.java -text
-svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ExtMergeTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/ISVNTestExtendedMergeCallback.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeAddFileFromRenamedSourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeAlreadyMergedFileTest.java -text
