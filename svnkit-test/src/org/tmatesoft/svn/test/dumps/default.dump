@@ -1,0 +1,223 @@
+SVN-fs-dump-format-version: 2
+
+UUID: 30f793dd-1c01-0010-a2cc-bf352657f57a
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2008-10-08T17:49:33.885000Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 126
+Content-length: 126
+
+K 7
+svn:log
+V 24
+import initial structure
+K 10
+svn:author
+V 7
+mrslave
+K 8
+svn:date
+V 27
+2008-10-08T17:49:39.836000Z
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A/B
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A/B/E
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A/B/lambda
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 30
+Text-content-md5: 6b0f8b7eb417c066f983df6b8f2d4395
+Content-length: 40
+
+PROPS-END
+This is the file 'A/B/lambda'.
+
+Node-path: trunk/A/D
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A/D/G
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A/D/G/pi
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 28
+Text-content-md5: cacc8049c7a590d98bc3c87ae2c968bd
+Content-length: 38
+
+PROPS-END
+This is the file 'A/D/G/pi'.
+
+Node-path: trunk/A/D/G/rho
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 29
+Text-content-md5: 06c45cc865cf2d7d65c478fb750de6df
+Content-length: 39
+
+PROPS-END
+This is the file 'A/D/G/rho'.
+
+Node-path: trunk/A/D/G/tau
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 29
+Text-content-md5: ea0813e9391bbb21c00ec619d2a1c580
+Content-length: 39
+
+PROPS-END
+This is the file 'A/D/G/tau'.
+
+Node-path: trunk/A/D/H
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/A/D/H/chi
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 29
+Text-content-md5: ce029ee7e927ef8a215df80ffbac0d49
+Content-length: 39
+
+PROPS-END
+This is the file 'A/D/H/chi'.
+
+Node-path: trunk/A/D/H/omega
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 31
+Text-content-md5: 6a15cebffb512ded02b65440386e2187
+Content-length: 41
+
+PROPS-END
+This is the file 'A/D/H/omega'.
+
+Node-path: trunk/A/D/H/psi
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 29
+Text-content-md5: 758cba6e489ba9718ae6d78821623efd
+Content-length: 39
+
+PROPS-END
+This is the file 'A/D/H/psi'.
+
+Node-path: trunk/A/D/gamma
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 29
+Text-content-md5: e9f269d6db8131526bfb0acd9d21f71e
+Content-length: 39
+
+PROPS-END
+This is the file 'A/D/gamma'.
+
+Node-path: trunk/A/mu
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 24
+Text-content-md5: e0e7b723413c6b13fc605b9d9fa5b3f4
+Content-length: 34
+
+PROPS-END
+This is the file 'A/mu'.
+
+Node-path: trunk/iota
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 24
+Text-content-md5: fce0ec3e36b6b3f32f725d7ed9124646
+Content-length: 34
+
+PROPS-END
+This is the file 'iota'.
+
