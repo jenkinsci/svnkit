@@ -119,6 +119,7 @@ svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeRenamedDirSourceTest
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeRenamedFileSourceMultipleTimesTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeRenamedSourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeRenamedTargetTest.java -text
+svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeReplacedSourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeReplacedWithoutHistorySourceTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeSwitchedEntriesFailTest.java -text
 svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext/MergeWithDepthSupportTest.java -text

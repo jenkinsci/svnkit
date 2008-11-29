@@ -231,7 +231,7 @@ public abstract class AbstractSVNTestFile {
         }
     }
 
-    protected String getSchedule() {
+    public String getSchedule() {
         return mySchedule;
     }
 
