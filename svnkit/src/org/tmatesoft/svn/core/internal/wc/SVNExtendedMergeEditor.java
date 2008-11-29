@@ -182,6 +182,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             SVNURL targetURL = targets[i];
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
+
             if (!expectedTarget.equals(target)) {
                 boolean depthAllows = checkDepth(target, null, nodeKind);
                 if (!depthAllows) {
@@ -190,7 +191,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             }
 
             fileInfo = getFileInfo(path, revision, SVNEditorAction.DELETE, nodeKind);
-            fileInfo.addTarget(targetPath);
+            fileInfo.addTarget(targetPath, null);
         }
 
         if (fileInfo != null) {
@@ -199,24 +200,39 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         myCurrentFile = null;
     }
 
-    private File getDeleteTarget(SVNCopySource source) throws SVNException {
-        File deleteTarget = null;
-        if (source.getURL() != null) {
-            if (source.getRevision() == null || source.getRevision().getNumber() < 0) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Illegal revision number was passed with copy source information");
-                SVNErrorManager.error(error, SVNLogType.DEFAULT);
-            }
-            String sPath = SVNPathUtil.getPathAsChild(mySourceURL.getPath(), source.getURL().getPath());
-            String tPath = SVNPathUtil.getPathAsChild(myTargetURL.getPath(), source.getURL().getPath());
-            if (sPath != null) {
-                deleteTarget = getFile(sPath);
-            } else if (tPath != null) {
-                deleteTarget = getFile(tPath);
-            }
-        } else {
-            deleteTarget = source.getFile();
+    private File getCopySourcePath(SVNCopySource source) throws SVNException {
+        if (source == null) {
+            return null;
         }
-        return deleteTarget;
+        if (!source.isURL()) {
+            return source.getFile();
+        }
+        File target = null;
+        String sPath = SVNPathUtil.getPathAsChild(mySourceURL.getPath(), source.getURL().getPath());
+        String tPath = SVNPathUtil.getPathAsChild(myTargetURL.getPath(), source.getURL().getPath());
+        if (sPath != null) {
+            target = getFile(sPath);
+        } else if (tPath != null) {
+            target = getFile(tPath);
+        } else {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: Neither merge source URL nor merge target URL are not ancestors of copy source URL");
+        }
+        return target;
+    }
+
+    private SVNURL getCopySourceURL(SVNCopySource source) throws SVNException {
+        if (source == null) {
+            return null;
+        }
+        if (source.isURL()) {
+            return source.getURL();
+        }
+        String relativePath = SVNPathUtil.getPathAsChild(myTarget.getAbsolutePath(), source.getFile().getAbsolutePath());
+        if (relativePath == null) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: illegal file path passed as copy source");
+            return null;
+        }
+        return myTargetURL.appendPath(relativePath, false);
     }
 
     private void deletePath(File file) throws SVNException {
@@ -272,36 +288,45 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
 
-            SVNMergeRangeList remainingRanges = null;
-            SVNURL[] mergeSources = null;
+
             if (!expectedTargetURL.equals(targetURL)) {
                 boolean depthAllows = checkDepth(target, null, SVNNodeKind.FILE);
                 if (!depthAllows) {
                     continue;
                 }
-                
-                mergeSources = new SVNURL[2];
-                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             }
+
+            SVNURL[] mergeSources = new SVNURL[2];
+            SVNMergeRangeList remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
+            boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
+            SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
+            copySource = processCopySource(copySource, targetRevision);
+            boolean deleteSource = copyTask != null && copyTask.isMove();
 
-            if (copyTask != null || remainingRanges != null) {
-                SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
-                copySource = processCopySource(copySource, targetRevision);
-                boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
-                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, mergeInfoConflicts, copySource);
-                if (copyTask != null && copyTask.isMove()) {
-                    File deleteTarget = getDeleteTarget(copySource);
-                    boolean depthAllows = checkDepth(deleteTarget, null, SVNNodeKind.FILE);
-                    if (depthAllows) {
-                        deletePath(deleteTarget);
-                    }
+            if (deleteSource) {
+                File deleteTarget = getCopySourcePath(copySource);
+                boolean depthAllows = checkDepth(deleteTarget, null, SVNNodeKind.FILE);
+                if (depthAllows) {
+                    deletePath(deleteTarget);
                 }
-                continue;
             }
 
-            SVNFileInfoExt fileInfo = getFileInfo(path, -1, SVNEditorAction.ADD, null);
-            fileInfo.addTarget(targetPath);
+            SVNEntry targetEntry = myWCAccess.getEntry(target, true);
+            boolean targetExists = targetEntry != null && !targetEntry.isScheduledForDeletion();
+            boolean applyDelta;
+
+            if (targetExists) {
+                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, mergeInfoConflicts, copySource);
+                applyDelta = false;
+            } else {
+                applyDelta = true;
+            }
+
+            if (applyDelta) {
+                SVNFileInfoExt fileInfo = getFileInfo(path, -1, SVNEditorAction.ADD, null);
+                fileInfo.addTarget(targetPath, copySource);
+            }
         }
     }
 
@@ -321,60 +346,90 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             String targetPath = getPath(targetURL);
             File target = getFile(targetPath);
 
-            SVNMergeRangeList remainingRanges = null;
-            SVNURL[] mergeSources = null;
             if (!expectedTargetURL.equals(targetURL)) {
                 boolean depthAllows = checkDepth(target, null, SVNNodeKind.FILE);
                 if (!depthAllows) {
                     continue;
                 }
-
-                mergeSources = new SVNURL[2];
-                remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             }
+
+            SVNURL[] mergeSources = new SVNURL[2];
+            SVNMergeRangeList remainingRanges = getMergeDriver().calculateRemainingRanges(target, url, mergeSources);
             boolean mergeInfoConflicts = getMergeDriver().mergeInfoConflicts(remainingRanges, target);
             SVNCopyTask copyTask = getMergeCallback().getTargetCopySource(url, Math.max(myRevision1, myRevision2), myRevision1, myRevision2, targetURL, targetRevision);
             SVNCopySource copySource = copyTask == null ? null : copyTask.getCopySource();
             copySource = processCopySource(copySource, targetRevision);
-            if (copySource != null && !mergeInfoConflicts) {
-                getMergeDriver().copy(copySource, target, false);
-            } else if (mergeInfoConflicts) {
-                getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, true, copySource);
-                continue;
-            }
+            boolean deleteSource = copyTask != null && copyTask.isMove();
 
-            if (copyTask != null && copyTask.isMove()) {
-                File deleteTarget = getDeleteTarget(copySource);
+            if (deleteSource) {
+                File deleteTarget = getCopySourcePath(copySource);
                 boolean depthAllows = checkDepth(deleteTarget, null, SVNNodeKind.FILE);
                 if (depthAllows) {
                     deletePath(deleteTarget);
                 }
             }
 
-            SVNFileInfoExt fileInfo = getFileInfo(path, revision, SVNEditorAction.MODIFY, null);
-            fileInfo.addTarget(targetPath);
+            SVNEntry targetEntry = myWCAccess.getEntry(target, true);
+            boolean targetExists = targetEntry != null && !targetEntry.isScheduledForDeletion();
+            boolean applyDelta;
+
+            if (targetExists) {
+                if (mergeInfoConflicts) {
+                    getMergeDriver().addMergeSource(path, mergeSources, target, remainingRanges, true, copySource);
+                    applyDelta = false;
+                } else {
+                    applyDelta = true;
+                }
+            } else {
+                if (copySource != null) {
+                    getMergeDriver().copy(copySource, target, false);
+                }
+                applyDelta = true;
+            }
+
+            if (applyDelta) {
+                SVNFileInfoExt fileInfo = getFileInfo(path, revision, SVNEditorAction.MODIFY, null);
+                fileInfo.addTarget(targetPath, copySource);
+            }
         }
     }
 
-    private SVNCopySource processCopySource(SVNCopySource copySource, long targetRevision) {
+    private SVNCopySource processCopySource(SVNCopySource copySource, long targetRevision) throws SVNException {
         if (copySource == null) {
             return null;
         }
-        SVNRevision pegRevision = copySource.getPegRevision();
-        SVNRevision revision = copySource.getRevision();
-        if (pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.BASE) {
-            pegRevision = SVNRevision.create(targetRevision);
+        if (copySource.isURL() && (copySource.getRevision() != null && copySource.getRevision().getID() == 10)) {
+            return copySource;
+        }
+
+        SVNRevision pegRevision;
+        SVNRevision revision;
+        try {
+            pegRevision = processCopySourceRevision(copySource.getPegRevision(), copySource, targetRevision);
+            revision = processCopySourceRevision(copySource.getRevision(), copySource, targetRevision);
+        } catch (SVNException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: Error while fetching copy source revision");
+            return null;
+        }
+
+        SVNURL url = copySource.getURL();
+        if (url == null) {
+            url = getCopySourceURL(copySource);
+            if (url == null) {
+                return null;
+            }
+        }
+        return new SVNCopySource(pegRevision, revision, url);
+    }
+
+    private SVNRevision processCopySourceRevision(SVNRevision revision, SVNCopySource copySource, long targetRevision) throws SVNException {
+        if (revision.getID() == 10) {
+            return revision;
         }
         if (revision == SVNRevision.WORKING || revision == SVNRevision.BASE) {
-            revision = SVNRevision.create(targetRevision);
+            return SVNRevision.create(targetRevision);
         }
-        if (pegRevision != copySource.getPegRevision() || revision != copySource.getRevision()) {
-            if (copySource.isURL()) {
-                return new SVNCopySource(pegRevision, revision, copySource.getURL());
-            }
-            return new SVNCopySource(pegRevision, revision, copySource.getFile());
-        }
-        return copySource;
+        return SVNRevision.create(getMergeDriver().getRevision(copySource));
     }
 
     private long getTargetRevision(String path) throws SVNException {
@@ -594,14 +649,14 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             return myTargets;
         }
 
-        protected void addTarget(String targetPath) {
+        protected void addTarget(String targetPath, SVNCopySource copySource) {
             SVNDeltaProcessor processor;
             if (myAction == SVNEditorAction.DELETE) {
                 processor = null;
             } else {
                 processor = getTargets().size() == 0 ? myDeltaProcessor : new SVNDeltaProcessor();
             }
-            MergeTarget target = new MergeTarget(targetPath, processor);
+            MergeTarget target = new MergeTarget(targetPath, processor, copySource);
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: " + target.toString());
             getTargets().add(target);
         }
@@ -664,11 +719,13 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         private String myPath;
         private File myWCFile;
         private File myFile;
+        private SVNCopySource myCopySource;
 
-        public MergeTarget(String path, SVNDeltaProcessor targetProcessor) {
+        public MergeTarget(String path, SVNDeltaProcessor targetProcessor, SVNCopySource copySource) {
             myPath = path;
             myWCFile = myTarget == null ? null : new File(myTarget, path);
             myTargetProcessor = targetProcessor;
+            myCopySource = copySource;
         }
 
         private SVNDeltaProcessor getDeltaProcessor() {
@@ -700,6 +757,22 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         protected void close() throws SVNException {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: close " + myPath);
             closeFile(myPath, myCurrentFile.myIsAdded, myWCFile, myFile, myCurrentFile.myPropertyDiff, myCurrentFile.myBaseProperties, myCurrentFile.myBaseFile);
+
+            if (myCopySource == null) {
+                return;
+            }
+
+            SVNEntry targetEntry = myWCAccess.getEntry(myWCFile, false);
+            if (targetEntry != null) {
+                SVNURL copyFromLocation = targetEntry.getCopyFromSVNURL();
+                long copyFromRevision = targetEntry.getCopyFromRevision();
+
+                SVNURL sourceURL = myCopySource.getURL();
+                long sourceRevision = myCopySource.getRevision().getNumber();
+                if (copyFromLocation == null || !copyFromLocation.equals(sourceURL) || copyFromRevision != sourceRevision) {
+                    getMergeDriver().copy(myCopySource, myWCFile, true);
+                }
+            }
         }
 
         protected void delete() throws SVNException {
@@ -740,6 +813,10 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
             buffer.append(myFile);
             buffer.append("; base file = ");
             buffer.append(myCurrentFile.myBaseFile);
+            buffer.append("; copyFromURL = ");
+            buffer.append(myCopySource == null ? null : myCopySource.getURL());
+            buffer.append("; copyFromRevision = ");
+            buffer.append(myCopySource == null ? "unknown" : String.valueOf(myCopySource.getRevision()));
             buffer.append("]");
             return buffer.toString();
         }

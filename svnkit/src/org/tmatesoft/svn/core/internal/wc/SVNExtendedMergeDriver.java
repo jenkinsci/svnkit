@@ -153,12 +153,16 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
 
     protected void doVirtualCopy(SVNEntry dstEntry, SVNCopySource copySource, boolean save) throws SVNException {
         dstEntry.setCopyFromURL(copySource.getURL().toString());
-        long cfRevision = getRevisionNumber(copySource.getRevision(), getRepository(copySource.getURL()), copySource.getFile());
+        long cfRevision = copySource.getRevision().getNumber();
         dstEntry.setCopyFromRevision(cfRevision);
         if (save) {
             SVNAdminArea dir = dstEntry.getAdminArea();
             dir.saveEntries(false);
         }
+    }
+
+    protected long getRevision(SVNCopySource copySource) throws SVNException {
+        return getRevisionNumber(copySource.getRevision(), getRepository(copySource.getURL()), copySource.getFile());
     }
 
     protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
