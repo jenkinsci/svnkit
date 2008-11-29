@@ -141,9 +141,13 @@ public class SVNTestFile extends AbstractSVNTestFile {
         setNodeKind(entry.getKind());
         setCopyFromLocation(entry.getCopyFromSVNURL());
         setCopyFromRevision(entry.getCopyFromRevision());
-        setReplaced(entry.isScheduledForReplacement());
-        setAdded(entry.isScheduledForAddition());
-        setDeleted(entry.isScheduledForDeletion());
+        if (entry.isScheduledForAddition()) {
+            setAdded(true);
+        } else if (entry.isScheduledForDeletion()) {
+            setDeleted(true);
+        } else if (entry.isScheduledForReplacement()) {
+            setReplaced(true);
+        }
 
         SVNVersionedProperties baseProperties = parentDir.getBaseProperties(entry.getName());
         SVNVersionedProperties properties = parentDir.getProperties(entry.getName());
