@@ -55,6 +55,12 @@ public class DAVPutHandler extends ServletDAVHandler {
                 null, null);
         
         DAVAutoVersionInfo avInfo = autoCheckOut(resource, false);
+        int mode = DAV_MODE_WRITE_TRUNC;
+        long[] range = parseRange();
+        if (range == null) {
+            mode = DAV_MODE_WRITE_SEEKABLE;
+        }
+        
         
     }
 

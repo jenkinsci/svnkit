@@ -38,6 +38,10 @@ import javax.xml.parsers.SAXParserFactory;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
@@ -103,6 +107,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     public static final int DAV_VALIDATE_ADD_LD    = 0x0040;
     public static final int DAV_VALIDATE_USE_424   = 0x0080;
     public static final int DAV_VALIDATE_IS_PARENT = 0x0100;
+    
+    public static final int DAV_MODE_WRITE_TRUNC = 0;
+    public static final int DAV_MODE_WRITE_SEEKABLE = 1;
     
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
@@ -362,6 +369,56 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             exception.setResponse(response);
             throw exception;
         }
+    }
+    
+    protected void openStream(DAVResource resource, int mode) throws DAVException {
+        if (mode == DAV_MODE_WRITE_TRUNC || mode == DAV_MODE_WRITE_SEEKABLE) {
+            if (resource.getType() != DAVResourceType.WORKING) {
+                throw new DAVException("Resource body changes may only be made to working resources [at this time].", 
+                        HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+            }
+        }
+        
+        if (mode == DAV_MODE_WRITE_SEEKABLE) {
+            throw new DAVException("Resource body writes cannot use ranges [at this time].", HttpServletResponse.SC_NOT_IMPLEMENTED, 0);
+        }
+        
+        String path = resource.getResourceURI().getPath();
+        FSRoot root = resource.getRoot();
+        FSFS fsfs = resource.getFSFS();
+        FSTransactionInfo txn = resource.getTxnInfo();
+        FSCommitter committer = getCommitter(fsfs, root, txn, null, resource.getUserName());
+
+        SVNNodeKind kind = DAVServletUtil.checkPath(resource.getRoot(), resource.getResourceURI().getPath());
+        if (kind == SVNNodeKind.NONE) {
+            try {
+                committer.makeFile(path);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not create file within the repository.", null);
+            }
+        }
+        
+        if (resource.isAutoCheckedOut() && myRequest.getContentType() != null) {
+            SVNProperties props = null;
+            try {
+                props = fsfs.getProperties(root.getRevisionNode(path));
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Error fetching mime-type property.", null);
+            }
+            
+            String mimeType = props.getStringValue(SVNProperty.MIME_TYPE);
+            if (mimeType == null) {
+                try {
+                    committer.changeNodeProperty(path, SVNProperty.MIME_TYPE, SVNPropertyValue.create(myRequest.getContentType()));
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "Could not set mime-type property.", null);
+                }
+            }
+        }
+       
     }
     
     protected int unlock(DAVResource resource, String lockToken) {
@@ -982,12 +1039,39 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             return null;
         }
         
+        if (rangeStart < 0) {
+            return null;
+        }
+        
         range = range.substring(ind + 1);
         ind = range.indexOf('/');
         
-        //String rangeEndSubstring
+        String rangeEndSubstring = range.substring(0, ind);
+        long rangeEnd = -1;
+        try {
+            rangeEnd = Long.parseLong(rangeEndSubstring);
+        } catch (NumberFormatException nfe) {
+            return null;
+        }
         
-        return null;
+        if (rangeEnd < 0 || rangeEnd < rangeStart) {
+            return null;
+        }
+        
+        if (range.charAt(ind + 1) != '*') {
+            range = range.substring(ind + 1);
+            long length = -1;
+            try {
+                length = Long.parseLong(range);
+            } catch (NumberFormatException nfe) {
+                return null;
+            }
+            
+            if (length <= rangeEnd) {
+                return null;
+            }
+        }
+        return new long[] { rangeStart, rangeEnd };
     }
     
     protected InputStream getRequestInputStream() throws SVNException {
