@@ -65,7 +65,6 @@ public class DAVDeleteHandler extends ServletDAVHandler {
                     dave, null, null, 0, dave.getResponse());
         }
         
-        //TODO: here comes dav locking
         int respCode = unlock(resource, null);
         if (respCode != HttpServletResponse.SC_OK) {
             setResponseStatus(respCode);

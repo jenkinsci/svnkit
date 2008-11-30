@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.server.dav;
 
 import java.io.File;
 import java.security.Principal;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -182,7 +184,7 @@ public class DAVRepositoryManager {
     }
 
     public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, long version, String clientOptions,
-            String baseChecksum, String resultChecksum, String label, boolean useCheckedIn) throws SVNException {
+            String baseChecksum, String resultChecksum, String label, boolean useCheckedIn, List lockTokens, Map capabilities) throws SVNException {
         DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), getResourcePathInfo(), label, useCheckedIn);
         DAVConfig config = getDAVConfig();
         String fsParentPath = config.getRepositoryParentPath();
@@ -207,7 +209,8 @@ public class DAVRepositoryManager {
         
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
         DAVResource resource = new DAVResource(resourceRepository, this, resourceURI, isSVNClient, deltaBase, version, 
-                clientOptions, baseChecksum, resultChecksum, myUserPrincipal != null ? myUserPrincipal.getName() : null, activitiesDBDir);
+                clientOptions, baseChecksum, resultChecksum, myUserPrincipal != null ? myUserPrincipal.getName() : null, activitiesDBDir, 
+                        lockTokens, capabilities);
         return resource;
     }
 

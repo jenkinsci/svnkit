@@ -22,9 +22,13 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -46,6 +50,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
+import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
@@ -79,6 +84,8 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
+import org.tmatesoft.svn.core.io.SVNCapability;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -111,6 +118,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     public static final int DAV_MODE_WRITE_TRUNC = 0;
     public static final int DAV_MODE_WRITE_SEEKABLE = 1;
     
+    protected static final String CAPABILITY_YES = "yes";
+    protected static final String CAPABILITY_NO = "no";
+
     protected static final String HTTP_STATUS_OK_LINE = "HTTP/1.1 200 OK";
     protected static final String HTTP_NOT_FOUND_LINE = "HTTP/1.1 404 NOT FOUND";
     
@@ -191,6 +201,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private HttpServletRequest myRequest;
     private HttpServletResponse myResponse;
     private FSCommitter myCommitter;
+    private FSDeltaConsumer myDeltaConsumer;
     
     static {
         REPORT_ELEMENTS.add(UPDATE_REPORT);
@@ -232,22 +243,60 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
 
     protected DAVResource getRequestedDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
         String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
+        
         String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
         long version = DAVResource.INVALID_REVISION;
         try {
             version = Long.parseLong(versionName);
         } catch (NumberFormatException e) {
         }
+        
         String clientOptions = getRequestHeader(SVN_OPTIONS_HEADER);
         String baseChecksum = getRequestHeader(SVN_BASE_FULLTEXT_MD5_HEADER);
         String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
         String deltaBase = getRequestHeader(SVN_DELTA_BASE_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
         boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
+        
+        Map clientCapabilities = new HashMap();
+        clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_NO);
+        
+        String clientCapabilitiesList = getRequestHeader(HTTPHeader.DAV_HEADER);
+        for(StringTokenizer tokens = new StringTokenizer(clientCapabilitiesList, ","); tokens.hasMoreTokens();) {
+            String token = tokens.nextToken();
+            if (DAVElement.MERGE_INFO_OPTION.equalsIgnoreCase(token)) {
+                clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_YES);
+            }
+        }
+       
+        List lockTokens = getLockTokensList();
         return getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
-                label, useCheckedIn);
+                label, useCheckedIn, lockTokens, clientCapabilities);
     }
 
+    protected List getLockTokensList() throws DAVException {
+        List ifHeaders = DAVServletUtil.processIfHeader(getRequestHeader(HTTPHeader.IF_HEADER));
+        LinkedList lockTokens = null;
+        if (ifHeaders != null) {
+            for (Iterator ifHeadersIter = ifHeaders.iterator(); ifHeadersIter.hasNext();) {
+                DAVIFHeader ifHeader = (DAVIFHeader) ifHeadersIter.next();
+                List ifStateList = ifHeader.getStateList();
+                if (ifStateList != null) {
+                    for (Iterator ifStateIter = ifStateList.iterator(); ifStateIter.hasNext();) {
+                        DAVIFState ifState = (DAVIFState) ifStateIter.next();
+                        if (ifState.getCondition() == DAVIFState.IF_CONDITION_NORMAL && ifState.getType() == DAVIFStateType.IF_OPAQUE_LOCK) {
+                            if (lockTokens == null) {
+                                lockTokens = new LinkedList();
+                            }
+                            lockTokens.add(ifState.getLockToken());
+                        }
+                    }
+                }
+            }
+        }
+        return lockTokens;
+    }
+    
     protected DAVResourceState getResourceState(DAVResource resource) throws SVNException {
         if (resource.exists()) {
             return DAVResourceState.EXISTS;
@@ -387,7 +436,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         FSRoot root = resource.getRoot();
         FSFS fsfs = resource.getFSFS();
         FSTransactionInfo txn = resource.getTxnInfo();
-        FSCommitter committer = getCommitter(fsfs, root, txn, null, resource.getUserName());
+        FSCommitter committer = getCommitter(fsfs, root, txn, resource.getLockTokens(), resource.getUserName());
 
         SVNNodeKind kind = DAVServletUtil.checkPath(resource.getRoot(), resource.getResourceURI().getPath());
         if (kind == SVNNodeKind.NONE) {
@@ -418,7 +467,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 }
             }
         }
-       
+        
+        ISVNDeltaConsumer deltaConsumer = getDeltaConsumer(root, committer, fsfs, resource.getUserName(), resource.getLockTokens());
+        try {
+            deltaConsumer.applyTextDelta(path, resource.getBaseChecksum());
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not prepare to write the file", null);
+        }
+        
     }
     
     protected int unlock(DAVResource resource, String lockToken) {
@@ -665,7 +722,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
             
             DAVServletUtil.setAutoRevisionProperties(resource);
-            FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
+            FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 
+                    resource.getUserName());
             
             StringBuffer conflictPath = new StringBuffer(); 
             long newRev = SVNRepository.INVALID_REVISION;
@@ -967,7 +1025,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         
         //TODO: lock pushing?
         
-        FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), null, resource.getUserName());
+        FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 
+                resource.getUserName());
         try {
             committer.deleteNode(uri.getPath());
         } catch (SVNException svne) {
@@ -1334,6 +1393,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             myCommitter.reset(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
         }
         return myCommitter;
+    }
+    
+    private FSDeltaConsumer getDeltaConsumer(FSRoot root, FSCommitter committer, FSFS fsfs, String userName, Collection lockTokens) {
+        if (myDeltaConsumer == null) {
+            myDeltaConsumer = new FSDeltaConsumer("", (FSTransactionRoot) root, fsfs, committer, userName, lockTokens);
+        }
+        return myDeltaConsumer;
+    
     }
     
     private float getEncodingRange(String encoding) {

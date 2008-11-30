@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -78,6 +79,8 @@ public class DAVResource {
     private String myTxnName;
     private FSRoot myRoot;
     private FSTransactionInfo myTxnInfo;
+    private Map myClientCapabilities;
+    private List myLockTokens;
     
     /**
      * DAVResource  constructor
@@ -90,7 +93,8 @@ public class DAVResource {
      * @throws SVNException if an error occurs while fetching repository properties.
      */
     public DAVResource(SVNRepository repository, DAVRepositoryManager manager, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
-            String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) throws DAVException {
+            String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB, 
+            List lockTokens, Map clientCapabilities) throws DAVException {
         myRepositoryManager = manager;
         myRepository = (FSRepository) repository;
         try {
@@ -99,7 +103,8 @@ public class DAVResource {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "Error occurred while accessing a repository at {0}", new Object[] { myRepository.getLocation() });
         }
-        
+        myLockTokens = lockTokens;
+        myClientCapabilities = clientCapabilities;
         myFSFS = myRepository.getFSFS();
         myResourceURI = resourceURI;
         myIsSVNClient = isSVNClient;
@@ -115,7 +120,8 @@ public class DAVResource {
     }
 
     public DAVResource(DAVRepositoryManager manager, SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
-            long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB) {
+            long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB, 
+            List lockTokens, Map clientCapabilities) {
         myRepositoryManager = manager;
         myResourceURI = resourceURI;
         myRepository = (FSRepository) repository;
@@ -129,6 +135,8 @@ public class DAVResource {
         myResultChecksum = resultChecksum;
         myUserName = userName;
         myActivitiesDB = activitiesDB;
+        myLockTokens = lockTokens;
+        myClientCapabilities = clientCapabilities;
     }
 
     public DAVResource() {
@@ -279,12 +287,20 @@ public class DAVResource {
                 try {
                     DAVResourceURI newResourceURI = new DAVResourceURI(getResourceURI().getContext(), childURI, null, false);
                     return new DAVResource(myRepositoryManager, getRepository(), newResourceURI, getRevision(), isSVNClient(), getDeltaBase(), 
-                            getVersion(), getClientOptions(), null, null, getUserName(), getActivitiesDB());
+                            getVersion(), getClientOptions(), null, null, getUserName(), getActivitiesDB(), getLockTokens(), getClientCapabilities());
                 } catch (SVNException e) {
                     return null;
                 }
             }
         };
+    }
+    
+    public Map getClientCapabilities() {
+        return myClientCapabilities;
+    }
+
+    public List getLockTokens() {
+        return myLockTokens;
     }
 
     public Collection getEntries() throws SVNException {
@@ -559,6 +575,8 @@ public class DAVResource {
         copy.myTxnName = myTxnName;
         copy.myRoot = myRoot;
         copy.myTxnInfo = myTxnInfo;
+        copy.myClientCapabilities = myClientCapabilities;
+        copy.myLockTokens = myLockTokens;
     }
 
 }

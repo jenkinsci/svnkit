@@ -53,6 +53,8 @@ public class HTTPHeader {
     public static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
     public static final String CONTENT_RANGE_HEADER = "content-range";
     
+    public static final String SVNDIFF_MIME_TYPE = "application/vnd.svn-svndiff";
+    
     private Map myHeaders;
 
     public HTTPHeader() {

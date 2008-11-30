@@ -69,6 +69,7 @@ public class DAVVersionResourceHelper extends DAVResourceHelper {
         
         return new DAVResource(resource.getRepository(), resource.getRepositoryManager(), regularResourceURI, resource.isSVNClient(), 
                 resource.getDeltaBase(), resource.getVersion(), resource.getClientOptions(), resource.getBaseChecksum(), 
-                resource.getResultChecksum(), resource.getUserName(), resource.getActivitiesDB());
+                resource.getResultChecksum(), resource.getUserName(), resource.getActivitiesDB(), resource.getLockTokens(), 
+                resource.getClientCapabilities());
     }
 }

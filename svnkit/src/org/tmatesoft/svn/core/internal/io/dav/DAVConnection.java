@@ -354,7 +354,7 @@ public class DAVConnection {
     
     public HTTPStatus doPutDiff(String repositoryPath, String path, InputStream data, long size, String baseChecksum, String textChecksum) throws SVNException {        
         HTTPHeader headers = new HTTPHeader();
-        headers.setHeaderValue(HTTPHeader.CONTENT_TYPE_HEADER, "application/vnd.svn-svndiff");
+        headers.setHeaderValue(HTTPHeader.CONTENT_TYPE_HEADER, HTTPHeader.SVNDIFF_MIME_TYPE);
         headers.setHeaderValue(HTTPHeader.CONTENT_LENGTH_HEADER, size + "");
         if (myLocks != null && myLocks.containsKey(repositoryPath)) {
             headers.setHeaderValue(HTTPHeader.IF_HEADER, "<" + repositoryPath + "> (<" + myLocks.get(repositoryPath) + ">)");
