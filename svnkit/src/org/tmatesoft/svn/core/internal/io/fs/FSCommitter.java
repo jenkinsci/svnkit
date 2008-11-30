@@ -723,12 +723,11 @@ public class FSCommitter {
             });
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        for (Iterator tokens = lockTokens.iterator(); tokens.hasNext();) {
-            String token = (String) tokens.next();
-            if (token.equals(lock.getID())) {
-                return;
-            }
+        
+        if (lockTokens.contains(lock.getID())) {
+            return;
         }
+        
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_BAD_LOCK_TOKEN, "Cannot verify lock on path ''{0}''; no matching lock-token available", lock.getPath());
         SVNErrorManager.error(err, SVNLogType.FSFS);
     }
