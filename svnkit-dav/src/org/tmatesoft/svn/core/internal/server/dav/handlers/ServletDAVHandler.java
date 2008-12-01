@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
@@ -420,7 +421,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
-    protected void openStream(DAVResource resource, int mode) throws DAVException {
+    protected SVNDeltaReader openStream(DAVResource resource, int mode) throws DAVException {
         if (mode == DAV_MODE_WRITE_TRUNC || mode == DAV_MODE_WRITE_SEEKABLE) {
             if (resource.getType() != DAVResourceType.WORKING) {
                 throw new DAVException("Resource body changes may only be made to working resources [at this time].", 
@@ -476,7 +477,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                     "Could not prepare to write the file", null);
         }
         
+        if (isSVNDiff()) {
+            return new SVNDeltaReader();
+        }
+        return null;
     }
+    
     
     protected int unlock(DAVResource resource, String lockToken) {
         DAVLockInfoProvider lockProvider = null;
@@ -1077,6 +1083,11 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myRequest.getDateHeader(name);
     }
 
+    protected boolean isSVNDiff() {
+        String contentType = myRequest.getContentType();
+        return contentType != null && contentType.equals(HTTPHeader.SVNDIFF_MIME_TYPE);
+    }
+    
     protected long[] parseRange() {
         String range = getRequestHeader(HTTPHeader.CONTENT_RANGE_HEADER);
         if (range == null) {
@@ -1192,6 +1203,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         setResponseHeader(HTTPHeader.LOCATION_HEADER, constructURL(location));
         String body = what + " " + SVNEncodingUtil.xmlEncodeCDATA(location) + " has been created.";
         response(body, DAVServlet.getStatusLine(HttpServletResponse.SC_CREATED), HttpServletResponse.SC_CREATED);
+    }
+    
+    protected void notifyCreated(DAVResource resource, DAVLockInfoProvider lockProvider, DAVResourceState resourceState, DAVDepth depth) {
+        if (resourceState == DAVResourceState.LOCK_NULL) {
+            if (depth != DAVDepth.DEPTH_ZERO) {
+                
+            }
+        }
     }
 
     protected void response(String body, String statusLine, int statusCode) throws SVNException {
@@ -1386,7 +1405,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return diffCompress;
     }
     
-    private FSCommitter getCommitter(FSFS fsfs, FSRoot root, FSTransactionInfo txn, Collection lockTokens, String userName) {
+    protected FSCommitter getCommitter(FSFS fsfs, FSRoot root, FSTransactionInfo txn, Collection lockTokens, String userName) {
         if (myCommitter == null) {
             myCommitter = new FSCommitter(fsfs, (FSTransactionRoot) root, txn, lockTokens, userName);
         } else {
@@ -1395,7 +1414,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return myCommitter;
     }
     
-    private FSDeltaConsumer getDeltaConsumer(FSRoot root, FSCommitter committer, FSFS fsfs, String userName, Collection lockTokens) {
+    protected FSDeltaConsumer getDeltaConsumer(FSRoot root, FSCommitter committer, FSFS fsfs, String userName, Collection lockTokens) {
         if (myDeltaConsumer == null) {
             myDeltaConsumer = new FSDeltaConsumer("", (FSTransactionRoot) root, fsfs, committer, userName, lockTokens);
         }

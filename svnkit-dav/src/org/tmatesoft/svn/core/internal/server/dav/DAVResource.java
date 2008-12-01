@@ -522,7 +522,10 @@ public class DAVResource {
         if (!reposRoot1.equals(reposRoot2)) {
             return false;
         }
-        return true;
+         
+        String myRequestURI = myResourceURI.getRequestURI(); 
+        String otherRequestURI = otherResource.getResourceURI().getRequestURI();
+        return myRequestURI.equals(otherRequestURI);
     }
     
     public DAVResource dup() {

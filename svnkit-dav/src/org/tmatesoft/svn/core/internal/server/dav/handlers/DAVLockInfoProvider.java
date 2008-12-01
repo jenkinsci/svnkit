@@ -22,9 +22,16 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSLock;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
+import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
@@ -33,7 +40,9 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVLockRecType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -94,6 +103,91 @@ public class DAVLockInfoProvider {
         return provider;
     }
 
+    public void inheritLocks(DAVResource resource, boolean useParent) throws DAVException {
+        DAVResource whichResource = resource;
+        if (useParent) {
+            DAVResource parentResource = DAVResourceHelper.createParentResource(resource);
+            if (parentResource == null) {
+                throw new DAVException("Could not fetch parent resource. Unable to inherit locks from the parent and apply them to this resource.", 
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
+            }
+            whichResource = parentResource;
+        }
+        
+        DAVLock lock = getLock(whichResource);
+        if (lock == null) {
+            return;
+        }
+        
+    }
+    
+    public void appendLock(DAVResource resource, DAVLock lock, FSCommitter committer, boolean makeIndirect) throws DAVException {
+        //TODO: add here authz check later
+        if (!resource.exists()) {
+            SVNProperties revisionProps = new SVNProperties();
+            revisionProps.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
+            DAVConfig config = resource.getRepositoryManager().getDAVConfig();
+            if (resource.isSVNClient()) {
+                throw new DAVException("Subversion clients may not lock nonexistent paths.", HttpServletResponse.SC_METHOD_NOT_ALLOWED, 
+                        DAVErrorCode.LOCK_SAVE_LOCK);
+            } else if (!config.isAutoVersioning()) {
+                throw new DAVException("Attempted to lock non-existent path; turn on autoversioning first.", 
+                        HttpServletResponse.SC_METHOD_NOT_ALLOWED, DAVErrorCode.LOCK_SAVE_LOCK);
+            }
+            
+            FSFS fsfs = resource.getFSFS();
+            long youngestRev = SVNRepository.INVALID_REVISION;
+            try {
+                youngestRev = resource.getLatestRevision();
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not determine youngest revision", null);
+            }
+            
+            FSTransactionInfo txnInfo = null;
+            try {
+                txnInfo = FSTransactionRoot.beginTransactionForCommit(youngestRev, revisionProps, fsfs);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not begin a transaction", null);
+            }
+            
+            FSTransactionRoot root = null;
+            try {
+                root = fsfs.createTransactionRoot(txnInfo);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not begin a transaction", null);
+            }
+            
+            String path = resource.getResourceURI().getPath();
+            try {
+                committer.makeFile(path);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not create empty file.", null);
+            }
+            
+            try {
+                DAVServletUtil.attachAutoRevisionProperties(txnInfo, path, fsfs);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "Could not create empty file.", null);
+            }
+            
+            StringBuffer conflictPath = new StringBuffer();
+            long newRev = SVNRepository.INVALID_REVISION;
+            try {
+                newRev = committer.commitTxn(true, true, null, conflictPath);
+            } catch (SVNException svne) {
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, "Conflict when committing ''{0}''.", 
+                        new Object[] { conflictPath.toString() });
+            }
+            
+            
+        }
+    }
+    
     public boolean hasLocks(DAVResource resource) throws DAVException {
         if (resource.getResourceURI().getPath() == null) {
             return false;
