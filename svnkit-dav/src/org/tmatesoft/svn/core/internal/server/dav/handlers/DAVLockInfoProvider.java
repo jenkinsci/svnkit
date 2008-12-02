@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -229,7 +230,7 @@ public class DAVLockInfoProvider {
         }
         
         if (lock != null) {
-            davLock = convertToDAVLock(lock, myIsBreakLock, resource.exists());
+            davLock = convertSVNLockToDAVLock(lock, myIsBreakLock, resource.exists());
             myOwner.setResponseHeader(HTTPHeader.CREATION_DATE_HEADER, SVNDate.formatDate(lock.getCreationDate()));
             myOwner.setResponseHeader(HTTPHeader.LOCK_OWNER_HEADER, lock.getOwner());
         }
@@ -253,7 +254,7 @@ public class DAVLockInfoProvider {
                 throw new DAVException("Incoming token doesn't match existing lock.", HttpServletResponse.SC_BAD_REQUEST, 
                         DAVErrorCode.LOCK_SAVE_LOCK);
             }
-            davLock = convertToDAVLock(lock, false, resource.exists());
+            davLock = convertSVNLockToDAVLock(lock, false, resource.exists());
             myOwner.setResponseHeader(HTTPHeader.CREATION_DATE_HEADER, SVNDate.formatDate(lock.getCreationDate()));
             myOwner.setResponseHeader(HTTPHeader.LOCK_OWNER_HEADER, lock.getOwner());
         }
@@ -320,7 +321,26 @@ public class DAVLockInfoProvider {
         return myWorkingRevision;
     }
     
-    private DAVLock convertToDAVLock(FSLock lock, boolean hideAuthUser, boolean exists) {
+    public static SVNLock convertDAVLockToSVNLock(DAVLock davLock, String path, boolean isSVNClient) throws DAVException {
+        if (davLock.getType() != DAVLockType.WRITE) {
+            throw new DAVException("Only 'write' locks are supported.", HttpServletResponse.SC_BAD_REQUEST, DAVErrorCode.LOCK_SAVE_LOCK);
+        }
+        if (davLock.getScope() != DAVLockScope.EXCLUSIVE) {
+            throw new DAVException("Only exclusive locks are supported.", HttpServletResponse.SC_BAD_REQUEST, DAVErrorCode.LOCK_SAVE_LOCK);
+        }
+        
+        Date creationDate = new Date(System.currentTimeMillis());
+        String owner = davLock.getAuthUser();
+        boolean isDAVComment = false;
+        if (davLock.getOwner() != null) {
+            if (isSVNClient) {
+                
+            }
+        }
+        return null;
+    }
+    
+    public static DAVLock convertSVNLockToDAVLock(FSLock lock, boolean hideAuthUser, boolean exists) {
         String authUser = null;
         StringBuffer owner = null;
         if (lock.getComment() != null) {
