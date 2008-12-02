@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -26,6 +30,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.BasicDAVHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -51,6 +56,10 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 
 /**
@@ -122,8 +131,10 @@ public class DAVLockInfoProvider {
         
     }
     
-    public void appendLock(DAVResource resource, DAVLock lock, FSCommitter committer, boolean makeIndirect) throws DAVException {
+    public void appendLock(DAVResource resource, DAVLock lock) throws DAVException {
         //TODO: add here authz check later
+        FSFS fsfs = resource.getFSFS();
+        String path = resource.getResourceURI().getPath();
         if (!resource.exists()) {
             SVNProperties revisionProps = new SVNProperties();
             revisionProps.put(SVNRevisionProperty.AUTHOR, resource.getUserName());
@@ -136,7 +147,6 @@ public class DAVLockInfoProvider {
                         HttpServletResponse.SC_METHOD_NOT_ALLOWED, DAVErrorCode.LOCK_SAVE_LOCK);
             }
             
-            FSFS fsfs = resource.getFSFS();
             long youngestRev = SVNRepository.INVALID_REVISION;
             try {
                 youngestRev = resource.getLatestRevision();
@@ -161,7 +171,7 @@ public class DAVLockInfoProvider {
                         "Could not begin a transaction", null);
             }
             
-            String path = resource.getResourceURI().getPath();
+            FSCommitter committer = new FSCommitter(fsfs, root, txnInfo, resource.getLockTokens(), resource.getUserName());
             try {
                 committer.makeFile(path);
             } catch (SVNException svne) {
@@ -177,16 +187,30 @@ public class DAVLockInfoProvider {
             }
             
             StringBuffer conflictPath = new StringBuffer();
-            long newRev = SVNRepository.INVALID_REVISION;
             try {
-                newRev = committer.commitTxn(true, true, null, conflictPath);
+                committer.commitTxn(true, true, null, conflictPath);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, "Conflict when committing ''{0}''.", 
                         new Object[] { conflictPath.toString() });
             }
-            
-            
         }
+        
+        FSLock svnLock = convertDAVLockToSVNLock(lock, path, resource.isSVNClient(), ServletDAVHandler.getSAXParserFactory());
+        try {
+            fsfs.lockPath(path, svnLock.getID(), svnLock.getOwner(), svnLock.getComment(), svnLock.getExpirationDate(), myWorkingRevision, 
+                    myIsStealLock, svnLock.isDAVComment());
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_USER) {
+                throw new DAVException("Anonymous lock creation is not allowed.", HttpServletResponse.SC_UNAUTHORIZED, 
+                        DAVErrorCode.LOCK_SAVE_LOCK);
+            }
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create new lock.", 
+                    null);
+        }
+        
+        myOwner.setResponseHeader(HTTPHeader.CREATION_DATE_HEADER, SVNDate.formatDate(svnLock.getCreationDate()));
+        myOwner.setResponseHeader(HTTPHeader.LOCK_OWNER_HEADER, svnLock.getOwner());
+        //TODO: add logging here later
     }
     
     public boolean hasLocks(DAVResource resource) throws DAVException {
@@ -321,7 +345,7 @@ public class DAVLockInfoProvider {
         return myWorkingRevision;
     }
     
-    public static SVNLock convertDAVLockToSVNLock(DAVLock davLock, String path, boolean isSVNClient) throws DAVException {
+    public static FSLock convertDAVLockToSVNLock(DAVLock davLock, String path, boolean isSVNClient, SAXParserFactory saxParserFactory) throws DAVException {
         if (davLock.getType() != DAVLockType.WRITE) {
             throw new DAVException("Only 'write' locks are supported.", HttpServletResponse.SC_BAD_REQUEST, DAVErrorCode.LOCK_SAVE_LOCK);
         }
@@ -329,15 +353,35 @@ public class DAVLockInfoProvider {
             throw new DAVException("Only exclusive locks are supported.", HttpServletResponse.SC_BAD_REQUEST, DAVErrorCode.LOCK_SAVE_LOCK);
         }
         
-        Date creationDate = new Date(System.currentTimeMillis());
-        String owner = davLock.getAuthUser();
         boolean isDAVComment = false;
+        String comment = null;
         if (davLock.getOwner() != null) {
             if (isSVNClient) {
-                
+                try {
+                    SAXParser xmlParser = saxParserFactory.newSAXParser();
+                    XMLReader reader = xmlParser.getXMLReader();
+                    FetchXMLHandler handler = new FetchXMLHandler(DAVElement.LOCK_OWNER);
+                    reader.setContentHandler(handler);
+                    reader.setDTDHandler(handler);
+                    reader.setErrorHandler(handler);
+                    reader.setEntityResolver(handler);
+                    reader.parse(new InputSource(davLock.getOwner()));
+                    comment = handler.getData();
+                } catch (ParserConfigurationException e) {
+                    throw new DAVException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.LOCK_SAVE_LOCK);
+                } catch (SAXException e) {
+                    throw new DAVException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.LOCK_SAVE_LOCK);
+                } catch (IOException e) {
+                    throw new DAVException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.LOCK_SAVE_LOCK);
+                }
+            } else {
+                isDAVComment = true;
+                comment = davLock.getOwner();
             }
         }
-        return null;
+        
+        return new FSLock(path, davLock.getLockToken(), davLock.getAuthUser(), comment, new Date(System.currentTimeMillis()), 
+                davLock.getTimeOutDate(), isDAVComment);
     }
     
     public static DAVLock convertSVNLockToDAVLock(FSLock lock, boolean hideAuthUser, boolean exists) {
@@ -373,4 +417,29 @@ public class DAVLockInfoProvider {
         private GetLocksCallType() {
         }
     }
+    
+    private static class FetchXMLHandler extends BasicDAVHandler {
+        private String myData;
+        private DAVElement myElement;
+        
+        public FetchXMLHandler(DAVElement element) {
+            myElement = element;
+            init();
+        }
+        
+        public String getData() {
+            return myData;
+        }
+        
+        protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+            if (element == myElement) {
+                myData = cdata.toString();
+            }
+        }
+
+        protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
+        }
+        
+    }
+    
 }

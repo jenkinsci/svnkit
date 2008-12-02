@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 
@@ -26,18 +27,19 @@ public class DAVInheritWalker implements IDAVResourceWalkHandler {
 
     private boolean myIsSkipRoot;
     private DAVResource myResource;
+    private DAVLock lock;
     
-    public DAVInheritWalker() {
-        
+    public DAVInheritWalker(DAVResource resource, DAVLock lock, boolean skipRoot) {
     }
     
-    public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, int flags, DAVLockScope lockScope, CallType callType)
+    public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, 
+            int flags, DAVLockScope lockScope, CallType callType)
             throws DAVException {
         if (myIsSkipRoot && myResource.equals(resource)) {
             return null;
         }
         
-        
+        lockInfoProvider.appendLock(resource, lock);
         return null;
     }
 

@@ -1562,7 +1562,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
 
-    private synchronized static SAXParserFactory getSAXParserFactory() {
+    public synchronized static SAXParserFactory getSAXParserFactory() {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();
             try {
