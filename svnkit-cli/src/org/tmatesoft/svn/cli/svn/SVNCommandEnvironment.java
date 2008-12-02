@@ -547,8 +547,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         if (!myIsDescend) {
             if (getCommand() instanceof SVNStatusCommand) {
                 myDepth = SVNDepth.IMMEDIATES;
+            } else if (getCommand() instanceof SVNRevertCommand ||
+                    getCommand() instanceof SVNAddCommand ||
+                    getCommand() instanceof SVNCommitCommand) {
+                myDepth = SVNDepth.EMPTY;
             } else {
-                myDepth = SVNDepth.fromRecurse(myIsDescend);
+                myDepth = SVNDepth.FILES;
             }
         }
     }
