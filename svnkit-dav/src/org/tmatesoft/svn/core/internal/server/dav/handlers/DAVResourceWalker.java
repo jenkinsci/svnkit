@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
@@ -42,36 +43,26 @@ public class DAVResourceWalker {
     private LinkedList myIfHeaders;
     private DAVResource myResource;
     private DAVLockInfoProvider myLockInfoProvider;
+    private DAVLockScope myLockScope;
     private int myFlags;
     private int myWalkType;
     private FSRoot myRoot;
     
-    public DAVResponse walk(DAVLockInfoProvider lockInfoProvider, DAVResource resource, LinkedList ifHeaders, int flags, int walkType, 
-            IDAVResourceWalkHandler handler, DAVDepth depth) throws DAVException {
+    public DAVResponse walk(DAVLockInfoProvider lockInfoProvider, DAVResource resource, LinkedList ifHeaders, int flags, DAVLockScope lockScope, 
+            int walkType, IDAVResourceWalkHandler handler, DAVDepth depth) throws DAVException {
         myIfHeaders = ifHeaders;
         myLockInfoProvider = lockInfoProvider;
         myResource = resource.dup();
         myFlags = flags;
         myWalkType = walkType;
         myRoot = resource.getRoot();
+        myLockScope = lockScope;
         return doWalk(handler, null, depth);
     }
 
-    public int getFlags() {
-        return myFlags;
-    }
-
-    public DAVLockInfoProvider getLockInfoProvider() {
-        return myLockInfoProvider;
-    }
-
-    public DAVResource getResource() {
-        return myResource;
-    }
-    
     private DAVResponse doWalk(IDAVResourceWalkHandler handler, DAVResponse response, DAVDepth depth) throws DAVException {
         boolean isDir = myResource.isCollection();
-        response = handler.handleResource(response, myResource, myLockInfoProvider, myIfHeaders, myFlags, null, 
+        response = handler.handleResource(response, myResource, myLockInfoProvider, myIfHeaders, myFlags, myLockScope, 
                 isDir ? CallType.COLLECTION : CallType.MEMBER);
         
         if (depth == DAVDepth.DEPTH_ZERO || !isDir) {
@@ -116,7 +107,7 @@ public class DAVResourceWalker {
             myResource.getResourceURI().setPath(DAVPathUtil.append(reposPath, childName));
             
             if (childEntry.getType() == SVNNodeKind.FILE) {
-                response = handler.handleResource(response, myResource, myLockInfoProvider, myIfHeaders, myFlags, null, CallType.MEMBER);
+                response = handler.handleResource(response, myResource, myLockInfoProvider, myIfHeaders, myFlags, myLockScope, CallType.MEMBER);
             } else {
                 myResource.setCollection(true);
                 response = doWalk(handler, response, depth);

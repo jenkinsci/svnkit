@@ -63,7 +63,7 @@ public class DAVPutHandler extends ServletDAVHandler {
         
         DAVResourceState resourceState = getResourceState(resource);
         validateRequest(resource, DAVDepth.DEPTH_ZERO, resourceState == DAVResourceState.NULL ? DAV_VALIDATE_PARENT : DAV_VALIDATE_RESOURCE, 
-                null, null);
+                null, null, null);
         
         autoCheckOut(resource, false);
         int mode = DAV_MODE_WRITE_TRUNC;
@@ -128,30 +128,40 @@ public class DAVPutHandler extends ServletDAVHandler {
                     }
                 }
             }
-
-            if (error == null) {
-                resource.setExists(true);
-            }
-
-            try {
-                autoCheckIn(resource, error != null, false, null);
-            } catch (DAVException dave) {
-                error2 = dave;
-            }
-            
-            if (error != null) {
-                throw error;
-            }
-            
-            if (error2 != null) {
-                error2 = new DAVException("The PUT was successful, but there was a problem automatically checking in the resource or its parent collection.", 
-                        null, error2.getResponseCode(), error2, 0);
-                //TODO: add here better logging
-            }
-
-            DAVLockInfoProvider lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
-            
         }
+        
+        if (error == null) {
+            resource.setExists(true);
+        }
+
+        try {
+            autoCheckIn(resource, error != null, false, null);
+        } catch (DAVException dave) {
+            error2 = dave;
+        }
+        
+        if (error != null) {
+            throw error;
+        }
+        
+        if (error2 != null) {
+            error2 = new DAVException("The PUT was successful, but there was a problem automatically checking in the resource or its parent collection.", 
+                    null, error2.getResponseCode(), error2, 0);
+            //TODO: add here better logging
+        }
+
+        DAVLockInfoProvider lockProvider = null;
+        try {
+            lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "The file was PUT successfully, but there was a problem opening the lock database which prevents inheriting locks from the parent resources.", 
+                    null);
+        }
+        
+        notifyCreated(resource, lockProvider, resourceState, DAVDepth.DEPTH_ZERO);
+
+        handleDAVCreated(null, "Resource", resourceState == DAVResourceState.EXISTS);
     }
 
     protected DAVRequest getDAVRequest() {

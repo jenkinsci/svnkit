@@ -58,7 +58,7 @@ public class DAVDeleteHandler extends ServletDAVHandler {
         }
         
         try {
-            validateRequest(resource, depth, DAV_VALIDATE_PARENT | DAV_VALIDATE_USE_424, null, null);
+            validateRequest(resource, depth, DAV_VALIDATE_PARENT | DAV_VALIDATE_USE_424, null, null, null);
         } catch (DAVException dave) {
             throw new DAVException("Could not DELETE {0} due to a failed precondition (e.g. locks).", 
                     new Object[] { SVNEncodingUtil.xmlEncodeCDATA(getURI()) }, dave.getResponseCode(), null, SVNLogType.NETWORK, Level.FINE, 

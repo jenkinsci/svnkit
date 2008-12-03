@@ -65,6 +65,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVIFHeader;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVIFStateType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -317,7 +318,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return DAVResourceState.NULL; 
     }
     
-    protected void validateRequest(DAVResource resource, DAVDepth depth, int flags, String lockToken, DAVLockInfoProvider lockInfoProvider) throws SVNException {
+    protected void validateRequest(DAVResource resource, DAVDepth depth, int flags, DAVLockScope lockScope, String lockToken, 
+            DAVLockInfoProvider lockInfoProvider) throws SVNException {
         boolean setETag = false;
         String eTag = getRequestHeader(ETAG_HEADER);
         if (eTag == null) {
@@ -359,7 +361,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             DAVResourceWalker walker = new DAVResourceWalker();
             int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL;
             try {
-                response = walker.walk(lockInfoProvider, resource, ifHeaders, flags, walkType, validateHandler, DAVDepth.DEPTH_INFINITY);
+                response = walker.walk(lockInfoProvider, resource, ifHeaders, flags, null, walkType, validateHandler, DAVDepth.DEPTH_INFINITY);
             } catch (DAVException dave) {
                 exception = dave;
             }
@@ -505,7 +507,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         DAVResourceWalker walker = new DAVResourceWalker();
         DAVUnlockWalker unlockHandler = new DAVUnlockWalker(lockToken, this);
         try {
-            walker.walk(lockProvider, lockResource, null, 0, walkType, unlockHandler, DAVDepth.DEPTH_INFINITY);
+            walker.walk(lockProvider, lockResource, null, 0, null, walkType, unlockHandler, DAVDepth.DEPTH_INFINITY);
         } catch (DAVException dave) {
             return dave.getResponseCode();
         }
@@ -1205,10 +1207,17 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         response(body, DAVServlet.getStatusLine(HttpServletResponse.SC_CREATED), HttpServletResponse.SC_CREATED);
     }
     
-    protected void notifyCreated(DAVResource resource, DAVLockInfoProvider lockProvider, DAVResourceState resourceState, DAVDepth depth) {
+    protected void notifyCreated(DAVResource resource, DAVLockInfoProvider lockProvider, DAVResourceState resourceState, DAVDepth depth) throws DAVException {
         if (resourceState == DAVResourceState.LOCK_NULL) {
             if (depth != DAVDepth.DEPTH_ZERO) {
-                
+                lockProvider.inheritLocks(resource, false);
+            }
+        } else if (resourceState == DAVResourceState.NULL) {
+            try {
+                lockProvider.inheritLocks(resource, true);
+            } catch (DAVException dave) {
+                throw new DAVException("The resource was created successfully, but there was a problem inheriting locks from the parent resource.", 
+                        dave.getResponseCode(), dave, 0);
             }
         }
     }

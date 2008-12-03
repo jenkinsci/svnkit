@@ -55,6 +55,10 @@ public class DAVException extends SVNException {
         SVNDebugLog.getDefaultLog().log(logType, message, level);
     }
 
+    public DAVException(String message, int respondCode, DAVException previousException, int errorID) {
+        this(message, null, respondCode, null, SVNLogType.NETWORK, Level.FINE, previousException, null, null, errorID, null);
+    }
+
     public DAVException(String message, Object[] objects, int respondCode, DAVException previousException, int errorID) {
         this(message, objects, respondCode, null, SVNLogType.NETWORK, Level.FINE, previousException, null, null, errorID, null);
     }

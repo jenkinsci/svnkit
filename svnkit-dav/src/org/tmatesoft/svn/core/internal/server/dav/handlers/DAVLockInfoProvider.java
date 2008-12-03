@@ -129,6 +129,10 @@ public class DAVLockInfoProvider {
             return;
         }
         
+        DAVInheritWalker inheritHandler = new DAVInheritWalker(resource, lock, !useParent);
+        DAVResourceWalker walker = new DAVResourceWalker();
+        walker.walk(this, whichResource, null, 0, null, DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL, 
+                inheritHandler, DAVDepth.DEPTH_INFINITY);
     }
     
     public void appendLock(DAVResource resource, DAVLock lock) throws DAVException {

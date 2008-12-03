@@ -27,9 +27,12 @@ public class DAVInheritWalker implements IDAVResourceWalkHandler {
 
     private boolean myIsSkipRoot;
     private DAVResource myResource;
-    private DAVLock lock;
+    private DAVLock myLock;
     
     public DAVInheritWalker(DAVResource resource, DAVLock lock, boolean skipRoot) {
+        myResource = resource;
+        myIsSkipRoot = skipRoot;
+        myLock = lock;
     }
     
     public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, 
@@ -39,7 +42,7 @@ public class DAVInheritWalker implements IDAVResourceWalkHandler {
             return null;
         }
         
-        lockInfoProvider.appendLock(resource, lock);
+        lockInfoProvider.appendLock(resource, myLock);
         return null;
     }
 
