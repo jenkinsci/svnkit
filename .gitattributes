@@ -95,10 +95,12 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVVersionResourceHelp
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/DAVWorkingResourceHelper.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVCheckOutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVCheckOutRequest.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVCopyMoveHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVDeleteHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVInheritWalker.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockInfoProvider.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeActivityHandler.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeCollectionHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResult.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResourceWalker.java -text

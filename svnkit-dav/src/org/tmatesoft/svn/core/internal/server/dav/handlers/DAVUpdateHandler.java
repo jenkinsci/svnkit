@@ -440,7 +440,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             attrs.put(SEND_ALL_ATTR, Boolean.TRUE.toString());
         }
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer);
     }
 
     public void targetRevision(long revision) throws SVNException {

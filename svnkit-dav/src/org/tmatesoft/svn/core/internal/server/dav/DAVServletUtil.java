@@ -18,7 +18,9 @@ import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.logging.Level;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpUtils;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -41,6 +43,42 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class DAVServletUtil {
+    
+    public static DAVResource lookUpURI(String uri, HttpServletRequest request, DAVResource resource, boolean mustBeAbsolute) throws DAVException {
+        URI parsedURI = null;
+        try {
+            parsedURI = new URI(uri);
+        } catch (URISyntaxException urise) {
+            throw new DAVException("Invalid syntax in Destination URI.", HttpServletResponse.SC_BAD_REQUEST, 0);
+        }
+        
+        if (parsedURI.getScheme() == null && mustBeAbsolute) {
+            throw new DAVException("Destination URI must be an absolute URI.", HttpServletResponse.SC_BAD_REQUEST, 0);
+        }
+        
+        if (parsedURI.getQuery() != null || parsedURI.getFragment() != null) {
+            throw new DAVException("Destination URI contains invalid components (a query or a fragment).", HttpServletResponse.SC_BAD_REQUEST, 0);
+        }
+        
+        if (parsedURI.getScheme() != null || parsedURI.getPort() != 0 || mustBeAbsolute) {
+            String scheme = request.getScheme();
+            if (scheme == null) {
+                //TODO: replace this code in future 
+                scheme = "http";
+            }
+            int parsedPort = parsedURI.getPort();
+            if (parsedURI.getPort() == 0) {
+                parsedPort = request.getServerPort();
+            }
+            
+            if (!scheme.equals(parsedURI.getScheme()) || parsedPort != request.getServerPort()) {
+                throw new DAVException("Destination URI refers to different scheme or port (%s://hostname:%d)\n(want: %s://hostname:%d)", 
+                        new Object[] { }, HttpServletResponse.SC_BAD_REQUEST, 0);
+            }
+        }
+        
+        return null;
+    }
     
     public static void setAutoRevisionProperties(DAVResource resource) throws DAVException {
         if (!(resource.getType() == DAVResourceType.WORKING && resource.isAutoCheckedOut())) {

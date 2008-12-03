@@ -75,8 +75,15 @@ public class DAVHandlerFactory {
         if (METHOD_DELETE.equals(methodName)) {
             return new DAVDeleteHandler(manager, request, response);
         }
+        if (METHOD_COPY.equals(methodName)) {
+            return new DAVCopyMoveHandler(manager, request, response, false);
+        }
+        if (METHOD_MOVE.equals(methodName)) {
+            return new DAVCopyMoveHandler(manager, request, response, true);
+        }
         
-        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), SVNLogType.NETWORK);
+        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), 
+                SVNLogType.NETWORK);
         return null;
     }
 

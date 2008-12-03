@@ -52,6 +52,8 @@ public class HTTPHeader {
     public static final String SVN_DELTA_BASE_HEADER = "X-SVN-VR-Base";
     public static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
     public static final String CONTENT_RANGE_HEADER = "content-range";
+    public static final String HOST_HEADER = "Host";
+    public static final String NEW_URI_HEADER = "New-uri";
     
     public static final String SVNDIFF_MIME_TYPE = "application/vnd.svn-svndiff";
     
