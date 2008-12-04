@@ -534,7 +534,7 @@ public class SVNWCManager {
         if (fileType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY) {
+        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.SYMLINK) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Unsupported node kind for path ''{0}''", path);
             SVNErrorManager.error(err, SVNLogType.WC);
