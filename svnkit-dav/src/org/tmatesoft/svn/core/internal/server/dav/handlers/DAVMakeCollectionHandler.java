@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
-import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 
 
 /**
@@ -51,7 +50,42 @@ public class DAVMakeCollectionHandler extends ServletDAVHandler {
         validateRequest(resource, DAVDepth.DEPTH_ZERO, resourceState == DAVResourceState.NULL ? DAV_VALIDATE_PARENT : DAV_VALIDATE_RESOURCE, 
                 null, null, null);
         
+        DAVException err1 = null;
+        DAVException err2 = null;
+        DAVAutoVersionInfo avInfo = autoCheckOut(resource, true);
+        resource.setCollection(true);
+        try {
+            createdCollection(resource);
+        } catch (DAVException dave) {
+            err1 = dave;
+        }
         
+        try {
+            autoCheckIn(resource, err1 != null, false, avInfo);
+        } catch (DAVException dave) {
+            err2 = dave;
+        }
+        
+        if (err1 != null) {
+            throw err1;
+        }
+        
+        if (err2 != null) {
+            err1 = new DAVException("The MKCOL was successful, but there was a problem opening the lock database which prevents inheriting locks from the parent resources.", 
+                    err2.getResponseCode(), err2, 0);
+        }
+        
+        DAVLockInfoProvider lockProvider = null;
+        try {
+            lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "The MKCOL was successful, but there was a problem opening the lock database which prevents inheriting locks from the parent resources.", 
+                    null);
+        }
+
+        notifyCreated(resource, lockProvider, resourceState, DAVDepth.DEPTH_ZERO);
+        handleDAVCreated(null, "Collection", false);
     }
 
     protected DAVRequest getDAVRequest() {

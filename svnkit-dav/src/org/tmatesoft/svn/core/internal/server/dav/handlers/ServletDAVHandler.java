@@ -1184,6 +1184,36 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
 
+    protected void createdCollection(DAVResource resource) throws DAVException {
+        if (resource.getType() != DAVResourceType.WORKING && resource.getType() != DAVResourceType.REGULAR) {
+            throw new DAVException("Collections can only be created within a working or regular collection [at this time].", 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+        }
+        
+        if (resource.getType() == DAVResourceType.REGULAR && !getConfig().isAutoVersioning()) {
+            throw new DAVException("MKCOL called on regular resource, but autoversioning is not active.", 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+        }
+        
+        if (resource.getType() == DAVResourceType.REGULAR) {
+            checkOut(resource, true, false, false, null);
+        }
+       
+        FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 
+                resource.getUserName());
+        
+        try {
+            committer.makeDir(resource.getResourceURI().getPath());
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not create the collection.", null);
+        }
+        
+        if (resource.isAutoCheckedOut()) {
+            checkIn(resource, false, false);
+        }
+    }
+    
     protected OutputStream getResponseOutputStream() throws SVNException {
         try {
             return myResponse.getOutputStream();
