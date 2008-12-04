@@ -69,7 +69,7 @@ public class SVNFileUtil {
     public static final boolean isOS2;
     public static final boolean isOSX;
     public static final boolean isBSD;
-    public static final boolean isLinux;
+    public static boolean isLinux;
     public static final boolean isSolaris;
     public static final boolean isOpenVMS;
     
@@ -116,11 +116,16 @@ public class SVNFileUtil {
         }
 
         isWindows = windows;
-        isOSX = !isWindows && osName != null && (osNameLC.indexOf("mac") >= 0 || osNameLC.indexOf("darwin") >= 0);
-        isLinux = !isWindows && osName != null && osNameLC.indexOf("linux") >= 0;
-        isBSD = !isWindows && !isLinux && osName != null && osNameLC.indexOf("bsd") >= 0;
-        isSolaris = !isWindows && !isLinux && !isBSD && osName != null && osNameLC.indexOf("solaris") >= 0;
-        isOpenVMS = !isWindows && !isOSX && osName != null && osNameLC.indexOf("openvms") >= 0;
+        isOSX = osName != null && (osNameLC.indexOf("mac") >= 0 || osNameLC.indexOf("darwin") >= 0);
+        isLinux = osName != null && (osNameLC.indexOf("linux") >= 0 || osNameLC.indexOf("hp-ux") >= 0);
+        isBSD = !isLinux && osName != null && osNameLC.indexOf("bsd") >= 0;
+        isSolaris = !isLinux && !isBSD && osName != null && osNameLC.indexOf("solaris") >= 0;
+        isOpenVMS = !isOSX && osName != null && osNameLC.indexOf("openvms") >= 0;
+
+        if (!isWindows && !isOSX && !isLinux && !isBSD && !isSolaris && !isOpenVMS && !isOS2) {
+            // fallback to some default.
+            isLinux = true;
+        }
 
         is32Bit = "32".equals(System.getProperty("sun.arch.data.model", "32"));
         is64Bit = "64".equals(System.getProperty("sun.arch.data.model", "64"));
