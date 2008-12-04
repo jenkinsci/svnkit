@@ -54,6 +54,7 @@ public class HTTPHeader {
     public static final String CONTENT_RANGE_HEADER = "content-range";
     public static final String HOST_HEADER = "Host";
     public static final String NEW_URI_HEADER = "New-uri";
+    public static final String OVERWRITE_HEADER = "Overwrite";
     
     public static final String SVNDIFF_MIME_TYPE = "application/vnd.svn-svndiff";
     

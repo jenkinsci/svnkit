@@ -183,9 +183,10 @@ public class DAVRepositoryManager {
         return uri;
     }
 
-    public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, long version, String clientOptions,
+    public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, String pathInfo, long version, String clientOptions,
             String baseChecksum, String resultChecksum, String label, boolean useCheckedIn, List lockTokens, Map capabilities) throws SVNException {
-        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), getResourcePathInfo(), label, useCheckedIn);
+        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo == null ? getResourcePathInfo() : pathInfo, label, 
+                useCheckedIn);
         DAVConfig config = getDAVConfig();
         String fsParentPath = config.getRepositoryParentPath();
         String xsltURI = config.getXSLTIndex();

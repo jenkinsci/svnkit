@@ -244,6 +244,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
 
     protected DAVResource getRequestedDAVResource(boolean labelAllowed, boolean useCheckedIn) throws SVNException {
+        return getRequestedDAVResource(labelAllowed, useCheckedIn, null);
+    }
+    
+    protected DAVResource getRequestedDAVResource(boolean labelAllowed, boolean useCheckedIn, String pathInfo) throws SVNException {
         String label = labelAllowed ? getRequestHeader(LABEL_HEADER) : null;
         
         String versionName = getRequestHeader(SVN_VERSION_NAME_HEADER);
@@ -265,15 +269,15 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         
         String clientCapabilitiesList = getRequestHeader(HTTPHeader.DAV_HEADER);
         for(StringTokenizer tokens = new StringTokenizer(clientCapabilitiesList, ","); tokens.hasMoreTokens();) {
-            String token = tokens.nextToken();
+            String token = tokens.nextToken().trim();
             if (DAVElement.MERGE_INFO_OPTION.equalsIgnoreCase(token)) {
                 clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_YES);
             }
         }
        
         List lockTokens = getLockTokensList();
-        return getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, version, clientOptions, baseChecksum, resultChecksum, 
-                label, useCheckedIn, lockTokens, clientCapabilities);
+        return getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, pathInfo, version, clientOptions, baseChecksum, 
+                resultChecksum, label, useCheckedIn, lockTokens, clientCapabilities);
     }
 
     protected List getLockTokensList() throws DAVException {
@@ -421,6 +425,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             exception.setResponse(response);
             throw exception;
         }
+        
     }
     
     protected SVNDeltaReader openStream(DAVResource resource, int mode) throws DAVException {
@@ -1155,6 +1160,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
 
+    protected HttpServletRequest getRequest() {
+        return myRequest;
+    }
+    
     protected void setResponseHeader(String name, String value) {
         myResponse.setHeader(name, value);
     }

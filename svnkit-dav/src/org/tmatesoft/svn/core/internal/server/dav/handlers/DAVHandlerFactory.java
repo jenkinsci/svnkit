@@ -81,6 +81,9 @@ public class DAVHandlerFactory {
         if (METHOD_MOVE.equals(methodName)) {
             return new DAVCopyMoveHandler(manager, request, response, true);
         }
+        if (METHOD_MKCOL.equals(methodName)) {
+            return new DAVMakeCollectionHandler(manager, request, response);
+        }
         
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), 
                 SVNLogType.NETWORK);

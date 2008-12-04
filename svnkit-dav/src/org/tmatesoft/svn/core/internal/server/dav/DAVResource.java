@@ -517,12 +517,10 @@ public class DAVResource {
         }
         
         DAVResource otherResource = (DAVResource) o;
-        File reposRoot1 = myFSFS.getDBRoot();
-        File reposRoot2 = otherResource.myFSFS.getDBRoot();
-        if (!reposRoot1.equals(reposRoot2)) {
+        if (!isOurResource(otherResource)) {
             return false;
         }
-         
+        
         String myRequestURI = myResourceURI.getRequestURI(); 
         String otherRequestURI = otherResource.getResourceURI().getRequestURI();
         return myRequestURI.equals(otherRequestURI);
@@ -542,6 +540,26 @@ public class DAVResource {
         return myRepositoryManager;
     }
 
+    public boolean isParentResource(DAVResource resource) {
+        if (!isOurResource(resource)) {
+            return false;
+        }
+        
+        String thisURIPath = myResourceURI.getURI();
+        String otherURIPath = resource.getResourceURI().getURI();
+        return otherURIPath.length() > thisURIPath.length() && otherURIPath.startsWith(thisURIPath) && 
+        otherURIPath.charAt(thisURIPath.length()) == '/'; 
+    }
+    
+    private boolean isOurResource(DAVResource resource) {
+        File reposRoot1 = myFSFS.getDBRoot();
+        File reposRoot2 = resource.myFSFS.getDBRoot();
+        if (!reposRoot1.equals(reposRoot2)) {
+            return false;
+        }
+        return true;
+    }
+    
     private SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new SVNProperties();

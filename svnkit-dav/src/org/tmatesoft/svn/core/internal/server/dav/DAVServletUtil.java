@@ -20,7 +20,6 @@ import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpUtils;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -44,7 +43,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVServletUtil {
     
-    public static DAVResource lookUpURI(String uri, HttpServletRequest request, DAVResource resource, boolean mustBeAbsolute) throws DAVException {
+    public static URI lookUpURI(String uri, HttpServletRequest request, boolean mustBeAbsolute) throws DAVException {
         URI parsedURI = null;
         try {
             parsedURI = new URI(uri);
@@ -72,12 +71,16 @@ public class DAVServletUtil {
             }
             
             if (!scheme.equals(parsedURI.getScheme()) || parsedPort != request.getServerPort()) {
-                throw new DAVException("Destination URI refers to different scheme or port (%s://hostname:%d)\n(want: %s://hostname:%d)", 
-                        new Object[] { }, HttpServletResponse.SC_BAD_REQUEST, 0);
+                throw new DAVException("Destination URI refers to different scheme or port ({0}://hostname:{1})\n(want: {2}://hostname:{3})", 
+                        new Object[] { parsedURI.getScheme() != null ? parsedURI.getScheme() : scheme, String.valueOf(parsedPort), scheme, 
+                                String.valueOf(request.getServerPort()) }, HttpServletResponse.SC_BAD_REQUEST, 0);
             }
         }
         
-        return null;
+        if (!parsedURI.getHost().equals(request.getServerName())) {
+            throw new DAVException("Destination URI refers to a different server.", HttpServletResponse.SC_BAD_GATEWAY, 0);
+        }
+        return parsedURI;
     }
     
     public static void setAutoRevisionProperties(DAVResource resource) throws DAVException {
