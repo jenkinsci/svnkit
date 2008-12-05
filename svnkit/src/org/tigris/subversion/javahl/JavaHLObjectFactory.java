@@ -199,15 +199,15 @@ public class JavaHLObjectFactory {
         boolean copied = status.isCopied();
         boolean switched = status.isSwitched();
 
-        String conflictOld = "";
+        String conflictOld = null;
         if(status.getConflictOldFile()!=null){
             conflictOld = status.getConflictOldFile().getName();
         }
-        String conflictNew = "";
+        String conflictNew = null;
         if(status.getConflictNewFile()!=null){
             conflictNew = status.getConflictNewFile().getName();
         }
-        String conflictWorking = "";
+        String conflictWorking = null;
         if(status.getConflictWrkFile()!=null){
             conflictWorking = status.getConflictWrkFile().getName();
         }
