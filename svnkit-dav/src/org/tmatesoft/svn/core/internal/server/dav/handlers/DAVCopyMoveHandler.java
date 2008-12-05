@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
@@ -155,7 +156,125 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
         
         if (isDir && depth == DAVDepth.DEPTH_INFINITY && resource.isParentResource(newResource)) {
             response("Source collection contains the Destination.", DAVServlet.getStatusLine(HttpServletResponse.SC_FORBIDDEN), HttpServletResponse.SC_FORBIDDEN);
+            return;
         }
+        
+        if (isDir && newResource.isParentResource(newResource)) {
+            response("Destination collection contains the Source and Overwrite has been specified.", DAVServlet.getStatusLine(HttpServletResponse.SC_FORBIDDEN), 
+                    HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        
+        readInput(true);
+        DAVLockInfoProvider lockProvider = null;
+        try {
+            lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, null);
+        }
+        
+        if (myIsMove) {
+            unlock(resource, null);
+        }
+        
+        DAVAutoVersionInfo srcAVInfo = null;
+        if (myIsMove) {
+            srcAVInfo = autoCheckOut(resource, true);
+            
+        }
+        
+        boolean replaceDestination = false;
+        DAVResourceState resNewState = getResourceState(newResource);
+        if (myIsMove || !newResource.isVersioned()) {
+            replaceDestination = true;
+        } else if (resource.getType() != newResource.getType()) {
+            replaceDestination = true;
+        } else if (resource.isCollection() != newResource.isCollection()) {
+            replaceDestination = true;
+        } 
+        
+        DAVAutoVersionInfo dstAVInfo = null;
+        if (!newResource.exists() || replaceDestination) {
+            try {
+                 dstAVInfo = autoCheckOut(newResource, true);
+            } catch (DAVException dave) {
+                if (myIsMove) {
+                    autoCheckIn(null, true, false, srcAVInfo);
+                }
+                throw dave;
+            }
+        }
+        
+        if (srcAVInfo.getParentResource() != null && dstAVInfo.getParentResource() != null) {
+            DAVResource srcParentResource = srcAVInfo.getParentResource();
+            DAVResource dstParentResource = dstAVInfo.getParentResource();
+            if (srcParentResource.equals(dstParentResource)) {
+                dstAVInfo.setParentResource(srcAVInfo.getParentResource());
+            }
+        }
+        
+        DAVException err1 = null;
+        if (replaceDestination) {
+            try {
+                removeResource(newResource);
+            } catch (DAVException dave) {
+                err1 = dave;
+            }
+        }
+
+        if (err1 == null) {
+            if (myIsMove) {
+                try {
+                    moveResource(resource, newResource);
+                } catch (DAVException dave) {
+                    err1 = dave;
+                }
+            } else {
+                try {
+                    copyResource(resource, newResource);
+                } catch (DAVException dave) {
+                    err1 = dave;
+                }
+            }
+        }
+
+        DAVException err2 = null;
+        try {
+            autoCheckIn(null, err1 != null, false, dstAVInfo);
+        } catch (DAVException dave) {
+            err2 = dave;
+        }
+        
+        DAVException err3 = null;
+        if (myIsMove) {
+            try {
+                autoCheckIn(null, err1 != null, false, srcAVInfo);
+            } catch (DAVException dave) {
+                err3 = dave;
+            }
+        }
+        
+        if (err1 != null) {
+            throw new DAVException("Could not MOVE/COPY {0}.", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(getURI()) }, 
+                    err1.getResponseCode(), err1, 0);
+        }
+        
+        if (err2 != null) {
+            //throw new DAVException("The MOVE/COPY was successful, but there was a problem automatically checking in the source parent collection.", null, err2.getResponseCode(), err2, 0);
+            //TODO: add logging here later
+        }
+        if (err3 != null) {
+            //TODO: add logging here later
+        }
+        
+        try {
+            notifyCreated(newResource, lockProvider, resNewState, depth);
+        } catch (DAVException dave) {
+            throw new DAVException("The MOVE/COPY was successful, but there was a problem updating the lock information.", null, 
+                    dave.getResponseCode(), dave, 0);
+        }
+        
+        handleDAVCreated(uri.toString(), "Destination", resNewState == DAVResourceState.EXISTS);
     }
 
     protected int getOverwrite() {

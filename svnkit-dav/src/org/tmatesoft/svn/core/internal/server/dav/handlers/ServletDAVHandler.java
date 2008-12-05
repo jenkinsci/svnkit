@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
@@ -490,6 +491,70 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return null;
     }
     
+    protected void moveResource(DAVResource srcResource, DAVResource dstResource) throws DAVException {
+        if (srcResource.getType() != DAVResourceType.REGULAR || dstResource.getType() != DAVResourceType.REGULAR || !getConfig().isAutoVersioning()) {
+            throw new DAVException("MOVE only allowed on two public URIs, and autoversioning must be active.", 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+        }
+        
+        checkOut(dstResource, true, false, false, null);
+        FSCommitter committer = getCommitter(dstResource.getFSFS(), dstResource.getRoot(), dstResource.getTxnInfo(), dstResource.getLockTokens(), 
+                dstResource.getUserName());
+        
+        String srcPath = srcResource.getResourceURI().getPath();
+        String dstPath = dstResource.getResourceURI().getPath();
+        try {
+            committer.makeCopy((FSRevisionRoot) srcResource.getRoot(), srcPath, dstPath, true);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Unable to make a filesystem copy.", null);
+        }
+        
+        try {
+            committer.deleteNode(srcPath);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not delete the src resource.", null);
+        }
+        
+        checkIn(dstResource, false, false);
+    }
+    
+    protected void copyResource(DAVResource srcResource, DAVResource dstResource) throws DAVException {
+        if (dstResource.isBaseLined() && dstResource.getType() == DAVResourceType.VERSION) {
+            throw new DAVException("Illegal: COPY Destination is a baseline.", HttpServletResponse.SC_PRECONDITION_FAILED, 0);
+        }
+        if (dstResource.getType() == DAVResourceType.REGULAR && !getConfig().isAutoVersioning()) {
+            throw new DAVException("COPY called on regular resource, but autoversioning is not active.", HttpServletResponse.SC_METHOD_NOT_ALLOWED, 0);
+        }
+        if (dstResource.getType() == DAVResourceType.REGULAR) {
+            checkOut(dstResource, true, false, false, null);
+        }
+        
+        FSFS srcFSFS = srcResource.getFSFS();
+        FSFS dstFSFS = dstResource.getFSFS();
+        if (!srcFSFS.getDBRoot().equals(dstFSFS.getDBRoot())) {
+            throw new DAVException("Copy source and destination are in different repositories.", null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 0, null);
+        }
+
+        FSCommitter committer = getCommitter(dstResource.getFSFS(), dstResource.getRoot(), dstResource.getTxnInfo(), dstResource.getLockTokens(), 
+                dstResource.getUserName());
+        
+        String srcPath = srcResource.getResourceURI().getPath();
+        String dstPath = dstResource.getResourceURI().getPath();
+        try {
+            committer.makeCopy((FSRevisionRoot) srcResource.getRoot(), srcPath, dstPath, true);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Unable to make a filesystem copy.", null);
+        }
+
+        if (dstResource.isAutoCheckedOut()) {
+            checkIn(dstResource, false, false);
+        }
+        
+    }
     
     protected int unlock(DAVResource resource, String lockToken) {
         DAVLockInfoProvider lockProvider = null;
