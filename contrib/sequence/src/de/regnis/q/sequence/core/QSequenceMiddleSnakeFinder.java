@@ -46,14 +46,21 @@ class QSequenceMiddleSnakeFinder {
 		final int delta = media.getLeftLength() - media.getRightLength();
 		final int deeMax = (int)Math.ceil(((double)media.getLeftLength() + (double)media.getRightLength()) / 2);
 		for (int dee = 0; dee <= deeMax; dee++) {
+			boolean found = false;
 			for (int diagonal = (delta >= 0 ? dee : -dee); (delta >= 0 ? diagonal >= -dee : diagonal <= dee); diagonal += (delta >= 0 ? -2 : 2)) {
 				forwardDeePathExtender.extendDeePath(media, dee, diagonal);
 				if (checkForwardOverlapping(delta, diagonal, dee)) {
 					if (isForwardAndBackwardOverlapping(diagonal)) {
 						setMiddleSnake(result, forwardDeePathExtender, diagonal);
-						return 2 * dee - 1;
+						// We are not returning here with the first overlapping point (we could do), but try all possible diagonals with the current
+						// maximum dee. All possible solutions are shortes, but setMiddleSnake() can select that path with minimum rightFrom/leftFrom.
+						// This gives more stable results, e.g. when having a similar left/right medium with just one line added/removed.
+						found = true;
 					}
 				}
+			}
+			if (found) {
+				return 2 * dee - 1;
 			}
 
 			for (int diagonal = (delta >= 0 ? -dee : dee); (delta >= 0 ? diagonal <= dee : diagonal >= -dee); diagonal += (delta >= 0 ? 2 : -2)) {
@@ -62,9 +69,12 @@ class QSequenceMiddleSnakeFinder {
 				if (checkBackwardOverlapping(delta, diagonal, dee)) {
 					if (isForwardAndBackwardOverlapping(deltadDiagonal)) {
 						setMiddleSnake(result, backwardDeePathExtender, deltadDiagonal);
-						return 2 * dee;
+						found = true;
 					}
 				}
+			}
+			if (found) {
+				return 2 * dee;
 			}
 
 			if (dee < maximumSearchDepth) {
@@ -136,10 +146,14 @@ class QSequenceMiddleSnakeFinder {
 	}
 
 	public static void setMiddleSnake(QSequenceMiddleSnakeFinderResult result, QSequenceDeePathExtender extender, int diagonal) {
-		result.setMiddleSnake(Math.min(extender.getLeft(diagonal), extender.getSnakeStartLeft()),
-		                      Math.min(extender.getRight(diagonal), extender.getSnakeStartRight()),
-		                      Math.max(extender.getLeft(diagonal), extender.getSnakeStartLeft()),
-		                      Math.max(extender.getRight(diagonal), extender.getSnakeStartRight()));
+		final int leftFrom = Math.min(extender.getLeft(diagonal), extender.getSnakeStartLeft());
+		final int rightFrom = Math.min(extender.getRight(diagonal), extender.getSnakeStartRight());
+		final int leftTo = Math.max(extender.getLeft(diagonal), extender.getSnakeStartLeft());
+		final int rightTo = Math.max(extender.getRight(diagonal), extender.getSnakeStartRight());
+		if ((result.getLeftFrom() == 0 && result.getRightFrom() == 0 && result.getLeftTo() == 0 && result.getRightTo() == 0)
+				|| result.getRightFrom() > rightFrom || (result.getRightFrom() == rightFrom && result.getLeftFrom() > leftFrom)) {
+			result.setMiddleSnake(leftFrom, rightFrom, leftTo, rightTo);
+		}
 	}
 
 	private static boolean checkForwardOverlapping(final int delta, int diagonal, int dee) {
