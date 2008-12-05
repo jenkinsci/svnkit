@@ -754,7 +754,7 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          instead
      */
     public SVNCommitInfo doCommit(File[] paths, boolean keepLocks, String commitMessage, boolean force, boolean recursive) throws SVNException {
-        return doCommit(paths, keepLocks, commitMessage, null, null, false, force, SVNDepth.fromRecurse(recursive));
+        return doCommit(paths, keepLocks, commitMessage, null, null, false, force, SVNDepth.getInfinityOrEmptyDepth(recursive));
     }
     
     /**
