@@ -2293,7 +2293,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                                    if (parentIndex >= 0 && parentIndex < childrenWithMergeInfoArray.length) {
                                        parent = (MergePath) childrenWithMergeInfoArray[parentIndex];
                                    }
-                                   boolean nearestParentIsTarget = parent.myPath.equals(targetPath);
+                                   String parentPath = parent.myPath.getAbsolutePath().replace(File.separatorChar, '/');
+                                   boolean nearestParentIsTarget = parentPath.equals(targetPath);
                                    
                                    SVNMergeRange range = null;
                                    if (childMergePath.myRemainingRanges != null && 
