@@ -533,8 +533,10 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
 
         public String toString() {
             StringBuffer buffer = new StringBuffer();
-            buffer.append("merge task: source ");
+            buffer.append("merge task: source from ");
             buffer.append(getMergeSource());
+            buffer.append("; source to");
+            buffer.append(getMergeSource2());
             buffer.append("; target ");
             buffer.append(getMergeTarget());
             buffer.append("; revision ranges ");
