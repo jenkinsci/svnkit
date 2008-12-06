@@ -241,7 +241,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         }
         String path = getPath(file);
         SVNStatusType type = SVNStatusType.INAPPLICABLE;
-        SVNEventAction action = SVNEventAction.SKIP;
+        SVNEventAction action;
         SVNEventAction expectedAction = SVNEventAction.UPDATE_DELETE;
 
         SVNEntry entry = myWCAccess.getEntry(file, false);
@@ -266,10 +266,9 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 if (myIsDryRun) {
                     getDiffCallback().addDeletedPath(path);
                 }
+                addDeletedPath(path, nodeKind, type, action, expectedAction);
             }
         }
-
-        addDeletedPath(path, nodeKind, type, action, expectedAction);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
