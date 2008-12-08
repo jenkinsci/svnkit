@@ -35,10 +35,6 @@ public class DAVCheckOutRequest extends DAVRequest {
     private static final DAVElement FORK_OK = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "fork-ok");
     private static final DAVElement ACTIVITY_SET = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "activity-set");
 
-    public DAVCheckOutRequest() {
-        super();
-    }
-    
     public boolean isUnreserved() {
         return getProperties().containsKey(UNRESERVED);
     }

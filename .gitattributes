@@ -101,6 +101,9 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVInheritWal
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockInfoProvider.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeActivityHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVMakeCollectionHandler.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropPatchHandler.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropPatchRequest.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropertiesProvider.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPropsResult.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVPutHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVResourceWalker.java -text
