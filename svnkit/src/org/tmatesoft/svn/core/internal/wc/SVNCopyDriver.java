@@ -703,7 +703,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                                     externals[k].getRawValue(),
                                     externalsWCRevision);
 
-                            if (revs != null && revs[0] == externals[k].getRevision()) {
+                            if (revs != null && revs[0].equals(externals[k].getRevision())) {
                                 newExternals.add(externals[k].getRawValue());
                             } else if (revs != null) {
                                 SVNExternal newExternal = new SVNExternal(externals[k].getPath(),
