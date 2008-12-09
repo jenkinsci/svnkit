@@ -146,7 +146,6 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class -t
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNSecurityLibrary.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWinSecurity.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNExtendedMergeCallback.java -text
-svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNCopyDriver.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNEventExt.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNExtendedMergeDriver.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNExtendedMergeEditor.java -text
