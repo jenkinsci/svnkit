@@ -333,7 +333,9 @@ public class SVNMergeInfoUtil {
                 } else {
                     inheritableRangeList = rangeList.dup();
                 }
-                inheritableMergeInfo.put(mergeSrcPath, inheritableRangeList);
+                if (!inheritableRangeList.isEmpty()) {
+                    inheritableMergeInfo.put(mergeSrcPath, inheritableRangeList);
+                }
             }
         }
         return inheritableMergeInfo;
