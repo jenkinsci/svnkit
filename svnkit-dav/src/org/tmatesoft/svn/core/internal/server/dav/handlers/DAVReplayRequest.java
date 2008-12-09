@@ -63,7 +63,7 @@ public class DAVReplayRequest extends DAVRequest {
     }
 
     protected void init() throws SVNException {
-        setRootElement(EDITOR_REPORT);
+        setRootElement(EDITOR_REPORT, null);
         for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
             Map.Entry entry = (Map.Entry) iterator.next();
             DAVElement element = (DAVElement) entry.getKey();

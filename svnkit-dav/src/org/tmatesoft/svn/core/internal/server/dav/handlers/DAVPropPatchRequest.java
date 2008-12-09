@@ -43,11 +43,11 @@ public class DAVPropPatchRequest extends DAVRequest {
     
     protected void init() throws SVNException {
         if (getRootElement() != PROPERTY_UPDATE) {
-            invalidXML();
+            invalidXMLRoot();
         }
     }
 
-    protected void invalidXML() throws SVNException {
+    protected void invalidXMLRoot() throws SVNException {
         throw new DAVException("The request body does not contain a \"propertyupdate\" element.", null, HttpServletResponse.SC_BAD_REQUEST, 
                 null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
     }

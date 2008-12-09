@@ -40,9 +40,12 @@ public abstract class DAVRequest {
     protected static final String NAMESPACE_ATTR = "namespace";
 
     private DAVElement myRootElement;
+    private DAVElementProperty myRootElementProperty;
+    private DAVElementProperty myCurrentElement;
     private Map myRootElementAttributes;
     private Map myProperties;
 
+    
     protected Map getProperties() {
         if (myProperties == null) {
             myProperties = new SVNHashMap();
@@ -50,20 +53,13 @@ public abstract class DAVRequest {
         return myProperties;
     }
 
-    protected DAVElementProperty getProperty(Map properties, DAVElement element) {
+
+	protected DAVElementProperty getProperty(Map properties, DAVElement element) {
         return (DAVElementProperty) properties.get(element);
     }
-
-    protected Collection getElements(Map properties) {
-        return properties.keySet();
-    }
-
-    protected Collection getElements() {
-        return getElements(getProperties());
-    }
-
-    public void setRootElement(DAVElement rootElement) {
+    public void setRootElement(DAVElement rootElement, DAVElementProperty rootElementProperty) {
         myRootElement = rootElement;
+        myRootElementProperty = rootElementProperty;
     }
 
     public DAVElement getRootElement() {
@@ -83,6 +79,17 @@ public abstract class DAVRequest {
 
     public void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == null) {
+            myCurrentElement = new DAVElementProperty(element, null);
+            myCurrentElement.setAttributes(attrs);
+            setRootElement(element, myCurrentElement);
+            setRootElementAttributes(attrs);
+        } else {
+            myCurrentElement = myCurrentElement.addChild(element, attrs);
+        }
+        
+        
+/*        
+        if (parent == null) {
             setRootElement(element);
             setRootElementAttributes(attrs);
         } else if (parent == getRootElement()) {
@@ -93,10 +100,17 @@ public abstract class DAVRequest {
                 parentProperty.addChild(element, attrs);
             }
         }
+        */
     }
 
     public void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (cdata != null) {
+            myCurrentElement.addCDATAToChild(element, cdata);
+        }
+        
+        myCurrentElement = myCurrentElement.getParent();
+        
+/*        if (cdata != null) {
             if (parent == getRootElement()) {
                 put(getProperties(), element, cdata);
             } else if (parent != null) {
@@ -108,24 +122,7 @@ public abstract class DAVRequest {
                 }
             }
         }
-    }
-
-    protected void put(Map properties, DAVElement element, Attributes attrs) {
-        DAVElementProperty elementProperty = (DAVElementProperty) properties.get(element);
-        if (elementProperty == null) {
-            elementProperty = new DAVElementProperty();
-            properties.put(element, elementProperty);
-        }
-        elementProperty.setAttributes(attrs);        
-    }
-
-    protected void put(Map properties, DAVElement element, StringBuffer cdata) throws SVNException {
-        DAVElementProperty elementProperty = (DAVElementProperty) properties.get(element);
-        if (elementProperty == null) {
-            invalidXML();
-        } else {
-            elementProperty.addValue(cdata.toString());
-        }
+        */
     }
 
     protected abstract void init() throws SVNException;
@@ -160,7 +157,22 @@ public abstract class DAVRequest {
         private ArrayList myValues;
         private Map myAttributes;
         private Map myChildren;
-
+        private DAVElement myElementName;
+        private DAVElementProperty myParent;
+        
+        public DAVElementProperty(DAVElement elementName, DAVElementProperty parent) {
+            myElementName = elementName;
+            myParent = parent;
+        }
+        
+        public DAVElementProperty getParent() {
+            return myParent;
+        }
+        
+        public DAVElement getName() {
+            return myElementName;
+        }
+        
         private void addValue(String cdata) throws SVNException {
             if (myChildren != null) {
                 invalidXML();
@@ -196,20 +208,44 @@ public abstract class DAVRequest {
             return myChildren;
         }
 
-        protected void addChild(DAVElement element, Attributes attrs) throws SVNException {
+        protected DAVElementProperty addChild(DAVElement element, Attributes attrs) throws SVNException {
             if (myValues != null) {
                 invalidXML();
             } else if (myChildren == null) {
                 myChildren = new SVNHashMap();
             }
-            put(myChildren, element, attrs);
+            
+            DAVElementProperty child = (DAVElementProperty) myChildren.get(element);
+            if (child == null) {
+                child = new DAVElementProperty(element, this);
+                myChildren.put(element, child);
+            }
+            child.setAttributes(attrs);
+            return child;
         }
 
-        protected void addChild(DAVElement element, StringBuffer cdata) throws SVNException {
+        protected void addCDATAToChild(DAVElement element, StringBuffer cdata) throws SVNException {
             if (myValues != null || myChildren == null) {
                 invalidXML();
             }
-            put(myChildren, element, cdata);
+
+            DAVElementProperty elementProperty = (DAVElementProperty) myChildren.get(element);
+            if (elementProperty == null) {
+                invalidXML();
+            } else {
+                elementProperty.addValue(cdata.toString());
+            }
         }
+        
+/*        
+        protected DAVElementProperty addChild(DAVElement element, StringBuffer cdata) throws SVNException {
+            if (myValues != null || myChildren == null) {
+                invalidXML();
+            }
+            DAVElementProperty child = put(myChildren, element, cdata);
+            child.setParent(this);
+            return child;
+        }
+*/        
     }
 }

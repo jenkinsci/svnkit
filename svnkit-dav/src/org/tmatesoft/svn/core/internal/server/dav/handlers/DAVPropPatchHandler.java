@@ -51,7 +51,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         
         long readLength = readInput(false);
         if (readLength <= 0) {
-            getDAVRequest().invalidXML();
+            getPropPatchRequest().invalidXMLRoot();
         }
         
         validateRequest(resource, DAVDepth.DEPTH_ZERO, DAV_VALIDATE_RESOURCE, null, null, null);
