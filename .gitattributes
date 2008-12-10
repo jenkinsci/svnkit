@@ -87,8 +87,6 @@ svnkit-test/src/org/tmatesoft/svn/test/SVNTestErrorCode.java -text
 svnkit-test/src/org/tmatesoft/svn/test/SVNTestException.java -text
 svnkit-test/src/org/tmatesoft/svn/test/SVNTestRunner.java -text
 svnkit-test/src/org/tmatesoft/svn/test/SVNTestScheme.java -text
-svnkit-test/src/org/tmatesoft/svn/test/dumps/default.dump -text
-svnkit-test/src/org/tmatesoft/svn/test/dumps/merge-ext.dump -text
 svnkit-test/src/org/tmatesoft/svn/test/environments/AbstractSVNTestEnvironment.java -text
 svnkit-test/src/org/tmatesoft/svn/test/environments/JavaHLTestEnvironment.java -text
 svnkit-test/src/org/tmatesoft/svn/test/environments/SVNTestEnvironment.java -text

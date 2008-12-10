@@ -159,16 +159,16 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         		} else {
         			newAction = kas.myAction;
         		}
-                SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, kas.myKind, null, 
-                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE, 
+                SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, kas.myKind, null,
+                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE,
                 		newAction, expectedAction, null, null);
                 myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 myDeletedPaths.remove(myCurrentDirectory.myWCFile);
-        	
+
         	}
         	if (!isReplace) {
                 // TODO prop type?
-        		SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, SVNNodeKind.DIR, 
+        		SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, SVNNodeKind.DIR,
                 		null, SVNRepository.INVALID_REVISION, type, type, null, action, expectedAction, null, null);
                 myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         	}
@@ -188,11 +188,11 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         SVNStatusType type = SVNStatusType.UNKNOWN;
         SVNEventAction expectedAction = SVNEventAction.UPDATE_UPDATE;
         SVNEventAction action = expectedAction;
-        
+
         if (myIsDryRun) {
             getDiffCallback().clearDeletedPaths();
         }
-        
+
         SVNAdminArea dir = null;
         if (!myCurrentDirectory.myPropertyDiff.isEmpty()) {
             try {
@@ -201,17 +201,17 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     if (myEventHandler != null) {
                         action = SVNEventAction.SKIP;
-                        SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, 
-                        		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, 
+                        SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
+                        		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING,
                         		SVNStatusType.MISSING, null, action, expectedAction, null, null);
                         myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                     }
                     return;
-                } 
+                }
                 throw e;
             }
             if (!myIsDryRun || dir != null) {
-                type = getDiffCallback().propertiesChanged(myCurrentDirectory.myRepositoryPath, 
+                type = getDiffCallback().propertiesChanged(myCurrentDirectory.myRepositoryPath,
                         myCurrentDirectory.myBaseProperties, myCurrentDirectory.myPropertyDiff);
             }
         }
@@ -224,15 +224,15 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             for (Iterator deletedPathsIter = myDeletedPaths.keySet().iterator(); deletedPathsIter.hasNext();) {
             	File deletedPath = (File) deletedPathsIter.next();
             	KindActionState kas = (KindActionState) myDeletedPaths.get(deletedPath);
-                SVNEvent event = SVNEventFactory.createSVNEvent(deletedPath, kas.myKind, null, 
-                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE, 
+                SVNEvent event = SVNEventFactory.createSVNEvent(deletedPath, kas.myKind, null,
+                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE,
                 		kas.myAction, kas.myExpectedAction, null, null);
                 myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 deletedPathsIter.remove();
             }
-            
+
             SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
-            		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, type, 
+            		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, type,
             		SVNStatusType.INAPPLICABLE, action, expectedAction, null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
@@ -356,8 +356,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void absentDir(String path) throws SVNException {
         if (myCurrentDirectory.myWCFile != null) {
             File dir = new File(myCurrentDirectory.myWCFile, SVNPathUtil.tail(path));
-            SVNEvent event = SVNEventFactory.createSVNEvent(dir, SVNNodeKind.DIR, 
-                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP, 
+            SVNEvent event = SVNEventFactory.createSVNEvent(dir, SVNNodeKind.DIR,
+                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP,
                     null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
@@ -366,8 +366,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     public void absentFile(String path) throws SVNException {
         if (myCurrentDirectory.myWCFile != null) {
             File file = new File(myCurrentDirectory.myWCFile, SVNPathUtil.tail(path));
-            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE, 
-                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP, 
+            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.FILE,
+                    null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNStatusType.MISSING, SVNEventAction.SKIP, SVNEventAction.SKIP,
                     null, null);
             myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
@@ -384,7 +384,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
         }
     }
-    
+
     protected SVNAdminArea retrieve(File path, boolean lenient) throws SVNException {
         if (myAdminArea == null) {
             return null;
@@ -405,18 +405,18 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
         return retrieve(path.getParentFile(), lenient);
     }
-    
+
     protected AbstractDiffCallback getDiffCallback() {
         return myDiffCallback;
     }
-    
+
     protected File getTempDirectory() throws SVNException {
         if (myTempDirectory == null) {
             myTempDirectory = getDiffCallback().createTempDirectory();
         }
         return myTempDirectory;
     }
-    
+
     protected File createTempFile(SVNAdminArea dir, String name) throws SVNException {
         if (dir != null && dir.isLocked()) {
             File tmpFile = dir.getBaseFile(name, true);
@@ -427,7 +427,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             return tmpFile;
         }
         return SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", myIsUseGlobalTmp);
-        
+
     }
         
     public void setUseGlobalTmp(boolean global) {
@@ -456,10 +456,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         protected boolean myIsAdded;
         protected String myRepositoryPath;
         protected File myWCFile;
-        
+
         protected SVNProperties myBaseProperties;
         protected SVNProperties myPropertyDiff;
-        
+
         protected SVNDirectoryInfo myParent;
     }
 
@@ -487,13 +487,13 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         protected String myRepositoryPath;
         protected File myWCFile;
         protected boolean myIsAdded;
-        
+
         protected File myFile;
         protected File myBaseFile;
         protected SVNProperties myBaseProperties;
         protected SVNProperties myPropertyDiff;
     }
-    
+
     protected class KindActionState {
     	protected SVNNodeKind myKind;
     	protected SVNEventAction myAction;

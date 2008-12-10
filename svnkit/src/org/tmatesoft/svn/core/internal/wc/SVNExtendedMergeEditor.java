@@ -268,8 +268,20 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 }
             }
         }
-
         addDeletedPath(path, nodeKind, type, action, expectedAction);
+    }
+
+    protected void addDeletedPath(String path, SVNNodeKind nodeKind, SVNStatusType type, SVNEventAction action, SVNEventAction expectedAction) {
+        if (myEventHandler != null) {
+            File deletedFile = getFile(path);
+            KindActionState kas = (KindActionState) myDeletedPaths.get(deletedFile);
+            if (kas != null) {
+                if (action == SVNEventAction.SKIP && (kas.myAction == SVNEventAction.UPDATE_DELETE || kas.myAction == SVNEventAction.SKIP)) {
+                    return;
+                }
+            }
+        }
+        super.addDeletedPath(path, nodeKind, type, action, expectedAction);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {

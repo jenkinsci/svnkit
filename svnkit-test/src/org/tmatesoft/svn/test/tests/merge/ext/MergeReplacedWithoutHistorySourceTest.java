@@ -112,11 +112,6 @@ public class MergeReplacedWithoutHistorySourceTest extends AbstractExtMergeTest 
                     return new SVNURL[]{getTrunk().appendPath("A/file", false)};
                 }
             }
-            if (action == SVNEditorAction.ADD) {
-                if (sourceUrl.getPath().endsWith("branch/A/file2")) {
-                    return new SVNURL[]{getTrunk().appendPath("A/file2", false)};
-                }
-            }
             return null;
         }
 
