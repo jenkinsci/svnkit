@@ -371,7 +371,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             DAVResourceWalker walker = new DAVResourceWalker();
             int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL;
             try {
-                response = walker.walk(lockInfoProvider, resource, ifHeaders, flags, null, walkType, validateHandler, DAVDepth.DEPTH_INFINITY);
+                response = walker.walk(lockInfoProvider, resource, ifHeaders, flags, lockScope, walkType, validateHandler, DAVDepth.DEPTH_INFINITY);
             } catch (DAVException dave) {
                 exception = dave;
             }

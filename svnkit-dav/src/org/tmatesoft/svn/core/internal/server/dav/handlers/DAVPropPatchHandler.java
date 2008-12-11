@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -66,25 +67,32 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
         }
         
-        DAVElement[] interestingElements = { DAVPropPatchRequest.REMOVE, DAVPropPatchRequest.REMOVE };
         DAVPropPatchRequest requestXMLObject = getPropPatchRequest();  
-        for (int i = 0; i < interestingElements.length; i++) {
-            if (requestXMLObject.hasElement(interestingElements[i])) {
-                Map children = requestXMLObject.getElementsChildren(interestingElements[i]);
-                DAVElementProperty propChildrenElement = children != null ? (DAVElementProperty) children.get(DAVElement.PROP) : null;
-                if (children == null || propChildrenElement == null) {
-                    autoCheckIn(resource, true, false, avInfo);
-                    SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, "A \"prop\" element is missing inside the propertyupdate command.");
-                    setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    return;
-                }
-                
-                boolean isRemove = interestingElements[i] == DAVPropPatchRequest.REMOVE;
-                Map propChildren = propChildrenElement.getChildren();
-                for (Iterator propsIter = propChildren.keySet().iterator(); propsIter.hasNext();) {
-                    
-                }
+        DAVElementProperty rootElement = requestXMLObject.getRoot();
+        List childrenElements = rootElement.getChildren();
+        for (Iterator childrenIter = childrenElements.iterator(); childrenIter.hasNext();) {
+            DAVElementProperty childElement = (DAVElementProperty) childrenIter.next();
+            DAVElement childElementName = childElement.getName();
+            if (!DAVElement.DAV_NAMESPACE.equals(childElementName.getNamespace()) || (childElementName != DAVPropPatchRequest.REMOVE && 
+                    childElementName != DAVPropPatchRequest.SET)) {
+                continue;
             }
+
+            DAVElementProperty propChildrenElement = childElement.getChild(DAVElement.PROP);
+            if (propChildrenElement == null) {
+                autoCheckIn(resource, true, false, avInfo);
+                SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, "A \"prop\" element is missing inside the propertyupdate command.");
+                setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            
+            boolean isRemove = childElementName == DAVPropPatchRequest.REMOVE;
+            List propChildren = propChildrenElement.getChildren();
+            for (Iterator propsIter = propChildren.iterator(); propsIter.hasNext();) {
+                
+            }
+            
+            
         }
     }
 

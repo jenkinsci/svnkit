@@ -117,6 +117,7 @@ public class DAVElement {
     public String getNamespace() {
         return myNamespace;
     }
+    
     public String getName() {
         return myPropertyName;
     }
@@ -130,5 +131,46 @@ public class DAVElement {
         sb.append(getName());
         return sb.toString();
     }
-    
+
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((myNamespace == null) ? 0 : myNamespace.hashCode());
+        result = prime * result + ((myPropertyName == null) ? 0 : myPropertyName.hashCode());
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+            
+        if (obj == null) {
+            return false;
+        }
+
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        
+        DAVElement other = (DAVElement) obj;
+        if (myNamespace == null) {
+            if (other.myNamespace != null) {
+                return false;
+            }
+        } else if (!myNamespace.equals(other.myNamespace)) {
+            return false;
+        }
+        
+        if (myPropertyName == null) {
+            if (other.myPropertyName != null) {
+                return false;
+            }
+        } else if (!myPropertyName.equals(other.myPropertyName)) {
+            return false;
+        }
+            
+        return true;
+    }
+
 }

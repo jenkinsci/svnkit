@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.util.Map;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
@@ -28,37 +27,42 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVCheckOutRequest extends DAVRequest {
     public static final DAVElement NEW = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "new");
+    public  static final DAVElement CHECKOUT = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "checkout");
+    public static final DAVElement APPLY_TO_VERSION = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "apply-to-version");
+    public static final DAVElement UNRESERVED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "unreserved");
+    public static final DAVElement FORK_OK = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "fork-ok");
+    public static final DAVElement ACTIVITY_SET = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "activity-set");
 
-    private static final DAVElement CHECKOUT = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "checkout");
-    private static final DAVElement APPLY_TO_VERSION = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "apply-to-version");
-    private static final DAVElement UNRESERVED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "unreserved");
-    private static final DAVElement FORK_OK = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "fork-ok");
-    private static final DAVElement ACTIVITY_SET = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "activity-set");
-
-    public boolean isUnreserved() {
-        return getProperties().containsKey(UNRESERVED);
+    public boolean isUnreserved() throws SVNException {
+        DAVElementProperty root = getRoot();
+        return root.hasChild(UNRESERVED);
     }
     
-    public boolean isForkOk() {
-        return getProperties().containsKey(FORK_OK);
+    public boolean isForkOk() throws SVNException {
+        DAVElementProperty root = getRoot();
+        return root.hasChild(FORK_OK);
     }
 
-    public boolean isApplyToVersion() {
-        return getProperties().containsKey(APPLY_TO_VERSION);
+    public boolean isApplyToVersion() throws SVNException {
+        DAVElementProperty root = getRoot(); 
+        return root.hasChild(APPLY_TO_VERSION);
     }
 
-    public Map getActivitySetPropertyElements() {
-        DAVElementProperty activitySet = (DAVElementProperty) getProperties().get(ACTIVITY_SET);
-        return activitySet != null && activitySet.getChildren() != null ? activitySet.getChildren() : null;
+    public DAVElementProperty getRoot() throws SVNException {
+        if (getRootElement() == null) {
+            invalidXMLRoot();
+        }
+        return getRootElement();
     }
 
     protected void init() throws SVNException {
-        if (getRootElement() != CHECKOUT) {
-            invalidXML();
+        DAVElementProperty rootElement = getRootElement();
+        if (rootElement == null || rootElement.getName() != CHECKOUT) {
+            invalidXMLRoot();
         }
     }
 
-    protected void invalidXML() throws SVNException {
+    protected void invalidXMLRoot() throws SVNException {
         throw new DAVException("The request body, if present, must be a DAV:checkout element.", null, HttpServletResponse.SC_BAD_REQUEST, 
                 null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
     }

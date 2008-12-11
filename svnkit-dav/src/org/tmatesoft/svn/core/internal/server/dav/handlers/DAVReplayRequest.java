@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -63,11 +63,12 @@ public class DAVReplayRequest extends DAVRequest {
     }
 
     protected void init() throws SVNException {
-        setRootElement(EDITOR_REPORT, null);
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            DAVElementProperty property = (DAVElementProperty) entry.getValue();
+        DAVElementProperty rootElement = getRootElement();
+        rootElement.setElementName(EDITOR_REPORT);
+        List children = rootElement.getChildren();
+        for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+            DAVElementProperty property = (DAVElementProperty) iterator.next();
+            DAVElement element = property.getName();
             if (element == REVISION) {
                 assertNullCData(element, property);
                 try {

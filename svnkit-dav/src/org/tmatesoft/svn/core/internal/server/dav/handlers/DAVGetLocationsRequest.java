@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -64,11 +64,11 @@ public class DAVGetLocationsRequest extends DAVRequest {
     }
 
     protected void init() throws SVNException {
-        setRootElement(GET_LOCATIONS_REPORT, null);
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            DAVElementProperty property = (DAVElementProperty) entry.getValue();
+        getRootElement().setElementName(GET_LOCATIONS_REPORT);
+        List children = getRootElement().getChildren();
+        for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+            DAVElementProperty property = (DAVElementProperty) iterator.next();
+            DAVElement element = property.getName();
             if (element == PATH) {
                 String path = property.getFirstValue();
                 DAVPathUtil.testCanonical(path);

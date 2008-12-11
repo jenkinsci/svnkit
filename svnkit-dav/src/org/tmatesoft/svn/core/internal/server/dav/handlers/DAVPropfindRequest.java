@@ -12,6 +12,9 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -31,26 +34,40 @@ public class DAVPropfindRequest extends DAVRequest {
     }
 
     protected void init() throws SVNException {
-        if (getRootElement() != PROPFIND) {
+        if (getRoot().getName() != PROPFIND) {
             invalidXML();
         }
     }
 
-    public boolean isAllPropRequest() {
-        return getProperties().containsKey(ALLPROP);
+    public boolean isAllPropRequest() throws SVNException {
+        return getRoot().hasChild(ALLPROP);
     }
 
-    public boolean isPropNameRequest() {
-        return getProperties().containsKey(PROPNAME);
+    public boolean isPropNameRequest() throws SVNException {
+        return getRoot().hasChild(PROPNAME);
     }
 
-    public boolean isPropRequest() {
-        return getProperties().containsKey(DAVElement.PROP);
+    public boolean isPropRequest() throws SVNException {
+        return getRoot().hasChild(DAVElement.PROP);
     }
 
-    public Collection getPropertyElements() {
-        DAVElementProperty propElementProperty = (DAVElementProperty) getProperties().get(DAVElement.PROP);
-        return propElementProperty.getChildren().keySet();
+    public Collection getPropertyElements() throws SVNException {
+        DAVElementProperty propElement = getRoot().getChild(DAVElement.PROP);
+        List props = new LinkedList();
+        List children = propElement.getChildren();
+        if (children != null) {
+            for (Iterator childrenIter = children.iterator(); childrenIter.hasNext();) {
+                DAVElementProperty child = (DAVElementProperty) childrenIter.next();
+                props.add(child.getName());
+            }
+        }
+        return props;
     }
 
+    private DAVElementProperty getRoot() throws SVNException {
+        if (getRootElement() == null) {
+            invalidXML();
+        }
+        return getRootElement();
+    }
 }

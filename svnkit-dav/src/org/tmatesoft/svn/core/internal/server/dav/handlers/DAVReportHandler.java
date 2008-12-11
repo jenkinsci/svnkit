@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -199,11 +200,14 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void addXMLHeader(StringBuffer xmlBuffer) {
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), REPORT_NAMESPACES, xmlBuffer);
+        DAVElementProperty rootElement = getDAVRequest().getRootElement();
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), REPORT_NAMESPACES, 
+                xmlBuffer);
     }
 
     protected void addXMLFooter(StringBuffer xmlBuffer) {
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, getDAVRequest().getRootElement().getName(), xmlBuffer);
+        DAVElementProperty rootElement = getDAVRequest().getRootElement();
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), xmlBuffer);
     }
 
     private OutputStream myDiffWindowWriter;

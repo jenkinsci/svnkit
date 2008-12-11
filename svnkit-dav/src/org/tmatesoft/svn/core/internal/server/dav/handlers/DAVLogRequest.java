@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -133,10 +133,10 @@ public class DAVLogRequest extends DAVRequest {
 
     protected void init() throws SVNException {
         boolean revisionPropertyRequested = false;
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            DAVElementProperty property = (DAVElementProperty) entry.getValue();
+        List children = getRootElement().getChildren();
+        for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+            DAVElementProperty property = (DAVElementProperty) iterator.next();
+            DAVElement element = property.getName();
             if (element == DISCOVER_CHANGED_PATHS) {
                 setDiscoverChangedPaths(true);
             } else if (element == STRICT_NODE_HISTORY) {

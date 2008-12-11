@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.util.Map;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
@@ -32,17 +31,8 @@ public class DAVPropPatchRequest extends DAVRequest {
     public static final DAVElement REMOVE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "remove");
     public static final DAVElement SET = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "set");
 
-    public Map getElementsChildren(DAVElement element) {
-        DAVElementProperty elementProperty = (DAVElementProperty) getProperties().get(element);
-        return elementProperty != null && elementProperty.getChildren() != null ? elementProperty.getChildren() : null;
-    }
-
-    public boolean hasElement(DAVElement element) {
-        return getProperties().containsKey(element);
-    }
-    
     protected void init() throws SVNException {
-        if (getRootElement() != PROPERTY_UPDATE) {
+        if (getRoot().getName() != PROPERTY_UPDATE) {
             invalidXMLRoot();
         }
     }
@@ -52,4 +42,10 @@ public class DAVPropPatchRequest extends DAVRequest {
                 null, SVNLogType.NETWORK, Level.FINE, null, null, null, 0, null);
     }
 
+    protected DAVElementProperty getRoot() throws SVNException {
+        if (getRootElement() == null) {
+            invalidXMLRoot();
+        }
+        return getRootElement();
+    }
 }

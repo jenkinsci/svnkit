@@ -12,7 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -58,23 +58,24 @@ public class DAVFileRevisionsRequest extends DAVRequest {
     }
 
     protected void init() throws SVNException {
-        for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            DAVElement element = (DAVElement) entry.getKey();
-            DAVElementProperty property = (DAVElementProperty) entry.getValue();
-            if (element == PATH) {
-                String path = property.getFirstValue();
+        DAVElementProperty rootElement = getRootElement();
+        List children = rootElement.getChildren();
+        for (Iterator iterator = children.iterator(); iterator.hasNext();) {
+            DAVElementProperty childElement = (DAVElementProperty) iterator.next();
+            DAVElement childElementName = childElement.getName();
+            if (childElementName == PATH) {
+                String path = childElement.getFirstValue();
                 DAVPathUtil.testCanonical(path);
                 setPath(path);
-            } else if (element == START_REVISION) {
+            } else if (childElementName == START_REVISION) {
                 try {
-                    setStartRevision(Long.parseLong(property.getFirstValue()));
+                    setStartRevision(Long.parseLong(childElement.getFirstValue()));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
-            } else if (element == END_REVISION) {
+            } else if (childElementName == END_REVISION) {
                 try {
-                    setEndRevision(Long.parseLong(property.getFirstValue()));
+                    setEndRevision(Long.parseLong(childElement.getFirstValue()));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }

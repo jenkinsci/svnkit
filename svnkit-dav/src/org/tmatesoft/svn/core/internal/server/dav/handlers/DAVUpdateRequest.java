@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -166,10 +165,10 @@ public class DAVUpdateRequest extends DAVRequest {
         if (!isInitialized()) {
             String sendAll = getRootElementAttributeValue("send-all");
             setSendAll(sendAll != null && Boolean.valueOf(sendAll).booleanValue());
-            for (Iterator iterator = getProperties().entrySet().iterator(); iterator.hasNext();) {
-                Map.Entry entry = (Map.Entry) iterator.next();
-                DAVElement element = (DAVElement) entry.getKey();
-                DAVElementProperty property = (DAVElementProperty) entry.getValue();
+            DAVElementProperty rootElement = getRootElement();
+            for (Iterator iterator = rootElement.getChildren().iterator(); iterator.hasNext();) {
+                DAVElementProperty property = (DAVElementProperty) iterator.next();
+                DAVElement element = property.getName();
                 String value = property.getFirstValue();
                 if (element == TARGET_REVISION) {
                     assertNullCData(element, property);

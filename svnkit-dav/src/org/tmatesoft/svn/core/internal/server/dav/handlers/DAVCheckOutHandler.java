@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,8 +22,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
-import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -42,7 +39,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class DAVCheckOutHandler extends ServletDAVHandler {
 
     private DAVCheckOutRequest myDAVRequest;
-    private FSFS myFSFS;
     
     public DAVCheckOutHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
@@ -67,18 +63,18 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
             }
         
             isUnreserved = davRequest.isUnreserved();
-            Map activitySetElements = davRequest.getActivitySetPropertyElements();
-            
-            if (activitySetElements != null) {
-                if (activitySetElements.containsKey(DAVCheckOutRequest.NEW)) {
+            DAVElementProperty rootElement = davRequest.getRoot();
+            DAVElementProperty activitySetElement = rootElement.getChild(DAVCheckOutRequest.ACTIVITY_SET);
+            if (activitySetElement != null) {
+                if (activitySetElement.hasChild(DAVCheckOutRequest.NEW)) {
                     createActivity = true;
                 } else {
                     activities = new LinkedList();
-                    for (Iterator activitySetIter = activitySetElements.keySet().iterator(); activitySetIter.hasNext();) {
-                        DAVElement element = (DAVElement) activitySetIter.next();
-                        if (element == DAVElement.HREF) {
-                            DAVElementProperty elementProperty = (DAVElementProperty) activitySetElements.get(element);
-                            activities.add(elementProperty.getFirstValue());
+                    List activitySetChildren = activitySetElement.getChildren();
+                    for (Iterator activitySetIter = activitySetChildren.iterator(); activitySetIter.hasNext();) {
+                        DAVElementProperty activitySetChild = (DAVElementProperty) activitySetIter.next();
+                        if (activitySetChild.getName() == DAVElement.HREF) {
+                            activities.add(activitySetChild.getFirstValue());
                         }
                     }
                     
@@ -111,9 +107,6 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
             response("The resource is already checked out to the workspace.", DAVServlet.getStatusLine(HttpServletResponse.SC_CONFLICT), 
                     HttpServletResponse.SC_CONFLICT);
         }
-
-        FSRepository repos = (FSRepository) resource.getRepository();
-        myFSFS = repos.getFSFS();
 
         DAVResource workingResource = null;
         try {

@@ -13,6 +13,9 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -39,90 +42,43 @@ public abstract class DAVRequest {
     protected static final String NAME_ATTR = "name";
     protected static final String NAMESPACE_ATTR = "namespace";
 
-    private DAVElement myRootElement;
     private DAVElementProperty myRootElementProperty;
     private DAVElementProperty myCurrentElement;
-    private Map myRootElementAttributes;
-    private Map myProperties;
 
-    
-    protected Map getProperties() {
-        if (myProperties == null) {
-            myProperties = new SVNHashMap();
-        }
-        return myProperties;
-    }
-
-
-	protected DAVElementProperty getProperty(Map properties, DAVElement element) {
-        return (DAVElementProperty) properties.get(element);
-    }
-    public void setRootElement(DAVElement rootElement, DAVElementProperty rootElementProperty) {
-        myRootElement = rootElement;
-        myRootElementProperty = rootElementProperty;
-    }
-
-    public DAVElement getRootElement() {
-        return myRootElement;
+    public DAVElementProperty getRootElement() {
+        return myRootElementProperty;
     }
 
     protected String getRootElementAttributeValue(String name) {
-        if (myRootElementAttributes != null) {
-            return (String) myRootElementAttributes.get(name);
+        if (myRootElementProperty != null) {
+            return myRootElementProperty.getAttributeValue(name);
         }
         return null;
-    }
-
-    private void setRootElementAttributes(Attributes rootElementAttributes) {
-        myRootElementAttributes = getAttributesMap(rootElementAttributes);
     }
 
     public void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (parent == null) {
             myCurrentElement = new DAVElementProperty(element, null);
             myCurrentElement.setAttributes(attrs);
-            setRootElement(element, myCurrentElement);
-            setRootElementAttributes(attrs);
+            myRootElementProperty = myCurrentElement;
         } else {
             myCurrentElement = myCurrentElement.addChild(element, attrs);
         }
-        
-        
-/*        
-        if (parent == null) {
-            setRootElement(element);
-            setRootElementAttributes(attrs);
-        } else if (parent == getRootElement()) {
-            put(getProperties(), element, attrs);
-        } else {
-            DAVElementProperty parentProperty = (DAVElementProperty) getProperties().get(parent);
-            if (parentProperty != null) {
-                parentProperty.addChild(element, attrs);
-            }
-        }
-        */
     }
 
     public void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
+        if (myCurrentElement == null || element != myCurrentElement.getName()) {
+            invalidXML();
+        }
+        
         if (cdata != null) {
-            myCurrentElement.addCDATAToChild(element, cdata);
+            myCurrentElement.addValue(cdata.toString());
         }
         
         myCurrentElement = myCurrentElement.getParent();
-        
-/*        if (cdata != null) {
-            if (parent == getRootElement()) {
-                put(getProperties(), element, cdata);
-            } else if (parent != null) {
-                DAVElementProperty parentProperty = (DAVElementProperty) getProperties().get(parent);
-                if (parentProperty == null) {
-                    invalidXML();
-                } else {
-                    parentProperty.addChild(element, cdata);
-                }
-            }
+        if (myCurrentElement == null && parent != null) {
+            invalidXML();
         }
-        */
     }
 
     protected abstract void init() throws SVNException;
@@ -156,7 +112,7 @@ public abstract class DAVRequest {
 
         private ArrayList myValues;
         private Map myAttributes;
-        private Map myChildren;
+        private List myChildren;
         private DAVElement myElementName;
         private DAVElementProperty myParent;
         
@@ -171,6 +127,29 @@ public abstract class DAVRequest {
         
         public DAVElement getName() {
             return myElementName;
+        }
+        
+        public void setElementName(DAVElement element) {
+            myElementName = element;
+        }
+        
+        public boolean hasChild(DAVElement element) {
+            if (myChildren != null) {
+                return myChildren.contains(element);
+            }
+            return false;
+        }
+        
+        public DAVElementProperty getChild(DAVElement element) {
+            if (myChildren != null) {
+                for (Iterator childrenIter = myChildren.iterator(); childrenIter.hasNext();) {
+                    DAVElementProperty nextChild = (DAVElementProperty) childrenIter.next();
+                    if (element == nextChild.getName()) {
+                        return nextChild;
+                    }
+                }
+            }
+            return null;
         }
         
         private void addValue(String cdata) throws SVNException {
@@ -204,7 +183,7 @@ public abstract class DAVRequest {
             myAttributes = getAttributesMap(attributes);
         }
 
-        protected Map getChildren() {
+        protected List getChildren() {
             return myChildren;
         }
 
@@ -212,40 +191,14 @@ public abstract class DAVRequest {
             if (myValues != null) {
                 invalidXML();
             } else if (myChildren == null) {
-                myChildren = new SVNHashMap();
+                myChildren = new LinkedList();
             }
             
-            DAVElementProperty child = (DAVElementProperty) myChildren.get(element);
-            if (child == null) {
-                child = new DAVElementProperty(element, this);
-                myChildren.put(element, child);
-            }
+            DAVElementProperty child = new DAVElementProperty(element, this);
+            myChildren.add(child);
             child.setAttributes(attrs);
             return child;
         }
 
-        protected void addCDATAToChild(DAVElement element, StringBuffer cdata) throws SVNException {
-            if (myValues != null || myChildren == null) {
-                invalidXML();
-            }
-
-            DAVElementProperty elementProperty = (DAVElementProperty) myChildren.get(element);
-            if (elementProperty == null) {
-                invalidXML();
-            } else {
-                elementProperty.addValue(cdata.toString());
-            }
-        }
-        
-/*        
-        protected DAVElementProperty addChild(DAVElement element, StringBuffer cdata) throws SVNException {
-            if (myValues != null || myChildren == null) {
-                invalidXML();
-            }
-            DAVElementProperty child = put(myChildren, element, cdata);
-            child.setParent(this);
-            return child;
-        }
-*/        
     }
 }
