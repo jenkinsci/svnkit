@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
+import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
@@ -28,7 +30,6 @@ import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElement
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
-import org.xml.sax.Attributes;
 
 
 /**
@@ -37,6 +38,31 @@ import org.xml.sax.Attributes;
  */
 public class DAVPropPatchHandler extends ServletDAVHandler {
 
+    private static final Map OUR_LIVE_PROPS = new HashMap(); 
+    
+    static {
+        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_LENGTH, new LivePropertySpecification(DAVElement.GET_CONTENT_LENGTH, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_TYPE, new LivePropertySpecification(DAVElement.GET_CONTENT_TYPE, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.GET_ETAG, new LivePropertySpecification(DAVElement.GET_ETAG, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.CREATION_DATE, new LivePropertySpecification(DAVElement.CREATION_DATE, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.GET_LAST_MODIFIED, new LivePropertySpecification(DAVElement.GET_LAST_MODIFIED, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.BASELINE_COLLECTION, new LivePropertySpecification(DAVElement.BASELINE_COLLECTION, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.CHECKED_IN, new LivePropertySpecification(DAVElement.CHECKED_IN, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.VERSION_CONTROLLED_CONFIGURATION, 
+                new LivePropertySpecification(DAVElement.VERSION_CONTROLLED_CONFIGURATION, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.VERSION_NAME, new LivePropertySpecification(DAVElement.VERSION_NAME, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.CREATOR_DISPLAY_NAME, new LivePropertySpecification(DAVElement.CREATOR_DISPLAY_NAME, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.AUTO_VERSION, new LivePropertySpecification(DAVElement.AUTO_VERSION, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.BASELINE_RELATIVE_PATH, new LivePropertySpecification(DAVElement.BASELINE_RELATIVE_PATH, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.MD5_CHECKSUM, new LivePropertySpecification(DAVElement.MD5_CHECKSUM, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.REPOSITORY_UUID, new LivePropertySpecification(DAVElement.REPOSITORY_UUID, false, true)); 
+        OUR_LIVE_PROPS.put(DAVElement.DEADPROP_COUNT, new LivePropertySpecification(DAVElement.DEADPROP_COUNT, false, true));
+        
+        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_LANGUAGE, new LivePropertySpecification(DAVElement.GET_CONTENT_LANGUAGE, false, false));
+        OUR_LIVE_PROPS.put(DAVElement.LOCK_DISCOVERY, new LivePropertySpecification(DAVElement.LOCK_DISCOVERY, false, false));
+        OUR_LIVE_PROPS.put(DAVElement.SUPPORTED_LOCK, new LivePropertySpecification(DAVElement.SUPPORTED_LOCK, false, false));
+    };
+    
     private DAVPropPatchRequest myDAVRequest;
 
     protected DAVPropPatchHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -89,21 +115,67 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
             boolean isRemove = childElementName == DAVPropPatchRequest.REMOVE;
             List propChildren = propChildrenElement.getChildren();
             for (Iterator propsIter = propChildren.iterator(); propsIter.hasNext();) {
-                
+                DAVElementProperty property = (DAVElementProperty) propsIter.next();
+                DAVElement propertyName = property.getName();
+                validateProp(resource, propertyName, propsProvider);
             }
             
             
         }
     }
 
-    protected void validateProp() {
+    private LivePropertySpecification validateProp(DAVResource resource, DAVElement property, DAVPropertiesProvider propsProvider) {
+        LivePropertySpecification livePropSpec = findLivePropertyt(property);
+        if (!isPropertyWritable(property, livePropSpec)) {
+            propsProvider.setError(new DAVException("Property is read-only.", HttpServletResponse.SC_CONFLICT, DAVErrorCode.PROP_READONLY));
+            return livePropSpec;
+        }
         
+        if (livePropSpec != null && livePropSpec.isSVNSupported()) {
+            return livePropSpec;
+        }
+        
+        if (propsProvider.isDeferred()) {
+            try {
+                propsProvider.open(resource, false);
+            } catch (DAVException dave) {
+                propsProvider.setError(dave);
+                return livePropSpec;
+            }
+        }
+        
+        if (!propsProvider.isOperative()) {
+            propsProvider.setError(new DAVException("Attempted to set/remove a property without a valid, open, read/write property database.", 
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.PROP_NO_DATABASE));
+            return livePropSpec;
+        }
+        
+        return livePropSpec;
     }
     
+    private LivePropertySpecification findLivePropertyt(DAVElement property) {
+        String nameSpace = property.getNamespace(); 
+        if (!DAVElement.DAV_NAMESPACE.equals(nameSpace) && !DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(nameSpace)) {
+            return null;
+        }
+        
+        return (LivePropertySpecification) OUR_LIVE_PROPS.get(property);
+    }
+   
     protected DAVRequest getDAVRequest() {
         return getPropPatchRequest();
     }
 
+    private boolean isPropertyWritable(DAVElement property, LivePropertySpecification livePropSpec) {
+        if (livePropSpec != null) {
+            return livePropSpec.isWritable();
+        }
+        if (property == DAVElement.LOCK_DISCOVERY || property == DAVElement.SUPPORTED_LOCK) {
+            return false;
+        }
+        return true;
+    }
+    
     private DAVPropPatchRequest getPropPatchRequest() {
         if (myDAVRequest == null) {
             myDAVRequest = new DAVPropPatchRequest();
@@ -111,4 +183,35 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         return myDAVRequest;
     }
 
+    private static class LivePropertySpecification {
+        private DAVElement myPropertyName; 
+        private boolean myIsWritable;
+        private boolean myIsSVNSupported;
+
+        public LivePropertySpecification(DAVElement propertyName, boolean isWritable, boolean isSVNSupported) {
+            myIsWritable = isWritable;
+            myPropertyName = propertyName;
+            myIsSVNSupported = isSVNSupported;
+        }
+        
+        public DAVElement getPropertyName() {
+            return myPropertyName;
+        }
+        
+        public boolean isWritable() {
+            return myIsWritable;
+        }
+
+        public boolean isSVNSupported() {
+            return myIsSVNSupported;
+        }
+        
+    }
+    
+    private static class PropertyChangeContext {
+        private boolean myIsSet;
+        private DAVElement myProperty;
+        private LivePropertySpecification myLivePropertySpec;
+        private DAVException myError;
+    }
 }

@@ -188,7 +188,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             value = getRepositoryUUIDProp(resource);
         } else if (element == DAVElement.GET_CONTENT_LENGTH) {
             value = getContentLengthProp(resource);
-        } else if (element == GET_CONTENT_TYPE) {
+        } else if (element == DAVElement.GET_CONTENT_TYPE) {
             value = getContentTypeProp(resource);
         } else if (element == DAVElement.CHECKED_IN) {
             value = getCheckedInProp(resource);
@@ -200,7 +200,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             isHref = true;
         } else if (element == DAVElement.CREATION_DATE) {
             value = SVNDate.formatDate(getLastModifiedTime(resource));
-        } else if (element == GET_LAST_MODIFIED) {
+        } else if (element == DAVElement.GET_LAST_MODIFIED) {
             value = SVNDate.formatRFC1123Date(getLastModifiedTime(resource));
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
             value = getCreatorDisplayNameProp(resource);
@@ -208,13 +208,13 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             value = getDeadpropCountProp(resource);
         } else if (element == DAVElement.MD5_CHECKSUM) {
             value = getMD5ChecksumProp(resource);
-        } else if (element == GET_ETAG) {
+        } else if (element == DAVElement.GET_ETAG) {
             value = getETag(resource);
         } else if (element == DAVElement.AUTO_VERSION) {
             value = getAutoVersionProp();
         } else if (element == DAVElement.DEADPROP_COUNT) {
             value = getDeadpropCountProp(resource);
-        } else if (element == LOG) {
+        } else if (element == DAVElement.LOG) {
             value = getLogProp(resource);
         } else {
             value = getDeadProperty(element, resource);

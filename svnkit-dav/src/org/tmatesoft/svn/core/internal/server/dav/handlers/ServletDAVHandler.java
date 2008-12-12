@@ -168,12 +168,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final String ACCEPT_ENCODING_HEADER = "Accept-Encoding";
     protected static final String CACHE_CONTROL_HEADER = "Cache-Control";
     
-    //Supported live properties
-    protected static final DAVElement GET_CONTENT_TYPE = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getcontenttype");
-    protected static final DAVElement GET_LAST_MODIFIED = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getlastmodified");
-    protected static final DAVElement GET_ETAG = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "getetag");
-    protected static final DAVElement LOG = DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "log");
-
     //Common xml attributes
     protected static final String NAME_ATTR = "name";
     protected static final String NAMESPACE_ATTR = "namespace";
@@ -1416,12 +1410,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         properties.add(DAVElement.BASELINE_RELATIVE_PATH);
         properties.add(DAVElement.RESOURCE_TYPE);
         properties.add(DAVElement.CHECKED_IN);
-        properties.add(GET_ETAG);
+        properties.add(DAVElement.GET_ETAG);
         properties.add(DAVElement.CREATOR_DISPLAY_NAME);
         properties.add(DAVElement.CREATION_DATE);
-        properties.add(GET_LAST_MODIFIED);
+        properties.add(DAVElement.GET_LAST_MODIFIED);
         properties.add(DAVElement.VERSION_NAME);
-        properties.add(GET_CONTENT_TYPE);
+        properties.add(DAVElement.GET_CONTENT_TYPE);
         if (!resource.isCollection()) {
             properties.add(DAVElement.GET_CONTENT_LENGTH);
             properties.add(DAVElement.MD5_CHECKSUM);

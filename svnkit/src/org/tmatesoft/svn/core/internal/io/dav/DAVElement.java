@@ -103,11 +103,18 @@ public class DAVElement {
     public static final DAVElement MERGE_INFO_PATH = getElement(SVN_NAMESPACE, "mergeinfo-path");
     public static final DAVElement MERGE_INFO_INFO = getElement(SVN_NAMESPACE, "mergeinfo-info");
 
+    //Supported live properties
+    public static final DAVElement GET_CONTENT_LANGUAGE = getElement(DAV_NAMESPACE, "getcontentlanguage");
+    public static final DAVElement GET_CONTENT_TYPE = getElement(DAV_NAMESPACE, "getcontenttype");
+    public static final DAVElement GET_ETAG = getElement(DAV_NAMESPACE, "getetag");
+    public static final DAVElement GET_LAST_MODIFIED = getElement(DAV_NAMESPACE, "getlastmodified");
+
     public static final DAVElement[] STARTING_PROPERTIES = {VERSION_CONTROLLED_CONFIGURATION, RESOURCE_TYPE, BASELINE_RELATIVE_PATH, REPOSITORY_UUID};
     public static final DAVElement[] BASELINE_PROPERTIES = {BASELINE_COLLECTION, VERSION_NAME};
     
     private String myPropertyName;
     private String myNamespace;
+    public static final DAVElement LOG = getElement(SVN_SVN_PROPERTY_NAMESPACE, "log");
 
     private DAVElement(String namespace, String propertyName) {
         myNamespace = namespace;
