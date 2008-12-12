@@ -67,7 +67,11 @@ public class SVNCopyDriver extends SVNBasicClient {
 
     private SVNWCAccess myWCAccess;
     
-    private static final boolean ourNoMergeInfo = Boolean.getBoolean("svnkit.wccopy.nomergeinfo");
+    private static final boolean ourNoMergeInfo;
+    
+    static {
+        ourNoMergeInfo = Boolean.valueOf(System.getProperty("svnkit.wccopy.nomergeinfo", "true")).booleanValue();
+    }
 
     protected SVNCopyDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);

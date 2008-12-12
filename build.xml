@@ -655,6 +655,7 @@
     	<mkdir dir="${basedir}/build/javahl"/>
     	
         <junit fork="true" dir="${javahl.test.home}" >
+            <jvmarg value="-Dsvnkit.wccopy.nomergeinfo=false" />
             <classpath>
                 <pathelement location="contrib/junit/junit.jar" />
                 <pathelement location="contrib/trilead/trilead.jar"/>
