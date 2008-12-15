@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
@@ -93,6 +96,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
         }
         
+        boolean isFailure = false;
         DAVPropPatchRequest requestXMLObject = getPropPatchRequest();  
         DAVElementProperty rootElement = requestXMLObject.getRoot();
         List childrenElements = rootElement.getChildren();
@@ -112,45 +116,52 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                 return;
             }
             
+            List properties = new LinkedList();
             boolean isRemove = childElementName == DAVPropPatchRequest.REMOVE;
             List propChildren = propChildrenElement.getChildren();
             for (Iterator propsIter = propChildren.iterator(); propsIter.hasNext();) {
                 DAVElementProperty property = (DAVElementProperty) propsIter.next();
                 DAVElement propertyName = property.getName();
-                validateProp(resource, propertyName, propsProvider);
+                PropertyChangeContext propContext = new PropertyChangeContext();
+                propContext.myIsSet = !isRemove;
+                propContext.myProperty = property;
+                properties.add(propContext);
+                validateProp(resource, propertyName, propsProvider, propContext);
+                if (propContext.myError != null && propContext.myError.getResponseCode() >= 300) {
+                    isFailure = true;
+                }
             }
-            
             
         }
     }
 
-    private LivePropertySpecification validateProp(DAVResource resource, DAVElement property, DAVPropertiesProvider propsProvider) {
+    private void validateProp(DAVResource resource, DAVElement property, DAVPropertiesProvider propsProvider, 
+            PropertyChangeContext propContext) {
         LivePropertySpecification livePropSpec = findLivePropertyt(property);
+        propContext.myLivePropertySpec = livePropSpec;
         if (!isPropertyWritable(property, livePropSpec)) {
-            propsProvider.setError(new DAVException("Property is read-only.", HttpServletResponse.SC_CONFLICT, DAVErrorCode.PROP_READONLY));
-            return livePropSpec;
+            propContext.myError = new DAVException("Property is read-only.", HttpServletResponse.SC_CONFLICT, DAVErrorCode.PROP_READONLY);
+            return;
         }
         
         if (livePropSpec != null && livePropSpec.isSVNSupported()) {
-            return livePropSpec;
+            return;
         }
         
         if (propsProvider.isDeferred()) {
             try {
                 propsProvider.open(resource, false);
             } catch (DAVException dave) {
-                propsProvider.setError(dave);
-                return livePropSpec;
+                propContext.myError = dave;
+                return;
             }
         }
         
         if (!propsProvider.isOperative()) {
-            propsProvider.setError(new DAVException("Attempted to set/remove a property without a valid, open, read/write property database.", 
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.PROP_NO_DATABASE));
-            return livePropSpec;
+            propContext.myError = new DAVException("Attempted to set/remove a property without a valid, open, read/write property database.", 
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.PROP_NO_DATABASE);
+            return;
         }
-        
-        return livePropSpec;
     }
     
     private LivePropertySpecification findLivePropertyt(DAVElement property) {
@@ -210,8 +221,36 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
     
     private static class PropertyChangeContext {
         private boolean myIsSet;
-        private DAVElement myProperty;
+        private DAVElementProperty myProperty;
         private LivePropertySpecification myLivePropertySpec;
         private DAVException myError;
+    }
+
+    private static interface IDAVPropertyContextHandler {
+        public void handleContext(PropertyChangeContext propContext);
+    }
+    
+    private static class DAVPropertyExecuteHandler implements IDAVPropertyContextHandler {
+        private DAVPropertiesProvider myPropsProvider;
+        
+        public void handleContext(PropertyChangeContext propContext) {
+            if (propContext.myLivePropertySpec == null) {
+                try {
+                    SVNPropertyValue rollBackValue = myPropsProvider.getPropertyValue(propContext.myProperty.getName());
+                    if (propContext.myIsSet) {
+                        
+                    }
+                } catch (DAVException dave) {
+                    handleError(dave, propContext);
+                    return;
+                }
+            }
+        }
+        
+        private void handleError(DAVException dave, PropertyChangeContext propContext) {
+            DAVException exc = new DAVException("Could not execute PROPPATCH.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, dave, 
+                    DAVErrorCode.PROP_EXEC);
+            propContext.myError = exc;
+        }
     }
 }

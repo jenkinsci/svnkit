@@ -170,6 +170,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     
     //Common xml attributes
     protected static final String NAME_ATTR = "name";
+    protected static final String ENCODING_ATTR = "encoding";
+
     protected static final String NAMESPACE_ATTR = "namespace";
 
     protected static final String DIFF_VERSION_1 = "svndiff1";

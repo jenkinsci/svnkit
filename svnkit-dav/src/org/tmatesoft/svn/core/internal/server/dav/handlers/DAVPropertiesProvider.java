@@ -11,15 +11,26 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 
 
 /**
@@ -30,7 +41,6 @@ public class DAVPropertiesProvider {
     private boolean myIsDeferred;
     private boolean myIsOperative;
     private DAVResource myResource;
-    private DAVException myError;
     
     private DAVPropertiesProvider() {
     }
@@ -54,6 +64,64 @@ public class DAVPropertiesProvider {
         }
     }
 
+    public void storeProperty(DAVElementProperty property) {
+        String propValue = property.getFirstValue();
+        Map attributes = property.getAttributes();
+        if (attributes != null) {
+            for (Iterator attrsIter = attributes.keySet().iterator(); attrsIter.hasNext();) {
+                String attrName = (String) attrsIter.next();
+                String attrValue = (String) attributes.get(attrName);
+                
+                if (ServletDAVHandler.ENCODING_ATTR.equals(attrName)) {
+                    
+                }
+           
+               
+            }
+        }
+    }
+   
+    public SVNPropertyValue getPropertyValue(DAVElement propName) throws DAVException {
+        String reposPropName = getReposPropName(propName);
+        if (reposPropName == null) {
+            return null;
+        }
+        
+        SVNProperties props = null;
+        FSFS fsfs = myResource.getFSFS();
+        try {
+            if (myResource.isBaseLined()) {
+                if (myResource.getType() == DAVResourceType.WORKING) {
+                    FSTransactionInfo txn = myResource.getTxnInfo();
+                    props = fsfs.getTransactionProperties(txn.getTxnId());
+                } else {
+                    long revision = myResource.getRevision();
+                    props = fsfs.getRevisionProperties(revision);
+                }
+            } else {
+                FSRoot root = myResource.getRoot();
+                props = fsfs.getProperties(root.getRevisionNode(myResource.getResourceURI().getPath()));
+            }
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "could not fetch a property", null);
+        }
+        
+        if (props != null) {
+            return props.getSVNPropertyValue(reposPropName);
+        }
+        return null;
+    }
+    
+    private String getReposPropName(DAVElement propName) {
+        if (DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(propName.getNamespace())) {
+            return SVNProperty.SVN_PREFIX + propName.getName();
+        } else if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(propName.getNamespace())) {
+            return propName.getName();
+        }
+        return null;
+    }
+
     public boolean isOperative() {
         return myIsOperative;
     }
@@ -64,14 +132,6 @@ public class DAVPropertiesProvider {
 
     public void setDeferred(boolean isDeferred) {
         myIsDeferred = isDeferred;
-    }
-
-    public DAVException getError() {
-        return myError;
-    }
-    
-    public void setError(DAVException error) {
-        myError = error;
     }
 
     private void doOpen(DAVResource resource, boolean readOnly) throws DAVException {

@@ -152,6 +152,10 @@ public abstract class DAVRequest {
             return null;
         }
         
+        public Map getAttributes() {
+            return myAttributes;
+        }
+        
         private void addValue(String cdata) throws SVNException {
             if (myChildren != null) {
                 invalidXML();

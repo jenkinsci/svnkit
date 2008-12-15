@@ -57,7 +57,6 @@ public class DAVReportHandler extends ServletDAVHandler {
     protected static final String COPYFROM_PATH_ATTR = "copyfrom-path";
     protected static final String COPYFROM_REVISION_ATTR = "copyfrom-rev";
     protected static final String TXDELTA_ATTR = "txdelta";
-    protected static final String ENCODING_ATTR = "encoding";
     protected static final String CHECKSUM_ATTR = "checksum";
     protected static final String DELETE_ATTR = "del";
     protected static final String LOCK_TOKEN_ATTR = "lock-token";
@@ -273,7 +272,7 @@ public class DAVReportHandler extends ServletDAVHandler {
             
             Map attrs = new SVNHashMap();
             attrs.put(NAME_ATTR, propertyName);
-            attrs.put(ENCODING_ATTR, BASE64_ENCODING);
+            attrs.put(ServletDAVHandler.ENCODING_ATTR, BASE64_ENCODING);
 
             xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, null);
             write(xmlBuffer);
