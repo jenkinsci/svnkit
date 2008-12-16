@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
@@ -97,6 +98,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         }
         
         boolean isFailure = false;
+        List properties = new LinkedList();
         DAVPropPatchRequest requestXMLObject = getPropPatchRequest();  
         DAVElementProperty rootElement = requestXMLObject.getRoot();
         List childrenElements = rootElement.getChildren();
@@ -116,7 +118,6 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                 return;
             }
             
-            List properties = new LinkedList();
             boolean isRemove = childElementName == DAVPropPatchRequest.REMOVE;
             List propChildren = propChildrenElement.getChildren();
             for (Iterator propsIter = propChildren.iterator(); propsIter.hasNext();) {
@@ -131,10 +132,17 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                     isFailure = true;
                 }
             }
-            
         }
+        
+//        if (!failure ) {
+//        }
+       
     }
 
+    private void processPropertyContextList(IDAVPropertyContextHandler handler, List propertyContextList, boolean stopOnError, boolean reverse) {
+        
+    }
+    
     private void validateProp(DAVResource resource, DAVElement property, DAVPropertiesProvider propsProvider, 
             PropertyChangeContext propContext) {
         LivePropertySpecification livePropSpec = findLivePropertyt(property);
@@ -224,25 +232,50 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         private DAVElementProperty myProperty;
         private LivePropertySpecification myLivePropertySpec;
         private DAVException myError;
+        private RollBackProperty myRollBackProperty;
     }
 
+    private static class RollBackProperty {
+        private DAVElement myPropertyName;
+        private SVNPropertyValue myRollBackPropertyValue;
+
+        public RollBackProperty(DAVElement propertyName, SVNPropertyValue rollBackPropertyValue) {
+            myPropertyName = propertyName;
+            myRollBackPropertyValue = rollBackPropertyValue;
+        }
+    }
+    
     private static interface IDAVPropertyContextHandler {
         public void handleContext(PropertyChangeContext propContext);
     }
     
     private static class DAVPropertyExecuteHandler implements IDAVPropertyContextHandler {
         private DAVPropertiesProvider myPropsProvider;
+        private FSCommitter myCommitter;
         
         public void handleContext(PropertyChangeContext propContext) {
             if (propContext.myLivePropertySpec == null) {
                 try {
-                    SVNPropertyValue rollBackValue = myPropsProvider.getPropertyValue(propContext.myProperty.getName());
-                    if (propContext.myIsSet) {
-                        
-                    }
+                    SVNPropertyValue rollBackPropValue = myPropsProvider.getPropertyValue(propContext.myProperty.getName());
+                    propContext.myRollBackProperty = new RollBackProperty(propContext.myProperty.getName(), rollBackPropValue);
                 } catch (DAVException dave) {
                     handleError(dave, propContext);
                     return;
+                }
+
+                if (propContext.myIsSet) {
+                    try {
+                        myPropsProvider.storeProperty(propContext.myProperty, myCommitter);
+                    } catch (DAVException dave) {
+                        handleError(dave, propContext);
+                        return;
+                    }
+                } else {
+                    try {
+                        myPropsProvider.removeProperty(propContext.myProperty.getName(), myCommitter);
+                    } catch (DAVException dave) {
+                        //
+                    }
                 }
             }
         }
@@ -251,6 +284,35 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
             DAVException exc = new DAVException("Could not execute PROPPATCH.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, dave, 
                     DAVErrorCode.PROP_EXEC);
             propContext.myError = exc;
+        }
+    }
+    
+    private static class DAVPropertyRollBackHandler implements IDAVPropertyContextHandler {
+        private DAVPropertiesProvider myPropsProvider;
+        private FSCommitter myCommitter;
+        
+        public void handleContext(PropertyChangeContext propContext) {
+            if (propContext.myRollBackProperty == null) {
+                return;
+            }
+            
+            if (propContext.myLivePropertySpec == null) {
+                try {
+                    myPropsProvider.applyRollBack(propContext.myRollBackProperty.myPropertyName, 
+                            propContext.myRollBackProperty.myRollBackPropertyValue, myCommitter);
+                } catch (DAVException dave) {
+                    if (propContext.myError == null) {
+                        propContext.myError = dave;
+                    } else {
+                        DAVException err = dave;
+                        while (err.getPreviousException() != null) {
+                            err = err.getPreviousException();
+                        }
+                        err.setPreviousException(propContext.myError);
+                        propContext.myError = dave;
+                    }
+                }
+            }
         }
     }
 }

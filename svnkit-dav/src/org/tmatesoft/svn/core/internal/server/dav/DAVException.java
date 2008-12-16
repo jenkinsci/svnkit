@@ -123,7 +123,7 @@ public class DAVException extends SVNException {
         myResponse = response;
     }
 
-    private void setPreviousException(DAVException previousException) {
+    public void setPreviousException(DAVException previousException) {
         myPreviousException = previousException;
     }
     

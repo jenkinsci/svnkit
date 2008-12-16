@@ -22,6 +22,9 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -208,10 +211,13 @@ public class DAVRepositoryManager {
             activitiesDBDir = new File(activitiesDB);
         }
         
+        String userName = myUserPrincipal != null ? myUserPrincipal.getName() : null;
+        SVNAuthentication auth = new SVNUserNameAuthentication(userName, false);
+        BasicAuthenticationManager authManager = new BasicAuthenticationManager(new SVNAuthentication[] { auth });
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
+        resourceRepository.setAuthenticationManager(authManager);
         DAVResource resource = new DAVResource(resourceRepository, this, resourceURI, isSVNClient, deltaBase, version, 
-                clientOptions, baseChecksum, resultChecksum, myUserPrincipal != null ? myUserPrincipal.getName() : null, activitiesDBDir, 
-                        lockTokens, capabilities);
+                clientOptions, baseChecksum, resultChecksum, userName, activitiesDBDir, lockTokens, capabilities);
         return resource;
     }
 

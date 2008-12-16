@@ -22,15 +22,19 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
 import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -64,21 +68,68 @@ public class DAVPropertiesProvider {
         }
     }
 
-    public void storeProperty(DAVElementProperty property) {
+    public void applyRollBack(DAVElement propName, SVNPropertyValue propValue, FSCommitter committer) throws DAVException {
+        if (propValue == null) {
+            removeProperty(propName, committer);
+            return;
+        }
+        saveValue(propName, propValue, committer);
+    }
+    
+    public void removeProperty(DAVElement propName, FSCommitter committer) throws DAVException {
+        String reposPropName = getReposPropName(propName);
+        if (reposPropName == null) {
+            return;
+        }
+        try {
+            FSFS fsfs = myResource.getFSFS();
+            if (myResource.isBaseLined()) {
+                if (myResource.isWorking()) {
+                    FSTransactionInfo txn = myResource.getTxnInfo();
+                    SVNProperties props = new SVNProperties();
+                    props.put(reposPropName, (SVNPropertyValue) null);
+                    fsfs.changeTransactionProperties(txn.getTxnId(), props);
+                } else {
+                    SVNRepository repos = myResource.getRepository();
+                    repos.setRevisionPropertyValue(myResource.getRevision(), reposPropName, null);
+                }
+            } else {
+                DAVResourceURI resourceURI = myResource.getResourceURI();
+                committer.changeNodeProperty(resourceURI.getPath(), reposPropName, null);
+            }
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not remove a property", null);
+        }
+    }
+    
+    public void storeProperty(DAVElementProperty property, FSCommitter committer) throws DAVException {
+        DAVElement propName = property.getName();
         String propValue = property.getFirstValue();
+        String reposPropName = getReposPropName(propName);
+        SVNPropertyValue value = null;
         Map attributes = property.getAttributes();
         if (attributes != null) {
             for (Iterator attrsIter = attributes.keySet().iterator(); attrsIter.hasNext();) {
                 String attrName = (String) attrsIter.next();
-                String attrValue = (String) attributes.get(attrName);
-                
                 if (ServletDAVHandler.ENCODING_ATTR.equals(attrName)) {
-                    
+                    String encodingType = (String) attributes.get(attrName);
+                    if (ServletDAVHandler.BASE64_ENCODING.equals(encodingType)) {
+                        byte[] buffer = new byte[propValue.length()];
+                        int length = SVNBase64.base64ToByteArray(new StringBuffer(propValue), buffer);
+                        value = SVNPropertyValue.create(reposPropName, buffer, 0, length);
+                    } else {
+                        throw new DAVException("Unknown property encoding", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
+                    }
+                    break;
                 }
-           
-               
             }
         }
+        
+        if (value == null) {
+            value = SVNPropertyValue.create(propValue);
+        }
+        
+        saveValue(propName, value, committer);
     }
    
     public SVNPropertyValue getPropertyValue(DAVElement propName) throws DAVException {
@@ -111,6 +162,42 @@ public class DAVPropertiesProvider {
             return props.getSVNPropertyValue(reposPropName);
         }
         return null;
+    }
+    
+    private void saveValue(DAVElement propName, SVNPropertyValue value, FSCommitter committer) throws DAVException {
+        String reposPropName = getReposPropName(propName);
+        if (reposPropName == null) {
+            DAVConfig config = myResource.getRepositoryManager().getDAVConfig(); 
+            if (config.isAutoVersioning()) {
+                reposPropName = propName.getName();
+            } else {
+                throw new DAVException("Properties may only be defined in the {0} and {1} namespaces.", 
+                        new Object[] { DAVElement.SVN_SVN_PROPERTY_NAMESPACE, DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE }, 
+                        HttpServletResponse.SC_CONFLICT, 0);
+            }
+        }
+    
+        try {
+            FSFS fsfs = myResource.getFSFS();
+            if (myResource.isBaseLined()) {
+                if (myResource.isWorking()) {
+                    FSTransactionInfo txn = myResource.getTxnInfo();
+                    SVNProperties props = new SVNProperties();
+                    props.put(reposPropName, value);
+                    fsfs.changeTransactionProperties(txn.getTxnId(), props);
+                } else {
+                    SVNRepository repos = myResource.getRepository();
+                    repos.setRevisionPropertyValue(myResource.getRevision(), reposPropName, value);
+                    //TODO: maybe add logging here
+                }
+            } else {
+                DAVResourceURI resourceURI = myResource.getResourceURI();
+                committer.changeNodeProperty(resourceURI.getPath(), reposPropName, value);
+            }
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, null);
+        }
+        
     }
     
     private String getReposPropName(DAVElement propName) {

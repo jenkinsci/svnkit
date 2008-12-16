@@ -273,8 +273,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
        
         List lockTokens = getLockTokensList();
-        DAVResource resource = getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, pathInfo, version, clientOptions, baseChecksum, 
-                resultChecksum, label, useCheckedIn, lockTokens, clientCapabilities);
+        DAVResource resource = getRepositoryManager().getRequestedDAVResource(isSVNClient, deltaBase, pathInfo, version, clientOptions, 
+                baseChecksum, resultChecksum, label, useCheckedIn, lockTokens, clientCapabilities);
         
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
