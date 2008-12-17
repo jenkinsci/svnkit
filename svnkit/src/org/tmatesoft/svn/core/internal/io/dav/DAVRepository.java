@@ -532,7 +532,8 @@ public class DAVRepository extends SVNRepository {
                     }
                     if (ents != null && ents.hasNext()) {
                         entry = (SVNDirEntry) ents.next();
-                        vcc = (String) vccs.get(index);
+                        SVNPropertyValue vccValue = (SVNPropertyValue) vccs.get(index);
+                        vcc = vccValue != null ? vccValue.getString() : null;
                         index++;
                     } else {
                         break;
