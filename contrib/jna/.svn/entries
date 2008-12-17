@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/jna
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/jna
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-24T14:07:55.499648Z
-4926
+2008-11-26T16:09:37.309105Z
+5257
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-834c3daa2b50d0a5b01d1069f1f113f5
-2008-09-24T14:07:55.499648Z
-4926
+2008-12-17T22:37:22.000000Z
+074e388212fdb098cf55177a7f42540e
+2008-11-26T16:09:37.309105Z
+5257
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-687934
+795871
 
 JNA-LICENSE
 file

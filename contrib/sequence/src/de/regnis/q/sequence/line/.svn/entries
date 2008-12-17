@@ -2,14 +2,14 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/line
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src/de/regnis/q/sequence/line
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-11-27T19:49:21.695323Z
+5288
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -25,40 +25,6 @@ svn:special svn:externals svn:needs-lock
 
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
-
-QSequenceLineResult.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-d786fd7aafc4ebff6684ca476b9001cf
-2008-07-30T16:53:59.266781Z
-4613
-semen
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1412
 
 QSequenceLineFileSystemCacheSegments.java
 file
@@ -94,14 +60,14 @@ has-props
 
 4760
 
-QSequenceLineMedia.java
+QSequenceLineResult.java
 file
 
 
 
 
 2008-11-04T17:25:59.000000Z
-cac7afcd9fa8a6991f850e3b8416f244
+d786fd7aafc4ebff6684ca476b9001cf
 2008-07-30T16:53:59.266781Z
 4613
 semen
@@ -126,7 +92,7 @@ has-props
 
 
 
-9418
+1412
 
 QSequenceLine.java
 file
@@ -161,6 +127,40 @@ has-props
 
 
 2237
+
+QSequenceLineMedia.java
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+cac7afcd9fa8a6991f850e3b8416f244
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9418
 
 QSequenceLineRAByteData.java
 file
@@ -332,14 +332,14 @@ has-props
 
 3084
 
-QSequenceLineRAFileData.java
+QSequenceLineMemoryCache.java
 file
 
 
 
 
 2008-11-04T17:25:59.000000Z
-906560afe3510ff7805a700640c64c6d
+021a4ac5bc9575356d90a3992b034a45
 2008-07-30T16:53:59.266781Z
 4613
 semen
@@ -364,7 +364,7 @@ has-props
 
 
 
-1509
+1652
 
 QSequenceLineRAData.java
 file
@@ -400,14 +400,14 @@ has-props
 
 709
 
-QSequenceLineMemoryCache.java
+QSequenceLineRAFileData.java
 file
 
 
 
 
 2008-11-04T17:25:59.000000Z
-021a4ac5bc9575356d90a3992b034a45
+906560afe3510ff7805a700640c64c6d
 2008-07-30T16:53:59.266781Z
 4613
 semen
@@ -432,44 +432,10 @@ has-props
 
 
 
-1652
+1509
 
 simplifier
 dir
-
-QSequenceLineFixedTempDirectoryFactory.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-a033a9b11cce77c01961bb2167811f6f
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1118
 
 QSequenceLineReader.java
 file
@@ -504,6 +470,40 @@ has-props
 
 
 2343
+
+QSequenceLineFixedTempDirectoryFactory.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+a033a9b11cce77c01961bb2167811f6f
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1118
 
 QSequenceLineCache.java
 file
@@ -548,11 +548,11 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-f7b5c259ee06e687322c57af894edaa2
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-12-17T22:37:22.000000Z
+a8efbd51c4a4628d77c7d093e04f66a9
+2008-11-27T19:49:21.695323Z
+5288
+alex
 has-props
 
 
@@ -574,7 +574,7 @@ has-props
 
 
 
-1793
+1800
 
 QSequenceLineFileSystemCache.java
 file

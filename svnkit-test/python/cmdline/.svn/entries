@@ -2,13 +2,13 @@
 
 dir
 34802
-http://svn.collab.net/repos/svn/tags/1.5.2/subversion/tests/cmdline
+http://svn.collab.net/repos/svn/tags/1.5.4/subversion/tests/cmdline
 http://svn.collab.net/repos/svn
 
 
 
-2008-08-27T16:09:18.120423Z
-32761
+2008-10-21T20:29:29.818341Z
+33827
 hwright
 has-props
 
@@ -236,11 +236,11 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-19948673dab7c5cb9172fa509b3ba47c
-2008-07-23T14:09:07.485178Z
-32263
-cmpilato
+2008-12-17T22:37:24.000000Z
+47e168dd0661e0856f37b8bde82fe84c
+2008-10-06T17:28:54.617253Z
+33494
+hwright
 has-props
 
 
@@ -262,7 +262,7 @@ has-props
 
 
 
-60000
+62089
 
 changelist_tests.py
 file
@@ -446,10 +446,10 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-077f6a2b35ef804d385c1d2f02d9b778
-2008-04-29T16:38:31.667421Z
-30838
+2008-12-17T22:37:24.000000Z
+f34fb6b5918602a0786e7672c7f45632
+2008-09-17T17:45:15.144112Z
+33142
 hwright
 has-props
 
@@ -472,7 +472,7 @@ has-props
 
 
 
-85810
+87476
 
 history_tests.py
 file
@@ -755,10 +755,10 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-e8a1658d3a0af4a7d87e960223d93066
-2008-08-20T21:11:56.364255Z
-32603
+2008-12-17T22:37:24.000000Z
+67e15e51b838e3108a39fad48ff64227
+2008-10-06T15:05:09.660902Z
+33482
 hwright
 has-props
 
@@ -781,7 +781,7 @@ has-props
 
 
 
-150075
+151897
 
 merge_authz_tests.py
 file
@@ -1274,10 +1274,10 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-cac5f67eea27cdc39ca1e8888594235f
-2008-08-27T16:09:18.120423Z
-32761
+2008-12-17T22:37:24.000000Z
+f4d85300e6445b7cafbc632980e78799
+2008-10-21T20:29:29.818341Z
+33827
 hwright
 has-props
 
@@ -1300,7 +1300,7 @@ has-props
 
 
 
-563301
+591208
 
 davautocheck.sh
 file

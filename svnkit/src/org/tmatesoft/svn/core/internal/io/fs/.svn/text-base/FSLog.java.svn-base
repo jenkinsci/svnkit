@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeInfoManager;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
@@ -147,7 +148,7 @@ public class FSLog {
                         PathInfo info = histories[i];
                         currentPaths.add(info.myPath);
                     }
-                    mergeInfo = getMergedRevisionMergeInfo((String[]) currentPaths.toArray(new String[currentPaths.size()]), currentRev);
+                    mergeInfo = getCombinedMergeInfoChanges((String[]) currentPaths.toArray(new String[currentPaths.size()]), currentRev);
                     hasChildren = !mergeInfo.isEmpty();
                 }
                 
@@ -331,7 +332,7 @@ public class FSLog {
         return histories;
     }
     
-    private Map getMergedRevisionMergeInfo(String[] paths, long revision) throws SVNException {
+    private Map getCombinedMergeInfoChanges(String[] paths, long revision) throws SVNException {
         if (revision == 0) {
             return new TreeMap();
         }
@@ -455,20 +456,40 @@ public class FSLog {
             } else {
                 continue;
             }
+            
+            FSRevisionRoot baseRoot = null;
             if (basePath != null && baseRevision >= 0) {
-                FSRevisionRoot baseRoot = myFSFS.createRevisionRoot(baseRevision);
-                String[] queryPaths = new String[] {basePath};
-                Map baseCatalog = getMergeInfoManager().getMergeInfo(queryPaths, baseRoot, SVNMergeInfoInheritance.INHERITED, false);
-                SVNMergeInfo baseMergeInfo = (SVNMergeInfo) baseCatalog.get(basePath);
-                if (baseMergeInfo != null) {
-                    previousMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(baseMergeInfo.getMergeSourcesToMergeLists());
-                }
+                baseRoot = myFSFS.createRevisionRoot(baseRevision);
+                SVNProperties props = myFSFS.getProperties(baseRoot.getRevisionNode(basePath));
+                previousMergeInfoValue = props.getStringValue(SVNProperty.MERGE_INFO);
             }
+
             SVNProperties props = myFSFS.getProperties(root.getRevisionNode(changedPath));
             if (props != null) {
                 mergeInfoValue = props.getStringValue(SVNProperty.MERGE_INFO);
             }
+  
+            if (mergeInfoValue == null && previousMergeInfoValue == null) {
+                continue;
+            }
             
+            if (previousMergeInfoValue != null && mergeInfoValue == null) {
+              String[] queryPaths = new String[] { changedPath };
+              Map tmpCatalog = getMergeInfoManager().getMergeInfo(queryPaths, root, SVNMergeInfoInheritance.INHERITED, false);
+              SVNMergeInfo tmpMergeInfo = (SVNMergeInfo) tmpCatalog.get(changedPath);
+              if (tmpMergeInfo != null) {
+                  mergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(tmpMergeInfo.getMergeSourcesToMergeLists());
+              }
+            } else if (mergeInfoValue != null && previousMergeInfoValue == null && basePath != null && 
+                    SVNRevision.isValidRevisionNumber(baseRevision)) {
+                String[] queryPaths = new String[] { basePath };
+                Map tmpCatalog = getMergeInfoManager().getMergeInfo(queryPaths, baseRoot, SVNMergeInfoInheritance.INHERITED, false);
+                SVNMergeInfo tmpMergeInfo = (SVNMergeInfo) tmpCatalog.get(basePath);
+                if (tmpMergeInfo != null) {
+                    previousMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(tmpMergeInfo.getMergeSourcesToMergeLists());
+                }
+            }
+        
             if ((previousMergeInfoValue != null && mergeInfoValue == null) ||
                     (previousMergeInfoValue == null && mergeInfoValue != null) ||
                     (previousMergeInfoValue != null && mergeInfoValue != null &&

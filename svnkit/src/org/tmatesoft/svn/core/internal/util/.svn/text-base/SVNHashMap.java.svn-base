@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.io.File;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -35,6 +36,8 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
 
     private static final Object NULL_KEY = new Object();
     private static final int INITIAL_CAPACITY = 16;
+
+    private static boolean ourIsCompatibilityMode = Boolean.getBoolean("svnkit.compatibleHash");
     
     private transient TableEntry[] myTable;
     private transient int myEntryCount;
@@ -301,7 +304,6 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
 
         while (i.hasNext()) {
             Map.Entry e = (Map.Entry) i.next();
-            System.out.println("key = " + e.getKey() + " | " + "value = " + e.getValue());
             s.writeObject(e.getKey());
             s.writeObject(e.getValue());
         }
@@ -352,13 +354,15 @@ public class SVNHashMap implements Map, Cloneable, Serializable {
     }
     
     private static int hashCode(Object key) {
-        if (key.getClass() == String.class) {
+        if (ourIsCompatibilityMode && String.class == key.getClass()) {
             int hash = 0;
             String str = (String) key;
             for (int i = 0; i < str.length(); i++) {
                 hash = hash*33 + str.charAt(i);
             }
             return hash;
+        } else if (key.getClass() == File.class) {
+            return hashCode(((File) key).getPath());
         }
         return key.hashCode();
     }

@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/io
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/io
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-09T20:35:39.535394Z
-4851
+2008-11-05T16:01:21.924522Z
+5082
 alex
 
 
@@ -97,40 +97,6 @@ has-props
 
 3266
 
-ISVNConnectionListener.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-368cad1b5f37e6fc388f8ea06c4f884d
-2008-08-15T15:28:48.918752Z
-4717
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1466
-
 ISVNDeltaConsumer.java
 file
 
@@ -165,16 +131,16 @@ has-props
 
 2773
 
-SVNRepository.java
+ISVNConnectionListener.java
 file
 
 
 
 
-2008-12-17T22:35:12.000000Z
-700dd1e6f9d048b1e7ff4debe5afe591
-2008-09-09T20:15:10.065775Z
-4849
+2008-11-04T17:25:59.000000Z
+368cad1b5f37e6fc388f8ea06c4f884d
+2008-08-15T15:28:48.918752Z
+4717
 alex
 has-props
 
@@ -197,7 +163,41 @@ has-props
 
 
 
-167101
+1466
+
+SVNRepository.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+0b4c4ee07b7f0da6adcbe389813f0320
+2008-11-05T16:01:21.924522Z
+5082
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+167383
 
 SVNCapability.java
 file
@@ -403,40 +403,6 @@ has-props
 
 2926
 
-ISVNSession.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-6dd07de1b9c9bd3ee58682d393214771
-2008-08-25T14:07:27.860521Z
-4758
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5874
-
 ISVNWorkspaceMediator.java
 file
 
@@ -470,6 +436,40 @@ has-props
 
 
 2099
+
+ISVNSession.java
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+6dd07de1b9c9bd3ee58682d393214771
+2008-08-25T14:07:27.860521Z
+4758
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5874
 
 doc-files
 dir
@@ -755,10 +755,10 @@ file
 
 
 
-2008-12-17T22:35:12.000000Z
-1d553bd7f1647efd095885bfdcd26b22
-2008-08-26T22:58:15.124844Z
-4776
+2008-12-17T22:37:22.000000Z
+748ab5cc3d6d6a810469e29a3ae042e8
+2008-10-09T16:14:16.277269Z
+4977
 alex
 has-props
 
@@ -781,5 +781,5 @@ has-props
 
 
 
-34854
+34877
 

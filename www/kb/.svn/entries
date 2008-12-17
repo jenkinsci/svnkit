@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/www/kb
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/www/kb
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -25,40 +25,6 @@ svn:special svn:externals svn:needs-lock
 
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
-
-dev-guide-svnclient.html
-file
-
-
-
-
-2008-11-04T17:26:00.000000Z
-48d42dcc17f2f7ef1f0b02439109a153
-2008-07-30T16:53:59.266781Z
-4613
-semen
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5072
 
 mailinglist.html
 file
@@ -93,6 +59,40 @@ has-props
 
 
 4841
+
+dev-guide-svnclient.html
+file
+
+
+
+
+2008-11-04T17:26:00.000000Z
+48d42dcc17f2f7ef1f0b02439109a153
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5072
 
 dev-guide-general-options.html
 file
@@ -264,14 +264,14 @@ has-props
 
 4560
 
-dev-guide-authentication.html
+user-guide-command-line-client.html
 file
 
 
 
 
 2008-11-04T17:26:00.000000Z
-ea2ac4f99aa3b5421523de1b0c2d2027
+411d3ce61068e1ac13b953518eadb871
 2008-07-30T16:53:59.266781Z
 4613
 semen
@@ -296,41 +296,7 @@ has-props
 
 
 
-7544
-
-build-subclipse.html
-file
-
-
-
-
-2008-11-04T17:26:00.000000Z
-478bf393b47866925e792737aec77b7f
-2008-07-30T16:53:59.266781Z
-4613
-semen
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5807
+5394
 
 logging.html
 file
@@ -366,14 +332,14 @@ has-props
 
 10289
 
-user-guide-command-line-client.html
+build-subclipse.html
 file
 
 
 
 
 2008-11-04T17:26:00.000000Z
-411d3ce61068e1ac13b953518eadb871
+478bf393b47866925e792737aec77b7f
 2008-07-30T16:53:59.266781Z
 4613
 semen
@@ -398,7 +364,41 @@ has-props
 
 
 
-5394
+5807
+
+dev-guide-authentication.html
+file
+
+
+
+
+2008-11-04T17:26:00.000000Z
+ea2ac4f99aa3b5421523de1b0c2d2027
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7544
 
 dev-guide-update-operation.html
 file

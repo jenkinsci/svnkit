@@ -684,7 +684,7 @@ public abstract class SVNRepositoryFactory {
     private static void setSGID(File dbDir) {
         SVNFileUtil.setSGID(dbDir);
         File[] dirContents = dbDir.listFiles();
-        for(int i = 0; i < dirContents.length; i++) {
+        for(int i = 0; dirContents != null && i < dirContents.length; i++) {
             File child = dirContents[i];
             if (child.isDirectory()) {
                 setSGID(child);

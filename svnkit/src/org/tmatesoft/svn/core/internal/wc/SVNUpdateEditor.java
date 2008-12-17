@@ -175,8 +175,13 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNErrorMessage err = svne.getErrorMessage().wrap("Error writing log file for ''{0}''", myCurrentDirectory.getPath());
             SVNErrorManager.error(err, svne, SVNLogType.WC);
         }
-
-        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {            
+        if (myIsLockOnDemand && kind == SVNNodeKind.DIR) {
+            SVNAdminArea childArea = myWCAccess.getAdminArea(parentArea.getFile(name));
+            if (childArea != null && !childArea.isLocked()) {
+                childArea.lock(false);
+            }
+        }
+        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
             SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
             try {
                 childArea.removeFromRevisionControl(childArea.getThisDirName(), true, true);
@@ -477,7 +482,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     } else if (oldExternal != null && newExternal == null) {
                         myAdminInfo.addExternal(path, oldExternal, newExternal);
                         myAdminInfo.addDepth(path, myCurrentDirectory.myAmbientDepth);
-                    } else if (!oldExternal.equals(newExternal)) {
+                    } else if (oldExternal != null && !oldExternal.equals(newExternal)) {
                         myAdminInfo.addExternal(path, oldExternal, newExternal);
                         myAdminInfo.addDepth(path, myCurrentDirectory.myAmbientDepth);
                     }
@@ -690,6 +695,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (myIsDepthSticky && (myRequestedDepth == SVNDepth.INFINITY || (adminArea.getRoot().equals(target) && 
                 myRequestedDepth.compareTo(entry.getDepth()) > 0))) {
             entry.setDepth(myRequestedDepth);
+            myAdminInfo.addDepth(dirInfo.getPath(), myRequestedDepth);
         }
 
         for (Iterator ents = adminArea.entries(true); ents.hasNext();) {

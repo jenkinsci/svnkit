@@ -391,15 +391,16 @@ public class SVNProperty {
 
     /**
      * Says if the given property name starts with the {@link #SVN_PREFIX}
-     * prefix.
+     * prefix or with the {@link #SVNKIT_PREFIX}.
      *
      * @param name a property name to check
      * @return <span class="javakeyword">true</span> if <code>name</code> is
      *         not <span class="javakeyword">null</span> and starts with
-     *         the {@link #SVN_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
+     *         the {@link #SVN_PREFIX} prefix or with the {@link #SVNKIT_PREFIX} prefix,
+     *         otherwise <span class="javakeyword">false</span>
      */
     public static boolean isSVNProperty(String name) {
-        return name != null && name.startsWith(SVN_PREFIX);
+        return name != null && (name.startsWith(SVN_PREFIX) || name.startsWith(SVNKIT_PREFIX));
     }
 
     /**
@@ -446,6 +447,17 @@ public class SVNProperty {
      */
     public static boolean isBinaryMimeType(String mimeType) {
         return !isTextMimeType(mimeType);
+    }
+
+    /**
+     * Says if the given charset is the name of UTF-8 encoding.
+     *
+     * @param charset a value of a file {@link #CHARSET} property
+     * @return <span class="javakeyword">true</span> if <code>charset</code>
+     *         is the name of UTF-8 encoding
+     */
+    public static boolean isUTF8(String charset) {
+        return charset != null && charset.equalsIgnoreCase("UTF-8");
     }
 
     /**

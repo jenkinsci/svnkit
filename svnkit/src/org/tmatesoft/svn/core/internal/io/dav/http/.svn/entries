@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
+2008-11-27T19:49:21.695323Z
+5288
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-ab2c965512b3f219d70127605495fea4
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+d01b0237e9da73b5f233b201ee811a4f
+2008-11-06T18:48:02.937947Z
+5100
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-41009
+43503
 
 IHTTPConnectionFactory.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-520b9921a9462ef8060824688f7d9b01
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+e75f8f98809c307d073b1be8f89977ec
+2008-10-17T13:50:04.076984Z
+5012
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-1243
+1458
 
 HTTPSSLKeyManager.java
 file
@@ -168,10 +168,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-2c78b55d1a541e21f821a98328922632
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+0da21e94189659919859e9e50d3efed4
+2008-11-06T18:43:55.678966Z
+5097
 alex
 has-props
 
@@ -194,41 +194,7 @@ has-props
 
 
 
-33902
-
-HTTPAuthentication.java
-file
-
-
-
-
-2008-12-17T22:35:11.000000Z
-1c24b50e7e484c19c46079597cea5128
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-11119
+35619
 
 HTTPDigestAuthentication.java
 file
@@ -264,6 +230,74 @@ has-props
 
 7385
 
+HTTPAuthentication.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+f400db4833782cbaaf54b51c348c78b7
+2008-11-26T16:52:52.387092Z
+5267
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12123
+
+HTTPNegotiateAuthentication.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+9932090b73f03b05fd4fde99e9e08306
+2008-10-29T16:21:09.703702Z
+5055
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3351
+
 HTTPBasicAuthentication.java
 file
 
@@ -297,6 +331,74 @@ has-props
 
 
 1962
+
+HTTPNativeNTLMAuthentication.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+d2a77a8233a08aee668f2f07de12f0c0
+2008-10-21T20:41:48.578798Z
+5027
+alex
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2743
+
+HTTPStatus.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+68d59fba4a176058b1f3eb10c603136c
+2008-11-06T18:48:02.937947Z
+5100
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4080
 
 XMLReader.java
 file
@@ -332,16 +434,16 @@ has-props
 
 2232
 
-HTTPStatus.java
+HTTPRequest.java
 file
 
 
 
 
-2008-12-17T22:35:11.000000Z
-7044860729c06b3b1e5a8884d1daaff3
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+156def8999f41b826996198e24c06332
+2008-11-26T16:49:37.585065Z
+5265
 alex
 has-props
 
@@ -364,7 +466,7 @@ has-props
 
 
 
-3984
+16211
 
 HTTPHeader.java
 file
@@ -400,40 +502,6 @@ has-props
 
 6315
 
-HTTPRequest.java
-file
-
-
-
-
-2008-12-17T22:35:11.000000Z
-b4d90bedee3792963bc94fe4d42b270e
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-14802
-
 HTTPBodyInputStream.java
 file
 
@@ -467,6 +535,40 @@ has-props
 
 
 2162
+
+SpoolFile.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+2d31659fd63fe52e34f1ca7cb07552f8
+2008-11-27T19:49:21.695323Z
+5288
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7727
 
 HTTPParser.java
 file
@@ -502,50 +604,16 @@ has-props
 
 3378
 
-SpoolFile.java
-file
-
-
-
-
-2008-12-17T22:35:11.000000Z
-27bee9d4207cc608def0852bcf07f902
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7720
-
 DefaultHTTPConnectionFactory.java
 file
 
 
 
 
-2008-12-17T22:35:11.000000Z
-73b334aab14150684b21c993ee5a2587
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+00195ae196249de57b6ba3e6ffefe06d
+2008-10-17T13:50:04.076984Z
+5012
 alex
 has-props
 
@@ -568,5 +636,5 @@ has-props
 
 
 
-1642
+2044
 

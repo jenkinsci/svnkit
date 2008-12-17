@@ -1,23 +1,23 @@
 K 25
 svn:wc:ra_dav:version-url
 V 75
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli
 END
 SVNCommandUtil.java
 K 25
 svn:wc:ra_dav:version-url
 V 95
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/SVNCommandUtil.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/SVNCommandUtil.java
 END
 SVNConsoleAuthenticationProvider.java
 K 25
 svn:wc:ra_dav:version-url
 V 113
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/SVNConsoleAuthenticationProvider.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/SVNConsoleAuthenticationProvider.java
 END
 AbstractSVNCommandEnvironment.java
 K 25
 svn:wc:ra_dav:version-url
 V 110
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/AbstractSVNCommandEnvironment.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/AbstractSVNCommandEnvironment.java
 END

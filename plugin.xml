@@ -3,7 +3,7 @@
 <plugin
    id="org.tmatesoft.svnkit"
    name="SVNKit Library Plug-in"
-   version="1.2.0"
+   version="1.2.1"
    provider-name="TMate Software"
    class="org.tmatesoft.svn.core.SVNKitActivator">
 

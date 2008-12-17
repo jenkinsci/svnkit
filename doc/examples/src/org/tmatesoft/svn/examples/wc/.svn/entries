@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/examples/src/org/tmatesoft/svn/examples/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-08T14:36:48.049230Z
-4836
+2008-11-05T16:05:59.854218Z
+5084
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-402cd8cc75902bf8f3db88ca29dd3291
-2008-09-08T14:36:48.049230Z
-4836
+2008-12-17T22:37:22.000000Z
+3ed03888fbd22f847f6eca0fd7005f38
+2008-10-09T16:16:00.971455Z
+4978
 alex
 
 
@@ -58,7 +58,7 @@ alex
 
 
 
-5633
+6266
 
 StatusHandler.java
 file
@@ -127,6 +127,40 @@ has-props
 
 
 6713
+
+WorkingCopyFormatTest.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+a302e8c932cde5782cb668219dd94452
+2008-11-05T16:05:59.854218Z
+5084
+alex
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3047
 
 DiffWCToRepository.java
 file

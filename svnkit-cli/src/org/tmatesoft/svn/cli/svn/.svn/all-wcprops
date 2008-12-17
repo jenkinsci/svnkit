@@ -1,23 +1,23 @@
 K 25
 svn:wc:ra_dav:version-url
 V 79
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/svn
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/svn
 END
 SVNCommandLineConflictHandler.java
 K 25
 svn:wc:ra_dav:version-url
 V 114
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNCommandLineConflictHandler.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNCommandLineConflictHandler.java
 END
 SVNDiffCommand.java
 K 25
 svn:wc:ra_dav:version-url
 V 99
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNDiffCommand.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNDiffCommand.java
 END
 SVNCommandEnvironment.java
 K 25
 svn:wc:ra_dav:version-url
 V 106
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNCommandEnvironment.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/svn/SVNCommandEnvironment.java
 END

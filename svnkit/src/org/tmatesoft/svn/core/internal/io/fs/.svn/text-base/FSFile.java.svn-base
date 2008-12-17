@@ -236,7 +236,10 @@ public class FSFile {
                     properties.put(key, myDecoder.decode(myReadLineBuffer).toString());
                 } catch (CharacterCodingException cce) {
                     if (allowBinaryValues){
-                        properties.put(key, myReadLineBuffer.array());                                                
+                        byte[] dst = new byte[limit - pos];
+                        myReadLineBuffer.position(pos);
+                        myReadLineBuffer.get(dst);
+                        properties.put(key, dst);                                                
                     } else {
                         SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "File ''{0}'' contains unexpected binary property value", getFile());
                         SVNErrorManager.error(error, cce, SVNLogType.DEFAULT);
@@ -392,15 +395,18 @@ public class FSFile {
         long revision = readRevisionFromReportFile();
         SVNDepth depth = SVNDepth.INFINITY;
         if (read() == '+') {
-            int id = readNumberFromReportFile();
+            int id = read();
             switch(id) {
-                case 0:
+                case 'X':
+                    depth = SVNDepth.EXCLUDE;
+                    break;
+                case 'E':
                     depth = SVNDepth.EMPTY;
                     break;
-                case 1:
+                case 'F':
                     depth = SVNDepth.FILES;
                     break;
-                case 2:
+                case 'M':
                     depth = SVNDepth.IMMEDIATES;
                     break;
                 default: {

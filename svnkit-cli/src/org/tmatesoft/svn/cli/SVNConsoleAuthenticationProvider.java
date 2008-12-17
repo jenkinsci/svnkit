@@ -55,8 +55,8 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         } else {
             prompt.append("\n(R)eject or accept (t)emporarily? "); 
         }
-        System.out.print(prompt.toString());
-        System.out.flush();
+        System.err.print(prompt.toString());
+        System.err.flush();
         while(true) {
             String line = readLine();
             if (line == null) {
@@ -200,20 +200,20 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
 
     private static void printRealm(String realm) {
         if (realm != null) {
-            System.out.println("Authentication realm: " + realm);
-            System.out.flush();
+            System.err.println("Authentication realm: " + realm);
+            System.err.flush();
         }
     }
     
     private static String prompt(String label) {
-        System.out.print(label + ": ");
-        System.out.flush();
+        System.err.print(label + ": ");
+        System.err.flush();
         return readLine();
     }
     
     private static String promptPassword(String label) {
-        System.out.print(label + ": ");
-        System.out.flush();
+        System.err.print(label + ": ");
+        System.err.flush();
         Class systemClass = System.class;
         try {
             // try to use System.console().readPassword - since JDK 1.6

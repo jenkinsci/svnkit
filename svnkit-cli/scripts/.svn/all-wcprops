@@ -1,41 +1,41 @@
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts
 END
 jsvn
 K 25
 svn:wc:ra_dav:version-url
 V 62
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts/jsvn
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts/jsvn
 END
 jsvnlook
 K 25
 svn:wc:ra_dav:version-url
 V 66
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts/jsvnlook
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts/jsvnlook
 END
 jsvnversion
 K 25
 svn:wc:ra_dav:version-url
 V 69
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts/jsvnversion
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts/jsvnversion
 END
 jsvnadmin
 K 25
 svn:wc:ra_dav:version-url
 V 67
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts/jsvnadmin
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts/jsvnadmin
 END
 jsvndumpfilter
 K 25
 svn:wc:ra_dav:version-url
 V 72
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts/jsvndumpfilter
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts/jsvndumpfilter
 END
 jsvnsync
 K 25
 svn:wc:ra_dav:version-url
 V 66
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit-cli/scripts/jsvnsync
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit-cli/scripts/jsvnsync
 END

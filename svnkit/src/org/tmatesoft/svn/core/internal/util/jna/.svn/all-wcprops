@@ -1,35 +1,53 @@
 K 25
 svn:wc:ra_dav:version-url
 V 90
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna
 END
 JNALibraryLoader.java
 K 25
 svn:wc:ra_dav:version-url
 V 112
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/JNALibraryLoader.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/JNALibraryLoader.java
 END
 SVNLinuxUtil.java
 K 25
 svn:wc:ra_dav:version-url
 V 108
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNLinuxUtil.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNLinuxUtil.java
 END
 SVNWin32Util.java
 K 25
 svn:wc:ra_dav:version-url
 V 108
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWin32Util.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWin32Util.java
+END
+ISVNWin32Library.java
+K 25
+svn:wc:ra_dav:version-url
+V 112
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNWin32Library.java
 END
 ISVNKernel32Library.java
 K 25
 svn:wc:ra_dav:version-url
 V 115
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNKernel32Library.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNKernel32Library.java
+END
+ISVNSecurityLibrary.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNSecurityLibrary.java
+END
+SVNWinSecurity.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWinSecurity.java
 END
 SVNJNAUtil.java
 K 25
 svn:wc:ra_dav:version-url
 V 106
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNJNAUtil.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNJNAUtil.java
 END

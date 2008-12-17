@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/.settings
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/.settings
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-09T20:09:53.475184Z
-4846
+2008-11-05T16:05:59.854218Z
+5084
 alex
 
 
@@ -66,11 +66,11 @@ file
 
 
 
-2008-12-17T22:35:12.000000Z
-d7e394d2de4ee266c1359476604a9ed6
-2007-11-09T19:38:33.461558Z
-3619
-sa
+2008-12-17T22:37:22.000000Z
+f8a1df7e6ca43ef69e820906f593cf2a
+2008-11-05T16:05:59.854218Z
+5084
+alex
 has-props
 
 
@@ -92,5 +92,5 @@ has-props
 
 
 
-5836
+5783
 

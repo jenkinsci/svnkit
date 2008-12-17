@@ -12,11 +12,15 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.Attributes;
 
@@ -60,7 +64,11 @@ public class DAVLocationsHandler extends BasicDAVHandler {
                 String path = attrs.getValue("path");
                 if (path != null && myLocationEntryHandler != null) {
                     path = "/" + path; 
-                    myLocationEntryHandler.handleLocationEntry(new SVNLocationEntry(Long.parseLong(revStr), path));
+                    try {
+                        myLocationEntryHandler.handleLocationEntry(new SVNLocationEntry(Long.parseLong(revStr), path));
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
                     myCount++;
                 }
             }

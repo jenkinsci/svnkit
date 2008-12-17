@@ -2,7 +2,7 @@
 
 dir
 34802
-http://svn.collab.net/repos/svn/tags/1.5.2/subversion/tests/cmdline/svnsync_tests_data
+http://svn.collab.net/repos/svn/tags/1.5.4/subversion/tests/cmdline/svnsync_tests_data
 http://svn.collab.net/repos/svn
 
 
@@ -128,17 +128,17 @@ lgo
 
 4837
 
-dir_prop_change.dump
+svnsync-trunk-only.expected.dump
 file
 
 
 
 
-2008-08-27T01:16:45.000000Z
-19531ec00014151d5207b87a011778be
-2005-12-22T00:08:56.394932Z
-17909
-rooneg
+2008-12-17T22:35:16.000000Z
+bfdddcb3cd26432b8125f3e09d481f2b
+2007-12-15T09:29:56.860784Z
+28498
+lgo
 
 
 
@@ -160,7 +160,7 @@ rooneg
 
 
 
-496
+4572
 
 svnsync-trunk-only.dump
 file
@@ -196,17 +196,17 @@ lgo
 
 4781
 
-svnsync-trunk-only.expected.dump
+dir_prop_change.dump
 file
 
 
 
 
-2008-12-17T22:35:16.000000Z
-bfdddcb3cd26432b8125f3e09d481f2b
-2007-12-15T09:29:56.860784Z
-28498
-lgo
+2008-08-27T01:16:45.000000Z
+19531ec00014151d5207b87a011778be
+2005-12-22T00:08:56.394932Z
+17909
+rooneg
 
 
 
@@ -228,7 +228,7 @@ lgo
 
 
 
-4572
+496
 
 tag-trunk-with-file2.dump
 file
@@ -264,40 +264,6 @@ rooneg
 
 1352
 
-svnsync-trunk-A-changes.dump
-file
-
-
-
-
-2008-12-17T22:35:16.000000Z
-9f9bb7ce4eb7548f2e91ecfc16b5a87f
-2007-12-15T09:29:56.860784Z
-28498
-lgo
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6211
-
 svnsync-trunk-A-changes.expected.dump
 file
 
@@ -331,6 +297,40 @@ lgo
 
 
 7284
+
+svnsync-trunk-A-changes.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+9f9bb7ce4eb7548f2e91ecfc16b5a87f
+2007-12-15T09:29:56.860784Z
+28498
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6211
 
 svnsync-move-and-modify.dump
 file
@@ -434,40 +434,6 @@ glasser
 
 1016
 
-url-encoding-bug.dump
-file
-
-
-
-
-2008-12-17T22:35:16.000000Z
-58382bec5418b6edc4322d5977734cd7
-2007-11-02T00:02:39.985382Z
-27559
-glasser
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1329
-
 tag-trunk-with-dir.dump
 file
 
@@ -501,6 +467,40 @@ rooneg
 
 
 964
+
+url-encoding-bug.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+58382bec5418b6edc4322d5977734cd7
+2007-11-02T00:02:39.985382Z
+27559
+glasser
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1329
 
 tag-trunk-with-file.dump
 file

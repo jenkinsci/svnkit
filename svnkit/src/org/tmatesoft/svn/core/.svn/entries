@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-27T17:09:01.496753Z
-4938
+2008-11-27T20:04:17.399572Z
+5291
 alex
 
 
@@ -137,10 +137,10 @@ file
 
 
 
-2008-12-17T22:35:12.000000Z
-30bb8ffeb8f80b585bc95a71bff93198
-2008-09-09T20:09:53.475184Z
-4846
+2008-12-17T22:37:22.000000Z
+e35dd09792ca04ce4aab3589eddf3280
+2008-10-21T21:29:04.536841Z
+5032
 alex
 has-props
 
@@ -163,7 +163,7 @@ has-props
 
 
 
-14743
+15821
 
 replicator
 dir
@@ -310,10 +310,10 @@ file
 
 
 
-2008-12-17T22:35:12.000000Z
-232302d12faa5de2c7dc4e4affd668ce
-2008-08-25T17:04:03.332478Z
-4764
+2008-12-17T22:37:22.000000Z
+07dc93c2c4918d8be11e23e3fec0b1ec
+2008-10-13T19:03:12.320682Z
+5006
 alex
 has-props
 
@@ -336,7 +336,7 @@ has-props
 
 
 
-4599
+4633
 
 SVNCancelException.java
 file
@@ -551,10 +551,10 @@ file
 
 
 
-2008-12-17T22:35:12.000000Z
-b76e3226253dd157623b78d65d29fb82
-2008-09-16T17:49:03.799251Z
-4887
+2008-12-17T22:37:22.000000Z
+63a141c81d4992d432249449c8ec6048
+2008-11-26T16:45:11.747223Z
+5263
 alex
 has-props
 
@@ -577,41 +577,7 @@ has-props
 
 
 
-29531
-
-SVNProperty.java
-file
-
-
-
-
-2008-12-17T22:35:12.000000Z
-54eef790094521eb2987f5b7c8c95b8e
-2008-08-26T22:48:25.933321Z
-4775
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-21762
+29570
 
 SVNErrorCode.java
 file
@@ -646,6 +612,40 @@ has-props
 
 
 36386
+
+SVNProperty.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+a55653de17f7c01a922424aca569cae5
+2008-11-26T17:09:49.666037Z
+5274
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22292
 
 SVNMergeInfoInheritance.java
 file
@@ -752,9 +752,6 @@ has-props
 javahl
 dir
 
-io
-dir
-
 SVNDirEntry.java
 file
 
@@ -788,6 +785,9 @@ has-props
 
 
 12280
+
+io
+dir
 
 ISVNCanceller.java
 file

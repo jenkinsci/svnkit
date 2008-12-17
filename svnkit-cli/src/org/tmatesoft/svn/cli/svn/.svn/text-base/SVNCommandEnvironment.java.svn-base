@@ -19,7 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -134,7 +134,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         myEndRevision = SVNRevision.UNDEFINED;
         myShowRevsType = SVNShowRevisionType.MERGED;
         myRevisionRanges = new LinkedList();
-        myChangelists = new HashSet();
+        myChangelists = new SVNHashSet();
     }
     
     public void initClientManager() throws SVNException {
@@ -440,7 +440,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             String extensionsString = optionValue.getValue();
             String[] extensions = extensionsString.trim().split("\\s+");
             if (myExtensions == null) {
-                myExtensions = new HashSet();
+                myExtensions = new SVNHashSet();
             }
             myExtensions.addAll(Arrays.asList(extensions));
         } else if (option == SVNOption.RECORD_ONLY) {

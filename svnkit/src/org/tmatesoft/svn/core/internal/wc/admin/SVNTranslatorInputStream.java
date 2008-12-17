@@ -46,7 +46,7 @@ public class SVNTranslatorInputStream extends InputStream {
         if (r <= 0) {
             return -1;
         }
-        return b[0];
+        return b[0] & 0xFF;
     }
 
     public int read(byte[] b) throws IOException {

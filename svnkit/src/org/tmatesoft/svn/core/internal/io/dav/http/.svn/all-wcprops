@@ -1,53 +1,65 @@
 K 25
 svn:wc:ra_dav:version-url
 V 93
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 END
 HTTPConnection.java
 K 25
 svn:wc:ra_dav:version-url
 V 113
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPConnection.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPConnection.java
 END
 IHTTPConnectionFactory.java
 K 25
 svn:wc:ra_dav:version-url
 V 121
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPConnectionFactory.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/IHTTPConnectionFactory.java
 END
 HTTPNTLMAuthentication.java
 K 25
 svn:wc:ra_dav:version-url
 V 121
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNTLMAuthentication.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNTLMAuthentication.java
 END
 HTTPAuthentication.java
 K 25
 svn:wc:ra_dav:version-url
 V 117
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPAuthentication.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPAuthentication.java
+END
+HTTPNegotiateAuthentication.java
+K 25
+svn:wc:ra_dav:version-url
+V 126
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNegotiateAuthentication.java
+END
+HTTPNativeNTLMAuthentication.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPNativeNTLMAuthentication.java
 END
 HTTPStatus.java
 K 25
 svn:wc:ra_dav:version-url
 V 109
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPStatus.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPStatus.java
 END
 HTTPRequest.java
 K 25
 svn:wc:ra_dav:version-url
 V 110
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPRequest.java
-END
-DefaultHTTPConnectionFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 127
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/DefaultHTTPConnectionFactory.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/HTTPRequest.java
 END
 SpoolFile.java
 K 25
 svn:wc:ra_dav:version-url
 V 108
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/SpoolFile.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/SpoolFile.java
+END
+DefaultHTTPConnectionFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 127
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http/DefaultHTTPConnectionFactory.java
 END

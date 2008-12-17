@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/fs
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/fs
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-09T20:13:17.116936Z
-4848
+2008-11-27T19:49:21.695323Z
+5288
 alex
 
 
@@ -270,10 +270,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-8b9d85949c7b184b6b1fb72a975f316e
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+fac516c0a157ed269f131260aa5ca3d1
+2008-11-27T19:49:21.695323Z
+5288
 alex
 has-props
 
@@ -296,7 +296,7 @@ has-props
 
 
 
-13366
+13373
 
 FSErrors.java
 file
@@ -372,10 +372,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-580a8b05f2e52bb272924548f8b68d25
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+8906b2ed6e4ec696945877c6151ebec6
+2008-11-06T18:45:05.893245Z
+5098
 alex
 has-props
 
@@ -398,7 +398,7 @@ has-props
 
 
 
-17408
+17639
 
 FSRoot.java
 file
@@ -474,10 +474,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-ec6be57799c6faa3d00f23506608c4a8
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+97523b20cec2f9be83fe9254f0bd25cb
+2008-11-05T16:05:14.706030Z
+5083
 alex
 has-props
 
@@ -500,7 +500,7 @@ has-props
 
 
 
-30356
+31090
 
 FSID.java
 file
@@ -604,6 +604,40 @@ has-props
 
 1544
 
+FSPathChange.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+0ca30bf25c81b6ad8f1021e4cb7b89cc
+2008-11-26T16:49:37.585065Z
+5265
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6823
+
 FSRepresentation.java
 file
 
@@ -637,40 +671,6 @@ has-props
 
 
 3488
-
-FSPathChange.java
-file
-
-
-
-
-2008-12-17T22:35:11.000000Z
-27f815472e5ccfbe6b6a440ffd7d4be7
-2008-09-09T20:09:53.475184Z
-4846
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6640
 
 FSWriteLock.java
 file
@@ -842,40 +842,6 @@ has-props
 
 10212
 
-FSRepository.java
-file
-
-
-
-
-2008-12-17T22:35:11.000000Z
-6cc2b9a35a7340bf44b51c7c5340298f
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-39894
-
 PathInfo.java
 file
 
@@ -909,6 +875,40 @@ has-props
 
 
 1829
+
+FSRepository.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+5607dec948abd77d70e4dd009167ba65
+2008-11-05T16:05:14.706030Z
+5083
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+40385
 
 FSTranslateReporter.java
 file
@@ -950,10 +950,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-cd81929bd645099921fa7b9ba73cb216
-2008-09-09T20:12:01.337004Z
-4847
+2008-12-17T22:37:22.000000Z
+59c52c3f55748cc7f9398212593019e5
+2008-10-09T16:21:29.793115Z
+4982
 alex
 has-props
 
@@ -976,41 +976,7 @@ has-props
 
 
 
-28896
-
-FSLocationsFinder.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-d90021f5d5f97ea528783f286065b05c
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-8435
+30018
 
 FSHooks.java
 file
@@ -1045,6 +1011,40 @@ has-props
 
 
 14076
+
+FSLocationsFinder.java
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+d90021f5d5f97ea528783f286065b05c
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8435
 
 FSTransactionRoot.java
 file
@@ -1188,10 +1188,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-91cd8e62378575f8c76f34d3da6c7ad5
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+4228c34fb8afdf51d38c01d4adf52679
+2008-11-26T16:49:37.585065Z
+5265
 alex
 has-props
 
@@ -1214,7 +1214,7 @@ has-props
 
 
 
-7427
+7714
 
 FSCommitter.java
 file
@@ -1222,10 +1222,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-26257cbe8e9426b86018a5d969e6a305
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+e42126bcf35508dc9661d641d8540aca
+2008-10-13T19:03:12.320682Z
+5006
 alex
 has-props
 
@@ -1248,7 +1248,7 @@ has-props
 
 
 
-33893
+33926
 
 FSRevisionNode.java
 file
@@ -1256,10 +1256,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-23a78000ee78dbb52ec923b9199702f0
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+f91261d7ace75c76500e433e69bfc331
+2008-11-26T16:49:37.585065Z
+5265
 alex
 has-props
 
@@ -1282,5 +1282,5 @@ has-props
 
 
 
-22365
+22794
 

@@ -227,7 +227,11 @@ public class DAVLogHandler extends BasicDAVHandler {
             myRevPropName = null;
             myHasChildren = false;
         } else if (element == DAVElement.VERSION_NAME && cdata != null) {
-            myRevision = Long.parseLong(cdata.toString());
+            try {
+                myRevision = Long.parseLong(cdata.toString());
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         } else if (element == REVPROP) {
             if (myRevProps == null) {
                 myRevProps = new SVNProperties();

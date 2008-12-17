@@ -358,7 +358,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, 
+                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, true, 
                             getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();

@@ -107,7 +107,7 @@ public class FSInputStream extends InputStream {
         if (r < 0) {
             return -1;
         }
-        return buf[0];
+        return buf[0] & 0xFF;
     }
 
     private int readContents(byte[] buf, int offset, int length) throws SVNException {

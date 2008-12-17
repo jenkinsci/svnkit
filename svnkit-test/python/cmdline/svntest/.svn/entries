@@ -2,13 +2,13 @@
 
 dir
 34802
-http://svn.collab.net/repos/svn/tags/1.5.2/subversion/tests/cmdline/svntest
+http://svn.collab.net/repos/svn/tags/1.5.4/subversion/tests/cmdline/svntest
 http://svn.collab.net/repos/svn
 
 
 
-2008-08-26T17:28:50.939611Z
-32729
+2008-10-06T21:39:17.356074Z
+33500
 hwright
 has-props
 
@@ -134,11 +134,11 @@ file
 
 
 
-2008-12-17T22:35:15.000000Z
-6fc88748b3a3a8d5f9d6a23cd85d9537
-2008-01-12T06:12:56.704211Z
-28878
-pburba
+2008-12-17T22:37:24.000000Z
+6a7488636d4de2cb3f6a1e2ed263433a
+2008-10-06T21:39:17.356074Z
+33500
+hwright
 has-props
 
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-27312
+27030
 
 actions.py
 file

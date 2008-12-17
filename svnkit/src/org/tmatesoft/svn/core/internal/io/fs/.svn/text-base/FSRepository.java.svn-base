@@ -575,6 +575,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 
     public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
         assertValidRevision(revision);
+        if (depth == SVNDepth.EXCLUDE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Depth 'exclude' not supported for link");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
         SVNURL reposRootURL = getRepositoryRoot(false);
         if (url.toDecodedString().indexOf(reposRootURL.toDecodedString()) == -1) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "''{0}''\nis not the same repository as\n''{1}''", new Object[] {
@@ -833,6 +838,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     private void makeReporterContext(long targetRevision, String target, SVNURL switchURL,
             SVNDepth depth, boolean ignoreAncestry, boolean textDeltas, boolean sendCopyFromArgs,
             ISVNEditor editor) throws SVNException {
+        if (depth == SVNDepth.EXCLUDE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Request depth 'exclude' not supported");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
         target = target == null ? "" : target;
 
         if (!isValidRevision(targetRevision)) {

@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/www/site/img
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/www/site/img
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -25,40 +25,6 @@ svn:special svn:externals svn:needs-lock
 
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
-
-logo.jpg
-file
-
-
-
-
-2008-08-27T01:16:45.000000Z
-e41d53f5942e04d822c6c871759fddbc
-2008-01-26T00:35:39.093024Z
-3800
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-18940
 
 header_bg.jpg
 file
@@ -93,6 +59,40 @@ has-props
 
 
 19159
+
+logo.jpg
+file
+
+
+
+
+2008-08-27T01:16:45.000000Z
+e41d53f5942e04d822c6c871759fddbc
+2008-01-26T00:35:39.093024Z
+3800
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18940
 
 note_bg.gif
 file
@@ -162,14 +162,14 @@ has-props
 
 498
 
-subnav_bg.jpg
+footer_bg.jpg
 file
 
 
 
 
 2008-08-27T01:16:45.000000Z
-700522c68732c218b3d142bb2ce7c8b2
+60115f3ebb283f571bc31700674646bf
 2008-01-26T00:35:39.093024Z
 3800
 alex
@@ -194,7 +194,7 @@ has-props
 
 
 
-8058
+4001
 
 list_dot.gif
 file
@@ -230,14 +230,14 @@ has-props
 
 65
 
-footer_bg.jpg
+subnav_bg.jpg
 file
 
 
 
 
 2008-08-27T01:16:45.000000Z
-60115f3ebb283f571bc31700674646bf
+700522c68732c218b3d142bb2ce7c8b2
 2008-01-26T00:35:39.093024Z
 3800
 alex
@@ -262,7 +262,7 @@ has-props
 
 
 
-4001
+8058
 
 slogan.gif
 file
@@ -332,40 +332,6 @@ has-props
 
 10014
 
-right_fade_top.jpg
-file
-
-
-
-
-2008-08-27T01:16:45.000000Z
-bbedd06e8e9fc5346de4da6e1334486a
-2008-01-26T00:35:39.093024Z
-3800
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1788
-
 title_bg.gif
 file
 
@@ -399,6 +365,40 @@ has-props
 
 
 546
+
+right_fade_top.jpg
+file
+
+
+
+
+2008-08-27T01:16:45.000000Z
+bbedd06e8e9fc5346de4da6e1334486a
+2008-01-26T00:35:39.093024Z
+3800
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1788
 
 server_side_applications.jpg
 file

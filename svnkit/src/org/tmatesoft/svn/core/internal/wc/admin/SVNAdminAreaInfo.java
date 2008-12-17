@@ -12,13 +12,12 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 
 
 /**
@@ -120,7 +119,7 @@ public class SVNAdminAreaInfo {
             return;
         }
         if (myIncompleteEntries == null) {
-            myIncompleteEntries = new HashSet();
+            myIncompleteEntries = new SVNHashSet();
         }
         myIncompleteEntries.add(path);
     }

@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/core
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src/de/regnis/q/sequence/core
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -128,40 +128,6 @@ has-props
 
 671
 
-QSequenceDeePathForwardExtender.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-8e3b78d9a149646a60caf4249fc5a973
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1582
-
 QSequenceException.java
 file
 
@@ -195,6 +161,40 @@ has-props
 
 
 710
+
+QSequenceDeePathForwardExtender.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+8e3b78d9a149646a60caf4249fc5a973
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1582
 
 QSequenceAssert.java
 file
@@ -332,14 +332,14 @@ has-props
 
 1435
 
-QSequenceDeePathBackwardExtender.java
+QSequenceRestrictedMedia.java
 file
 
 
 
 
 2008-08-27T01:16:44.000000Z
-b4b127c8024555380a992da5e113a9f1
+37f3dbc618c69bebb6e90c9b0572c652
 2008-04-01T17:30:14.226162Z
 4095
 alex
@@ -364,41 +364,7 @@ has-props
 
 
 
-1932
-
-QSequenceDeePathExtenderArray.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-d2d2eafa47c7fc91421b90bd6aca83cc
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1632
+2477
 
 QSequenceMiddleSnakeFinder.java
 file
@@ -434,14 +400,14 @@ has-props
 
 6009
 
-QSequenceRestrictedMedia.java
+QSequenceDeePathExtenderArray.java
 file
 
 
 
 
 2008-08-27T01:16:44.000000Z
-37f3dbc618c69bebb6e90c9b0572c652
+d2d2eafa47c7fc91421b90bd6aca83cc
 2008-04-01T17:30:14.226162Z
 4095
 alex
@@ -466,7 +432,41 @@ has-props
 
 
 
-2477
+1632
+
+QSequenceDeePathBackwardExtender.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+b4b127c8024555380a992da5e113a9f1
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1932
 
 QSequenceDeePathExtender.java
 file

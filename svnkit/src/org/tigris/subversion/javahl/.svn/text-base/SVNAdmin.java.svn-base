@@ -531,7 +531,7 @@ public class SVNAdmin {
                 if (r <= 0) {
                     return -1;
                 }
-                return b[0];
+                return b[0] & 0xFF;
             }
 
             public void close() throws IOException {

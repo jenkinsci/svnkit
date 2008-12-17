@@ -1,17 +1,17 @@
 K 25
 svn:wc:ra_dav:version-url
 V 75
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/io
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/io
 END
 SVNRepository.java
 K 25
 svn:wc:ra_dav:version-url
 V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/io/SVNRepository.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/io/SVNRepository.java
 END
 SVNRepositoryFactory.java
 K 25
 svn:wc:ra_dav:version-url
 V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/io/SVNRepositoryFactory.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/io/SVNRepositoryFactory.java
 END

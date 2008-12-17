@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tigris/subversion/javahl
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tigris/subversion/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
+2008-10-09T16:17:55.144935Z
+4980
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-12-17T22:35:11.000000Z
-601ef60248fab2b9cd9d7e5688b2b0ed
-2008-08-28T19:30:55.179841Z
-4792
+2008-12-17T22:37:22.000000Z
+c643fbd1a0cf5da5fa83a48caf663b07
+2008-10-09T16:17:55.144935Z
+4980
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-22933
+22940
 
 JavaHLObjectFactory.java
 file
