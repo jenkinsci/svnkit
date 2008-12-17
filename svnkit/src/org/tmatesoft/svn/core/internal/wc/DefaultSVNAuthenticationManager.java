@@ -164,7 +164,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                SVNErrorManager.cancel("authentication cancelled", SVNLogType.WC);
+                SVNErrorManager.cancel("No credential to try. Authentication failed", SVNLogType.WC);
             }
         }
         // end of probe. if we were asked for username for ssh and didn't find anything 

@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 
 /**
  * The <b>SVNEvent</b> class is used to provide detailed information on 
@@ -120,6 +121,8 @@ public class SVNEvent {
     private SVNEventAction myExpectedAction;
     private String myChangelistName;
     private SVNMergeRange myRange;
+    private SVNExternal myExternalInfo;
+    private SVNExternal myPreviousExternalInfo;
 
     /**
      * Constructs an <b>SVNEvent</b> object given
@@ -403,7 +406,20 @@ public class SVNEvent {
 	    myPreviousURL = url;
 	}
 
+    public SVNExternal getExternalInfo() {
+        return myExternalInfo;
+    }
 
+    public SVNExternal getPreviousExternalInfo() {
+        return myExternalInfo;
+    }
+
+    public SVNEvent setExternalInfo(SVNExternal prev, SVNExternal _new) {
+        this.myPreviousExternalInfo = prev;
+        this.myExternalInfo = _new;
+        return this;
+    }
+    
     public String toString() {
         StringBuffer sb = new StringBuffer();
         if (getAction() != null) {

@@ -60,6 +60,7 @@
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
     <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
   </component>
@@ -68,7 +69,7 @@
     <option name="OPEN_IN_BROWSER" value="false" />
     <option name="OUTPUT_DIRECTORY" />
   </component>
-  <component name="IdProvider" IDEtalkID="EB2EE9F752737EAB263111041D9B1AC9" />
+  <component name="IdProvider" IDEtalkID="50DFADB72ECB9280341B1C3ED0808C5D" />
   <component name="InspectionProjectProfileManager">
     <option name="PROJECT_PROFILE" value="Project Default" />
     <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
@@ -77,6 +78,42 @@
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />
         <option name="myLocal" value="false" />
+        <inspection_tool class="InstanceofChain" level="WARNING" enabled="true" />
+        <inspection_tool class="InfiniteLoopStatement" level="WARNING" enabled="false" />
+        <inspection_tool class="EmptyCatchBlock" level="WARNING" enabled="false">
+          <option name="m_includeComments" value="true" />
+          <option name="m_ignoreTestCases" value="true" />
+          <option name="m_ignoreIgnoreParameter" value="true" />
+        </inspection_tool>
+        <inspection_tool class="JavaDoc" level="WARNING" enabled="false">
+          <option name="TOP_LEVEL_CLASS_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="INNER_CLASS_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="METHOD_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="@return@param@throws or @exception" />
+            </value>
+          </option>
+          <option name="FIELD_OPTIONS">
+            <value>
+              <option name="ACCESS_JAVADOC_REQUIRED_FOR" value="none" />
+              <option name="REQUIRED_TAGS" value="" />
+            </value>
+          </option>
+          <option name="IGNORE_DEPRECATED" value="false" />
+          <option name="IGNORE_JAVADOC_PERIOD" value="true" />
+          <option name="myAdditionalJavadocTags" value="" />
+        </inspection_tool>
       </profile>
     </profiles>
     <list size="0" />
@@ -118,6 +155,32 @@
     <option name="FILTER_WARNINGS" value="false" />
     <option name="FILTER_INFO" value="true" />
     <option name="CUSTOM_FILTER" />
+  </component>
+  <component name="MavenBuildProjectComponent">
+    <option name="mavenExecutable" value="" />
+    <option name="Settings File" value="C:\Documents and Settings\kohsuke\.m2\settings.xml" />
+    <option name="mavenCommandLineParams" value="" />
+    <option name="vmOptions" value="" />
+    <option name="useMavenEmbedder" value="false" />
+    <option name="useFilter" value="false" />
+    <option name="Batch Mode" value="false" />
+    <option name="Check Plugin Updates" value="false" />
+    <option name="Debug" value="false" />
+    <option name="Errors" value="false" />
+    <option name="Fail At End" value="false" />
+    <option name="Fail Fast" value="false" />
+    <option name="Fail Never" value="false" />
+    <option name="Lax Checksums" value="false" />
+    <option name="No Plugin Registry" value="false" />
+    <option name="No Plugin Updates" value="false" />
+    <option name="Non Recursive" value="false" />
+    <option name="Offline" value="false" />
+    <option name="Reactor" value="false" />
+    <option name="Strict Checksums" value="false" />
+    <option name="Update Plugins" value="false" />
+    <option name="Update Snapshots" value="false" />
+    <option name="Skip Tests" value="false" />
+    <pom-list />
   </component>
   <component name="Palette2">
     <group name="Swing">
@@ -251,7 +314,7 @@
       <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="false" project-jdk-name="1.4" project-jdk-type="JavaSDK" />
+  <component name="ProjectRootManager" version="2" assert-keyword="false" jdk-15="false" project-jdk-name="1.6" project-jdk-type="JavaSDK" />
   <component name="ResourceManagerContainer">
     <option name="myResourceBundles">
       <value>
@@ -266,6 +329,9 @@
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="myVersion" value="123" />
+  </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="svn" />
   </component>
@@ -277,5 +343,13 @@
       </value>
     </option>
   </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="2" />
+    </Base>
+  </component>
+  <UsedPathMacros>
+    <macro name="TEMPLATE" />
+  </UsedPathMacros>
 </project>
 

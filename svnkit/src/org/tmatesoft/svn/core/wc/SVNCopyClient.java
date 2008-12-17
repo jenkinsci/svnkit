@@ -743,7 +743,54 @@ public class SVNCopyClient extends SVNBasicClient {
             return copyReposToRepos(pairs, makeParents, isMove, message, revprops);
         }
     }
-    
+
+    /**
+     * Copies/moves a source URL to a destination one immediately committing changes
+     * to a repository.
+     * <p/>
+     * <p/>
+     * If <code>dstURL</code> and <code>srcURL</code> are the same,
+     * <code>failWhenDstExists</code> is <span class="javakeyword">false</span> and
+     * <code>srcURL</code> is a directory then this directory will be copied into itself.
+     * <p/>
+     * <p/>
+     * If <code>dstURL</code> is a directory, <code>dstURL</code> and <code>srcURL</code> are not the same,
+     * <code>failWhenDstExists</code> is <span class="javakeyword">false</span>, <code>dstURL</code>
+     * has not the last path element entry of <code>srcURL</code> then that entry will be copied into
+     * <code>dstURL</code>.
+     *
+     * @param srcURL            a source repository location URL
+     * @param srcRevision       a revision of <code>srcURL</code>
+     * @param dstURL            a target URL where <code>srcURL</code> is to be
+     *                          copied/moved
+     * @param isMove            <span class="javakeyword">true</span> to move the source
+     *                          to the target (only URL-to-URL),
+     *                          <span class="javakeyword">false</span> to copy
+     * @param failWhenDstExists <span class="javakeyword">true</span> to force a failure if
+     *                          the destination exists
+     * @param commitMessage     a commit log message
+     * @return information on the committed revision
+     * @throws SVNException if one of the following is true:
+     *                      <ul>
+     *                      <li><code>srcURL</code> and <code>dstURL</code> are not in the
+     *                      same repository
+     *                      <li><code>srcURL</code> was not found in <code>srcRevision</code>
+     *                      <li><code>dstURL</code> and <code>srcURL</code> are the same and
+     *                      <code>failWhenDstExists</code> is <span class="javakeyword">true</span>
+     *                      <li><code>dstURL</code> already exists and <code>failWhenDstExists</code>
+     *                      is <span class="javakeyword">true</span>
+     *                      <li><code>dstURL</code> already exists, <code>failWhenDstExists</code>
+     *                      is <span class="javakeyword">false</span>, but <code>dstURL</code>
+     *                      already contains the top path element name of <code>srcURL</code>
+     *                      <li><code>isMove = </code><span class="javakeyword">true</span> and
+     *                      <code>dstURL = srcURL</code>
+     *                      </ul>
+     */
+    public SVNCommitInfo doCopy(SVNURL srcURL, SVNRevision srcRevision, SVNURL dstURL, boolean isMove, boolean failWhenDstExists, String commitMessage) throws SVNException {
+        SVNCopySource cs = new SVNCopySource(SVNRevision.UNDEFINED,srcRevision,srcURL);
+        return doCopy( new SVNCopySource[]{cs}, dstURL, isMove, true, failWhenDstExists, commitMessage, null);
+    }
+
     private SVNCommitInfo copyWCToRepos(List copyPairs, boolean makeParents, String message, 
             SVNProperties revprops) throws SVNException {
         String topSrc = ((CopyPair) copyPairs.get(0)).mySource;
