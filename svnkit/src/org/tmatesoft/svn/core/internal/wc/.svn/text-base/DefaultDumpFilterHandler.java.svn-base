@@ -160,9 +160,13 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
 
                 String headerValue = (String) headers.get(header);
                 if (myIsDoRenumberRevisions && header.equals(SVNAdminHelper.DUMPFILE_NODE_COPYFROM_REVISION)) {
-                    long copyFromOriginalRevision = Long.parseLong(headerValue);
-                    RevisionItem reNumberedCopyFromValue = (RevisionItem) myRenumberHistory.get(
-                            new Long(copyFromOriginalRevision));
+                    long copyFromOriginalRevision = -1;
+                    try {
+                        copyFromOriginalRevision = Long.parseLong(headerValue);
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, nfe), SVNLogType.FSFS);
+                    }
+                    RevisionItem reNumberedCopyFromValue = (RevisionItem) myRenumberHistory.get(new Long(copyFromOriginalRevision));
                     if (reNumberedCopyFromValue == null || 
                             !SVNRevision.isValidRevisionNumber(reNumberedCopyFromValue.myRevision)) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
@@ -457,7 +461,11 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
     private long getLongFromHeaders(String header, Map headers) {
         String val = (String) headers.get(header);
         if (val != null) {
-            return Long.parseLong(val);
+            try {
+                return Long.parseLong(val);
+            } catch (NumberFormatException nfe) {
+                //
+            }
         }
         return -1;
     }

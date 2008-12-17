@@ -84,9 +84,6 @@ abstract class HTTPAuthentication {
     }
 
     public String getUserName() {
-        if (myUserName == null) {
-            myUserName = System.getProperty("user.name", "");
-        }
         return myUserName;
     }
     
@@ -102,9 +99,11 @@ abstract class HTTPAuthentication {
         myPassword = password;
     }
     
-    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse, String charset) throws SVNException {
+    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, 
+            HTTPAuthentication prevResponse, String charset) throws SVNException {
         if (authHeaderValues == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Missing HTTP authorization method"); 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "Missing HTTP authorization method"); 
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
 
@@ -121,7 +120,7 @@ abstract class HTTPAuthentication {
             
             if (index <= 0) {
                 index = source.length();
-                if (!"NTLM".equalsIgnoreCase(source.substring(0, index))) {
+                if (!"NTLM".equalsIgnoreCase(source.substring(0, index)) && !"Negotiate".equalsIgnoreCase(source.substring(0, index))) {
                     continue;
                 }
             }
@@ -186,7 +185,15 @@ abstract class HTTPAuthentication {
             } else if ("NTLM".equalsIgnoreCase(method)) {
                 HTTPNTLMAuthentication ntlmAuth = null;
                 if (source.length() == 0) {
-                    ntlmAuth = new HTTPNTLMAuthentication(charset);
+                    if ("jna".equalsIgnoreCase(System.getProperty("svnkit.http.ntlm", "java"))) {
+                        ntlmAuth = HTTPNativeNTLMAuthentication.newInstance(charset);
+                    }
+                    if (ntlmAuth != null) {
+                        ntlmAuth.parseChallenge(null);
+                    }
+                    if (ntlmAuth == null) {
+                        ntlmAuth = new HTTPNTLMAuthentication(charset);
+                    }
                     ntlmAuth.setType1State();
                 } else {
                     ntlmAuth = (HTTPNTLMAuthentication)prevResponse;
@@ -195,11 +202,24 @@ abstract class HTTPAuthentication {
                 }
                 auth = ntlmAuth;
                 break;
+            } else if ("Negotiate".equalsIgnoreCase(method)) {
+                if (HTTPNegotiateAuthentication.isSupported()) {
+                    HTTPNegotiateAuthentication negoAuth = null;
+                    if (source.length() == 0) {
+                        negoAuth = new HTTPNegotiateAuthentication();
+                        negoAuth.respondTo(null);
+                    } else {
+                        negoAuth = (HTTPNegotiateAuthentication)prevResponse;
+                        negoAuth.respondTo(source);
+                    }
+                    auth = negoAuth;
+                }
             }
         }
 
         if (auth == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "HTTP authorization method ''{0}'' is not supported", authHeader); 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                    "HTTP authorization method ''{0}'' is not supported", authHeader); 
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         

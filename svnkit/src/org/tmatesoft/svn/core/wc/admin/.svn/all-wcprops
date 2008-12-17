@@ -1,95 +1,11 @@
 K 25
 svn:wc:ra_dav:version-url
 V 81
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin
-END
-ISVNHistoryHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 105
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/ISVNHistoryHandler.java
-END
-ISVNChangeEntryHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/ISVNChangeEntryHandler.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/admin
 END
 SVNAdminClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNAdminClient.java
-END
-SVNAdminEventAction.java
-K 25
-svn:wc:ra_dav:version-url
-V 106
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNAdminEventAction.java
-END
-SVNAdminEvent.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNAdminEvent.java
-END
-SVNReplayHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 103
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNReplayHandler.java
-END
-SVNAdminEventAdapter.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNAdminEventAdapter.java
-END
-ISVNChangedDirectoriesHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 116
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/ISVNChangedDirectoriesHandler.java
-END
-ISVNAdminEventHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 108
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/ISVNAdminEventHandler.java
-END
-ISVNGNUDiffGenerator.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/ISVNGNUDiffGenerator.java
-END
-SVNLookClient.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNLookClient.java
-END
-SVNUUIDAction.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNUUIDAction.java
-END
-SVNAdminPath.java
-K 25
-svn:wc:ra_dav:version-url
-V 99
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNAdminPath.java
-END
-ISVNTreeHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 102
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/ISVNTreeHandler.java
-END
-SVNChangeEntry.java
-K 25
-svn:wc:ra_dav:version-url
-V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNChangeEntry.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/admin/SVNAdminClient.java
 END

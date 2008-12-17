@@ -539,7 +539,12 @@ public class SVNAdminClient extends SVNBasicClient {
             long toLatestRevision = toRepos.getLatestRevision();
 
             if (currentlyCopying != null) {
-                long copyingRev = Long.parseLong(currentlyCopying.getString());
+                long copyingRev = -1;
+                try {
+                    copyingRev = Long.parseLong(currentlyCopying.getString());
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, nfe), SVNLogType.WC);
+                }
                 if (copyingRev < lastMergedRevision || copyingRev > lastMergedRevision + 1 || 
                         (toLatestRevision != lastMergedRevision && toLatestRevision != copyingRev)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
@@ -1367,7 +1372,12 @@ public class SVNAdminClient extends SVNBasicClient {
 
         SVNURL srcURL = SVNURL.parseURIDecoded(fromURL.getString());
         SVNRepository srcRepos = createRepository(srcURL, fromUUID.getString(), false);
-        return new SessionInfo(srcRepos, Long.parseLong(lastMergedRev.getString()));
+        try {
+            return new SessionInfo(srcRepos, Long.parseLong(lastMergedRev.getString()));
+        } catch (NumberFormatException nfe) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, nfe), SVNLogType.FSFS);
+        }
+        return null;
     }
 
     private void checkIfRepositoryIsAtRoot(SVNRepository repos, SVNURL url) throws SVNException {

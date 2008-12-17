@@ -1,119 +1,29 @@
 K 25
 svn:wc:ra_dav:version-url
 V 88
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
 END
 SVNSSHConnector.java
 K 25
 svn:wc:ra_dav:version-url
 V 109
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNSSHConnector.java
-END
-SVNAuthenticator.java
-K 25
-svn:wc:ra_dav:version-url
-V 110
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNAuthenticator.java
-END
-SVNWriter.java
-K 25
-svn:wc:ra_dav:version-url
-V 103
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNWriter.java
-END
-SVNEditModeReader.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNEditModeReader.java
-END
-SVNPlainConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNPlainConnector.java
-END
-SVNTunnelConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 112
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNTunnelConnector.java
-END
-SVNRepositoryFactoryImpl.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNRepositoryFactoryImpl.java
-END
-SVNDataSource.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNDataSource.java
-END
-ISVNConnectorFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/ISVNConnectorFactory.java
-END
-SVNPlainAuthenticator.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNPlainAuthenticator.java
-END
-SVNItem.java
-K 25
-svn:wc:ra_dav:version-url
-V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNItem.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNSSHConnector.java
 END
 SVNConnection.java
 K 25
 svn:wc:ra_dav:version-url
 V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNConnection.java
-END
-SVNCommitEditor.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNCommitEditor.java
-END
-SVNRepositoryImpl.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNRepositoryImpl.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNConnection.java
 END
 SVNSSHSession.java
 K 25
 svn:wc:ra_dav:version-url
 V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNSSHSession.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNSSHSession.java
 END
-CramMD5.java
+SVNRepositoryImpl.java
 K 25
 svn:wc:ra_dav:version-url
-V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/CramMD5.java
-END
-SVNReader.java
-K 25
-svn:wc:ra_dav:version-url
-V 103
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNReader.java
-END
-ISVNConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/ISVNConnector.java
-END
-SVNAbstractTunnelConnector.java
-K 25
-svn:wc:ra_dav:version-url
-V 120
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNAbstractTunnelConnector.java
+V 111
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/SVNRepositoryImpl.java
 END

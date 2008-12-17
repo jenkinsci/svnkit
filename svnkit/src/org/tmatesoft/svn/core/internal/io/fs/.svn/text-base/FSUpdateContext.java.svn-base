@@ -327,7 +327,7 @@ public class FSUpdateContext {
                     break;
                 }
                 PathInfo pathInfo = (PathInfo) nextInfo[1];
-                if (pathInfo != null && FSRepository.isInvalidRevision(pathInfo.getRevision())) {
+                if (pathInfo != null && FSRepository.isInvalidRevision(pathInfo.getRevision()) && pathInfo.getDepth() != SVNDepth.EXCLUDE) {
                     if (sourceEntries != null) {
                         sourceEntries.remove(entryName);
                     }
@@ -340,9 +340,8 @@ public class FSUpdateContext {
                 String entrySourcePath = sourcePath != null ? SVNPathUtil.getAbsolutePath(SVNPathUtil.append(sourcePath, entryName)) : null;
                 FSEntry sourceEntry = sourceEntries != null ? (FSEntry) sourceEntries.get(entryName) : null;
                 
-                if (requestedDepth != SVNDepth.FILES || ((targetEntry == null || 
-                        targetEntry.getType() != SVNNodeKind.DIR) && (sourceEntry == null ||
-                                sourceEntry.getType() != SVNNodeKind.DIR))) {
+                if ((pathInfo == null || pathInfo.getDepth() != SVNDepth.EXCLUDE) && (requestedDepth != SVNDepth.FILES || ((targetEntry == null || 
+                        targetEntry.getType() != SVNNodeKind.DIR) && (sourceEntry == null || sourceEntry.getType() != SVNNodeKind.DIR)))) {
                     updateEntry(sourceRevision, entrySourcePath, sourceEntry, 
                                 entryTargetPath, targetEntry, entryEditPath, 
                                 pathInfo, pathInfo != null ? pathInfo.getDepth() : 
@@ -683,9 +682,9 @@ public class FSUpdateContext {
         }
         String anchorRelativePath = SVNPathUtil.append(getReportTarget(), path);
         String revisionRep = FSRepository.isValidRevision(revision) ? "+" + String.valueOf(revision) + ":" : "-";
-        String depthRep = "-";
-        if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
-            depthRep = "+" + depth.getId() + ":";
+        String depthRep = "-";//infinity by default
+        if (depth == SVNDepth.EXCLUDE || depth == SVNDepth.EMPTY || depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
+            depthRep = "+" + getDepthLetter(depth);
         } 
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -703,4 +702,22 @@ public class FSUpdateContext {
         }
     }
 
+    public String getDepthLetter(SVNDepth depth) throws SVNException {
+        if (depth == SVNDepth.EXCLUDE) {
+            return "X";
+        }
+        if (depth == SVNDepth.EMPTY) {
+            return "E";
+        }
+        if (depth == SVNDepth.FILES) {
+            return "F";
+        }
+        if (depth == SVNDepth.IMMEDIATES) {
+            return "M";
+        }
+        
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Unsupported report depth ''{0}''", SVNDepth.asString(depth));
+        SVNErrorManager.error(err, SVNLogType.FSFS);
+        return null;
+    }
 }

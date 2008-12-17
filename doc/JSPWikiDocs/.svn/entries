@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/JSPWikiDocs
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/JSPWikiDocs
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -38,12 +38,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 4577d5df487dcbcfc88966d9bddcf435
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7332
 
 PrintingOutRepositoryHistory.txt
 file
@@ -51,12 +72,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 31a6c669e41956effb4d932df7281dff
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5183
 
 GettingStartedWithSvnkit
 dir
@@ -73,12 +115,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 dcb54a0f72a0dc231c159bade03ba15f
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+763
 
 ReplicatingAnExistingRepository
 dir
@@ -89,12 +152,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 224deef7928b4957b64774f58e974acd
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+17602
 
 ManagingAWorkingCopy.txt
 file
@@ -102,12 +186,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 bb7be57bee93d145306fd2c5dbe6ff09
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+49835
 
 Authentication.txt
 file
@@ -115,12 +220,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 19551afab2d85111379e2749d235a874
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12176
 
 LeftMenu.txt
 file
@@ -128,12 +254,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 7211931536883690f75dbce5e22d0487
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+246
 
 LeftMenuFooter
 dir
@@ -144,12 +291,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 4e96d84b5fc71d60fcb9974e39eb1690
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3238
 
 UpdatingFromARepository
 dir
@@ -160,12 +328,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 f84846a8c08a9018057fd4763de32c0d
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6446
 
 GettingStartedWithSvnkit.txt
 file
@@ -173,12 +362,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 bb10a62ea277cebd2d82a6abaaffea75
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5273
 
 Main.txt
 file
@@ -186,12 +396,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 506e1b63dfc1998756327097ea7a8ec2
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+271
 
 SettingUpASubversionRepository
 dir
@@ -202,12 +433,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 77c3be5b93661da8f972684aa162e277
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5508
 
 ReplicatingAnExistingRepository.txt
 file
@@ -215,12 +467,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 386d00f344ffde027d720e7e2e2b842b
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+24325
 
 LeftMenuFooter.txt
 file
@@ -228,12 +501,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 db00b843c01967efd219104608336c4a
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+188
 
 CommittingToARepository
 dir
@@ -247,12 +541,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 2e6b09d33d14fecced7e258aaa3c70f4
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3834
 
 UpdatingFromARepository.txt
 file
@@ -260,10 +575,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 87da3d18210a87d7e5ffff0cf989cb88
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20984
 

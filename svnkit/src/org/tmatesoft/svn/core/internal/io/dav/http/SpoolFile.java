@@ -67,7 +67,7 @@ public class SpoolFile {
             if (read != 1) {
                 return -1;
             }
-            return buffer[0];
+            return buffer[0] & 0xFF;
         }
 
         public int read(byte[] b) throws IOException {

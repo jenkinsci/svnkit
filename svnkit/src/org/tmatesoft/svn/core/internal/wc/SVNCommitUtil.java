@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +33,8 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -58,6 +59,22 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNCommitUtil {
+    
+    public static final Comparator FILE_COMPARATOR = new Comparator() {
+        public int compare(Object o1, Object o2) {
+            if (o1 == null) {
+                return -1;
+            } else if (o2 == null) {
+                return 1;
+            } else if (o1 == o2) {
+                return 0;
+            }
+            
+            File f1 = (File) o1;
+            File f2 = (File) o2;
+            return f1.getPath().compareTo(f2.getPath());
+        }
+    };
 
     public static void driveCommitEditor(ISVNCommitPathHandler handler, Collection paths, ISVNEditor editor, long revision) throws SVNException {
         if (paths == null || paths.isEmpty() || handler == null || editor == null) {
@@ -153,8 +170,8 @@ public class SVNCommitUtil {
 
         File baseDir = new File(rootPath).getAbsoluteFile();
         rootPath = baseDir.getAbsolutePath().replace(File.separatorChar, '/');
-        Collection dirsToLock = new HashSet(); // relative paths to lock.
-        Collection dirsToLockRecursively = new HashSet(); 
+        Collection dirsToLock = new SVNHashSet(); // relative paths to lock.
+        Collection dirsToLockRecursively = new SVNHashSet(); 
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
             String target = getTargetName(baseDir);
@@ -362,8 +379,9 @@ public class SVNCommitUtil {
     public static SVNCommitItem[] harvestCommitables(SVNWCAccess baseAccess, Collection paths, Map lockTokens, 
             boolean justLocked, SVNDepth depth, boolean force, Collection changelists, 
             ISVNCommitParameters params) throws SVNException {
-        Map commitables = new TreeMap();
-        Collection danglers = new HashSet();
+        // TODO
+        Map commitables = new TreeMap(FILE_COMPARATOR);
+        Collection danglers = new SVNHashSet();
         Iterator targets = paths.iterator();
         
         boolean isRecursionForced = false;

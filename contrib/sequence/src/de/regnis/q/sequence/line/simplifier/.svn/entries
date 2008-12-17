@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/line/simplifier
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src/de/regnis/q/sequence/line/simplifier
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 fcbbe817dbcc0fa41ff7698d6fc9f4be
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+708
 
 QSequenceLineTeeSimplifier.java
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 e916325cd1781437ddd0f60682b3905b
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1139
 
 QSequenceLineWhiteSpaceReducingSimplifier.java
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 7ed8be1548d445ae2b7fde5645e646bb
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1400
 
 QSequenceLineSimplifier.java
 file
@@ -71,12 +134,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 fb30f1ecee77317041b6db337c066985
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+566
 
 QSequenceLineWhiteSpaceSkippingSimplifier.java
 file
@@ -84,12 +168,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 14f899b01ed3c203279ddf7f493c92d5
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1185
 
 QSequenceLineEOLUnifyingSimplifier.java
 file
@@ -97,10 +202,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 d5b7bc0b560939e2f123ceb011408536
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+952
 

@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/JSPWikiDocs/ManagingAWorkingCopy
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/JSPWikiDocs/ManagingAWorkingCopy
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 4acf913669964f2400787e4a069f1d2b
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+69310
 
 WC_Example1.png
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 0caf352b3b5aba259a9383b92a68443a
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2010
 
 WC_Example2.png
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 f187fd4255ce2d970b2724864d63d0cf
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6288
 
 WC_Example3.png
 file
@@ -71,12 +134,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 e47e353a539dacb9bf7f4139b4a0b7e6
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10298
 
 WC_Example4.png
 file
@@ -84,12 +168,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 6a51be2957ee27809a2b7874892054b6
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20199
 
 WC_Example5.png
 file
@@ -97,10 +202,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 225844f1443c9a25b5c46a4f3aa8bf19
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+16257
 

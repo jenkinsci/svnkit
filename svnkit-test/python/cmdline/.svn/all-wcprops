@@ -1,5 +1,29 @@
 K 25
 svn:wc:ra_dav:version-url
 V 61
-/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline
+/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline
+END
+copy_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/copy_tests.py
+END
+merge_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/merge_tests.py
+END
+log_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/log_tests.py
+END
+switch_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/switch_tests.py
 END

@@ -14,9 +14,14 @@ package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.Attributes;
 
@@ -47,9 +52,13 @@ public class DAVDateRevisionHandler extends BasicDAVHandler {
         return myRevisionNumber;
     }
 
-    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) {
+    protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == DAVElement.VERSION_NAME && cdata != null) {
-            myRevisionNumber = Long.parseLong(cdata.toString());
+            try {
+                myRevisionNumber = Long.parseLong(cdata.toString());
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         }
     }
 

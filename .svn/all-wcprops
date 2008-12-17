@@ -1,17 +1,41 @@
 K 25
 svn:wc:ra_dav:version-url
 V 38
-/repos/svnkit/!svn/ver/4949/tags/1.2.0
+/repos/svnkit/!svn/ver/5297/tags/1.2.1
+END
+THIRD-PARTY.txt
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/THIRD-PARTY.txt
+END
+changelog.txt
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/changelog.txt
 END
 svnkit.build.properties
 K 25
 svn:wc:ra_dav:version-url
 V 62
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit.build.properties
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit.build.properties
 END
 README.txt
 K 25
 svn:wc:ra_dav:version-url
 V 49
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/README.txt
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/README.txt
+END
+plugin.xml
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/plugin.xml
+END
+build.xml
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/build.xml
 END

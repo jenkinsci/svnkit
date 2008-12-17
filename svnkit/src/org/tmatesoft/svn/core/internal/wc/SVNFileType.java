@@ -13,10 +13,10 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -38,7 +38,7 @@ public class SVNFileType {
     private static final boolean canonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
     private static boolean detectSymlinks = !"false".equalsIgnoreCase(System.getProperty("svnkit.symlinks", System.getProperty("javasvn.symlinks", "true")));
     
-    private static final Set ADMIN_FILE_PARENTS = new HashSet();
+    private static final Set ADMIN_FILE_PARENTS = new SVNHashSet();
     
     static {
         ADMIN_FILE_PARENTS.add("text-base");

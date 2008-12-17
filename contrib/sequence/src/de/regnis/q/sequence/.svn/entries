@@ -2,14 +2,14 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src/de/regnis/q/sequence
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-11-27T19:49:21.695323Z
+5288
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -35,12 +35,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 a1e1a211e60256ae7696290522b91fc9
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2007
 
 QSequenceCommonBlocks.java
 file
@@ -48,12 +69,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 29a27a1dd169469144a8301e70319f3d
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2320
 
 QSequenceDifferenceBlockUtils.java
 file
@@ -61,7 +103,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 81c7e318b0200d7ea6cb68d3f69d5bc9
 2008-07-30T16:53:59.266781Z
 4613
@@ -95,12 +137,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 5dc9ac71900085569ea0b48b5251ec4c
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3042
 
 QSequenceDifferenceBlockShifter.java
 file
@@ -108,12 +171,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 9965fb61aae2bce248c0660edebebe39
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5808
 
 QSequenceSimpleLCSCommand.java
 file
@@ -121,12 +205,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 2f6f5feef2192e248aa61c1f92bab1c0
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1083
 
 QSequenceCommonBlockFactory.java
 file
@@ -134,12 +239,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 0ef8a2145d3d7f8eb53f8b79d840fd1f
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+687
 
 QSequenceSimpleLCS.java
 file
@@ -147,12 +273,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 2fd63e793596502114ed88362b097021
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1462
 
 line
 dir

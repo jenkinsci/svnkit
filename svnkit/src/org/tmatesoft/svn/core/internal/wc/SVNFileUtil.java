@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -96,6 +97,8 @@ public class SVNFileUtil {
     private static String ourAdminDirectoryName;
     private static File ourSystemAppDataPath;
     
+    private static Method ourSetWritableMethod;
+    
     private static volatile boolean ourIsSleepForTimeStamp = true;
     
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
@@ -144,6 +147,12 @@ public class SVNFileUtil {
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
+        
+        try {
+            ourSetWritableMethod = File.class.getMethod("setWritable", new Class[] {Boolean.TYPE});
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        }
     }
 
     public static String getIdCommand() {
@@ -408,6 +417,16 @@ public class SVNFileUtil {
         }
         if (readonly) {
             return file.setReadOnly();
+        } else if (ourSetWritableMethod != null) {
+            try {
+                Object result = ourSetWritableMethod.invoke(file, new Object[] {Boolean.TRUE});
+                if (Boolean.TRUE.equals(result)) {
+                    return true;
+                }
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException e) {
+            }
         }
         if (isWindows) {
             if (SVNJNAUtil.setWritable(file)) {
@@ -418,25 +437,14 @@ public class SVNFileUtil {
                 return true;
             }
         }
-        if (file.canWrite()) {
-            return true;
-        }
         try {
-            if (file.length() < 1024 * 100) {
-                // faster way for small files.
-                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro", true);
-                copyFile(file, tmp, false);
-                copyFile(tmp, file, false);
-                deleteFile(tmp);
+            if (isWindows) {
+                Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
+                p.waitFor();
             } else {
-                if (isWindows) {
-                    Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
-                    p.waitFor();
-                } else {
-                    execCommand(new String[] {
-                            CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
-                    });
-                }
+                execCommand(new String[] {
+                        CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
+                });
             }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
@@ -482,6 +490,14 @@ public class SVNFileUtil {
     }
 
     public static File resolveSymlinkToFile(File file) {
+        File targetFile = resolveSymlink(file);
+        if (targetFile == null || !targetFile.isFile()) {
+            return null;
+        }
+        return targetFile;
+    }
+
+    public static File resolveSymlink(File file) {
         File targetFile = file;
         while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {
             String symlinkName = getSymlinkName(targetFile);
@@ -494,12 +510,9 @@ public class SVNFileUtil {
                 targetFile = new File(targetFile.getParentFile(), symlinkName);
             }
         }
-        if (targetFile == null || !targetFile.isFile()) {
-            return null;
-        }
         return targetFile;
     }
-
+    
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
         SVNFileType srcType = SVNFileType.getType(src);
         if (srcType == SVNFileType.FILE) {
@@ -1347,8 +1360,9 @@ public class SVNFileUtil {
         InputStream is = null;
         boolean handleOutput = callback != null && callback.isHandleProgramOutput(); 
         StringBuffer result =  handleOutput ? null : new StringBuffer();
+        Process process = null;
         try {
-            Process process = Runtime.getRuntime().exec(commandLine, env);
+            process = Runtime.getRuntime().exec(commandLine, env);
             is = process.getInputStream();
             if (!waitAfterRead) {
                 int rc = process.waitFor();
@@ -1381,6 +1395,9 @@ public class SVNFileUtil {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e);
         } finally {
             closeFile(is);
+            if (process != null) {
+                process.destroy();
+            }
         }
         return null;
     }
@@ -1457,9 +1474,16 @@ public class SVNFileUtil {
         if (ourAppDataPath != null) {
             return ourAppDataPath;
         }
+        String jnaAppData = SVNJNAUtil.getApplicationDataPath(false);
+        if (jnaAppData != null) {
+            ourAppDataPath = new File(jnaAppData);
+            return ourAppDataPath;
+        }
+        
         String envAppData = getEnvironmentVariable("APPDATA");
         if (envAppData == null) {
-            ourAppDataPath = new File(new File(System.getProperty("user.home")), "Application Data");
+            // no appdata for that user, fallback to system one.
+            ourAppDataPath = getSystemApplicationDataPath();
         } else {
             ourAppDataPath = new File(envAppData);
         }
@@ -1468,6 +1492,11 @@ public class SVNFileUtil {
 
     public static File getSystemApplicationDataPath() {
         if (ourSystemAppDataPath != null) {
+            return ourSystemAppDataPath;
+        }
+        String jnaAppData = SVNJNAUtil.getApplicationDataPath(true);
+        if (jnaAppData != null) {
+            ourSystemAppDataPath = new File(jnaAppData);
             return ourSystemAppDataPath;
         }
         String envAppData = getEnvironmentVariable("ALLUSERSPROFILE");

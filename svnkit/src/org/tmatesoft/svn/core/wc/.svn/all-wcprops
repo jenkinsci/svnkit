@@ -1,341 +1,77 @@
 K 25
 svn:wc:ra_dav:version-url
 V 75
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc
 END
 SVNCopyClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNCopyClient.java
-END
-SVNConflictReason.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictReason.java
-END
-ISVNExternalsHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNExternalsHandler.java
-END
-DefaultSVNRepositoryPool.java
-K 25
-svn:wc:ra_dav:version-url
-V 105
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/DefaultSVNRepositoryPool.java
-END
-SVNLogClient.java
-K 25
-svn:wc:ra_dav:version-url
-V 93
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNLogClient.java
-END
-ISVNAnnotateHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNAnnotateHandler.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNCopyClient.java
 END
 SVNEvent.java
 K 25
 svn:wc:ra_dav:version-url
 V 89
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNEvent.java
-END
-DefaultSVNCommitParameters.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/DefaultSVNCommitParameters.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNEvent.java
 END
 SVNUpdateClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNUpdateClient.java
-END
-ISVNRepositoryPool.java
-K 25
-svn:wc:ra_dav:version-url
-V 99
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNRepositoryPool.java
-END
-ISVNMergerFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNMergerFactory.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNUpdateClient.java
 END
 SVNStatusClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNStatusClient.java
-END
-ISVNDiffStatusHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 102
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNDiffStatusHandler.java
-END
-SVNStatus.java
-K 25
-svn:wc:ra_dav:version-url
-V 90
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNStatus.java
-END
-SVNDiffOptions.java
-K 25
-svn:wc:ra_dav:version-url
-V 95
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNDiffOptions.java
-END
-ISVNCommitParameters.java
-K 25
-svn:wc:ra_dav:version-url
-V 101
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNCommitParameters.java
-END
-ISVNAddParameters.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNAddParameters.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNStatusClient.java
 END
 SVNCommitClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNCommitClient.java
-END
-ISVNStatusHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNStatusHandler.java
-END
-ISVNMerger.java
-K 25
-svn:wc:ra_dav:version-url
-V 91
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNMerger.java
-END
-SVNInfo.java
-K 25
-svn:wc:ra_dav:version-url
-V 88
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNInfo.java
-END
-ISVNPropertyHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNPropertyHandler.java
-END
-SVNRevision.java
-K 25
-svn:wc:ra_dav:version-url
-V 92
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNRevision.java
-END
-SVNConflictResult.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictResult.java
-END
-ISVNInfoHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNInfoHandler.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNCommitClient.java
 END
 SVNWCClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 92
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNWCClient.java
-END
-ISVNConflictHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNConflictHandler.java
-END
-SVNClientManager.java
-K 25
-svn:wc:ra_dav:version-url
-V 97
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNClientManager.java
-END
-SVNMergeFileSet.java
-K 25
-svn:wc:ra_dav:version-url
-V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNMergeFileSet.java
-END
-SVNRevisionRange.java
-K 25
-svn:wc:ra_dav:version-url
-V 97
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNRevisionRange.java
-END
-SVNConflictChoice.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictChoice.java
-END
-SVNDiffStatus.java
-K 25
-svn:wc:ra_dav:version-url
-V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNDiffStatus.java
-END
-SVNPropertyData.java
-K 25
-svn:wc:ra_dav:version-url
-V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNPropertyData.java
-END
-SVNEventAction.java
-K 25
-svn:wc:ra_dav:version-url
-V 95
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNEventAction.java
-END
-SVNCommitPacket.java
-K 25
-svn:wc:ra_dav:version-url
-V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNCommitPacket.java
-END
-SVNBasicClient.java
-K 25
-svn:wc:ra_dav:version-url
-V 95
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNBasicClient.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNWCClient.java
 END
 SVNChangelistClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNChangelistClient.java
-END
-SVNEventAdapter.java
-K 25
-svn:wc:ra_dav:version-url
-V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNEventAdapter.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNChangelistClient.java
 END
 DefaultSVNDiffGenerator.java
 K 25
 svn:wc:ra_dav:version-url
 V 104
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/DefaultSVNDiffGenerator.java
-END
-SVNStatusType.java
-K 25
-svn:wc:ra_dav:version-url
-V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNStatusType.java
-END
-package.html
-K 25
-svn:wc:ra_dav:version-url
-V 88
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/package.html
-END
-ISVNDiffGenerator.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNDiffGenerator.java
-END
-ISVNEventHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 97
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNEventHandler.java
-END
-ISVNChangelistHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 102
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNChangelistHandler.java
-END
-DefaultSVNCommitHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 104
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/DefaultSVNCommitHandler.java
-END
-SVNCopySource.java
-K 25
-svn:wc:ra_dav:version-url
-V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNCopySource.java
-END
-SVNMergeResult.java
-K 25
-svn:wc:ra_dav:version-url
-V 95
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNMergeResult.java
-END
-ISVNCommitHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNCommitHandler.java
-END
-SVNConflictAction.java
-K 25
-svn:wc:ra_dav:version-url
-V 98
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictAction.java
-END
-ISVNPathListHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 100
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNPathListHandler.java
-END
-ISVNOptions.java
-K 25
-svn:wc:ra_dav:version-url
-V 92
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/ISVNOptions.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/DefaultSVNDiffGenerator.java
 END
 SVNMoveClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNMoveClient.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNMoveClient.java
 END
-SVNConflictDescription.java
+ISVNPropertyValueProvider.java
 K 25
 svn:wc:ra_dav:version-url
-V 103
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNConflictDescription.java
+V 106
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/ISVNPropertyValueProvider.java
 END
 SVNDiffClient.java
 K 25
 svn:wc:ra_dav:version-url
 V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNDiffClient.java
-END
-SVNCommitItem.java
-K 25
-svn:wc:ra_dav:version-url
-V 94
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNCommitItem.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNDiffClient.java
 END
 SVNWCUtil.java
 K 25
 svn:wc:ra_dav:version-url
 V 90
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/SVNWCUtil.java
+/repos/svnkit/!svn/ver/5297/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc/SVNWCUtil.java
 END

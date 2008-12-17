@@ -82,7 +82,14 @@ public class SVNEntry {
 
     public long getRevision() {
         String revStr = (String) myAttributes.get(SVNProperty.REVISION);
-        return revStr != null ? Long.parseLong(revStr) : SVNRepository.INVALID_REVISION;
+        if (revStr != null) {
+            try {
+                return Long.parseLong(revStr);
+            } catch (NumberFormatException nfe) {
+                //
+            }
+        }
+        return SVNRepository.INVALID_REVISION;
     }
 
     public boolean isScheduledForAddition() {
@@ -153,7 +160,11 @@ public class SVNEntry {
         if (workingSize == null) {
             return SVNProperty.WORKING_SIZE_UNKNOWN;
         }
-        return Long.parseLong(workingSize);
+        try {
+            return Long.parseLong(workingSize);
+        } catch (NumberFormatException nfe) {
+            return SVNProperty.WORKING_SIZE_UNKNOWN;
+        }
     }
 
     public SVNDepth getDepth() {
@@ -222,7 +233,11 @@ public class SVNEntry {
         if (rev == null) {
             return SVNRepository.INVALID_REVISION ;
         }
-        return Long.parseLong(rev);
+        try {
+            return Long.parseLong(rev);
+        } catch (NumberFormatException nfe) {
+            return SVNRepository.INVALID_REVISION;
+        }
     }
 
     public void setTextTime(String time) {
@@ -329,7 +344,11 @@ public class SVNEntry {
         if (rev == null) {
             return SVNRepository.INVALID_REVISION;
         }
-        return Long.parseLong(rev);
+        try {
+            return Long.parseLong(rev);
+        } catch (NumberFormatException nfe) {
+            return SVNRepository.INVALID_REVISION;
+        }
     }
 
     public String getPropTime() {

@@ -2,14 +2,14 @@
 
 dir
 34802
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnsync_tests_data
+http://svn.collab.net/repos/svn/tags/1.5.4/subversion/tests/cmdline/svnsync_tests_data
 http://svn.collab.net/repos/svn
 
 
 
-2006-10-31T21:27:53.570003Z
-22185
-dlr
+2008-01-03T21:46:12.216746Z
+28742
+lgo
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-02-05T02:05:43.000000Z
+
 caaf2b701f2af323e7394a1a7842804c
-2006-10-31T21:27:53.570003Z
-22185
-dlr
+2006-10-27T19:53:51.113660Z
+22140
+rooneg
 
 
 
@@ -60,81 +60,13 @@ dlr
 
 441
 
-copy-from-previous-version-and-modify.dump
-file
-
-
-
-
-2008-12-17T22:43:15.000000Z
-7631ff4cce062a9e6ab83cb650b95aa9
-2005-12-17T00:00:11.688747Z
-17817
-rooneg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1860
-
-copy-and-modify.dump
-file
-
-
-
-
-2008-12-17T22:43:15.000000Z
-20db5f3fdd9271dfe43b75447704f4b0
-2005-12-17T00:00:11.688747Z
-17817
-rooneg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-961
-
 tag-with-modified-file.dump
 file
 
 
 
 
-2008-02-05T02:05:43.000000Z
+2008-08-27T01:16:45.000000Z
 16a85247edb653ce0dacff56bbeeb085
 2005-12-17T00:00:11.688747Z
 17817
@@ -162,13 +94,353 @@ rooneg
 
 1562
 
+revprops.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+fa0edbaabcdb2c71ac067d21e5a17498
+2007-12-09T22:17:24.393197Z
+28363
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4837
+
+svnsync-trunk-only.expected.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+bfdddcb3cd26432b8125f3e09d481f2b
+2007-12-15T09:29:56.860784Z
+28498
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4572
+
+svnsync-trunk-only.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+aba724acb2d76074fd6ee8b46f588e97
+2007-12-15T09:29:56.860784Z
+28498
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4781
+
+dir_prop_change.dump
+file
+
+
+
+
+2008-08-27T01:16:45.000000Z
+19531ec00014151d5207b87a011778be
+2005-12-22T00:08:56.394932Z
+17909
+rooneg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+496
+
+tag-trunk-with-file2.dump
+file
+
+
+
+
+2008-08-27T01:16:45.000000Z
+dfba849c7e37a3c31e97be798ade6edb
+2005-12-17T00:00:11.688747Z
+17817
+rooneg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1352
+
+svnsync-trunk-A-changes.expected.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+ed9bf50b9fdb53240e69de059c7d8183
+2007-12-15T09:29:56.860784Z
+28498
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7284
+
+svnsync-trunk-A-changes.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+9f9bb7ce4eb7548f2e91ecfc16b5a87f
+2007-12-15T09:29:56.860784Z
+28498
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6211
+
+svnsync-move-and-modify.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+f621853f876f466f59bd656919df9066
+2008-01-03T21:46:12.216746Z
+28742
+lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3497
+
+copy-from-previous-version-and-modify.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+52a7c4bae1989fafaeb46c8795862a8e
+2007-11-02T00:02:39.985382Z
+27559
+glasser
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1915
+
+copy-and-modify.dump
+file
+
+
+
+
+2008-12-17T22:35:16.000000Z
+0b95253610e344995bffe19ad18ef2b8
+2007-11-02T00:02:39.985382Z
+27559
+glasser
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1016
+
 tag-trunk-with-dir.dump
 file
 
 
 
 
-2008-02-05T02:05:43.000000Z
+2008-08-27T01:16:45.000000Z
 023f31bd9eaa00ae98fed4cb1d19105c
 2005-12-17T00:00:11.688747Z
 17817
@@ -202,11 +474,11 @@ file
 
 
 
-2008-12-17T22:43:15.000000Z
-d30f8c104b683c82c9cc4bbd6d549c99
-2006-10-26T12:49:29.151397Z
-22123
-malcolm
+2008-12-17T22:35:16.000000Z
+58382bec5418b6edc4322d5977734cd7
+2007-11-02T00:02:39.985382Z
+27559
+glasser
 
 
 
@@ -228,7 +500,7 @@ malcolm
 
 
 
-1219
+1329
 
 tag-trunk-with-file.dump
 file
@@ -236,11 +508,11 @@ file
 
 
 
-2008-12-17T22:43:15.000000Z
-93b57648e3fbdf650b7a1b1fdbcb007b
-2005-12-17T00:00:11.688747Z
-17817
-rooneg
+2008-12-17T22:35:16.000000Z
+bb0fad03d4222fa11df27679dd964388
+2007-11-02T00:02:39.985382Z
+27559
+glasser
 
 
 
@@ -262,41 +534,7 @@ rooneg
 
 
 
-1515
-
-dir_prop_change.dump
-file
-
-
-
-
-2008-02-05T02:05:43.000000Z
-19531ec00014151d5207b87a011778be
-2005-12-22T00:08:56.394932Z
-17909
-rooneg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-496
+1570
 
 copy-parent-modify-prop.dump
 file
@@ -304,7 +542,7 @@ file
 
 
 
-2008-02-05T02:05:43.000000Z
+2008-08-27T01:16:45.000000Z
 83e094c00355b5035c7192633e750104
 2006-04-19T19:13:50.962018Z
 19416
@@ -332,47 +570,13 @@ lundblad
 
 1071
 
-tag-trunk-with-file2.dump
-file
-
-
-
-
-2008-02-05T02:05:43.000000Z
-dfba849c7e37a3c31e97be798ade6edb
-2005-12-17T00:00:11.688747Z
-17817
-rooneg
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1352
-
 modified-in-place.dump
 file
 
 
 
 
-2008-02-05T02:05:43.000000Z
+2008-08-27T01:16:45.000000Z
 92ff40a73840ce86b5f7ced544e14fcd
 2005-12-17T00:00:11.688747Z
 17817
@@ -400,14 +604,14 @@ rooneg
 
 941
 
-copy-from-previous-version.dump
+tag-empty-trunk.dump
 file
 
 
 
 
-2008-12-17T22:43:15.000000Z
-fc2de79a4a7bd1e80646ae9c981813b8
+2008-08-27T01:16:45.000000Z
+4259807dd46add26f57a9c8121690d08
 2005-12-17T00:00:11.688747Z
 17817
 rooneg
@@ -432,7 +636,7 @@ rooneg
 
 
 
-2172
+857
 
 file-dir-file.dump
 file
@@ -440,7 +644,7 @@ file
 
 
 
-2008-02-05T02:05:43.000000Z
+2008-08-27T01:16:45.000000Z
 fade1b37e9458c8121852bd24a417fe7
 2006-04-14T23:03:36.319718Z
 19382
@@ -468,17 +672,17 @@ rooneg
 
 1011
 
-tag-empty-trunk.dump
+copy-from-previous-version.dump
 file
 
 
 
 
-2008-02-05T02:05:43.000000Z
-4259807dd46add26f57a9c8121690d08
-2005-12-17T00:00:11.688747Z
-17817
-rooneg
+2008-12-17T22:35:16.000000Z
+5114cec37b935cc7173cc4a2bc9c9153
+2007-11-02T00:02:39.985382Z
+27559
+glasser
 
 
 
@@ -500,5 +704,5 @@ rooneg
 
 
 
-857
+2227
 

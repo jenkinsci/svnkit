@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test/src/org/tmatesoft/svn/core/test/daemon
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit-test/src/org/tmatesoft/svn/core/test/daemon
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-10-30T04:41:34.000000Z
+2008-11-04T17:25:59.000000Z
 aa651c91b0f4a631b0f02f63e9234b31
 2008-07-30T16:53:59.266781Z
 4613
@@ -66,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:45.000000Z
 a96a99ef43c310bee1028eb2de7715f4
 2008-06-19T16:54:23.052618Z
 4368
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7222
 
 SVNCommandExitException.java
 file
@@ -79,10 +100,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:45.000000Z
 673a0591fed5d70015ea6456c6ea5ea9
 2008-03-07T00:33:38.836328Z
 3935
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+790
 

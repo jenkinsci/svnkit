@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -93,6 +94,20 @@ public class SVNProperties implements Cloneable, Serializable {
     }
 
     /**
+     * Returns an unmodifiable view of the specified <code>properties</code>.
+     * Any attempt to modify the returned <code>SVNProperties</code> object result in an
+     * <code>UnsupportedOperationException</code>.
+     *
+     * @param   properties  <code>SVNProperties</code> object for which an unmodifiable view is to be returned.
+     * @return              an unmodifiable view of the specified properties.
+     */
+    public static SVNProperties unmodifiableProperties(SVNProperties properties) {
+        Map propertiesMap = properties.myProperties;
+        propertiesMap = Collections.unmodifiableMap(propertiesMap);
+        return new SVNProperties(propertiesMap);
+    }
+
+    /**
      * Creates an empty <code>SVNProperties</code> object.
      */
     public SVNProperties() {
@@ -110,6 +125,18 @@ public class SVNProperties implements Cloneable, Serializable {
 
     private SVNProperties(Map properties) {
         myProperties = properties;
+    }
+    
+    /**
+     * Returns SVNProperties as Map of String, SVNPropertyValue pairs.
+     * 
+     * @return copy of SVNProperties as Map object
+     */
+    public Map asMap() {
+        if (myProperties == null) {
+            return Collections.unmodifiableMap(Collections.EMPTY_MAP);
+        }
+        return Collections.unmodifiableMap(myProperties);
     }
 
     /**

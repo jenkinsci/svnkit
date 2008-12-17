@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -108,6 +109,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private SVNRepository myRepository1;
     private SVNRepository myRepository2;
     private SVNLogClient myLogClient;
+    private List myPathsWithNewMergeInfo;
     
     public SVNMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -780,6 +782,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         mySkippedPaths = null;
         myAddedPaths = null;
         myChildrenWithMergeInfo = null;
+        myPathsWithNewMergeInfo = null;
         myHasExistingMergeInfo = false;
         
         boolean checkedMergeInfoCapability = false;
@@ -794,8 +797,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
             
             try {
-                myRepository1 = createRepository(url1, null, null, false);
-                myRepository2 = createRepository(url2, null, null, false);
+                myRepository1 = ensureRepository(myRepository1, url1);
+                myRepository2 = ensureRepository(myRepository2, url2);
                 myIsTargetHasDummyMergeRange = false;
                 myURL = url2;
                 myConflictedPaths = null;
@@ -825,6 +828,29 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
             }
         }
+    }
+    
+    protected void addPathWithNewMergeInfo(File path) {
+        if (myPathsWithNewMergeInfo == null) {
+            myPathsWithNewMergeInfo = new LinkedList();
+        }
+        myPathsWithNewMergeInfo.add(path);
+    }
+    
+    protected SVNRepository ensureRepository(SVNRepository repository, SVNURL url) throws SVNException {
+        if (repository != null) {
+            try {
+                ensureSessionURL(repository, url);
+                return repository;
+            } catch (SVNException e) {
+                //
+            }
+            repository = null;
+        }
+        if (repository == null) {
+            repository = createRepository(url, null, null, false);
+        }
+        return repository; 
     }
 
     protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2, 
@@ -1050,6 +1076,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         }
                     }
                     
+                    processChildrenWithNewMergeInfo();
+                    
                     removeFirstRangeFromRemainingRanges(endRev, myChildrenWithMergeInfo);
                     nextEndRev = getYoungestEndRevision(myChildrenWithMergeInfo, isRollBack);
                     if (SVNRevision.isValidRevisionNumber(nextEndRev) && myConflictedPaths != null && 
@@ -1194,6 +1222,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         if (!honorMergeInfo) {
             return null;
         }
+        SVNEntry targetEntry = myWCAccess.getVersionedEntry(path, false);
+        if (targetEntry.isScheduledForAddition() || targetEntry.isScheduledForReplacement()) {
+            return null;
+        }
         SVNProperties adjustedProperties = new SVNProperties();
         for (Iterator propNamesIter = props.nameSet().iterator(); propNamesIter.hasNext();) {
             String propName = (String) propNamesIter.next();
@@ -1203,56 +1235,79 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 adjustedProperties.put(propName, propValue);
             } else {
                 SVNURL mergeSourceRootURL = myRepository2.getRepositoryRoot(true);
-                SVNEntry targetEntry = myWCAccess.getVersionedEntry(path, false);
                 SVNURL targetURL = getURL(path);
                 SVNURL oldURL = ensureSessionURL(myRepository2, targetURL);
                 
-                Map filteredMergeInfo = null;
+                Map filteredYoungerMergeInfo = null;
                 Map mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(propValue.getString()), null);
-                for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
-                    String sourcePath = (String) mergeInfoIter.next();
-                    SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(sourcePath);
-                    SVNMergeRange ranges[] = rangeList.getRanges();
-                    LinkedList adjustedRanges = new LinkedList();
-                    SVNURL mergeSourceURL = mergeSourceRootURL.appendPath(sourcePath, false);
-                    for (int i = 0; i < ranges.length; i++) {
-                        SVNMergeRange range = ranges[i];
-                        SVNRepositoryLocation[] locations = null;
-                        try {
-                            locations = getLocations(targetURL, null, myRepository2, 
-                                    SVNRevision.create(targetEntry.getRevision()), 
-                                    SVNRevision.create(range.getStartRevision() + 1), SVNRevision.UNDEFINED);
-                            SVNURL startURL = locations[0].getURL();
-                            if (!mergeSourceURL.equals(startURL)) {
-                                adjustedRanges.add(range);
-                            }
-                        } catch (SVNException svne) {
-                            SVNErrorCode code = svne.getErrorMessage().getErrorCode();
-                            if (code == SVNErrorCode.CLIENT_UNRELATED_RESOURCES || 
-                                    code == SVNErrorCode.RA_DAV_PATH_NOT_FOUND ||
-                                    code == SVNErrorCode.FS_NOT_FOUND) {
-                                adjustedRanges.add(range);
-                            } else {
-                                throw svne;
+                
+                Map[] mergeInfoArr = { mergeInfo };
+                Map youngerMergeInfo = splitMergeInfoOnRevision(mergeInfoArr, targetEntry.getRevision());
+                mergeInfo = mergeInfoArr[0];
+                
+                if (youngerMergeInfo != null) {
+                    for (Iterator youngerMergeInfoIter = youngerMergeInfo.keySet().iterator(); youngerMergeInfoIter.hasNext();) {
+                        String sourcePath = (String) youngerMergeInfoIter.next();
+                        SVNMergeRangeList rangeList = (SVNMergeRangeList) youngerMergeInfo.get(sourcePath);
+                        SVNMergeRange ranges[] = rangeList.getRanges();
+                        LinkedList adjustedRanges = new LinkedList();
+                        SVNURL mergeSourceURL = mergeSourceRootURL.appendPath(sourcePath, false);
+                        for (int i = 0; i < ranges.length; i++) {
+                            SVNMergeRange range = ranges[i];
+                            SVNRepositoryLocation[] locations = null;
+                            try {
+                                locations = getLocations(targetURL, null, myRepository2, 
+                                        SVNRevision.create(targetEntry.getRevision()), 
+                                        SVNRevision.create(range.getStartRevision() + 1), SVNRevision.UNDEFINED);
+                                SVNURL startURL = locations[0].getURL();
+                                if (!mergeSourceURL.equals(startURL)) {
+                                    adjustedRanges.add(range);
+                                }
+                            } catch (SVNException svne) {
+                                SVNErrorCode code = svne.getErrorMessage().getErrorCode();
+                                if (code == SVNErrorCode.CLIENT_UNRELATED_RESOURCES || 
+                                        code == SVNErrorCode.RA_DAV_PATH_NOT_FOUND ||
+                                        code == SVNErrorCode.FS_NOT_FOUND ||
+                                        code == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                                    adjustedRanges.add(range);
+                                } else {
+                                    throw svne;
+                                }
                             }
                         }
-                    }
 
-                    if (!adjustedRanges.isEmpty()) {
-                        if (filteredMergeInfo == null) {
-                            filteredMergeInfo = new TreeMap();
+                        if (!adjustedRanges.isEmpty()) {
+                            if (filteredYoungerMergeInfo == null) {
+                                filteredYoungerMergeInfo = new TreeMap();
+                            }
+                            SVNMergeRangeList adjustedRangeList = SVNMergeRangeList.fromCollection(adjustedRanges); 
+                            filteredYoungerMergeInfo.put(sourcePath, adjustedRangeList);
                         }
-                        SVNMergeRangeList adjustedRangeList = SVNMergeRangeList.fromCollection(adjustedRanges); 
-                        filteredMergeInfo.put(sourcePath, adjustedRangeList);
                     }
                 }
                 
-                if (filteredMergeInfo != null) {
-                    String filteredMergeInfoStr = SVNMergeInfoUtil.formatMergeInfoToString(filteredMergeInfo);
-                    adjustedProperties.put(SVNProperty.MERGE_INFO, filteredMergeInfoStr);
+                Map filteredMergeInfo = null;
+                if (mergeInfo != null && !mergeInfo.isEmpty()) {
+                    Map implicitMergeInfo = getHistoryAsMergeInfo(null, path, SVNRevision.create(targetEntry.getRevision()), 
+                            targetEntry.getRevision(), SVNRepository.INVALID_REVISION, myRepository2, myWCAccess);
+                    
+                    filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(implicitMergeInfo, mergeInfo);
                 }
+                
                 if (oldURL != null) {
                     myRepository2.setLocation(oldURL, false);
+                }
+                
+                if (filteredMergeInfo != null && filteredYoungerMergeInfo != null) {
+                    filteredMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(filteredMergeInfo, filteredYoungerMergeInfo);
+                    
+                } else if (filteredYoungerMergeInfo != null) {
+                    filteredMergeInfo = filteredYoungerMergeInfo;
+                }
+
+                if (filteredMergeInfo != null && !filteredMergeInfo.isEmpty()) {
+                    String filteredMergeInfoStr = SVNMergeInfoUtil.formatMergeInfoToString(filteredMergeInfo);
+                    adjustedProperties.put(SVNProperty.MERGE_INFO, filteredMergeInfoStr);
                 }
             }
         }
@@ -1264,6 +1319,77 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             myLogClient = new SVNLogClient(getRepositoryPool(), getOptions());
         }
         return myLogClient;
+    }
+    
+    private void processChildrenWithNewMergeInfo() throws SVNException {
+        if (myPathsWithNewMergeInfo != null) {
+            for (Iterator pathsIter = myPathsWithNewMergeInfo.iterator(); pathsIter.hasNext();) {
+                File pathWithNewMergeInfo = (File) pathsIter.next();
+                SVNEntry pathEntry = myWCAccess.getVersionedEntry(pathWithNewMergeInfo, false);
+                boolean[] indirect = { false };
+                Map pathExplicitMergeInfo = getWCMergeInfo(pathWithNewMergeInfo, pathEntry, null, SVNMergeInfoInheritance.EXPLICIT, false, 
+                        indirect);
+                
+                SVNURL oldURL = null;
+                if (pathExplicitMergeInfo != null) {
+                    oldURL = ensureSessionURL(myRepository2, pathEntry.getSVNURL());
+                    Map pathInheritedMergeInfo = getWCOrRepositoryMergeInfo(pathWithNewMergeInfo, pathEntry, 
+                            SVNMergeInfoInheritance.NEAREST_ANCESTOR, indirect, false, myRepository2);
+                    
+                    if (pathInheritedMergeInfo != null) {
+                        pathExplicitMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(pathExplicitMergeInfo, pathInheritedMergeInfo);
+                        SVNPropertiesManager.recordWCMergeInfo(pathWithNewMergeInfo, pathExplicitMergeInfo, myWCAccess);
+                    }
+                
+                    MergePath newChild = new MergePath(pathWithNewMergeInfo);
+                    if (!myChildrenWithMergeInfo.contains(newChild)) {
+                        int parentIndex = findNearestAncestor(myChildrenWithMergeInfo.toArray(), false, pathWithNewMergeInfo);
+                        MergePath parent = (MergePath) myChildrenWithMergeInfo.get(parentIndex);
+                        newChild.myRemainingRanges = parent.myRemainingRanges.dup();
+                        myChildrenWithMergeInfo.add(newChild);
+                        Collections.sort(myChildrenWithMergeInfo);
+                    }
+                }
+                
+                if (oldURL != null) {
+                    myRepository2.setLocation(oldURL, false);
+                }
+            }
+        }
+    }
+    
+    private Map splitMergeInfoOnRevision(Map[] mergeInfo, long revision) {
+        Map youngerMergeInfo = null;
+        for (Iterator mergeInfoIter = mergeInfo[0].keySet().iterator(); mergeInfoIter.hasNext();) {
+            String mergeSourcePath = (String) mergeInfoIter.next();
+            SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo[0].get(mergeSourcePath);
+            SVNMergeRange[] ranges = rangeList.getRanges();
+            for (int i = 0; i < ranges.length; i++) {
+                SVNMergeRange range = ranges[i];
+                if (range.getEndRevision() < revision) {
+                    continue;
+                } 
+
+                LinkedList youngerRanges = new LinkedList();
+                for (int j = i; j < ranges.length; j++) {
+                    SVNMergeRange youngerRange = ranges[j].dup();
+                    if (j == i && youngerRange.getStartRevision() < revision) {
+                        youngerRange.setStartRevision(revision);
+                        range.setEndRevision(revision);
+                    }
+                    youngerRanges.add(youngerRange);    
+                }
+                    
+                if (youngerMergeInfo == null) {
+                    youngerMergeInfo = new HashMap();
+                }
+                
+                youngerMergeInfo.put(mergeSourcePath, SVNMergeRangeList.fromCollection(youngerRanges));
+                mergeInfo[0] = SVNMergeInfoUtil.removeMergeInfo(youngerMergeInfo, mergeInfo[0]);
+                break;
+            }
+        }
+        return youngerMergeInfo;
     }
 
     private void ensureWCReflectsRepositorySubTree(File targetWCPath) throws SVNException {
@@ -1489,6 +1615,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 	        doMerge(removeSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
 	                ignoreAncestry, force, dryRun, true, depth);
 		}
+    }
+    
+    public boolean isSameRepository() {
+        return myIsSameRepository;
     }
     
     private boolean isHonorMergeInfo() {
@@ -2065,7 +2195,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             
             boolean indirect[] = { false };
             Map mergeInfo[] = getFullMergeInfo(childEntry, indirect, SVNMergeInfoInheritance.INHERITED, 
-            		null, child.myPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
+            		repository, child.myPath, Math.max(revision1, revision2), Math.min(revision1, revision2));
             child.myPreMergeMergeInfo = mergeInfo[0];
             child.myImplicitMergeInfo = mergeInfo[1];
             child.myIsIndirectMergeInfo = indirect[0];

@@ -43,6 +43,7 @@ public class SVNReporter implements ISVNReporterBaton {
     private SVNDepth myDepth;
     private boolean myIsRestore;
     private boolean myUseDepthCompatibilityTrick;
+    private boolean myIsStatus;
     private File myTarget;
     private ISVNDebugLog myLog;
     private boolean myIsLockOnDemand;
@@ -51,10 +52,12 @@ public class SVNReporter implements ISVNReporterBaton {
     private long myReportedFilesCount;
 
     public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, 
-            boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, ISVNDebugLog log) {
+            boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, 
+            boolean isStatus, ISVNDebugLog log) {
         myInfo = info;
         myDepth = depth;
         myIsRestore = restoreFiles;
+        myIsStatus = isStatus;
         myUseDepthCompatibilityTrick = useDepthCompatibilityTrick;
         myLog = log;
         myTarget = file;
@@ -108,6 +111,10 @@ public class SVNReporter implements ISVNReporterBaton {
             myTotalFilesCount = 1;
             myReportedFilesCount = 1;            
             if (targetEntry.isDirectory()) {
+                if (!myIsStatus && !missing && !targetEntry.isThisDir()) {
+                    missing = true;
+                }
+                
                 if (missing) {
                     reporter.deletePath("");
                 } else if (myDepth != SVNDepth.EMPTY) {
@@ -208,8 +215,7 @@ public class SVNReporter implements ISVNReporterBaton {
                                      entry.getDepth(), false);
                     myReportedFilesCount++;
                 }
-            } else if (entry.isDirectory() && (depth.compareTo(SVNDepth.FILES) > 0 || 
-                                               depth == SVNDepth.UNKNOWN)) {
+            } else if (entry.isDirectory() && (depth.compareTo(SVNDepth.FILES) > 0 || depth == SVNDepth.UNKNOWN)) {
                 if (missing) {
                     if (myIsRestore && entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
                         // remove dir schedule if it is 'scheduled for deletion' but missing.
@@ -224,6 +230,10 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
                 
                 if (wcAccess.isMissing(adminArea.getFile(entry.getName()))) {
+                    if (!myIsStatus) {
+                        reporter.deletePath(path);
+                        myReportedFilesCount++;
+                    }
                     continue;
                 }
                 

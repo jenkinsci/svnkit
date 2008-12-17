@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/www/feed
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/www/feed
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:57:07.000000Z
+2008-08-27T01:16:45.000000Z
 11d29a94f83d6f20f0b1633308a4036f
 2006-11-15T18:38:04.977458Z
 2809
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6708
 
 lgpl.txt
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:57:07.000000Z
+2008-08-27T01:16:45.000000Z
 7fbc338309ac38fefcd64b04bb903e34
 2004-12-19T13:57:48.166302Z
 33
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+26430
 
 feedcreator.class.php
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:57:07.000000Z
+2008-08-27T01:16:45.000000Z
 ec118c6491a5fc368270ac7d82d94c59
 2004-12-19T13:57:48.166302Z
 33
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+49867
 
 rss.php
 file
@@ -71,10 +134,31 @@ file
 
 
 
-2008-07-24T04:57:07.000000Z
+2008-08-27T01:16:45.000000Z
 df0341de777de0e350f9bb78503dd296
 2006-11-10T18:39:23.156171Z
 2787
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1393
 

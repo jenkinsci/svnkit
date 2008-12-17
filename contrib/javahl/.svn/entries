@@ -2,13 +2,13 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/javahl
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-29T12:54:31.537730Z
-4794
+2008-10-29T16:24:06.182374Z
+5057
 alex
 has-props
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:42.000000Z
+2008-08-27T01:16:44.000000Z
 ac35b7b8d4076ccf4bc49d4df769db30
 2005-01-31T19:24:28.057953Z
 193
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2745
 
 javahl.iml
 file
@@ -45,10 +66,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 67427007c8cb0b5342c399e7e116cd3e
 2008-04-14T13:19:58.057202Z
 4160
 semen
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+753
 

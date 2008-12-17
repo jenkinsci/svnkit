@@ -26,7 +26,9 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNWorkspaceMediator;
+import org.tmatesoft.svn.util.SVNLogType;
 
 import org.xml.sax.Attributes;
 
@@ -174,7 +176,11 @@ public class DAVMergeHandler extends BasicDAVHandler {
         } else if (element == DAVElement.CREATOR_DISPLAY_NAME) {
             myAuthor = cdata.toString();
         } else if (element == DAVElement.VERSION_NAME) {
-            myRevision = Long.parseLong(cdata.toString());
+            try {
+                myRevision = Long.parseLong(cdata.toString());
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         } else if (parent == DAVElement.PROPSTAT && element == DAVElement.STATUS) {
             // should be 200
         }

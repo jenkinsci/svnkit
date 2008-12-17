@@ -16,9 +16,11 @@ import java.io.OutputStream;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 
 
 /**
@@ -66,7 +68,11 @@ public class SVNDiffCallback extends AbstractDiffCallback {
 
     public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         if (file2 != null) {
+            boolean useDefaultEncoding = defineEncoding(originalProperties, diff);
             myGenerator.displayFileDiff(getDisplayPath(path), null, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, myResult);
+            if (!useDefaultEncoding) {
+                myGenerator.setEncoding(null);
+            }
         }
         if (diff != null && !diff.isEmpty()) {
             propertiesChanged(path, originalProperties, diff);
@@ -76,7 +82,11 @@ public class SVNDiffCallback extends AbstractDiffCallback {
 
     public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
         if (file1 != null) {
+            boolean useDefaultEncoding = defineEncoding(originalProperties, diff);
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, myResult);
+            if (!useDefaultEncoding) {
+                myGenerator.setEncoding(null);
+            }
         }
         if (diff != null && !diff.isEmpty()) {
             propertiesChanged(path, originalProperties, diff);
@@ -86,7 +96,11 @@ public class SVNDiffCallback extends AbstractDiffCallback {
 
     public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
         if (file1 != null) {
+            boolean useDefaultEncoding = defineEncoding(originalProperties, null);
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(myRevision1), getRevision(myRevision2), mimeType1, mimeType2, myResult);
+            if (useDefaultEncoding) {
+                myGenerator.setEncoding(null);
+            }
         }
         return SVNStatusType.UNKNOWN;
     }
@@ -108,6 +122,29 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             return "(revision " + revision + ")";
         }
         return "(working copy)";
+    }
+
+    private boolean defineEncoding(SVNProperties properties, SVNProperties diff) {
+        if (myGenerator instanceof DefaultSVNDiffGenerator) {
+            DefaultSVNDiffGenerator defaultGenerator = (DefaultSVNDiffGenerator) myGenerator;
+            if (!defaultGenerator.hasEncoding()) {
+                boolean hasOriginCharset = properties  == null ? false : properties.containsName(SVNProperty.CHARSET);
+                String originCharset = properties == null ? null : properties.getStringValue(SVNProperty.CHARSET);
+                boolean hasChangedCharset = diff == null ? false : diff.containsName(SVNProperty.CHARSET);
+                String changedCharset = diff == null ? null : diff.getStringValue(SVNProperty.CHARSET);
+                if (hasOriginCharset || (hasChangedCharset && changedCharset != null)) {
+                    if (originCharset != null) {
+                        defaultGenerator.setEncoding("UTF-8");
+                        return false;
+                    }
+                    if (changedCharset != null) {
+                        defaultGenerator.setEncoding("UTF-8");
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
 }

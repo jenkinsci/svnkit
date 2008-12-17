@@ -402,4 +402,27 @@ public class SVNEvent {
 	public void setPreviousURL(SVNURL url) {
 	    myPreviousURL = url;
 	}
+
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        if (getAction() != null) {
+            sb.append(getAction().toString());
+        }
+        if (getFile() != null) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(getFile().toString());
+        }
+        if (getURL() != null) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(getURL().toString());
+        }
+        return sb.toString();
+    }
+	
+	
 }

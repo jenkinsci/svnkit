@@ -2,7 +2,7 @@
 
 dir
 5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/JSPWikiDocs/SvnkitArchitecture
+http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/JSPWikiDocs/SvnkitArchitecture
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 474b054319a4ea2735ad4c68d7e5d96b
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+43705
 
 access_protocols.png
 file
@@ -45,10 +66,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 74fa5d728002631fe33f78fdd31e00be
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12498
 

@@ -2,11 +2,11 @@
 #
 #  cat_tests.py:  testing cat cases.
 #
-#  Subversion is a tool for revision control. 
+#  Subversion is a tool for revision control.
 #  See http://subversion.tigris.org for more information.
-#    
+#
 # ====================================================================
-# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -28,7 +28,7 @@ Skip = svntest.testcase.Skip
 XFail = svntest.testcase.XFail
 Item = svntest.wc.StateItem
 
- 
+
 ######################################################################
 # Tests
 #
@@ -39,54 +39,56 @@ Item = svntest.wc.StateItem
 
 def cat_local_directory(sbox):
   "cat a local directory"
-  sbox.build()
- 
+  sbox.build(read_only = True)
+
   A_path = os.path.join(sbox.wc_dir, 'A')
-  
+
   svntest.actions.run_and_verify_svn('No error where one is expected',
-                                     None, svntest.SVNAnyOutput, 'cat', A_path)
+                                     None, svntest.verify.AnyOutput,
+                                     'cat', A_path)
 
 def cat_remote_directory(sbox):
   "cat a remote directory"
-  sbox.build(create_wc = False)
- 
-  A_url = svntest.main.current_repo_url + '/A'
-  
+  sbox.build(create_wc = False, read_only = True)
+
+  A_url = sbox.repo_url + '/A'
+
   svntest.actions.run_and_verify_svn('No error where one is expected',
-                                     None, svntest.SVNAnyOutput, 'cat', A_url)
+                                     None, svntest.verify.AnyOutput,
+                                     'cat', A_url)
 
 def cat_base(sbox):
   "cat a file at revision BASE"
-  sbox.build()
- 
+  sbox.build(read_only = True)
+
   wc_dir = sbox.wc_dir
 
   mu_path = os.path.join(wc_dir, 'A', 'mu')
   svntest.main.file_append(mu_path, 'Appended text')
-  
+
   outlines, errlines = svntest.main.run_svn(0, 'cat', mu_path)
 
   # Verify the expected output
   expected_output = svntest.main.greek_state.desc['A/mu'].contents
   if len(outlines) != 1 or outlines[0] != expected_output:
-    raise svntest.Failure ('Cat failed: expected "%s", but received "%s"' % \
+    raise svntest.Failure('Cat failed: expected "%s", but received "%s"' % \
       (expected_output, outlines[0]))
 
 def cat_nonexistent_file(sbox):
   "cat a nonexistent file"
-  sbox.build()
+  sbox.build(read_only = True)
 
   wc_dir = sbox.wc_dir
 
   bogus_path = os.path.join(wc_dir, 'A', 'bogus')
 
   svntest.actions.run_and_verify_svn('No error where one is expected',
-                                     None, svntest.SVNAnyOutput, 'cat',
-                                     bogus_path)
+                                     None, svntest.verify.AnyOutput,
+                                     'cat', bogus_path)
 
 def cat_skip_uncattable(sbox):
   "cat should skip uncattable resources"
-  sbox.build()
+  sbox.build(read_only = True)
 
   wc_dir = sbox.wc_dir
   dir_path = os.path.join(wc_dir, 'A', 'D')
@@ -106,7 +108,7 @@ def cat_skip_uncattable(sbox):
     item_to_cat = os.path.join(dir_path, file)
     if item_to_cat == new_file_path:
       expected_err = ["svn: warning: '" + item_to_cat + "'" + \
-                     " is not under version control or doesn't exist\n"]
+                     " is not under version control\n"]
       svntest.actions.run_and_verify_svn(None, None, expected_err,
                                          'cat', item_to_cat)
     elif os.path.isdir(item_to_cat):
@@ -129,7 +131,7 @@ def cat_skip_uncattable(sbox):
                                      'cat', rho_path, G_path)
 
   expected_err2 = ["svn: warning: '" + new_file_path + "'"
-                   + " is not under version control or doesn't exist\n"]
+                   + " is not under version control\n"]
   svntest.actions.run_and_verify_svn(None, expected_out, expected_err2,
                                      'cat', rho_path, new_file_path)
 
