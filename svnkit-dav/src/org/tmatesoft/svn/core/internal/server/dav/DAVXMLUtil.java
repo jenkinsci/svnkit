@@ -28,6 +28,19 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 public class DAVXMLUtil extends SVNXMLUtil {
     public static final String SVN_DAV_ERROR_TAG = "error";
 
+    public static StringBuffer addEmptyElement(DAVElement element, StringBuffer target) {
+        if (element.getNamespace() == null || "".equals(element.getNamespace())) {
+            target.append("<");
+            target.append(element.getName());
+            target.append("/>");
+            target.append('\n');
+            return target;
+        }
+        
+        target.append("<ns%d:%s/>");
+        return target;
+    }
+    
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target) {
         return openNamespaceDeclarationTag(prefix, header, namespaces, null, target, true);
     }

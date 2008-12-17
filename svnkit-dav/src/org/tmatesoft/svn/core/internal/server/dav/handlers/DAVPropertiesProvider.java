@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -45,17 +44,21 @@ public class DAVPropertiesProvider {
     private boolean myIsDeferred;
     private boolean myIsOperative;
     private DAVResource myResource;
+    private ServletDAVHandler myOwner;
     
-    private DAVPropertiesProvider() {
+    public DAVPropertiesProvider(boolean isDeferred, ServletDAVHandler owner, DAVResource resource) {
+        myIsDeferred = isDeferred;
+        myOwner = owner;
+        myResource = resource;
     }
-    
-    public static DAVPropertiesProvider createPropertiesProvider(DAVResource resource, List namespaceXLate) throws DAVException {
+
+    public static DAVPropertiesProvider createPropertiesProvider(DAVResource resource, ServletDAVHandler owner) throws DAVException {
         DAVResourceURI resourceURI = resource.getResourceURI();
         if (resourceURI.getURI() == null) {
             throw new DAVException("INTERNAL DESIGN ERROR: resource must define its URI.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 0);
         }
         
-        DAVPropertiesProvider provider = new DAVPropertiesProvider();
+        DAVPropertiesProvider provider = new DAVPropertiesProvider(true, owner, resource);
         return provider;
     }
 
@@ -68,15 +71,15 @@ public class DAVPropertiesProvider {
         }
     }
 
-    public void applyRollBack(DAVElement propName, SVNPropertyValue propValue, FSCommitter committer) throws DAVException {
+    public void applyRollBack(DAVElement propName, SVNPropertyValue propValue) throws DAVException {
         if (propValue == null) {
-            removeProperty(propName, committer);
+            removeProperty(propName);
             return;
         }
-        saveValue(propName, propValue, committer);
+        saveValue(propName, propValue);
     }
     
-    public void removeProperty(DAVElement propName, FSCommitter committer) throws DAVException {
+    public void removeProperty(DAVElement propName) throws DAVException {
         String reposPropName = getReposPropName(propName);
         if (reposPropName == null) {
             return;
@@ -95,6 +98,7 @@ public class DAVPropertiesProvider {
                 }
             } else {
                 DAVResourceURI resourceURI = myResource.getResourceURI();
+                FSCommitter committer = getCommitter();
                 committer.changeNodeProperty(resourceURI.getPath(), reposPropName, null);
             }
         } catch (SVNException svne) {
@@ -102,7 +106,7 @@ public class DAVPropertiesProvider {
         }
     }
     
-    public void storeProperty(DAVElementProperty property, FSCommitter committer) throws DAVException {
+    public void storeProperty(DAVElementProperty property) throws DAVException {
         DAVElement propName = property.getName();
         String propValue = property.getFirstValue();
         String reposPropName = getReposPropName(propName);
@@ -129,7 +133,7 @@ public class DAVPropertiesProvider {
             value = SVNPropertyValue.create(propValue);
         }
         
-        saveValue(propName, value, committer);
+        saveValue(propName, value);
     }
    
     public SVNPropertyValue getPropertyValue(DAVElement propName) throws DAVException {
@@ -164,7 +168,7 @@ public class DAVPropertiesProvider {
         return null;
     }
     
-    private void saveValue(DAVElement propName, SVNPropertyValue value, FSCommitter committer) throws DAVException {
+    private void saveValue(DAVElement propName, SVNPropertyValue value) throws DAVException {
         String reposPropName = getReposPropName(propName);
         if (reposPropName == null) {
             DAVConfig config = myResource.getRepositoryManager().getDAVConfig(); 
@@ -192,6 +196,7 @@ public class DAVPropertiesProvider {
                 }
             } else {
                 DAVResourceURI resourceURI = myResource.getResourceURI();
+                FSCommitter committer = getCommitter();
                 committer.changeNodeProperty(resourceURI.getPath(), reposPropName, value);
             }
         } catch (SVNException svne) {
@@ -235,5 +240,10 @@ public class DAVPropertiesProvider {
         }
         
         myResource = resource;
+    }
+    
+    private FSCommitter getCommitter() {
+        return myOwner.getCommitter(myResource.getFSFS(), myResource.getRoot(), myResource.getTxnInfo(), myResource.getLockTokens(), 
+                myResource.getUserName());
     }
 }
