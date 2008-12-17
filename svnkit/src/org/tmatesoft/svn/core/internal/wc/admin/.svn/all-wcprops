@@ -3,59 +3,17 @@ svn:wc:ra_dav:version-url
 V 90
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin
 END
-ISVNEntryHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 112
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/ISVNEntryHandler.java
-END
-SVNAdminAreaFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminAreaFactory.java
-END
 SVNLogRunner.java
 K 25
 svn:wc:ra_dav:version-url
 V 108
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNLogRunner.java
 END
-SVNVersionedProperties.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNVersionedProperties.java
-END
-SVNAdminArea14Factory.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea14Factory.java
-END
-SVNAdminArea15Factory.java
-K 25
-svn:wc:ra_dav:version-url
-V 117
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea15Factory.java
-END
-SVNLog.java
-K 25
-svn:wc:ra_dav:version-url
-V 102
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNLog.java
-END
 SVNAdminArea.java
 K 25
 svn:wc:ra_dav:version-url
 V 108
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea.java
-END
-ISVNAdminAreaFactorySelector.java
-K 25
-svn:wc:ra_dav:version-url
-V 124
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/ISVNAdminAreaFactorySelector.java
 END
 SVNTranslatorInputStream.java
 K 25
@@ -69,35 +27,11 @@ svn:wc:ra_dav:version-url
 V 110
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea14.java
 END
-SVNTranslatorOutputStream.java
-K 25
-svn:wc:ra_dav:version-url
-V 121
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNTranslatorOutputStream.java
-END
-SVNAdminArea15.java
-K 25
-svn:wc:ra_dav:version-url
-V 110
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea15.java
-END
 SVNTranslator.java
 K 25
 svn:wc:ra_dav:version-url
 V 109
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNTranslator.java
-END
-SVNXMLAdminAreaFactory.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNXMLAdminAreaFactory.java
-END
-SVNWCAccess.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNWCAccess.java
 END
 SVNAdminAreaInfo.java
 K 25
@@ -105,41 +39,11 @@ svn:wc:ra_dav:version-url
 V 112
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminAreaInfo.java
 END
-SVNChecksumInputStream.java
-K 25
-svn:wc:ra_dav:version-url
-V 118
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNChecksumInputStream.java
-END
-ISVNCleanupHandler.java
-K 25
-svn:wc:ra_dav:version-url
-V 114
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/ISVNCleanupHandler.java
-END
-SVNProperties13.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNProperties13.java
-END
-SVNProperties14.java
-K 25
-svn:wc:ra_dav:version-url
-V 111
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNProperties14.java
-END
 SVNEntry.java
 K 25
 svn:wc:ra_dav:version-url
 V 104
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNEntry.java
-END
-SVNReporter.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNReporter.java
 END
 SVNXMLAdminArea.java
 K 25
@@ -147,9 +51,9 @@ svn:wc:ra_dav:version-url
 V 111
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNXMLAdminArea.java
 END
-SVNLogImpl.java
+SVNReporter.java
 K 25
 svn:wc:ra_dav:version-url
-V 106
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNLogImpl.java
+V 107
+/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNReporter.java
 END

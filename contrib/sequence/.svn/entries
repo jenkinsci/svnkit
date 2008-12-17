@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence
 http://svn.svnkit.com/repos/svnkit
 
@@ -38,12 +38,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 9eefef3b3b00b2d90e930bed4f15e6d8
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2276
 
 sequence.iml
 file
@@ -51,10 +72,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 e997d40cd1d8933cf360ac8b9b45234e
 2008-04-14T13:19:58.057202Z
 4160
 semen
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+906
 

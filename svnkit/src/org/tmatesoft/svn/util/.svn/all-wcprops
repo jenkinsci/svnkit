@@ -3,33 +3,9 @@ svn:wc:ra_dav:version-url
 V 72
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/util
 END
-SVNDebugLog.java
-K 25
-svn:wc:ra_dav:version-url
-V 89
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/util/SVNDebugLog.java
-END
-SVNDebugLogAdapter.java
-K 25
-svn:wc:ra_dav:version-url
-V 96
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/util/SVNDebugLogAdapter.java
-END
 Version.java
 K 25
 svn:wc:ra_dav:version-url
 V 85
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/util/Version.java
-END
-ISVNDebugLog.java
-K 25
-svn:wc:ra_dav:version-url
-V 90
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/util/ISVNDebugLog.java
-END
-SVNLogType.java
-K 25
-svn:wc:ra_dav:version-url
-V 88
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/util/SVNLogType.java
 END

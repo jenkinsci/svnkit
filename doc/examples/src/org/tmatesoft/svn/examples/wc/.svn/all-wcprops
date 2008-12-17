@@ -9,33 +9,3 @@ svn:wc:ra_dav:version-url
 V 96
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc/Merge.java
 END
-DiffWCToRepository.java
-K 25
-svn:wc:ra_dav:version-url
-V 109
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc/DiffWCToRepository.java
-END
-DiffBASEToHEAD.java
-K 25
-svn:wc:ra_dav:version-url
-V 105
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc/DiffBASEToHEAD.java
-END
-SamplesUtility.java
-K 25
-svn:wc:ra_dav:version-url
-V 105
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc/SamplesUtility.java
-END
-ConflictedMerge.java
-K 25
-svn:wc:ra_dav:version-url
-V 106
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc/ConflictedMerge.java
-END
-Annotations.java
-K 25
-svn:wc:ra_dav:version-url
-V 102
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/doc/examples/src/org/tmatesoft/svn/examples/wc/Annotations.java
-END

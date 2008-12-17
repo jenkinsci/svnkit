@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/JSPWikiDocs/Authentication
 http://svn.svnkit.com/repos/svnkit
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 34caa3cf60b7c2a4391e0849179e8161
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+15335
 
 AuthProvider_In_Work.png
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 e513408390721889b400fc68eb5c6e00
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+59294
 
 AuthProvider_In_Work_1.png
 file
@@ -58,10 +100,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:44.000000Z
 45367bf6d7d9275dbfb83aae38014d11
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+26163
 

@@ -15,15 +15,17 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+
 /**
  * This class connects a java.io.PipedInputStream to a OutputInterface.
- * The outherside of the Pipe must read by another thread, or deadlocks
- * will occure
+ * The other side of the Pipe must read by another thread, or deadlocks
+ * will occur.
  */
 public class SVNInputStream extends PipedInputStream
 {
@@ -31,6 +33,7 @@ public class SVNInputStream extends PipedInputStream
      * my connection to put data into subversion
      */
     Outputer myOutputer;
+
     /**
      * Creates a SVNInputStream so that it is connected with an internal
      * PipedOutputStream
@@ -40,14 +43,16 @@ public class SVNInputStream extends PipedInputStream
     {
         myOutputer = new Outputer(this);
     }
+
     /**
      * Get the Interface to connect to SVNAdmin
-     * @return the connetion interface
+     * @return the connection interface
      */
     public OutputInterface getOutputer()
     {
         return myOutputer;
     }
+
     /**
      * Closes this input stream and releases any system resources associated
      * with the stream.
@@ -55,7 +60,7 @@ public class SVNInputStream extends PipedInputStream
      * <p> The <code>close</code> method of <code>InputStream</code> does
      * nothing.
      *
-     * @exception  IOException  if an I/O error occurs.
+     * @throws  IOException  if an I/O error occurs.
      */
     public void close() throws IOException
     {
@@ -72,10 +77,12 @@ public class SVNInputStream extends PipedInputStream
          * my side of the pipe
          */
         PipedOutputStream myStream;
+
         /**
          * flag that the other side of the pipe has been closed
          */
         boolean closed;
+
         /**
          * build a new connection object
          * @param myMaster  the other side of the pipe
@@ -85,14 +92,15 @@ public class SVNInputStream extends PipedInputStream
         {
             myStream =new PipedOutputStream(myMaster);
         }
+
         /**
          * write the bytes in data to java
-         * @param data          the data to be writtem
+         * @param data          the data to be written
          * @throws IOException  throw in case of problems.
          */
         public int write(byte[] data) throws IOException
         {
-            if(closed)
+            if (closed)
                 throw new IOException("stream has been closed");
             myStream.write(data);
             return data.length;

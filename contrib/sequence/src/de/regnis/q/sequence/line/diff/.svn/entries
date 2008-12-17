@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/line/diff
 http://svn.svnkit.com/repos/svnkit
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 dc683f67bfe6eb6e8425f3ff6612b96a
 2008-06-05T20:44:33.220049Z
 4295
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1197
 
 QDiffManager.java
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 f157a704f4c6fcfe1385ca66b2cf4cb6
 2008-06-05T20:44:33.220049Z
 4295
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3574
 
 QDiffGeneratorFactory.java
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 e5ec3cfb28d81f1a5b9c3639a0685c33
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1044
 
 QDiffNormalGenerator.java
 file
@@ -71,12 +134,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 4e6ec970ca68e281b3ef193d5d24f057
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8773
 
 QDiffSequenceGenerator.java
 file
@@ -84,12 +168,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 40f0553999394394b16aec13a6e98610
 2008-06-05T20:44:33.220049Z
 4295
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6579
 
 QDiffUniGenerator.java
 file
@@ -97,10 +202,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 7e2e5e7e23768400e2a8f1559bf93510
 2008-05-05T15:59:26.389685Z
 4235
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5876
 

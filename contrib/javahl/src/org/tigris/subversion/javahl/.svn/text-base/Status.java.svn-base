@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2005 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2005,2007 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,150 +15,192 @@
  * ====================================================================
  * @endcopyright
  */
+
 package org.tigris.subversion.javahl;
 
 import java.util.Date;
+
 /**
  * Subversion status API.
  * This describes the status of one subversion item (file or directory) in
  * the working copy. Will be returned by SVNClient.status or
  * SVNClient.singleStatus
- * @author Patrick Mayweg
- * @author C&eacute;dric Chabanois
- *         <a href="mailto:cchabanois@ifrance.com">cchabanois@ifrance.com</a>
  */
-public class Status
+public class Status implements java.io.Serializable
 {
+    // Update the serialVersionUID when there is a incompatible change
+    // made to this class.  See any of the following, depending upon
+    // the Java release.
+    // http://java.sun.com/j2se/1.3/docs/guide/serialization/spec/version.doc7.html
+    // http://java.sun.com/j2se/1.4/pdf/serial-spec.pdf
+    // http://java.sun.com/j2se/1.5.0/docs/guide/serialization/spec/version.html#6678
+    // http://java.sun.com/javase/6/docs/platform/serialization/spec/version.html#6678
+    private static final long serialVersionUID = 1L;
+
     /**
      * the url for accessing the item
      */
     private String url;
+
     /**
      * the path in the working copy
      */
     private String path;
+
     /**
      * kind of the item (file, directory or unknonw)
      */
     private int nodeKind;
+
     /**
      * the base revision of the working copy
      */
     private long revision;
+
     /**
      * the last revision the item was changed before base
      */
     private long lastChangedRevision;
+
     /**
      * the last date the item was changed before base (represented in
      * microseconds since the epoch)
      */
     private long lastChangedDate;
+
     /**
      * the last author of the last change before base
      */
     private String lastCommitAuthor;
+
     /**
      * the file or directory status (See StatusKind)
      */
     private int textStatus;
+
     /**
      * the status of the properties (See StatusKind)
      */
     private int propStatus;
+
     /**
      * flag is this item is locked locally by subversion
      * (running or aborted operation)
      */
     private boolean locked;
+
     /**
      * has this item be copied from another item
      */
     private boolean copied;
+
     /**
      * has the url of the item be switch
      */
     private boolean switched;
+
     /**
      * the file or directory status of base (See StatusKind)
      */
     private int repositoryTextStatus;
+
     /**
      * the status of the properties base (See StatusKind)
      */
     private int repositoryPropStatus;
+
     /**
      * if there is a conflict, the filename of the new version
      * from the repository
      */
     private String conflictNew;
+
     /**
      * if there is a conflict, the filename of the common base version
      * from the repository
      */
     private String conflictOld;
+
     /**
      * if there is a conflict, the filename of the former working copy
      * version
      */
     private String conflictWorking;
+
     /**
      * if copied, the url of the copy source
      */
     private String urlCopiedFrom;
+
     /**
      * if copied, the revision number of the copy source
      */
     private long revisionCopiedFrom;
+
     /**
      * @since 1.2
      * token specified for the lock (null if not locked)
      */
     private String lockToken;
+
     /**
      * @since 1.2
      * owner of the lock (null if not locked)
      */
     private String lockOwner;
+
     /**
      * @since 1.2
      * comment specified for the lock (null if not locked)
      */
     private String lockComment;
+
     /**
      * @since 1.2
      * date of the creation of the lock (represented in microseconds
      * since the epoch)
      */
     private long lockCreationDate;
+
     /**
      * @since 1.2
      * the lock in the repository
      */
     private Lock reposLock;
+
     /**
      * @since 1.3
      * Set to the youngest committed revision, or {@link
      * Revision#SVN_INVALID_REVNUM} if not out of date.
      */
     private long reposLastCmtRevision = Revision.SVN_INVALID_REVNUM;
+
     /**
      * @since 1.3
      * Set to the most recent commit date, or 0 if not out of date.
      */
     private long reposLastCmtDate = 0;
+
     /**
      * @since 1.3
      * Set to the node kind of the youngest commit, or {@link
      * NodeKind#none} if not out of date.
      */
     private int reposKind = NodeKind.none;
+
     /**
      * @since 1.3
      * Set to the user name of the youngest commit, or
      * <code>null</code> if not out of date.
      */
     private String reposLastCmtAuthor;
+
+    /**
+     * @since 1.5
+     * Set to the changelist of the item, or <code>null</code> if not under
+     * version control.
+     */
+    private String changelist;
 
     /**
      * this constructor should only called from JNI code
@@ -186,7 +228,7 @@ public class Status
      * @param urlCopiedFrom         if copied, the url of the copy source
      * @param revisionCopiedFrom    if copied, the revision number of the copy
      *                              source
-     * @param switched              flag if the node has been switched in the 
+     * @param switched              flag if the node has been switched in the
      *                              path
      * @param lockToken             the token for the current lock if any
      * @param lockOwner             the owner of the current lock is any
@@ -200,6 +242,7 @@ public class Status
      *                              out of date
      * @param reposLastCmtAuthor    the author of the last commit, if out of
      *                              date
+     * @param changelist            the changelist the item is a member of
      */
     public Status(String path, String url, int nodeKind, long revision,
                   long lastChangedRevision, long lastChangedDate,
@@ -208,10 +251,10 @@ public class Status
                   boolean locked, boolean copied, String conflictOld,
                   String conflictNew, String conflictWorking,
                   String urlCopiedFrom, long revisionCopiedFrom,
-                  boolean switched, String lockToken, String lockOwner, 
+                  boolean switched, String lockToken, String lockOwner,
                   String lockComment, long lockCreationDate, Lock reposLock,
                   long reposLastCmtRevision, long reposLastCmtDate,
-                  int reposKind, String reposLastCmtAuthor)
+                  int reposKind, String reposLastCmtAuthor, String changelist)
     {
         this.path = path;
         this.url = url;
@@ -241,6 +284,7 @@ public class Status
         this.reposLastCmtDate = reposLastCmtDate;
         this.reposKind = reposKind;
         this.reposLastCmtAuthor = reposLastCmtAuthor;
+        this.changelist = changelist;
     }
 
     /**
@@ -272,12 +316,23 @@ public class Status
 
     /**
      * Returns the last date the item was changed or null
-     * @return the last time the item was changed.
-     * or null if not available
+     * @return the last time the item was changed or null if not
+     * available
      */
     public Date getLastChangedDate()
     {
         return microsecondsToDate(lastChangedDate);
+    }
+
+    /**
+     * Returns the last date the item was changed measured in the
+     * number of microseconds since 00:00:00 January 1, 1970 UTC.
+     * @return the last time the item was changed.
+     * @since 1.5
+     */
+    public long getLastChangedDateMicros()
+    {
+        return lastChangedDate;
     }
 
     /**
@@ -578,6 +633,17 @@ public class Status
     }
 
     /**
+     * Returns the lock creation date measured in the number of
+     * microseconds since 00:00:00 January 1, 1970 UTC.
+     * @return the lock creation date
+     * @since 1.5
+     */
+    public long getLockCreationDateMicros()
+    {
+        return lockCreationDate;
+    }
+
+    /**
      * Returns the lock as in the repository
      * @return the lock as in the repository
      * @since 1.2
@@ -618,6 +684,17 @@ public class Status
     }
 
     /**
+     * Return the last committed date measured in the number of
+     * microseconds since 00:00:00 January 1, 1970 UTC.
+     * @return the last committed date
+     * @since 1.5
+     */
+    public long getReposLastCmtDateMicros()
+    {
+        return reposLastCmtDate;
+    }
+
+    /**
      * @return The node kind (e.g. file, directory, etc.), or
      * <code>null</code> if up to date.
      * @since 1.3
@@ -635,6 +712,15 @@ public class Status
     public String getReposLastCmtAuthor()
     {
         return reposLastCmtAuthor;
+    }
+
+    /**
+     * @return the changelist name
+     * @since 1.5
+     */
+    public String getChangelist()
+    {
+        return changelist;
     }
 
     /**

@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/getopt_tests_data
+END
+svn_help--version_stdout
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/getopt_tests_data/svn_help--version_stdout
+END
+svn_help_stdout
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/getopt_tests_data/svn_help_stdout
+END
+svn_help_log_switch_stdout
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/getopt_tests_data/svn_help_log_switch_stdout
+END
+svn--version_stdout
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/getopt_tests_data/svn--version_stdout
+END
+svn--help_stdout
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/getopt_tests_data/svn--help_stdout
+END

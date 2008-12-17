@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest
+END
+wc.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/wc.py
+END
+testcase.py
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/testcase.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/__init__.py
+END
+tree.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/tree.py
+END
+actions.py
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/actions.py
+END
+entry.py
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/entry.py
+END
+main.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/main.py
+END
+verify.py
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/svn/!svn/ver/32783/tags/1.5.2/subversion/tests/cmdline/svntest/verify.py
+END

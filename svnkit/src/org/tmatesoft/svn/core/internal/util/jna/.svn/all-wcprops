@@ -3,12 +3,6 @@ svn:wc:ra_dav:version-url
 V 90
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna
 END
-ISVNWinCryptLibrary.java
-K 25
-svn:wc:ra_dav:version-url
-V 115
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNWinCryptLibrary.java
-END
 JNALibraryLoader.java
 K 25
 svn:wc:ra_dav:version-url
@@ -20,18 +14,6 @@ K 25
 svn:wc:ra_dav:version-url
 V 108
 /repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNLinuxUtil.java
-END
-SVNWinCrypt.java
-K 25
-svn:wc:ra_dav:version-url
-V 107
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNWinCrypt.java
-END
-ISVNCLibrary.java
-K 25
-svn:wc:ra_dav:version-url
-V 108
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util/jna/ISVNCLibrary.java
 END
 SVNWin32Util.java
 K 25

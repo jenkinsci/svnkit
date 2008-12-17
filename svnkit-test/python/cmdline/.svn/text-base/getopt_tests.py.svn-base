@@ -2,9 +2,9 @@
 #
 #  getopt_tests.py:  testing the svn command line processing
 #
-#  Subversion is a tool for revision control. 
+#  Subversion is a tool for revision control.
 #  See http://subversion.tigris.org for more information.
-#    
+#
 # ====================================================================
 # Copyright (c) 2000-2004 CollabNet.  All rights reserved.
 #
@@ -17,7 +17,7 @@
 ######################################################################
 
 # General modules
-import string, sys, re, os.path
+import sys, re, os.path
 
 # Our testing module
 import svntest
@@ -56,8 +56,9 @@ del_lines_res = [
                  re.compile(r'\s+compiled\s+'),
 
                  # Also for 'svn --version':
-                 re.compile(r"\* ra_(dav|local|svn|serf) :"),
+                 re.compile(r"\* ra_(neon|local|svn|serf) :"),
                  re.compile(r"  - handles '(https?|file|svn)' scheme"),
+                 re.compile(r"  - with Cyrus SASL authentication"),
                  re.compile(r"\* fs_(base|fs) :"),
                 ]
 

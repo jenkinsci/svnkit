@@ -5,7 +5,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -17,6 +17,7 @@
 
 import os
 import types
+import sys
 
 import svntest.tree
 
@@ -43,9 +44,21 @@ class State:
 
     self.desc.update(more_desc)
 
+  def add_state(self, parent, state):
+    "Import state items from a State object, reparent the items to PARENT."
+    assert isinstance(state, State)
+
+    if parent and parent[-1] != '/':
+      parent += '/'
+    for path, item in state.desc.items():
+      path = parent + path
+      self.desc[path] = item
+
   def remove(self, *paths):
     "Remove a path from the state (the path must exist)."
     for path in paths:
+      if sys.platform == 'win32':
+        path = path.replace('\\', '/')
       del self.desc[path]
 
   def copy(self, new_root=None):
@@ -67,7 +80,14 @@ class State:
     """
     if args:
       for path in args:
-        apply(self.desc[path].tweak, (), kw)
+        try:
+          if sys.platform == 'win32':
+            path = path.replace('\\', '/')
+          path_ref = self.desc[path]
+        except KeyError, e:
+          e.args = "Path '%s' not present in WC state descriptor" % path
+          raise
+        apply(path_ref.tweak, (), kw)
     else:
       for item in self.desc.values():
         apply(item.tweak, (), kw)
@@ -80,8 +100,8 @@ class State:
 
   def subtree(self, subtree_path):
     """Return a State object which is a deep copy of the sub-tree
-    identified by PATH (which is assumed to contain only on element
-    rooted at the tree of this State object's WC_DIR)."""
+    identified by SUBTREE_PATH (which is assumed to contain only one
+    element rooted at the tree of this State object's WC_DIR)."""
     desc = { }
     for path, item in self.desc.items():
       path_elements = path.split("/")
@@ -141,6 +161,8 @@ class State:
 
     return svntest.tree.build_generic_tree(nodelist)
 
+  def __str__(self):
+    return str(self.old_tree())
 
 class StateItem:
   """Describes an individual item within a working copy.
@@ -181,6 +203,6 @@ class StateItem:
   def tweak(self, **kw):
     for name, value in kw.items():
       ### refine the revision args (for now) to ensure they are strings
-      if name == 'wc_rev':
+      if value is not None and name == 'wc_rev':
         value = str(value)
       setattr(self, name, value)
