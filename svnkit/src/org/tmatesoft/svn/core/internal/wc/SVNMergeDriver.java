@@ -110,6 +110,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     protected SVNRepository myRepository2;
     private SVNLogClient myLogClient;
     private List myPathsWithNewMergeInfo;
+    private LinkedList myPathsWithDeletedMergeInfo;
     
     public SVNMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -836,6 +837,13 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
         myPathsWithNewMergeInfo.add(path);
     }
+
+    protected void addPathWithDeletedMergeInfo(File path) {
+        if (myPathsWithDeletedMergeInfo == null) {
+            myPathsWithDeletedMergeInfo = new LinkedList();
+        }
+        myPathsWithDeletedMergeInfo.add(path);
+    }
     
     protected SVNRepository ensureRepository(SVNRepository repository, SVNURL url) throws SVNException {
         if (repository != null) {
@@ -1095,6 +1103,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     }
                     
                     processChildrenWithNewMergeInfo();
+                    processChildrenWithDeletedMergeInfo();
                     
                     removeFirstRangeFromRemainingRanges(endRev, myChildrenWithMergeInfo);
                     nextEndRev = getYoungestEndRevision(myChildrenWithMergeInfo, isRollBack);
@@ -1371,6 +1380,19 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 
                 if (oldURL != null) {
                     myRepository2.setLocation(oldURL, false);
+                }
+            }
+        }
+    }
+    
+    private void processChildrenWithDeletedMergeInfo() throws SVNException {
+        if (myPathsWithDeletedMergeInfo != null && !myIsDryRun) {
+            Iterator children = myChildrenWithMergeInfo.iterator();
+            children.next(); // skip first.
+            while(children.hasNext()) {
+                MergePath path = (MergePath) children.next();
+                if (path != null && myPathsWithDeletedMergeInfo.contains(path.myPath)) {
+                    children.remove();             
                 }
             }
         }
