@@ -97,13 +97,15 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             }
             SVNStatusType status = SVNPropertiesManager.mergeProperties(getWCAccess(), file, originalProperties, regularProps, 
                     false, myIsDryRun);
-            for (Iterator propsIter = regularProps.nameSet().iterator(); propsIter.hasNext();) {
-                String propName = (String) propsIter.next();
-                SVNPropertyValue propValue = regularProps.getSVNPropertyValue(propName);
-                if (SVNProperty.MERGE_INFO.equals(propName) && propValue != null) {
-                    SVNPropertyValue mergeInfoProp = originalProperties.getSVNPropertyValue(SVNProperty.MERGE_INFO);
-                    if (mergeInfoProp == null) {
-                        myMergeDriver.addPathWithNewMergeInfo(file);
+            if (!myIsDryRun) {
+                for (Iterator propsIter = regularProps.nameSet().iterator(); propsIter.hasNext();) {
+                    String propName = (String) propsIter.next();
+                    SVNPropertyValue propValue = regularProps.getSVNPropertyValue(propName);
+                    if (SVNProperty.MERGE_INFO.equals(propName) && propValue != null) {
+                        SVNPropertyValue mergeInfoProp = originalProperties.getSVNPropertyValue(SVNProperty.MERGE_INFO);
+                        if (mergeInfoProp == null) {
+                            myMergeDriver.addPathWithNewMergeInfo(file);
+                        }
                     }
                 }
             }

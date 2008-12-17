@@ -1340,7 +1340,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     private void processChildrenWithNewMergeInfo() throws SVNException {
-        if (myPathsWithNewMergeInfo != null) {
+        if (myPathsWithNewMergeInfo != null && !myIsDryRun) {
             for (Iterator pathsIter = myPathsWithNewMergeInfo.iterator(); pathsIter.hasNext();) {
                 File pathWithNewMergeInfo = (File) pathsIter.next();
                 SVNEntry pathEntry = myWCAccess.getVersionedEntry(pathWithNewMergeInfo, false);
@@ -2357,7 +2357,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return editor;
     }
 
-    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
+            SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
         if (editor == null) {
             editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
                     defaultStart, revision, myIsDryRun, this, this);
