@@ -2,7 +2,7 @@
 tiger
 ant clean build-src build-library
 
-version=1.2.0-hudson-3
+version=1.2.1-hudson-1
 
 # be sure to update pom.xml and svnkit.build.properties
 
