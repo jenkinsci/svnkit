@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
@@ -579,40 +579,6 @@ has-props
 
 29531
 
-SVNProperty.java
-file
-
-
-
-
-2008-10-30T04:44:59.000000Z
-54eef790094521eb2987f5b7c8c95b8e
-2008-08-26T22:48:25.933321Z
-4775
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-21762
-
 SVNErrorCode.java
 file
 
@@ -646,6 +612,40 @@ has-props
 
 
 36386
+
+SVNProperty.java
+file
+
+
+
+
+2008-10-30T04:44:59.000000Z
+54eef790094521eb2987f5b7c8c95b8e
+2008-08-26T22:48:25.933321Z
+4775
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+21762
 
 SVNMergeInfoInheritance.java
 file
@@ -752,9 +752,6 @@ has-props
 javahl
 dir
 
-io
-dir
-
 SVNDirEntry.java
 file
 
@@ -788,6 +785,9 @@ has-props
 
 
 12280
+
+io
+dir
 
 ISVNCanceller.java
 file

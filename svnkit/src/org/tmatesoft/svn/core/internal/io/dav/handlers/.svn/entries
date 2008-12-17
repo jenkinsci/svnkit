@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
 http://svn.svnkit.com/repos/svnkit
 
@@ -25,40 +25,6 @@ svn:special svn:externals svn:needs-lock
 
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
-
-DAVMergeInfoHandler.java
-file
-
-
-
-
-2008-10-30T04:44:38.000000Z
-d45287ee22f8b9b6bbf356b557533637
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3467
 
 DAVGetLocksHandler.java
 file
@@ -94,6 +60,40 @@ has-props
 
 5309
 
+DAVMergeInfoHandler.java
+file
+
+
+
+
+2008-10-30T04:44:38.000000Z
+d45287ee22f8b9b6bbf356b557533637
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3467
+
 DAVLocationSegmentsHandler.java
 file
 
@@ -128,40 +128,6 @@ has-props
 
 4824
 
-DAVLogHandler.java
-file
-
-
-
-
-2008-10-30T04:44:38.000000Z
-6ff7bc998961aff111c7f6e013d56d60
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-11353
-
 BasicDAVHandler.java
 file
 
@@ -195,6 +161,40 @@ has-props
 
 
 5397
+
+DAVLogHandler.java
+file
+
+
+
+
+2008-10-30T04:44:38.000000Z
+6ff7bc998961aff111c7f6e013d56d60
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11353
 
 DAVEditorHandler.java
 file
@@ -298,14 +298,14 @@ has-props
 
 2866
 
-DAVOptionsHandler.java
+BasicDAVDeltaHandler.java
 file
 
 
 
 
 2008-10-30T04:44:38.000000Z
-9a7f634f6318615e76d3349b66434df9
+5b0f4d6fa8fddf12bea754c04c9a7578
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -330,7 +330,7 @@ has-props
 
 
 
-2017
+4093
 
 DAVLocationsHandler.java
 file
@@ -366,14 +366,14 @@ has-props
 
 3223
 
-BasicDAVDeltaHandler.java
+DAVOptionsHandler.java
 file
 
 
 
 
 2008-10-30T04:44:38.000000Z
-5b0f4d6fa8fddf12bea754c04c9a7578
+9a7f634f6318615e76d3349b66434df9
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -398,16 +398,16 @@ has-props
 
 
 
-4093
+2017
 
-DAVReplayHandler.java
+DAVDateRevisionHandler.java
 file
 
 
 
 
 2008-10-30T04:44:38.000000Z
-18e978a77c127e1102f1ecb35f07fb4d
+e5d56a211e9db7c4794ef2b2a1e162aa
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -432,7 +432,7 @@ has-props
 
 
 
-10807
+2099
 
 DAVPropertiesHandler.java
 file
@@ -468,14 +468,14 @@ has-props
 
 7677
 
-DAVDateRevisionHandler.java
+DAVReplayHandler.java
 file
 
 
 
 
 2008-10-30T04:44:38.000000Z
-e5d56a211e9db7c4794ef2b2a1e162aa
+18e978a77c127e1102f1ecb35f07fb4d
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -500,7 +500,7 @@ has-props
 
 
 
-2099
+10807
 
 DAVFileRevisionHandler.java
 file

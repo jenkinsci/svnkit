@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/wc
 http://svn.svnkit.com/repos/svnkit
 
@@ -94,40 +94,6 @@ has-props
 
 20704
 
-SVNCommitMediator.java
-file
-
-
-
-
-2008-10-30T04:44:41.000000Z
-767b6daf3ccecea9ff68df2131dec55e
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3079
-
 ISVNAuthenticationStorage.java
 file
 
@@ -162,14 +128,14 @@ has-props
 
 2987
 
-SVNFileType.java
+SVNCommitMediator.java
 file
 
 
 
 
 2008-10-30T04:44:41.000000Z
-95c9da65cd55073f8092dd9a2f9e632f
+767b6daf3ccecea9ff68df2131dec55e
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -194,7 +160,7 @@ has-props
 
 
 
-6518
+3079
 
 SVNAmbientDepthFilterEditor.java
 file
@@ -230,16 +196,16 @@ has-props
 
 10602
 
-SVNCancellableOutputStream.java
+SVNFileType.java
 file
 
 
 
 
 2008-10-30T04:44:41.000000Z
-1316fc1def0df6e942b42b5284f0b7de
-2008-09-09T20:09:53.475184Z
-4846
+95c9da65cd55073f8092dd9a2f9e632f
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
 
@@ -262,7 +228,7 @@ has-props
 
 
 
-2100
+6518
 
 SVNSynchronizeEditor.java
 file
@@ -298,6 +264,40 @@ has-props
 
 5244
 
+SVNCancellableOutputStream.java
+file
+
+
+
+
+2008-10-30T04:44:41.000000Z
+1316fc1def0df6e942b42b5284f0b7de
+2008-09-09T20:09:53.475184Z
+4846
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2100
+
 SVNDiffStatusEditor.java
 file
 
@@ -331,40 +331,6 @@ has-props
 
 
 5735
-
-SVNAdminUtil.java
-file
-
-
-
-
-2008-10-30T04:44:41.000000Z
-4e3b50dcc67f3095528843e246845b90
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7825
 
 SVNWCProperties.java
 file
@@ -400,6 +366,40 @@ has-props
 
 20529
 
+SVNAdminUtil.java
+file
+
+
+
+
+2008-10-30T04:44:41.000000Z
+4e3b50dcc67f3095528843e246845b90
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7825
+
 ISVNMergeInfoFilter.java
 file
 
@@ -434,40 +434,6 @@ has-props
 
 834
 
-SVNNodeEditor.java
-file
-
-
-
-
-2008-10-30T04:44:41.000000Z
-9e756eed5c9c5ebbf64e03a787f32f14
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-20576
-
 SVNCancellableEditor.java
 file
 
@@ -501,6 +467,40 @@ has-props
 
 
 5664
+
+SVNNodeEditor.java
+file
+
+
+
+
+2008-10-30T04:44:41.000000Z
+9e756eed5c9c5ebbf64e03a787f32f14
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20576
 
 SVNPasswordCipher.java
 file
@@ -1253,40 +1253,6 @@ has-props
 
 5552
 
-DefaultSVNMerger.java
-file
-
-
-
-
-2008-10-30T04:44:41.000000Z
-cf1e02785904a837124980c1b91cc185
-2008-08-15T15:28:48.918752Z
-4717
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-42125
-
 ISVNLoadHandler.java
 file
 
@@ -1321,16 +1287,16 @@ has-props
 
 1706
 
-SVNPropertiesManager.java
+DefaultSVNMerger.java
 file
 
 
 
 
 2008-10-30T04:44:41.000000Z
-2622331434da3ff01208cf82cb6a4567
-2008-08-28T19:30:55.179841Z
-4792
+cf1e02785904a837124980c1b91cc185
+2008-08-15T15:28:48.918752Z
+4717
 alex
 has-props
 
@@ -1353,7 +1319,7 @@ has-props
 
 
 
-23442
+42125
 
 DefaultDumpFilterHandler.java
 file
@@ -1388,6 +1354,40 @@ has-props
 
 
 24770
+
+SVNPropertiesManager.java
+file
+
+
+
+
+2008-10-30T04:44:41.000000Z
+2622331434da3ff01208cf82cb6a4567
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23442
 
 SVNPath.java
 file
@@ -1627,8 +1627,39 @@ has-props
 
 31562
 
-admin
-dir
+SVNDepthFilterEditor.java
+file
+
+
+
+
+2008-10-30T04:44:41.000000Z
+003c6a3a0d839dfa371712709c652fe3
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7828
 
 SVNStatusUtil.java
 file
@@ -1664,39 +1695,8 @@ has-props
 
 13964
 
-SVNDepthFilterEditor.java
-file
-
-
-
-
-2008-10-30T04:44:41.000000Z
-003c6a3a0d839dfa371712709c652fe3
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7828
+admin
+dir
 
 AbstractDiffCallback.java
 file
@@ -1766,40 +1766,6 @@ has-props
 
 879
 
-SVNDiffCallback.java
-file
-
-
-
-
-2008-10-30T04:44:41.000000Z
-c22f0d3d45a028d8fd285173189f9c71
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-4694
-
 ISVNPropertyComparator.java
 file
 
@@ -1834,14 +1800,14 @@ has-props
 
 909
 
-SVNExportEditor.java
+SVNDiffCallback.java
 file
 
 
 
 
 2008-10-30T04:44:41.000000Z
-0f85eec93c1470224bcc9ada8115186c
+c22f0d3d45a028d8fd285173189f9c71
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -1866,7 +1832,7 @@ has-props
 
 
 
-10484
+4694
 
 SVNCompositeConfigFile.java
 file
@@ -1902,14 +1868,14 @@ has-props
 
 1804
 
-ISVNFileFetcher.java
+SVNExportEditor.java
 file
 
 
 
 
 2008-10-30T04:44:41.000000Z
-50ed7377cd40dd4aac5672afcdbef4ae
+0f85eec93c1470224bcc9ada8115186c
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -1934,7 +1900,7 @@ has-props
 
 
 
-909
+10484
 
 SVNUpdateEditor.java
 file
@@ -1969,6 +1935,40 @@ has-props
 
 
 72426
+
+ISVNFileFetcher.java
+file
+
+
+
+
+2008-10-30T04:44:41.000000Z
+50ed7377cd40dd4aac5672afcdbef4ae
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+909
 
 SVNStatusEditor.java
 file

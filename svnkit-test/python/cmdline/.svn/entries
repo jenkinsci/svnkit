@@ -1,14 +1,14 @@
-8
+9
 
 dir
-32289
-http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline
+34802
+http://svn.collab.net/repos/svn/tags/1.5.2/subversion/tests/cmdline
 http://svn.collab.net/repos/svn
 
 
 
-2008-06-11T05:49:51.896376Z
-31699
+2008-08-27T16:09:18.120423Z
+32761
 hwright
 has-props
 
@@ -32,12 +32,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/revert_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 16a92fab3caed592fd4838b10443ad75
 2007-11-23T22:51:54.246788Z
 27997
 hwright
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+32804
 
 cat_tests.py
 file
@@ -45,25 +66,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/cat_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 bd25e9525003cb81318cdb410d69ebac
 2006-05-31T11:44:01.063071Z
 19867
 lundblad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5280
 
 svneditor.bat
 file
 
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/svneditor.bat
 
 
-
-2008-07-24T05:03:16.000000Z
+2008-07-24T22:30:36.000000Z
 3d97d624152d406bfd1caf008415bdde
 2007-10-06T09:49:27.423762Z
 26987
 lgo
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+139
 
 import_tests.py
 file
@@ -71,25 +134,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/import_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 204260b4e463fcbfc2371c9bdc1180cb
 2006-07-03T09:24:52.908681Z
 20369
 lundblad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12883
 
 mergeinfo_tests.py
 file
 
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/mergeinfo_tests.py
 
 
-
-2008-07-24T05:03:16.000000Z
+2008-12-17T22:43:15.000000Z
 e86fb48fc469a476d2bab9a9b10ef034
 2008-04-11T13:20:03.299751Z
 30541
 cmpilato
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4700
 
 svnadmin_tests.py
 file
@@ -97,12 +202,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnadmin_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 bea72958f27a595615bd8724b25d0ad3
 2007-05-18T23:49:35.364303Z
 25066
 pburba
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+13594
 
 log_tests.py
 file
@@ -110,25 +236,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/log_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 b7d0a284820885a93a2c217691d4a6df
 2006-05-31T18:26:07.064048Z
 19877
 danderson
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+29273
 
 changelist_tests.py
 file
 
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/changelist_tests.py
 
 
-
-2008-07-24T05:03:16.000000Z
+2008-07-24T22:30:36.000000Z
 0386b987a91b8e3244050baf0653f722
 2008-04-09T17:15:32.698676Z
 30454
 hwright
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+34999
 
 special_tests_data
 dir
@@ -142,12 +310,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/trans_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 d26f60c9f2bf445ec49bfa303c8d4dda
 2006-07-03T09:01:05.601473Z
 20364
 lundblad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+29644
 
 lock_tests.py
 file
@@ -155,12 +344,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/lock_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 0afb4df20a0bf787d8c525fa7cc11011
 2006-06-02T14:12:45.925212Z
 19911
 lundblad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+63532
 
 svnlook_tests.py
 file
@@ -168,38 +378,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnlook_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 51be65036b9d4898e0d37d8c4b7bebc8
 2005-09-28T20:07:31.793351Z
 16328
 lundblad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11854
 
 svneditor.py
 file
 
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/svneditor.py
 
 
-
-2008-07-24T05:03:16.000000Z
+2008-07-24T22:30:36.000000Z
 c069f6a4e75a4405286c77c8edec92cd
 2007-10-05T20:56:20.189617Z
 26960
 hwright
 has-props
-
-history_tests.py
-file
-
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/history_tests.py
 
 
-2008-07-24T04:49:44.000000Z
-db67c3d1ecf67604c461397fd0da1bd6
-2005-09-09T09:30:51.782875Z
-16097
-cmpilato
-has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1445
 
 switch_tests.py
 file
@@ -207,25 +446,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/switch_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 7c44c2671203ecd93db6b211b02200a7
 2006-02-09T01:36:05.899913Z
 18397
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+41724
 
-svndumpfilter_tests.py
+history_tests.py
 file
 
+http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/history_tests.py
 
 
-
-2008-07-24T05:03:16.000000Z
-14c46e8cf4a6eb9496beda1599450614
-2008-04-28T10:35:31.533357Z
-30808
-kameshj
+2008-12-17T22:43:15.000000Z
+db67c3d1ecf67604c461397fd0da1bd6
+2005-09-09T09:30:51.782875Z
+16097
+cmpilato
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8248
 
 svnserveautocheck.sh
 file
@@ -233,25 +514,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnserveautocheck.sh
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 8e037dde20e8a2b24cd2b0a7064ce244
 2007-06-01T18:01:16.143140Z
 25255
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2032
 
-svnsync_tests.py
+svndumpfilter_tests.py
 file
 
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnsync_tests.py
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/svndumpfilter_tests.py
 
 
-2008-07-24T04:49:44.000000Z
-4dad1f8db77da8ff7767c61851b3f747
-2007-05-29T19:36:08.439737Z
-25185
-dlr
+2008-07-24T22:30:36.000000Z
+14c46e8cf4a6eb9496beda1599450614
+2008-04-28T10:35:31.533357Z
+30808
+kameshj
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5682
 
 theta.bin
 file
@@ -259,12 +582,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/theta.bin
 
 
-2008-07-24T04:49:44.000000Z
+2008-02-05T02:05:43.000000Z
 b944cc2f2d54aafc58e53da4cd330ac3
 2002-12-05T19:24:07.064498Z
 4013
 brane
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1380
+
+svnsync_tests.py
+file
+
+http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnsync_tests.py
+
+
+2008-12-17T22:43:15.000000Z
+4dad1f8db77da8ff7767c61851b3f747
+2007-05-29T19:36:08.439737Z
+25185
+dlr
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23372
 
 getopt_tests_data
 dir
@@ -275,12 +653,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/externals_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 1960dbd7b6de2d67dbaa202ec7e713ce
 2006-05-31T11:44:01.063071Z
 19867
 lundblad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+32567
 
 diff_tests.py
 file
@@ -288,12 +687,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/diff_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 ad508a2819772eb743a76c4eb4facfe2
 2007-09-11T04:10:15.868166Z
 26532
 hwright
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+98419
 
 autoprop_tests.py
 file
@@ -301,25 +721,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/autoprop_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 015c368a23dc6df1d958526796598356
 2005-09-26T07:16:59.600674Z
 16266
 brane
 has-props
-
-merge_authz_tests.py
-file
 
 
 
 
-2008-07-24T05:03:16.000000Z
-124bc2fa59011e44590e1a4de9bf6d33
-2008-04-11T13:20:03.299751Z
-30541
-cmpilato
-has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8996
 
 copy_tests.py
 file
@@ -327,12 +755,67 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/copy_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 fb5d5fd04e48fd94d62710d4b5a90426
 2006-10-15T21:34:32.332039Z
 21951
 maxb
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+74145
+
+merge_authz_tests.py
+file
+
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/merge_authz_tests.py
+
+
+2008-07-24T22:30:36.000000Z
+124bc2fa59011e44590e1a4de9bf6d33
+2008-04-11T13:20:03.299751Z
+30541
+cmpilato
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+19309
 
 stat_tests.py
 file
@@ -340,12 +823,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/stat_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 87f439f372a960d70e653e8f779b7fd5
 2006-10-15T22:22:27.478370Z
 21953
 maxb
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+42334
 
 svnversion_tests.py
 file
@@ -353,38 +857,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/svnversion_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 e3f0b8fc50b82dd173c09bbddfe4c6aa
 2005-09-07T11:49:28.589715Z
 16080
 julianfoad
 has-props
-
-blame_tests.py
-file
-
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/blame_tests.py
 
 
-2008-07-24T04:49:44.000000Z
-307ed4eee2c0d0fd4096af4080961bbd
-2006-07-03T09:18:49.123238Z
-20367
-lundblad
-has-props
-
-prop_tests.py
-file
-
-http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/prop_tests.py
 
 
-2008-07-24T04:49:44.000000Z
-704447988c3ad3b91975f71426493999
-2007-12-07T22:32:10.598436Z
-28338
-dlr
-has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7003
 
 special_tests.py
 file
@@ -392,12 +891,101 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/special_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 e2fe8880ddfbcdb56c3dd165eb26adf8
 2007-10-30T20:10:45.500647Z
 27498
 glasser
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12913
+
+prop_tests.py
+file
+
+http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/prop_tests.py
+
+
+2008-12-17T22:43:15.000000Z
+704447988c3ad3b91975f71426493999
+2007-12-07T22:32:10.598436Z
+28338
+dlr
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+46563
+
+blame_tests.py
+file
+
+http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/blame_tests.py
+
+
+2008-12-17T22:43:15.000000Z
+307ed4eee2c0d0fd4096af4080961bbd
+2006-07-03T09:18:49.123238Z
+20367
+lundblad
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+14483
 
 basic_tests.py
 file
@@ -405,12 +993,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/basic_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 51cafde2f40c3b133b84ff86d44db367
 2007-03-01T22:25:10.746413Z
 23542
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+67473
 
 export_tests.py
 file
@@ -418,12 +1027,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/export_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 1f725e19206c8873582a25045149fc04
 2007-03-26T17:03:33.737084Z
 24154
 hwright
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+15589
 
 svnadmin_tests_data
 dir
@@ -434,12 +1064,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/update_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 8ee9d2e17d9ec920ea304e3c51be956d
 2007-03-01T22:25:10.746413Z
 23542
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+72150
 
 log_tests_data
 dir
@@ -450,12 +1101,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/README
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 a810ed1a1cb17f8f329be4e0be3ffc94
 2006-04-27T17:18:09.335740Z
 19462
 rooneg
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9298
 
 utf8_tests.py
 file
@@ -463,12 +1135,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/utf8_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 e4c0f37a14b1ddcae6b970c0059cf6f1
 2005-09-07T11:49:28.589715Z
 16080
 julianfoad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5110
 
 commit_tests.py
 file
@@ -476,12 +1169,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/commit_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 e5539148a75b6c5a48019b35aef37d9d
 2007-08-03T02:37:41.937345Z
 25941
 hwright
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+77889
 
 authz_tests.py
 file
@@ -489,12 +1203,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/authz_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 0894eda68cfd3ec81f616d0c8d58a5df
 2007-04-04T01:52:06.971852Z
 24393
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+33413
 
 schedule_tests.py
 file
@@ -502,12 +1237,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/schedule_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 c46839dd171a5a6e9a206fdee5db929f
 2006-04-03T14:15:30.773619Z
 19132
 julianfoad
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22362
 
 svntest
 dir
@@ -518,12 +1274,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/merge_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 e8b5072ab0b7136a01b884de69c266b0
 2007-05-16T17:18:01.870568Z
 25043
 malcolm
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+151794
 
 davautocheck.sh
 file
@@ -531,12 +1308,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/davautocheck.sh
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 60c4f15a125c299b05965b30e554d123
 2007-03-03T00:30:11.670162Z
 23558
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9623
 
 getopt_tests.py
 file
@@ -544,12 +1342,33 @@ file
 http://svn.collab.net/repos/svn/tags/1.4.6/subversion/tests/cmdline/getopt_tests.py
 
 
-2008-07-24T04:49:44.000000Z
+2008-12-17T22:43:15.000000Z
 c0497f5b49b6fa027a0ea962841d39ca
 2006-07-10T18:57:27.390403Z
 20508
 rooneg
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6938
 
 svndumpfilter_tests_data
 dir
@@ -557,15 +1376,36 @@ dir
 depth_tests.py
 file
 
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/depth_tests.py
 
 
-
-2008-07-24T05:03:16.000000Z
+2008-07-24T22:30:36.000000Z
 89ba3e63b40c3af9f42cc54a53e8f8d7
 2008-06-04T00:17:23.610689Z
 31576
 hwright
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+64131
 
 svnsync_tests_data
 dir
@@ -573,13 +1413,34 @@ dir
 checkout_tests.py
 file
 
+http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/checkout_tests.py
 
 
-
-2008-07-24T05:03:16.000000Z
+2008-07-24T22:30:36.000000Z
 2835417cabdc3e73c3d59f11f6b02912
 2008-01-14T20:59:15.150118Z
 28902
 cmpilato
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+30226
 

@@ -1,7 +1,7 @@
-8
+9
 
 dir
-32289
+34802
 http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/special_tests_data
 http://svn.collab.net/repos/svn
 
@@ -32,11 +32,33 @@ file
 
 
 
-2008-07-24T05:03:15.000000Z
+2008-07-24T22:30:36.000000Z
 a26a03ccf6f6959feb22bbe60cd3e597
 2007-03-22T21:11:00.268714Z
 24027
 dlr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+621
 
 symlink.dump
 file
@@ -44,9 +66,31 @@ file
 
 
 
-2008-07-24T05:03:15.000000Z
+2008-07-24T22:30:36.000000Z
 70fc33bea0411e6d8cd4b7b70a24dc69
 2007-01-20T22:08:04.187096Z
 23139
 lgo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+771
 

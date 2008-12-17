@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/util
 http://svn.svnkit.com/repos/svnkit
 
@@ -60,16 +60,16 @@ has-props
 
 31034
 
-SVNDate.java
+SVNUUIDGenerator.java
 file
 
 
 
 
 2008-10-30T04:44:50.000000Z
-eb7291c974a1d7ae5aa9a364ea61a7b0
-2008-09-09T20:09:53.475184Z
-4846
+bd95d32a4a58e922b38dabad0e2f2a1f
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-13029
+5344
 
 SVNLogInputStream.java
 file
@@ -128,16 +128,16 @@ has-props
 
 2436
 
-SVNUUIDGenerator.java
+SVNDate.java
 file
 
 
 
 
 2008-10-30T04:44:50.000000Z
-bd95d32a4a58e922b38dabad0e2f2a1f
-2008-08-28T19:30:55.179841Z
-4792
+eb7291c974a1d7ae5aa9a364ea61a7b0
+2008-09-09T20:09:53.475184Z
+4846
 alex
 has-props
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-5344
+13029
 
 SVNLogOutputStream.java
 file
@@ -298,40 +298,6 @@ has-props
 
 16485
 
-SVNBase64.java
-file
-
-
-
-
-2008-10-30T04:44:50.000000Z
-e8f06c094704d1fb35f61d9f26b735e9
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-8088
-
 SVNEncodingUtil.java
 file
 
@@ -365,6 +331,40 @@ has-props
 
 
 13122
+
+SVNBase64.java
+file
+
+
+
+
+2008-10-30T04:44:50.000000Z
+e8f06c094704d1fb35f61d9f26b735e9
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8088
 
 SVNCharsetInputStream.java
 file
@@ -400,14 +400,14 @@ has-props
 
 3291
 
-SVNCharsetOutputStream.java
+ChunkedInputStream.java
 file
 
 
 
 
 2008-10-30T04:44:50.000000Z
-ddde49b57ca58883b9239302ac78d77b
+b3f831b245c05312eb99a7957602fd26
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -432,7 +432,7 @@ has-props
 
 
 
-2737
+5506
 
 SVNFormatUtil.java
 file
@@ -468,14 +468,14 @@ has-props
 
 1348
 
-ChunkedInputStream.java
+SVNCharsetOutputStream.java
 file
 
 
 
 
 2008-10-30T04:44:50.000000Z
-b3f831b245c05312eb99a7957602fd26
+ddde49b57ca58883b9239302ac78d77b
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -500,7 +500,7 @@ has-props
 
 
 
-5506
+2737
 
 SVNStreamGobbler.java
 file

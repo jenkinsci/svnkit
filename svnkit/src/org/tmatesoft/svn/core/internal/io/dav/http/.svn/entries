@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 http://svn.svnkit.com/repos/svnkit
 
@@ -196,40 +196,6 @@ has-props
 
 33902
 
-HTTPAuthentication.java
-file
-
-
-
-
-2008-10-30T04:44:38.000000Z
-1c24b50e7e484c19c46079597cea5128
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-11119
-
 HTTPDigestAuthentication.java
 file
 
@@ -263,6 +229,40 @@ has-props
 
 
 7385
+
+HTTPAuthentication.java
+file
+
+
+
+
+2008-10-30T04:44:38.000000Z
+1c24b50e7e484c19c46079597cea5128
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11119
 
 HTTPBasicAuthentication.java
 file
@@ -298,40 +298,6 @@ has-props
 
 1962
 
-XMLReader.java
-file
-
-
-
-
-2008-10-30T04:44:38.000000Z
-322cc6d392361a238920cd956cc6cffd
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2232
-
 HTTPStatus.java
 file
 
@@ -366,14 +332,14 @@ has-props
 
 3984
 
-HTTPHeader.java
+XMLReader.java
 file
 
 
 
 
 2008-10-30T04:44:38.000000Z
-272e147c4d6ab7dd94c167581f875ab9
+322cc6d392361a238920cd956cc6cffd
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -398,7 +364,7 @@ has-props
 
 
 
-6315
+2232
 
 HTTPRequest.java
 file
@@ -434,6 +400,40 @@ has-props
 
 14802
 
+HTTPHeader.java
+file
+
+
+
+
+2008-10-30T04:44:38.000000Z
+272e147c4d6ab7dd94c167581f875ab9
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6315
+
 HTTPBodyInputStream.java
 file
 
@@ -468,40 +468,6 @@ has-props
 
 2162
 
-SpoolFile.java
-file
-
-
-
-
-2008-10-30T04:44:38.000000Z
-27bee9d4207cc608def0852bcf07f902
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7720
-
 HTTPParser.java
 file
 
@@ -535,6 +501,40 @@ has-props
 
 
 3378
+
+SpoolFile.java
+file
+
+
+
+
+2008-10-30T04:44:38.000000Z
+27bee9d4207cc608def0852bcf07f902
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7720
 
 DefaultHTTPConnectionFactory.java
 file

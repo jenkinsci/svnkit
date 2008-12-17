@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-cli/src/org/tmatesoft/svn/cli
 http://svn.svnkit.com/repos/svnkit
 
@@ -63,40 +63,6 @@ has-props
 
 774
 
-SVNSync.java
-file
-
-
-
-
-2008-10-30T04:41:33.000000Z
-46312638986f10f6041a6ab685c008ce
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-756
-
 SVNCommandUtil.java
 file
 
@@ -130,6 +96,40 @@ has-props
 
 
 19306
+
+SVNSync.java
+file
+
+
+
+
+2008-10-30T04:41:33.000000Z
+46312638986f10f6041a6ab685c008ce
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+756
 
 SVNConsoleAuthenticationProvider.java
 file
@@ -202,40 +202,6 @@ has-props
 svnlook
 dir
 
-SVNVersion.java
-file
-
-
-
-
-2008-10-30T04:41:33.000000Z
-02ee3e45fd362ba2d55bb01a409b3150
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-765
-
 AbstractSVNLauncher.java
 file
 
@@ -269,6 +235,40 @@ has-props
 
 
 5019
+
+SVNVersion.java
+file
+
+
+
+
+2008-10-30T04:41:33.000000Z
+02ee3e45fd362ba2d55bb01a409b3150
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+765
 
 SVNCommandLine.java
 file
@@ -375,9 +375,6 @@ has-props
 svndumpfilter
 dir
 
-svnsync
-dir
-
 AbstractSVNOption.java
 file
 
@@ -411,6 +408,9 @@ has-props
 
 
 2375
+
+svnsync
+dir
 
 svn
 dir

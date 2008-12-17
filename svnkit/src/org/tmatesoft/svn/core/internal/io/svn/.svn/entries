@@ -1,7 +1,7 @@
 9
 
 dir
-5060
+5374
 http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
 http://svn.svnkit.com/repos/svnkit
 
@@ -298,9 +298,6 @@ has-props
 
 1014
 
-sasl
-dir
-
 ISVNConnectorFactory.java
 file
 
@@ -335,39 +332,8 @@ has-props
 
 2158
 
-SVNItem.java
-file
-
-
-
-
-2008-10-30T04:44:33.000000Z
-77aea3ed0c054b10a81dd4cca1800fbb
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3738
+sasl
+dir
 
 SVNPlainAuthenticator.java
 file
@@ -403,14 +369,14 @@ has-props
 
 6877
 
-SVNCommitEditor.java
+SVNItem.java
 file
 
 
 
 
 2008-10-30T04:44:33.000000Z
-a77d6a076efad3fb671b89c3dade1269
+77aea3ed0c054b10a81dd4cca1800fbb
 2008-08-28T19:30:55.179841Z
 4792
 alex
@@ -435,7 +401,7 @@ has-props
 
 
 
-10145
+3738
 
 SVNConnection.java
 file
@@ -470,6 +436,40 @@ has-props
 
 
 15547
+
+SVNCommitEditor.java
+file
+
+
+
+
+2008-10-30T04:44:33.000000Z
+a77d6a076efad3fb671b89c3dade1269
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10145
 
 SVNSSHSession.java
 file
