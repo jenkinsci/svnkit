@@ -74,6 +74,22 @@ public class SVNMergeRangeList {
     }
     
     /**
+     * Replaces the array of {@link SVNMergeRange} objects backed by this object 
+     * with a new one.
+     * 
+     * </p>
+     * This method was introduced because of purposes of convenience. Use this method 
+     * with care as it changes the internal state of this <code>SVNMergeRangeList</code> 
+     * object.
+     * 
+     * @param ranges  new merge ranges array
+     * @since 1.2.2        
+     */
+    public void setRanges(SVNMergeRange[] ranges) {
+        myRanges = ranges;
+    }
+    
+    /**
      * Returns an array of {@link SVNMergeRange} ranges backed by this merge range list object.
      * 
      * <p/>

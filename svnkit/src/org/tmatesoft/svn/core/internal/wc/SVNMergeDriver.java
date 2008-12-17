@@ -2217,6 +2217,25 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             child.myPreMergeMergeInfo = mergeInfo[0];
             child.myImplicitMergeInfo = mergeInfo[1];
             child.myIsIndirectMergeInfo = indirect[0];
+
+            if (index == 0) {
+                long[] rangePoints = SVNMergeInfoUtil.getRangeEndPoints(child.myImplicitMergeInfo);
+                long youngestRev = rangePoints[0];
+                long oldestRev = rangePoints[1];
+                
+                for (Iterator mergeInfoIter = child.myImplicitMergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+                    String sourcePath = (String) mergeInfoIter.next();
+                    SVNMergeRangeList sourceRangeList = (SVNMergeRangeList) child.myImplicitMergeInfo.get(sourcePath);
+                    SVNMergeRange[] srcRanges = sourceRangeList.getRanges();
+                    SVNMergeRange range = srcRanges[srcRanges.length - 1];
+                    youngestRev = range.getEndRevision();
+                    
+                    SVNMergeRangeList rev1rev2RangeList = new SVNMergeRangeList(new SVNMergeRange(oldestRev, youngestRev, true));
+                    SVNMergeRangeList result = sourceRangeList.merge(rev1rev2RangeList);
+                    sourceRangeList.setRanges(result.getRanges());
+                }
+            }
+            
             if (index > 0) {
                 Object[] childrenWithMergeInfoArray = childrenWithMergeInfo.toArray();
                 int parentIndex = findNearestAncestor(childrenWithMergeInfoArray, false, child.myPath);

@@ -37,7 +37,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.ISVNEditor;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -46,6 +48,32 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNMergeInfoUtil {
 
+    public static long[] getRangeEndPoints(Map mergeInfo) {
+        //long[] { youngestRange, oldestRange }
+        long[] rangePoints = { SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION };
+        
+        if (mergeInfo != null) {
+            for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+                String path = (String) mergeInfoIter.next();
+                SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
+                if (!rangeList.isEmpty()) {
+                    SVNMergeRange[] ranges = rangeList.getRanges();
+                    SVNMergeRange range = ranges[ranges.length - 1];
+                    if (!SVNRevision.isValidRevisionNumber(rangePoints[0]) || range.getEndRevision() > rangePoints[0]) {
+                        rangePoints[0] = range.getEndRevision(); 
+                    }
+                    
+                    range = ranges[0];
+                    if (!SVNRevision.isValidRevisionNumber(rangePoints[1]) || rangePoints[1] > range.getStartRevision()) {
+                        rangePoints[1] = range.getStartRevision();
+                    }
+                }
+            }
+        }
+        
+        return rangePoints;
+    }
+    
 	public static Map elideMergeInfoCatalog(Map mergeInfoCatalog) throws SVNException {
 	    Map adjustedMergeInfoCatalog = new TreeMap();
 	    for (Iterator pathsIter = mergeInfoCatalog.keySet().iterator(); pathsIter.hasNext();) {
