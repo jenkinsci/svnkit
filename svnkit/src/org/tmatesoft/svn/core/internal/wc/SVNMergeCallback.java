@@ -101,10 +101,12 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 for (Iterator propsIter = regularProps.nameSet().iterator(); propsIter.hasNext();) {
                     String propName = (String) propsIter.next();
                     SVNPropertyValue propValue = regularProps.getSVNPropertyValue(propName);
-                    if (SVNProperty.MERGE_INFO.equals(propName) && propValue != null) {
+                    if (SVNProperty.MERGE_INFO.equals(propName)) {
                         SVNPropertyValue mergeInfoProp = originalProperties.getSVNPropertyValue(SVNProperty.MERGE_INFO);
-                        if (mergeInfoProp == null) {
+                        if (mergeInfoProp == null && propValue != null) {
                             myMergeDriver.addPathWithNewMergeInfo(file);
+                        } else if (mergeInfoProp != null && propValue == null) {
+                            myMergeDriver.addPathWithDeletedMergeInfo(file);
                         }
                     }
                 }
