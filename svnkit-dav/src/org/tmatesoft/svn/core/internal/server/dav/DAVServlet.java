@@ -202,8 +202,6 @@ public class DAVServlet extends HttpServlet {
     }
     
     private void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {
-        servletResponse.setContentType(XML_CONTENT_TYPE);
-
         DAVResponse response = error.getResponse();
         if (response == null) {
             DAVException stackErr = error;
@@ -212,6 +210,8 @@ public class DAVServlet extends HttpServlet {
             }
             
             if (stackErr != null && stackErr.getTagName() != null) {
+                servletResponse.setContentType(XML_CONTENT_TYPE);
+
                 StringBuffer errorMessageBuffer = new StringBuffer();
                 errorMessageBuffer.append('\n');
                 errorMessageBuffer.append("<D:error xmlns:D=\"DAV:\"");
@@ -249,15 +249,23 @@ public class DAVServlet extends HttpServlet {
             return;
         }
         
-        sendMultiStatus(response, servletResponse, error.getResponseCode());
+        sendMultiStatus(response, servletResponse, error.getResponseCode(), null);
     }
     
-    private void sendMultiStatus(DAVResponse davResponse, HttpServletResponse servletResponse, int statusCode) throws IOException {
-        StringBuffer xmlBuffer = new StringBuffer();
+    private StringBuffer beginMultiStatus(HttpServletResponse servletResponse, int status, Collection namespaces, StringBuffer xmlBuffer) {
+        servletResponse.setContentType(XML_CONTENT_TYPE);
+        servletResponse.setStatus(status);
+        
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", null, xmlBuffer);
-        
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", namespaces, xmlBuffer);
+        return xmlBuffer;
+    }
+    
+    private void sendMultiStatus(DAVResponse davResponse, HttpServletResponse servletResponse, int statusCode, 
+            Collection namespaces) throws IOException {
+        StringBuffer xmlBuffer = new StringBuffer();
+        xmlBuffer = beginMultiStatus(servletResponse, statusCode, namespaces, xmlBuffer);
         while (davResponse != null) {
             DAVPropsResult propResult = davResponse.getPropResult();
             String xmlnsText = propResult.getXMLNSText(); 
