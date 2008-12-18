@@ -111,6 +111,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private SVNLogClient myLogClient;
     private List myPathsWithNewMergeInfo;
     private LinkedList myPathsWithDeletedMergeInfo;
+    private MergeSource myCurrentMergeSource;
     
     public SVNMergeDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -794,7 +795,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             long revision1 = mergeSource.myRevision1;
             long revision2 = mergeSource.myRevision2;
             if (revision1 == revision2 && mergeSource.myURL1.equals(mergeSource.myURL2)) {
-                return;
+                continue;
             }
             
             try {
@@ -805,7 +806,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 myConflictedPaths = null;
                 myDryRunDeletions = dryRun ? new SVNHashMap() : null;
                 myIsAddNecessitatedMerge = false;
-
+                myCurrentMergeSource = mergeSource;
+                
                 if (!checkedMergeInfoCapability) {
                 	myIsMergeInfoCapable = myRepository1.hasCapability(SVNCapability.MERGE_INFO);
                 	checkedMergeInfoCapability = true;
@@ -1201,42 +1203,47 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     elideMergeInfo(myWCAccess, child.myPath, childEntry, isInSwitchedSubTree ? null : myTarget);
                 }
         	}
-        }
-        
-        if (myAddedPaths != null) {
-        	for (Iterator addedPathsIter = myAddedPaths.iterator(); addedPathsIter.hasNext();) {
-				File addedPath = (File) addedPathsIter.next();
-				SVNPropertyValue addedPathParentPropValue = SVNPropertiesManager.getProperty(myWCAccess, 
-						addedPath.getParentFile(), SVNProperty.MERGE_INFO);
-				String addedPathParentPropValueStr = addedPathParentPropValue != null ? 
-						addedPathParentPropValue.getString() : null;
-				if (addedPathParentPropValueStr != null && 
-						addedPathParentPropValueStr.indexOf(SVNMergeRangeList.MERGE_INFO_NONINHERITABLE_STRING) != -1) {
-					String addedPathStr = addedPath.getAbsolutePath().replace(File.separatorChar, '/');
-					String targetMergePathStr = targetMergePath.myPath.getAbsolutePath().replace(File.separatorChar, '/');
-					String commonAncestorPath = SVNPathUtil.getCommonPathAncestor(addedPathStr, 
-							targetMergePathStr);
-					String relativeAddedPath = SVNPathUtil.getRelativePath(commonAncestorPath, addedPathStr);
-					SVNEntry entry = myWCAccess.getVersionedEntry(addedPath, false);
-					Map mergeMergeInfo = new TreeMap();
-					SVNMergeRange rng = range.dup();
-					if (entry.isFile()) {
-						rng.setInheritable(true);
-					} else {
-						rng.setInheritable(!(depth == SVNDepth.INFINITY || depth == SVNDepth.IMMEDIATES));
-					}
-					SVNMergeRangeList rangeList = new SVNMergeRangeList(rng);
-					mergeMergeInfo.put(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeInfoPath, 
-							relativeAddedPath)), rangeList);
-					boolean[] inherited = { false };
-					Map addedPathMergeInfo = getWCMergeInfo(addedPath, entry, null, 
-							SVNMergeInfoInheritance.EXPLICIT, false, inherited);
-					if (addedPathMergeInfo != null) {
-						mergeMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeMergeInfo, addedPathMergeInfo);
-					}
-					SVNPropertiesManager.recordWCMergeInfo(addedPath, mergeMergeInfo, myWCAccess);
-				}
-        	}
+
+            if (myAddedPaths != null) {
+                for (Iterator addedPathsIter = myAddedPaths.iterator(); addedPathsIter.hasNext();) {
+                    File addedPath = (File) addedPathsIter.next();
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "added path = " + addedPath);
+                    SVNPropertyValue addedPathParentPropValue = SVNPropertiesManager.getProperty(myWCAccess, 
+                            addedPath.getParentFile(), SVNProperty.MERGE_INFO);
+                    String addedPathParentPropValueStr = addedPathParentPropValue != null ? 
+                            addedPathParentPropValue.getString() : null;
+                    if (addedPathParentPropValueStr != null && 
+                            addedPathParentPropValueStr.indexOf(SVNMergeRangeList.MERGE_INFO_NONINHERITABLE_STRING) != -1) {
+                        SVNEntry entry = myWCAccess.getVersionedEntry(addedPath, false);
+                        Map mergeMergeInfo = new TreeMap();
+                        SVNMergeRange rng = range.dup();
+                        if (entry.isFile()) {
+                            rng.setInheritable(true);
+                        } else {
+                            rng.setInheritable(!(depth == SVNDepth.INFINITY || depth == SVNDepth.IMMEDIATES));
+                        }
+
+                        String addedPathStr = SVNPathUtil.validateFilePath(addedPath.getAbsolutePath());
+                        String targetMergePathStr = SVNPathUtil.validateFilePath(targetMergePath.myPath.getAbsolutePath());
+                        String commonAncestorPath = SVNPathUtil.getCommonPathAncestor(addedPathStr, targetMergePathStr);
+                        String relativeAddedPath = SVNPathUtil.getRelativePath(commonAncestorPath, addedPathStr);
+                        if (relativeAddedPath.startsWith("/")) {
+                            relativeAddedPath = relativeAddedPath.substring(1);
+                        }
+                        
+                        SVNMergeRangeList rangeList = new SVNMergeRangeList(rng);
+                        mergeMergeInfo.put(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(mergeInfoPath, 
+                                relativeAddedPath)), rangeList);
+                        boolean[] inherited = { false };
+                        Map addedPathMergeInfo = getWCMergeInfo(addedPath, entry, null, 
+                                SVNMergeInfoInheritance.EXPLICIT, false, inherited);
+                        if (addedPathMergeInfo != null) {
+                            mergeMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeMergeInfo, addedPathMergeInfo);
+                        }
+                        SVNPropertiesManager.recordWCMergeInfo(addedPath, mergeMergeInfo, myWCAccess);
+                    }
+                }
+            }
         }
         
         if (err != null) {
@@ -1667,6 +1674,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
     protected boolean isRecordMergeInfo() {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsIgnoreAncestry && !myIsDryRun;
+    }
+    
+    protected MergeSource getCurrentMergeSource() {
+        return myCurrentMergeSource;
     }
     
     private List normalizeMergeSources(File source, SVNURL sourceURL, SVNURL sourceRootURL, 
@@ -2848,6 +2859,15 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         private long myRevision1;
         private SVNURL myURL2;
         private long myRevision2;
+        
+        public long getRevision1() {
+            return myRevision1;
+        }
+        
+        public long getRevision2() {
+            return myRevision2;
+        }
+        
     }
     
     protected static class MergeAction {
