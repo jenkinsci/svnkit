@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -153,8 +154,8 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         StringBuffer buffer = new StringBuffer();
         for (Iterator propsIter = propContextList.iterator(); propsIter.hasNext();) {
             PropertyChangeContext propContext = (PropertyChangeContext) propsIter.next();
-            buffer.append("<D:propstat>\n<D:prop>");
-            
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         }
         
         return buffer.toString();

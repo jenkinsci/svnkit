@@ -258,7 +258,7 @@ public class DAVServlet extends HttpServlet {
         
         xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", namespaces, xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", namespaces, xmlBuffer, namespaces != null);
         return xmlBuffer;
     }
     

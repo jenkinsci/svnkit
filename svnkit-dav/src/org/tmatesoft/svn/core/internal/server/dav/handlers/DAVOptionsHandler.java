@@ -210,7 +210,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
     private void generateOptionsResponse(DAVResource resource, Collection supportedMethods, StringBuffer xmlBuffer) throws SVNException {
         if (!getOptionsRequest().isEmpty()) {
             SVNXMLUtil.addXMLHeader(xmlBuffer);
-            DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer);
+            DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "options-response", null, xmlBuffer, false);
             if (getOptionsRequest().isActivitySetRequest()) {
                 generateActivityCollectionSet(resource, xmlBuffer);
             } else if (getOptionsRequest().isSupportedLivePropertiesRequest()) {

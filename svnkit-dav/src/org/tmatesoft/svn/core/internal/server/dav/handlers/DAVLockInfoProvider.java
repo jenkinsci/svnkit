@@ -397,7 +397,7 @@ public class DAVLockInfoProvider {
                 List namespaces = new ArrayList(1);
                 namespaces.add(DAVElement.DAV_NAMESPACE);
                 owner = DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_OWNER.getName(), namespaces, 
-                        null, owner, false);
+                        null, owner, false, false);
                 owner.append(SVNEncodingUtil.xmlEncodeAttr(lock.getComment()));
                 owner = SVNXMLUtil.addXMLFooter(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_OWNER.getName(), owner);
             } else {

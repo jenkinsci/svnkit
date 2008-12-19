@@ -99,7 +99,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         }
 
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", null, xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", null, xmlBuffer, false);
 
         generateResponse(xmlBuffer, resource, properties, depth);
 
@@ -127,7 +127,7 @@ public class DAVPropfindHandler extends ServletDAVHandler {
     }
 
     private void addResponse(StringBuffer xmlBuffer, DAVResource resource, Collection properties) throws SVNException {
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", properties, xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", properties, xmlBuffer, false);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", resource.getResourceURI().getRequestURI(), xmlBuffer);
 
         Collection badProperties = addPropstat(xmlBuffer, properties, resource, !getPropfindRequest().isPropNameRequest(), HTTP_STATUS_OK_LINE);

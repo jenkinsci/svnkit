@@ -201,7 +201,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         SVNXMLUtil.addXMLHeader(xmlBuffer);
         DAVElementProperty rootElement = getDAVRequest().getRootElement();
         DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), REPORT_NAMESPACES, 
-                xmlBuffer);
+                xmlBuffer, false);
     }
 
     protected void addXMLFooter(StringBuffer xmlBuffer) {

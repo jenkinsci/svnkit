@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -28,7 +29,7 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 public class DAVXMLUtil extends SVNXMLUtil {
     public static final String SVN_DAV_ERROR_TAG = "error";
 
-    public static StringBuffer addEmptyElement(DAVElement element, StringBuffer target) {
+    public static StringBuffer addEmptyElement(List namespaces, DAVElement element, StringBuffer target) {
         if (element.getNamespace() == null || "".equals(element.getNamespace())) {
             target.append("<");
             target.append(element.getName());
@@ -37,16 +38,22 @@ public class DAVXMLUtil extends SVNXMLUtil {
             return target;
         }
         
-        target.append("<ns%d:%s/>");
+        int index = namespaces.indexOf(element); 
+        target.append("<ns");
+        target.append(index);
+        target.append(":");
+        target.append(element.getName());
+        target.append("/>");
         return target;
     }
     
-    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target) {
-        return openNamespaceDeclarationTag(prefix, header, namespaces, null, target, true);
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, StringBuffer target, 
+            boolean useIndexedPrefixes) {
+        return openNamespaceDeclarationTag(prefix, header, namespaces, null, target, true, useIndexedPrefixes);
     }
 
     public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map attrs, StringBuffer target, 
-            boolean addEOL) {
+            boolean addEOL, boolean useIndexedPrefixes) {
         target = target == null ? new StringBuffer() : target;
         target.append("<");
         target.append(prefix);
@@ -61,6 +68,7 @@ public class DAVXMLUtil extends SVNXMLUtil {
         if (namespaces != null && !namespaces.isEmpty()) {
             Collection usedNamespaces = new ArrayList();
             usedNamespaces.add(DAVElement.DAV_NAMESPACE);
+            int i = 0;
             for (Iterator iterator = namespaces.iterator(); iterator.hasNext();) {
                 Object item = iterator.next();
                 String currentNamespace = null;
@@ -73,11 +81,16 @@ public class DAVXMLUtil extends SVNXMLUtil {
                 if (currentNamespace != null && currentNamespace.length() > 0 && !usedNamespaces.contains(currentNamespace)) {
                     usedNamespaces.add(currentNamespace);
                     target.append(" xmlns:");
-                    target.append(PREFIX_MAP.get(currentNamespace));
+                    if (useIndexedPrefixes) {
+                        target.append("ns" + i); 
+                    } else {
+                        target.append(PREFIX_MAP.get(currentNamespace));
+                    }
                     target.append("=\"");
                     target.append(currentNamespace);
                     target.append("\"");
                 }
+                i++;
             }
             usedNamespaces.clear();
         }
