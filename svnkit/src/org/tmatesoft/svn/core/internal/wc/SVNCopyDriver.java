@@ -67,12 +67,6 @@ public class SVNCopyDriver extends SVNBasicClient {
 
     private SVNWCAccess myWCAccess;
     
-    private static final boolean ourNoMergeInfo;
-    
-    static {
-        ourNoMergeInfo = Boolean.valueOf(System.getProperty("svnkit.wccopy.nomergeinfo", "true")).booleanValue();
-    }
-
     protected SVNCopyDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
     }
@@ -1101,14 +1095,8 @@ public class SVNCopyDriver extends SVNBasicClient {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
-            boolean[] extend = { false };
-            Map mergeInfo = fetchMergeInfoForPropagation(nestedWC, extend, nestedWCAccess);
-
             copyDisjointDir(nestedWC, parentWCAccess, nestedWCParent);
             parentWCAccess.probeTry(nestedWC, true, SVNWCAccess.INFINITE_DEPTH);
-            if (!ourNoMergeInfo) {
-                propagateMegeInfo(nestedWC, mergeInfo, extend, parentWCAccess);
-            }
         } finally {
             parentWCAccess.close();
             nestedWCAccess.close();
@@ -1167,38 +1155,10 @@ public class SVNCopyDriver extends SVNBasicClient {
                 CopyPair pair = (CopyPair) ps.next();
                 checkCancelled();
                 SVNWCAccess srcAccess = null;
-                String srcParent = SVNPathUtil.removeTail(pair.mySource);
-                SVNFileType srcType = SVNFileType.getType(new File(pair.mySource));
                 try {
-                    if (!ourNoMergeInfo) {
-                        if (srcParent.equals(dstParentPath)) {
-                            if (srcType == SVNFileType.DIRECTORY) {
-                                srcAccess = getWCAccess();
-                                open(srcAccess, new File(pair.mySource), false, false, -1);
-                            } else {
-                                srcAccess = dstAccess;
-                            }
-                        } else {
-                            try {
-                                srcAccess = getWCAccess();
-                                open(srcAccess, new File(srcParent), false, false, srcType == SVNFileType.DIRECTORY ? -1 : 0);
-                            } catch (SVNException e) {
-                                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                                    srcAccess = null;
-                                } else {
-                                    throw e;
-                                }
-                            }
-                        }
-                    }
                     // do real copy.
                     File sourceFile = new File(pair.mySource);
                     copyFiles(sourceFile, new File(dstParentPath), dstAccess, pair.myBaseName);
-                    if (!ourNoMergeInfo) {
-                        if (srcAccess != null) {
-                            propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
-                        }
-                    }
                 } finally {
                     if (srcAccess != null && srcAccess != dstAccess) {
                         close(srcAccess);
@@ -1239,9 +1199,6 @@ public class SVNCopyDriver extends SVNBasicClient {
                     }
                 }
                 copyFiles(sourceFile, dstParent, dstAccess, pair.myBaseName);
-                if (!ourNoMergeInfo) {
-                    propagateMegeInfo(sourceFile, new File(pair.myDst), srcAccess, dstAccess);
-                }
                 // delete src.
                 SVNWCManager.delete(srcAccess, srcAccess.getAdminArea(srcParent), sourceFile, true, true);
             } finally {
@@ -1252,41 +1209,6 @@ public class SVNCopyDriver extends SVNBasicClient {
             }
         }
         sleepForTimeStamp();
-    }
-
-    private void propagateMegeInfo(File src, File dst, SVNWCAccess srcAccess, SVNWCAccess dstAccess) throws SVNException {
-        boolean[] extend = { false };
-        Map mergeInfo = fetchMergeInfoForPropagation(src, extend, srcAccess);
-        propagateMegeInfo(dst, mergeInfo, extend, dstAccess);
-    }
-
-    protected Map fetchMergeInfoForPropagation(File src, boolean[] extend, SVNWCAccess srcAccess) throws SVNException {
-        SVNEntry entry = srcAccess.getVersionedEntry(src, false);
-        if (entry.getSchedule() == null || (entry.isScheduledForAddition() && entry.isCopied())) {
-            Map mergeInfo = calculateTargetMergeInfo(src, srcAccess, entry.getSVNURL(),
-                    entry.getRevision(), null, true);
-            if (mergeInfo == null) {
-                mergeInfo = new TreeMap();
-            }
-            extend[0] = true;
-            return mergeInfo;
-        }
-
-        Map mergeInfo = SVNPropertiesManager.parseMergeInfo(src, entry, false);
-        if (mergeInfo == null) {
-            mergeInfo = new TreeMap();
-        }
-        extend[0] = false;
-        return mergeInfo;
-    }
-
-    private void propagateMegeInfo(File dst, Map mergeInfo, boolean[] extend, SVNWCAccess dstAccess) throws SVNException {
-        if (extend[0]) {
-            SVNEntry dstEntry = dstAccess.getEntry(dst, false);
-            extendWCMergeInfo(dst, dstEntry, mergeInfo, dstAccess);
-            return;
-        }
-        SVNPropertiesManager.recordWCMergeInfo(dst, mergeInfo, dstAccess);
     }
 
     private void copyFiles(File src, File dstParent, SVNWCAccess dstAccess, String dstName) throws SVNException {

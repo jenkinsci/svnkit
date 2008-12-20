@@ -13,25 +13,20 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNCopyDriver;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -826,23 +821,6 @@ public class SVNMoveClient extends SVNCopyDriver {
             File baseSrc = srcArea.getBaseFile(src.getName(), false);
             File baseDst = dstArea.getBaseFile(dst.getName(), false);
             SVNFileUtil.copyFile(baseSrc, baseDst, false);
-
-            boolean[] extend = new boolean[]{false};
-            Map mergeInfo = fetchMergeInfoForPropagation(src, extend, srcAccess);
-            Map wcMergeInfo = null;
-            if (extend[0]) {
-                wcMergeInfo = SVNPropertiesManager.parseMergeInfo(dst, dstEntry, false);
-                if (wcMergeInfo != null && mergeInfo != null) {
-                    wcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(wcMergeInfo, mergeInfo);
-                } else if (wcMergeInfo == null) {
-                    wcMergeInfo = mergeInfo;
-                }
-            }
-            SVNPropertyValue prop = null;
-            if (wcMergeInfo != null) {
-                prop = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(wcMergeInfo));
-            } 
-            dstProps.setPropertyValue(SVNProperty.MERGE_INFO, prop);
 
             if (dstEntry.isScheduledForDeletion()) {
                 dstEntry.unschedule();
