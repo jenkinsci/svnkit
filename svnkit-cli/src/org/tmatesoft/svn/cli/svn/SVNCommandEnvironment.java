@@ -123,6 +123,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private SVNShowRevisionType myShowRevsType;
     private Collection myChangelists;
     private String myAuthorOfInterest;
+    private String myRegularExpression;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -519,6 +520,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsReIntegrate = true;
         } else if (option == SVNOption.AUTHOR_OF_INTEREST) {
             myAuthorOfInterest = optionValue.getValue();
+        } else if (option == SVNOption.REGULAR_EXPRESSION) {
+            myRegularExpression = optionValue.getValue();
         }
     }
     
@@ -758,6 +761,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     public String getAuthorOfInterest() {
         return myAuthorOfInterest;
+    }
+
+    public String getRegularExpression() {
+        return myRegularExpression;
     }
 
     public long getLimit() {

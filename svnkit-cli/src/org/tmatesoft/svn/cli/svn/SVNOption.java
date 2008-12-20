@@ -80,6 +80,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption STOP_ON_COPY = new SVNOption("stop-on-copy");
     public static final SVNOption LIMIT = new SVNOption("limit", "l", false);
     public static final SVNOption AUTHOR_OF_INTEREST = new SVNOption("author", "a", false);
+    public static final SVNOption REGULAR_EXPRESSION = new SVNOption("regexp", false);
     public static final SVNOption WITH_ALL_REVPROPS = new SVNOption("with-all-revprops");
     
     // auth options.
