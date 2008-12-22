@@ -529,7 +529,7 @@ public class SVNMergeRangeList {
         return isCompacted;
     }
     
-    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList rangeList, boolean remove, boolean considerInheritance) {
+    private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList eraserRangeList, boolean remove, boolean considerInheritance) {
         Collection ranges = new LinkedList();
         SVNMergeRange lastRange = null;
         SVNMergeRange range1 = null;
@@ -537,8 +537,8 @@ public class SVNMergeRangeList {
         int j = 0;
         int lastInd = -1;
         SVNMergeRange whiteBoardElement = new SVNMergeRange(-1, -1, false);
-        while (i < myRanges.length && j < rangeList.myRanges.length) {
-            SVNMergeRange range2 = rangeList.myRanges[j];
+        while (i < myRanges.length && j < eraserRangeList.myRanges.length) {
+            SVNMergeRange range2 = eraserRangeList.myRanges[j];
             if (i != lastInd) {
                 SVNMergeRange tmpRange = myRanges[i]; 
                 range1 = tmpRange.dup();
