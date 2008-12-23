@@ -65,12 +65,12 @@ public class SVNMergeInfoUtil {
         Map filteredMergeInfo = new TreeMap();
         if (mergeInfo != null) {
             SVNMergeRange range = new SVNMergeRange(oldestRev, youngestRev, true);
-            SVNMergeRangeList filteredRangeList = new SVNMergeRangeList(range);
+            SVNMergeRangeList filterRangeList = new SVNMergeRangeList(range);
             for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
                 String path = (String) mergeInfoIter.next();
                 SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
                 if (!rangeList.isEmpty()) {
-                    SVNMergeRangeList newRangeList = filteredRangeList.intersect(rangeList, false);
+                    SVNMergeRangeList newRangeList = filterRangeList.intersect(rangeList, false);
                     if (!newRangeList.isEmpty()) {
                         filteredMergeInfo.put(path, newRangeList);
                     }
