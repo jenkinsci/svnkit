@@ -586,13 +586,9 @@ public class SVNMergeRangeList {
                 if (range2.compareTo(range1) < 0) {
                     j++;
                 } else {
-                    if (lastRange == null || !lastRange.canCombine(range1, considerInheritance)) {
-                        if (remove) {
-                            lastRange = range1.dup();
-                            ranges.add(lastRange);
-                        }
-                    } else if (lastRange != null && lastRange.canCombine(range1, considerInheritance)) {
-                        lastRange = lastRange.combine(range1, considerInheritance);
+                    if (remove && !(lastRange != null && lastRange.canCombine(range1, considerInheritance))) {
+                        lastRange = range1.dup();
+                        ranges.add(lastRange);
                     }
                     i++;
                 }

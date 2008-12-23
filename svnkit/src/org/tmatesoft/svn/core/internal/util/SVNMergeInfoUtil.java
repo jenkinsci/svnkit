@@ -305,12 +305,18 @@ public class SVNMergeInfoUtil {
         return srcPathsToRangeLists;
     }
 
+    /**
+     * Note: Make sure that this method is used only for making up an error message. 
+     */
     public static String formatMergeInfoCatalogToString(Map catalog, String keyPrefix, String valuePrefix) {
         StringBuffer buffer = null;
         if (catalog != null && !catalog.isEmpty()) {
             buffer = new StringBuffer();
             for (Iterator catalogIter = catalog.keySet().iterator(); catalogIter.hasNext();) {
                 String path1 = (String) catalogIter.next();
+                if (path1.startsWith("/")) {
+                    path1 = path1.substring(1);
+                }
                 Map mergeInfo = (Map) catalog.get(path1);
                 if (keyPrefix != null) {
                     buffer.append(keyPrefix);
