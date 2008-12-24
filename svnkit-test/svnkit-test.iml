@@ -28,7 +28,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="javahl" />
     <orderEntry type="module" module-name="svnkit-cli" />
-    <orderEntryProperties />
   </component>
   <component name="PluginUploader.PluginUploadConfigurable">
     <option name="ARCHIVE_PATH" />
