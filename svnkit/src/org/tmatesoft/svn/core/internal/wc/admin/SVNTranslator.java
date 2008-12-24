@@ -256,7 +256,7 @@ public class SVNTranslator {
             ISVNOptions options = dir.getWCAccess().getOptions();
             byte[] eol = getEOL(eolStyle, options);
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
-            copyAndTranslate(target, tmpFile, null, eol, null, false, false, eol == null);
+            copyAndTranslate(target, tmpFile, null, eol, null, false, false, true);
             return tmpFile;
         }
         return target;
@@ -304,7 +304,7 @@ public class SVNTranslator {
         String charset = getCharset(charsetProp, dir.getFile(name).getPath(), options);
         if (force || charset != null || keywords != null || eolStyle != null || isSpecial) {
             File tmpFile = SVNAdminUtil.createTmpFile(dir);
-            translateToNormalForm(dir.getFile(name), tmpFile, charset, eolStyle, getEOL(eolStyle, options) == null, keywords, isSpecial);
+            translateToNormalForm(dir.getFile(name), tmpFile, charset, eolStyle, true, keywords, isSpecial);
             detranslatedFile = tmpFile;
         } else {
             detranslatedFile = dir.getFile(name);
