@@ -686,7 +686,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             SVNRepository repository = null;
             SVNURL sourceReposRoot = null;
             try {
-                repository = createRepository(url2, null, null, true);
+                repository = createRepository(wcReposRoot, null, null, true);
                 sourceReposRoot = repository.getRepositoryRoot(true);
                 if (!wcReposRoot.equals(sourceReposRoot)) {
                     Object source = srcPath;
@@ -726,7 +726,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "unmergedCatalog is " + unmergedToSourceMergeInfoCatalog);
                 if (rev1[0] > youngestAncestorRevision) {
                     try {
                         ensureAllMissingRangesArePhantoms(repository, unmergedToSourceMergeInfoCatalog);
@@ -1521,8 +1520,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     private Map findUnmergedMergeInfo(boolean[] neverSynched, long[] youngestMergedRev, Map srcCatalog, Map targetSegments, 
             String sourceReposPath, String targetReposPath, long targetRev, long srcRev, SVNRepository repos) throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "in findUnmergedMergeInfo");
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "sourceReposPath is " + sourceReposPath);
         neverSynched[0] = true;
         youngestMergedRev[0] = SVNRepository.INVALID_REVISION;
         Map newCatalog = new TreeMap();
@@ -1578,7 +1575,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             srcMergeInfo = SVNMergeInfoUtil.mergeMergeInfos(srcMergeInfo, srcHistoryAsMergeInfo);
             Map commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(srcMergeInfo, targetHistoryAsMergeInfo);
             Map filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo);
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "putting " + filteredMergeInfo);
             newCatalog.put(srcPath, filteredMergeInfo);
         }
         
@@ -1587,7 +1583,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 String srcPath = (String) srcCatalogIter.next();
                 SVNMergeInfo sourceMergeInfoObject = (SVNMergeInfo) srcCatalog.get(srcPath);
                 Map srcMergeInfo = sourceMergeInfoObject.getMergeSourcesToMergeLists();
-                
                 String targetPath = srcPath.substring(sourceReposPath.length());
                 if (targetPath.startsWith("/")) {
                     targetPath = targetPath.substring(1);
@@ -1625,7 +1620,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     Map commonMergeInfo = SVNMergeInfoUtil.intersectMergeInfo(srcMergeInfo, targetHistoryAsMergeInfo);
                     Map filteredMergeInfo = SVNMergeInfoUtil.removeMergeInfo(commonMergeInfo, targetHistoryAsMergeInfo);
                     if (!filteredMergeInfo.isEmpty()) {
-                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "and now putting " + filteredMergeInfo);
                         newCatalog.put(srcPath, filteredMergeInfo);
                     }
                 }
@@ -1633,10 +1627,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
 
         if (SVNRevision.isValidRevisionNumber(youngestMergedRev[0])) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "newCatalog before filtering by " + youngestMergedRev[0] + " is " + newCatalog);
             newCatalog = SVNMergeInfoUtil.filterCatalogByRanges(newCatalog, youngestMergedRev[0], 0);
         }
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "finally, newCatalog is " + newCatalog);
         return newCatalog;
     }
     
@@ -1650,7 +1642,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     SVNRepository.INVALID_REVISION);
             segmentsMap.put(path, segments);
         }
-        
+
         Map mergeInfoCatalog = repository.getMergeInfo(new String[] { sourceReposRelPath }, sourceRev, 
                 SVNMergeInfoInheritance.INHERITED, true);
         if (mergeInfoCatalog == null) {
