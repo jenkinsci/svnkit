@@ -480,6 +480,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsRemove = true;
         } else if (option == SVNOption.CHANGELIST) {            
             myChangelist = optionValue.getValue();
+            if (myChangelist == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Changelist names must not be empty");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
             myChangelists.add(myChangelist);
         } else if (option == SVNOption.KEEP_CHANGELISTS) {
             myIsKeepChangelist = true;
