@@ -48,6 +48,38 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNMergeInfoUtil {
 
+    public static Map filterCatalogByRanges(Map catalog, long youngestRev, long oldestRev) {
+        Map filteredCatalog = new TreeMap();
+        for (Iterator catalogIter = catalog.keySet().iterator(); catalogIter.hasNext();) {
+            String path = (String) catalogIter.next();
+            Map mergeInfo = (Map) catalog.get(path);
+            Map filteredMergeInfo = filterMergeInfoByRanges(mergeInfo, youngestRev, oldestRev);
+            if (!filteredMergeInfo.isEmpty()) {
+                filteredCatalog.put(path, filteredMergeInfo);
+            }
+        }
+        return filteredCatalog;
+    }
+    
+    public static Map filterMergeInfoByRanges(Map mergeInfo, long youngestRev, long oldestRev) {
+        Map filteredMergeInfo = new TreeMap();
+        if (mergeInfo != null) {
+            SVNMergeRange range = new SVNMergeRange(oldestRev, youngestRev, true);
+            SVNMergeRangeList filterRangeList = new SVNMergeRangeList(range);
+            for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
+                String path = (String) mergeInfoIter.next();
+                SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(path);
+                if (!rangeList.isEmpty()) {
+                    SVNMergeRangeList newRangeList = filterRangeList.intersect(rangeList, false);
+                    if (!newRangeList.isEmpty()) {
+                        filteredMergeInfo.put(path, newRangeList);
+                    }
+                }
+            }
+        }
+        return filteredMergeInfo;
+    }
+    
     public static long[] getRangeEndPoints(Map mergeInfo) {
         //long[] { youngestRange, oldestRange }
         long[] rangePoints = { SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION };
@@ -168,7 +200,7 @@ public class SVNMergeInfoUtil {
         Map srcsToRanges1 = parseMergeInfo(new StringBuffer(propValue1), null);
         Map srcsToRanges2 = parseMergeInfo(new StringBuffer(propValue2), null);
         srcsToRanges1 = mergeMergeInfos(srcsToRanges1, srcsToRanges2);
-        return formatMergeInfoToString(srcsToRanges1);
+        return formatMergeInfoToString(srcsToRanges1, null);
     }
     
     public static String combineForkedMergeInfoProperties(String fromPropValue, String workingPropValue, 
@@ -185,7 +217,7 @@ public class SVNMergeInfoUtil {
         leftAdded = mergeMergeInfos(leftAdded, rightAdded);
         fromMergeInfo = mergeMergeInfos(fromMergeInfo, leftAdded);
         Map result = removeMergeInfo(leftDeleted, fromMergeInfo);
-        return formatMergeInfoToString(result);
+        return formatMergeInfoToString(result, null);
     }
     
     public static void diffMergeInfoProperties(Map deleted, Map added, String fromPropValue, Map fromMergeInfo, String toPropValue, Map toMergeInfo) throws SVNException {
@@ -208,6 +240,17 @@ public class SVNMergeInfoUtil {
         } else if (!from.isEmpty() && !to.isEmpty()) {
             walkMergeInfoHashForDiff(deleted, added, from, to, considerInheritance);
         }
+    }
+    
+    public static Map dupCatalog(Map catalog) {
+        Map newMergeInfoCatalog = new TreeMap();
+        for (Iterator catalogIter = catalog.keySet().iterator(); catalogIter.hasNext();) {
+            String path = (String) catalogIter.next();
+            Map mergeInfo = (Map) catalog.get(path);
+            Map mergeInfoCopy = dupMergeInfo(mergeInfo, null);
+            newMergeInfoCatalog.put(path, mergeInfoCopy);
+        }
+        return newMergeInfoCatalog;
     }
     
     public static Map dupMergeInfo(Map srcsToRangeLists, Map target) {
@@ -263,25 +306,50 @@ public class SVNMergeInfoUtil {
     }
 
     /**
+     * Note: Make sure that this method is used only for making up an error message. 
+     */
+    public static String formatMergeInfoCatalogToString(Map catalog, String keyPrefix, String valuePrefix) {
+        StringBuffer buffer = null;
+        if (catalog != null && !catalog.isEmpty()) {
+            buffer = new StringBuffer();
+            for (Iterator catalogIter = catalog.keySet().iterator(); catalogIter.hasNext();) {
+                String path1 = (String) catalogIter.next();
+                if (path1.startsWith("/")) {
+                    path1 = path1.substring(1);
+                }
+                Map mergeInfo = (Map) catalog.get(path1);
+                if (keyPrefix != null) {
+                    buffer.append(keyPrefix);
+                }
+                buffer.append(path1);
+                buffer.append('\n');
+                buffer.append(formatMergeInfoToString(mergeInfo, valuePrefix != null ? valuePrefix : ""));
+                buffer.append('\n');
+            }
+        }
+        return buffer != null ? buffer.toString() : "\n";
+    }
+    
+    /**
      * Each element of the resultant array is formed like this:
      * %s:%ld-%ld,.. where the first %s is a merge src path 
      * and %ld-%ld is startRev-endRev merge range.
      */
-    public static String[] formatMergeInfoToArray(Map srcsToRangeLists) {
+    public static String[] formatMergeInfoToArray(Map srcsToRangeLists, String prefix) {
         srcsToRangeLists = srcsToRangeLists == null ? Collections.EMPTY_MAP : srcsToRangeLists;
         String[] pathRanges = new String[srcsToRangeLists.size()];
         int k = 0;
         for (Iterator paths = srcsToRangeLists.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
             SVNMergeRangeList rangeList = (SVNMergeRangeList) srcsToRangeLists.get(path);
-            String output = path + ':' + rangeList;  
+            String output = (prefix != null ? prefix : "") + path + ':' + rangeList;  
             pathRanges[k++] = output;
         }
         return pathRanges;
     }
 
-    public static String formatMergeInfoToString(Map srcsToRangeLists) {
-        String[] infosArray = formatMergeInfoToArray(srcsToRangeLists);
+    public static String formatMergeInfoToString(Map srcsToRangeLists, String prefix) {
+        String[] infosArray = formatMergeInfoToArray(srcsToRangeLists, prefix);
         String result = "";
         for (int i = 0; i < infosArray.length; i++) {
             result += infosArray[i];

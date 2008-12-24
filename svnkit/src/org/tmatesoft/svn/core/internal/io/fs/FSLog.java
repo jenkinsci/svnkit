@@ -478,7 +478,7 @@ public class FSLog {
               Map tmpCatalog = getMergeInfoManager().getMergeInfo(queryPaths, root, SVNMergeInfoInheritance.INHERITED, false);
               SVNMergeInfo tmpMergeInfo = (SVNMergeInfo) tmpCatalog.get(changedPath);
               if (tmpMergeInfo != null) {
-                  mergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(tmpMergeInfo.getMergeSourcesToMergeLists());
+                  mergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(tmpMergeInfo.getMergeSourcesToMergeLists(), null);
               }
             } else if (mergeInfoValue != null && previousMergeInfoValue == null && basePath != null && 
                     SVNRevision.isValidRevisionNumber(baseRevision)) {
@@ -486,7 +486,7 @@ public class FSLog {
                 Map tmpCatalog = getMergeInfoManager().getMergeInfo(queryPaths, baseRoot, SVNMergeInfoInheritance.INHERITED, false);
                 SVNMergeInfo tmpMergeInfo = (SVNMergeInfo) tmpCatalog.get(basePath);
                 if (tmpMergeInfo != null) {
-                    previousMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(tmpMergeInfo.getMergeSourcesToMergeLists());
+                    previousMergeInfoValue = SVNMergeInfoUtil.formatMergeInfoToString(tmpMergeInfo.getMergeSourcesToMergeLists(), null);
                 }
             }
         

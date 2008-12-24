@@ -290,7 +290,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             Map mergeInfo = calculateTargetMergeInfo(null, null, SVNURL.parseURIEncoded(info.mySource),
                     info.mySourceRevisionNumber, topRepos, false);
             if (mergeInfo != null) {
-                info.myMergeInfoProp = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
+                info.myMergeInfoProp = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null);
             }
             paths.add(info.myDstPath);
             if (isMove && !info.isResurrection) {
@@ -652,7 +652,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                     mergeInfo = wcMergeInfo;
                 }
                 if (mergeInfo != null) {
-                    String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
+                    String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null);
                     setCommitItemProperty(item, SVNProperty.MERGE_INFO, SVNPropertyValue.create(mergeInfoString));
                 }
 
