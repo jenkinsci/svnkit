@@ -66,7 +66,6 @@ doc/wiki/access_protocols.png -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
-/eligible.txt -text
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/options.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli/svnlook/SVNLookCatCommand.java -text
