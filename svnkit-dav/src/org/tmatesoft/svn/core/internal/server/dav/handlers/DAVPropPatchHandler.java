@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,6 +22,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -30,6 +32,8 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -138,6 +142,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 
                 resource.getUserName());
         
+        String propStatText = null;
         DAVPropertyExecuteHandler executeHandler = new DAVPropertyExecuteHandler(propsProvider);
         if (!isFailure && processPropertyContextList(executeHandler, properties, true, false)) {
             isFailure = true;
@@ -145,19 +150,82 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         
         if (isFailure) {
             DAVPropertyRollBackHandler rollBackHandler = new DAVPropertyRollBackHandler(propsProvider);
-            processPropertyContextList(rollBackHandler, properties, false, false);
+            processPropertyContextList(rollBackHandler, properties, false, true);
+            propStatText = getFailureMessage(properties);
+        } else {
+            propStatText = getSuccessMessage(properties);
         }
-       
+        
+        autoCheckIn(resource, isFailure, false, avInfo);
+        //TODO: log propCtxt.error here later
+        DAVPropsResult propResult = new DAVPropsResult();
+        propResult.addPropStatsText(propStatText);
+        DAVResponse response = new DAVResponse(null, resource.getResourceURI().getRequestURI(), null, propResult, 0);
+        try {
+            DAVServlet.sendMultiStatus(response, getHttpServletResponse(), SC_MULTISTATUS, getNamespaces());
+        } catch (IOException ioe) {
+            throw new DAVException(ioe.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, SVNErrorCode.IO_ERROR.getCode());
+        }
     }
 
     private String getFailureMessage(List propContextList) {
+        DAVException err424Set = null;
+        DAVException err424Delete = null;
         StringBuffer buffer = new StringBuffer();
         for (Iterator propsIter = propContextList.iterator(); propsIter.hasNext();) {
             PropertyChangeContext propContext = (PropertyChangeContext) propsIter.next();
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            DAVXMLUtil.addEmptyElement(getNamespaces(), propContext.myProperty.getName(), buffer);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", buffer);
+            if (propContext.myError == null) {
+                if (propContext.myIsSet) {
+                    if (err424Set == null) {
+                        err424Set = new DAVException("Attempted DAV:set operation could not be completed due to other errors.", 
+                                SC_FAILED_DEPENDANCY, 0);
+                    }
+                    propContext.myError = err424Set;
+                } else {
+                    if (err424Delete == null) {
+                        err424Delete = new DAVException("Attempted DAV:remove operation could not be completed due to other errors.", 
+                                SC_FAILED_DEPENDANCY, 0);
+                    }
+                    propContext.myError = err424Delete;
+                }
+            }
+            
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            buffer.append("HTTP/1.1 ");
+            buffer.append(propContext.myError.getResponseCode());
+            buffer.append(" (status)");
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", buffer);
+            
+            if (propContext.myError.getMessage() != null) {
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+                buffer.append(propContext);
+                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", buffer);
+            }
+            
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", buffer);
         }
         
+        return buffer.toString();
+    }
+    
+    private String getSuccessMessage(List propContextList) {
+        StringBuffer buffer = new StringBuffer();
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        for (Iterator propsIter = propContextList.iterator(); propsIter.hasNext();) {
+            PropertyChangeContext propContext = (PropertyChangeContext) propsIter.next();
+            DAVXMLUtil.addEmptyElement(getNamespaces(), propContext.myProperty.getName(), buffer);
+        }
+
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        buffer.append("HTTP/1.1 200 OK");
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", buffer);
         return buffer.toString();
     }
     

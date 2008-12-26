@@ -38,7 +38,7 @@ public class DAVXMLUtil extends SVNXMLUtil {
             return target;
         }
         
-        int index = namespaces.indexOf(element); 
+        int index = namespaces.indexOf(element.getNamespace()); 
         target.append("<ns");
         target.append(index);
         target.append(":");

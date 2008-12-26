@@ -1676,6 +1676,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
 
+    protected HttpServletResponse getHttpServletResponse() {
+        return myResponse;
+    }
+    
     public synchronized static SAXParserFactory getSAXParserFactory() {
         if (ourSAXParserFactory == null) {
             ourSAXParserFactory = SAXParserFactory.newInstance();

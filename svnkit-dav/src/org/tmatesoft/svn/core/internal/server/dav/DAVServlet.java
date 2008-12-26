@@ -252,7 +252,7 @@ public class DAVServlet extends HttpServlet {
         sendMultiStatus(response, servletResponse, error.getResponseCode(), null);
     }
     
-    private StringBuffer beginMultiStatus(HttpServletResponse servletResponse, int status, Collection namespaces, StringBuffer xmlBuffer) {
+    private static StringBuffer beginMultiStatus(HttpServletResponse servletResponse, int status, Collection namespaces, StringBuffer xmlBuffer) {
         servletResponse.setContentType(XML_CONTENT_TYPE);
         servletResponse.setStatus(status);
         
@@ -262,7 +262,7 @@ public class DAVServlet extends HttpServlet {
         return xmlBuffer;
     }
     
-    private void sendMultiStatus(DAVResponse davResponse, HttpServletResponse servletResponse, int statusCode, 
+    public static void sendMultiStatus(DAVResponse davResponse, HttpServletResponse servletResponse, int statusCode, 
             Collection namespaces) throws IOException {
         StringBuffer xmlBuffer = new StringBuffer();
         xmlBuffer = beginMultiStatus(servletResponse, statusCode, namespaces, xmlBuffer);
@@ -304,7 +304,7 @@ public class DAVServlet extends HttpServlet {
         }
 
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
-        servletResponse.sendError(statusCode, xmlBuffer.toString());
+        servletResponse.getWriter().write(xmlBuffer.toString());
     }
     
     private String generateStandardizedErrorBody(int errorID, String namespace, String tagName, String description) {
