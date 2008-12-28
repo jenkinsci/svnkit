@@ -64,18 +64,18 @@ public class DAVFileRevisionsRequest extends DAVRequest {
             DAVElementProperty childElement = (DAVElementProperty) iterator.next();
             DAVElement childElementName = childElement.getName();
             if (childElementName == PATH) {
-                String path = childElement.getFirstValue();
+                String path = childElement.getFirstValue(false);
                 DAVPathUtil.testCanonical(path);
                 setPath(path);
             } else if (childElementName == START_REVISION) {
                 try {
-                    setStartRevision(Long.parseLong(childElement.getFirstValue()));
+                    setStartRevision(Long.parseLong(childElement.getFirstValue(true)));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (childElementName == END_REVISION) {
                 try {
-                    setEndRevision(Long.parseLong(childElement.getFirstValue()));
+                    setEndRevision(Long.parseLong(childElement.getFirstValue(true)));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }

@@ -74,7 +74,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
                     for (Iterator activitySetIter = activitySetChildren.iterator(); activitySetIter.hasNext();) {
                         DAVElementProperty activitySetChild = (DAVElementProperty) activitySetIter.next();
                         if (activitySetChild.getName() == DAVElement.HREF) {
-                            activities.add(activitySetChild.getFirstValue());
+                            activities.add(activitySetChild.getFirstValue(true));
                         }
                     }
                     

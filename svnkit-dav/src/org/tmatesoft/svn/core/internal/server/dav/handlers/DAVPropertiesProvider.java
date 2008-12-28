@@ -108,7 +108,7 @@ public class DAVPropertiesProvider {
     
     public void storeProperty(DAVElementProperty property) throws DAVException {
         DAVElement propName = property.getName();
-        String propValue = property.getFirstValue();
+        String propValue = property.getFirstValue(false);
         String reposPropName = getReposPropName(propName);
         SVNPropertyValue value = null;
         Map attributes = property.getAttributes();

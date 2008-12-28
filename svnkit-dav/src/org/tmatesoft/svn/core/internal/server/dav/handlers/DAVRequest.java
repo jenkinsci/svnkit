@@ -134,10 +134,7 @@ public abstract class DAVRequest {
         }
         
         public boolean hasChild(DAVElement element) {
-            if (myChildren != null) {
-                return myChildren.contains(element);
-            }
-            return false;
+            return getChild(element) != null;
         }
         
         public DAVElementProperty getChild(DAVElement element) {
@@ -165,9 +162,13 @@ public abstract class DAVRequest {
             myValues.add(cdata);
         }
 
-        protected String getFirstValue() {
+        protected String getFirstValue(boolean trim) {
             if (myValues != null) {
-                return (String) myValues.get(0);
+                String value = (String) myValues.get(0); 
+                if (trim && value != null) {
+                    value = value.trim();
+                }
+                return value;
             }
             return null;
         }

@@ -72,20 +72,20 @@ public class DAVReplayRequest extends DAVRequest {
             if (element == REVISION) {
                 assertNullCData(element, property);
                 try {
-                    setRevision(Long.parseLong(property.getFirstValue()));
+                    setRevision(Long.parseLong(property.getFirstValue(true)));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (element == LOW_WATER_MARK) {
                 assertNullCData(element, property);
                 try {
-                    setLowRevision(Long.parseLong(property.getFirstValue()));
+                    setLowRevision(Long.parseLong(property.getFirstValue(true)));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (element == SEND_DELTAS) {
                 assertNullCData(element, property);
-                int sendDeltas = Integer.parseInt(property.getFirstValue());
+                int sendDeltas = Integer.parseInt(property.getFirstValue(true));
                 setSendDeltas(sendDeltas != 0);
             }
         }

@@ -70,11 +70,11 @@ public class DAVGetLocationsRequest extends DAVRequest {
             DAVElementProperty property = (DAVElementProperty) iterator.next();
             DAVElement element = property.getName();
             if (element == PATH) {
-                String path = property.getFirstValue();
+                String path = property.getFirstValue(false);
                 DAVPathUtil.testCanonical(path);
                 setPath(path);
             } else if (element == PEG_REVISION) {
-                String pegRevisionString = property.getFirstValue();
+                String pegRevisionString = property.getFirstValue(true);
                 try {
                     setPegRevision(Long.parseLong(pegRevisionString));
                 } catch (NumberFormatException nfe) {

@@ -67,12 +67,12 @@ public class DAVMergeInfoRequest extends DAVRequest {
             DAVElement element = property.getName();
             if (element == REVISION) {
                 try {
-                    setRevision(Long.parseLong(property.getFirstValue()));
+                    setRevision(Long.parseLong(property.getFirstValue(true)));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (element == INHERIT) {
-                setInherit(parseInheritance(property.getFirstValue()));
+                setInherit(parseInheritance(property.getFirstValue(true)));
                 if (getInherit() == null) {
                     invalidXML();
                 }

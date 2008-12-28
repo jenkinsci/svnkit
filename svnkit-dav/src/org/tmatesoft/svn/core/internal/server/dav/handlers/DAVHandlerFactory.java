@@ -87,6 +87,9 @@ public class DAVHandlerFactory {
         if (METHOD_PROPPATCH.equals(methodName)) {
             return new DAVPropPatchHandler(manager, request, response);
         }
+        if (METHOD_MERGE.equals(methodName)) {
+            return new DAVMergeHandler(manager, request, response);
+        }
         
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), 
                 SVNLogType.NETWORK);

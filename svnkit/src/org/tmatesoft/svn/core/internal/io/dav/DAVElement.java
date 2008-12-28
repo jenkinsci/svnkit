@@ -58,6 +58,7 @@ public class DAVElement {
     public static final String LOG_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/log-revprops";
     public static final String PARTIAL_REPLAY_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/partial-replay";
 
+    public static final DAVElement SOURCE = getElement(DAV_NAMESPACE, "source");
     public static final DAVElement MULTISTATUS = getElement(DAV_NAMESPACE, "multistatus");
     public static final DAVElement RESPONSE = getElement(DAV_NAMESPACE, "response");
     public static final DAVElement RESPONSE_DESCRIPTION = getElement(DAV_NAMESPACE, "responsedescription");

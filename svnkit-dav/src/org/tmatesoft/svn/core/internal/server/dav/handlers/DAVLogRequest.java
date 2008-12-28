@@ -146,21 +146,21 @@ public class DAVLogRequest extends DAVRequest {
             } else if (element == OMIT_LOG_TEXT) {
                 setOmitLogText(true);
             } else if (element == START_REVISION) {
-                String revisionString = property.getFirstValue();
+                String revisionString = property.getFirstValue(true);
                 try {
                     setStartRevision(Long.parseLong(revisionString));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (element == END_REVISION) {
-                String revisionString = property.getFirstValue();
+                String revisionString = property.getFirstValue(true);
                 try {
                     setEndRevision(Long.parseLong(revisionString));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (element == LIMIT) {
-                String limitString = property.getFirstValue();
+                String limitString = property.getFirstValue(true);
                 setLimit(Integer.parseInt(limitString));
             } else if (element == PATH) {
                 Collection paths = property.getValues();

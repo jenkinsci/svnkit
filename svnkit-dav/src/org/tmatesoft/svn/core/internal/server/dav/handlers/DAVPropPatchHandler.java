@@ -26,7 +26,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
@@ -138,9 +137,6 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                 }
             }
         }
-        
-        FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 
-                resource.getUserName());
         
         String propStatText = null;
         DAVPropertyExecuteHandler executeHandler = new DAVPropertyExecuteHandler(propsProvider);

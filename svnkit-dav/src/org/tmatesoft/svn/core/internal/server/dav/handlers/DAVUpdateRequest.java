@@ -169,9 +169,9 @@ public class DAVUpdateRequest extends DAVRequest {
             for (Iterator iterator = rootElement.getChildren().iterator(); iterator.hasNext();) {
                 DAVElementProperty property = (DAVElementProperty) iterator.next();
                 DAVElement element = property.getName();
-                String value = property.getFirstValue();
                 if (element == TARGET_REVISION) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(true);
                     try {
                         setRevision(Long.parseLong(value));
                     } catch (NumberFormatException nfe) {
@@ -179,34 +179,42 @@ public class DAVUpdateRequest extends DAVRequest {
                     }
                 } else if (element == SRC_PATH) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(false);
                     DAVPathUtil.testCanonical(value);
                     setSrcURL(SVNURL.parseURIEncoded(value));
                 } else if (element == DST_PATH) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(false);
                     DAVPathUtil.testCanonical(value);
                     setDstURL(SVNURL.parseURIEncoded(value));
                 } else if (element == UPDATE_TARGET) {
+                    String value = property.getFirstValue(false);
                     DAVPathUtil.testCanonical(value);
                     setTarget(value);
                 } else if (element == DEPTH) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(true);
                     setDepth(SVNDepth.fromString(value));
                     setDepthRequested(true);
                 } else if (element == SEND_COPYFROM_ARGS) {
                     assertNullCData(element, property);
-                    setSendCopyFromArgs("no".equals(property.getFirstValue()));
+                    setSendCopyFromArgs("no".equals(property.getFirstValue(true)));
                 } else if (element == RECURSIVE && !isDepthRequested()) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(true);
                     SVNDepth.fromRecurse(!"no".equals(value));
                     setRecursiveRequested(true);
                 } else if (element == IGNORE_ANCESTRY) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(true);
                     setIgnoreAncestry(!"no".equals(value));
                 } else if (element == TEXT_DELTAS) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(true);
                     setTextDeltas(!"no".equals(value));
                 } else if (element == RESOURCE_WALK) {
                     assertNullCData(element, property);
+                    String value = property.getFirstValue(true);
                     setResourceWalk(!"no".equals(value));
                 }
             }
