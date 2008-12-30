@@ -80,7 +80,7 @@ public class DAVResource {
     private FSRoot myRoot;
     private FSTransactionInfo myTxnInfo;
     private Map myClientCapabilities;
-    private List myLockTokens;
+    private Collection myLockTokens;
     
     /**
      * DAVResource  constructor
@@ -94,7 +94,7 @@ public class DAVResource {
      */
     public DAVResource(SVNRepository repository, DAVRepositoryManager manager, DAVResourceURI resourceURI, boolean isSVNClient, String deltaBase, long version, 
             String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB, 
-            List lockTokens, Map clientCapabilities) throws DAVException {
+            Collection lockTokens, Map clientCapabilities) throws DAVException {
         myRepositoryManager = manager;
         myRepository = (FSRepository) repository;
         try {
@@ -121,7 +121,7 @@ public class DAVResource {
 
     public DAVResource(DAVRepositoryManager manager, SVNRepository repository, DAVResourceURI resourceURI, long revision, boolean isSVNClient, String deltaBase, 
             long version, String clientOptions, String baseChecksum, String resultChecksum, String userName, File activitiesDB, 
-            List lockTokens, Map clientCapabilities) {
+            Collection lockTokens, Map clientCapabilities) {
         myRepositoryManager = manager;
         myResourceURI = resourceURI;
         myRepository = (FSRepository) repository;
@@ -299,8 +299,15 @@ public class DAVResource {
         return myClientCapabilities;
     }
 
-    public List getLockTokens() {
+    public Collection getLockTokens() {
         return myLockTokens;
+    }
+    
+    public void setLockTokens(Collection lockTokens) {
+        if (myLockTokens != null) {
+            myLockTokens.addAll(lockTokens);
+        }
+        myLockTokens = lockTokens;
     }
 
     public Collection getEntries() throws SVNException {

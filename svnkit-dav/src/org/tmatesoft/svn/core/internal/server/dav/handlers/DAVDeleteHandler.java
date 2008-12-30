@@ -31,13 +31,15 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class DAVDeleteHandler extends ServletDAVHandler {
-
+    
+    private DAVDeleteRequest myDAVRequest;
+    
     public DAVDeleteHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
         super(repositoryManager, request, response);
     }
 
     public void execute() throws SVNException {
-        readInput(true);
+        readInput(false);
 
         DAVResource resource = getRequestedDAVResource(false, false);
         if (!resource.exists()) {
@@ -90,7 +92,10 @@ public class DAVDeleteHandler extends ServletDAVHandler {
     }
 
     protected DAVRequest getDAVRequest() {
-        return null;
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVDeleteRequest();
+        }
+        return myDAVRequest;
     }
 
 }

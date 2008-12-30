@@ -12,18 +12,27 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.net.URI;
-import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -66,12 +75,61 @@ public class DAVMergeHandler extends ServletDAVHandler {
             response(dave.getMessage(), DAVServlet.getStatusLine(dave.getResponseCode()), dave.getResponseCode());
         }
 
+        String path = uri.getPath();
+        DAVRepositoryManager manager = getRepositoryManager();
+        String resourceContext = manager.getResourceContext();
+        
+        if (!path.startsWith(resourceContext)) {
+            throw new DAVException("Destination url starts with a wrong context", HttpServletResponse.SC_BAD_REQUEST, 0);
+        }
+        
+        DAVResource srcResource = getRequestedDAVResource(false, false, path);
+        boolean noAutoMerge = rootElement.hasChild(DAVElement.NO_AUTO_MERGE);
+        boolean noCheckOut = rootElement.hasChild(DAVElement.NO_CHECKOUT);
+        DAVElementProperty propElement = rootElement.getChild(DAVElement.PROP);
+        DAVResource resource = getRequestedDAVResource(false, false);
+        if (!resource.exists()) {
+            setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        
+        setResponseHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE);
+        
     }
 
     protected DAVRequest getDAVRequest() {
         return getMergeRequest();
     }
 
+    private void merge(DAVResource targetResource, DAVResource sourceResource, DAVElementProperty propElement) throws DAVException {
+        boolean disableMergeResponse = false;
+        if (sourceResource.getType() != DAVResourceType.ACTIVITY) {
+            throw new DAVException("MERGE can only be performed using an activity as the source [at this time].", null, 
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.INCORRECT_PARAMS.getCode(), null);
+        }
+        
+        Map locks = parseLocks(getMergeRequest().getRootElement(), targetResource.getResourceURI().getPath());
+        if (!locks.isEmpty()) {
+            sourceResource.setLockTokens(locks.values());
+        }
+        
+        DAVServletUtil.openTxn(sourceResource.getFSFS(), sourceResource.getTxnName());
+        FSCommitter committer = getCommitter(sourceResource.getFSFS(), sourceResource.getRoot(), sourceResource.getTxnInfo(), 
+                sourceResource.getLockTokens(), sourceResource.getUserName());
+        
+        StringBuffer buffer = new StringBuffer();
+        SVNErrorMessage[] postCommitHookErr = { null };
+        
+        try {
+            committer.commitTxn(true, true, postCommitHookErr, buffer);
+        } catch (SVNException svne) {
+            if (postCommitHookErr[0] == null) {
+                
+            }
+        }
+    }
+    
     private DAVMergeRequest getMergeRequest() {
         if (myDAVRequest == null) {
             myDAVRequest = new DAVMergeRequest();

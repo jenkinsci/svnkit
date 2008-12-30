@@ -58,6 +58,8 @@ public class DAVElement {
     public static final String LOG_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/log-revprops";
     public static final String PARTIAL_REPLAY_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/partial-replay";
 
+    public static final DAVElement NO_AUTO_MERGE = getElement(DAV_NAMESPACE, "no-auto-merge");
+    public static final DAVElement NO_CHECKOUT = getElement(DAV_NAMESPACE, "no-checkout");
     public static final DAVElement SOURCE = getElement(DAV_NAMESPACE, "source");
     public static final DAVElement MULTISTATUS = getElement(DAV_NAMESPACE, "multistatus");
     public static final DAVElement RESPONSE = getElement(DAV_NAMESPACE, "response");
@@ -85,6 +87,7 @@ public class DAVElement {
     public static final DAVElement LOCK_TIMEOUT = getElement(DAV_NAMESPACE, "timeout");
     public static final DAVElement LOCK_TOKEN = getElement(DAV_NAMESPACE, "locktoken");
 
+    public static final DAVElement SVN_LOCK_TOKEN_LIST = getElement(SVN_NAMESPACE, "lock-token-list");
     public static final DAVElement SVN_LOCK = getElement(SVN_NAMESPACE, "lock");
     public static final DAVElement SVN_LOCK_PATH = getElement(SVN_NAMESPACE, "path");
     public static final DAVElement SVN_LOCK_TOKEN = getElement(SVN_NAMESPACE, "token");

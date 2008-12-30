@@ -81,9 +81,11 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVURIInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVVersionResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVWorkingResourceHelper;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.CountingInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -192,7 +194,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
     protected static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
     protected static final DAVElement MERGEINFO_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "mergeinfo-report");
-
+    protected static final DAVElement LOCK_PATH_ELEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "lock-path");
+    protected static final DAVElement LOCK_TOKEN_ELEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "lock-token");
+    
     private static SAXParserFactory ourSAXParserFactory;
     private SAXParser mySAXParser;
 
@@ -1102,7 +1106,10 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
         
-        //TODO: lock pushing?
+        Map locks = parseLocks(getDAVRequest().getRootElement(), uri.getPath());
+        if (!locks.isEmpty()) {
+            resource.setLockTokens(locks.values());
+        }
         
         FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 
                 resource.getUserName());
@@ -1118,6 +1125,70 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
     }
     
+    protected Map parseLocks(DAVElementProperty rootElement, String pathPrefix) throws DAVException {
+        Map pathsToLockTokens = new HashMap();
+        List namespaces = getNamespaces();
+        if (namespaces == null || !namespaces.contains(DAVElement.SVN_NAMESPACE)) {
+            return pathsToLockTokens;
+        }
+        
+        DAVElement rootElementName = rootElement.getName();
+        DAVElementProperty child = null;
+        if (rootElementName == DAVElement.SVN_LOCK_TOKEN_LIST) {
+            child = rootElement;
+        } else {
+            List children = rootElement.getChildren();
+            for (Iterator childIter = children.iterator(); childIter.hasNext();) {
+                DAVElementProperty nextChild = (DAVElementProperty) childIter.next();
+                if (nextChild.getName() == DAVElement.SVN_LOCK_TOKEN_LIST) {
+                    child = nextChild;
+                    break;
+                }
+            }
+        }
+       
+        if (child == null) {
+            return pathsToLockTokens;
+        }
+        
+        List children = child.getChildren();
+        for (Iterator childIter = children.iterator(); childIter.hasNext();) {
+            DAVElementProperty lockChild = (DAVElementProperty) childIter.next();
+            if (lockChild.getName() != DAVElement.SVN_LOCK) {
+                continue;
+            }
+            
+            String lockPath = null;
+            String lockToken = null;
+            List lockChildren = lockChild.getChildren();
+            for (Iterator lockChildrenIter = lockChildren.iterator(); lockChildrenIter.hasNext();) {
+                DAVElementProperty lockElementChild = (DAVElementProperty) lockChildrenIter.next();
+                if (lockElementChild.getName() == LOCK_PATH_ELEM) {
+                    String cdata = lockElementChild.getFirstValue(false);
+                    DAVPathUtil.testCanonical(cdata);
+                    lockPath = SVNPathUtil.append(pathPrefix, cdata);
+                    if (!lockPath.startsWith("/")) {
+                        lockPath = "/" + lockPath;
+                    }
+                    
+                    if (lockPath != null && lockToken != null) {
+                        pathsToLockTokens.put(lockPath, lockToken);
+                        lockPath = null;
+                        lockToken = null;
+                    }
+                } else if (lockElementChild.getName() == LOCK_TOKEN_ELEM) {
+                    lockToken = lockElementChild.getFirstValue(true);
+                    if (lockPath != null && lockToken != null) {
+                        pathsToLockTokens.put(lockPath, lockToken);
+                        lockPath = null;
+                        lockToken = null;
+                    }
+                }
+            }
+        }
+        return pathsToLockTokens;
+    }
+
     protected DAVDepth getRequestDepth(DAVDepth defaultDepth) throws SVNException {
         String depth = getRequestHeader(DEPTH_HEADER);
         if (depth == null) {

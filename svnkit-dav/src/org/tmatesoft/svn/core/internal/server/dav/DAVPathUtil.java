@@ -14,10 +14,14 @@ package org.tmatesoft.svn.core.internal.server.dav;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.logging.Level;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -110,10 +114,11 @@ public class DAVPathUtil {
         return "".equals(uri) ? SLASH : uri;
     }
 
-    public static void testCanonical(String path) throws SVNException {
+    public static void testCanonical(String path) throws DAVException {
         if (path != null && !path.equals(SVNPathUtil.canonicalizePath(path))) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
-                    "Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", path), SVNLogType.NETWORK);
+            throw new DAVException("Path ''{0}'' is not canonicalized;\nthere is a problem with the client.", new Object[] { path }, 
+                    HttpServletResponse.SC_BAD_REQUEST, null, SVNLogType.NETWORK, Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, 
+                    DAVElement.SVN_DAV_ERROR_NAMESPACE, 0, null);
         }
     }
 
