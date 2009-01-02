@@ -57,7 +57,7 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
         try {
             makeActivity(resource);
         } catch (DAVException dave) {
-            throw new DAVException("Could not create activity {0}.", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getURI())}, 
+            throw new DAVException("Could not create activity {0}.", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(resource.getResourceURI().getURI()) }, 
                     dave.getResponseCode(), null, SVNLogType.NETWORK, Level.FINE, dave, null, null, 0, null);
         }
 
@@ -71,7 +71,7 @@ public class DAVMakeActivityHandler extends ServletDAVHandler {
 
     private void makeActivity(DAVResource resource) throws DAVException {
         FSTransactionInfo txnInfo = DAVServletUtil.createActivity(resource, myFSFS);
-        DAVServletUtil.storeActivity(resource, txnInfo);
+        DAVServletUtil.storeActivity(resource, txnInfo.getTxnId());
         resource.setExists(true);
         resource.setTxnName(txnInfo.getTxnId());
     }

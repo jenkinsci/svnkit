@@ -14,9 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.ParserConfigurationException;
@@ -68,11 +66,11 @@ import org.xml.sax.XMLReader;
  */
 public class DAVLockInfoProvider {
 
-    private static final String LOCK_BREAK_OPTION = "lock-break";
-    private static final String LOCK_STEAL_OPTION = "lock-steal";
-    private static final String RELEASE_LOCKS_OPTION = "release-locks";
-    private static final String KEEP_LOCKS_OPTION = "keep-locks";
-    private static final String NO_MERGE_RESPONSE = "no-merge-response";
+    public static final String LOCK_BREAK_OPTION = "lock-break";
+    public static final String LOCK_STEAL_OPTION = "lock-steal";
+    public static final String RELEASE_LOCKS_OPTION = "release-locks";
+    public static final String KEEP_LOCKS_OPTION = "keep-locks";
+    public static final String NO_MERGE_RESPONSE = "no-merge-response";
     
     private boolean myIsReadOnly;
     private boolean myIsStealLock;

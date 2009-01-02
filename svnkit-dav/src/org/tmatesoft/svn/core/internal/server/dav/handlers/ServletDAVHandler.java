@@ -624,7 +624,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                 
                 sharedTxnInfo = DAVServletUtil.createActivity(resource, fsfs);
                 sharedTxnName = sharedTxnInfo.getTxnId();
-                DAVServletUtil.storeActivity(resource, sharedTxnInfo);
+                DAVServletUtil.storeActivity(resource, sharedTxnInfo.getTxnId());
                 DAVServlet.setSharedActivity(sharedActivity);
             }
             

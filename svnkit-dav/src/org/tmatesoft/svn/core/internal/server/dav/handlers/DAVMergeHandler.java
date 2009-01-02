@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.net.URI;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -23,9 +24,14 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
@@ -114,19 +120,79 @@ public class DAVMergeHandler extends ServletDAVHandler {
             sourceResource.setLockTokens(locks.values());
         }
         
-        DAVServletUtil.openTxn(sourceResource.getFSFS(), sourceResource.getTxnName());
-        FSCommitter committer = getCommitter(sourceResource.getFSFS(), sourceResource.getRoot(), sourceResource.getTxnInfo(), 
+        FSFS fsfs = sourceResource.getFSFS();
+        String txnName = sourceResource.getTxnName();
+        FSTransactionInfo txn = DAVServletUtil.openTxn(fsfs, txnName);
+        FSCommitter committer = getCommitter(sourceResource.getFSFS(), sourceResource.getRoot(), txn, 
                 sourceResource.getLockTokens(), sourceResource.getUserName());
         
         StringBuffer buffer = new StringBuffer();
         SVNErrorMessage[] postCommitHookErr = { null };
-        
+        String postCommitErrMessage = null;
         try {
             committer.commitTxn(true, true, postCommitHookErr, buffer);
         } catch (SVNException svne) {
             if (postCommitHookErr[0] == null) {
+                try {
+                    FSCommitter.abortTransaction(fsfs, txnName);
+                } catch (SVNException svne1) {
+                    //
+                }
                 
+                String msg = null;
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, 
+                            "A conflict occurred during the MERGE processing. The problem occurred with the \"{0}\" resource.",  
+                            new Object[] { buffer.toString() });
+                } 
+
+                throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, 
+                        "An error occurred while committing the transaction.", null);
             }
+            
+            SVNErrorMessage childErr = postCommitHookErr[0].getChildErrorMessage(); 
+            if (childErr != null && childErr.getMessage() != null) {
+                postCommitErrMessage = childErr.getMessage();
+            }
+        }
+        
+        //TODO: maybe add logging here
+        
+        DAVServletUtil.storeActivity(sourceResource, "");
+        String clientOptions = sourceResource.getClientOptions(); 
+        if (clientOptions != null) {
+            if (clientOptions.contains(DAVLockInfoProvider.RELEASE_LOCKS_OPTION) && !locks.isEmpty()) {
+                for (Iterator locksIter = locks.keySet().iterator(); locksIter.hasNext();) {
+                    String path = (String) locksIter.next();
+                    String lockToken = (String) locks.get(path);
+                    try {
+                        fsfs.unlockPath(path, lockToken, sourceResource.getUserName(), false, true);
+                    } catch (SVNException svne) {
+                        // TODO: ignore exceptions. maybe add logging
+                    }
+                }
+            }
+            
+            if (clientOptions.contains(DAVLockInfoProvider.NO_MERGE_RESPONSE)) {
+                disableMergeResponse = true;
+            }
+        
+        }
+    }
+    
+    private void response(FSFS fsfs, long newRev, String postCommitErr) throws DAVException {
+        FSRevisionRoot root = null;
+        try {
+            root = fsfs.createRevisionRoot(newRev);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not open the FS root for the revision just committed.", null);
+        }
+        
+        String vcc = DAVPathUtil.buildURI(getRepositoryManager().getResourceContext(), DAVResourceKind.VCC, -1, null);
+        StringBuffer buffer = new StringBuffer();
+        if (postCommitErr != null) {
+            
         }
     }
     

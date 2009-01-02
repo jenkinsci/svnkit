@@ -142,7 +142,7 @@ public class DAVServletUtil {
         }
     }
     
-    public static void storeActivity(DAVResource resource, FSTransactionInfo txnInfo) throws DAVException {
+    public static void storeActivity(DAVResource resource, String txnName) throws DAVException {
         DAVResourceURI resourceURI = resource.getResourceURI();
         String activityID = resourceURI.getActivityID();
         File activitiesDB = resource.getActivitiesDB();
@@ -161,7 +161,7 @@ public class DAVServletUtil {
         }
         
         StringBuffer activitiesContents = new StringBuffer();
-        activitiesContents.append(txnInfo.getTxnId());
+        activitiesContents.append(txnName);
         activitiesContents.append('\n');
         activitiesContents.append(activityID);
         activitiesContents.append('\n');
