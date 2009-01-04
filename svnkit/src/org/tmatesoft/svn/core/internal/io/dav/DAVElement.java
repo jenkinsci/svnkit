@@ -80,7 +80,8 @@ public class DAVElement {
     public static final DAVElement CREATOR_DISPLAY_NAME = getElement(DAV_NAMESPACE, "creator-displayname");    
     public static final DAVElement COMMENT = getElement(DAV_NAMESPACE, "comment");    
     public static final DAVElement DATE = getElement(SVN_NAMESPACE, "date");
-    
+    public static final DAVElement POST_COMMIT_ERROR = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "post-commit-err");
+
     public static final DAVElement SUPPORTED_LOCK = getElement(DAV_NAMESPACE, "supportedlock");
     public static final DAVElement LOCK_DISCOVERY = getElement(DAV_NAMESPACE, "lockdiscovery");
     public static final DAVElement LOCK_OWNER = getElement(DAV_NAMESPACE, "owner");

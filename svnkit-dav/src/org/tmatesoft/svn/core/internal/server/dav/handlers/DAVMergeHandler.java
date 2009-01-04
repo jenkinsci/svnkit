@@ -12,16 +12,22 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.net.URI;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.osgi.service.resolver.DisabledInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
@@ -37,6 +43,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -161,7 +168,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         DAVServletUtil.storeActivity(sourceResource, "");
         String clientOptions = sourceResource.getClientOptions(); 
         if (clientOptions != null) {
-            if (clientOptions.contains(DAVLockInfoProvider.RELEASE_LOCKS_OPTION) && !locks.isEmpty()) {
+            if (clientOptions.indexOf(DAVLockInfoProvider.RELEASE_LOCKS_OPTION) != -1 && !locks.isEmpty()) {
                 for (Iterator locksIter = locks.keySet().iterator(); locksIter.hasNext();) {
                     String path = (String) locksIter.next();
                     String lockToken = (String) locks.get(path);
@@ -173,14 +180,14 @@ public class DAVMergeHandler extends ServletDAVHandler {
                 }
             }
             
-            if (clientOptions.contains(DAVLockInfoProvider.NO_MERGE_RESPONSE)) {
+            if (clientOptions.indexOf(DAVLockInfoProvider.NO_MERGE_RESPONSE) != -1) {
                 disableMergeResponse = true;
             }
         
         }
     }
     
-    private void response(FSFS fsfs, long newRev, String postCommitErr) throws DAVException {
+    private void response(FSFS fsfs, long newRev, String postCommitErr, boolean disableMergeResponse) throws DAVException {
         FSRevisionRoot root = null;
         try {
             root = fsfs.createRevisionRoot(newRev);
@@ -190,8 +197,76 @@ public class DAVMergeHandler extends ServletDAVHandler {
         }
         
         String vcc = DAVPathUtil.buildURI(getRepositoryManager().getResourceContext(), DAVResourceKind.VCC, -1, null);
+        
         StringBuffer buffer = new StringBuffer();
+        Map prefixMap = new HashMap();
+        Collection namespaces = new LinkedList();
+        namespaces.add(DAVElement.DAV_NAMESPACE);
+        prefixMap.put(DAVElement.DAV_NAMESPACE, SVNXMLUtil.DAV_NAMESPACE_PREFIX);
+        String postCommitErrElement = null;
         if (postCommitErr != null) {
+            namespaces.add(DAVElement.SVN_NAMESPACE);
+            prefixMap.put(DAVElement.SVN_NAMESPACE, SVNXMLUtil.SVN_NAMESPACE_PREFIX);
+            
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, DAVElement.POST_COMMIT_ERROR.getName(), SVNXMLUtil.XML_STYLE_NORMAL, 
+                    null, buffer);
+            buffer.append(postCommitErr);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, DAVElement.POST_COMMIT_ERROR.getName(), buffer);
+            postCommitErrElement = buffer.toString();
+            buffer.delete(0, buffer.length());
+        } else {
+            postCommitErrElement = "";
+        }
+        
+        String creationDate = null;
+        String creatorDisplayName = null;
+        
+        try {
+            SVNProperties revProps = fsfs.getRevisionProperties(newRev);
+            creationDate = revProps.getStringValue(SVNRevisionProperty.DATE);
+            creatorDisplayName = revProps.getStringValue(SVNRevisionProperty.AUTHOR);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not get author of newest revision", null);
+        }
+        
+        
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge-response", namespaces, prefixMap, null, buffer, true);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "updated-set", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        buffer.append(SVNEncodingUtil.xmlEncodeAttr(vcc));
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.BASELINE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), buffer);
+        buffer.append(postCommitErrElement);
+        buffer.append('\n');
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        buffer.append(newRev);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), buffer);
+        
+        if (creationDate != null ) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            buffer.append(SVNEncodingUtil.xmlEncodeAttr(creationDate));
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), buffer);
+        }
+        
+        if (creatorDisplayName != null ) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            buffer.append(SVNEncodingUtil.xmlEncodeAttr(creationDate));
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), buffer);
+        }
+        
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        buffer.append("HTTP/1.1 200 OK");
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), buffer);
+        if (!disableMergeResponse) {
             
         }
     }
