@@ -29,6 +29,10 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSID;
+import org.tmatesoft.svn.core.internal.io.fs.FSNodeHistory;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
@@ -42,6 +46,49 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class DAVServletUtil {
+    
+    public static long getSafeCreatedRevision(FSRevisionRoot root, String path) {
+        long revision = root.getRevision();
+        FSFS fsfs = root.getOwner();
+        FSID id = null;
+        try {
+            FSRevisionNode node = root.getRevisionNode(path);
+            id = node.getId();
+        } catch (SVNException svne) {
+            return revision;
+        }
+
+        FSNodeHistory history = null;
+        long historyRev = -1;
+        try {
+            history = root.getNodeHistory(path);
+            history = history.getPreviousHistory(false);
+            historyRev = history.getHistoryEntry().getRevision();
+        } catch (SVNException svne) {
+            return revision;
+        }
+        
+        FSRevisionRoot otherRoot = null;
+        try {
+            otherRoot = fsfs.createRevisionRoot(historyRev);
+        } catch (SVNException svne) {
+            return revision;
+        }
+        
+        FSID otherID = null;
+        try {
+            FSRevisionNode node = otherRoot.getRevisionNode(path);
+            otherID = node.getId();
+        } catch (SVNException svne) {
+            return revision;
+        }
+        
+        if (id.compareTo(otherID) == 0) {
+            return historyRev;
+        }
+        
+        return revision;
+    }
     
     public static URI lookUpURI(String uri, HttpServletRequest request, boolean mustBeAbsolute) throws DAVException {
         URI parsedURI = null;
