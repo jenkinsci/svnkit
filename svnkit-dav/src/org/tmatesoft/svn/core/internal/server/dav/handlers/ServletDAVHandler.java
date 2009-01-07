@@ -263,16 +263,21 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         String resultChecksum = getRequestHeader(SVN_RESULT_FULLTEXT_MD5_HEADER);
         String deltaBase = getRequestHeader(SVN_DELTA_BASE_HEADER);
         String userAgent = getRequestHeader(USER_AGENT_HEADER);
-        boolean isSVNClient = userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"));
         
         Map clientCapabilities = new HashMap();
         clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_NO);
-        
-        String clientCapabilitiesList = getRequestHeader(HTTPHeader.DAV_HEADER);
-        for(StringTokenizer tokens = new StringTokenizer(clientCapabilitiesList, ","); tokens.hasMoreTokens();) {
-            String token = tokens.nextToken().trim();
-            if (DAVElement.MERGE_INFO_OPTION.equalsIgnoreCase(token)) {
-                clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_YES);
+
+        boolean isSVNClient = false;
+        if (userAgent != null && (userAgent.startsWith("SVN/") || userAgent.startsWith("SVNKit"))) {
+            isSVNClient = true;
+            String clientCapabilitiesList = getRequestHeader(HTTPHeader.DAV_HEADER);
+            if (clientCapabilitiesList != null) {
+                for(StringTokenizer tokens = new StringTokenizer(clientCapabilitiesList, ","); tokens.hasMoreTokens();) {
+                    String token = tokens.nextToken().trim();
+                    if (DAVElement.MERGE_INFO_OPTION.equalsIgnoreCase(token)) {
+                        clientCapabilities.put(SVNCapability.MERGE_INFO, CAPABILITY_YES);
+                    }
+                }
             }
         }
        

@@ -114,7 +114,8 @@ public class SVNXMLUtil {
         return target;
     }
 
-    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, StringBuffer target) {
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map prefixMap, 
+            StringBuffer target) {
         return openNamespaceDeclarationTag(prefix, header, namespaces, prefixMap, null, target, true);
     }
 
