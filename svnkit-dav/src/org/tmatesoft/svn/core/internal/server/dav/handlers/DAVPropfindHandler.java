@@ -165,7 +165,8 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     private void insertPropertyValue(DAVElement element, DAVResource resource, boolean addValue, StringBuffer xmlBuffer) throws SVNException {
         if (!resource.exists() && (element != DAVElement.VERSION_CONTROLLED_CONFIGURATION || element != DAVElement.BASELINE_RELATIVE_PATH)) {
-            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Invalid path ''{0}''", resource.getResourceURI().getURI()), SVNLogType.NETWORK);
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PATH_NOT_FOUND, "Invalid path ''{0}''", 
+                    resource.getResourceURI().getURI()), SVNLogType.NETWORK);
         }
 
         String prefix = (String) SVNXMLUtil.PREFIX_MAP.get(element.getNamespace());

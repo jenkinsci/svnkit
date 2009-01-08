@@ -11,11 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
+
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -46,6 +50,14 @@ public class DAVResourceURI {
         myRevision = DAVResource.INVALID_REVISION;
         parseURI(label, useCheckedIn);
         
+        try {
+            throw new Exception();
+        } catch (Exception e) {
+            OutputStream os = SVNDebugLog.getDefaultLog().createOutputLogStream();
+            e.printStackTrace(new PrintStream(os));
+            SVNFileUtil.closeFile(os);
+        }
+    
         StringBuffer logBuffer = new StringBuffer();
         logBuffer.append('\n');
         logBuffer.append("Requested URI: " + getRequestURI());

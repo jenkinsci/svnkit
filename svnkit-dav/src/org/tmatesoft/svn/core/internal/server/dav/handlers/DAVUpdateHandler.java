@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
@@ -443,8 +444,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         DAVElementProperty rootElement = getDAVRequest().getRootElement();
         SVNXMLUtil.addXMLHeader(xmlBuffer);
         
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), 
-                UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), 
+                UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer, true, false);
     }
 
     public void targetRevision(long revision) throws SVNException {

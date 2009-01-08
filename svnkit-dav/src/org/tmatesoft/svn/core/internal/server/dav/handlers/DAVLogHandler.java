@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -22,12 +21,12 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -106,19 +105,20 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(logEntry.getRevision()), xmlBuffer);
 
         boolean noCustomProperties = getLogRequest().isCustomPropertyRequested();
-        for (Iterator iterator = logEntry.getRevisionProperties().nameSet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            String property = (String) entry.getKey();
-            Object value = entry.getValue();
-            if (property.equals(SVNRevisionProperty.AUTHOR)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), (String) value, xmlBuffer);
-            } else if (property.equals(SVNRevisionProperty.DATE)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "date", SVNDate.formatDate((Date) value), xmlBuffer);
-            } else if (property.equals(SVNRevisionProperty.LOG)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), (String) value, xmlBuffer);
+        SVNProperties revProps = logEntry.getRevisionProperties(); 
+        for (Iterator iterator = revProps.nameSet().iterator(); iterator.hasNext();) {
+            String propName = (String) iterator.next();
+            String propValue = revProps.getStringValue(propName);
+            
+            if (SVNRevisionProperty.AUTHOR.equals(propName)) {
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), propValue, xmlBuffer);
+            } else if (SVNRevisionProperty.DATE.equals(propName)) {
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "date", propValue, xmlBuffer);
+            } else if (SVNRevisionProperty.LOG.equals(propName)) {
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), propValue, xmlBuffer);
             } else {
                 noCustomProperties = false;
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", (String) value, NAME_ATTR, property, xmlBuffer);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", propValue, NAME_ATTR, propName, xmlBuffer);
             }
         }
 

@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVLockInfoProvider;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -49,6 +50,7 @@ public abstract class DAVResourceHelper {
     public static void prepareResource(DAVResource resource) throws DAVException {
         DAVResourceURI resourceURI = resource.getResourceURI();
         DAVResourceType resourceType = resourceURI.getType();
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "resource type is " + resourceType.toString());
         DAVResourceHelper helperImpl = getHelper(resourceType);
         helperImpl.prepare(resource);
     }

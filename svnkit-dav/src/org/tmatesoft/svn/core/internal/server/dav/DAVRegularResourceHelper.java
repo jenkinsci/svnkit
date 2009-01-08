@@ -20,6 +20,8 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -52,6 +54,8 @@ public class DAVRegularResourceHelper extends DAVResourceHelper {
         }
         
         SVNNodeKind kind = DAVServletUtil.checkPath(root, resource.getResourceURI().getPath());
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "resource path is " + resource.getResourceURI().getPath());
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "resource kind is " + kind);
         resource.setExists(kind != SVNNodeKind.NONE);
         resource.setCollection(kind == SVNNodeKind.DIR);
     }
