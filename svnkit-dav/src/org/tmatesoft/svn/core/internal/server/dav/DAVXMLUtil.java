@@ -11,13 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVPropsResult;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVResponse;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 
@@ -113,4 +118,60 @@ public class DAVXMLUtil extends SVNXMLUtil {
         }
         return target;
     }
+    
+    public static StringBuffer beginMultiStatus(HttpServletResponse servletResponse, int status, Collection namespaces, StringBuffer xmlBuffer) {
+        servletResponse.setContentType(DAVServlet.XML_CONTENT_TYPE);
+        servletResponse.setStatus(status);
+        
+        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
+        SVNXMLUtil.addXMLHeader(xmlBuffer);
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", namespaces, xmlBuffer, namespaces != null);
+        return xmlBuffer;
+    }
+    
+    public static void sendMultiStatus(DAVResponse davResponse, HttpServletResponse servletResponse, int statusCode, 
+            Collection namespaces) throws IOException {
+        StringBuffer xmlBuffer = new StringBuffer();
+        xmlBuffer = beginMultiStatus(servletResponse, statusCode, namespaces, xmlBuffer);
+        while (davResponse != null) {
+            DAVPropsResult propResult = davResponse.getPropResult();
+            String xmlnsText = propResult.getXMLNSText(); 
+            if (xmlnsText == null || xmlnsText.length() == 0) {
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            } else {
+                xmlBuffer.append("<D:response");
+                xmlBuffer.append(xmlnsText);
+                xmlBuffer.append(">\n");
+            }
+            
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            String href = davResponse.getHref();
+            xmlBuffer.append(href.indexOf('&') != -1 ? SVNEncodingUtil.xmlEncodeCDATA(href) : href);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", xmlBuffer);
+
+            String propStatsText = propResult.getPropStatsText();
+            if (propStatsText == null || propStatsText.length() == 0) {
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+                xmlBuffer.append("HTTP/1.1 ");
+                String statusLine = DAVServlet.getStatusLine(davResponse.getStatusCode());
+                xmlBuffer.append(statusLine);
+                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", xmlBuffer);
+            } else {
+                xmlBuffer.append(propStatsText);
+            }
+            
+            if (davResponse.getDescription() != null) {
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+                xmlBuffer.append(davResponse.getDescription());
+                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", xmlBuffer);
+            }
+            
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
+            davResponse = davResponse.getNextResponse();
+        }
+
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
+        servletResponse.getWriter().write(xmlBuffer.toString());
+    }
+
 }

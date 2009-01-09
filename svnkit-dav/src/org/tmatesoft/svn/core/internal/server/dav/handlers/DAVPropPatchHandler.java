@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVErrorCode;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
-import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -158,7 +157,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         propResult.addPropStatsText(propStatText);
         DAVResponse response = new DAVResponse(null, resource.getResourceURI().getRequestURI(), null, propResult, 0);
         try {
-            DAVServlet.sendMultiStatus(response, getHttpServletResponse(), SC_MULTISTATUS, getNamespaces());
+            DAVXMLUtil.sendMultiStatus(response, getHttpServletResponse(), SC_MULTISTATUS, getNamespaces());
         } catch (IOException ioe) {
             throw new DAVException(ioe.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, SVNErrorCode.IO_ERROR.getCode());
         }
@@ -239,7 +238,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
     
     private void validateProp(DAVResource resource, DAVElement property, DAVPropertiesProvider propsProvider, 
             PropertyChangeContext propContext) {
-        LivePropertySpecification livePropSpec = findLivePropertyt(property);
+        LivePropertySpecification livePropSpec = findLiveProperty(property);
         propContext.myLivePropertySpec = livePropSpec;
         if (!isPropertyWritable(property, livePropSpec)) {
             propContext.myError = new DAVException("Property is read-only.", HttpServletResponse.SC_CONFLICT, DAVErrorCode.PROP_READONLY);
@@ -266,7 +265,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         }
     }
     
-    private LivePropertySpecification findLivePropertyt(DAVElement property) {
+    private LivePropertySpecification findLiveProperty(DAVElement property) {
         String nameSpace = property.getNamespace(); 
         if (!DAVElement.DAV_NAMESPACE.equals(nameSpace) && !DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(nameSpace)) {
             return null;

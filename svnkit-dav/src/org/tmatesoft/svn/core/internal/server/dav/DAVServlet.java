@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVPropsResult;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVResponse;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.ServletDAVHandler;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -249,62 +248,7 @@ public class DAVServlet extends HttpServlet {
             return;
         }
         
-        sendMultiStatus(response, servletResponse, error.getResponseCode(), null);
-    }
-    
-    private static StringBuffer beginMultiStatus(HttpServletResponse servletResponse, int status, Collection namespaces, StringBuffer xmlBuffer) {
-        servletResponse.setContentType(XML_CONTENT_TYPE);
-        servletResponse.setStatus(status);
-        
-        xmlBuffer = xmlBuffer == null ? new StringBuffer() : xmlBuffer;
-        SVNXMLUtil.addXMLHeader(xmlBuffer);
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", namespaces, xmlBuffer, namespaces != null);
-        return xmlBuffer;
-    }
-    
-    public static void sendMultiStatus(DAVResponse davResponse, HttpServletResponse servletResponse, int statusCode, 
-            Collection namespaces) throws IOException {
-        StringBuffer xmlBuffer = new StringBuffer();
-        xmlBuffer = beginMultiStatus(servletResponse, statusCode, namespaces, xmlBuffer);
-        while (davResponse != null) {
-            DAVPropsResult propResult = davResponse.getPropResult();
-            String xmlnsText = propResult.getXMLNSText(); 
-            if (xmlnsText == null || xmlnsText.length() == 0) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            } else {
-                xmlBuffer.append("<D:response");
-                xmlBuffer.append(xmlnsText);
-                xmlBuffer.append(">\n");
-            }
-            
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            String href = davResponse.getHref();
-            xmlBuffer.append(href.indexOf('&') != -1 ? SVNEncodingUtil.xmlEncodeCDATA(href) : href);
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", xmlBuffer);
-
-            String propStatsText = propResult.getPropStatsText();
-            if (propStatsText == null || propStatsText.length() == 0) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-                xmlBuffer.append("HTTP/1.1 ");
-                String statusLine = getStatusLine(davResponse.getStatusCode());
-                xmlBuffer.append(statusLine);
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", xmlBuffer);
-            } else {
-                xmlBuffer.append(propStatsText);
-            }
-            
-            if (davResponse.getDescription() != null) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-                xmlBuffer.append(davResponse.getDescription());
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", xmlBuffer);
-            }
-            
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
-            davResponse = davResponse.getNextResponse();
-        }
-
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "multistatus", xmlBuffer);
-        servletResponse.getWriter().write(xmlBuffer.toString());
+        DAVXMLUtil.sendMultiStatus(response, servletResponse, error.getResponseCode(), null);
     }
     
     private String generateStandardizedErrorBody(int errorID, String namespace, String tagName, String description) {

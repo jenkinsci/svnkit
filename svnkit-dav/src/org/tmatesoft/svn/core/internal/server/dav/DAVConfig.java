@@ -38,6 +38,7 @@ public class DAVConfig {
     private static final String ACTIVITIES_DB = "SVNActivitiesDB"; 
     private static final String AUTOVERSIONING = "SVNAutoversioning";
     private static final String ALLOW_BULK_UPDATES = "SVNAllowBulkUpdates";
+    private static final String DAV_DEPTH = "DAVDepthInfinity";
     private static final String OFF = "off";
     private static final String ON = "on";
 
@@ -53,6 +54,7 @@ public class DAVConfig {
     private boolean myIsListParentPath = false;
     private boolean myIsAutoVersioning = false;
     private boolean myIsAllowBulkUpdates = false;
+    private boolean myIsAllowDepthInfinity = false;
     
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
@@ -111,8 +113,17 @@ public class DAVConfig {
         if (allowBulkUpdates != null && ON.equals(allowBulkUpdates)) {
             myIsAllowBulkUpdates = true;
         }
+    
+        String allowDepthInfinity = servletConfig.getInitParameter(DAV_DEPTH);
+        if (allowDepthInfinity != null && ON.equals(allowDepthInfinity)) {
+            myIsAllowDepthInfinity = true;
+        }
         
         myActivitiesDBPath = servletConfig.getInitParameter(ACTIVITIES_DB);
+    }
+
+    public boolean isAllowDepthInfinity() {
+        return myIsAllowDepthInfinity;
     }
 
     public String getRepositoryName() {

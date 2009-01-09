@@ -46,7 +46,7 @@ public class DAVPropertiesProvider {
     private DAVResource myResource;
     private ServletDAVHandler myOwner;
     
-    public DAVPropertiesProvider(boolean isDeferred, ServletDAVHandler owner, DAVResource resource) {
+    private DAVPropertiesProvider(boolean isDeferred, ServletDAVHandler owner, DAVResource resource) {
         myIsDeferred = isDeferred;
         myOwner = owner;
         myResource = resource;

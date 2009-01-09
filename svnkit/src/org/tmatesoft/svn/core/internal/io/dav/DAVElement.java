@@ -81,6 +81,9 @@ public class DAVElement {
     public static final DAVElement COMMENT = getElement(DAV_NAMESPACE, "comment");    
     public static final DAVElement DATE = getElement(SVN_NAMESPACE, "date");
     public static final DAVElement POST_COMMIT_ERROR = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "post-commit-err");
+    public static final DAVElement PROPFIND = DAVElement.getElement(DAV_NAMESPACE, "propfind");
+    public static final DAVElement ALLPROP = DAVElement.getElement(DAV_NAMESPACE, "allprop");
+    public static final DAVElement PROPNAME = DAVElement.getElement(DAV_NAMESPACE, "propname");
 
     public static final DAVElement SUPPORTED_LOCK = getElement(DAV_NAMESPACE, "supportedlock");
     public static final DAVElement LOCK_DISCOVERY = getElement(DAV_NAMESPACE, "lockdiscovery");

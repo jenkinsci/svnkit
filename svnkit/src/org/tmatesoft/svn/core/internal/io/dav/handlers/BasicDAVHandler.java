@@ -73,6 +73,7 @@ public abstract class BasicDAVHandler extends DefaultHandler {
 
     protected void init() {
         myPrefixesMap.clear();
+        myNamespacesCollection.clear();
         myParent.clear();
         myParent.push(ROOT);
     }

@@ -13,10 +13,12 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,14 +28,22 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
+import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResourceState;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
+import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -80,6 +90,96 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
+        setResponseStatus(SC_MULTISTATUS);
+
+        try {
+            getResponseWriter().write(responseBody);
+        } catch (IOException e) {
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
+        }
+    }
+
+    public void execute2() throws SVNException {
+        DAVResource resource = getRequestedDAVResource(true, false);
+
+        DAVResourceState resourceState = getResourceState(resource);
+        if (resourceState == DAVResourceState.NULL) {
+            //TODO: what body should we send?
+            setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        
+        DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
+        //TODO: check the depth is not less than 0; if it is, send BAD_REQUEST
+        
+        if (depth == DAVDepth.DEPTH_INFINITY && resource.isCollection()) {
+            DAVConfig config = getConfig();
+            if (!config.isAllowDepthInfinity()) {
+                String message = "PROPFIND requests with a Depth of \"infinity\" are not allowed for " + 
+                    SVNEncodingUtil.xmlEncodeCDATA(getURI()) + ".";
+                response(message, DAVServlet.getStatusLine(HttpServletResponse.SC_FORBIDDEN), HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+        }
+
+        long readCount = readInput(false);
+        DAVPropfindRequest request = getPropfindRequest();
+        DAVElementProperty rootElement = request.getRootElement();
+        
+        if (readCount > 0 && rootElement.getName() != DAVElement.PROPFIND) {
+            //TODO: maybe add logging here later
+            //TODO: what body should we send?
+            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        
+        boolean isAllProp = false;
+        boolean isPropName = false;
+        boolean isProp = false;
+        if (readCount == 0 || rootElement.hasChild(DAVElement.ALLPROP)) {
+            isAllProp = true;
+        } else if (rootElement.hasChild(DAVElement.PROPNAME)) {
+            isPropName = true;
+        } else if (rootElement.hasChild(DAVElement.PROP)) {
+            isProp = true;
+        } else {
+            //TODO: what body should we send?
+            //TODO: maybe add logging here later
+            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        
+        DAVLockInfoProvider lockProvider = null;
+        try {
+            lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "The lock database could not be opened, preventing access to the various lock properties for the PROPFIND.", null);
+        }
+    
+        StringBuffer body = new StringBuffer();
+        DAVXMLUtil.beginMultiStatus(getHttpServletResponse(), SC_MULTISTATUS, getNamespaces(), body);
+        
+        int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_AUTH | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL; 
+        DAVResourceWalker walker = new DAVResourceWalker();
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        generatePropertiesResponse(body, resource, depth);
+        String responseBody = body.toString();
+
+        try {
+            setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
+        } catch (UnsupportedEncodingException e) {
+        }
+
         setResponseStatus(SC_MULTISTATUS);
 
         try {
@@ -417,5 +517,41 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         }
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_PROPS_NOT_FOUND, "Unrecognized namespace ''{0}''", namespace), SVNLogType.NETWORK);
         return null;
+    }
+    
+    private static class PropFindWalker implements IDAVResourceWalkHandler {
+        private boolean myIsAllProp;
+        private boolean myIsPropName;
+        private boolean myIsProp;
+        private ServletDAVHandler myOwner;
+        private DAVElementProperty myRoot;
+        private StringBuffer myPropStat404;
+        
+        public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, 
+                int flags, DAVLockScope lockScope, CallType callType) throws DAVException {
+            DAVPropertiesProvider propsProvider = null;
+            try {
+                propsProvider = DAVPropertiesProvider.createPropertiesProvider(resource, myOwner);
+            } catch (DAVException dave) {
+                if (myIsProp) {
+                    
+                }
+            }
+            
+            return null;
+        }
+        
+        private void cacheBadProps() {
+            if (myPropStat404 != null) {
+                return;
+            }
+            
+            myPropStat404 = new StringBuffer();
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
+                    myPropStat404);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
+                    myPropStat404);
+            
+        }
     }
 }

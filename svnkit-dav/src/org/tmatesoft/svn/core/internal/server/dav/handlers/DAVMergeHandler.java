@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
@@ -101,9 +102,12 @@ public class DAVMergeHandler extends ServletDAVHandler {
         }
         
         DAVResource srcResource = getRequestedDAVResource(false, false, path);
-        boolean noAutoMerge = rootElement.hasChild(DAVElement.NO_AUTO_MERGE);
-        boolean noCheckOut = rootElement.hasChild(DAVElement.NO_CHECKOUT);
-        DAVElementProperty propElement = rootElement.getChild(DAVElement.PROP);
+
+        //NOTE: for now this all are no-ops, just commented them for a while 
+        //boolean noAutoMerge = rootElement.hasChild(DAVElement.NO_AUTO_MERGE);
+        //boolean noCheckOut = rootElement.hasChild(DAVElement.NO_CHECKOUT);
+        //DAVElementProperty propElement = rootElement.getChild(DAVElement.PROP);
+        
         DAVResource resource = getRequestedDAVResource(false, false);
         if (!resource.exists()) {
             setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -113,13 +117,18 @@ public class DAVMergeHandler extends ServletDAVHandler {
         setResponseHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE);
         String response = null;
         try {
-            response = merge(resource, srcResource, propElement);
+            response = merge(resource, srcResource);
         } catch (DAVException dave) {
             throw new DAVException("Could not MERGE resource \"{0}\" into \"{1}\".", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(source), 
                     SVNEncodingUtil.xmlEncodeCDATA(getURI()) }, dave.getResponseCode(), null, SVNLogType.NETWORK, Level.FINE, dave, null, 
                     null, 0, null);
         }
-        
+
+        try {
+            setResponseContentLength(response.getBytes(UTF8_ENCODING).length);
+        } catch (UnsupportedEncodingException e) {
+        }
+
         try {
             getResponseWriter().write(response);
         } catch (IOException ioe) {
@@ -131,7 +140,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         return getMergeRequest();
     }
 
-    private String merge(DAVResource targetResource, DAVResource sourceResource, DAVElementProperty propElement) throws DAVException {
+    private String merge(DAVResource targetResource, DAVResource sourceResource) throws DAVException {
         boolean disableMergeResponse = false;
         if (sourceResource.getType() != DAVResourceType.ACTIVITY) {
             throw new DAVException("MERGE can only be performed using an activity as the source [at this time].", null, 
@@ -164,7 +173,6 @@ public class DAVMergeHandler extends ServletDAVHandler {
                     //
                 }
                 
-                String msg = null;
                 if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_CONFLICT) {
                     throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, 
                             "A conflict occurred during the MERGE processing. The problem occurred with the \"{0}\" resource.",  
@@ -248,7 +256,8 @@ public class DAVMergeHandler extends ServletDAVHandler {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "Could not get author of newest revision", null);
         }
-        
+
+        SVNXMLUtil.addXMLHeader(buffer);
         SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge-response", namespaces, prefixMap, null, buffer, true);
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "updated-set", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
@@ -286,7 +295,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), buffer);
         if (!disableMergeResponse) {
             try {
-                doResources(fsfs, root, newRev, buffer);
+                doResources(root, buffer);
             } catch (SVNException svne) {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Error constructing resource list.", null);
@@ -298,7 +307,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         return buffer.toString();
     }
     
-    private void doResources(FSFS fsfs, FSRevisionRoot root, long revision, StringBuffer buffer) throws SVNException {
+    private void doResources(FSRevisionRoot root, StringBuffer buffer) throws SVNException {
         Map changedPaths = root.getChangedPaths();
         Map sentPaths = new HashMap();
         for (Iterator pathsIter = changedPaths.keySet().iterator(); pathsIter.hasNext();) {
