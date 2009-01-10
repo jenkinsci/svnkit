@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -52,12 +53,18 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class DAVPropfindHandler extends ServletDAVHandler {
+public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourceWalkHandler {
 
     private static final String DEFAULT_AUTOVERSION_LINE = "DAV:checkout-checkin";
     private static final String COLLECTION_RESOURCE_TYPE = "<D:collection/>\n";
 
     private DAVPropfindRequest myDAVRequest;
+    private boolean myIsAllProp;
+    private boolean myIsPropName;
+    private boolean myIsProp;
+    private DAVElementProperty myDocRoot;
+    private StringBuffer myPropStat404;
+    private StringBuffer myResponseBuffer;
 
     public DAVPropfindHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
@@ -65,13 +72,6 @@ public class DAVPropfindHandler extends ServletDAVHandler {
 
     protected DAVRequest getDAVRequest() {
         return getPropfindRequest();
-    }
-
-    private DAVPropfindRequest getPropfindRequest() {
-        if (myDAVRequest == null) {
-            myDAVRequest = new DAVPropfindRequest();
-        }
-        return myDAVRequest;
     }
 
     public void execute() throws SVNException {
@@ -133,15 +133,15 @@ public class DAVPropfindHandler extends ServletDAVHandler {
             return;
         }
         
-        boolean isAllProp = false;
-        boolean isPropName = false;
-        boolean isProp = false;
+        myIsAllProp = false;
+        myIsPropName = false;
+        myIsProp = false;
         if (readCount == 0 || rootElement.hasChild(DAVElement.ALLPROP)) {
-            isAllProp = true;
+            myIsAllProp = true;
         } else if (rootElement.hasChild(DAVElement.PROPNAME)) {
-            isPropName = true;
+            myIsPropName = true;
         } else if (rootElement.hasChild(DAVElement.PROP)) {
-            isProp = true;
+            myIsProp = true;
         } else {
             //TODO: what body should we send?
             //TODO: maybe add logging here later
@@ -187,6 +187,66 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
         }
+    }
+
+    public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, 
+            int flags, DAVLockScope lockScope, CallType callType) throws DAVException {
+        DAVPropertiesProvider propsProvider = null;
+        try {
+            propsProvider = DAVPropertiesProvider.createPropertiesProvider(resource, this);
+        } catch (DAVException dave) {
+            if (myIsProp) {
+                cacheBadProps();
+                DAVPropsResult badProps = new DAVPropsResult();
+                badProps.addPropStatsText(myPropStat404.toString());
+                streamResponse(resource, 0, badProps);
+            } else {
+                streamResponse(resource, HttpServletResponse.SC_OK, null);
+            }
+            return null;
+        }
+        
+        if (myIsProp) {
+            
+        }
+        
+        return null;
+    }
+    
+    private void streamResponse(DAVResource resource, int status, DAVPropsResult propStats) {
+        DAVResponse response = new DAVResponse(null, resource.getResourceURI().getRequestURI(), null, propStats, status);
+        DAVXMLUtil.sendOneResponse(response, myResponseBuffer);
+    }
+    
+    private void cacheBadProps() {
+        if (myPropStat404 != null) {
+            return;
+        }
+        
+        myPropStat404 = new StringBuffer();
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
+                myPropStat404);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
+                myPropStat404);
+        DAVElementProperty elem = myDocRoot.getChild(DAVElement.PROP);
+        List childrenElements = elem.getChildren();
+        for (Iterator childrenIter = childrenElements.iterator(); childrenIter.hasNext();) {
+            DAVElementProperty childElement = (DAVElementProperty) childrenIter.next();
+            DAVXMLUtil.addEmptyElement(DAVPropfindHandler.this.getNamespaces(), childElement.getName(), myPropStat404);
+        }
+        
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), myPropStat404);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, myPropStat404);
+        myPropStat404.append("HTTP/1.1 404 Not Found");
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), myPropStat404);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), myPropStat404);
+    }
+
+    private DAVPropfindRequest getPropfindRequest() {
+        if (myDAVRequest == null) {
+            myDAVRequest = new DAVPropfindRequest();
+        }
+        return myDAVRequest;
     }
 
     private void generatePropertiesResponse(StringBuffer xmlBuffer, DAVResource resource, DAVDepth depth) throws SVNException {
@@ -519,13 +579,14 @@ public class DAVPropfindHandler extends ServletDAVHandler {
         return null;
     }
     
-    private static class PropFindWalker implements IDAVResourceWalkHandler {
+    private class PropFindWalker implements IDAVResourceWalkHandler {
         private boolean myIsAllProp;
         private boolean myIsPropName;
         private boolean myIsProp;
         private ServletDAVHandler myOwner;
-        private DAVElementProperty myRoot;
+        private DAVElementProperty myDocRoot;
         private StringBuffer myPropStat404;
+        private StringBuffer myResponseBuffer;
         
         public DAVResponse handleResource(DAVResponse response, DAVResource resource, DAVLockInfoProvider lockInfoProvider, LinkedList ifHeaders, 
                 int flags, DAVLockScope lockScope, CallType callType) throws DAVException {
@@ -534,11 +595,26 @@ public class DAVPropfindHandler extends ServletDAVHandler {
                 propsProvider = DAVPropertiesProvider.createPropertiesProvider(resource, myOwner);
             } catch (DAVException dave) {
                 if (myIsProp) {
-                    
+                    cacheBadProps();
+                    DAVPropsResult badProps = new DAVPropsResult();
+                    badProps.addPropStatsText(myPropStat404.toString());
+                    streamResponse(resource, 0, badProps);
+                } else {
+                    streamResponse(resource, HttpServletResponse.SC_OK, null);
                 }
+                return null;
+            }
+            
+            if (myIsProp) {
+                
             }
             
             return null;
+        }
+        
+        private void streamResponse(DAVResource resource, int status, DAVPropsResult propStats) {
+            DAVResponse response = new DAVResponse(null, resource.getResourceURI().getRequestURI(), null, propStats, status);
+            DAVXMLUtil.sendOneResponse(response, myResponseBuffer);
         }
         
         private void cacheBadProps() {
@@ -551,7 +627,18 @@ public class DAVPropfindHandler extends ServletDAVHandler {
                     myPropStat404);
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
                     myPropStat404);
+            DAVElementProperty elem = myDocRoot.getChild(DAVElement.PROP);
+            List childrenElements = elem.getChildren();
+            for (Iterator childrenIter = childrenElements.iterator(); childrenIter.hasNext();) {
+                DAVElementProperty childElement = (DAVElementProperty) childrenIter.next();
+                DAVXMLUtil.addEmptyElement(DAVPropfindHandler.this.getNamespaces(), childElement.getName(), myPropStat404);
+            }
             
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), myPropStat404);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, myPropStat404);
+            myPropStat404.append("HTTP/1.1 404 Not Found");
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), myPropStat404);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), myPropStat404);
         }
     }
 }

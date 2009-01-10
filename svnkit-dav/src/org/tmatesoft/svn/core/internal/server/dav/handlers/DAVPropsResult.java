@@ -11,6 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Collection;
+import java.util.LinkedList;
+
 
 /**
  * @version 1.1.2
@@ -18,13 +21,13 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
  */
 public class DAVPropsResult {
     private StringBuffer myPropStats;
-    private StringBuffer myXMLNS;
+    private Collection myNamespaces;
     
-    public void addXMLNSText(String text) {
-        if (myXMLNS == null) {
-            myXMLNS = new StringBuffer();
+    public void addNamespace(String namespace) {
+        if (myNamespaces == null) {
+            myNamespaces = new LinkedList();
         }
-        myXMLNS.append(text);
+        myNamespaces.add(namespace);
     }
     
     public void addPropStatsText(String text) {
@@ -34,11 +37,8 @@ public class DAVPropsResult {
         myPropStats.append(text);    
     }
     
-    public String getXMLNSText() {
-        if (myXMLNS != null) {
-            return myXMLNS.toString();
-        }
-        return null;
+    public Collection getNamespaces() {
+        return myNamespaces;
     }
     
     public String getPropStatsText() {

@@ -134,39 +134,7 @@ public class DAVXMLUtil extends SVNXMLUtil {
         StringBuffer xmlBuffer = new StringBuffer();
         xmlBuffer = beginMultiStatus(servletResponse, statusCode, namespaces, xmlBuffer);
         while (davResponse != null) {
-            DAVPropsResult propResult = davResponse.getPropResult();
-            String xmlnsText = propResult.getXMLNSText(); 
-            if (xmlnsText == null || xmlnsText.length() == 0) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            } else {
-                xmlBuffer.append("<D:response");
-                xmlBuffer.append(xmlnsText);
-                xmlBuffer.append(">\n");
-            }
-            
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-            String href = davResponse.getHref();
-            xmlBuffer.append(href.indexOf('&') != -1 ? SVNEncodingUtil.xmlEncodeCDATA(href) : href);
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", xmlBuffer);
-
-            String propStatsText = propResult.getPropStatsText();
-            if (propStatsText == null || propStatsText.length() == 0) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-                xmlBuffer.append("HTTP/1.1 ");
-                String statusLine = DAVServlet.getStatusLine(davResponse.getStatusCode());
-                xmlBuffer.append(statusLine);
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", xmlBuffer);
-            } else {
-                xmlBuffer.append(propStatsText);
-            }
-            
-            if (davResponse.getDescription() != null) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-                xmlBuffer.append(davResponse.getDescription());
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", xmlBuffer);
-            }
-            
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "response", xmlBuffer);
+            sendOneResponse(davResponse, xmlBuffer);
             davResponse = davResponse.getNextResponse();
         }
 
@@ -174,4 +142,47 @@ public class DAVXMLUtil extends SVNXMLUtil {
         servletResponse.getWriter().write(xmlBuffer.toString());
     }
 
+    public static void sendOneResponse(DAVResponse davResponse, StringBuffer xmlBuffer) {
+        DAVPropsResult propResult = davResponse.getPropResult();
+        Collection namespaces = propResult.getNamespaces();
+        if (namespaces == null || namespaces.isEmpty()) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
+                    xmlBuffer);
+        } else {
+            xmlBuffer.append('<');
+            xmlBuffer.append(SVNXMLUtil.DAV_NAMESPACE_PREFIX);
+            xmlBuffer.append(':');
+            xmlBuffer.append(DAVElement.RESPONSE.getName());
+            for (Iterator namespacesIter = namespaces.iterator(); namespacesIter.hasNext();) {
+                String namespaceText = (String) namespacesIter.next();
+                xmlBuffer.append(namespaceText);
+            }
+            xmlBuffer.append(">\n");
+        }
+        
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+        String href = davResponse.getHref();
+        xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(href));
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), xmlBuffer);
+
+        String propStatsText = propResult.getPropStatsText();
+        if (propStatsText == null || propStatsText.length() == 0) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
+            xmlBuffer.append("HTTP/1.1 ");
+            String statusLine = DAVServlet.getStatusLine(davResponse.getStatusCode());
+            xmlBuffer.append(statusLine);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), xmlBuffer);
+        } else {
+            xmlBuffer.append(propStatsText);
+        }
+        
+        if (davResponse.getDescription() != null) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE_DESCRIPTION.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null,
+                    xmlBuffer);
+            xmlBuffer.append(davResponse.getDescription());
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE_DESCRIPTION.getName(), xmlBuffer);
+        }
+        
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), xmlBuffer);
+    }
 }
