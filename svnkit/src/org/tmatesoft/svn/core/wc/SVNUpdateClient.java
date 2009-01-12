@@ -104,6 +104,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
     private ISVNExternalsHandler myExternalsHandler;
     private boolean myIsUpdateLocksOnDemand;
+    private boolean myIsExportExpandsKeywords;
 
     /**
      * Constructs and initializes an <b>SVNUpdateClient</b> object
@@ -130,6 +131,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public SVNUpdateClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
+        myIsExportExpandsKeywords = true;
     }
 
     /**
@@ -1177,6 +1179,14 @@ public class SVNUpdateClient extends SVNBasicClient {
             wcAccess.close();
         }
     }
+    
+    public void setExportExpandsKeywords(boolean expand) {
+        myIsExportExpandsKeywords = expand;
+    }
+
+    public boolean isExportExpandsKeywords() {
+        return myIsExportExpandsKeywords;
+    }
 
     private void copyVersionedDir(File from, File to, SVNRevision revision, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
@@ -1317,7 +1327,7 @@ public class SVNUpdateClient extends SVNBasicClient {
     private long doRemoteExport(SVNRepository repository, final long revNumber, File dstPath, String eolStyle, boolean force, SVNDepth depth) throws SVNException {
         SVNNodeKind dstKind = repository.checkPath("", revNumber);
         if (dstKind == SVNNodeKind.DIR) {
-            SVNExportEditor editor = new SVNExportEditor(this, repository.getLocation().toString(), dstPath,  force, eolStyle, getOptions());
+            SVNExportEditor editor = new SVNExportEditor(this, repository.getLocation().toString(), dstPath,  force, eolStyle, isExportExpandsKeywords(), getOptions());
             repository.update(revNumber, null, depth, false, new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     reporter.setPath("", null, revNumber, SVNDepth.INFINITY, true);
@@ -1359,6 +1369,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
                 if (force && dstPath.exists()) {
                     SVNFileUtil.deleteAll(dstPath, this);
+                }
+                if (!isExportExpandsKeywords()) {
+                    properties.put(SVNProperty.MIME_TYPE, "application/octet-stream");
                 }
                 boolean binary = SVNProperty.isBinaryMimeType(properties.getStringValue(SVNProperty.MIME_TYPE));
                 String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), url, getOptions());
