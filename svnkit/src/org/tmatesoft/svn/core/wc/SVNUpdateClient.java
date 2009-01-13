@@ -155,6 +155,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public SVNUpdateClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
         super(repositoryPool, options);
+        myIsExportExpandsKeywords = true;
     }
     
     /**
