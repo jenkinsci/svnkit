@@ -987,4 +987,13 @@ public class SVNCommitUtil {
         }
         return false;
     }
+
+    public static String validateCommitMessage(String message) {
+        if (message == null) {
+            return message;
+        }
+        message = message.replaceAll("\r\n", "\n");
+        message = message.replace('\r', '\n');
+        return message;
+    }
 }

@@ -2991,13 +2991,13 @@ public abstract class SVNRepository {
         oldest = youngestRequestedRev < oldest ? youngestRequestedRev : oldest;
         
         LocationsLogHandler locationsLogHandler = new LocationsLogHandler(revisions, kind, reposAbsPath, 
-                pegRevision);
+                pegRevision, handler);
         log(new String[] { path }, youngest, oldest, true, false, 0, false, null, locationsLogHandler);
         if (locationsLogHandler.myPegPath == null) {
             locationsLogHandler.myPegPath = locationsLogHandler.myLastPath;
         }
         if (locationsLogHandler.myLastPath != null) {
-            for (int i = 0; i < locationsLogHandler.myRevisionsCount; i++) {
+            for (int i = 0; i < revisions.length; i++) {
                 long rev = revisions[i];
                 Long revObject = new Long(rev);
                 if (handler != null && !locationsLogHandler.myProcessedRevisions.contains(revObject)) {
@@ -3249,13 +3249,14 @@ public abstract class SVNRepository {
         ISVNLocationEntryHandler myLocationsHandler;
         LinkedList myProcessedRevisions;
         
-        public LocationsLogHandler(long[] revisions, SVNNodeKind kind, String lastPath, long pegRevision) {
+        public LocationsLogHandler(long[] revisions, SVNNodeKind kind, String lastPath, long pegRevision, ISVNLocationEntryHandler handler) {
             myRevisionsCount = revisions.length;
             myRevisions = revisions;
             myNodeKind = kind;
             myLastPath = lastPath;
             myPegRevision = pegRevision;
             myProcessedRevisions = new LinkedList();
+            myLocationsHandler = handler;
         }
         
         public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {

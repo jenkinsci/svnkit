@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/www
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/www
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-12-24T21:39:18.094790Z
+5393
+alex
 
 
 svn:special svn:externals svn:needs-lock

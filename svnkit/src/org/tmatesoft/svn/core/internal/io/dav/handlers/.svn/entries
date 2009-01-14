@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/handlers
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-26T16:49:37.585065Z
-5265
+2009-01-07T17:06:18.666368Z
+5404
 alex
 
 
@@ -134,10 +134,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-c38b664e58ac46e9111999e8f83d06b8
-2008-08-28T19:30:55.179841Z
-4792
+2009-01-14T22:06:36.000000Z
+e1233b9f8639e841b242c3d74874c19e
+2009-01-07T17:06:18.666368Z
+5404
 alex
 has-props
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-5397
+5516
 
 DAVLogHandler.java
 file

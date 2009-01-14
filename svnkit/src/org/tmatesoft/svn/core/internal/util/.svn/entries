@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/util
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/util
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T20:04:17.399572Z
-5291
+2009-01-07T17:06:18.666368Z
+5404
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-6dd24fcd6bfd8559e74ed4564c5c2edc
-2008-08-28T19:30:55.179841Z
-4792
+2009-01-14T22:06:36.000000Z
+c1f5b84383e3bb03dcd36a6b488fc754
+2008-12-24T21:19:00.796804Z
+5391
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-31034
+35657
 
 SVNUUIDGenerator.java
 file
@@ -678,10 +678,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-80df42dd33c1aefda1f4472af07799ad
-2008-08-28T19:30:55.179841Z
-4792
+2009-01-14T22:06:36.000000Z
+25e493408e97d598186ad5b969b03ad6
+2009-01-07T17:06:18.666368Z
+5404
 alex
 has-props
 
@@ -704,7 +704,7 @@ has-props
 
 
 
-8833
+8846
 
 SVNSSLUtil.java
 file

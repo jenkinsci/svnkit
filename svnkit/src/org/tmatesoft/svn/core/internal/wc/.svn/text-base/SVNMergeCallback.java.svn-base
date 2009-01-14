@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver.MergeSource;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -91,19 +92,28 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (wcAccess.getAdminArea(file) == null) {
                 wcAccess.probeTry(file, true, SVNWCAccess.INFINITE_DEPTH);
             }
-            SVNProperties filteredProps = myMergeDriver.filterSelfReferentialMergeInfo(regularProps, file); 
-            if (filteredProps != null) {
-                regularProps = filteredProps; 
+            
+            MergeSource mergeSource = myMergeDriver.getCurrentMergeSource();
+            if (mergeSource.getRevision1() < mergeSource.getRevision2()) {
+                SVNProperties filteredProps = myMergeDriver.filterSelfReferentialMergeInfo(regularProps, file); 
+                if (filteredProps != null) {
+                    regularProps = filteredProps; 
+                }
             }
+            
             SVNStatusType status = SVNPropertiesManager.mergeProperties(getWCAccess(), file, originalProperties, regularProps, 
                     false, myIsDryRun);
-            for (Iterator propsIter = regularProps.nameSet().iterator(); propsIter.hasNext();) {
-                String propName = (String) propsIter.next();
-                SVNPropertyValue propValue = regularProps.getSVNPropertyValue(propName);
-                if (SVNProperty.MERGE_INFO.equals(propName) && propValue != null) {
-                    SVNPropertyValue mergeInfoProp = originalProperties.getSVNPropertyValue(SVNProperty.MERGE_INFO);
-                    if (mergeInfoProp == null) {
-                        myMergeDriver.addPathWithNewMergeInfo(file);
+            if (!myIsDryRun) {
+                for (Iterator propsIter = regularProps.nameSet().iterator(); propsIter.hasNext();) {
+                    String propName = (String) propsIter.next();
+                    SVNPropertyValue propValue = regularProps.getSVNPropertyValue(propName);
+                    if (SVNProperty.MERGE_INFO.equals(propName)) {
+                        SVNPropertyValue mergeInfoProp = originalProperties.getSVNPropertyValue(SVNProperty.MERGE_INFO);
+                        if (mergeInfoProp == null && propValue != null) {
+                            myMergeDriver.addPathWithNewMergeInfo(file);
+                        } else if (mergeInfoProp != null && propValue == null) {
+                            myMergeDriver.addPathWithDeletedMergeInfo(file);
+                        }
                     }
                 }
             }

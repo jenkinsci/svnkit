@@ -1,8 +1,8 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -298,6 +298,9 @@ has-props
 
 1014
 
+sasl
+dir
+
 ISVNConnectorFactory.java
 file
 
@@ -331,43 +334,6 @@ has-props
 
 
 2158
-
-sasl
-dir
-
-SVNPlainAuthenticator.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-daec07670bc32fc0512cb37f7a1baa51
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6877
 
 SVNItem.java
 file
@@ -403,16 +369,16 @@ has-props
 
 3738
 
-SVNConnection.java
+SVNPlainAuthenticator.java
 file
 
 
 
 
-2008-12-17T22:37:22.000000Z
-7ae4056a4fb8104932a37feb710c26bc
-2008-10-13T19:03:12.320682Z
-5006
+2008-11-04T17:25:59.000000Z
+daec07670bc32fc0512cb37f7a1baa51
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
 
@@ -435,7 +401,7 @@ has-props
 
 
 
-15580
+6877
 
 SVNCommitEditor.java
 file
@@ -470,6 +436,40 @@ has-props
 
 
 10145
+
+SVNConnection.java
+file
+
+
+
+
+2008-12-17T22:37:22.000000Z
+7ae4056a4fb8104932a37feb710c26bc
+2008-10-13T19:03:12.320682Z
+5006
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+15580
 
 SVNSSHSession.java
 file

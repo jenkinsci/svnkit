@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src-test/de/regnis/q/sequence
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src-test/de/regnis/q/sequence
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-12-05T15:26:52.438073Z
+5324
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -171,10 +171,10 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
-d2e47db2496be7f9a2b02d139a43376e
-2008-04-01T17:30:14.226162Z
-4095
+2009-01-14T22:06:35.000000Z
+255b73087642f3a9225c64592c1f8cc2
+2008-12-05T15:26:52.438073Z
+5324
 alex
 has-props
 
@@ -205,10 +205,10 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
-6438be562a674929dd645ca69d5fad01
-2008-04-01T17:30:14.226162Z
-4095
+2009-01-14T22:06:35.000000Z
+56ac73fc4d004941e124371d1e9a839f
+2008-12-05T15:26:52.438073Z
+5324
 alex
 has-props
 

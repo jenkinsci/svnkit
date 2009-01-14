@@ -137,7 +137,8 @@ public class SVNWCManager {
                 ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, SVNDepth.INFINITY);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, null, copyFromRev, SVNDepth.INFINITY);
+                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(), 
+                        copyFromRev, SVNDepth.INFINITY);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
@@ -534,7 +535,7 @@ public class SVNWCManager {
         if (fileType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY) {
+        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.SYMLINK) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Unsupported node kind for path ''{0}''", path);
             SVNErrorManager.error(err, SVNLogType.WC);

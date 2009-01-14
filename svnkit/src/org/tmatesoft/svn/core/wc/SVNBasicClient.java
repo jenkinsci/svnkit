@@ -1053,6 +1053,14 @@ public class SVNBasicClient implements ISVNEventHandler {
         return  depth == SVNDepth.EMPTY || depth == SVNDepth.FILES ? 0 : 
             (depth == SVNDepth.IMMEDIATES ? 1 : SVNWCAccess.INFINITE_DEPTH);  
     }
+
+    protected void setCommitItemAccess(SVNCommitItem item, SVNWCAccess access) {
+        item.setWCAccess(access);
+    }
+
+    protected void setCommitItemProperty(SVNCommitItem item, String name, SVNPropertyValue value) {
+        item.setProperty(name, value);
+    }
     
     private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {
         

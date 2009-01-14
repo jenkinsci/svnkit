@@ -321,7 +321,7 @@ public class SVNPropertiesManager {
     public static void recordWCMergeInfo(File path, Map mergeInfo, SVNWCAccess wcAccess) throws SVNException {
         SVNPropertyValue value = null;
         if (mergeInfo != null) {
-            value = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo));
+            value = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null));
         }
         setProperty(wcAccess, path, SVNProperty.MERGE_INFO, value, true);
     }

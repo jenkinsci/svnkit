@@ -1,8 +1,8 @@
 9
 
 dir
-34802
-http://svn.collab.net/repos/svn/tags/1.5.4/subversion/bindings/javahl/src/org/tigris/subversion/javahl
+35256
+http://svn.collab.net/repos/svn/tags/1.5.5/subversion/bindings/javahl/src/org/tigris/subversion/javahl
 http://svn.collab.net/repos/svn
 
 
@@ -468,40 +468,6 @@ has-props
 
 1794
 
-SVNClientSynchronized.java
-file
-
-
-
-
-2008-12-17T22:35:13.000000Z
-8d184e640eff134e15ecee58f1e9f55f
-2008-05-21T21:38:42.951617Z
-31344
-cmpilato
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-51221
-
 SVNClient.java
 file
 
@@ -535,6 +501,40 @@ has-props
 
 
 49734
+
+SVNClientSynchronized.java
+file
+
+
+
+
+2008-12-17T22:35:13.000000Z
+8d184e640eff134e15ecee58f1e9f55f
+2008-05-21T21:38:42.951617Z
+31344
+cmpilato
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+51221
 
 ErrorCodes.java
 file
@@ -1114,40 +1114,6 @@ has-props
 
 3163
 
-PropertyData.java
-file
-
-
-
-
-2008-12-17T22:35:13.000000Z
-ba86aea7053fa43667e250e5fbefa784
-2007-04-23T20:22:56.496637Z
-24725
-blair
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6008
-
 SubversionException.java
 file
 
@@ -1182,17 +1148,17 @@ has-props
 
 1720
 
-LogDate.java
+PropertyData.java
 file
 
 
 
 
-2008-08-27T01:16:44.000000Z
-8db9bd3e094288724dd55de04311770f
-2008-05-25T03:03:24.421074Z
-31439
-hwright
+2008-12-17T22:35:13.000000Z
+ba86aea7053fa43667e250e5fbefa784
+2007-04-23T20:22:56.496637Z
+24725
+blair
 has-props
 
 
@@ -1214,7 +1180,7 @@ has-props
 
 
 
-3663
+6008
 
 BlameCallbackImpl.java
 file
@@ -1250,6 +1216,40 @@ has-props
 
 5765
 
+LogDate.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+8db9bd3e094288724dd55de04311770f
+2008-05-25T03:03:24.421074Z
+31439
+hwright
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3663
+
 OutputInterface.java
 file
 
@@ -1284,40 +1284,6 @@ has-props
 
 1291
 
-PromptUserPassword2.java
-file
-
-
-
-
-2008-12-17T22:35:13.000000Z
-1f164adf84eeafab6fae4a1ef4c2e079
-2007-04-23T17:40:47.726441Z
-24716
-blair
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1976
-
 CommitItemStateFlags.java
 file
 
@@ -1351,6 +1317,40 @@ has-props
 
 
 1395
+
+PromptUserPassword2.java
+file
+
+
+
+
+2008-12-17T22:35:13.000000Z
+1f164adf84eeafab6fae4a1ef4c2e079
+2007-04-23T17:40:47.726441Z
+24716
+blair
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1976
 
 SVNClientInterface.java
 file
@@ -1556,40 +1556,6 @@ has-props
 
 1378
 
-DirEntry.java
-file
-
-
-
-
-2008-12-17T22:35:13.000000Z
-526922eb3dcf220749db9b6ef04079e0
-2007-04-23T21:44:55.916859Z
-24735
-blair
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6675
-
 StatusCallback.java
 file
 
@@ -1624,16 +1590,16 @@ has-props
 
 1095
 
-ScheduleKind.java
+DirEntry.java
 file
 
 
 
 
 2008-12-17T22:35:13.000000Z
-d24d67f31233e3f57d6bcdf10e0315a9
-2007-04-23T17:40:47.726441Z
-24716
+526922eb3dcf220749db9b6ef04079e0
+2007-04-23T21:44:55.916859Z
+24735
 blair
 has-props
 
@@ -1656,7 +1622,7 @@ has-props
 
 
 
-1199
+6675
 
 SVNInputStream.java
 file
@@ -1691,6 +1657,40 @@ has-props
 
 
 3276
+
+ScheduleKind.java
+file
+
+
+
+
+2008-12-17T22:35:13.000000Z
+d24d67f31233e3f57d6bcdf10e0315a9
+2007-04-23T17:40:47.726441Z
+24716
+blair
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1199
 
 PromptUserPassword.java
 file
@@ -1828,40 +1828,6 @@ has-props
 
 1380
 
-ProplistCallbackImpl.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-2d700d6f5a1123066383af03ec584704
-2007-04-23T17:40:47.726441Z
-24716
-blair
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1223
-
 RevisionRange.java
 file
 
@@ -1895,6 +1861,40 @@ has-props
 
 
 5234
+
+ProplistCallbackImpl.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+2d700d6f5a1123066383af03ec584704
+2007-04-23T17:40:47.726441Z
+24716
+blair
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1223
 
 NotifyInformation.java
 file
@@ -1998,40 +1998,6 @@ has-props
 
 21917
 
-DiffSummary.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-a88ad91e1b926f3044444d99209ea67a
-2007-10-10T20:32:38.826622Z
-27091
-hwright
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5186
-
 PromptUserPassword3.java
 file
 
@@ -2065,6 +2031,40 @@ has-props
 
 
 3504
+
+DiffSummary.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+a88ad91e1b926f3044444d99209ea67a
+2007-10-10T20:32:38.826622Z
+27091
+hwright
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5186
 
 ProplistCallback.java
 file

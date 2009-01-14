@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/util
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/util
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 svn:special svn:externals svn:needs-lock
@@ -100,11 +100,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-2f4579b624c3a50eb06f3ee3403ba07f
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-14T22:09:49.000000Z
+b9781031df036f2b55dcbce7c436ccdb
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 

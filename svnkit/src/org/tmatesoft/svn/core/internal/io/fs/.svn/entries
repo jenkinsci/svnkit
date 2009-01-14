@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/fs
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/io/fs
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T19:49:21.695323Z
-5288
+2008-12-24T21:14:03.459294Z
+5390
 alex
 
 
@@ -950,10 +950,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-59c52c3f55748cc7f9398212593019e5
-2008-10-09T16:21:29.793115Z
-4982
+2009-01-14T22:06:35.000000Z
+f2861f3a376e9aa0707fc53447253399
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -976,7 +976,7 @@ has-props
 
 
 
-30018
+30030
 
 FSHooks.java
 file

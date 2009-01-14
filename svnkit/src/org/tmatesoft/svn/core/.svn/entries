@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T20:04:17.399572Z
-5291
+2009-01-07T17:06:18.666368Z
+5404
 alex
 
 
@@ -415,10 +415,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-8c2732da3a129bd6725be221bb6440e8
-2008-08-25T17:04:03.332478Z
-4764
+2009-01-14T22:06:37.000000Z
+5f9c6747f00e295136c60f91aeba40cd
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -441,7 +441,7 @@ has-props
 
 
 
-33775
+34048
 
 SVNMergeInfo.java
 file

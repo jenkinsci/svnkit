@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src/de/regnis/q/sequence/core
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src/de/regnis/q/sequence/core
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-12-06T17:25:53.505049Z
+5335
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -372,10 +372,10 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
-4a070e98b21702f6a9ca4329f38eb38d
-2008-04-01T17:30:14.226162Z
-4095
+2009-01-14T22:06:35.000000Z
+0fb8b3864e6bc2f08b74cf5096505816
+2008-12-06T17:25:53.505049Z
+5335
 alex
 has-props
 
@@ -398,7 +398,7 @@ has-props
 
 
 
-6009
+6193
 
 QSequenceDeePathExtenderArray.java
 file
@@ -474,10 +474,10 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
-33f9dc3c660430e93dd97f5074ffbbc4
-2008-04-01T17:30:14.226162Z
-4095
+2009-01-14T22:06:35.000000Z
+c18627dd5ba60b9add588c86a6a5ffb8
+2008-12-05T15:26:52.438073Z
+5324
 alex
 has-props
 
@@ -500,7 +500,7 @@ has-props
 
 
 
-3133
+2833
 
 QSequenceMedia.java
 file

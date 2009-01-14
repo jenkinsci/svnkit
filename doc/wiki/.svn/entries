@@ -1,8 +1,8 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/wiki
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/doc/wiki
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -672,40 +672,6 @@ has-props
 
 24090
 
-repository_tree.png
-file
-
-
-
-
-2008-08-27T01:16:45.000000Z
-e835a764d1c1550d347de5f800aaa49f
-2006-06-05T17:20:30.666879Z
-2494
-sa
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-23424
-
 AuthManager_Architecture.png
 file
 
@@ -739,6 +705,40 @@ has-props
 
 
 15335
+
+repository_tree.png
+file
+
+
+
+
+2008-08-27T01:16:45.000000Z
+e835a764d1c1550d347de5f800aaa49f
+2006-06-05T17:20:30.666879Z
+2494
+sa
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23424
 
 Printing_Out_File_Contents.wp
 file
@@ -774,40 +774,6 @@ has-props
 
 3913
 
-Setting_Up_A_Subversion_Repository.wp
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-9c411901cb0277494980bf72403e9668
-2008-07-30T16:53:59.266781Z
-4613
-semen
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7367
-
 Subversion_Architecture.png
 file
 
@@ -841,6 +807,40 @@ has-props
 
 
 55406
+
+Setting_Up_A_Subversion_Repository.wp
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+9c411901cb0277494980bf72403e9668
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7367
 
 AuthProvider_In_Work.png
 file
@@ -944,40 +944,6 @@ has-props
 
 6288
 
-Editing_Operation_Update.wp
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-a245b1a091f6147355f6afe5cfa56175
-2008-07-30T16:53:59.266781Z
-4613
-semen
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-20674
-
 WC_Example3.png
 file
 
@@ -1011,6 +977,40 @@ has-props
 
 
 10298
+
+Editing_Operation_Update.wp
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+a245b1a091f6147355f6afe5cfa56175
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+20674
 
 WC_Example4.png
 file

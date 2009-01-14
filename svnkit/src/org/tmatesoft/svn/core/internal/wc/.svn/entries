@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/wc
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T19:52:13.518016Z
-5290
+2008-12-24T21:39:18.094790Z
+5393
 alex
 
 
@@ -434,6 +434,40 @@ has-props
 
 834
 
+SVNExtendedMergeDriver.java
+file
+
+
+
+
+2009-01-14T22:06:36.000000Z
+f28a13e019dc65553a789f903b3a43e3
+2008-12-24T21:39:18.094790Z
+5393
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+24619
+
 SVNCancellableEditor.java
 file
 
@@ -780,10 +814,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-dff6558fa234b1c440b9d2be044e2b70
-2008-11-26T16:57:14.562531Z
-5269
+2009-01-14T22:06:36.000000Z
+6044cc882be3e29a41777ec3e7d8a28e
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -806,7 +840,7 @@ has-props
 
 
 
-148519
+161119
 
 SVNDiffEditor.java
 file
@@ -882,10 +916,44 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-74bdcfe81eb5671e6eba49ce0277d4d8
-2008-10-13T19:03:12.320682Z
-5006
+2009-01-14T22:06:36.000000Z
+d9e24b25a55b243862dda620c3031410
+2008-11-28T21:07:21.269306Z
+5301
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+49881
+
+SVNCopyDriver.java
+file
+
+
+
+
+2009-01-14T22:06:36.000000Z
+9f2cb30378e30ba40a2e185241c62b99
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -908,7 +976,7 @@ has-props
 
 
 
-49617
+79590
 
 SVNAdminHelper.java
 file
@@ -950,11 +1018,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-082b69049c9a54f8ee8546a6d8838bb5
-2008-11-26T17:06:51.374222Z
-5273
-alex
+2009-01-14T22:06:36.000000Z
+769b24b208efecff5d81e0eb5daaca2f
+2008-12-10T00:36:19.349906Z
+5357
+semen
 has-props
 
 
@@ -976,7 +1044,7 @@ has-props
 
 
 
-20828
+21350
 
 DefaultLoadHandler.java
 file
@@ -984,10 +1052,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-edbae41b806fd35f6b0d859a8e189bf7
-2008-08-28T19:30:55.179841Z
-4792
+2009-01-14T22:06:36.000000Z
+8078b7ae7b8f22d0b28ac7a02dc7bb0c
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -1010,7 +1078,10 @@ has-props
 
 
 
-26531
+26537
+
+config
+dir
 
 SVNDumpStreamParser.java
 file
@@ -1046,21 +1117,18 @@ has-props
 
 18350
 
-config
-dir
-
 SVNEventExt.java
 file
 
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-01-14T22:06:36.000000Z
 217ac9424a820b8c6c7374b89db892d4
-2008-09-10T18:40:04.671303Z
-4857
+2008-12-24T21:39:18.094790Z
+5393
 alex
-
+has-props
 
 
 
@@ -1123,10 +1191,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-26f1a9fd423000d9d72e2694a5b26222
-2008-11-27T19:52:13.518016Z
-5290
+2009-01-14T22:06:36.000000Z
+443ee61ea81fe6369828e3f10a6091aa
+2008-12-05T15:28:25.748917Z
+5325
 alex
 has-props
 
@@ -1149,7 +1217,7 @@ has-props
 
 
 
-57172
+57308
 
 SVNAdminDeltifier.java
 file
@@ -1293,10 +1361,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-cf1e02785904a837124980c1b91cc185
-2008-08-15T15:28:48.918752Z
-4717
+2009-01-14T22:06:36.000000Z
+308030012ac75413d944017d96f65cc2
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -1319,7 +1387,41 @@ has-props
 
 
 
-42125
+42131
+
+SVNExtendedMergeEditor.java
+file
+
+
+
+
+2009-01-14T22:06:36.000000Z
+db6deff318ce8739f814bd0026e7922a
+2008-12-24T21:39:18.094790Z
+5393
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+34325
 
 DefaultDumpFilterHandler.java
 file
@@ -1327,10 +1429,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-5513b314c7a54ed556e621bb18ba0a37
-2008-11-26T16:49:37.585065Z
-5265
+2009-01-14T22:06:36.000000Z
+7e1ced7302b05ec1e631baff3a3613b1
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -1353,7 +1455,7 @@ has-props
 
 
 
-25130
+25136
 
 SVNPropertiesManager.java
 file
@@ -1361,10 +1463,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-0b75faeaed668b5cc97ec3e3d87e38da
-2008-10-13T19:03:12.320682Z
-5006
+2009-01-14T22:06:36.000000Z
+2117228b3b9b1f0cc86ed3a1a5bbd01f
+2008-12-24T21:14:03.459294Z
+5390
 alex
 has-props
 
@@ -1387,7 +1489,7 @@ has-props
 
 
 
-23481
+23487
 
 SVNPath.java
 file
@@ -1565,10 +1667,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-b9a94aa1e4e37a8d084dfbc9c9b15772
-2008-11-26T16:57:14.562531Z
-5269
+2009-01-14T22:06:36.000000Z
+c5e47f7d57a1dda90da90d6f0c7b3f5e
+2008-12-24T21:09:00.920802Z
+5387
 alex
 has-props
 
@@ -1591,7 +1693,7 @@ has-props
 
 
 
-18352
+18873
 
 DefaultSVNAuthenticationManager.java
 file
@@ -2180,10 +2282,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-b38d3eb24d6bc7569d3616aa457a638b
-2008-11-26T16:59:41.818991Z
-5270
+2009-01-14T22:06:36.000000Z
+0846304934618204247136544965717d
+2008-12-09T15:33:47.761070Z
+5343
 alex
 has-props
 
@@ -2206,7 +2308,7 @@ has-props
 
 
 
-38415
+38492
 
 SVNConfigFile.java
 file
@@ -2309,4 +2411,38 @@ has-props
 
 
 7944
+
+ISVNExtendedMergeCallback.java
+file
+
+
+
+
+2009-01-14T22:06:36.000000Z
+fbf4ff00248f06600f6c790cd28f36d9
+2008-12-24T21:39:18.094790Z
+5393
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1593
 

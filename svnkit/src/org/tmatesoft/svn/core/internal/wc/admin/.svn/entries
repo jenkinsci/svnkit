@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/wc/admin
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T19:49:21.695323Z
-5288
+2008-12-24T21:09:00.920802Z
+5387
 alex
 
 
@@ -270,10 +270,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-886cd4191b6cc7d4a659769eecbdb4f5
-2008-11-26T17:09:49.666037Z
-5274
+2009-01-14T22:06:36.000000Z
+eee3b957d0a1e4737de056737fac5a9b
+2008-12-09T19:34:14.122270Z
+5353
 alex
 has-props
 
@@ -296,7 +296,7 @@ has-props
 
 
 
-70066
+70121
 
 ISVNAdminAreaFactorySelector.java
 file
@@ -474,10 +474,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-6dd2559edf402a0ebbdd83604b5dda88
-2008-11-26T17:09:49.666037Z
-5274
+2009-01-14T22:06:36.000000Z
+99bd14b3b1035f83beb8ee1d692074b0
+2008-12-24T21:09:00.920802Z
+5387
 alex
 has-props
 
@@ -500,7 +500,7 @@ has-props
 
 
 
-27437
+27401
 
 SVNXMLAdminAreaFactory.java
 file

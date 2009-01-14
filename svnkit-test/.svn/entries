@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit-test
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,12 @@ file
 
 
 
-2008-12-17T22:37:18.000000Z
-de6315b86fd1832e6ccaa82485993e22
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-14T22:06:35.000000Z
+3234ccc4457ddf4f31eea3128b13ea02
+2009-01-08T16:28:00.472597Z
+5405
+sa
+has-props
 
 
 
@@ -57,8 +58,7 @@ alex
 
 
 
-
-206104
+207849
 
 patch
 dir
@@ -251,10 +251,10 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
-5e4f36ede36965d29e3e67516a34d57e
-2008-04-14T13:19:58.057202Z
-4160
+2009-01-14T22:06:35.000000Z
+ad249a9c0f671e1a024c132a550e07ac
+2008-11-28T21:07:21.269306Z
+5301
 semen
 has-props
 
@@ -277,7 +277,7 @@ has-props
 
 
 
-1360
+1242
 
 test.unix.properties
 file

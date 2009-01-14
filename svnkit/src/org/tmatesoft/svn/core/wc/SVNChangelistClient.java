@@ -304,6 +304,11 @@ public class SVNChangelistClient extends SVNBasicClient {
     }
 
     private void setChangelist(File[] paths, String changelistName, String[] changelists, SVNDepth depth) throws SVNException {
+        if ("".equals(changelistName)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Changelist names must not be empty");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
         SVNWCAccess wcAccess = createWCAccess();
         for (int i = 0; i < paths.length; i++) {
             checkCancelled();

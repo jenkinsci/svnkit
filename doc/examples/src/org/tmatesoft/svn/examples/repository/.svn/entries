@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/examples/src/org/tmatesoft/svn/examples/repository
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/doc/examples/src/org/tmatesoft/svn/examples/repository
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-08T14:36:48.049230Z
-4836
+2008-12-24T21:39:18.094790Z
+5393
 alex
 
 
@@ -100,12 +100,12 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-01-14T22:06:35.000000Z
 a7376a6d817b230a7831edbc3b3e61d2
-2008-09-08T14:36:48.049230Z
-4836
+2008-12-24T21:39:18.094790Z
+5393
 alex
-
+has-props
 
 
 

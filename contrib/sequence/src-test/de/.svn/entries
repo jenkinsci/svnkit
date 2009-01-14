@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src-test/de
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src-test/de
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-12-05T15:26:52.438073Z
+5324
+alex
 
 
 svn:special svn:externals svn:needs-lock

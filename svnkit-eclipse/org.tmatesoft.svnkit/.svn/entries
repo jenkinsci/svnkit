@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit-eclipse/org.tmatesoft.svnkit
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-eclipse/org.tmatesoft.svnkit
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T20:04:17.399572Z
-5291
-alex
+2008-12-09T16:07:34.880547Z
+5346
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -34,9 +34,9 @@ file
 
 
 043c175572aec242431b1dec44966c6d
-2008-11-27T20:04:17.399572Z
-5291
-alex
+2008-12-09T16:07:34.880547Z
+5346
+semen
 has-props
 
 
@@ -139,9 +139,9 @@ file
 
 
 bf38ea109322858adc3f53dd3f6ccf82
-2008-11-27T20:04:17.399572Z
-5291
-alex
+2008-12-09T16:07:34.880547Z
+5346
+semen
 has-props
 
 
