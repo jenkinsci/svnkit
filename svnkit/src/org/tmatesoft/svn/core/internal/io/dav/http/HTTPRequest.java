@@ -378,7 +378,6 @@ class HTTPRequest {
             sb.append(header.toString());
         }
         sb.append(HTTPRequest.CRLF);
-        System.out.println(sb);
         return sb;
     }
     
