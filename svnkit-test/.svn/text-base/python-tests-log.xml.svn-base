@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<PythonTests start="2008.11.28  at 03:01:54 CET" elapsed="1 hours 21 minutes 0 seconds">
-  <server name="file" url="file:///home/builder/agent2ram/python/cmdline">
+<PythonTests start="2009.01.08  at 05:01:50 CET" elapsed="1 hours 24 minutes 17 seconds">
+  <server name="file" url="file:///home/builder/agent1ram/python/cmdline">
     <suite name="authz" total="0" passed="0" failed="0">
     </suite>
     <suite name="autoprop" total="14" passed="14" failed="0">
@@ -166,7 +166,7 @@
       <test name="'svn commit SOME_URL' should error" id="55" result="PASSED"></test>
       <test name="commit a missing to-be-added file should fail" id="56" result="PASSED"></test>
     </suite>
-    <suite name="copy" total="72" passed="72" failed="0">
+    <suite name="copy" total="73" passed="73" failed="0">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -237,8 +237,9 @@
       <test name="copy a URL that needs URI encoding to WC" id="68" result="PASSED"></test>
       <test name="copy wc in unversioned parent to other wc" id="69" result="PASSED"></test>
       <test name="update receives copy, but local source is replaced" id="70" result="PASSED"></test>
-      <test name="copy file into absent dir" id="71" result="PASSED"></test>
-      <test name="renaming inside a copied subtree shouldn't hang" id="72" result="PASSED"></test>
+      <test name="svn cp --parents FILE_URL DIR_URL" id="71" result="PASSED"></test>
+      <test name="copy file into absent dir" id="72" result="PASSED"></test>
+      <test name="renaming inside a copied subtree shouldn't hang" id="73" result="PASSED"></test>
     </suite>
     <suite name="depth" total="26" passed="26" failed="0">
       <test name="depth-empty checkout" id="1" result="PASSED"></test>
@@ -429,7 +430,7 @@
       <test name="log -g and explicit mergeinfo replacing inherited" id="27" result="PASSED"></test>
       <test name="log -g and simple propmod to merge-inheriting path" id="28" result="PASSED"></test>
     </suite>
-    <suite name="merge" total="102" passed="102" failed="0">
+    <suite name="merge" total="107" passed="107" failed="0">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -517,21 +518,26 @@
       <test name="cyclic merges dont add mergeinfo from own history" id="86" result="PASSED"></test>
       <test name="merge range predates history (issue #3094)" id="87" result="PASSED"></test>
       <test name="merge from a foreign repository" id="88" result="PASSED"></test>
-      <test name="2-url merge from a foreign repository" id="89" result="PASSED"></test>
-      <test name="merging an unknown url should return error" id="90" result="PASSED"></test>
-      <test name="merges that remove all mergeinfo work" id="91" result="PASSED"></test>
-      <test name="dont merge revs into a subtree that predate it" id="92" result="PASSED"></test>
-      <test name="don't explicitly record implicit mergeinfo" id="93" result="PASSED"></test>
-      <test name="merge with broken symlinks in target" id="94" result="PASSED"></test>
-      <test name="subtree ranges might not intersect with target" id="95" result="PASSED"></test>
-      <test name="merge fails with renamed subtrees with mergeinfo" id="96" result="PASSED"></test>
-      <test name="subtree merge source might not exist" id="97" result="PASSED"></test>
-      <test name="mergeinfo not set on subtree with empty mergeinfo" id="98" result="PASSED"></test>
-      <test name="subtree merges dont cause spurious conflicts" id="100" result="PASSED"></test>
-      <test name="target and subtrees need nonintersecting revs" id="101" result="PASSED"></test>
-      <test name="natural history filtering permits valid mergeinfo" id="102" result="PASSED"></test>
-      <test name="merge adds mergeinfo to subtrees correctly" id="103" result="PASSED"></test>
-      <test name="no self referential filtering on added path" id="104" result="PASSED"></test>
+      <test name="verify uuid of items added via foreign repo merge" id="89" result="PASSED"></test>
+      <test name="2-url merge from a foreign repository" id="90" result="PASSED"></test>
+      <test name="merging an unknown url should return error" id="91" result="PASSED"></test>
+      <test name="merges that remove all mergeinfo work" id="92" result="PASSED"></test>
+      <test name="dont merge revs into a subtree that predate it" id="93" result="PASSED"></test>
+      <test name="don't explicitly record implicit mergeinfo" id="94" result="PASSED"></test>
+      <test name="merge with broken symlinks in target" id="95" result="PASSED"></test>
+      <test name="subtree ranges might not intersect with target" id="96" result="PASSED"></test>
+      <test name="merge fails with renamed subtrees with mergeinfo" id="97" result="PASSED"></test>
+      <test name="subtree merge source might not exist" id="98" result="PASSED"></test>
+      <test name="mergeinfo not set on subtree with empty mergeinfo" id="99" result="PASSED"></test>
+      <test name="subtree merges dont cause spurious conflicts" id="101" result="PASSED"></test>
+      <test name="target and subtrees need nonintersecting revs" id="102" result="PASSED"></test>
+      <test name="natural history filtering permits valid mergeinfo" id="103" result="PASSED"></test>
+      <test name="merge adds mergeinfo to subtrees correctly" id="104" result="PASSED"></test>
+      <test name="no self referential filtering on added path" id="105" result="PASSED"></test>
+      <test name="merge --reintegrate with subtree mergeinfo" id="106" result="PASSED"></test>
+      <test name="mergeinfo aware merges ignore natural history gaps" id="107" result="PASSED"></test>
+      <test name="mergeinfo deleted by a merge should disappear" id="108" result="PASSED"></test>
+      <test name="merge an EOL unification and set svn:eol-style" id="109" result="PASSED"></test>
     </suite>
     <suite name="merge_authz" total="0" passed="0" failed="0">
     </suite>
@@ -799,7 +805,7 @@
       <test name="update fails when repos uuid changed" id="44" result="PASSED"></test>
     </suite>
   </server>
-  <server name="svnserve" url="svn://localhost:44227">
+  <server name="svnserve" url="svn://localhost:55562">
     <suite name="authz" total="14" passed="14" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="authz issue #2486 - open directory" id="2" result="PASSED"></test>
@@ -979,7 +985,7 @@
       <test name="'svn commit SOME_URL' should error" id="55" result="PASSED"></test>
       <test name="commit a missing to-be-added file should fail" id="56" result="PASSED"></test>
     </suite>
-    <suite name="copy" total="72" passed="72" failed="0">
+    <suite name="copy" total="73" passed="73" failed="0">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -1050,8 +1056,9 @@
       <test name="copy a URL that needs URI encoding to WC" id="68" result="PASSED"></test>
       <test name="copy wc in unversioned parent to other wc" id="69" result="PASSED"></test>
       <test name="update receives copy, but local source is replaced" id="70" result="PASSED"></test>
-      <test name="copy file into absent dir" id="71" result="PASSED"></test>
-      <test name="renaming inside a copied subtree shouldn't hang" id="72" result="PASSED"></test>
+      <test name="svn cp --parents FILE_URL DIR_URL" id="71" result="PASSED"></test>
+      <test name="copy file into absent dir" id="72" result="PASSED"></test>
+      <test name="renaming inside a copied subtree shouldn't hang" id="73" result="PASSED"></test>
     </suite>
     <suite name="depth" total="26" passed="26" failed="0">
       <test name="depth-empty checkout" id="1" result="PASSED"></test>
@@ -1242,7 +1249,7 @@
       <test name="log -g and explicit mergeinfo replacing inherited" id="27" result="PASSED"></test>
       <test name="log -g and simple propmod to merge-inheriting path" id="28" result="PASSED"></test>
     </suite>
-    <suite name="merge" total="102" passed="102" failed="0">
+    <suite name="merge" total="107" passed="107" failed="0">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -1330,21 +1337,26 @@
       <test name="cyclic merges dont add mergeinfo from own history" id="86" result="PASSED"></test>
       <test name="merge range predates history (issue #3094)" id="87" result="PASSED"></test>
       <test name="merge from a foreign repository" id="88" result="PASSED"></test>
-      <test name="2-url merge from a foreign repository" id="89" result="PASSED"></test>
-      <test name="merging an unknown url should return error" id="90" result="PASSED"></test>
-      <test name="merges that remove all mergeinfo work" id="91" result="PASSED"></test>
-      <test name="dont merge revs into a subtree that predate it" id="92" result="PASSED"></test>
-      <test name="don't explicitly record implicit mergeinfo" id="93" result="PASSED"></test>
-      <test name="merge with broken symlinks in target" id="94" result="PASSED"></test>
-      <test name="subtree ranges might not intersect with target" id="95" result="PASSED"></test>
-      <test name="merge fails with renamed subtrees with mergeinfo" id="96" result="PASSED"></test>
-      <test name="subtree merge source might not exist" id="97" result="PASSED"></test>
-      <test name="mergeinfo not set on subtree with empty mergeinfo" id="98" result="PASSED"></test>
-      <test name="subtree merges dont cause spurious conflicts" id="100" result="PASSED"></test>
-      <test name="target and subtrees need nonintersecting revs" id="101" result="PASSED"></test>
-      <test name="natural history filtering permits valid mergeinfo" id="102" result="PASSED"></test>
-      <test name="merge adds mergeinfo to subtrees correctly" id="103" result="PASSED"></test>
-      <test name="no self referential filtering on added path" id="104" result="PASSED"></test>
+      <test name="verify uuid of items added via foreign repo merge" id="89" result="PASSED"></test>
+      <test name="2-url merge from a foreign repository" id="90" result="PASSED"></test>
+      <test name="merging an unknown url should return error" id="91" result="PASSED"></test>
+      <test name="merges that remove all mergeinfo work" id="92" result="PASSED"></test>
+      <test name="dont merge revs into a subtree that predate it" id="93" result="PASSED"></test>
+      <test name="don't explicitly record implicit mergeinfo" id="94" result="PASSED"></test>
+      <test name="merge with broken symlinks in target" id="95" result="PASSED"></test>
+      <test name="subtree ranges might not intersect with target" id="96" result="PASSED"></test>
+      <test name="merge fails with renamed subtrees with mergeinfo" id="97" result="PASSED"></test>
+      <test name="subtree merge source might not exist" id="98" result="PASSED"></test>
+      <test name="mergeinfo not set on subtree with empty mergeinfo" id="99" result="PASSED"></test>
+      <test name="subtree merges dont cause spurious conflicts" id="101" result="PASSED"></test>
+      <test name="target and subtrees need nonintersecting revs" id="102" result="PASSED"></test>
+      <test name="natural history filtering permits valid mergeinfo" id="103" result="PASSED"></test>
+      <test name="merge adds mergeinfo to subtrees correctly" id="104" result="PASSED"></test>
+      <test name="no self referential filtering on added path" id="105" result="PASSED"></test>
+      <test name="merge --reintegrate with subtree mergeinfo" id="106" result="PASSED"></test>
+      <test name="mergeinfo aware merges ignore natural history gaps" id="107" result="PASSED"></test>
+      <test name="mergeinfo deleted by a merge should disappear" id="108" result="PASSED"></test>
+      <test name="merge an EOL unification and set svn:eol-style" id="109" result="PASSED"></test>
     </suite>
     <suite name="merge_authz" total="1" passed="1" failed="0">
       <test name="skipped paths get overriding mergeinfo" id="1" result="PASSED"></test>
@@ -1617,7 +1629,7 @@
       <test name="update fails when repos uuid changed" id="44" result="PASSED"></test>
     </suite>
   </server>
-  <server name="apache" url="http://localhost:33166">
+  <server name="apache" url="http://localhost:60378">
     <suite name="authz" total="13" passed="13" failed="0">
       <test name="authz issue #2486 - open root" id="1" result="PASSED"></test>
       <test name="authz issue #2486 - open directory" id="2" result="PASSED"></test>
@@ -1796,7 +1808,7 @@
       <test name="'svn commit SOME_URL' should error" id="55" result="PASSED"></test>
       <test name="commit a missing to-be-added file should fail" id="56" result="PASSED"></test>
     </suite>
-    <suite name="copy" total="72" passed="72" failed="0">
+    <suite name="copy" total="73" passed="73" failed="0">
       <test name="basic copy and move commands -- on files only" id="1" result="PASSED"></test>
       <test name="receive a copied directory during update" id="2" result="PASSED"></test>
       <test name="resurrect a deleted directory" id="3" result="PASSED"></test>
@@ -1867,8 +1879,9 @@
       <test name="copy a URL that needs URI encoding to WC" id="68" result="PASSED"></test>
       <test name="copy wc in unversioned parent to other wc" id="69" result="PASSED"></test>
       <test name="update receives copy, but local source is replaced" id="70" result="PASSED"></test>
-      <test name="copy file into absent dir" id="71" result="PASSED"></test>
-      <test name="renaming inside a copied subtree shouldn't hang" id="72" result="PASSED"></test>
+      <test name="svn cp --parents FILE_URL DIR_URL" id="71" result="PASSED"></test>
+      <test name="copy file into absent dir" id="72" result="PASSED"></test>
+      <test name="renaming inside a copied subtree shouldn't hang" id="73" result="PASSED"></test>
     </suite>
     <suite name="depth" total="26" passed="26" failed="0">
       <test name="depth-empty checkout" id="1" result="PASSED"></test>
@@ -2059,7 +2072,7 @@
       <test name="log -g and explicit mergeinfo replacing inherited" id="27" result="PASSED"></test>
       <test name="log -g and simple propmod to merge-inheriting path" id="28" result="PASSED"></test>
     </suite>
-    <suite name="merge" total="103" passed="103" failed="0">
+    <suite name="merge" total="108" passed="108" failed="0">
       <test name="performing a merge, with mixed results" id="1" result="PASSED"></test>
       <test name="merge and add new files/dirs with history" id="2" result="PASSED"></test>
       <test name="merge that deletes items" id="3" result="PASSED"></test>
@@ -2147,22 +2160,27 @@
       <test name="cyclic merges dont add mergeinfo from own history" id="86" result="PASSED"></test>
       <test name="merge range predates history (issue #3094)" id="87" result="PASSED"></test>
       <test name="merge from a foreign repository" id="88" result="PASSED"></test>
-      <test name="2-url merge from a foreign repository" id="89" result="PASSED"></test>
-      <test name="merging an unknown url should return error" id="90" result="PASSED"></test>
-      <test name="merges that remove all mergeinfo work" id="91" result="PASSED"></test>
-      <test name="dont merge revs into a subtree that predate it" id="92" result="PASSED"></test>
-      <test name="don't explicitly record implicit mergeinfo" id="93" result="PASSED"></test>
-      <test name="merge with broken symlinks in target" id="94" result="PASSED"></test>
-      <test name="subtree ranges might not intersect with target" id="95" result="PASSED"></test>
-      <test name="merge fails with renamed subtrees with mergeinfo" id="96" result="PASSED"></test>
-      <test name="subtree merge source might not exist" id="97" result="PASSED"></test>
-      <test name="mergeinfo not set on subtree with empty mergeinfo" id="98" result="PASSED"></test>
-      <test name="commits to subtrees added by merge wreak havoc" id="99" result="PASSED"></test>
-      <test name="subtree merges dont cause spurious conflicts" id="100" result="PASSED"></test>
-      <test name="target and subtrees need nonintersecting revs" id="101" result="PASSED"></test>
-      <test name="natural history filtering permits valid mergeinfo" id="102" result="PASSED"></test>
-      <test name="merge adds mergeinfo to subtrees correctly" id="103" result="PASSED"></test>
-      <test name="no self referential filtering on added path" id="104" result="PASSED"></test>
+      <test name="verify uuid of items added via foreign repo merge" id="89" result="PASSED"></test>
+      <test name="2-url merge from a foreign repository" id="90" result="PASSED"></test>
+      <test name="merging an unknown url should return error" id="91" result="PASSED"></test>
+      <test name="merges that remove all mergeinfo work" id="92" result="PASSED"></test>
+      <test name="dont merge revs into a subtree that predate it" id="93" result="PASSED"></test>
+      <test name="don't explicitly record implicit mergeinfo" id="94" result="PASSED"></test>
+      <test name="merge with broken symlinks in target" id="95" result="PASSED"></test>
+      <test name="subtree ranges might not intersect with target" id="96" result="PASSED"></test>
+      <test name="merge fails with renamed subtrees with mergeinfo" id="97" result="PASSED"></test>
+      <test name="subtree merge source might not exist" id="98" result="PASSED"></test>
+      <test name="mergeinfo not set on subtree with empty mergeinfo" id="99" result="PASSED"></test>
+      <test name="commits to subtrees added by merge wreak havoc" id="100" result="PASSED"></test>
+      <test name="subtree merges dont cause spurious conflicts" id="101" result="PASSED"></test>
+      <test name="target and subtrees need nonintersecting revs" id="102" result="PASSED"></test>
+      <test name="natural history filtering permits valid mergeinfo" id="103" result="PASSED"></test>
+      <test name="merge adds mergeinfo to subtrees correctly" id="104" result="PASSED"></test>
+      <test name="no self referential filtering on added path" id="105" result="PASSED"></test>
+      <test name="merge --reintegrate with subtree mergeinfo" id="106" result="PASSED"></test>
+      <test name="mergeinfo aware merges ignore natural history gaps" id="107" result="PASSED"></test>
+      <test name="mergeinfo deleted by a merge should disappear" id="108" result="PASSED"></test>
+      <test name="merge an EOL unification and set svn:eol-style" id="109" result="PASSED"></test>
     </suite>
     <suite name="merge_authz" total="1" passed="1" failed="0">
       <test name="skipped paths get overriding mergeinfo" id="1" result="PASSED"></test>

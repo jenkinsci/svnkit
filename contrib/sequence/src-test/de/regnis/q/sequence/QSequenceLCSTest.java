@@ -25,7 +25,7 @@ public class QSequenceLCSTest extends TestCase {
 
 	public void test() throws QSequenceException {
 		test1("abcabba", "cbabac", "cbba");
-		test1("cbabac", "abcabba", "cbba");
+		test1("cbabac", "abcabba", "baba");
 
 		test2("abccd", "abccd", "abccd");
 		test2("ab*", "ab", "ab");

@@ -480,6 +480,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myIsRemove = true;
         } else if (option == SVNOption.CHANGELIST) {            
             myChangelist = optionValue.getValue();
+            if (myChangelist == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Changelist names must not be empty");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
             myChangelists.add(myChangelist);
         } else if (option == SVNOption.KEEP_CHANGELISTS) {
             myIsKeepChangelist = true;
@@ -544,8 +548,12 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         if (!myIsDescend) {
             if (getCommand() instanceof SVNStatusCommand) {
                 myDepth = SVNDepth.IMMEDIATES;
+            } else if (getCommand() instanceof SVNRevertCommand ||
+                    getCommand() instanceof SVNAddCommand ||
+                    getCommand() instanceof SVNCommitCommand) {
+                myDepth = SVNDepth.EMPTY;
             } else {
-                myDepth = SVNDepth.fromRecurse(myIsDescend);
+                myDepth = SVNDepth.FILES;
             }
         }
     }

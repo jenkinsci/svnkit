@@ -1,29 +1,41 @@
 K 25
 svn:wc:ra_dav:version-url
-V 61
-/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline
+V 65
+/repos/svn/!svn/ver/35048/branches/1.5.x/subversion/tests/cmdline
+END
+revert_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/svn/!svn/ver/34668/branches/1.5.x/subversion/tests/cmdline/revert_tests.py
+END
+commit_tests.py
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/svn/!svn/ver/34508/branches/1.5.x/subversion/tests/cmdline/commit_tests.py
 END
 copy_tests.py
 K 25
 svn:wc:ra_dav:version-url
-V 75
-/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/copy_tests.py
+V 79
+/repos/svn/!svn/ver/34668/branches/1.5.x/subversion/tests/cmdline/copy_tests.py
 END
 merge_tests.py
 K 25
 svn:wc:ra_dav:version-url
-V 76
-/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/merge_tests.py
+V 80
+/repos/svn/!svn/ver/34853/branches/1.5.x/subversion/tests/cmdline/merge_tests.py
 END
-log_tests.py
+update_tests.py
 K 25
 svn:wc:ra_dav:version-url
-V 74
-/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/log_tests.py
+V 81
+/repos/svn/!svn/ver/34668/branches/1.5.x/subversion/tests/cmdline/update_tests.py
 END
-switch_tests.py
+depth_tests.py
 K 25
 svn:wc:ra_dav:version-url
-V 77
-/repos/svn/!svn/ver/33845/tags/1.5.4/subversion/tests/cmdline/switch_tests.py
+V 80
+/repos/svn/!svn/ver/34508/branches/1.5.x/subversion/tests/cmdline/depth_tests.py
 END

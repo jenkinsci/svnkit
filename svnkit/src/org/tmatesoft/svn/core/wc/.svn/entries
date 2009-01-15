@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/wc
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-26T17:14:47.093715Z
-5275
+2008-12-24T21:39:18.094790Z
+5393
 alex
 
 
@@ -32,11 +32,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-58df4e6cc48db57b709d4c1a7d2f6899
-2008-11-26T17:14:47.093715Z
-5275
-alex
+2009-01-14T22:09:49.000000Z
+529ed46c3b6259044d3f6506e8393f3f
+2008-11-28T21:07:21.269306Z
+5301
+semen
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-105051
+23924
 
 SVNConflictReason.java
 file
@@ -536,40 +536,6 @@ has-props
 
 5154
 
-ISVNCommitParameters.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-8d21dc011689f0670c8858e90756158e
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3501
-
 ISVNAddParameters.java
 file
 
@@ -604,50 +570,16 @@ has-props
 
 2581
 
-SVNCommitClient.java
-file
-
-
-
-
-2008-12-17T22:37:22.000000Z
-edaf359697d13e610335c09445c84726
-2008-10-13T19:03:12.320682Z
-5006
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-83248
-
-ISVNStatusHandler.java
+ISVNCommitParameters.java
 file
 
 
 
 
 2008-11-04T17:25:59.000000Z
-18775b10fb3e3a525e80b97a68236ec2
-2008-08-21T13:55:20.827574Z
-4736
+8d21dc011689f0670c8858e90756158e
+2008-08-28T19:30:55.179841Z
+4792
 alex
 has-props
 
@@ -670,7 +602,41 @@ has-props
 
 
 
-1837
+3501
+
+SVNCommitClient.java
+file
+
+
+
+
+2009-01-14T22:09:49.000000Z
+94bc5aae5e91cbefd6ab00708e7db263
+2008-12-05T15:23:11.503244Z
+5322
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+83316
 
 ISVNMerger.java
 file
@@ -706,16 +672,16 @@ has-props
 
 3233
 
-SVNInfo.java
+ISVNStatusHandler.java
 file
 
 
 
 
 2008-11-04T17:25:59.000000Z
-217a44fa8b3759b7cd5850eb2bbdc982
-2008-08-28T19:30:55.179841Z
-4792
+18775b10fb3e3a525e80b97a68236ec2
+2008-08-21T13:55:20.827574Z
+4736
 alex
 has-props
 
@@ -738,7 +704,7 @@ has-props
 
 
 
-17298
+1837
 
 ISVNPropertyHandler.java
 file
@@ -773,6 +739,74 @@ has-props
 
 
 3797
+
+SVNInfo.java
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+217a44fa8b3759b7cd5850eb2bbdc982
+2008-08-28T19:30:55.179841Z
+4792
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+17298
+
+SVNCopyTask.java
+file
+
+
+
+
+2009-01-14T22:09:49.000000Z
+31f44acb6911b541b4e34b924f1ac284
+2008-12-24T21:39:18.094790Z
+5393
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1422
 
 SVNRevision.java
 file
@@ -876,40 +910,6 @@ has-props
 
 1813
 
-SVNWCClient.java
-file
-
-
-
-
-2008-12-17T22:37:22.000000Z
-b92ab6a70ac4bdead322ca4232c737e9
-2008-11-10T15:26:20.556257Z
-5138
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-192968
-
 ISVNConflictHandler.java
 file
 
@@ -943,6 +943,40 @@ has-props
 
 
 2145
+
+SVNWCClient.java
+file
+
+
+
+
+2009-01-14T22:09:49.000000Z
+a8ad62fba4f90d20873ba0d6ddbfc4c4
+2008-11-28T21:07:21.269306Z
+5301
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+193023
 
 SVNClientManager.java
 file
@@ -978,40 +1012,6 @@ has-props
 
 31083
 
-SVNMergeFileSet.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-88bf20707e7db9a804adf6b81e329d52
-2008-08-15T15:28:48.918752Z
-4717
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-12135
-
 SVNRevisionRange.java
 file
 
@@ -1045,6 +1045,40 @@ has-props
 
 
 1902
+
+SVNMergeFileSet.java
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+88bf20707e7db9a804adf6b81e329d52
+2008-08-15T15:28:48.918752Z
+4717
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12135
 
 SVNConflictChoice.java
 file
@@ -1222,11 +1256,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-d0b6d049f056b33497ec093312e6b43b
-2008-09-03T14:06:06.779631Z
-4824
-alex
+2009-01-14T22:09:49.000000Z
+ed8799d08b7b59eed465db0ec1aa5391
+2008-11-28T21:07:21.269306Z
+5301
+semen
 has-props
 
 
@@ -1248,7 +1282,7 @@ has-props
 
 
 
-46737
+47005
 
 SVNChangelistClient.java
 file
@@ -1256,10 +1290,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-d50d8ea4501b14275e5021b20427e314
-2008-10-13T19:03:12.320682Z
-5006
+2009-01-14T22:09:49.000000Z
+3c95deb9bc6998c4cf5e63f36fe924f9
+2008-12-24T21:10:28.095070Z
+5388
 alex
 has-props
 
@@ -1282,7 +1316,7 @@ has-props
 
 
 
-17144
+17386
 
 admin
 dir
@@ -1354,6 +1388,40 @@ has-props
 
 
 31308
+
+SVNEditorAction.java
+file
+
+
+
+
+2009-01-14T22:09:49.000000Z
+1b5a80abada892bde262e11546b00f85
+2008-12-24T21:39:18.094790Z
+5393
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1034
 
 SVNStatusType.java
 file
@@ -1772,10 +1840,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-23893591cab44cfe934cbb2beb19abc6
-2008-11-06T18:49:22.423126Z
-5101
+2009-01-14T22:09:49.000000Z
+d8d53cab59ef3bc3873fd98721d7c9da
+2008-12-24T21:12:15.849559Z
+5389
 alex
 has-props
 
@@ -1798,7 +1866,7 @@ has-props
 
 
 
-49844
+48807
 
 SVNConflictDescription.java
 file
@@ -1840,12 +1908,12 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
+2009-01-14T22:09:49.000000Z
 b05d62da36fabcb063b3da130bae657f
-2008-10-21T21:29:04.536841Z
-5032
+2008-12-24T21:39:18.094790Z
+5393
 alex
-
+has-props
 
 
 
@@ -1874,11 +1942,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-287ea5e3d0e5f8998c02214afb2b5ab9
-2008-11-26T17:06:51.374222Z
-5273
-alex
+2009-01-14T22:09:49.000000Z
+cc140e130b04e4105ae20b26451a38b3
+2008-11-28T21:07:21.269306Z
+5301
+semen
 has-props
 
 
@@ -1900,7 +1968,7 @@ has-props
 
 
 
-173274
+173290
 
 SVNCommitItem.java
 file

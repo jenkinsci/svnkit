@@ -373,7 +373,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             if (myParentDir != null) {
                 mergeInfo = prefixMergeInfoPaths(mergeInfo);
             }
-            String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo);
+            String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null);
             propertyValue = SVNPropertyValue.create(mergeInfoString);
         }
         myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, 

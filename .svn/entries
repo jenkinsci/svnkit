@@ -1,15 +1,15 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 svn:special svn:externals svn:needs-lock
@@ -27,6 +27,9 @@ svn:special svn:externals svn:needs-lock
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
 svnkit-cli
+dir
+
+www
 dir
 
 .project
@@ -62,9 +65,6 @@ has-props
 
 
 706
-
-www
-dir
 
 THIRD-PARTY.txt
 file
@@ -143,11 +143,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-b337693cbd438defc7d23022919183d0
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-14T22:06:37.000000Z
+ecf1bcd2a941b0b06816a9b1c952c82b
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 
@@ -177,10 +177,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
+
 219ef93c96a3f13fb31fdaf1a831dafb
-2008-11-26T16:13:52.380768Z
-5258
+2008-12-24T21:12:15.849559Z
+5389
 alex
 has-props
 
@@ -204,6 +204,12 @@ has-props
 
 
 35251
+
+svnkit-eclipse
+dir
+
+contrib
+dir
 
 .classpath
 file
@@ -239,10 +245,7 @@ has-props
 
 1479
 
-contrib
-dir
-
-svnkit-eclipse
+doc
 dir
 
 changelog.txt
@@ -251,11 +254,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-d9b43a501ad4c5ed2c89701b79277c1b
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-14T22:06:37.000000Z
+57b5564fa46c9798c9ebb3063eaecb5f
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 
@@ -277,44 +280,7 @@ has-props
 
 
 
-11299
-
-doc
-dir
-
-svnkit.ipr
-file
-
-
-
-
-2008-08-27T01:16:45.000000Z
-b46fe8c8b7f3cc5a8d080b466356289f
-2008-06-11T14:40:58.084670Z
-4326
-semen
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-15572
+11566
 
 svnkit.build.properties
 file
@@ -322,11 +288,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-8fee840e136de1f98412a458f46a58b8
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-14T22:06:37.000000Z
+765517d043d00ef721a8d8d2c378e206
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 
@@ -349,6 +315,40 @@ has-props
 
 
 400
+
+svnkit.ipr
+file
+
+
+
+
+2009-01-14T22:06:37.000000Z
+0ecb084e22698c37502a7692f58d14e0
+2008-11-28T21:07:21.269306Z
+5301
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+15972
 
 COPYING
 file
@@ -424,11 +424,11 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-a4d3ccaad948e8e1efb955e7a7fb4be7
-2008-11-28T03:33:54.214657Z
-5297
-alex
+2009-01-14T22:06:37.000000Z
+5be41ca79b11007eb9476bcc50e39927
+2009-01-08T16:28:00.472597Z
+5405
+sa
 has-props
 
 

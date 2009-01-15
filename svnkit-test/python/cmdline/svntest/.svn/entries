@@ -1,14 +1,14 @@
 9
 
 dir
-34802
-http://svn.collab.net/repos/svn/tags/1.5.4/subversion/tests/cmdline/svntest
+35256
+http://svn.collab.net/repos/svn/branches/1.5.x/subversion/tests/cmdline/svntest
 http://svn.collab.net/repos/svn
 
 
 
-2008-10-06T21:39:17.356074Z
-33500
+2009-01-06T16:46:40.593836Z
+35048
 hwright
 has-props
 
@@ -168,10 +168,10 @@ file
 
 
 
-2008-12-17T22:35:15.000000Z
-21926d3336b2d35b934d870578e9401a
-2008-04-05T19:10:11.586875Z
-30352
+2009-01-14T22:42:22.000000Z
+8998f38688c381798223f88c714fe19b
+2009-01-06T16:46:40.593836Z
+35048
 hwright
 has-props
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-51894
+54556
 
 entry.py
 file

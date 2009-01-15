@@ -69,7 +69,7 @@ public class QSequenceDifferenceCoreTest extends TestCase {
 
 	public void test() throws QSequenceException {
 		test1("abcabba", "cbabac", "--c-bba", "cb-ba-");
-		test1("abcccd", "accccd", "a-cccd", "a-cccd");
+		test1("abcccd", "accccd", "a-cccd", "accc-d");
 		test2("abbb", "abbbb", "abbb", "abbb-");
 		test2("abccd", "abccd", "abccd", "abccd");
 		test2("abccd*", "abccd", "abccd-", "abccd");

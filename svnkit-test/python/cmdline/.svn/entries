@@ -1,14 +1,14 @@
 9
 
 dir
-34802
-http://svn.collab.net/repos/svn/tags/1.5.4/subversion/tests/cmdline
+35256
+http://svn.collab.net/repos/svn/branches/1.5.x/subversion/tests/cmdline
 http://svn.collab.net/repos/svn
 
 
 
-2008-10-21T20:29:29.818341Z
-33827
+2009-01-06T16:46:40.593836Z
+35048
 hwright
 has-props
 
@@ -32,11 +32,11 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-a6ae01a24620dadf325a739cbe84f1f2
-2008-01-08T20:34:14.886960Z
-28802
-kfogel
+2009-01-14T22:42:22.000000Z
+8f8a91a82f1fc598a956aa0c694f8845
+2008-12-11T15:14:25.441373Z
+34668
+hwright
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-33695
+33659
 
 cat_tests.py
 file
@@ -755,10 +755,10 @@ file
 
 
 
-2008-12-17T22:37:24.000000Z
-67e15e51b838e3108a39fad48ff64227
-2008-10-06T15:05:09.660902Z
-33482
+2009-01-14T22:42:22.000000Z
+8d7ce10bcca3e0788e240b50240a7ef4
+2008-12-11T15:14:25.441373Z
+34668
 hwright
 has-props
 
@@ -781,7 +781,7 @@ has-props
 
 
 
-151897
+153781
 
 merge_authz_tests.py
 file
@@ -1064,10 +1064,10 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-9106e4be3e9d72d708807db828f7c73a
-2008-05-01T19:46:42.757043Z
-30901
+2009-01-14T22:42:22.000000Z
+fafbb254616e8935396f3f9616e64c58
+2008-12-11T15:14:25.441373Z
+34668
 hwright
 has-props
 
@@ -1090,7 +1090,7 @@ has-props
 
 
 
-159841
+159746
 
 log_tests_data
 dir
@@ -1169,11 +1169,11 @@ file
 
 
 
-2008-12-17T22:35:16.000000Z
-fdf8fcc980ccb9541fb125cd24dcb5ae
-2008-07-07T20:55:54.111766Z
-32026
-pburba
+2009-01-14T22:42:22.000000Z
+55487d9380e39a9a9b28a9272111b867
+2008-12-01T17:59:11.673644Z
+34508
+hwright
 has-props
 
 
@@ -1195,7 +1195,7 @@ has-props
 
 
 
-98468
+98119
 
 authz_tests.py
 file
@@ -1274,11 +1274,11 @@ file
 
 
 
-2008-12-17T22:37:24.000000Z
-f4d85300e6445b7cafbc632980e78799
-2008-10-21T20:29:29.818341Z
-33827
-hwright
+2009-01-14T22:42:22.000000Z
+388d0297cd5a38c8ad3af79aa35ce008
+2008-12-19T17:18:09.688667Z
+34853
+pburba
 has-props
 
 
@@ -1300,7 +1300,7 @@ has-props
 
 
 
-591208
+637522
 
 davautocheck.sh
 file
@@ -1379,10 +1379,10 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
-89ba3e63b40c3af9f42cc54a53e8f8d7
-2008-06-04T00:17:23.610689Z
-31576
+2009-01-14T22:42:22.000000Z
+b815bc7b8374ddec3013e300cd3f3b14
+2008-12-01T17:59:11.673644Z
+34508
 hwright
 has-props
 
@@ -1405,7 +1405,7 @@ has-props
 
 
 
-64131
+64598
 
 svnsync_tests_data
 dir

@@ -1,15 +1,15 @@
 9
 
 dir
-34802
-http://svn.collab.net/repos/svn/tags/1.5.4/subversion/bindings/javahl/tests/org/tigris/subversion/javahl
+35256
+http://svn.collab.net/repos/svn/tags/1.5.5/subversion/bindings/javahl/tests/org/tigris/subversion/javahl
 http://svn.collab.net/repos/svn
 
 
 
-2008-06-19T17:21:23.146502Z
-31814
-hwright
+2008-12-19T17:00:14.137921Z
+34851
+markphip
 
 
 svn:special svn:externals svn:needs-lock
@@ -66,11 +66,11 @@ file
 
 
 
-2008-12-17T22:35:14.000000Z
-4bbb0bee5e190bd7a3f1767abb9b0ed8
-2008-06-19T17:21:23.146502Z
-31814
-hwright
+2009-01-14T22:42:21.000000Z
+13a2726d407323e6fb583055ee424ac1
+2008-12-19T17:00:14.137921Z
+34851
+markphip
 has-props
 
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-137793
+137652
 
 RunTests.java
 file

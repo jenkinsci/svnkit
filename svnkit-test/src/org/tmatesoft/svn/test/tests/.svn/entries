@@ -1,0 +1,71 @@
+9
+
+dir
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/test/tests
+http://svn.svnkit.com/repos/svnkit
+
+
+
+2008-12-10T00:36:19.349906Z
+5357
+semen
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+0a862816-5deb-0310-9199-c792c6ae6c6e
+
+merge
+dir
+
+ext
+dir
+
+common
+dir
+
+AbstractSVNTest.java
+file
+
+
+
+
+2009-01-14T22:06:34.000000Z
+5e153a63494d74eafad53c0029c989c1
+2008-11-28T21:07:21.269306Z
+5301
+semen
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5651
+

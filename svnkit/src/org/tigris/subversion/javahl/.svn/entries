@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tigris/subversion/javahl
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tigris/subversion/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-10-09T16:17:55.144935Z
-4980
+2008-12-05T15:30:11.632646Z
+5326
 alex
 
 
@@ -66,10 +66,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-b253b24b6dc833c4a28ebe424443fa22
-2008-08-28T19:30:55.179841Z
-4792
+2009-01-14T22:06:35.000000Z
+95d900df4505dd28ca6af56edd27c1e1
+2008-12-05T15:30:11.632646Z
+5326
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-36309
+36315
 
 JavaHLPropertyData.java
 file

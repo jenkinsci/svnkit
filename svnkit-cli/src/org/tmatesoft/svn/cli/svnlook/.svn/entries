@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/svnlook
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-cli/src/org/tmatesoft/svn/cli/svnlook
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-10-13T19:03:12.320682Z
-5006
+2008-12-24T21:39:18.094790Z
+5393
 alex
 
 
@@ -32,12 +32,12 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-01-14T22:06:34.000000Z
 16d295dc4670475e33a64f90ac837cb2
-2008-09-23T16:58:29.147992Z
-4922
+2008-12-24T21:39:18.094790Z
+5393
 alex
-
+has-props
 
 
 
@@ -406,12 +406,12 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-01-14T22:06:34.000000Z
 39d8d204a548cc8027d431b01e9daecb
-2008-09-23T16:58:29.147992Z
-4922
+2008-12-24T21:39:18.094790Z
+5393
 alex
-
+has-props
 
 
 

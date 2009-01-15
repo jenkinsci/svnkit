@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit-cli/src/org/tmatesoft/svn/cli/svn
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-cli/src/org/tmatesoft/svn/cli/svn
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-26T16:23:58.064652Z
-5262
+2008-12-24T21:10:28.095070Z
+5388
 alex
 
 
@@ -474,10 +474,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-19dfb19bf9c5d9d08689b4ef5dc7ccd2
-2008-08-28T19:30:55.179841Z
-4792
+2009-01-14T22:06:34.000000Z
+47e7bf50f7c4e705df77da67d5211860
+2008-12-09T15:35:55.403903Z
+5344
 alex
 has-props
 
@@ -500,7 +500,7 @@ has-props
 
 
 
-15574
+15577
 
 SVNXMLCommand.java
 file
@@ -1562,10 +1562,10 @@ file
 
 
 
-2008-12-17T22:37:18.000000Z
-3ee0d529de219cf81c91d7be3e828f4f
-2008-10-13T19:03:12.320682Z
-5006
+2009-01-14T22:06:34.000000Z
+099f519fd8430192dde689ef56ebf8a7
+2008-12-24T21:10:28.095070Z
+5388
 alex
 has-props
 
@@ -1588,7 +1588,7 @@ has-props
 
 
 
-38338
+38805
 
 SVNCatCommand.java
 file

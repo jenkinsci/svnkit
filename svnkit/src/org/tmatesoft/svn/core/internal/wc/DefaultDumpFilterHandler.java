@@ -291,7 +291,7 @@ public class DefaultDumpFilterHandler implements ISVNLoadHandler {
         }
         if (propertyName.equals(SVNProperty.MERGE_INFO)) {
             Map filteredMergeInfo = adjustMergeInfo(propertyValue);
-            propertyValue = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(filteredMergeInfo));
+            propertyValue = SVNPropertyValue.create(SVNMergeInfoUtil.formatMergeInfoToString(filteredMergeInfo, null));
         }
         myCurrentNodeBaton.writeProperty(propertyName, propertyValue);
     }

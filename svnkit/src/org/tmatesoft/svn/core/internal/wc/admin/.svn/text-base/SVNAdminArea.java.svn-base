@@ -171,7 +171,7 @@ public abstract class SVNAdminArea {
                 compare = true;
             }
 
-            if (!compare) {
+            if (!compare && isEntryPropertyApplicable(SVNProperty.WORKING_SIZE)) {
                 if (entry.getWorkingSize() != SVNProperty.WORKING_SIZE_UNKNOWN &&
                     textFile.length() != entry.getWorkingSize()) {
                     compare = true;

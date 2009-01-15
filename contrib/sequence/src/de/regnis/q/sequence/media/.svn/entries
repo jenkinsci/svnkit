@@ -1,8 +1,8 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/contrib/sequence/src/de/regnis/q/sequence/media
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src/de/regnis/q/sequence/media
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -25,40 +25,6 @@ svn:special svn:externals svn:needs-lock
 
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
-
-QSequenceDiscardingMediaConfusionDetector.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-aa4b703d3d307819e4c9944aed071a56
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-650
 
 QSequenceDiscardingMediaNoConfusionDectector.java
 file
@@ -94,17 +60,17 @@ has-props
 
 1202
 
-QSequenceIntMedia.java
+QSequenceDiscardingMediaConfusionDetector.java
 file
 
 
 
 
-2008-11-04T17:25:59.000000Z
-7420abfd69f4308204f411f8f1ed5d8f
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-08-27T01:16:44.000000Z
+aa4b703d3d307819e4c9944aed071a56
+2008-04-01T17:30:14.226162Z
+4095
+alex
 has-props
 
 
@@ -126,7 +92,7 @@ has-props
 
 
 
-1733
+650
 
 QSequenceMediaIndexTransformer.java
 file
@@ -161,6 +127,40 @@ has-props
 
 
 660
+
+QSequenceIntMedia.java
+file
+
+
+
+
+2008-11-04T17:25:59.000000Z
+7420abfd69f4308204f411f8f1ed5d8f
+2008-07-30T16:53:59.266781Z
+4613
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1733
 
 QSequenceCachableMediaRightGetter.java
 file
@@ -230,40 +230,6 @@ has-props
 
 1949
 
-QSequenceCachableMediaGetter.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-e258e2349fd66a0a6ac782c5ab4efdc2
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-709
-
 QSequenceDiscardingMediaLeftBlock.java
 file
 
@@ -297,6 +263,40 @@ has-props
 
 
 907
+
+QSequenceCachableMediaGetter.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+e258e2349fd66a0a6ac782c5ab4efdc2
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+709
 
 QSequenceMediaDummyIndexTransformer.java
 file
@@ -366,40 +366,6 @@ has-props
 
 2626
 
-QSequenceCachableMediaLeftGetter.java
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-ac0ef20e9f9118b0bd5797165721803a
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-923
-
 QSequenceMediaComparer.java
 file
 
@@ -434,14 +400,14 @@ has-props
 
 702
 
-QSequenceCachingMediaSymbolMap.java
+QSequenceCachableMediaLeftGetter.java
 file
 
 
 
 
 2008-08-27T01:16:44.000000Z
-5276e24420821b8c2990129470b837d8
+ac0ef20e9f9118b0bd5797165721803a
 2008-04-01T17:30:14.226162Z
 4095
 alex
@@ -466,7 +432,7 @@ has-props
 
 
 
-1756
+923
 
 QSequenceDiscardingMediaRightBlock.java
 file
@@ -501,6 +467,40 @@ has-props
 
 
 912
+
+QSequenceCachingMediaSymbolMap.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+5276e24420821b8c2990129470b837d8
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1756
 
 QSequenceDiscardingMediaBlock.java
 file

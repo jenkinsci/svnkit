@@ -1,8 +1,8 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/doc/JSPWikiDocs
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/doc/JSPWikiDocs
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -27,9 +27,6 @@ svn:special svn:externals svn:needs-lock
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
 Authentication
-dir
-
-SvnkitArchitecture
 dir
 
 SettingUpASubversionRepository.txt
@@ -65,6 +62,9 @@ has-props
 
 
 7332
+
+SvnkitArchitecture
+dir
 
 PrintingOutRepositoryHistory.txt
 file
@@ -146,40 +146,6 @@ has-props
 ReplicatingAnExistingRepository
 dir
 
-CommittingToARepository.txt
-file
-
-
-
-
-2008-08-27T01:16:44.000000Z
-224deef7928b4957b64774f58e974acd
-2007-01-26T19:26:17.328519Z
-2919
-sa
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-17602
-
 ManagingAWorkingCopy.txt
 file
 
@@ -214,14 +180,14 @@ has-props
 
 49835
 
-Authentication.txt
+CommittingToARepository.txt
 file
 
 
 
 
 2008-08-27T01:16:44.000000Z
-19551afab2d85111379e2749d235a874
+224deef7928b4957b64774f58e974acd
 2007-01-26T19:26:17.328519Z
 2919
 sa
@@ -246,7 +212,7 @@ has-props
 
 
 
-12176
+17602
 
 LeftMenu.txt
 file
@@ -281,6 +247,40 @@ has-props
 
 
 246
+
+Authentication.txt
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+19551afab2d85111379e2749d235a874
+2007-01-26T19:26:17.328519Z
+2919
+sa
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+12176
 
 LeftMenuFooter
 dir

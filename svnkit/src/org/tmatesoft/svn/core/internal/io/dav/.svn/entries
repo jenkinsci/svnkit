@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T19:49:21.695323Z
-5288
+2009-01-07T17:06:18.666368Z
+5404
 alex
 
 
@@ -174,10 +174,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-fb00376f64751b265527878b52ecf992
-2008-11-26T16:49:37.585065Z
-5265
+2009-01-14T22:06:36.000000Z
+f06166b41a2e0f9b58183aa322fa95b3
+2008-12-12T02:41:53.003144Z
+5363
 alex
 has-props
 
@@ -200,7 +200,7 @@ has-props
 
 
 
-15432
+15656
 
 DAVBaselineInfo.java
 file
@@ -310,10 +310,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-d8a2485fbb59b60dba0abf8fc411a567
-2008-11-26T16:49:37.585065Z
-5265
+2009-01-14T22:06:36.000000Z
+85a530e717f68f116f025d70e3e3b785
+2008-12-17T15:58:31.835840Z
+5371
 alex
 has-props
 
@@ -336,7 +336,7 @@ has-props
 
 
 
-59114
+59224
 
 DAVKeyManager.java
 file

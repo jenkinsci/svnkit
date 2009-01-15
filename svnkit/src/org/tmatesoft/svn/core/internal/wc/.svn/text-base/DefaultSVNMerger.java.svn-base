@@ -602,7 +602,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 SVNMergeInfoUtil.diffMergeInfoProperties(null, addedMergeInfo, oldValue.getString(), null, 
                 		newValue.getString(), null);
                 newValue = SVNPropertyValue.create(
-                        SVNMergeInfoUtil.formatMergeInfoToString(addedMergeInfo));
+                        SVNMergeInfoUtil.formatMergeInfoToString(addedMergeInfo, null));
                 changeProperty(workingProps, propName, newValue);
             } else {
                 gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, newValue, 

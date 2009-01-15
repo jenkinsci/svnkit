@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-27T19:49:21.695323Z
-5288
+2008-12-24T21:39:18.094790Z
+5393
 alex
 
 
@@ -338,11 +338,12 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-d2a77a8233a08aee668f2f07de12f0c0
-2008-10-21T20:41:48.578798Z
-5027
+2009-01-14T22:06:35.000000Z
+4b7da2c91364269fb5b0c22cfe6e06a0
+2008-12-24T21:39:18.094790Z
+5393
 alex
+has-props
 
 
 
@@ -363,8 +364,7 @@ alex
 
 
 
-
-2743
+2667
 
 HTTPStatus.java
 file

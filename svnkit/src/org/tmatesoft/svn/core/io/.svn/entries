@@ -1,14 +1,14 @@
 9
 
 dir
-5374
-http://svn.svnkit.com/repos/svnkit/tags/1.2.1/svnkit/src/org/tmatesoft/svn/core/io
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/io
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-05T16:01:21.924522Z
-5082
+2009-01-05T15:31:12.191985Z
+5401
 alex
 
 
@@ -171,10 +171,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
-0b4c4ee07b7f0da6adcbe389813f0320
-2008-11-05T16:01:21.924522Z
-5082
+2009-01-14T22:09:49.000000Z
+894f937fc6c3fc4f31436c5470d37d26
+2009-01-05T15:31:12.191985Z
+5401
 alex
 has-props
 
@@ -197,7 +197,7 @@ has-props
 
 
 
-167383
+167448
 
 SVNCapability.java
 file
