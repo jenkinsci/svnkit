@@ -248,7 +248,7 @@ class HTTPRequest {
                     }
                 }
             }
-            return -1;
+            return -1; // no keep alive
         }
         // HTTP/1.1
         String[] fields = keepAlive.split(",");
