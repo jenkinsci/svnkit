@@ -58,9 +58,10 @@ public class SVNExportEditor implements ISVNEditor {
     private ISVNOptions myOptions;
     
     private SVNDeltaProcessor myDeltaProcessor;
+    private boolean myIsExpandKeywords;
 
     public SVNExportEditor(ISVNEventHandler eventDispatcher, String url,
-            File dstPath, boolean force, String eolStyle, ISVNOptions options) {
+            File dstPath, boolean force, String eolStyle, boolean expandKeywords, ISVNOptions options) {
         myRoot = dstPath;
         myIsForce = force;
         myEOLStyle = eolStyle;
@@ -69,6 +70,7 @@ public class SVNExportEditor implements ISVNEditor {
         myURL = url;
         myDeltaProcessor = new SVNDeltaProcessor();
         myOptions = options;
+        myIsExpandKeywords = expandKeywords;
     }
 
     public Map getCollectedExternals() {
@@ -166,6 +168,9 @@ public class SVNExportEditor implements ISVNEditor {
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         // retranslate.
+        if (!myIsExpandKeywords) {
+            myFileProperties.put(SVNProperty.MIME_TYPE, "application/octet-stream");
+        }
         try {
             String date = myFileProperties.getStringValue(SVNProperty.COMMITTED_DATE);
             boolean special = myFileProperties.getStringValue(SVNProperty.SPECIAL) != null;
