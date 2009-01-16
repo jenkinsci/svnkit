@@ -445,14 +445,8 @@ public class DAVConnection {
     }
     
     private void exchangeCapabilities() throws SVNException {
-        HTTPHeader header = new HTTPHeader();
-        header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.DEPTH_OPTION);
-        header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.LOG_REVPROPS_OPTION);
-        header.addHeaderValue(HTTPHeader.DAV_HEADER, DAVElement.MERGE_INFO_OPTION);
-
         String path = SVNEncodingUtil.uriEncode(getLocation().getPath());
-        HTTPStatus status = myHttpConnection.request("OPTIONS", path, header, 
-        		(StringBuffer) null, 200, 0, null, null);
+        HTTPStatus status = myHttpConnection.request("OPTIONS", path, null, (StringBuffer) null, 200, 0, null, null);
         if (status.getCode() == 200) {
         	parseCapabilities(status);
         } else {

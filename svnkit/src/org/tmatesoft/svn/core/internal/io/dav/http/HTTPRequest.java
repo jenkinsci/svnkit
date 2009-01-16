@@ -23,6 +23,7 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -361,6 +362,16 @@ class HTTPRequest {
             sb.append("Content-Type: text/xml; charset=\"utf-8\"");
             sb.append(HTTPRequest.CRLF);
         }
+        // append capabilities
+        sb.append(HTTPHeader.DAV_HEADER + ": ");
+        sb.append(DAVElement.DEPTH_OPTION);
+        sb.append(HTTPRequest.CRLF);
+        sb.append(HTTPHeader.DAV_HEADER + ": ");
+        sb.append(DAVElement.MERGE_INFO_OPTION);
+        sb.append(HTTPRequest.CRLF);
+        sb.append(HTTPHeader.DAV_HEADER + ": ");
+        sb.append(DAVElement.LOG_REVPROPS_OPTION);
+        sb.append(HTTPRequest.CRLF);
         if (header != null) {
             sb.append(header.toString());
         }
