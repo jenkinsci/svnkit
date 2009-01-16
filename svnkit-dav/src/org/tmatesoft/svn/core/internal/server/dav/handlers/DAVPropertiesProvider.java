@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -31,8 +33,9 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceURI;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -62,10 +65,10 @@ public class DAVPropertiesProvider {
         return provider;
     }
 
-    public void open(DAVResource resource, boolean readOnly) throws DAVException {
+    public void open(boolean readOnly) throws DAVException {
         myIsDeferred = false;
         try {
-            doOpen(resource, readOnly);
+            doOpen(readOnly);
         } catch (DAVException dave) {
             throw new DAVException("Could not open the property database.", HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.PROP_OPENING);
         }
@@ -136,6 +139,47 @@ public class DAVPropertiesProvider {
         saveValue(propName, value);
     }
    
+    public void defineNamespaces(Map namespaces) {
+        namespaces.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "S");
+        namespaces.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, "C");
+        namespaces.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, "V");
+    }
+    
+    public boolean outputValue(DAVElement propName, StringBuffer buffer) throws DAVException {
+        SVNPropertyValue propValue = getPropertyValue(propName);
+        boolean found = propValue != null;
+        if (!found) {
+            return found;
+        }
+        
+        String prefix = null;
+        if (SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX.equals(propName.getNamespace())) {
+            prefix = "C";
+        } else {
+            prefix = "S";
+        }
+        
+        String propValueString = SVNPropertyValue.getPropertyAsString(propValue);
+        if (propValueString.length() == 0) {
+            SVNXMLUtil.openXMLTag(prefix, propName.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+        } else {
+            String xmlSafeValue = null;
+            if (!SVNEncodingUtil.isXMLSafe(propValueString)) {
+                try {
+                    xmlSafeValue = SVNBase64.byteArrayToBase64(propValueString.getBytes("UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    xmlSafeValue = SVNBase64.byteArrayToBase64(propValueString.getBytes());
+                }
+            } else {
+                xmlSafeValue = SVNEncodingUtil.xmlEncodeCDATA(propValueString);
+            }
+            SVNXMLUtil.openXMLTag(prefix, propName.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "V:encoding", "base64", buffer);
+            buffer.append(xmlSafeValue);
+            SVNXMLUtil.closeXMLTag(prefix, propName.getName(), buffer);
+        }
+        return found;
+    }
+    
     public SVNPropertyValue getPropertyValue(DAVElement propName) throws DAVException {
         String reposPropName = getReposPropName(propName);
         if (reposPropName == null) {
@@ -167,7 +211,11 @@ public class DAVPropertiesProvider {
         }
         return null;
     }
-    
+
+    public DAVResource getResource() {
+        return myResource;
+    }
+
     private void saveValue(DAVElement propName, SVNPropertyValue value) throws DAVException {
         String reposPropName = getReposPropName(propName);
         if (reposPropName == null) {
@@ -226,20 +274,18 @@ public class DAVPropertiesProvider {
         myIsDeferred = isDeferred;
     }
 
-    private void doOpen(DAVResource resource, boolean readOnly) throws DAVException {
-        DAVResourceType resType = resource.getType();
+    private void doOpen(boolean readOnly) throws DAVException {
+        DAVResourceType resType = myResource.getType();
         if (resType == DAVResourceType.HISTORY || resType == DAVResourceType.ACTIVITY || resType == DAVResourceType.PRIVATE) {
             myIsOperative = false;
             return;
         }
         
         if (!readOnly && resType != DAVResourceType.WORKING) {
-            if (!(resource.isBaseLined() && resType == DAVResourceType.VERSION)) {
+            if (!(myResource.isBaseLined() && resType == DAVResourceType.VERSION)) {
                 throw new DAVException("Properties may only be changed on working resources.", HttpServletResponse.SC_CONFLICT, 0);
             }
         }
-        
-        myResource = resource;
     }
     
     private FSCommitter getCommitter() {

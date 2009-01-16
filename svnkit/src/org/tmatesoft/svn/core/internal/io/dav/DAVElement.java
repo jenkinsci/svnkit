@@ -58,6 +58,9 @@ public class DAVElement {
     public static final String LOG_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/log-revprops";
     public static final String PARTIAL_REPLAY_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/partial-replay";
 
+    public static final DAVElement SUPPORTED_LIVE_PROPERTY = getElement(DAV_NAMESPACE, "supported-live-property");
+    public static final DAVElement MERGE_RESPONSE = getElement(DAV_NAMESPACE, "merge-response");
+    public static final DAVElement UPDATE_SET = getElement(DAV_NAMESPACE, "updated-set");
     public static final DAVElement NO_AUTO_MERGE = getElement(DAV_NAMESPACE, "no-auto-merge");
     public static final DAVElement NO_CHECKOUT = getElement(DAV_NAMESPACE, "no-checkout");
     public static final DAVElement SOURCE = getElement(DAV_NAMESPACE, "source");

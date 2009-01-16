@@ -226,7 +226,7 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     private void generateActivityCollectionSet(DAVResource resource, StringBuffer xmlBuffer) {
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-collection-set", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
-        String uri = DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.ACT_COLLECTION, 0, null);
+        String uri = DAVPathUtil.buildURI(resource.getResourceURI().getContext(), DAVResourceKind.ACT_COLLECTION, 0, null, false);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", uri, xmlBuffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "activity-collection-set", xmlBuffer);
     }

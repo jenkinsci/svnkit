@@ -12,12 +12,10 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,12 +30,10 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
-
 
 /**
  * @version 1.2.0
@@ -45,31 +41,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVPropPatchHandler extends ServletDAVHandler {
 
-    private static final Map OUR_LIVE_PROPS = new HashMap(); 
-    
-    static {
-        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_LENGTH, new LivePropertySpecification(DAVElement.GET_CONTENT_LENGTH, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_TYPE, new LivePropertySpecification(DAVElement.GET_CONTENT_TYPE, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.GET_ETAG, new LivePropertySpecification(DAVElement.GET_ETAG, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.CREATION_DATE, new LivePropertySpecification(DAVElement.CREATION_DATE, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.GET_LAST_MODIFIED, new LivePropertySpecification(DAVElement.GET_LAST_MODIFIED, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.BASELINE_COLLECTION, new LivePropertySpecification(DAVElement.BASELINE_COLLECTION, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.CHECKED_IN, new LivePropertySpecification(DAVElement.CHECKED_IN, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.VERSION_CONTROLLED_CONFIGURATION, 
-                new LivePropertySpecification(DAVElement.VERSION_CONTROLLED_CONFIGURATION, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.VERSION_NAME, new LivePropertySpecification(DAVElement.VERSION_NAME, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.CREATOR_DISPLAY_NAME, new LivePropertySpecification(DAVElement.CREATOR_DISPLAY_NAME, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.AUTO_VERSION, new LivePropertySpecification(DAVElement.AUTO_VERSION, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.BASELINE_RELATIVE_PATH, new LivePropertySpecification(DAVElement.BASELINE_RELATIVE_PATH, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.MD5_CHECKSUM, new LivePropertySpecification(DAVElement.MD5_CHECKSUM, false, true));
-        OUR_LIVE_PROPS.put(DAVElement.REPOSITORY_UUID, new LivePropertySpecification(DAVElement.REPOSITORY_UUID, false, true)); 
-        OUR_LIVE_PROPS.put(DAVElement.DEADPROP_COUNT, new LivePropertySpecification(DAVElement.DEADPROP_COUNT, false, true));
-        
-        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_LANGUAGE, new LivePropertySpecification(DAVElement.GET_CONTENT_LANGUAGE, false, false));
-        OUR_LIVE_PROPS.put(DAVElement.LOCK_DISCOVERY, new LivePropertySpecification(DAVElement.LOCK_DISCOVERY, false, false));
-        OUR_LIVE_PROPS.put(DAVElement.SUPPORTED_LOCK, new LivePropertySpecification(DAVElement.SUPPORTED_LOCK, false, false));
-    };
-    
     private DAVPropPatchRequest myDAVRequest;
 
     protected DAVPropPatchHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -130,7 +101,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                 propContext.myIsSet = !isRemove;
                 propContext.myProperty = property;
                 properties.add(propContext);
-                validateProp(resource, propertyName, propsProvider, propContext);
+                validateProp(propertyName, propsProvider, propContext);
                 if (propContext.myError != null && propContext.myError.getResponseCode() >= 300) {
                     isFailure = true;
                 }
@@ -169,10 +140,10 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         StringBuffer buffer = new StringBuffer();
         for (Iterator propsIter = propContextList.iterator(); propsIter.hasNext();) {
             PropertyChangeContext propContext = (PropertyChangeContext) propsIter.next();
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
             DAVXMLUtil.addEmptyElement(getNamespaces(), propContext.myProperty.getName(), buffer);
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", buffer);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
             if (propContext.myError == null) {
                 if (propContext.myIsSet) {
                     if (err424Set == null) {
@@ -189,19 +160,20 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                 }
             }
             
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
             buffer.append("HTTP/1.1 ");
             buffer.append(propContext.myError.getResponseCode());
             buffer.append(" (status)");
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", buffer);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), buffer);
             
             if (propContext.myError.getMessage() != null) {
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE_DESCRIPTION.getName(), 
+                        SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
                 buffer.append(propContext);
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "responsedescription", buffer);
+                SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE_DESCRIPTION.getName(), buffer);
             }
             
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", buffer);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), buffer);
         }
         
         return buffer.toString();
@@ -209,18 +181,18 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
     
     private String getSuccessMessage(List propContextList) {
         StringBuffer buffer = new StringBuffer();
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         for (Iterator propsIter = propContextList.iterator(); propsIter.hasNext();) {
             PropertyChangeContext propContext = (PropertyChangeContext) propsIter.next();
             DAVXMLUtil.addEmptyElement(getNamespaces(), propContext.myProperty.getName(), buffer);
         }
 
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "prop", buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         buffer.append("HTTP/1.1 200 OK");
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "status", buffer);
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "propstat", buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), buffer);
         return buffer.toString();
     }
     
@@ -236,7 +208,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         return false;
     }
     
-    private void validateProp(DAVResource resource, DAVElement property, DAVPropertiesProvider propsProvider, 
+    private void validateProp(DAVElement property, DAVPropertiesProvider propsProvider, 
             PropertyChangeContext propContext) {
         LivePropertySpecification livePropSpec = findLiveProperty(property);
         propContext.myLivePropertySpec = livePropSpec;
@@ -251,7 +223,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         
         if (propsProvider.isDeferred()) {
             try {
-                propsProvider.open(resource, false);
+                propsProvider.open(false);
             } catch (DAVException dave) {
                 propContext.myError = dave;
                 return;
@@ -265,15 +237,6 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         }
     }
     
-    private LivePropertySpecification findLiveProperty(DAVElement property) {
-        String nameSpace = property.getNamespace(); 
-        if (!DAVElement.DAV_NAMESPACE.equals(nameSpace) && !DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(nameSpace)) {
-            return null;
-        }
-        
-        return (LivePropertySpecification) OUR_LIVE_PROPS.get(property);
-    }
-   
     protected DAVRequest getDAVRequest() {
         return getPropPatchRequest();
     }
@@ -295,31 +258,6 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         return myDAVRequest;
     }
 
-    private static class LivePropertySpecification {
-        private DAVElement myPropertyName; 
-        private boolean myIsWritable;
-        private boolean myIsSVNSupported;
-
-        public LivePropertySpecification(DAVElement propertyName, boolean isWritable, boolean isSVNSupported) {
-            myIsWritable = isWritable;
-            myPropertyName = propertyName;
-            myIsSVNSupported = isSVNSupported;
-        }
-        
-        public DAVElement getPropertyName() {
-            return myPropertyName;
-        }
-        
-        public boolean isWritable() {
-            return myIsWritable;
-        }
-
-        public boolean isSVNSupported() {
-            return myIsSVNSupported;
-        }
-        
-    }
-    
     private static class PropertyChangeContext {
         private boolean myIsSet;
         private DAVElementProperty myProperty;

@@ -155,6 +155,10 @@ public class SVNEncodingUtil {
     }
 
     public static String xmlEncodeCDATA(String src) {
+        return xmlEncodeCDATA(src, false);
+    }
+
+    public static String xmlEncodeCDATA(String src, boolean escapeQuotes) {
         StringBuffer sb = null;
         for(int i = 0; i < src.length(); i++) {
             char ch = src.charAt(i);
@@ -183,6 +187,14 @@ public class SVNEncodingUtil {
                     }
                     sb.append("&#13;");
                     break;
+                case '\"':
+                    if (escapeQuotes) {
+                        if (sb == null) {
+                            sb = createStringBuffer(src, i);
+                        }
+                        sb.append("&quot;");
+                        break;
+                    }
                 default:
                     if (sb != null) {
                         sb.append(ch);

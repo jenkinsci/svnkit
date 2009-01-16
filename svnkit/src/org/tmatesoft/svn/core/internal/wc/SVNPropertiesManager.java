@@ -454,7 +454,7 @@ public class SVNPropertiesManager {
         }
     }
 
-    private static void validateMimeType(String value) throws SVNException {
+    public static void validateMimeType(String value) throws SVNException {
         String type = value.indexOf(';') >= 0 ? value.substring(0, value.indexOf(';')) : value;
         SVNErrorMessage err = null;
         if (type.length() == 0) {

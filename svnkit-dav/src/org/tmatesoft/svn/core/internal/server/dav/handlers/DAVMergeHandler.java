@@ -46,7 +46,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServlet;
 import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -223,7 +222,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
                     "Could not open the FS root for the revision just committed.", null);
         }
         
-        String vcc = DAVPathUtil.buildURI(getRepositoryManager().getResourceContext(), DAVResourceKind.VCC, -1, null);
+        String vcc = DAVPathUtil.buildURI(getRepositoryManager().getResourceContext(), DAVResourceKind.VCC, -1, null, false);
         
         StringBuffer buffer = new StringBuffer();
         Map prefixMap = new HashMap();
@@ -235,10 +234,11 @@ public class DAVMergeHandler extends ServletDAVHandler {
             namespaces.add(DAVElement.SVN_NAMESPACE);
             prefixMap.put(DAVElement.SVN_NAMESPACE, SVNXMLUtil.SVN_NAMESPACE_PREFIX);
             
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, DAVElement.POST_COMMIT_ERROR.getName(), SVNXMLUtil.XML_STYLE_NORMAL, 
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, DAVElement.POST_COMMIT_ERROR.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, 
                     null, buffer);
             buffer.append(postCommitErr);
             SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, DAVElement.POST_COMMIT_ERROR.getName(), buffer);
+            
             postCommitErrElement = buffer.toString();
             buffer.delete(0, buffer.length());
         } else {
@@ -258,37 +258,36 @@ public class DAVMergeHandler extends ServletDAVHandler {
         }
 
         SVNXMLUtil.addXMLHeader(buffer);
-        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge-response", namespaces, prefixMap, null, buffer, true);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "updated-set", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-        buffer.append(SVNEncodingUtil.xmlEncodeAttr(vcc));
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), buffer);
+        SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.MERGE_RESPONSE.getName(), namespaces, prefixMap, 
+                null, buffer, true);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.UPDATE_SET.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), vcc, null, true, buffer);
+        
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.BASELINE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.BASELINE.getName(), 
+                SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), buffer);
         buffer.append(postCommitErrElement);
         buffer.append('\n');
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         buffer.append(newRev);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), buffer);
         
         if (creationDate != null ) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-            buffer.append(SVNEncodingUtil.xmlEncodeAttr(creationDate));
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), buffer);
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), creationDate, null, true, buffer);
         }
         
         if (creatorDisplayName != null ) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-            buffer.append(SVNEncodingUtil.xmlEncodeAttr(creationDate));
-            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), buffer);
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), creatorDisplayName, null, true, 
+                    buffer);
         }
         
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         buffer.append("HTTP/1.1 200 OK");
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), buffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), buffer);
@@ -302,8 +301,8 @@ public class DAVMergeHandler extends ServletDAVHandler {
             }
         }
         
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "updated-set", buffer);
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "merge-response", buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.UPDATE_SET.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.MERGE_RESPONSE.getName(), buffer);
         return buffer.toString();
     }
     
@@ -349,39 +348,37 @@ public class DAVMergeHandler extends ServletDAVHandler {
         
         String context = getRepositoryManager().getResourceContext();
         
-        String href = DAVPathUtil.buildURI(context, DAVResourceKind.PUBLIC, -1, path);
+        String href = DAVPathUtil.buildURI(context, DAVResourceKind.PUBLIC, -1, path, false);
         long revToUse = DAVServletUtil.getSafeCreatedRevision(root, path);
-        String vsnURL = DAVPathUtil.buildURI(context, DAVResourceKind.VERSION, revToUse, path);
+        String vsnURL = DAVPathUtil.buildURI(context, DAVResourceKind.VERSION, revToUse, path, false);
         
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), 
-                SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+                SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-        buffer.append(SVNEncodingUtil.xmlEncodeAttr(href));
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), buffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), href, null, true, buffer);
         
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         
         if (isDir) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COLLECTION.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, 
+                    buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COLLECTION.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
+                    SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
             SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), buffer);
         } else {
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESOURCE_TYPE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
-                    SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+                    SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         }
         
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CHECKED_IN.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CHECKED_IN.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         
-        buffer.append(SVNEncodingUtil.xmlEncodeAttr(vsnURL));
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), vsnURL, null, true, buffer);
         
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), buffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CHECKED_IN.getName(), buffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
         
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         buffer.append("HTTP/1.1 200 OK");
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), buffer);
         

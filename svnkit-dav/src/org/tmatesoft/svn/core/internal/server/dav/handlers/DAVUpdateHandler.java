@@ -41,7 +41,6 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
-import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVRequest.DAVElementProperty;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -610,7 +609,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             attrs.put(NAME_ATTR, SVNPathUtil.tail(path));
             if (isDirectory) {
                 long createdRevision = getDAVResource().getCreatedRevision(realPath, getRevision());
-                String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, createdRevision, realPath);
+                String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, createdRevision, realPath, false);
                 attrs.put(BC_URL_ATTR, bcURL);
             }
             if (copyFromPath != null) {
@@ -690,7 +689,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     private StringBuffer addVersionURL(String path, StringBuffer xmlBuffer) throws SVNException {
         long revision = getDAVResource().getCreatedRevision(path, getRevision());
-        String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, path);
+        String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, path, false);
         xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", url, xmlBuffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", xmlBuffer);

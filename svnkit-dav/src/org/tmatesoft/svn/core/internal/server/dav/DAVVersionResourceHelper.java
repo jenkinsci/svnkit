@@ -48,7 +48,7 @@ public class DAVVersionResourceHelper extends DAVResourceHelper {
             resource.setRoot(root);
         }
         
-        resource.getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, resource.getRevision(), null));
+        resource.getResourceURI().setURI(DAVPathUtil.buildURI(null, DAVResourceKind.BASELINE, resource.getRevision(), null, false));
         resource.setExists(true);
     }
 

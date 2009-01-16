@@ -106,7 +106,7 @@ public abstract class DAVResourceHelper {
             resource.setRevision(rev);
             path = uri.getPath();
         } else {
-            path = DAVPathUtil.buildURI(uri.getContext(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), uri.getPath());
+            path = DAVPathUtil.buildURI(uri.getContext(), DAVResourceKind.BASELINE_COLL, resource.getRevision(), uri.getPath(), false);
         }
         
         path = SVNEncodingUtil.uriEncode(path);

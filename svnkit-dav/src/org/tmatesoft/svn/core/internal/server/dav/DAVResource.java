@@ -190,6 +190,12 @@ public class DAVResource {
         return getResourceURI().getType();
     }
 
+    //TODO: refactor DAVResourceKind later and name
+    //this method as getPrivateResourceKind()
+    public DAVResourceKind getKind() {
+        return getResourceURI().getKind();
+    }
+    
     public String getActivityID() {
         return myResourceURI.getActivityID();
     }
@@ -352,6 +358,7 @@ public class DAVResource {
     }
 
     public Date getRevisionDate(long revision) throws SVNException {
+        //TODO: insert here later an authz check
         return SVNDate.parseDate(getRevisionProperty(revision, SVNRevisionProperty.DATE));
     }
 
@@ -362,8 +369,7 @@ public class DAVResource {
         
         long createdRevision = -1;
         try {
-            FSRevisionNode revNode = myRoot.getRevisionNode(getResourceURI().getPath());
-            createdRevision = revNode.getCreatedRevision();
+            createdRevision = getCreatedRevisionUsingFS(null);
         } catch (SVNException svne) {
             return null;
         }
@@ -406,9 +412,19 @@ public class DAVResource {
         return getRepository().getLatestRevision();
     }
 
+    //TODO: remove this method later, use getContentLength(String path) instead
+    /**
+     * @deprecated
+     */
     public long getContentLength() throws SVNException {
         SVNDirEntry entry = getRepository().getDir(getResourceURI().getPath(), getRevision(), false, null);
         return entry.getSize();
+    }
+
+    public long getContentLength(String path) throws SVNException {
+        path = path == null ? getResourceURI().getPath() : path;
+        FSRevisionNode node = myRoot.getRevisionNode(path);
+        return node.getFileLength();
     }
 
     public SVNLock[] getLocks() throws SVNException {
@@ -432,29 +448,33 @@ public class DAVResource {
         return getRevisionProperty(revision, SVNRevisionProperty.AUTHOR);
     }
 
+    /**
+     * @deprecated use getMD5Checksum() instead
+     */
     public String getMD5Checksum() throws SVNException {
         return getProperty(SVNProperty.CHECKSUM);
     }
 
-    public Collection getDeadProperties() throws SVNException {
-        if (myDeadProperties == null) {
-            myDeadProperties = new ArrayList();
-            for (Iterator iterator = getSVNProperties().nameSet().iterator(); iterator.hasNext();) {
-                String propertyName = (String) iterator.next();
-                if (SVNProperty.isRegularProperty(propertyName)) {
-                    myDeadProperties.add(propertyName);
-                }
-            }
-        }
-        return myDeadProperties;
+    public String getMD5Checksum(String path) throws SVNException {
+        path = path == null ? getResourceURI().getPath() : path;
+        FSRevisionNode node = myRoot.getRevisionNode(path);
+        return node.getFileChecksum();
     }
 
     public String getLog(long revision) throws SVNException {
         return getRevisionProperty(revision, SVNRevisionProperty.LOG);
     }
 
+    //TODO: replace later with getProperty(path, propName)
+    /**
+     * @deprecated
+     */
     public String getProperty(String propertyName) throws SVNException {
         return getSVNProperties().getStringValue(propertyName);
+    }
+
+    public SVNPropertyValue getProperty(String path, String propertyName) throws SVNException {
+        return getSVNProperties(path).getSVNPropertyValue(propertyName);
     }
 
     public String getRevisionProperty(long revision, String propertyName) throws SVNException {
@@ -557,7 +577,15 @@ public class DAVResource {
         return otherURIPath.length() > thisURIPath.length() && otherURIPath.startsWith(thisURIPath) && 
         otherURIPath.charAt(thisURIPath.length()) == '/'; 
     }
-    
+
+    public SVNProperties getSVNProperties(String path) throws SVNException {
+        path = path == null ? getResourceURI().getPath() : path;
+        if (mySVNProperties == null) {
+            mySVNProperties = myFSFS.getProperties(myRoot.getRevisionNode(path));
+        }
+        return mySVNProperties;
+    }
+
     private boolean isOurResource(DAVResource resource) {
         File reposRoot1 = myFSFS.getDBRoot();
         File reposRoot2 = resource.myFSFS.getDBRoot();
@@ -566,8 +594,12 @@ public class DAVResource {
         }
         return true;
     }
-    
-    private SVNProperties getSVNProperties() throws SVNException {
+
+    //TODO: replace occurances of getSVNProperties() with getSVNProperties(path)
+    /**
+     * @deprecated
+     */
+    public SVNProperties getSVNProperties() throws SVNException {
         if (mySVNProperties == null) {
             mySVNProperties = new SVNProperties();
             if (getResourceURI().getType() == DAVResourceType.REGULAR) {

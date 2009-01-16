@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -122,10 +123,13 @@ public class DAVPathUtil {
         }
     }
 
-    public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path) {
+    public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path, boolean addHref) {
         StringBuffer resultURI = new StringBuffer();
         path = path == null ? "" : path;
         context = context == null ? "" : context;
+        if (addHref) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, resultURI);
+        }
         resultURI.append(context);
         resultURI.append(SLASH);
         if (davResourceKind == DAVResourceKind.PUBLIC) {
@@ -154,6 +158,9 @@ public class DAVPathUtil {
                 resultURI.append(SLASH);
                 resultURI.append(DAVResourceURI.DEDAULT_VCC_NAME);
             }
+        }
+        if (addHref) {
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), resultURI, false);
         }
         return resultURI.toString();
     }
