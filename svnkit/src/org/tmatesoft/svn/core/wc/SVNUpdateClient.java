@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -1566,8 +1567,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             // TODO convert diffpath to full path.
             SVNExternal[] previous = oldValue != null ? SVNExternal.parseExternals(diffPath, oldValue) : null;
             SVNExternal[] current = newValue != null ? SVNExternal.parseExternals(diffPath, newValue) : null;
-            Map oldParsedExternals = new SVNHashMap();
-            Map newParsedExternals = new SVNHashMap();
+            Map oldParsedExternals = new LinkedHashMap();
+            Map newParsedExternals = new LinkedHashMap();
             // put to another hashes.
             for (int i = 0; current != null && i < current.length; i++) {
                 newParsedExternals.put(current[i].getPath(), current[i]);
