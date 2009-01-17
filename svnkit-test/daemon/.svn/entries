@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test/daemon
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/daemon
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,10 +32,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:45.000000Z
 603629d5c8ff780225b2110a69fd125f
 2008-03-09T17:19:12.656361Z
 3957
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1280
 

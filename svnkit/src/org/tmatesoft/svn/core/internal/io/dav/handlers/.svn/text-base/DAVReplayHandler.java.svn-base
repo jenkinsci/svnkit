@@ -68,7 +68,11 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing revision attr in target-revision element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
-                myEditor.targetRevision(Long.parseLong(rev));
+                try {
+                    myEditor.targetRevision(Long.parseLong(rev));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
             }
         } else if (element == OPEN_ROOT) {
             String rev = attrs.getValue(REVISION_ATTR);
@@ -76,7 +80,11 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing revision attr in open-root element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
-                myEditor.openRoot(Long.parseLong(rev));
+                try {
+                    myEditor.openRoot(Long.parseLong(rev));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
                 myPath = "";
                 myIsDirectory = true;
             }
@@ -90,7 +98,11 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing rev attr in delete-entry element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
-                myEditor.deleteEntry(path, Long.parseLong(rev));
+                try {
+                    myEditor.deleteEntry(path, Long.parseLong(rev));
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
             }
         } else if (element == OPEN_DIRECTORY || element == ADD_DIRECTORY) {
             String path = attrs.getValue(NAME_ATTR);
@@ -100,13 +112,27 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, "Missing name attr in " + (element == OPEN_DIRECTORY ? "open-directory" : "add-directory") + " element");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             } else {
-                long revision = rev != null ? Long.parseLong(rev) : -1;
+                long revision = -1;
+                if (rev != null) {
+                    try {
+                        revision =Long.parseLong(rev);
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
+                }
                 if (element == OPEN_DIRECTORY) {
                     myEditor.openDir(path, revision);
                 } else {
                     String copyFromPath = attrs.getValue(COPYFROM_PATH_ATTR);
                     String cfRevision = attrs.getValue(COPYFROM_REV_ATTR);
-                    long copyFromRevision = cfRevision != null ? Long.parseLong(cfRevision) : -1;
+                    long copyFromRevision = -1;
+                    if (cfRevision != null) {
+                        try {
+                            copyFromRevision = Long.parseLong(cfRevision);
+                        } catch (NumberFormatException nfe) {
+                            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                        }
+                    }
                     myEditor.addDir(path, copyFromPath, copyFromRevision);
                 }
             }
@@ -122,11 +148,25 @@ public class DAVReplayHandler extends DAVEditorHandler {
             if (element == ADD_FILE) {
                 String copyFromPath = attrs.getValue(COPYFROM_PATH_ATTR);
                 String cfRevision = attrs.getValue(COPYFROM_REV_ATTR);
-                long copyFromRevision = cfRevision != null ? Long.parseLong(cfRevision) : -1;
+                long copyFromRevision = -1;
+                if (cfRevision != null) {
+                    try {
+                        copyFromRevision = Long.parseLong(cfRevision);
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
+                }
                 myEditor.addFile(path, copyFromPath, copyFromRevision);
             } else {
                 String rev = attrs.getValue(REVISION_ATTR);
-                long revision = rev != null ? Long.parseLong(rev) : -1;
+                long revision = -1;
+                if (rev != null) {
+                    try {
+                        revision = Long.parseLong(rev);
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
+                }
                 myEditor.openFile(path, revision);
             }
             myIsDirectory = false;

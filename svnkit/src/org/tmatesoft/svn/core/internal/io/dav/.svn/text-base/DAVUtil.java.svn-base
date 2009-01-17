@@ -125,7 +125,12 @@ public class DAVUtil {
             }
             loppedPath = SVNPathUtil.append(SVNPathUtil.tail(fullPath), loppedPath);
             int length = fullPath.length();
-            fullPath = "/".equals(fullPath) ? "" : SVNPathUtil.removeTail(fullPath);
+            fullPath = SVNPathUtil.removeTail(fullPath);
+            // will return "" for "/dir", hack it here, to make sure we're not missing root.
+            // we assume full path always starts with "/". 
+            if (length > 1 && "".equals(fullPath)) {
+                fullPath = "/";
+            }
             if (length == fullPath.length()) {
                 SVNErrorMessage err2 = SVNErrorMessage.create(err.getErrorCode(), "The path was not part of repository");
                 SVNErrorManager.error(err2, err, nested, SVNLogType.NETWORK);
@@ -182,7 +187,11 @@ public class DAVUtil {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "'DAV:version-name' not present on the baseline resource");
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
-            info.revision = Long.parseLong(version.getString());
+            try {
+                info.revision = Long.parseLong(version.getString());
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+            }
         }
         if (includeType) {
             Map propsMap = new SVNHashMap();

@@ -20,8 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,13 +38,15 @@ import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -166,7 +166,7 @@ public abstract class SVNRepository {
     protected SVNRepository(SVNURL location, ISVNSession options) {
         myLocation = location;
         myOptions = options;
-        myConnectionListeners = new HashSet();
+        myConnectionListeners = new SVNHashSet();
     }
 	
     /**
@@ -2854,6 +2854,12 @@ public abstract class SVNRepository {
         if ("".equals(repositoryPath)) {
             return "/";
         }
+
+        //if url does not contain a repos root path component, then it results here in 
+        //a path that lacks leading slash, fix that
+        if (!repositoryPath.startsWith("/")) {
+            repositoryPath = "/" + repositoryPath;
+        }
         return repositoryPath;
     }
     
@@ -2985,13 +2991,13 @@ public abstract class SVNRepository {
         oldest = youngestRequestedRev < oldest ? youngestRequestedRev : oldest;
         
         LocationsLogHandler locationsLogHandler = new LocationsLogHandler(revisions, kind, reposAbsPath, 
-                pegRevision);
+                pegRevision, handler);
         log(new String[] { path }, youngest, oldest, true, false, 0, false, null, locationsLogHandler);
         if (locationsLogHandler.myPegPath == null) {
             locationsLogHandler.myPegPath = locationsLogHandler.myLastPath;
         }
         if (locationsLogHandler.myLastPath != null) {
-            for (int i = 0; i < locationsLogHandler.myRevisionsCount; i++) {
+            for (int i = 0; i < revisions.length; i++) {
                 long rev = revisions[i];
                 Long revObject = new Long(rev);
                 if (handler != null && !locationsLogHandler.myProcessedRevisions.contains(revObject)) {
@@ -3243,13 +3249,14 @@ public abstract class SVNRepository {
         ISVNLocationEntryHandler myLocationsHandler;
         LinkedList myProcessedRevisions;
         
-        public LocationsLogHandler(long[] revisions, SVNNodeKind kind, String lastPath, long pegRevision) {
+        public LocationsLogHandler(long[] revisions, SVNNodeKind kind, String lastPath, long pegRevision, ISVNLocationEntryHandler handler) {
             myRevisionsCount = revisions.length;
             myRevisions = revisions;
             myNodeKind = kind;
             myLastPath = lastPath;
             myPegRevision = pegRevision;
             myProcessedRevisions = new LinkedList();
+            myLocationsHandler = handler;
         }
         
         public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {

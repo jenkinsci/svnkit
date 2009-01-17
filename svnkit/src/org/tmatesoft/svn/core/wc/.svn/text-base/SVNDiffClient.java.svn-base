@@ -39,8 +39,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
+import org.tmatesoft.svn.core.internal.wc.SVNExtendedMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
@@ -88,7 +88,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2
  * @author  TMate Software Ltd.
  */
-public class SVNDiffClient extends SVNMergeDriver {
+public class SVNDiffClient extends SVNExtendedMergeDriver {
 
     private ISVNDiffGenerator myDiffGenerator;
     private SVNDiffOptions myDiffOptions;
@@ -363,7 +363,6 @@ public class SVNDiffClient extends SVNMergeDriver {
                 doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
             } catch (SVNException svne) {
                 dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage()));
-                continue;
             }
         }
     }
@@ -2720,7 +2719,7 @@ public class SVNDiffClient extends SVNMergeDriver {
                     depth, changeLists);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, 
-                    !serverSupportsDepth, depth, false, getDebugLog());
+                    !serverSupportsDepth, depth, false, false, getDebugLog());
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
@@ -2773,7 +2772,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depth, false);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
-                    false, !serverSupportsDepth, depth, false, getDebugLog());
+                    false, !serverSupportsDepth, depth, false, false, getDebugLog());
             
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
@@ -2872,6 +2871,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
             callback.setBasePath(basePath);
             editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
+            editor.setUseGlobalTmp(true);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     //TODO(sd): dynamic depth here

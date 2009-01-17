@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,6 +53,7 @@ import org.tmatesoft.svn.core.internal.io.dav.http.IHTTPConnectionFactory;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -354,7 +354,11 @@ public class DAVRepository extends SVNRepository {
                     if ((entryFields & SVNDirEntry.DIRENT_SIZE) != 0) {
                     SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
                         if (sizeValue != null) {
-                            size = Long.parseLong(sizeValue.getString());
+                            try {
+                                size = Long.parseLong(sizeValue.getString());
+                            } catch (NumberFormatException nfe) {
+                                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                            }
                         }
                     }
 
@@ -366,7 +370,12 @@ public class DAVRepository extends SVNRepository {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCOMPLETE_DATA, "Server response missing the expected deadprop-count property");
                                 SVNErrorManager.error(err, SVNLogType.NETWORK);
                             } else {
-                                long propCount = Long.parseLong(propVal.getString());
+                                long propCount = -1;
+                                try {
+                                    propCount = Long.parseLong(propVal.getString());
+                                } catch (NumberFormatException nfe) {
+                                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                                }
                                 hasProperties = propCount > 0;
                             }
                         } else {
@@ -459,9 +468,21 @@ public class DAVRepository extends SVNRepository {
                 }
                 SVNNodeKind kind = SVNNodeKind.FILE;
                 Object revisionStr = child.getPropertyValue(DAVElement.VERSION_NAME);
-                long lastRevision = Long.parseLong(revisionStr.toString());
+                long lastRevision = -1;
+                try {
+                    lastRevision = Long.parseLong(revisionStr.toString());
+                } catch (NumberFormatException nfe) {
+                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                }
                 SVNPropertyValue sizeValue = child.getPropertyValue(DAVElement.GET_CONTENT_LENGTH);
-                long size = sizeValue == null ? 0 : Long.parseLong(sizeValue.getString());
+                long size = 0;
+                if (sizeValue != null) {
+                    try {
+                        size = Long.parseLong(sizeValue.getString());
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_MALFORMED_DATA, nfe), SVNLogType.NETWORK);
+                    }
+                }
                 if (child.isCollection()) {
                     kind = SVNNodeKind.DIR;
                 }
@@ -511,7 +532,8 @@ public class DAVRepository extends SVNRepository {
                     }
                     if (ents != null && ents.hasNext()) {
                         entry = (SVNDirEntry) ents.next();
-                        vcc = (String) vccs.get(index);
+                        SVNPropertyValue vccValue = (SVNPropertyValue) vccs.get(index);
+                        vcc = vccValue != null ? vccValue.getString() : null;
                         index++;
                     } else {
                         break;
@@ -592,7 +614,7 @@ public class DAVRepository extends SVNRepository {
 			for (int i = 0; i < targetPaths.length; i++) {
 				fullPaths[i] = doGetFullPath(targetPaths[i]);
             }
-            Collection relativePaths = new HashSet();
+            Collection relativePaths = new SVNHashSet();
             String path = SVNPathUtil.condencePaths(fullPaths, relativePaths, false);
             if (relativePaths.isEmpty()) {
                 relativePaths.add("");
@@ -1033,8 +1055,9 @@ public class DAVRepository extends SVNRepository {
         if (revision < 0) {
             revision = targetRevision;
         }
+        boolean sendAll = myConnectionFactory.useSendAllForDiff(this);
         runReport(getLocation(), targetRevision, target, url.toString(), depth, ignoreAncestry, false, 
-                getContents, false, false, false, true, reporter, editor);
+                getContents, false, sendAll, false, true, reporter, editor);
     }
 
     public void status(long revision, String target, SVNDepth depth, ISVNReporterBaton reporter, ISVNEditor editor) throws SVNException {

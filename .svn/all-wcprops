@@ -1,17 +1,5 @@
 K 25
 svn:wc:ra_dav:version-url
 V 38
-/repos/svnkit/!svn/ver/4949/tags/1.2.0
-END
-svnkit.build.properties
-K 25
-svn:wc:ra_dav:version-url
-V 62
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/svnkit.build.properties
-END
-README.txt
-K 25
-svn:wc:ra_dav:version-url
-V 49
-/repos/svnkit/!svn/ver/4949/tags/1.2.0/README.txt
+/repos/svnkit/!svn/ver/5405/tags/1.2.2
 END

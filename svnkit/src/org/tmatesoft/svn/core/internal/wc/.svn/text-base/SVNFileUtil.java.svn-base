@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -64,12 +65,16 @@ public class SVNFileUtil {
     private static final String ATTRIB_COMMAND;
     private static final String ENV_COMMAND;
 
-    public final static boolean isWindows;
-    public final static boolean isOS2;
-    public final static boolean isOSX;
-    public final static boolean isBSD;
+    public static final boolean isWindows;
+    public static final boolean isOS2;
+    public static final boolean isOSX;
+    public static final boolean isBSD;
     public static boolean isLinux;
-    public final static boolean isOpenVMS;
+    public static final boolean isSolaris;
+    public static final boolean isOpenVMS;
+    
+    public static final boolean is32Bit;
+    public static final boolean is64Bit;
 
     public static final int STREAM_CHUNK_SIZE = 16384;
 
@@ -92,25 +97,39 @@ public class SVNFileUtil {
     private static String ourAdminDirectoryName;
     private static File ourSystemAppDataPath;
     
+    private static Method ourSetWritableMethod;
+    
     private static volatile boolean ourIsSleepForTimeStamp = true;
     
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
         String osName = System.getProperty("os.name");
-        boolean windows = osName != null && osName.toLowerCase().indexOf("windows") >= 0;
+        String osNameLC = osName == null ? null : osName.toLowerCase();
+
+        boolean windows = osName != null && osNameLC.indexOf("windows") >= 0;
         if (!windows && osName != null) {
-            windows = osName.toLowerCase().indexOf("os/2") >= 0;
+            windows = osNameLC.indexOf("os/2") >= 0;
             isOS2 = windows;
         } else {
             isOS2 = false;
         }
 
         isWindows = windows;
-        isOSX = !isWindows && osName != null && osName.toLowerCase().indexOf("mac") >= 0;
-        isLinux = !isWindows && osName != null && osName.toLowerCase().indexOf("linux") >= 0;
-        isBSD = !isWindows && !isLinux && osName != null && osName.toLowerCase().indexOf("bsd") >= 0;
-        isOpenVMS = osName != null && !isWindows && !isOSX && osName.toLowerCase().indexOf("openvms") >= 0;
+        isOSX = osName != null && (osNameLC.indexOf("mac") >= 0 || osNameLC.indexOf("darwin") >= 0);
+        isLinux = osName != null && (osNameLC.indexOf("linux") >= 0 || osNameLC.indexOf("hp-ux") >= 0);
+        isBSD = !isLinux && osName != null && osNameLC.indexOf("bsd") >= 0;
+        isSolaris = !isLinux && !isBSD && osName != null && osNameLC.indexOf("solaris") >= 0;
+        isOpenVMS = !isOSX && osName != null && osNameLC.indexOf("openvms") >= 0;
+
+        if (!isWindows && !isOSX && !isLinux && !isBSD && !isSolaris && !isOpenVMS && !isOS2) {
+            // fallback to some default.
+            isLinux = true;
+        }
+
+        is32Bit = "32".equals(System.getProperty("sun.arch.data.model", "32"));
+        is64Bit = "64".equals(System.getProperty("sun.arch.data.model", "64"));
+        
         if (isOpenVMS) {
             setAdminDirectoryName("_svn");
         }
@@ -133,6 +152,36 @@ public class SVNFileUtil {
         CHMOD_COMMAND = props.getProperty(prefix + "chmod", "chmod");
         ATTRIB_COMMAND = props.getProperty(prefix + "attrib", "attrib");
         ENV_COMMAND = props.getProperty(prefix + "env", "env");
+        
+        try {
+            ourSetWritableMethod = File.class.getMethod("setWritable", new Class[] {Boolean.TYPE});
+        } catch (SecurityException e) {
+        } catch (NoSuchMethodException e) {
+        }
+    }
+
+    public static String getIdCommand() {
+        return ID_COMMAND;
+    }
+
+    public static String getLnCommand() {
+        return LN_COMMAND;
+    }
+
+    public static String getLsCommand() {
+        return LS_COMMAND;
+    }
+
+    public static String getChmodCommand() {
+        return CHMOD_COMMAND;
+    }
+
+    public static String getAttribCommand() {
+        return ATTRIB_COMMAND;
+    }
+
+    public static String getEnvCommand() {
+        return ENV_COMMAND;
     }
     
     public static File getParentFile(File file) {
@@ -373,6 +422,16 @@ public class SVNFileUtil {
         }
         if (readonly) {
             return file.setReadOnly();
+        } else if (ourSetWritableMethod != null) {
+            try {
+                Object result = ourSetWritableMethod.invoke(file, new Object[] {Boolean.TRUE});
+                if (Boolean.TRUE.equals(result)) {
+                    return true;
+                }
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
+            } catch (InvocationTargetException e) {
+            }
         }
         if (isWindows) {
             if (SVNJNAUtil.setWritable(file)) {
@@ -383,25 +442,14 @@ public class SVNFileUtil {
                 return true;
             }
         }
-        if (file.canWrite()) {
-            return true;
-        }
         try {
-            if (file.length() < 1024 * 100) {
-                // faster way for small files.
-                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro", true);
-                copyFile(file, tmp, false);
-                copyFile(tmp, file, false);
-                deleteFile(tmp);
+            if (isWindows) {
+                Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
+                p.waitFor();
             } else {
-                if (isWindows) {
-                    Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
-                    p.waitFor();
-                } else {
-                    execCommand(new String[] {
-                            CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
-                    });
-                }
+                execCommand(new String[] {
+                        CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
+                });
             }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
@@ -447,6 +495,14 @@ public class SVNFileUtil {
     }
 
     public static File resolveSymlinkToFile(File file) {
+        File targetFile = resolveSymlink(file);
+        if (targetFile == null || !targetFile.isFile()) {
+            return null;
+        }
+        return targetFile;
+    }
+
+    public static File resolveSymlink(File file) {
         File targetFile = file;
         while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {
             String symlinkName = getSymlinkName(targetFile);
@@ -459,12 +515,9 @@ public class SVNFileUtil {
                 targetFile = new File(targetFile.getParentFile(), symlinkName);
             }
         }
-        if (targetFile == null || !targetFile.isFile()) {
-            return null;
-        }
         return targetFile;
     }
-
+    
     public static void copy(File src, File dst, boolean safe, boolean copyAdminDirectories) throws SVNException {
         SVNFileType srcType = SVNFileType.getType(src);
         if (srcType == SVNFileType.FILE) {
@@ -1312,8 +1365,9 @@ public class SVNFileUtil {
         InputStream is = null;
         boolean handleOutput = callback != null && callback.isHandleProgramOutput(); 
         StringBuffer result =  handleOutput ? null : new StringBuffer();
+        Process process = null;
         try {
-            Process process = Runtime.getRuntime().exec(commandLine, env);
+            process = Runtime.getRuntime().exec(commandLine, env);
             is = process.getInputStream();
             if (!waitAfterRead) {
                 int rc = process.waitFor();
@@ -1346,6 +1400,9 @@ public class SVNFileUtil {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, e);
         } finally {
             closeFile(is);
+            if (process != null) {
+                process.destroy();
+            }
         }
         return null;
     }
@@ -1422,9 +1479,16 @@ public class SVNFileUtil {
         if (ourAppDataPath != null) {
             return ourAppDataPath;
         }
+        String jnaAppData = SVNJNAUtil.getApplicationDataPath(false);
+        if (jnaAppData != null) {
+            ourAppDataPath = new File(jnaAppData);
+            return ourAppDataPath;
+        }
+        
         String envAppData = getEnvironmentVariable("APPDATA");
         if (envAppData == null) {
-            ourAppDataPath = new File(new File(System.getProperty("user.home")), "Application Data");
+            // no appdata for that user, fallback to system one.
+            ourAppDataPath = getSystemApplicationDataPath();
         } else {
             ourAppDataPath = new File(envAppData);
         }
@@ -1433,6 +1497,11 @@ public class SVNFileUtil {
 
     public static File getSystemApplicationDataPath() {
         if (ourSystemAppDataPath != null) {
+            return ourSystemAppDataPath;
+        }
+        String jnaAppData = SVNJNAUtil.getApplicationDataPath(true);
+        if (jnaAppData != null) {
+            ourSystemAppDataPath = new File(jnaAppData);
             return ourSystemAppDataPath;
         }
         String envAppData = getEnvironmentVariable("ALLUSERSPROFILE");

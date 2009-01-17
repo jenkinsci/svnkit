@@ -1,15 +1,15 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-09-30T18:20:38.652280Z
-4949
-alex
+2009-01-08T16:28:00.472597Z
+5405
+sa
 
 
 svn:special svn:externals svn:needs-lock

@@ -1,15 +1,15 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/core
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src/de/regnis/q/sequence/core
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2008-12-06T17:25:53.505049Z
+5335
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 392db83af27e2fed0bf980ef58c685ba
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4122
 
 QSequenceCanceller.java
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 4c6a83a1869486ec872ad7c0cdc7b340
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+576
 
 QSequenceCancelledException.java
 file
@@ -58,25 +100,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 29b32b869c40969b268c768e465f6b2e
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
-
-QSequenceDeePathForwardExtender.java
-file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-8e3b78d9a149646a60caf4249fc5a973
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+671
 
 QSequenceException.java
 file
@@ -84,7 +134,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 af03002c152b4bbba914fb2b2f84e596
 2008-07-30T16:53:59.266781Z
 4613
@@ -112,18 +162,73 @@ has-props
 
 710
 
+QSequenceDeePathForwardExtender.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+8e3b78d9a149646a60caf4249fc5a973
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1582
+
 QSequenceAssert.java
 file
 
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 9b1188246f586ad8ad493d0b34ca9e08
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1523
 
 QSequenceDummyCanceller.java
 file
@@ -131,12 +236,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 db6e3b0016137ec811f6f3adb93236de
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+662
 
 QSequenceSnakeRegister.java
 file
@@ -144,12 +270,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 03eb82d7f41fd3e29e5da0ed95831208
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+631
 
 QSequenceMiddleSnakeFinderResult.java
 file
@@ -157,51 +304,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 c8e1438d6dfbdbcf5a919b3befe7102f
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
-
-QSequenceDeePathBackwardExtender.java
-file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-b4b127c8024555380a992da5e113a9f1
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-QSequenceDeePathExtenderArray.java
-file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-d2d2eafa47c7fc91421b90bd6aca83cc
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
-
-QSequenceMiddleSnakeFinder.java
-file
 
 
 
 
-2008-07-24T04:58:24.000000Z
-4a070e98b21702f6a9ca4329f38eb38d
-2008-04-01T17:30:14.226162Z
-4095
-alex
-has-props
+
+
+
+
+
+
+
+
+1435
 
 QSequenceRestrictedMedia.java
 file
@@ -209,12 +338,135 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 37f3dbc618c69bebb6e90c9b0572c652
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2477
+
+QSequenceMiddleSnakeFinder.java
+file
+
+
+
+
+2009-01-14T22:06:35.000000Z
+0fb8b3864e6bc2f08b74cf5096505816
+2008-12-06T17:25:53.505049Z
+5335
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6193
+
+QSequenceDeePathExtenderArray.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+d2d2eafa47c7fc91421b90bd6aca83cc
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1632
+
+QSequenceDeePathBackwardExtender.java
+file
+
+
+
+
+2008-08-27T01:16:44.000000Z
+b4b127c8024555380a992da5e113a9f1
+2008-04-01T17:30:14.226162Z
+4095
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1932
 
 QSequenceDeePathExtender.java
 file
@@ -222,12 +474,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
-33f9dc3c660430e93dd97f5074ffbbc4
-2008-04-01T17:30:14.226162Z
-4095
+2009-01-14T22:06:35.000000Z
+c18627dd5ba60b9add588c86a6a5ffb8
+2008-12-05T15:26:52.438073Z
+5324
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2833
 
 QSequenceMedia.java
 file
@@ -235,10 +508,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 6901d6d6c5f9f83fa178a1773f9d3040
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+635
 

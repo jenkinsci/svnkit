@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/JSPWikiDocs/SettingUpASubversionRepository
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/doc/JSPWikiDocs/SettingUpASubversionRepository
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 e835a764d1c1550d347de5f800aaa49f
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23424
 
 Subversion_Architecture.png
 file
@@ -45,10 +66,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 d5cf54020bcbb99fb12150481d94bffa
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+55406
 

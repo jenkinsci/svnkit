@@ -37,7 +37,7 @@ final class QSequenceLineRAFileDataStream extends InputStream {
 	public int read() throws IOException {
 		byte[] buffer = new byte[]{-1};
 		read(buffer, 0, 1);
-		return buffer[0];
+		return buffer[0] & 0xFF;
 	}
 
 	public int read(byte[] buffer, int userOffset, int userLength) throws IOException {

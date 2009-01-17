@@ -23,7 +23,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -259,10 +258,6 @@ public class SVNWCUtil {
      *         <span class="javakeyword">false</span>
      */
     public static boolean isVersionedDirectory(File dir) {
-        SVNFileType type = SVNFileType.getType(dir);
-        if (type != SVNFileType.DIRECTORY) {
-            return false;
-        }
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
 	        wcAccess.open(dir, false, false, false, 0, Level.FINEST);

@@ -210,6 +210,9 @@ public class SVNSSHConnector implements ISVNConnector {
         if (mySession == null) {
             return true;
         }
+        if (myConnection == null || myConnection.isDisposed()) {
+            return true;
+        }
         if (!myIsUseSessionPing) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "SKIPPING CHANNEL PING, IT HAS BEEN DISABLED");
             return false;

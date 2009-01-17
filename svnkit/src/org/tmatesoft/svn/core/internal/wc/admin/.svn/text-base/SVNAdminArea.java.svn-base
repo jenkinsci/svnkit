@@ -171,7 +171,7 @@ public abstract class SVNAdminArea {
                 compare = true;
             }
 
-            if (!compare) {
+            if (!compare && isEntryPropertyApplicable(SVNProperty.WORKING_SIZE)) {
                 if (entry.getWorkingSize() != SVNProperty.WORKING_SIZE_UNKNOWN &&
                     textFile.length() != entry.getWorkingSize()) {
                     compare = true;
@@ -680,11 +680,15 @@ public abstract class SVNAdminArea {
     }
 
     public void extendLockToTree() throws SVNException {
+        final boolean writeLock = isLocked();
         ISVNEntryHandler entryHandler = new ISVNEntryHandler() {
             public void handleEntry(File path, SVNEntry entry) throws SVNException {
                 if (entry.isDirectory() && !entry.getName().equals(getThisDirName())) {
                     try {
-                        getWCAccess().probeTry(path, isLocked(), SVNWCAccess.INFINITE_DEPTH);
+                        SVNAdminArea area = getWCAccess().probeTry(path, isLocked(), SVNWCAccess.INFINITE_DEPTH);
+                        if (writeLock && area != null && !area.isLocked()) {
+                            area.lock(false);
+                        }
                     } catch (SVNException svne) {
                         if (svne.getErrorMessage().getErrorCode() != SVNErrorCode.WC_LOCKED) {
                             throw svne;
@@ -1535,7 +1539,7 @@ public abstract class SVNAdminArea {
         SVNPropertyValue charsetProp = baseProps.getPropertyValue(SVNProperty.CHARSET);
         String currentCharset = charsetProp == null ? null : charsetProp.getString();
         currentCharset = SVNTranslator.getCharset(currentCharset, getAdminFile(entry.getName()).toString(), getWCAccess().getOptions());
-        if (currentCharset != null && !"UTF-8".equals(currentCharset)) {
+        if (currentCharset != null && !SVNProperty.isUTF8(currentCharset)) {
             File detranslatedFile = SVNAdminUtil.createTmpFile(this, "detranslated", ".tmp", true);
             String detranslatedPath = SVNPathUtil.getRelativePath(getRoot().getAbsolutePath(), detranslatedFile.getAbsolutePath());
             File tmpCharsetPropFile = SVNAdminUtil.createTmpFile(this, "props", ".tmp", true);

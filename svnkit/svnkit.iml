@@ -16,24 +16,23 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/ganymed/ganymed.jar!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/ganymed/ganymed.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../contrib/ganymed/ganymedsrc.zip!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/ganymed/ganymedsrc.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/jna/jna.jar!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/jna/jna.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntryProperties />
   </component>
   <component name="PluginUploader.PluginUploadConfigurable">
     <option name="ARCHIVE_PATH" />

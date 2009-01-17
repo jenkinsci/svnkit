@@ -1,8 +1,8 @@
-8
+9
 
 dir
-32289
-http://svn.collab.net/repos/svn/tags/1.5.0/subversion/tests/cmdline/log_tests_data
+35256
+http://svn.collab.net/repos/svn/branches/1.5.x/subversion/tests/cmdline/log_tests_data
 http://svn.collab.net/repos/svn
 
 
@@ -32,9 +32,31 @@ file
 
 
 
-2008-07-24T05:03:15.000000Z
+2008-08-27T01:16:45.000000Z
 bdd8e477b5b7976c8c8b487d4bbed144
 2007-10-03T23:21:06.707076Z
 26918
 kfogel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+291
 

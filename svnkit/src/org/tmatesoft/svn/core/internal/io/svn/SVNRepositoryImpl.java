@@ -108,6 +108,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "SVNRepository URL could not be changed from ''{0}'' to ''{1}''; create new SVNRepository instance instead", new Object[]{myLocation, url});
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
+        if (myConnection == null) {
+            // force normal relocate, no attempt to reparent.
+            forceReconnect = true;
+        }
         if (forceReconnect) {
             closeSession();
             myLocation = url;

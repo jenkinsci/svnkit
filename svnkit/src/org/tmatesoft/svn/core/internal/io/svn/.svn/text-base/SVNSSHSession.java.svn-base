@@ -404,6 +404,9 @@ public class SVNSSHSession {
         
         public boolean isSessionPingSupported() {
             lock(Thread.currentThread());
+            if (myConnection == null) {
+                return false;
+            }
             try {
                 ClientServerHello csh = null;
                 try {
@@ -593,6 +596,10 @@ public class SVNSSHSession {
         
         public String toString() {
             return myID + " [" + hashCode() + "]";
+        }
+
+        public boolean isDisposed() {
+            return myConnection == null;
         }
     }
 }

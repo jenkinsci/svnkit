@@ -247,7 +247,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         String url = info.getURL() != null ? info.getURL().toString() : null;
         buffer = openCDataTag("url", url, buffer);
         
-        String rootURL = info.getRepositoryRootURL() != null ? info.getRepositoryUUID().toString() : null;
+        String rootURL = info.getRepositoryRootURL() != null ? info.getRepositoryRootURL().toString() : null;
         String uuid = info.getRepositoryUUID();
         if (rootURL != null || uuid != null) {
             buffer = openXMLTag("repository", SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);

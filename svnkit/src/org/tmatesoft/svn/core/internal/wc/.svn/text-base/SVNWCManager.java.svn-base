@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -31,6 +30,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
@@ -133,10 +133,12 @@ public class SVNWCManager {
                 SVNEntry pEntry = wcAccess.getEntry(path.getParentFile(), false);
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
                 SVNURL rootURL = pEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, null, 0, SVNDepth.INFINITY);
+                String uuid = pEntry.getUUID();
+                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, SVNDepth.INFINITY);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
-                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, null, copyFromRev, SVNDepth.INFINITY);
+                ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(), 
+                        copyFromRev, SVNDepth.INFINITY);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
@@ -533,7 +535,7 @@ public class SVNWCManager {
         if (fileType == SVNFileType.NONE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, "''{0}'' does not exist", path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY) {
+        } else if (fileType != SVNFileType.FILE && fileType != SVNFileType.DIRECTORY && fileType != SVNFileType.SYMLINK) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Unsupported node kind for path ''{0}''", path);
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -564,7 +566,7 @@ public class SVNWCManager {
                 throw svne;
             }
 
-            Collection versioned = new HashSet();
+            Collection versioned = new SVNHashSet();
             for (Iterator entries = childDir.entries(false); entries.hasNext();) {
                 SVNEntry entry = (SVNEntry) entries.next();
                 versioned.add(entry.getName());

@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.util.jna;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.WString;
 import com.sun.jna.win32.StdCallLibrary;
 
@@ -23,9 +24,33 @@ import com.sun.jna.win32.StdCallLibrary;
  */
 interface ISVNKernel32Library extends StdCallLibrary {
     
+    public static class OSVERSIONINFO extends Structure {
+        public NativeLong dwOSVersionInfoSize;
+        public NativeLong dwMajorVersion;
+        public NativeLong dwMinorVersion;
+        public NativeLong dwBuildNumber;
+        public NativeLong dwPlatformId;
+        public char[] szCSDVersion; 
+        
+        public OSVERSIONINFO() {
+            dwMajorVersion = new NativeLong(0);
+            dwMinorVersion = new NativeLong(0);
+            dwBuildNumber = new NativeLong(0);
+            dwPlatformId = new NativeLong(0);
+            szCSDVersion = new char[128];
+            for (int i = 0; i < szCSDVersion.length; i++) {
+                szCSDVersion[i] = 0;
+            }
+            dwOSVersionInfoSize = new NativeLong(this.size());
+        }
+    }
+
     public long FILE_ATTRIBUTE_READONLY = 0x01;
     public long FILE_ATTRIBUTE_HIDDEN   = 0x02;
     public long FILE_ATTRIBUTE_NORMAL   = 0x80;
+    
+    public int VER_PLATFORM_WIN32_WINDOWS = 1;
+    public int VER_PLATFORM_WIN32_NT = 2;
     
     public Pointer LocalFree(Pointer ptr);
     
@@ -34,4 +59,6 @@ interface ISVNKernel32Library extends StdCallLibrary {
     public int MoveFileW(WString src, WString dst);
 
     public int MoveFileExW(WString src, WString dst, NativeLong flags);
+    
+    public int GetVersionExW(Pointer pInfo);
 }

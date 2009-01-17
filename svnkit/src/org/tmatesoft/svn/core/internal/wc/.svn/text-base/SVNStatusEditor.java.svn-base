@@ -14,8 +14,6 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -28,6 +26,8 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -324,7 +324,7 @@ public class SVNStatusEditor {
     public static Collection getIgnorePatterns(SVNAdminArea dir, Collection globalIgnores) throws SVNException {
         String localIgnores = dir.getProperties("").getStringPropertyValue(SVNProperty.IGNORE);
         if (localIgnores != null) {
-            Collection patterns = new HashSet();
+            Collection patterns = new SVNHashSet();
             patterns.addAll(globalIgnores);
             for(StringTokenizer tokens = new StringTokenizer(localIgnores, "\r\n"); tokens.hasMoreTokens();) {
                 String token = tokens.nextToken().trim();
@@ -341,7 +341,7 @@ public class SVNStatusEditor {
         if (options != null) {
             String[] ignores = options.getIgnorePatterns();
             if (ignores != null) {
-                Collection patterns = new HashSet();
+                Collection patterns = new SVNHashSet();
                 for (int i = 0; i < ignores.length; i++) {
                     patterns.add(ignores[i]);
                 }

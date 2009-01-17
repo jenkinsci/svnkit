@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-eclipse/org.tmatesoft.svnkit/src/org/tmatesoft/svn/core
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 27e26ef3a8e10e145769da1e7dba0d9f
 2008-09-16T17:47:40.986804Z
 4886
@@ -66,7 +66,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 c3dc1e5f4484481e9a113128f4e6aca2
 2008-09-16T17:47:40.986804Z
 4886

@@ -422,7 +422,8 @@ public class FSRevisionNode {
         try {
             offset = Long.parseLong(repOffset);
             if (offset < 0) {
-                throw new NumberFormatException();
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
@@ -442,7 +443,8 @@ public class FSRevisionNode {
         try {
             size = Long.parseLong(repSize);
             if (size < 0) {
-                throw new NumberFormatException();
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
@@ -462,7 +464,8 @@ public class FSRevisionNode {
         try {
             expandedSize = Long.parseLong(repExpandedSize);
             if (expandedSize < 0) {
-                throw new NumberFormatException();
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");

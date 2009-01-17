@@ -115,6 +115,10 @@ public class HTTPStatus {
     public String getVersion() {
         return myVersion;
     }
+    
+    public boolean isHTTP11() {
+        return "HTTP/1.1".equals(myVersion);        
+    }
 
     public void setHeader(HTTPHeader header) {
         myHeader = header;

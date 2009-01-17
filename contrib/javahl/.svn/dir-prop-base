@@ -1,8 +1,8 @@
 K 13
 svn:externals
 V 162
-src http://svn.collab.net/repos/svn/tags/1.5.2/subversion/bindings/javahl/src/
-tests http://svn.collab.net/repos/svn/tags/1.5.2/subversion/bindings/javahl/tests/
+src http://svn.collab.net/repos/svn/tags/1.5.5/subversion/bindings/javahl/src/
+tests http://svn.collab.net/repos/svn/tags/1.5.5/subversion/bindings/javahl/tests/
 
 K 10
 svn:ignore

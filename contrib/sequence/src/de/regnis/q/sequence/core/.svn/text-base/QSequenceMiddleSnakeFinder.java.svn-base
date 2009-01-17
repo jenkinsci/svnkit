@@ -46,7 +46,10 @@ class QSequenceMiddleSnakeFinder {
 		final int delta = media.getLeftLength() - media.getRightLength();
 		final int deeMax = (int)Math.ceil(((double)media.getLeftLength() + (double)media.getRightLength()) / 2);
 		for (int dee = 0; dee <= deeMax; dee++) {
-			for (int diagonal = (delta >= 0 ? dee : -dee); (delta >= 0 ? diagonal >= -dee : diagonal <= dee); diagonal += (delta >= 0 ? -2 : 2)) {
+			// Always run from dee to -dee to keep results more stable against slight changes like insertion/removal of a line:
+			// Previous version was slightly more effective but *less stable* by starting the forward scan with those
+			// diagonal which is nearer to the backward scan (i.e. at +dee for delta >= 0 and -dee for delta < 0).
+			for (int diagonal = dee; diagonal >= -dee; diagonal -= 2) {
 				forwardDeePathExtender.extendDeePath(media, dee, diagonal);
 				if (checkForwardOverlapping(delta, diagonal, dee)) {
 					if (isForwardAndBackwardOverlapping(diagonal)) {
@@ -56,7 +59,7 @@ class QSequenceMiddleSnakeFinder {
 				}
 			}
 
-			for (int diagonal = (delta >= 0 ? -dee : dee); (delta >= 0 ? diagonal <= dee : diagonal >= -dee); diagonal += (delta >= 0 ? 2 : -2)) {
+			for (int diagonal = dee; diagonal >= -dee; diagonal -= 2) {
 				final int deltadDiagonal = diagonal + delta;
 				backwardDeePathExtender.extendDeePath(media, dee, deltadDiagonal);
 				if (checkBackwardOverlapping(delta, diagonal, dee)) {

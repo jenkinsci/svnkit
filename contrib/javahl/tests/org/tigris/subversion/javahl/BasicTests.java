@@ -176,6 +176,14 @@ public class BasicTests extends SVNTests
 
         // check the status of the working copy
         thisTest.checkStatus();
+
+        // Test status of non-existent file
+        File fileC = new File(thisTest.getWorkingCopy() + "/A", "foo.c");
+
+        Status s = client.singleStatus(fileToSVNPath(fileC, false), false);
+        if (s != null)
+            fail("File foo.c should not return a status.");
+
     }
 
     /**
@@ -854,11 +862,9 @@ public class BasicTests extends SVNTests
             wc.addItem("A/B/F/" + fileName,
                        wc.getItemContent("A/B/E/" + fileName));
             wc.setItemWorkingCopyRevision("A/B/F/" + fileName, 2);
-            wc.setItemPropStatus("A/B/F/" + fileName, Status.Kind.normal);
             addExpectedCommitItem(thisTest.getWCPath(), thisTest.getUrl(),
                                   "A/B/F/" + fileName, NodeKind.file,
                                   CommitItemStateFlags.Add |
-                                  CommitItemStateFlags.PropMods |
                                   CommitItemStateFlags.IsCopy);
 
             wc.removeItem("A/B/E/" + fileName);

@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/doc/JSPWikiDocs/WhatIsSubversionFor
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/doc/JSPWikiDocs/WhatIsSubversionFor
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 e835a764d1c1550d347de5f800aaa49f
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23424
 
 right.gif
 file
@@ -45,10 +66,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 65b61ba558d3d4cc72ba32bc4cff1c68
 2007-01-26T19:26:17.328519Z
 2919
 sa
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1435
 

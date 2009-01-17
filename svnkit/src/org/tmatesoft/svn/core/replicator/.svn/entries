@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/replicator
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/replicator
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-10-30T04:44:28.000000Z
+2008-11-04T17:25:59.000000Z
 952ce98daa96f89f62468f734da2e832
 2008-08-26T22:48:25.933321Z
 4775
@@ -66,7 +66,7 @@ file
 
 
 
-2008-10-30T04:44:28.000000Z
+2008-11-04T17:25:59.000000Z
 9c5afe4cf4e392772d6ad3b460f093b4
 2008-08-27T13:16:35.698961Z
 4780
@@ -100,7 +100,7 @@ file
 
 
 
-2008-10-30T04:44:28.000000Z
+2008-11-04T17:25:59.000000Z
 39c8e4117080f1fbffb58b0d15ea45a8
 2008-08-26T22:48:25.933321Z
 4775
@@ -134,10 +134,31 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 07b6bb1eab505d8d2046ef03cb8e4e42
 2006-11-09T20:08:45.359921Z
 2775
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+718
 

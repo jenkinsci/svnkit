@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit/src/org/tmatesoft/svn/core/wc/xml/schema
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/wc/xml/schema
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 badad6fa2fa5572649df2b7b1bf1d50f
 2006-10-19T00:03:09.042196Z
 2704
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+554
 
 log.rnc
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 ef9e40479f8353762813916fe09c04ff
 2006-10-19T00:03:09.042196Z
 2704
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+742
 
 status.rnc
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 11ce28de52b25f242e1a1061fe08d995
 2006-10-19T00:03:09.042196Z
 2704
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1988
 
 common.rnc
 file
@@ -71,12 +134,33 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 7fb9ec8677fbcf7b74ba693c781c1366
 2006-10-19T00:03:09.042196Z
 2704
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+998
 
 info.rnc
 file
@@ -84,12 +168,33 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 af00f3d2a640779cdb34e4f235d7b39d
 2006-10-19T00:03:09.042196Z
 2704
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1731
 
 list.rnc
 file
@@ -97,10 +202,31 @@ file
 
 
 
-2008-07-24T04:49:44.000000Z
+2008-08-27T01:16:45.000000Z
 e93ee5f73e544f0c22c0f33b53883a2a
 2006-10-19T00:03:09.042196Z
 2704
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+626
 

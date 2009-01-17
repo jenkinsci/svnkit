@@ -30,11 +30,34 @@ public class FixedSizeInputStream extends InputStream {
     }
 
     public int read() throws IOException {
+        int read = -1;
         if (myLength > 0) {
-            myLength--;
-            return mySource.read();
+            read = mySource.read();
+            if (read != -1) {
+                myLength--;
+            }
         }
-        return -1;
+        return read;
+    }
+    
+    public int read(byte[] b, int off, int len) throws IOException {
+        if (myLength <= 0) {
+            return -1;
+        }
+        if (b == null) {
+            throw new NullPointerException();
+        } else if ((off < 0) || (off > b.length) || (len < 0) ||
+               ((off + len) > b.length) || ((off + len) < 0)) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return 0;
+        }
+        long toRead = Math.min(myLength, len);
+        toRead = mySource.read(b, off, (int) toRead);
+        if (toRead >= 0) {
+            myLength -= toRead;
+        }
+        return (int) toRead;
     }
     
     public void close() {

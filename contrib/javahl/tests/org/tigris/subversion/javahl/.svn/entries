@@ -1,15 +1,15 @@
-8
+9
 
 dir
-32354
-http://svn.collab.net/repos/svn/tags/1.5.0/subversion/bindings/javahl/tests/org/tigris/subversion/javahl
+35256
+http://svn.collab.net/repos/svn/tags/1.5.5/subversion/bindings/javahl/tests/org/tigris/subversion/javahl
 http://svn.collab.net/repos/svn
 
 
 
-2008-05-25T03:03:24.421074Z
-31439
-hwright
+2008-12-19T17:00:14.137921Z
+34851
+markphip
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,12 +32,33 @@ file
 
 
 
-2008-08-02T14:58:34.000000Z
+2008-08-27T01:16:44.000000Z
 63581ebe101ce5987adbf0c1462bf29f
 2007-09-25T06:39:27.578066Z
 26775
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1850
 
 BasicTests.java
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-08-02T14:58:34.000000Z
-29cc69d4b50ca73cf23bd03b365e2aac
-2008-05-25T03:03:24.421074Z
-31439
-hwright
+2009-01-14T22:42:21.000000Z
+13a2726d407323e6fb583055ee424ac1
+2008-12-19T17:00:14.137921Z
+34851
+markphip
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+137652
 
 RunTests.java
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-08-02T14:58:34.000000Z
+2008-08-27T01:16:44.000000Z
 880b231ca8d6574d74fa44eabe7366c8
 2007-09-25T06:39:27.578066Z
 26775
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5071
 
 SVNTests.java
 file
@@ -71,12 +134,33 @@ file
 
 
 
-2008-08-02T14:58:34.000000Z
+2008-08-27T01:16:44.000000Z
 264be92fb1774b8a00303c3239c1f6ac
 2007-09-25T06:39:27.578066Z
 26775
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+28291
 
 WC.java
 file
@@ -84,10 +168,31 @@ file
 
 
 
-2008-08-02T14:58:34.000000Z
+2008-08-27T01:16:44.000000Z
 fe8eeb61d3dab472ea8a19309502df9a
 2007-04-26T22:04:11.278866Z
 24797
 dlr
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+22150
 

@@ -164,8 +164,11 @@ public class FSPathChange extends SVNLogEntryPath {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
-            
-            copyfromRevision = Long.parseLong(copyfromLine.substring(0, delimiterInd));
+            try {
+                copyfromRevision = Long.parseLong(copyfromLine.substring(0, delimiterInd));
+            } catch (NumberFormatException nfe) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, nfe), SVNLogType.FSFS);
+            }
             copyfromPath = copyfromLine.substring(delimiterInd + 1);
         }
 

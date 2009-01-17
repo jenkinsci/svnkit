@@ -1,15 +1,15 @@
-8
+9
 
 dir
-32354
-http://svn.collab.net/repos/svn/tags/1.5.0/subversion/bindings/javahl/tests/org/tigris/subversion
+35256
+http://svn.collab.net/repos/svn/tags/1.5.5/subversion/bindings/javahl/tests/org/tigris/subversion
 http://svn.collab.net/repos/svn
 
 
 
-2008-05-25T03:03:24.421074Z
-31439
-hwright
+2008-12-19T17:00:14.137921Z
+34851
+markphip
 
 
 svn:special svn:externals svn:needs-lock

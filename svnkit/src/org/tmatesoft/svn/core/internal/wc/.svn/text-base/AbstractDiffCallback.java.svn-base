@@ -12,13 +12,13 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -79,11 +79,11 @@ public abstract class AbstractDiffCallback {
         }
         for(Iterator propNames = original.nameSet().iterator(); propNames.hasNext();) {
             String name = (String) propNames.next();
-            if (SVNProperty.isRegularProperty(name) && regular != null) {
+            if (regular != null && SVNProperty.isRegularProperty(name)) {
                 regular.put(name, original.getSVNPropertyValue(name));
-            } else if (SVNProperty.isEntryProperty(name) && entry != null) {
+            } else if (entry != null && SVNProperty.isEntryProperty(name)) {
                 entry.put(name, original.getSVNPropertyValue(name));
-            } else if (SVNProperty.isWorkingCopyProperty(name) && wc != null) {
+            } else if (wc != null && SVNProperty.isWorkingCopyProperty(name)) {
                 wc.put(name, original.getSVNPropertyValue(name));
             }
         }
@@ -99,7 +99,7 @@ public abstract class AbstractDiffCallback {
     
     protected void addDeletedPath(String path) {
         if (myDeletedPaths == null) {
-            myDeletedPaths = new HashSet();
+            myDeletedPaths = new SVNHashSet();
         }
         myDeletedPaths.add(path);
     }

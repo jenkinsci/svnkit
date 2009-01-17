@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/svnkit-test/apache
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/apache
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-08-02T14:58:30.000000Z
+2008-08-27T01:16:45.000000Z
 c7f9027ff3f2c0f20c013a7e026d92eb
 2008-07-15T13:59:35.627165Z
 4533
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1960
 
 users
 file
@@ -45,10 +66,31 @@ file
 
 
 
-2008-07-24T04:49:43.000000Z
+2008-08-27T01:16:45.000000Z
 a809d6803fa8cfa2390626465f65ea38
 2005-04-29T19:07:23.952596Z
 494
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+94
 

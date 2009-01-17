@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src-test/de/regnis/q/sequence/line
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src-test/de/regnis/q/sequence/line
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 011796445bf44bccf78b930e94e0b552
 2008-07-30T16:53:59.266781Z
 4613
@@ -66,7 +66,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 da6a5cc579300fe78e3b015cac9c28a8
 2008-07-30T16:53:59.266781Z
 4613
@@ -100,10 +100,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 71a0159fb016f3f3450ead309a9918fa
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1995
 

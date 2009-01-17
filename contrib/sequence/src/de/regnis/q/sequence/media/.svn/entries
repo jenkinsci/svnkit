@@ -1,8 +1,8 @@
 9
 
 dir
-5060
-http://svn.svnkit.com/repos/svnkit/tags/1.2.0/contrib/sequence/src/de/regnis/q/sequence/media
+5413
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/sequence/src/de/regnis/q/sequence/media
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -32,12 +32,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 0268e1e3a8d7a8a7cc20e1851c91a836
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1202
 
 QSequenceDiscardingMediaConfusionDetector.java
 file
@@ -45,12 +66,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 aa4b703d3d307819e4c9944aed071a56
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+650
 
 QSequenceMediaIndexTransformer.java
 file
@@ -58,12 +100,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 fe4380a3b97b8a9076fa464df819a4d0
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+660
 
 QSequenceIntMedia.java
 file
@@ -71,7 +134,7 @@ file
 
 
 
-2008-10-30T04:42:00.000000Z
+2008-11-04T17:25:59.000000Z
 7420abfd69f4308204f411f8f1ed5d8f
 2008-07-30T16:53:59.266781Z
 4613
@@ -105,12 +168,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 74fd4d33eb324c0c57a9e3a744886468
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+927
 
 QSequenceCachingMedia.java
 file
@@ -118,12 +202,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 146eafd9a27e9b74ef1bc0499a78fa0b
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1949
 
 QSequenceDiscardingMediaLeftBlock.java
 file
@@ -131,12 +236,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 ab650f5b93aa959dc3ee4788efc1225a
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+907
 
 QSequenceCachableMediaGetter.java
 file
@@ -144,12 +270,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 e258e2349fd66a0a6ac782c5ab4efdc2
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+709
 
 QSequenceMediaDummyIndexTransformer.java
 file
@@ -157,12 +304,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 85012971300f86ba29acd1db3d9ccbc0
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1526
 
 QSequenceDiscardingMedia.java
 file
@@ -170,12 +338,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 920e0ab923540a1d14d4cbe81705db90
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2626
 
 QSequenceMediaComparer.java
 file
@@ -183,12 +372,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 c2e44a08af91ac9e757f212fbe5e7655
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+702
 
 QSequenceCachableMediaLeftGetter.java
 file
@@ -196,12 +406,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 ac0ef20e9f9118b0bd5797165721803a
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+923
 
 QSequenceDiscardingMediaRightBlock.java
 file
@@ -209,12 +440,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 efa22e9565a23e5ff9f02f559c1a384e
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+912
 
 QSequenceCachingMediaSymbolMap.java
 file
@@ -222,12 +474,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 5276e24420821b8c2990129470b837d8
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1756
 
 QSequenceDiscardingMediaBlock.java
 file
@@ -235,12 +508,33 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 b59268b77ed8c7273d53738a04a20b62
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7130
 
 QSequenceCachableMedia.java
 file
@@ -248,10 +542,31 @@ file
 
 
 
-2008-07-24T04:58:24.000000Z
+2008-08-27T01:16:44.000000Z
 5f378545b7ceadbff6e5449539f1a68a
 2008-04-01T17:30:14.226162Z
 4095
 alex
 has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+715
 

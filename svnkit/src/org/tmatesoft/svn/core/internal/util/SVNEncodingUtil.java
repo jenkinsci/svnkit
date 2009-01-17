@@ -46,7 +46,11 @@ public class SVNEncodingUtil {
             }
             if (sb == null) {
                 sb = new StringBuffer();
-                sb.append(new String(bytes, 0, i));
+                try {
+                    sb.append(new String(bytes, 0, i, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    sb.append(new String(bytes, 0, i));
+                }
             }
             sb.append("%");
 
@@ -80,7 +84,11 @@ public class SVNEncodingUtil {
             }
             if (sb == null) {
                 sb = new StringBuffer();
-                sb.append(new String(bytes, 0, i));
+                try {
+                    sb.append(new String(bytes, 0, i, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    sb.append(new String(bytes, 0, i));
+                }
             }
             sb.append("%");
 
