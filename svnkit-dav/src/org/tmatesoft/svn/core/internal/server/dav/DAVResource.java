@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -97,6 +98,7 @@ public class DAVResource {
             Collection lockTokens, Map clientCapabilities) throws DAVException {
         myRepositoryManager = manager;
         myRepository = (FSRepository) repository;
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Repos location is " + myRepository.getLocation());
         try {
             myRepository.testConnection();//this should create an FSFS object
         } catch (SVNException svne) {

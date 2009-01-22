@@ -25,10 +25,13 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -36,7 +39,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2.0
  */
 public class DAVRepositoryManager {
-
+    
     private static final String FILE_PROTOCOL_LINE = "file://";
     private static final String DESTINATION_HEADER = "Destination";
     private static final String DEFAULT_ACTIVITY_DB = "dav/activities.d";
@@ -58,9 +61,13 @@ public class DAVRepositoryManager {
 
         myResourceRepositoryRoot = getRepositoryRoot(request.getPathInfo());
         myResourceContext = getResourceContext(request.getContextPath(), request.getPathInfo());
-        myResourcePathInfo = getResourcePathInfo(request.getPathInfo());
         myUserPrincipal = request.getUserPrincipal();
-        myRepositoryRootDir = getRepositoryRootDir(request.getPathInfo());
+        if (myRepositoryRootDir == null) {
+            myRepositoryRootDir = getRepositoryRootDir(request.getPathInfo());
+        }
+        if (myResourcePathInfo == null) {
+            myResourcePathInfo = getResourcePathInfo(request.getPathInfo());
+        }
             
         if (config.isUsingPBA()) {
             String path = null;
@@ -188,7 +195,8 @@ public class DAVRepositoryManager {
 
     public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, String pathInfo, long version, String clientOptions,
             String baseChecksum, String resultChecksum, String label, boolean useCheckedIn, List lockTokens, Map capabilities) throws SVNException {
-        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo == null ? getResourcePathInfo() : pathInfo, label, 
+        pathInfo = pathInfo == null ? getResourcePathInfo() : pathInfo;
+        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo, label, 
                 useCheckedIn);
         DAVConfig config = getDAVConfig();
         String fsParentPath = config.getRepositoryParentPath();
@@ -224,11 +232,38 @@ public class DAVRepositoryManager {
     private String getRepositoryRoot(String requestURI) {
         StringBuffer repositoryURL = new StringBuffer();
         repositoryURL.append(FILE_PROTOCOL_LINE);
+
         if (getDAVConfig().isUsingRepositoryPathDirective()) {
             repositoryURL.append(getDAVConfig().getRepositoryPath().startsWith("/") ? "" : "/");
             repositoryURL.append(getDAVConfig().getRepositoryPath());
         } else {
-            repositoryURL.append(getDAVConfig().getRepositoryParentPath().startsWith("/") ? "" : "/");
+            String reposParentPath = getDAVConfig().getRepositoryParentPath();
+            if (!reposParentPath.startsWith("/")) {
+                reposParentPath = "/" + reposParentPath;
+            }
+            
+            //TODO: remove later this hack
+            if (getDAVConfig().isTestMode()) {
+                requestURI = requestURI.startsWith("/") ? requestURI.substring(1) : requestURI;
+                String fsPath = SVNPathUtil.append(reposParentPath, requestURI);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fs path: " + fsPath);
+                File reposRoot = FSFS.findRepositoryRoot(new File(fsPath));
+                if (reposRoot != null) {
+                    String reposRootPath = reposRoot.getAbsolutePath();
+                    String reposAbsPath = fsPath.startsWith(reposRootPath) ? fsPath.substring(reposRootPath.length()) : null;
+                    if (reposAbsPath != null) {
+                        myResourcePathInfo = reposAbsPath.startsWith("/") ? reposAbsPath : "/" + reposAbsPath; 
+                    }
+                }
+                
+                myRepositoryRootDir = reposRoot;
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "reposRoot: " + reposRoot);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "abs repos path: " + myResourcePathInfo);
+
+                return FILE_PROTOCOL_LINE + reposRoot.getAbsolutePath(); 
+            }
+            
+            repositoryURL.append(reposParentPath);
             repositoryURL.append(DAVPathUtil.addTrailingSlash(getDAVConfig().getRepositoryParentPath()));
             repositoryURL.append(DAVPathUtil.head(requestURI));
         }

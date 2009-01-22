@@ -143,32 +143,67 @@ public class PythonTests {
 		}
 
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
-			properties.setProperty("apache.conf", "apache/python.template.conf");
-            boolean started = false;
-            int port = -1;
-			try {
-				port = startApache(properties);
-                url = "http://localhost:" + port;
-			    for (int i = 0; i < ourLoggers.length; i++) {
-                    ourLoggers[i].startServer("apache", url);
-                }
-                started = true;
-				runPythonTests(properties, defaultTestSuite, "dav", url, libPath);
-			} catch (Throwable th) {
-				th.printStackTrace();
-			} finally {
-				try {
-					stopApache(properties, port);
-                    if (started) {
-                        for (int i = 0; i < ourLoggers.length; i++) {
-                            ourLoggers[i].endServer("apache", url);
-                        }
+            String apacheEnabled = properties.getProperty("apache", "1");
+            if ("1".equals(apacheEnabled)) {
+                properties.setProperty("apache.conf", "apache/python.template.conf");
+                boolean started = false;
+                int port = -1;
+                try {
+                    port = startApache(properties);
+                    url = "http://localhost:" + port;
+                    for (int i = 0; i < ourLoggers.length; i++) {
+                        ourLoggers[i].startServer("apache", url);
                     }
+                    started = true;
+                    runPythonTests(properties, defaultTestSuite, "dav", url, libPath);
                 } catch (Throwable th) {
-					th.printStackTrace();
-				}
+                    th.printStackTrace();
+                } finally {
+                    try {
+                        stopApache(properties, port);
+                        if (started) {
+                            for (int i = 0; i < ourLoggers.length; i++) {
+                                ourLoggers[i].endServer("apache", url);
+                            }
+                        }
+                    } catch (Throwable th) {
+                        th.printStackTrace();
+                    }
+                }
+            }
+			
+			//now check the servlet flag
+			String servletContainer = properties.getProperty("servlet.container", "0");
+			if ("1".equals(servletContainer)) {
+			    boolean started = false;
+	            int port = -1;
+	            try {
+	                port = startTomcat(properties);
+	                url = "http://localhost:" + port + "/svnkit";
+	                for (int i = 0; i < ourLoggers.length; i++) {
+	                    ourLoggers[i].startServer("tomcat", url);
+	                }
+	                //wait a little until tomcat
+	                Thread.sleep(1000);
+	                started = true;
+	                runPythonTests(properties, defaultTestSuite, "dav", url, libPath);
+	            } catch (Throwable th) {
+	                th.printStackTrace();
+	            } finally {
+	                try {
+	                    stopTomcat(properties);
+	                    if (started) {
+	                        for (int i = 0; i < ourLoggers.length; i++) {
+	                            ourLoggers[i].endServer("tomcat", url);
+	                        }
+	                    }
+	                } catch (Throwable th) {
+	                    th.printStackTrace();
+	                }
+	            }
 			}
 		}
+		
         for (int i = 0; i < ourLoggers.length; i++) {
             ourLoggers[i].endTests(properties);
         }
@@ -176,7 +211,7 @@ public class PythonTests {
             ourDaemon.shutdown();
         }
 	}
-    
+
     private static void setupLogging() {
         setupLogger("python", Level.INFO);
         setupLogger(SVNLogType.DEFAULT.getName(), Level.ALL);
@@ -441,7 +476,6 @@ public class PythonTests {
 			        close();
 			    }
 			}
-			
 		}
 	}
 
@@ -585,6 +619,60 @@ public class PythonTests {
         os.write(config.getBytes());
         os.close();
         return port;
+    }
+
+    public static int startTomcat(Properties props) throws Throwable {
+        return tomcat(props, -1, -1, true);
+    }
+
+    public static void stopTomcat(Properties props) throws Throwable {
+        tomcat(props, -1, -1, false);
+    }
+
+    private static int tomcat(Properties props, int serverPort, int connectorPort, boolean start) throws Throwable {
+        if (start) {
+            connectorPort = generateTomcatServerXML(props, serverPort, connectorPort);
+        }
+
+        String catalina = "tomcat/bin/catalina.sh";
+        String[] command = new String[] {catalina, (start ? "start" : "stop")};
+        execCommand(command, start);
+        return connectorPort;
+    }
+
+    private static int generateTomcatServerXML(Properties props, int serverPort, int connectorPort) throws IOException {
+        File template = new File(props.getProperty("server.xml", "tomcat/conf/server.xml"));
+        byte[] contents = new byte[(int) template.length()];
+        InputStream is = new FileInputStream(template);
+        is.read(contents);
+        is.close();
+        
+        if (serverPort < 0) {
+            serverPort = 8006;
+            try {
+                serverPort = Integer.parseInt(props.getProperty("tomcat.server.port", "8006"));
+            } catch (NumberFormatException nfe) {
+            }
+            serverPort = findUnoccupiedPort(serverPort);
+        }
+        
+        if (connectorPort < 0) {
+            connectorPort = 8181;
+            try {
+                connectorPort = Integer.parseInt(props.getProperty("tomcat.connector.port", "8181"));
+            } catch (NumberFormatException nfe) {
+            }
+            connectorPort = findUnoccupiedPort(connectorPort);
+        }
+        
+        String config = new String(contents);
+        config = config.replaceAll("%server.port%", serverPort + "");
+        config = config.replaceAll("%connector.port%", connectorPort + "");
+        
+        FileOutputStream os = new FileOutputStream(template);
+        os.write(config.getBytes());
+        os.close();
+        return connectorPort;
     }
 
     private static void generateClientScript(File src, File destination, String name, int port) throws IOException {

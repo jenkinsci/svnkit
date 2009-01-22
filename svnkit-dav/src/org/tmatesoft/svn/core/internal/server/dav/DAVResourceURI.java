@@ -49,15 +49,7 @@ public class DAVResourceURI {
         myContext = context;
         myRevision = DAVResource.INVALID_REVISION;
         parseURI(label, useCheckedIn);
-        
-        try {
-            throw new Exception();
-        } catch (Exception e) {
-            OutputStream os = SVNDebugLog.getDefaultLog().createOutputLogStream();
-            e.printStackTrace(new PrintStream(os));
-            SVNFileUtil.closeFile(os);
-        }
-    
+
         StringBuffer logBuffer = new StringBuffer();
         logBuffer.append('\n');
         logBuffer.append("Requested URI: " + getRequestURI());

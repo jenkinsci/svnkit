@@ -706,7 +706,7 @@
 		<available file="svnkit-test/test.${os}.properties" property="python.test.properties" value="svnkit-test/test.${os}.properties"/>
 	</target>
 
-    <target name="test-python" depends="init-test-properties,init-environment,compile-tests,build-library,build-cli">
+    <target name="test-python" depends="init-test-properties,init-environment,compile-tests,build-library,build-cli,build-dav">
     	<property name="python.test.home" value="${basedir}/build/python"/>
     	<mkdir dir="${python.test.home}"/>
     	<delete includeemptydirs="true">
@@ -783,6 +783,23 @@
     			<include name="**/**"/>
     	    </fileset>
         </delete>
+    	
+    	<!-- Unjar tomcat.jar -->
+    	<unjar src="svnkit-test/tomcat/tomcat.jar" dest="${python.test.home}" />
+        <chmod file="${python.test.home}/tomcat/bin/catalina.sh" perm="ugo+rx" />
+        <chmod file="${python.test.home}/tomcat/bin/digest.sh" perm="ugo+rx" />
+        <chmod file="${python.test.home}/tomcat/bin/setclasspath.sh" perm="ugo+rx" />
+        <chmod file="${python.test.home}/tomcat/bin/shutdown.sh" perm="ugo+rx" />
+        <chmod file="${python.test.home}/tomcat/bin/startup.sh" perm="ugo+rx" />
+        <chmod file="${python.test.home}/tomcat/bin/tool-wrapper.sh" perm="ugo+rx" />
+        <chmod file="${python.test.home}/tomcat/bin/version.sh" perm="ugo+rx" />
+
+    	<copy file="svnkit-test/tomcat/logging.properties" overwrite="true" tofile="${python.test.home}/tomcat/conf/logging.properties" failonerror="false" />
+    	<replace token="%ant.dir%" file="${python.test.home}/tomcat/conf/logging.properties" value="${basedir.unix}" />
+    	
+    	<unwar src="build/lib/svnkit.war" dest="${python.test.home}/tomcat/webapps/svnkit" />
+    	<replace token="%ant.dir%" file="${python.test.home}/tomcat/webapps/svnkit/WEB-INF/web.xml" value="${basedir.unix}" />
+    	
     	<java classpathref="python.classpath" 
               dir="${python.test.home}"
               fork="true"

@@ -8,22 +8,23 @@
         <servlet-name>svnkit</servlet-name>
         <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
         <init-param>
-            <!--<param-name>SVNPath</param-name>-->
-            <!--<param-value>/var/svn/repository/repoview/</param-value>-->
             <param-name>SVNParentPath</param-name>
-            <param-value>/var/svn/repository</param-value>
+            <param-value>%ant.dir%/build/python/python/cmdline</param-value>
+        </init-param>
+        <init-param>
+            <param-name>TestMode</param-name>
+            <param-value>on</param-value>
         </init-param>
         <!--<init-param>-->
             <!--<param-name>AuthzSVNAccessFile</param-name>-->
             <!--<param-value>/var/svn/access_conf</param-value>-->
-        <!--</init-param>-->
-    </servlet>
+        <!--</init-param>-->        
+</servlet>
     <servlet-mapping>
         <servlet-name>svnkit</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
-
-    <!--<security-constraint>-->
+<!--<security-constraint>-->
         <!--<display-name>DAV Subversion Security Constraint</display-name>-->
         <!--<web-resource-collection>-->
             <!--<web-resource-name>svnkit</web-resource-name>-->
@@ -37,6 +38,5 @@
     <!--<login-config>-->
         <!--<auth-method>BASIC</auth-method>-->
         <!--<realm-name>Repository Realm</realm-name>-->
-    <!--</login-config>-->
-
+    <!--</login-config>-->    
 </web-app>
