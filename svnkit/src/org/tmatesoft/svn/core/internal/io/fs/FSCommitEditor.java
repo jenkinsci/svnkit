@@ -219,8 +219,8 @@ public class FSCommitEditor implements ISVNEditor {
                     increment = -1;
                 }
                 if (increment != 0) {
-                    myCommitter.incrementMergeInfoUpTree(parentPath, increment);
                     parentPath.getRevNode().setHasMergeInfo(propValue != null);
+                    myCommitter.incrementMergeInfoUpTree(parentPath, increment);
                 }
             }
 

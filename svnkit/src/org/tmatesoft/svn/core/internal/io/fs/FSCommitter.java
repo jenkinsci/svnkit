@@ -117,8 +117,8 @@ public class FSCommitter {
                 increment = -1;
             }
             if (increment != 0) {
-                incrementMergeInfoUpTree(parentPath, increment);
                 parentPath.getRevNode().setHasMergeInfo(propValue != null);
+                incrementMergeInfoUpTree(parentPath, increment);
             }
         }
         
