@@ -15,6 +15,8 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+
+import java.util.Iterator;
 import java.util.Map;
 
 
@@ -37,13 +39,23 @@ public class SVNClientImplTracker implements Runnable {
             }
         }
         synchronized (ourReferences) {
+            SVNClientImpl oldClient = null;
+            for (Iterator refs = ourReferences.keySet().iterator(); refs.hasNext();) {
+                WeakReference reference = (WeakReference) refs.next();
+                if (reference.get() == Thread.currentThread()) {
+                    oldClient = (SVNClientImpl) ourReferences.get(reference);
+                    if (oldClient != null) {
+                        oldClient.dispose();
+                    }
+                    refs.remove();
+                }
+            }    
             WeakReference ref = new WeakReference(Thread.currentThread(), ourQueue);
-            SVNClientImpl oldClient = (SVNClientImpl) ourReferences.put(ref, client);
+            oldClient = (SVNClientImpl) ourReferences.put(ref, client);
             if (oldClient != null) {
                 oldClient.dispose();
-            }
+            } 
         }
-        
     }
 
     public void run() {
