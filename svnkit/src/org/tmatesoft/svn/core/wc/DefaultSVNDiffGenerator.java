@@ -504,6 +504,16 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 args.add("-L");
                 args.add(label2);
             }
+            boolean tmpFile1 = false;
+            boolean tmpFile2 = false;
+            if (file1 == null) {
+                file1 = SVNFileUtil.createTempFile("svn.", ".tmp");
+                tmpFile1 = true;
+            }
+            if (file2 == null) {
+                file2 = SVNFileUtil.createTempFile("svn.", ".tmp");
+                tmpFile2 = true;
+            }
                 
             String currentDir = new File("").getAbsolutePath().replace(File.separatorChar, '/');
             String file1Path = file1.getAbsolutePath().replace(File.separatorChar, '/');
@@ -554,7 +564,18 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
                 SVNErrorManager.error(err, ioe, SVNLogType.DEFAULT);
-            } 
+            } finally {
+                try {
+                    if (tmpFile1) {
+                        SVNFileUtil.deleteFile(file1);                    
+                    }
+                    if (tmpFile2) {
+                        SVNFileUtil.deleteFile(file2);                    
+                    }
+                } catch (SVNException e) {
+                    // skip
+                }
+            }
             return;
         }
 
