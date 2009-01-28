@@ -87,7 +87,10 @@ public class DAVElement {
     public static final DAVElement PROPFIND = DAVElement.getElement(DAV_NAMESPACE, "propfind");
     public static final DAVElement ALLPROP = DAVElement.getElement(DAV_NAMESPACE, "allprop");
     public static final DAVElement PROPNAME = DAVElement.getElement(DAV_NAMESPACE, "propname");
-
+    public static final DAVElement ACTIVE_LOCK = DAVElement.getElement(DAV_NAMESPACE, "activelock");
+    public static final DAVElement LOCK_TYPE = DAVElement.getElement(DAV_NAMESPACE, "locktype");
+    public static final DAVElement WRITE = DAVElement.getElement(DAV_NAMESPACE, "write");
+    
     public static final DAVElement SUPPORTED_LOCK = getElement(DAV_NAMESPACE, "supportedlock");
     public static final DAVElement LOCK_DISCOVERY = getElement(DAV_NAMESPACE, "lockdiscovery");
     public static final DAVElement LOCK_OWNER = getElement(DAV_NAMESPACE, "owner");

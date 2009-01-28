@@ -127,6 +127,8 @@ public class DAVServlet extends HttpServlet {
         ServletDAVHandler handler = null;
         logRequest(request);//TODO: remove later
         try {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "creating repomanager");
+
             DAVRepositoryManager repositoryManager = new DAVRepositoryManager(getDAVConfig(), request);
             handler = DAVHandlerFactory.createHandler(repositoryManager, request, response);
             handler.execute();
@@ -212,6 +214,7 @@ public class DAVServlet extends HttpServlet {
                 servletResponse.setContentType(XML_CONTENT_TYPE);
 
                 StringBuffer errorMessageBuffer = new StringBuffer();
+                SVNXMLUtil.addXMLHeader(errorMessageBuffer);
                 errorMessageBuffer.append('\n');
                 errorMessageBuffer.append("<D:error xmlns:D=\"DAV:\"");
                 

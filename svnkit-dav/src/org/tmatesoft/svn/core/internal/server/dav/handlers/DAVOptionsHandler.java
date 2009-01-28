@@ -80,7 +80,6 @@ public class DAVOptionsHandler extends ServletDAVHandler {
 
     public void execute() throws SVNException {
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "in execute() of DAVOptiondsHandler");
-        try {
         
         readInput(false);
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "read input");
@@ -110,10 +109,6 @@ public class DAVOptionsHandler extends ServletDAVHandler {
             getResponseWriter().write(responseBody);
         } catch (IOException e) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
-        }
-        } catch (SVNException svne) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, svne.getErrorMessage().getFullMessage());
-            throw svne;
         }
     }
 

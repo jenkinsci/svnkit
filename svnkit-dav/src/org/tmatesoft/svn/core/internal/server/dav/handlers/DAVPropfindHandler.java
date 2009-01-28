@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -37,6 +36,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
+import org.tmatesoft.svn.core.internal.server.dav.DAVLock;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -50,10 +50,10 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -77,6 +77,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
     private DAVElementProperty myDocRoot;
     private StringBuffer myPropStat404;
     private StringBuffer myResponseBuffer;
+    private DAVLockInfoProvider myLocksProvider;
 
     public DAVPropfindHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
         super(connector, request, response);
@@ -87,8 +88,15 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
     }
 
     public void execute() throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "in propfind");
+
         readInput(false);
+
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "read the input");
+        
         DAVResource resource = getRequestedDAVResource(true, false);
+        
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "got the resource");
 
         StringBuffer body = new StringBuffer();
         DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
@@ -161,9 +169,9 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             return;
         }
         
-        DAVLockInfoProvider lockProvider = null;
+        myLocksProvider = null;
         try {
-            lockProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
+            myLocksProvider = DAVLockInfoProvider.createLockInfoProvider(this, false);
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "The lock database could not be opened, preventing access to the various lock properties for the PROPFIND.", null);
@@ -228,10 +236,52 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         return null;
     }
     
+    private void getAllProps(DAVPropertiesProvider propsProvider, DAVInsertPropAction action) throws DAVException {
+        boolean foundContentType = false;
+        boolean foundContentLang = false;
+        DAVPropsResult result = new DAVPropsResult();
+        StringBuffer buffer = new StringBuffer();
+        if (action != DAVInsertPropAction.INSERT_SUPPORTED) {
+            if (propsProvider.isDeferred()) {
+                propsProvider.open(true);
+            }
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            
+            Map namespaces = new HashMap();
+            propsProvider.defineNamespaces(namespaces);
+            Collection propNames = propsProvider.getPropertyNames();
+            int ind = 0;
+            for (Iterator propNamesIter = propNames.iterator(); propNamesIter.hasNext();) {
+                DAVElement propNameElement = (DAVElement) propNamesIter.next();
+                if (DAVElement.DAV_NAMESPACE.equals(propNameElement.getNamespace())) {
+                    if (DAVElement.GET_CONTENT_TYPE.getName().equals(propNameElement.getName())) {
+                        foundContentType = true;
+                    } else if (DAVElement.GET_CONTENT_LANGUAGE.getName().equals(propNameElement.getName())) {
+                        foundContentLang = true;
+                    }
+                    
+                    if (action == DAVInsertPropAction.INSERT_VALUE) {
+                        try {
+                            propsProvider.outputValue(propNameElement, buffer);
+                        } catch (DAVException dave) {
+                            //TODO: probably change this behavior in future
+                            continue;
+                        }
+                    } else {
+                        ind = outputPropName(propNameElement, namespaces, ind, buffer);
+                    }
+                }
+            }
+            
+            generateXMLNSNamespaces(result, namespaces);
+        }
+    }
+    
     private DAVPropsResult getProps(DAVPropertiesProvider propsProvider, DAVElementProperty docRootElement) throws DAVException {
         StringBuffer buffer = new StringBuffer();
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
-        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         
         StringBuffer badRes = null;
         Collection xmlnses = new LinkedList();
@@ -311,8 +361,16 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             result.addPropStatsText(buffer.toString());
         }
         
+        addNamespaces(result, xmlnses);
         generateXMLNSNamespaces(result, namespaces);
         return result;
+    }
+    
+    private void addNamespaces(DAVPropsResult result, Collection xmlnses) {
+        for (Iterator xmlnsesIter = xmlnses.iterator(); xmlnsesIter.hasNext();) {
+            String xmlnsString = (String) xmlnsesIter.next();
+            result.addNamespace(xmlnsString);
+        }
     }
     
     private void generateXMLNSNamespaces(DAVPropsResult result, Map prefixesToNamespaces) {
@@ -338,8 +396,37 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         return ind++;
     }
     
+    private DAVInsertPropAction insertCoreLiveProperty(DAVResource resource, DAVPropertiesProvider propProvider, DAVInsertPropAction propAction, 
+            LivePropertySpecification livePropSpec) throws DAVException {
+        DAVInsertPropAction inserted = DAVInsertPropAction.NOT_DEF;
+        DAVElement livePropElement = livePropSpec.getPropertyName();
+        String value = null;
+        if (livePropElement == DAVElement.LOCK_DISCOVERY) {
+            if (myLocksProvider != null) {
+                DAVLock lock = null;
+                try {
+                    lock = myLocksProvider.getLock(resource);
+                } catch (DAVException dave) {
+                    throw new DAVException("DAV:lockdiscovery could not be determined due to a problem fetching the locks for this resource.", 
+                            dave.getResponseCode(), dave, 0);
+                }
+                
+                if (lock == null) {
+                    value = "";
+                } else {
+                    
+                }
+            }
+        }
+        return null;
+    }
+    
     private DAVInsertPropAction insertLiveProp(DAVResource resource, LivePropertySpecification livePropSpec, DAVInsertPropAction propAction, 
             StringBuffer buffer) {
+        if (!livePropSpec.isSVNSupported()) {
+            //this is a core WebDAV live prop
+        }
+        
         DAVElement livePropElement = livePropSpec.getPropertyName();
         if (!resource.exists() && livePropElement != DAVElement.VERSION_CONTROLLED_CONFIGURATION && 
                 livePropElement != DAVElement.BASELINE_RELATIVE_PATH) {

@@ -59,7 +59,15 @@ public class DAVRepositoryManager {
 
         myDAVConfig = config;
 
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "getting repos root");
+
+        try {
         myResourceRepositoryRoot = getRepositoryRoot(request.getPathInfo());
+        } catch (Throwable th) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
+        }
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "repos root is " + myResourceRepositoryRoot);
+
         myResourceContext = getResourceContext(request.getContextPath(), request.getPathInfo());
         myUserPrincipal = request.getUserPrincipal();
         if (myRepositoryRootDir == null) {
@@ -211,6 +219,8 @@ public class DAVRepositoryManager {
             //TODO: later add code for parent path resource here
         }
         
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "uri type - " + resourceURI.getType() + ", uri kind - " + resourceURI.getKind());
+        
         String activitiesDB = config.getActivitiesDBPath();
         File activitiesDBDir = null;
         if (activitiesDB == null) {
@@ -246,7 +256,6 @@ public class DAVRepositoryManager {
             if (getDAVConfig().isTestMode()) {
                 requestURI = requestURI.startsWith("/") ? requestURI.substring(1) : requestURI;
                 String fsPath = SVNPathUtil.append(reposParentPath, requestURI);
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fs path: " + fsPath);
                 File reposRoot = FSFS.findRepositoryRoot(new File(fsPath));
                 if (reposRoot != null) {
                     String reposRootPath = reposRoot.getAbsolutePath();
@@ -254,17 +263,12 @@ public class DAVRepositoryManager {
                     if (reposAbsPath != null) {
                         myResourcePathInfo = reposAbsPath.startsWith("/") ? reposAbsPath : "/" + reposAbsPath; 
                     }
+                    myRepositoryRootDir = reposRoot;
+                    return FILE_PROTOCOL_LINE + reposRoot.getAbsolutePath(); 
                 }
-                
-                myRepositoryRootDir = reposRoot;
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "reposRoot: " + reposRoot);
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "abs repos path: " + myResourcePathInfo);
-
-                return FILE_PROTOCOL_LINE + reposRoot.getAbsolutePath(); 
             }
             
-            repositoryURL.append(reposParentPath);
-            repositoryURL.append(DAVPathUtil.addTrailingSlash(getDAVConfig().getRepositoryParentPath()));
+            repositoryURL.append(DAVPathUtil.addTrailingSlash(reposParentPath));
             repositoryURL.append(DAVPathUtil.head(requestURI));
         }
         return repositoryURL.toString();

@@ -12,19 +12,22 @@
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.server.dav.DAVConfig;
@@ -48,6 +51,7 @@ public class DAVPropertiesProvider {
     private boolean myIsOperative;
     private DAVResource myResource;
     private ServletDAVHandler myOwner;
+    private SVNProperties myProperties;
     
     private DAVPropertiesProvider(boolean isDeferred, ServletDAVHandler owner, DAVResource resource) {
         myIsDeferred = isDeferred;
@@ -107,6 +111,7 @@ public class DAVPropertiesProvider {
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "could not remove a property", null);
         }
+        myProperties = null;
     }
     
     public void storeProperty(DAVElementProperty property) throws DAVException {
@@ -143,6 +148,68 @@ public class DAVPropertiesProvider {
         namespaces.put(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, "S");
         namespaces.put(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, "C");
         namespaces.put(DAVElement.SVN_DAV_PROPERTY_NAMESPACE, "V");
+    }
+    
+    /**
+     * @return Collection of DAVElement objects
+     */
+    public Collection getPropertyNames() throws DAVException {
+        FSFS fsfs = myResource.getFSFS();
+        SVNException exc = null;
+        if (myProperties == null) {
+            if (myResource.isBaseLined()) {
+                if (myResource.getType() == DAVResourceType.WORKING) {
+                    try {
+                        myProperties = fsfs.getTransactionProperties(myResource.getTxnName());
+                    } catch (SVNException svne) {
+                        exc = svne;
+                    }
+                } else {
+                    try {
+                        myProperties = fsfs.getRevisionProperties(myResource.getRevision());
+                    } catch (SVNException svne) {
+                        exc = svne;
+                    }
+                }
+            } else {
+                FSRoot root = myResource.getRoot();
+                String path = myResource.getResourceURI().getPath();
+                try {
+                    FSRevisionNode node = root.getRevisionNode(path);
+                    myProperties = node.getProperties(fsfs);
+                } catch (SVNException svne) {
+                    exc = svne;
+                }
+
+                if (exc == null) {
+                    try {
+                        root.checkNodeKind(path);
+                    } catch (SVNException svne) {
+                        exc = svne;
+                    }
+                    //TODO: add logging here?
+                }
+            }
+            
+            if (exc != null) {
+                throw DAVException.convertError(exc.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                        "could not begin sequencing through properties", null);
+            }
+        }
+        
+        Collection propNames = new ArrayList();
+        for (Iterator namesIter = myProperties.nameSet().iterator(); namesIter.hasNext();) {
+            String propName = (String) namesIter.next();
+            DAVElement propElementName = null;
+            if (propName.startsWith(SVNProperty.SVN_PREFIX)) {
+                propElementName = DAVElement.getElement(DAVElement.SVN_SVN_PROPERTY_NAMESPACE, 
+                        propName.substring(SVNProperty.SVN_PREFIX.length()));
+            } else {
+                propElementName = DAVElement.getElement(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE, propName);
+            }
+            propNames.add(propElementName);
+        }
+        return propNames;
     }
     
     public boolean outputValue(DAVElement propName, StringBuffer buffer) throws DAVException {
@@ -189,6 +256,7 @@ public class DAVPropertiesProvider {
         SVNProperties props = null;
         FSFS fsfs = myResource.getFSFS();
         try {
+            //TODO: if myProperties != null, try searching there first
             if (myResource.isBaseLined()) {
                 if (myResource.getType() == DAVResourceType.WORKING) {
                     FSTransactionInfo txn = myResource.getTxnInfo();
@@ -251,6 +319,7 @@ public class DAVPropertiesProvider {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, null, null);
         }
         
+        myProperties = null;
     }
     
     private String getReposPropName(DAVElement propName) {

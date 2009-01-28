@@ -347,6 +347,27 @@ public class DAVLockInfoProvider {
         return myWorkingRevision;
     }
     
+    public static StringBuffer getActiveLockXML(DAVLock lock, StringBuffer buffer) {
+        buffer = buffer == null ? new StringBuffer() : buffer;
+        if (lock == null) {
+            return buffer;
+        }
+        
+        if (lock.getRecType() == DAVLockRecType.INDIRECT_PARTIAL) {
+            //TODO: add debugging message here?
+        }
+        
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.ACTIVE_LOCK.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TYPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        if (lock.getType() == DAVLockType.WRITE) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.WRITE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+        } else {
+            //TODO: 
+        }
+        
+        return buffer;
+    }
+    
     public static FSLock convertDAVLockToSVNLock(DAVLock davLock, String path, boolean isSVNClient, SAXParserFactory saxParserFactory) throws DAVException {
         if (davLock.getType() != DAVLockType.WRITE) {
             throw new DAVException("Only 'write' locks are supported.", HttpServletResponse.SC_BAD_REQUEST, DAVErrorCode.LOCK_SAVE_LOCK);
