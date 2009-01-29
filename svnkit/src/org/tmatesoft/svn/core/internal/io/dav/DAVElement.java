@@ -89,14 +89,19 @@ public class DAVElement {
     public static final DAVElement PROPNAME = DAVElement.getElement(DAV_NAMESPACE, "propname");
     public static final DAVElement ACTIVE_LOCK = DAVElement.getElement(DAV_NAMESPACE, "activelock");
     public static final DAVElement LOCK_TYPE = DAVElement.getElement(DAV_NAMESPACE, "locktype");
+    public static final DAVElement LOCK_SCOPE = DAVElement.getElement(DAV_NAMESPACE, "lockscope");
     public static final DAVElement WRITE = DAVElement.getElement(DAV_NAMESPACE, "write");
+    public static final DAVElement EXCLUSIVE = DAVElement.getElement(DAV_NAMESPACE, "exclusive");
+    public static final DAVElement SHARED = DAVElement.getElement(DAV_NAMESPACE, "shared");
+    public static final DAVElement DEPTH = DAVElement.getElement(DAV_NAMESPACE, "depth");
     
     public static final DAVElement SUPPORTED_LOCK = getElement(DAV_NAMESPACE, "supportedlock");
     public static final DAVElement LOCK_DISCOVERY = getElement(DAV_NAMESPACE, "lockdiscovery");
     public static final DAVElement LOCK_OWNER = getElement(DAV_NAMESPACE, "owner");
     public static final DAVElement LOCK_TIMEOUT = getElement(DAV_NAMESPACE, "timeout");
     public static final DAVElement LOCK_TOKEN = getElement(DAV_NAMESPACE, "locktoken");
-
+    public static final DAVElement LOCK_ENTRY = getElement(DAV_NAMESPACE, "lockentry");
+    
     public static final DAVElement SVN_LOCK_TOKEN_LIST = getElement(SVN_NAMESPACE, "lock-token-list");
     public static final DAVElement SVN_LOCK = getElement(SVN_NAMESPACE, "lock");
     public static final DAVElement SVN_LOCK_PATH = getElement(SVN_NAMESPACE, "path");

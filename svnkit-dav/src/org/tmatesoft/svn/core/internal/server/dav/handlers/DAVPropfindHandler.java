@@ -414,10 +414,17 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 if (lock == null) {
                     value = "";
                 } else {
-                    
+                    value = DAVLockInfoProvider.getActiveLockXML(lock);
                 }
             }
+        } else if (livePropElement == DAVElement.SUPPORTED_LOCK) {
+            if (myLocksProvider != null) {
+                value = myLocksProvider.getSupportedLock(resource);
+            }
+        } else if (livePropElement == DAVElement.GET_CONTENT_TYPE) {
+            //
         }
+        
         return null;
     }
     

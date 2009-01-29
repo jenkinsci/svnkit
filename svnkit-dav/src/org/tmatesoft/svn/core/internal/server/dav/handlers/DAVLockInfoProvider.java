@@ -327,6 +327,27 @@ public class DAVLockInfoProvider {
         }
     }
     
+    public String getSupportedLock(DAVResource resource) {
+        if (resource.isCollection()) {
+            return null;
+        }
+        
+        StringBuffer buffer = new StringBuffer();
+        buffer.append('\n');
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_ENTRY.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_SCOPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.EXCLUSIVE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
+                SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_SCOPE.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TYPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.WRITE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
+                SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TYPE.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_ENTRY.getName(), buffer);
+        return buffer.toString();
+    }
+        
     public boolean isReadOnly() {
         return myIsReadOnly;
     }
@@ -347,10 +368,10 @@ public class DAVLockInfoProvider {
         return myWorkingRevision;
     }
     
-    public static StringBuffer getActiveLockXML(DAVLock lock, StringBuffer buffer) {
-        buffer = buffer == null ? new StringBuffer() : buffer;
+    public static String getActiveLockXML(DAVLock lock) {
+        StringBuffer buffer = new StringBuffer();
         if (lock == null) {
-            return buffer;
+            return "";
         }
         
         if (lock.getRecType() == DAVLockRecType.INDIRECT_PARTIAL) {
@@ -360,12 +381,54 @@ public class DAVLockInfoProvider {
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.ACTIVE_LOCK.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TYPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         if (lock.getType() == DAVLockType.WRITE) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.WRITE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.WRITE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
+                    SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         } else {
-            //TODO: 
+            //TODO: internal error. log something?
         }
         
-        return buffer;
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TYPE.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_SCOPE.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        if (lock.getScope() == DAVLockScope.EXCLUSIVE) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.EXCLUSIVE.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
+                    SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        } else if (lock.getScope() == DAVLockScope.SHARED) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.SHARED.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING | 
+                    SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        } else {
+            //TODO: internal error. log something?
+        }
+        
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_SCOPE.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.DEPTH.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        buffer.append(lock.getDepth() == DAVDepth.DEPTH_INFINITY ? DAVDepth.DEPTH_INFINITY.toString() : DAVDepth.DEPTH_ZERO.toString());
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.DEPTH.getName(), buffer);
+        
+        if (lock.getOwner() != null) {
+            buffer.append(lock.getOwner());
+        }
+        
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TIMEOUT.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        if (lock.getTimeOutDate() == null) {
+            buffer.append("Infinite");
+        } else {
+            Date timeOutDate = lock.getTimeOutDate();
+            long now = System.currentTimeMillis();
+            long diff = timeOutDate.getTime() - now;
+            buffer.append("Second-");
+            //TODO: I'm not sure if I clearly understand what we must send here, 
+            //have to test and review this later
+            buffer.append(diff);
+        }
+        
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TIMEOUT.getName(), buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TOKEN.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+        SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
+        buffer.append(lock.getLockToken());
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.LOCK_TOKEN.getName(), buffer);
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.ACTIVE_LOCK.getName(), buffer);
+        return buffer.toString();
     }
     
     public static FSLock convertDAVLockToSVNLock(DAVLock davLock, String path, boolean isSVNClient, SAXParserFactory saxParserFactory) throws DAVException {
