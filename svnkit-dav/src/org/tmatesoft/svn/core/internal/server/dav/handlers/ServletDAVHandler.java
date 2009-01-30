@@ -204,6 +204,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private HttpServletResponse myResponse;
     private FSCommitter myCommitter;
     private FSDeltaConsumer myDeltaConsumer;
+    private DAVServlet myServlet;
     
     static {
         REPORT_ELEMENTS.add(UPDATE_REPORT);
@@ -216,7 +217,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         REPORT_ELEMENTS.add(MERGEINFO_REPORT);
     }
 
-    private static final Map OUR_LIVE_PROPS = new HashMap(); 
+    protected static final Map OUR_LIVE_PROPS = new HashMap(); 
+    protected static final Map OUR_CORE_LIVE_PROPS = new HashMap();
     
     static {
         OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_LENGTH, new LivePropertySpecification(DAVElement.GET_CONTENT_LENGTH, false, true));
@@ -237,9 +239,9 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         OUR_LIVE_PROPS.put(DAVElement.DEADPROP_COUNT, new LivePropertySpecification(DAVElement.DEADPROP_COUNT, false, true));
         
         //TODO: the following three props are supported by DAV itself, should we do that as well? 
-        OUR_LIVE_PROPS.put(DAVElement.GET_CONTENT_LANGUAGE, new LivePropertySpecification(DAVElement.GET_CONTENT_LANGUAGE, false, false));
-        OUR_LIVE_PROPS.put(DAVElement.LOCK_DISCOVERY, new LivePropertySpecification(DAVElement.LOCK_DISCOVERY, false, false));
-        OUR_LIVE_PROPS.put(DAVElement.SUPPORTED_LOCK, new LivePropertySpecification(DAVElement.SUPPORTED_LOCK, false, false));
+        OUR_CORE_LIVE_PROPS.put(DAVElement.GET_CONTENT_LANGUAGE, new LivePropertySpecification(DAVElement.GET_CONTENT_LANGUAGE, false, false));
+        OUR_CORE_LIVE_PROPS.put(DAVElement.LOCK_DISCOVERY, new LivePropertySpecification(DAVElement.LOCK_DISCOVERY, false, false));
+        OUR_CORE_LIVE_PROPS.put(DAVElement.SUPPORTED_LOCK, new LivePropertySpecification(DAVElement.SUPPORTED_LOCK, false, false));
     };
 
     protected ServletDAVHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
@@ -364,7 +366,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             return null;
         }
         
-        return (LivePropertySpecification) OUR_LIVE_PROPS.get(property);
+        LivePropertySpecification lps = (LivePropertySpecification) OUR_LIVE_PROPS.get(property);
+        if (lps == null) {
+            //search in core props
+            lps = (LivePropertySpecification) OUR_CORE_LIVE_PROPS.get(property);
+        }
+        return lps;
     }
 
     protected void validateRequest(DAVResource resource, DAVDepth depth, int flags, DAVLockScope lockScope, String lockToken, 

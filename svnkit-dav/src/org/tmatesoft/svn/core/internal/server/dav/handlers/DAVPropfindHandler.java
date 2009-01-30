@@ -276,6 +276,25 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             
             generateXMLNSNamespaces(result, namespaces);
         }
+        
+        addAllLivePropNamespaces(result);
+        insertAllLiveProps(propsProvider.getResource(), action, buffer);
+        
+        LivePropertySpecification suppLockSpec = (LivePropertySpecification) OUR_CORE_LIVE_PROPS.get(DAVElement.SUPPORTED_LOCK);
+        insertCoreLiveProperty(propsProvider.getResource(), action, suppLockSpec, buffer);
+        
+    }
+    
+    private void insertAllLiveProps(DAVResource resource, DAVInsertPropAction propAction, StringBuffer buffer) throws DAVException {
+        if (!resource.exists()) {
+            return;
+        }
+        
+        for (Iterator livePropsIter = OUR_LIVE_PROPS.keySet().iterator(); livePropsIter.hasNext();) {
+            DAVElement propElement = (DAVElement) livePropsIter.next();
+            LivePropertySpecification lps = (LivePropertySpecification) OUR_LIVE_PROPS.get(propElement);
+            insertLiveProp(resource, lps, propAction, buffer);
+        }
     }
     
     private DAVPropsResult getProps(DAVPropertiesProvider propsProvider, DAVElementProperty docRootElement) throws DAVException {
@@ -373,6 +392,15 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         }
     }
     
+    private void addAllLivePropNamespaces(DAVPropsResult result) {
+        int ind = 0;
+        for (Iterator namespacesIter = NAMESPACES.iterator(); namespacesIter.hasNext();) {
+            String namespace = (String) namespacesIter.next();
+            String xmlnsStr = " xmlns:lp" + ind + "=\"" + namespace + "\"";
+            result.addNamespace(xmlnsStr);
+        }
+    }
+    
     private void generateXMLNSNamespaces(DAVPropsResult result, Map prefixesToNamespaces) {
         for (Iterator prefixesIter = prefixesToNamespaces.keySet().iterator(); prefixesIter.hasNext();) {
             String prefix = (String) prefixesIter.next();
@@ -396,8 +424,8 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         return ind++;
     }
     
-    private DAVInsertPropAction insertCoreLiveProperty(DAVResource resource, DAVPropertiesProvider propProvider, DAVInsertPropAction propAction, 
-            LivePropertySpecification livePropSpec) throws DAVException {
+    private DAVInsertPropAction insertCoreLiveProperty(DAVResource resource, DAVInsertPropAction propAction, 
+            LivePropertySpecification livePropSpec, StringBuffer buffer) throws DAVException {
         DAVInsertPropAction inserted = DAVInsertPropAction.NOT_DEF;
         DAVElement livePropElement = livePropSpec.getPropertyName();
         String value = null;
@@ -422,16 +450,30 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 value = myLocksProvider.getSupportedLock(resource);
             }
         } else if (livePropElement == DAVElement.GET_CONTENT_TYPE) {
-            //
-        }
+            //TODO: get content type from a response when imitating a GET request? 
+        } else if (livePropElement == DAVElement.GET_CONTENT_LANGUAGE) {
+            //TODO: get Content-Language from a response when imitating a GET request?
+        } 
         
-        return null;
+        if (value != null) {
+            if (propAction == DAVInsertPropAction.INSERT_SUPPORTED) {
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.SUPPORTED_LIVE_PROPERTY.getName(), SVNXMLUtil.XML_STYLE_NORMAL, 
+                        "D:name", livePropElement.getName(), buffer);
+            } else if (propAction == DAVInsertPropAction.INSERT_VALUE && !"".equals(value)) {
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, livePropElement.getName(), value, buffer);
+            } else {
+                SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, livePropElement.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
+            }
+            inserted = propAction;
+        }
+        return inserted;
     }
     
     private DAVInsertPropAction insertLiveProp(DAVResource resource, LivePropertySpecification livePropSpec, DAVInsertPropAction propAction, 
-            StringBuffer buffer) {
+            StringBuffer buffer) throws DAVException {
         if (!livePropSpec.isSVNSupported()) {
             //this is a core WebDAV live prop
+            return insertCoreLiveProperty(resource, propAction, livePropSpec, buffer);
         }
         
         DAVElement livePropElement = livePropSpec.getPropertyName();
