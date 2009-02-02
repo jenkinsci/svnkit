@@ -263,7 +263,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.UPDATE_SET.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         
-        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), vcc, null, true, buffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), vcc, null, true, true, buffer);
         
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
@@ -278,12 +278,12 @@ public class DAVMergeHandler extends ServletDAVHandler {
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), buffer);
         
         if (creationDate != null ) {
-            SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), creationDate, null, true, buffer);
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATION_DATE.getName(), creationDate, null, true, true, buffer);
         }
         
         if (creatorDisplayName != null ) {
             SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), creatorDisplayName, null, true, 
-                    buffer);
+                    true, buffer);
         }
         
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
@@ -355,7 +355,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.RESPONSE.getName(), 
                 SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
         
-        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), href, null, true, buffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), href, null, true, true, buffer);
         
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
@@ -373,7 +373,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         
         SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CHECKED_IN.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, buffer);
         
-        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), vsnURL, null, true, buffer);
+        SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), vsnURL, null, true, true, buffer);
         
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CHECKED_IN.getName(), buffer);
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);

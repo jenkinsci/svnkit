@@ -181,9 +181,9 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         DAVXMLUtil.beginMultiStatus(getHttpServletResponse(), SC_MULTISTATUS, getNamespaces(), body);
         
         int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_AUTH | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL; 
-        DAVResourceWalker walker = new DAVResourceWalker();
-
         
+        DAVResourceWalker walker = new DAVResourceWalker();
+        //DAVResponse multiStatus = walker.walk(myLocksProvider, resource, ifHeaders, 0, lockScope, walkType, this, depth);
         
         
         
@@ -230,13 +230,16 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         if (myIsProp) {
             result = getProps(propsProvider, getPropfindRequest().getRootElement());
         } else {
-            
+            DAVInsertPropAction action = myIsAllProp ? DAVInsertPropAction.INSERT_VALUE : DAVInsertPropAction.INSERT_NAME;
+            result = getAllProps(propsProvider, action);
         }
+        
+        streamResponse(resource, 0, result);
         
         return null;
     }
     
-    private void getAllProps(DAVPropertiesProvider propsProvider, DAVInsertPropAction action) throws DAVException {
+    private DAVPropsResult getAllProps(DAVPropertiesProvider propsProvider, DAVInsertPropAction action) throws DAVException {
         boolean foundContentType = false;
         boolean foundContentLang = false;
         DAVPropsResult result = new DAVPropsResult();
@@ -283,6 +286,26 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         LivePropertySpecification suppLockSpec = (LivePropertySpecification) OUR_CORE_LIVE_PROPS.get(DAVElement.SUPPORTED_LOCK);
         insertCoreLiveProperty(propsProvider.getResource(), action, suppLockSpec, buffer);
         
+        LivePropertySpecification lockDiscoverySpec = (LivePropertySpecification) OUR_CORE_LIVE_PROPS.get(DAVElement.LOCK_DISCOVERY);
+        insertCoreLiveProperty(propsProvider.getResource(), action, lockDiscoverySpec, buffer);
+        
+        if (!foundContentType) {
+            LivePropertySpecification getContentTypeSpec = (LivePropertySpecification) OUR_CORE_LIVE_PROPS.get(DAVElement.GET_CONTENT_TYPE);
+            insertCoreLiveProperty(propsProvider.getResource(), action, getContentTypeSpec, buffer);
+        }
+        
+        if (!foundContentLang) {
+            LivePropertySpecification getContentLanguageSpec = (LivePropertySpecification) OUR_CORE_LIVE_PROPS.get(DAVElement.GET_CONTENT_LANGUAGE);
+            insertCoreLiveProperty(propsProvider.getResource(), action, getContentLanguageSpec, buffer);
+        }
+        
+        if (action != DAVInsertPropAction.INSERT_SUPPORTED) {
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
+            SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.STATUS.getName(), "HTTP/1.1 200 OK", null, false, false, buffer);
+            SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), buffer);
+        }
+        result.addPropStatsText(buffer.toString());
+        return result;
     }
     
     private void insertAllLiveProps(DAVResource resource, DAVInsertPropAction propAction, StringBuffer buffer) throws DAVException {
@@ -606,7 +629,8 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 try {
                     revNum = resource.getLatestRevision();
                     s = DAVPathUtil.buildURI(uri.getContext(), DAVResourceKind.BASELINE, revNum, null, false);
-                    StringBuffer buf = SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), s, null, true, null);
+                    StringBuffer buf = SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), s, 
+                            null, true, true, null);
                     value = buf.toString();
                 } catch (SVNException svne) {
                     value = "###error###";
@@ -616,7 +640,8 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             } else {
                 long revToUse = DAVServletUtil.getSafeCreatedRevision((FSRevisionRoot) resource.getRoot(), uri.getPath());
                 s = DAVPathUtil.buildURI(uri.getContext(), DAVResourceKind.VERSION, revToUse, uri.getPath(), false);
-                StringBuffer buf = SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), s, null, true, null);
+                StringBuffer buf = SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), s, 
+                        null, true, true, null);
                 value = buf.toString();
             }
         } else if (livePropElement == DAVElement.VERSION_CONTROLLED_CONFIGURATION) {
@@ -699,8 +724,8 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             Map attrs = new HashMap();
             attrs.put("D:name", livePropElement.getName());
             attrs.put("D:namespace", livePropElement.getNamespace());
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.SUPPORTED_LIVE_PROPERTY.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, 
-                    attrs, buffer);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.SUPPORTED_LIVE_PROPERTY.getName(), 
+                    SVNXMLUtil.XML_STYLE_SELF_CLOSING, attrs, buffer);
         }
         
         return propAction;

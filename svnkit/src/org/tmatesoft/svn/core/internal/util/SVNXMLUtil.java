@@ -145,17 +145,28 @@ public class SVNXMLUtil {
         return openCDataTag(prefix, tagName, cdata, attributes, target);
     }
 
+    public static StringBuffer openCDataTag(String prefix, String tagName, String cdata, String attr, String value, boolean escapeQuotes, 
+            boolean encodeCDATA, StringBuffer target) {
+        Map attributes = new SVNHashMap();
+        attributes.put(attr, value);
+        return openCDataTag(prefix, tagName, cdata, attributes, escapeQuotes, encodeCDATA, target);
+    }
+
     public static StringBuffer openCDataTag(String prefix, String tagName, String cdata, Map attributes, StringBuffer target) {
-        return openCDataTag(prefix, tagName, cdata, attributes, false, target);
+        return openCDataTag(prefix, tagName, cdata, attributes, false, true, target);
     }
 
     public static StringBuffer openCDataTag(String prefix, String tagName, String cdata, Map attributes, boolean escapeQuotes, 
-            StringBuffer target) {
+            boolean encodeCDATA, StringBuffer target) {
         if (cdata == null) {
             return target;
         }
         target = openXMLTag(prefix, tagName, XML_STYLE_PROTECT_CDATA, attributes, target);
-        target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata, escapeQuotes));
+        if (encodeCDATA) {
+            target.append(SVNEncodingUtil.xmlEncodeCDATA(cdata, escapeQuotes));
+        } else {
+            target.append(cdata);
+        }
         target = closeXMLTag(prefix, tagName, target);
         return target;
     }

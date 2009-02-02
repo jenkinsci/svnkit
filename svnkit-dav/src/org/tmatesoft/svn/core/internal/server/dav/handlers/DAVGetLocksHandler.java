@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -95,9 +96,9 @@ public class DAVGetLocksHandler extends DAVReportHandler {
                 } catch (UnsupportedEncodingException e) {
                     ownerEncoded = SVNBase64.byteArrayToBase64(lock.getOwner().getBytes());
                 }
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "owner", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
-                xmlBuffer.append(ownerEncoded);
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "owner", xmlBuffer);
+                
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "owner", ownerEncoded, ENCODING_ATTR, BASE64_ENCODING, 
+                        false, false, xmlBuffer);
             }
         }
         if (lock.getComment() != null) {
@@ -110,9 +111,9 @@ public class DAVGetLocksHandler extends DAVReportHandler {
                 } catch (UnsupportedEncodingException e) {
                     commentEncoded = SVNBase64.byteArrayToBase64(lock.getComment().getBytes());
                 }
-                SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "comment", SVNXMLUtil.XML_STYLE_PROTECT_CDATA, ENCODING_ATTR, BASE64_ENCODING, xmlBuffer);
-                xmlBuffer.append(commentEncoded);
-                SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "comment", xmlBuffer);
+                
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "comment", commentEncoded, ENCODING_ATTR, BASE64_ENCODING, 
+                        false, false, xmlBuffer);
             }
         }
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "lock", xmlBuffer);
