@@ -11,14 +11,8 @@
  */
 package org.tmatesoft.svn.test.tests.merge.ext;
 
-import java.io.File;
-
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNCopySource;
-import org.tmatesoft.svn.core.wc.SVNCopyTask;
-import org.tmatesoft.svn.core.wc.SVNEditorAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
 import org.tmatesoft.svn.test.wc.SVNTestFileDescriptor;
@@ -28,30 +22,24 @@ import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
+public abstract class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
 
-    public ISVNTestExtendedMergeCallback getFeatureModeCallback() {
-        return new FeatureModeCallback();
-    }
-
-    public ISVNTestExtendedMergeCallback getReleaseModeCallback() {
-        return new ReleaseModeCallback();
-    }
+    protected abstract void doMerge(long startRevision, long endRevision) throws SVNException;
 
     private long myEndRevision;
 
-    public String getDumpFile() {
+    public final String getDumpFile() {
         return null;
     }
 
-    public SVNWCDescriptor getInitialFS() {
+    public final SVNWCDescriptor getInitialFS() {
         SVNWCDescriptor fs = new SVNWCDescriptor();
         fs.addFile(new SVNTestFileDescriptor("A"));
         fs.addFile(new SVNTestFileDescriptor("A/file", "this is A/file"));
         return fs;
     }
 
-    public void run() throws SVNException {
+    public final void run() throws SVNException {
         fill();
 
         createWCs();
@@ -73,79 +61,13 @@ public class MergeRenamedDirSourceTest extends AbstractExtMergeTest {
         getEnvironment().setEventHandler(SVNTestDebugLog.getEventHandler());
 
         myEndRevision = endRevision;
-        mergeLastRevisions(getBranch(), getTrunkWC(), endRevision - startRevision, SVNDepth.INFINITY, false, false);
+        doMerge(startRevision, endRevision);
 
         SVNTestDebugLog.log("\ncontents of merge target after merge:\n");
         getEnvironment().getFileContents(getTrunkFile("A/file"), System.out);
     }
 
-// ###############  FEATURE MODE  ###################    
-
-    private class FeatureModeCallback implements ISVNTestExtendedMergeCallback {
-
-        public void prepareMerge(SVNURL source, File target) throws SVNException {
-        }
-
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
-            if (sourceUrl.getPath().endsWith("branch/B/file3")) {
-                SVNCopySource source = new SVNCopySource(SVNRevision.create(targetRevision), SVNRevision.create(targetRevision), getTrunk().appendPath("A/file", false));
-                return SVNCopyTask.create(source, true);
-            }
-            return null;
-        }
-
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
-            if (action == SVNEditorAction.DELETE && sourceUrl.getPath().endsWith("branch/B/file2")) {
-                return new SVNURL[0];
-            }
-            if (sourceUrl.getPath().endsWith("branch/B/file3")) {
-                return new SVNURL[]{getTrunk().appendPath("A/file3", false)};
-            }
-            return null;
-        }
-
-        public SVNURL transformLocation(SVNURL sourceUrl, long sourceRevision, long targetRevision) throws SVNException {
-            if (sourceUrl.getPath().endsWith("branch/B/file3") && sourceRevision == myEndRevision) {
-                return getBranch().appendPath("B/file2", false);
-            }
-            return null;
-        }
-
-        public SVNWCDescriptor getExpectedState() throws SVNException {
-            return null;
-        }
-    }
-
-// ###############  RELEASE MODE  ###################
-    
-    private class ReleaseModeCallback implements ISVNTestExtendedMergeCallback {
-
-        public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) {
-            return null;
-        }
-
-        public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
-            if (action == SVNEditorAction.DELETE && sourceUrl.getPath().endsWith("branch/B/file2")) {
-                return new SVNURL[0];
-            }
-            if (sourceUrl.getPath().endsWith("branch/B/file3")) {
-                return new SVNURL[]{getTrunk().appendPath("A/file", false)};
-            }
-            return null;
-        }
-
-        public SVNURL transformLocation(SVNURL sourceUrl, long sourceRevision, long targetRevision) throws SVNException {
-            if (sourceUrl.getPath().endsWith("branch/B/file3") && sourceRevision == myEndRevision) {
-                return getBranch().appendPath("B/file2", false);
-            }
-            return null;
-        }
-
-        public void prepareMerge(SVNURL source, File target) throws SVNException {
-        }
-
-        public SVNWCDescriptor getExpectedState() throws SVNException {
-            return null;
-        }
+    public final long getMyEndRevision() {
+        return myEndRevision;
     }
 }
