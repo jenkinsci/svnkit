@@ -679,14 +679,15 @@ public class SVNWCAccess implements ISVNEventHandler {
     private File probe(File path, Level logLevel) throws SVNException {
         int wcFormat = -1;
         SVNFileType type = SVNFileType.getType(path);
-        if (type == SVNFileType.DIRECTORY) {
+        boolean eligible = type == SVNFileType.DIRECTORY || (type == SVNFileType.SYMLINK && path.isDirectory());
+        if (eligible) {
             wcFormat = SVNAdminAreaFactory.checkWC(path, true, logLevel);
         } else {
             wcFormat = 0;
         }
         
         //non wc
-        if (type != SVNFileType.DIRECTORY || wcFormat == 0) {
+        if (!eligible || wcFormat == 0) {
             if ("..".equals(path.getName()) || ".".equals(path.getName())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_BAD_PATH, "Path ''{0}'' ends in ''{1}'', which is unsupported for this operation", new Object[]{path, path.getName()});
                 SVNErrorManager.error(err, SVNLogType.WC);
