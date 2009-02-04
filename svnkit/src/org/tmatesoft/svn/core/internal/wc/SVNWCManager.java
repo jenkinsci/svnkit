@@ -70,7 +70,12 @@ public class SVNWCManager {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Unsupported node kind for path ''{0}''", path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        SVNAdminArea dir = wcAccess.probeTry(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
+        SVNAdminArea dir;
+        if (fileType == SVNFileType.SYMLINK) {
+            dir = wcAccess.probeTry(path.getParentFile(), true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
+        } else {
+            dir = wcAccess.probeTry(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
+        }
         SVNEntry entry = null;
         if (dir != null) {
             entry = wcAccess.getEntry(path, true);
