@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
@@ -553,7 +554,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 dir.mkdirs();
             }
             if (!dir.isDirectory()) {
-                return;
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", dir.getAbsolutePath());
+                SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
             if ("".equals(auth.getUserName()) || auth.getUserName() == null) {
                 return;
