@@ -87,7 +87,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         return getPropfindRequest();
     }
 
-    public void execute() throws SVNException {
+    public void execute1() throws SVNException {
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "in propfind");
 
         readInput(false);
@@ -119,7 +119,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         }
     }
 
-    public void execute2() throws SVNException {
+    public void execute() throws SVNException {
         DAVResource resource = getRequestedDAVResource(true, false);
 
         DAVResourceState resourceState = getResourceState(resource);
@@ -177,31 +177,33 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                     "The lock database could not be opened, preventing access to the various lock properties for the PROPFIND.", null);
         }
     
-        StringBuffer body = new StringBuffer();
-        DAVXMLUtil.beginMultiStatus(getHttpServletResponse(), SC_MULTISTATUS, getNamespaces(), body);
+        myResponseBuffer = new StringBuffer();
+        DAVXMLUtil.beginMultiStatus(getHttpServletResponse(), SC_MULTISTATUS, getNamespaces(), myResponseBuffer);
         
         int walkType = DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_AUTH | DAVResourceWalker.DAV_WALKTYPE_LOCKNULL; 
         
         DAVResourceWalker walker = new DAVResourceWalker();
-        //DAVResponse multiStatus = walker.walk(myLocksProvider, resource, ifHeaders, 0, lockScope, walkType, this, depth);
+        DAVException error = null;
+        try {
+            walker.walk(myLocksProvider, resource, null, 0, null, walkType, this, depth);
+        } catch (DAVException dave) {
+            error = dave;
+        }
         
+        if (error != null) {
+            throw new DAVException("Provider encountered an error while streaming", error.getResponseCode(), error, 0);
+        }
         
-        
-        
-        
-        
-        
-        
-        generatePropertiesResponse(body, resource, depth);
-        String responseBody = body.toString();
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.MULTISTATUS.getName(), myResponseBuffer);
+        String responseBody = myResponseBuffer.toString();
 
         try {
             setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {
+            setResponseContentLength(responseBody.getBytes().length);
         }
 
         setResponseStatus(SC_MULTISTATUS);
-
         try {
             getResponseWriter().write(responseBody);
         } catch (IOException e) {
