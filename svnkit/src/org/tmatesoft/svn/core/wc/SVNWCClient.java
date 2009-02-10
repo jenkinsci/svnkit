@@ -1610,12 +1610,13 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminArea dir = null;
-            if (path.isDirectory()) {
+            SVNFileType fileType = SVNFileType.getType(path);
+            if (fileType == SVNFileType.DIRECTORY) {
                 dir = wcAccess.open(SVNWCUtil.isVersionedDirectory(path.getParentFile()) ? path.getParentFile() : path, true, 0);
             } else {
+                // files and symlink goes here.
                 dir = wcAccess.open(path.getParentFile(), true, 0);
             }
-            SVNFileType fileType = SVNFileType.getType(path);
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.FILES) >= 0) {
                 addDirectory(path, dir, force, includeIgnored, depth);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
