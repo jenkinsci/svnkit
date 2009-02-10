@@ -185,6 +185,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 		}
 		catch (SVNException e) {
 			props.delete();
+            throw e;
 		}
 	}
 
