@@ -779,9 +779,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                         mergedFile = SVNFileUtil.createUniqueFile(path.getParentFile(), path.getName(), ".tmp", false);
                         result = SVNFileUtil.openFileForWriting(mergedFile);
 
-                        QSequenceLineRAData baseData = new QSequenceLineRAByteData(theValue.getBytes());
-                        QSequenceLineRAData localData = new QSequenceLineRAByteData(workingValue.getBytes());
-                        QSequenceLineRAData latestData = new QSequenceLineRAByteData(newValue.getBytes());
+                        QSequenceLineRAData baseData = new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(theValue));
+                        QSequenceLineRAData localData = new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(workingValue));
+                        QSequenceLineRAData latestData = new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(newValue));
                         merger.merge(baseData, localData, latestData, null, result);
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
