@@ -1446,7 +1446,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             boolean recursive) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), false, 
-                false);
+                climbUnversionedParents);
     }
 
     /**
@@ -1488,7 +1488,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             boolean recursive, boolean includeIgnored) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), 
-                includeIgnored, false);
+                includeIgnored, climbUnversionedParents);
     }
 
     /**
