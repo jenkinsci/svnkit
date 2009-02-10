@@ -347,12 +347,15 @@ public class SVNErrorMessage implements Serializable {
      * @param childMessage a child error message
      */
     public void setChildErrorMessage(SVNErrorMessage childMessage) {
-        SVNErrorMessage msg = childMessage;
-        while (msg != null) {
-            if (this == msg) {
-                return;
+        SVNErrorMessage parent = this;
+        SVNErrorMessage child = childMessage;
+        while (child != null) {
+            if (this == child) {
+                parent.setChildErrorMessage(null);
+                break;
             }
-            msg = msg.getChildErrorMessage();
+            parent = child;
+            child = child.getChildErrorMessage();
         }
         myChildErrorMessage = childMessage;
     }
