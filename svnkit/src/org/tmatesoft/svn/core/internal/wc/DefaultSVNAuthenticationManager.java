@@ -615,6 +615,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 SVNFileUtil.setReadonly(props.getFile(), false);
             } catch (SVNException e) {
                 props.delete();
+                throw e;
             }
         }
         
