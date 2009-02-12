@@ -57,8 +57,8 @@ public class DAVXMLUtil extends SVNXMLUtil {
         return openNamespaceDeclarationTag(prefix, header, namespaces, null, target, true, useIndexedPrefixes);
     }
 
-    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map attrs, StringBuffer target, 
-            boolean addEOL, boolean useIndexedPrefixes) {
+    public static StringBuffer openNamespaceDeclarationTag(String prefix, String header, Collection namespaces, Map attrs, 
+            StringBuffer target, boolean addEOL, boolean useIndexedPrefixes) {
         target = target == null ? new StringBuffer() : target;
         target.append("<");
         target.append(prefix);
@@ -70,6 +70,7 @@ public class DAVXMLUtil extends SVNXMLUtil {
         target.append("=\"");
         target.append(DAVElement.DAV_NAMESPACE);
         target.append("\"");
+        
         if (namespaces != null && !namespaces.isEmpty()) {
             Collection usedNamespaces = new ArrayList();
             usedNamespaces.add(DAVElement.DAV_NAMESPACE);
@@ -99,6 +100,7 @@ public class DAVXMLUtil extends SVNXMLUtil {
             }
             usedNamespaces.clear();
         }
+        
         if (attrs != null && !attrs.isEmpty()) {
             for (Iterator iterator = attrs.entrySet().iterator(); iterator.hasNext();) {
                 Map.Entry entry = (Map.Entry) iterator.next();

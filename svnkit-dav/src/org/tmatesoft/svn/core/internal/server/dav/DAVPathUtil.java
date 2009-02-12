@@ -128,7 +128,7 @@ public class DAVPathUtil {
         path = path == null ? "" : path;
         context = context == null ? "" : context;
         if (addHref) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, resultURI);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, resultURI);
         }
         resultURI.append(context);
         resultURI.append(SLASH);

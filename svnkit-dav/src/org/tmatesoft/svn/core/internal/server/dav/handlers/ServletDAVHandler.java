@@ -237,6 +237,12 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         OUR_LIVE_PROPS.put(DAVElement.MD5_CHECKSUM, new LivePropertySpecification(DAVElement.MD5_CHECKSUM, false, true));
         OUR_LIVE_PROPS.put(DAVElement.REPOSITORY_UUID, new LivePropertySpecification(DAVElement.REPOSITORY_UUID, false, true)); 
         OUR_LIVE_PROPS.put(DAVElement.DEADPROP_COUNT, new LivePropertySpecification(DAVElement.DEADPROP_COUNT, false, true));
+
+        //TODO: this probably should be later moved to CORE_LIVE_PROPS and shouldn't be actually SVN supported
+        OUR_LIVE_PROPS.put(DAVElement.COMMENT, new LivePropertySpecification(DAVElement.COMMENT, true, true));
+        OUR_LIVE_PROPS.put(DAVElement.DISPLAY_NAME, new LivePropertySpecification(DAVElement.DISPLAY_NAME, true, true));
+        OUR_LIVE_PROPS.put(DAVElement.RESOURCE_TYPE, new LivePropertySpecification(DAVElement.RESOURCE_TYPE, false, true));
+        OUR_LIVE_PROPS.put(DAVElement.SOURCE, new LivePropertySpecification(DAVElement.SOURCE, true, true));
         
         //TODO: the following three props are supported by DAV itself, should we do that as well? 
         OUR_CORE_LIVE_PROPS.put(DAVElement.GET_CONTENT_LANGUAGE, new LivePropertySpecification(DAVElement.GET_CONTENT_LANGUAGE, false, false));

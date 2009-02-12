@@ -72,7 +72,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
     
     private DAVPropfindRequest myDAVRequest;
     private boolean myIsAllProp;
-    private boolean myIsPropName;
+    //private boolean myIsPropName;
     private boolean myIsProp;
     private DAVElementProperty myDocRoot;
     private StringBuffer myPropStat404;
@@ -154,12 +154,12 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         }
         
         myIsAllProp = false;
-        myIsPropName = false;
+        //myIsPropName = false;
         myIsProp = false;
         if (readCount == 0 || rootElement.hasChild(DAVElement.ALLPROP)) {
             myIsAllProp = true;
         } else if (rootElement.hasChild(DAVElement.PROPNAME)) {
-            myIsPropName = true;
+            //myIsPropName = true;
         } else if (rootElement.hasChild(DAVElement.PROP)) {
             myIsProp = true;
         } else {
@@ -253,8 +253,8 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROPSTAT.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
             
-            Map namespaces = new HashMap();
-            propsProvider.defineNamespaces(namespaces);
+            Map namespacesToPrefixes = new HashMap();
+            propsProvider.defineNamespaces(namespacesToPrefixes);
             Collection propNames = propsProvider.getPropertyNames();
             int ind = 0;
             for (Iterator propNamesIter = propNames.iterator(); propNamesIter.hasNext();) {
@@ -274,12 +274,12 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                             continue;
                         }
                     } else {
-                        ind = outputPropName(propNameElement, namespaces, ind, buffer);
+                        ind = outputPropName(propNameElement, namespacesToPrefixes, ind, buffer);
                     }
                 }
             }
             
-            generateXMLNSNamespaces(result, namespaces);
+            generateXMLNSNamespaces(result, namespacesToPrefixes);
         }
         
         addAllLivePropNamespaces(result);
@@ -331,10 +331,12 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         Collection xmlnses = new LinkedList();
         boolean haveGood = false;
         boolean definedNamespaces = false;
-        Map namespaces = new HashMap();
+        Map namespacesToPrefixes = new HashMap();
         int prefixInd = 0;
         
-        List childrenElements = docRootElement.getChildren();
+        DAVElementProperty propElement = docRootElement.getChild(DAVElement.PROP);
+        List childrenElements = propElement.getChildren();
+        boolean filledNamespaces = false;
         for (Iterator childrenIter = childrenElements.iterator(); childrenIter.hasNext();) {
             DAVElementProperty childElement = (DAVElementProperty) childrenIter.next();
             LivePropertySpecification livePropSpec = findLiveProperty(childElement.getName());
@@ -343,11 +345,15 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                         DAVInsertPropAction.INSERT_VALUE, buffer);
                 if (doneAction == DAVInsertPropAction.INSERT_VALUE) {
                     haveGood = true;
-                    int ind = 0;
-                    for (Iterator namespacesIter = NAMESPACES.iterator(); namespacesIter.hasNext();) {
-                        String namespace = (String) namespacesIter.next();
-                        String xmlns = " xmlns:lp" + ind + "=\"" + namespace + "\"";
-                        xmlnses.add(xmlns);
+                    if (!filledNamespaces) {
+                        int ind = 0;
+                        for (Iterator namespacesIter = NAMESPACES.iterator(); namespacesIter.hasNext();) {
+                            String namespace = (String) namespacesIter.next();
+                            String xmlns = " xmlns:lp" + ind + "=\"" + namespace + "\"";
+                            xmlnses.add(xmlns);
+                            ind++;
+                        }
+                        filledNamespaces = true;
                     }
                     continue;
                 } 
@@ -367,7 +373,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             if (found) {
                 haveGood = true;
                 if (!definedNamespaces) {
-                    propsProvider.defineNamespaces(namespaces);
+                    propsProvider.defineNamespaces(namespacesToPrefixes);
                     definedNamespaces = true;
                 }
                 continue;
@@ -379,7 +385,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, badRes);
             }
             
-            prefixInd = outputPropName(childElement.getName(), namespaces, prefixInd, buffer);
+            prefixInd = outputPropName(childElement.getName(), namespacesToPrefixes, prefixInd, buffer);
         }
         
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.PROP.getName(), buffer);
@@ -406,7 +412,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         }
         
         addNamespaces(result, xmlnses);
-        generateXMLNSNamespaces(result, namespaces);
+        generateXMLNSNamespaces(result, namespacesToPrefixes);
         return result;
     }
     
@@ -426,24 +432,25 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         }
     }
     
-    private void generateXMLNSNamespaces(DAVPropsResult result, Map prefixesToNamespaces) {
-        for (Iterator prefixesIter = prefixesToNamespaces.keySet().iterator(); prefixesIter.hasNext();) {
-            String prefix = (String) prefixesIter.next();
-            String uri = (String) prefixesToNamespaces.get(prefix);
+    private void generateXMLNSNamespaces(DAVPropsResult result, Map namespacesToPrefixes) {
+        for (Iterator prefixesIter = namespacesToPrefixes.keySet().iterator(); prefixesIter.hasNext();) {
+            String uri = (String) prefixesIter.next();
+            String prefix = (String) namespacesToPrefixes.get(uri); 
             result.addNamespace(" xmlns:" + prefix + "=\"" + uri + "\"");
         }
     }
     
-    private int outputPropName(DAVElement propName, Map prefixesToNamespaces, int ind, StringBuffer buffer) {
+    private int outputPropName(DAVElement propName, Map namespacesToPrefixes, int ind, StringBuffer buffer) {
         if ("".equals(propName.getNamespace())) {
             SVNXMLUtil.openXMLTag(null, propName.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
         } else {
-            String prefix = prefixesToNamespaces != null ? (String) prefixesToNamespaces.get(propName.getNamespace()) : null;
+            String prefix = namespacesToPrefixes != null ? (String) namespacesToPrefixes.get(propName.getNamespace()) : null;
             if (prefix == null) {
                 prefix = "g" + ind;
-                prefixesToNamespaces.put(propName.getNamespace(), prefix);
+                namespacesToPrefixes.put(propName.getNamespace(), prefix);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "prefix for " + propName.getName() + " is " + prefix);
             }
-            SVNXMLUtil.openXMLTag((String) prefixesToNamespaces.get(propName.getNamespace()), propName.getName(), 
+            SVNXMLUtil.openXMLTag((String) namespacesToPrefixes.get(propName.getNamespace()), propName.getName(), 
                     SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
         }
         return ind++;
@@ -709,6 +716,32 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             } catch (SVNException svne) {
                 value = "###error###";
             }
+        } else if (livePropElement == DAVElement.RESOURCE_TYPE) {
+            if (resource.getType() == DAVResourceType.VERSION) {
+                if (resource.isBaseLined()) {
+                    StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.BASELINE.getName(), 
+                            SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                    value = buf.toString();
+                    
+                }
+            } else if (resource.getType() == DAVResourceType.REGULAR || resource.getType() == DAVResourceType.WORKING) {
+                if (resource.isCollection()) {
+                    StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COLLECTION.getName(), 
+                            SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                    value = buf.toString();
+                } else {
+                    value = "";
+                }
+            } else if (resource.getType() == DAVResourceType.HISTORY) {
+                StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_HISTORY.getName(), 
+                        SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                value = buf.toString();
+            } else if (resource.getType() == DAVResourceType.WORKSPACE) {
+                StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COLLECTION.getName(), 
+                        SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                value = buf.toString();
+            }
+
         } else {
             return DAVInsertPropAction.NOT_SUPP;
         }
@@ -719,9 +752,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 (propAction == DAVInsertPropAction.INSERT_VALUE && (value == null || value.length() == 0))) {
             SVNXMLUtil.openXMLTag(prefix, livePropElement.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
         } else if (propAction == DAVInsertPropAction.INSERT_VALUE) {
-            SVNXMLUtil.openXMLTag(prefix, livePropElement.getName(), SVNXMLUtil.XML_STYLE_NORMAL, null, buffer);
-            buffer.append(value);
-            SVNXMLUtil.closeXMLTag(prefix, livePropElement.getName(), buffer);
+            SVNXMLUtil.openCDataTag(prefix, livePropElement.getName(), value, null, false, false, buffer);
         } else {
             Map attrs = new HashMap();
             attrs.put("D:name", livePropElement.getName());
