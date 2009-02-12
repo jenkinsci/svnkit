@@ -1550,15 +1550,20 @@ public class SVNWCClient extends SVNBasicClient {
         if (!mkdir && makeParents && path.getParentFile() != null) {
             // check if parent is versioned. if not, add it.
             SVNWCAccess wcAccess = createWCAccess();
+            File parent = path.getParentFile();
             try {
-                wcAccess.open(path.getParentFile(), false, 0);
+                wcAccess.open(parent, false, 0);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                    if (path.getParentFile() == null) {
+                    if (parent == null) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
                         SVNErrorManager.error(err, SVNLogType.WC);
+                    } else if (SVNFileUtil.getAdminDirectoryName().equals(parent.getName())) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RESERVED_FILENAME_SPECIFIED, 
+                                    "''{0}'' ends in a reserved name", path);
+                            SVNErrorManager.error(err, SVNLogType.WC);
                     } else {
-                        doAdd(path.getParentFile(), false, false, climbUnversionedParents, SVNDepth.EMPTY, false, 
+                        doAdd(parent, false, false, climbUnversionedParents, SVNDepth.EMPTY, false, 
                                 makeParents);
                     }
                 } else {
