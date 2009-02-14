@@ -58,6 +58,7 @@ public class DAVElement {
     public static final String LOG_REVPROPS_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/log-revprops";
     public static final String PARTIAL_REPLAY_OPTION = SVN_DAV_PROPERTY_NAMESPACE + "svn/partial-replay";
 
+    public static final DAVElement ACTIVITY = getElement(DAV_NAMESPACE, "activity");
     public static final DAVElement VERSION_HISTORY = getElement(DAV_NAMESPACE, "version-history");
     public static final DAVElement DISPLAY_NAME = getElement(DAV_NAMESPACE, "displayname");    
     public static final DAVElement SUPPORTED_LIVE_PROPERTY = getElement(DAV_NAMESPACE, "supported-live-property");
