@@ -55,7 +55,6 @@ public class DAVConfig {
     private boolean myIsAutoVersioning = false;
     private boolean myIsAllowBulkUpdates = false;
     private boolean myIsAllowDepthInfinity = false;
-    private boolean myIsTestMode = false;
     
     public DAVConfig(ServletConfig servletConfig) throws SVNException {
         String repositoryPath = servletConfig.getInitParameter(PATH_DIRECIVE);
@@ -110,12 +109,6 @@ public class DAVConfig {
             myIsAutoVersioning = true;
         }
         
-        //TODO: remove this hack later if possible
-        String testMode = servletConfig.getInitParameter("TestMode");
-        if (ON.equals(testMode)) {
-            myIsTestMode = true;
-        }
-        
         String allowBulkUpdates = servletConfig.getInitParameter(ALLOW_BULK_UPDATES);
         if (allowBulkUpdates != null && ON.equals(allowBulkUpdates)) {
             myIsAllowBulkUpdates = true;
@@ -129,10 +122,6 @@ public class DAVConfig {
         myActivitiesDBPath = servletConfig.getInitParameter(ACTIVITIES_DB);
     }
     
-    public boolean isTestMode() {
-        return myIsTestMode;
-    }
-
     public boolean isAllowDepthInfinity() {
         return myIsAllowDepthInfinity;
     }

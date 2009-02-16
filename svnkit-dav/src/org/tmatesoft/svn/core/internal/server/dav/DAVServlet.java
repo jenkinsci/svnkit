@@ -127,8 +127,6 @@ public class DAVServlet extends HttpServlet {
         ServletDAVHandler handler = null;
         logRequest(request);//TODO: remove later
         try {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "creating repomanager");
-
             DAVRepositoryManager repositoryManager = new DAVRepositoryManager(getDAVConfig(), request);
             handler = DAVHandlerFactory.createHandler(repositoryManager, request, response);
             handler.execute();
@@ -166,43 +164,44 @@ public class DAVServlet extends HttpServlet {
     private void logRequest(HttpServletRequest request) {
         StringBuffer logBuffer = new StringBuffer();
         logBuffer.append('\n');
-        logBuffer.append("Request auth type: " + request.getAuthType());
+        logBuffer.append("request.getAuthType(): " + request.getAuthType());
         logBuffer.append('\n');
-        logBuffer.append("Request character encoding: " + request.getCharacterEncoding());
+        logBuffer.append("request.getCharacterEncoding(): " + request.getCharacterEncoding());
         logBuffer.append('\n');
-        logBuffer.append("Request content type: " + request.getContentType());
+        logBuffer.append("request.getContentType(): " + request.getContentType());
         logBuffer.append('\n');
-        logBuffer.append("Request context path: " + request.getContextPath());
+        logBuffer.append("request.getContextPath(): " + request.getContextPath());
         logBuffer.append('\n');
-        logBuffer.append("Request content length: " + request.getContentLength());
+        logBuffer.append("request.getContentLength(): " + request.getContentLength());
         logBuffer.append('\n');
-        logBuffer.append("Request method: " + request.getMethod());
+        logBuffer.append("request.getMethod(): " + request.getMethod());
         logBuffer.append('\n');
-        logBuffer.append("Request path info: " + request.getPathInfo());
+        logBuffer.append("request.getPathInfo(): " + request.getPathInfo());
         logBuffer.append('\n');
-        logBuffer.append("Request path translated: " + request.getPathTranslated());
+        logBuffer.append("request.getPathTranslated(): " + request.getPathTranslated());
         logBuffer.append('\n');
-        logBuffer.append("Request query string: " + request.getQueryString());
+        logBuffer.append("request.getQueryString(): " + request.getQueryString());
         logBuffer.append('\n');
-        logBuffer.append("Request remote address: " + request.getRemoteAddr());
+        logBuffer.append("request.getRemoteAddr(): " + request.getRemoteAddr());
         logBuffer.append('\n');
-        logBuffer.append("Request remote host: " + request.getRemoteHost());
+        logBuffer.append("request.getRemoteHost(): " + request.getRemoteHost());
         logBuffer.append('\n');
-        logBuffer.append("Request remote user: " + request.getRemoteUser());
+        logBuffer.append("request.getRemoteUser(): " + request.getRemoteUser());
         logBuffer.append('\n');
-        logBuffer.append("Request URI: " + request.getRequestURI());
+        logBuffer.append("request.getRequestURI(): " + request.getRequestURI());
         logBuffer.append('\n');
-        logBuffer.append("Request server name: " + request.getServerName());
+        logBuffer.append("request.getServerName(): " + request.getServerName());
         logBuffer.append('\n');
-        logBuffer.append("Request server port: " + request.getServerPort());
+        logBuffer.append("request.getServerPort(): " + request.getServerPort());
         logBuffer.append('\n');
-        logBuffer.append("Request servlet path: " + request.getServletPath());
+        logBuffer.append("request.getServletPath(): " + request.getServletPath());
         logBuffer.append('\n');
-        logBuffer.append("Request URL: " + request.getRequestURL());
+        logBuffer.append("request.getRequestURL(): " + request.getRequestURL());
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, logBuffer.toString());
     }
     
     private void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, error);
         DAVResponse response = error.getResponse();
         if (response == null) {
             DAVException stackErr = error;

@@ -5,25 +5,38 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
     <display-name>DAV Subversion Servlet</display-name>
     <servlet>
-        <servlet-name>svnkit</servlet-name>
+        <servlet-name>svnkit1</servlet-name>
         <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
         <init-param>
             <param-name>SVNParentPath</param-name>
-            <param-value>%ant.dir%/build/python/python/cmdline</param-value>
-        </init-param>
-        <init-param>
-            <param-name>TestMode</param-name>
-            <param-value>on</param-value>
+            <param-value>%ant.dir%/build/python/python/cmdline/svn-test-work/repositories</param-value>
         </init-param>
         <!--<init-param>-->
             <!--<param-name>AuthzSVNAccessFile</param-name>-->
             <!--<param-value>/var/svn/access_conf</param-value>-->
         <!--</init-param>-->        
-</servlet>
+    </servlet>
     <servlet-mapping>
-        <servlet-name>svnkit</servlet-name>
-        <url-pattern>/*</url-pattern>
+        <servlet-name>svnkit1</servlet-name>
+        <url-pattern>/svn-test-work/repositories/*</url-pattern>
+    </servlet-mapping> 
+    <servlet>
+	    <servlet-name>svnkit2</servlet-name>
+	    <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
+	    <init-param>
+		    <param-name>SVNPath</param-name>
+		    <param-value>%ant.dir%/build/python/python/cmdline/svn-test-work/local_tmp/repos</param-value>
+	    </init-param>
+	    <!--<init-param>-->
+		    <!--<param-name>AuthzSVNAccessFile</param-name>-->
+		    <!--<param-value>/var/svn/access_conf</param-value>-->
+		    <!--</init-param>-->        
+    </servlet>
+    <servlet-mapping>
+	    <servlet-name>svnkit2</servlet-name>
+	    <url-pattern>/svn-test-work/local_tmp/repos/*</url-pattern>
     </servlet-mapping>
+    
 <!--<security-constraint>-->
         <!--<display-name>DAV Subversion Security Constraint</display-name>-->
         <!--<web-resource-collection>-->

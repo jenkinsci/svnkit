@@ -317,6 +317,10 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         
         for (Iterator livePropsIter = OUR_LIVE_PROPS.keySet().iterator(); livePropsIter.hasNext();) {
             DAVElement propElement = (DAVElement) livePropsIter.next();
+            if (propElement == DAVElement.COMMENT || propElement == DAVElement.DISPLAY_NAME || propElement == DAVElement.SOURCE) {
+                //only RESOURCETYPE core prop should be inserted
+                continue;
+            }
             LivePropertySpecification lps = (LivePropertySpecification) OUR_LIVE_PROPS.get(propElement);
             insertLiveProp(resource, lps, propAction, buffer);
         }
@@ -720,28 +724,36 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             if (resource.getType() == DAVResourceType.VERSION) {
                 if (resource.isBaseLined()) {
                     StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.BASELINE.getName(), 
-                            SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                            SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, null);
                     value = buf.toString();
                     
                 }
             } else if (resource.getType() == DAVResourceType.REGULAR || resource.getType() == DAVResourceType.WORKING) {
                 if (resource.isCollection()) {
                     StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COLLECTION.getName(), 
-                            SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                            SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, null);
                     value = buf.toString();
                 } else {
                     value = "";
                 }
             } else if (resource.getType() == DAVResourceType.HISTORY) {
                 StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_HISTORY.getName(), 
-                        SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                        SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, null);
                 value = buf.toString();
             } else if (resource.getType() == DAVResourceType.WORKSPACE) {
                 StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COLLECTION.getName(), 
-                        SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+                        SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, null);
                 value = buf.toString();
+            } else if (resource.getType() == DAVResourceType.ACTIVITY) {
+                StringBuffer buf = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.ACTIVITY.getName(), 
+                        SVNXMLUtil.XML_STYLE_SELF_CLOSING | SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, null);
+                value = buf.toString();
+            } else {
+                return DAVInsertPropAction.NOT_DEF;
             }
-
+        } else if (livePropElement == DAVElement.COMMENT || livePropElement == DAVElement.CREATOR_DISPLAY_NAME || 
+                livePropElement == DAVElement.DISPLAY_NAME || livePropElement == DAVElement.SOURCE) {
+            return DAVInsertPropAction.NOT_DEF;
         } else {
             return DAVInsertPropAction.NOT_SUPP;
         }

@@ -41,20 +41,30 @@ public class DAVResourceURI {
     private boolean myIsWorking = false;
 
     public DAVResourceURI(String context, String uri, String label, boolean useCheckedIn) throws SVNException {
-        myURI = uri;
+        StringBuffer logBuffer = new StringBuffer();
+        logBuffer.append('\n');
+        logBuffer.append("uri: " + uri);
+        logBuffer.append('\n');
+        logBuffer.append("label: " + label);
+        logBuffer.append('\n');
+        logBuffer.append("context: " + context);
+        
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, logBuffer.toString());
+        
+        myURI = uri == null ? "" : uri;
         myContext = context;
         myRevision = DAVResource.INVALID_REVISION;
         parseURI(label, useCheckedIn);
 
-        StringBuffer logBuffer = new StringBuffer();
+        logBuffer.delete(0, logBuffer.length());
         logBuffer.append('\n');
-        logBuffer.append("Requested URI: " + getRequestURI());
+        logBuffer.append("DAVResourceURI.getRequestURI(): " + getRequestURI());
         logBuffer.append('\n');
-        logBuffer.append("URI: " + getURI());
+        logBuffer.append("DAVResourceURI.getURI(): " + getURI());
         logBuffer.append('\n');
-        logBuffer.append("URI path: " + getPath());
+        logBuffer.append("DAVResourceURI.getPath(): " + getPath());
         logBuffer.append('\n');
-        logBuffer.append("Context: " + getContext());
+        logBuffer.append("DAVResourceURI.getContext(): " + getContext());
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, logBuffer.toString());
     }
 

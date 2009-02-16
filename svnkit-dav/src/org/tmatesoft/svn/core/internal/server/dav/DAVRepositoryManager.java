@@ -59,23 +59,11 @@ public class DAVRepositoryManager {
 
         myDAVConfig = config;
 
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "getting repos root");
-
-        try {
         myResourceRepositoryRoot = getRepositoryRoot(request.getPathInfo());
-        } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, th);
-        }
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "repos root is " + myResourceRepositoryRoot);
-
-        myResourceContext = getResourceContext(request.getContextPath(), request.getPathInfo());
+        myResourceContext = getResourceContext(request);
         myUserPrincipal = request.getUserPrincipal();
-        if (myRepositoryRootDir == null) {
-            myRepositoryRootDir = getRepositoryRootDir(request.getPathInfo());
-        }
-        if (myResourcePathInfo == null) {
-            myResourcePathInfo = getResourcePathInfo(request.getPathInfo());
-        }
+        myRepositoryRootDir = getRepositoryRootDir(request.getPathInfo());
+        myResourcePathInfo = getResourcePathInfo(request);
             
         if (config.isUsingPBA()) {
             String path = null;
@@ -252,22 +240,6 @@ public class DAVRepositoryManager {
                 reposParentPath = "/" + reposParentPath;
             }
             
-            //TODO: remove later this hack
-            if (getDAVConfig().isTestMode()) {
-                requestURI = requestURI.startsWith("/") ? requestURI.substring(1) : requestURI;
-                String fsPath = SVNPathUtil.append(reposParentPath, requestURI);
-                File reposRoot = FSFS.findRepositoryRoot(new File(fsPath));
-                if (reposRoot != null) {
-                    String reposRootPath = reposRoot.getAbsolutePath();
-                    String reposAbsPath = fsPath.startsWith(reposRootPath) ? fsPath.substring(reposRootPath.length()) : null;
-                    if (reposAbsPath != null) {
-                        myResourcePathInfo = reposAbsPath.startsWith("/") ? reposAbsPath : "/" + reposAbsPath; 
-                    }
-                    myRepositoryRootDir = reposRoot;
-                    return FILE_PROTOCOL_LINE + reposRoot.getAbsolutePath(); 
-                }
-            }
-            
             repositoryURL.append(DAVPathUtil.addTrailingSlash(reposParentPath));
             repositoryURL.append(DAVPathUtil.head(requestURI));
         }
@@ -284,16 +256,21 @@ public class DAVRepositoryManager {
         return reposRootDir;
     }
 
-    private String getResourcePathInfo(String requestURI) throws SVNException {
-        if (getDAVConfig().isUsingRepositoryPathDirective()) {
-            return requestURI;
+    private String getResourcePathInfo(HttpServletRequest request) throws SVNException {
+        String pathInfo = request.getPathInfo();
+        if (pathInfo == null || "".equals(pathInfo)) {
+            pathInfo = "/";
         }
+        
+        if (getDAVConfig().isUsingRepositoryPathDirective()) {
+            return pathInfo;
+        }   
 
-        if (requestURI == null || requestURI.length() == 0 || "/".equals(requestURI)) {
+        if (pathInfo == null || pathInfo.length() == 0 || "/".equals(pathInfo)) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED), SVNLogType.NETWORK);
             //TODO: client tried to access repository parent path, result status code should be FORBIDDEN.
         }
-        return DAVPathUtil.removeHead(requestURI, true);
+        return DAVPathUtil.removeHead(pathInfo, true);
     }
 
     private String getResourceRepositoryName(String requestURI) {
@@ -303,10 +280,29 @@ public class DAVRepositoryManager {
         return DAVPathUtil.head(requestURI);        
     }
 
-    private String getResourceContext(String requestContext, String requestURI) {
+    private String getResourceContext(HttpServletRequest request) {
+        String requestContext = request.getContextPath();
+        String pathInfo = request.getPathInfo();
+        String servletPath = request.getServletPath();
+        
         if (getDAVConfig().isUsingRepositoryPathDirective()) {
+            if (servletPath != null && !"".equals(servletPath)) {
+                if (servletPath.startsWith("/")) {
+                    servletPath = servletPath.substring(1);
+                }
+                return SVNPathUtil.append(requestContext, servletPath);
+            }
             return requestContext;
         }
-        return DAVPathUtil.append(requestContext, DAVPathUtil.head(requestURI));
+        
+        String reposName = DAVPathUtil.head(pathInfo);
+        if (servletPath != null && !"".equals(servletPath)) {
+            if (servletPath.startsWith("/")) {
+                servletPath = servletPath.substring(1);
+            }
+            String pathToRepos = SVNPathUtil.append(requestContext, servletPath);
+            return SVNPathUtil.append(pathToRepos, reposName);
+        }
+        return DAVPathUtil.append(requestContext, reposName);
     }
 }

@@ -84,7 +84,8 @@ public class DAVXMLUtil extends SVNXMLUtil {
                 } else if (item instanceof String) {
                     currentNamespace = (String) item;
                 }
-                if (currentNamespace != null && currentNamespace.length() > 0 && !usedNamespaces.contains(currentNamespace)) {
+                if (currentNamespace != null && currentNamespace.length() > 0 && (useIndexedPrefixes || 
+                        !usedNamespaces.contains(currentNamespace))) {
                     usedNamespaces.add(currentNamespace);
                     target.append(" xmlns:");
                     if (useIndexedPrefixes) {

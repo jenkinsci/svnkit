@@ -122,7 +122,7 @@ public class DAVCheckOutHandler extends ServletDAVHandler {
             return;
         }
             
-        handleDAVCreated(workingResource.getResourceURI().getURI(), "Checked-out resource", false);
+        handleDAVCreated(workingResource.getResourceURI().getRequestURI(), "Checked-out resource", false);
     }
 
     protected DAVRequest getDAVRequest() {
