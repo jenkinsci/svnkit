@@ -1413,7 +1413,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     }
                 }
                 // also use protocol, host and port as a key, not only uuid.
-                uuid += url.getProtocol() + ":" + url.getHost() + ":" + url.getPort();
+                uuid += url.getProtocol() + ":" + url.getHost() + ":" + url.getPort() + ":" + url.getUserInfo();
                 if (!repoUUIDs.containsKey(uuid)) {
                     repoUUIDs.put(uuid, new ArrayList());
                     locktokensMap.put(uuid, new SVNHashMap());
