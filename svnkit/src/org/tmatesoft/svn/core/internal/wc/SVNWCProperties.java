@@ -470,7 +470,11 @@ public class SVNWCProperties {
         if (os != null) {
             byte[] value = new byte[length];
             int r = is.read(value);
-            os.write(value, 0, r);
+            if (r >= 0) {
+                os.write(value, 0, r);
+            } else {
+                return false;
+            }
         } else {
             while(length > 0) {
                 length -= is.skip(length);
