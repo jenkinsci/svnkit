@@ -563,6 +563,11 @@ public class SVNCommitUtil {
                 baseURL = baseURL.removePathTail();
             }
         }
+        if (baseURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
+                    "Cannot compute base URL for commit operation");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         for (Iterator iterator = itemsMap.keySet().iterator(); iterator.hasNext();) {
             SVNURL url = (SVNURL) iterator.next();
             SVNCommitItem item = (SVNCommitItem) itemsMap.get(url);
