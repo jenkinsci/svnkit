@@ -65,10 +65,10 @@ public class DAVPutHandler extends ServletDAVHandler {
         validateRequest(resource, DAVDepth.DEPTH_ZERO, resourceState == DAVResourceState.NULL ? DAV_VALIDATE_PARENT : DAV_VALIDATE_RESOURCE, 
                 null, null, null);
         
-        autoCheckOut(resource, false);
+        DAVAutoVersionInfo avInfo = autoCheckOut(resource, false);
         int mode = DAV_MODE_WRITE_TRUNC;
         long[] range = parseRange();
-        if (range == null) {
+        if (range != null) {
             mode = DAV_MODE_WRITE_SEEKABLE;
         }
         
@@ -135,7 +135,7 @@ public class DAVPutHandler extends ServletDAVHandler {
         }
 
         try {
-            autoCheckIn(resource, error != null, false, null);
+            autoCheckIn(resource, error != null, false, avInfo);
         } catch (DAVException dave) {
             error2 = dave;
         }

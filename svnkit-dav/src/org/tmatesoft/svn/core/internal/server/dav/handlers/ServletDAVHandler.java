@@ -621,7 +621,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         }
         
-        DAVResource lockResource = null;
+        DAVResource lockResource = resource;
         if (lockToken != null) {
             try {
                 lockResource = DAVResourceHelper.getDirectResource(lockProvider, lockToken, resource);
