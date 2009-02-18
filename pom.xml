@@ -18,13 +18,13 @@
     <dependency>
       <groupId>com.sun.jna</groupId>
       <artifactId>jna</artifactId>
-      <version>%jna.version%</version>
+      <version>3.0.5</version>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.trilead</groupId>
       <artifactId>trilead-ssh2</artifactId>
-     <version>build212-hudson-1</version>
+      <version>build212-hudson-1</version>
       <optional>true</optional>
     </dependency>
   </dependencies>

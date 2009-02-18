@@ -12,6 +12,12 @@
 package org.tmatesoft.svn.core;
 
 import java.io.File;
+import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.StreamCorruptedException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
@@ -43,7 +49,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
-public class SVNURL {
+public class SVNURL implements Serializable {
     /**
      * Creates a new <b>SVNURL</b> representation from the given url 
      * components.
@@ -568,4 +574,24 @@ public class SVNURL {
         return path;
     }
 
+    private synchronized void writeObject(ObjectOutputStream s) throws IOException {
+        s.writeUTF(toDecodedString());
+    }
+
+    private synchronized void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        // use this field temporarily until readResolve is called
+        myEncodedPath = s.readUTF();
+    }
+
+    private Object readResolve() throws ObjectStreamException {
+        try {
+            return new SVNURL(myEncodedPath,false);
+        } catch (SVNException e) {
+            StreamCorruptedException x = new StreamCorruptedException("Failed to load SVNURL");
+            x.initCause(e);
+            throw x;
+        }
+    }
+
+    private static final long serialVersionUID = 1L;
 } 
