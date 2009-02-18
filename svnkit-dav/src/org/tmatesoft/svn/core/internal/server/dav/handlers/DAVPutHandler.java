@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -126,6 +128,7 @@ public class DAVPutHandler extends ServletDAVHandler {
                     if (error2 != null && error == null) {
                         error = error2;
                     }
+                    deltaConsumer.textDeltaEnd(path);
                 }
             }
         }

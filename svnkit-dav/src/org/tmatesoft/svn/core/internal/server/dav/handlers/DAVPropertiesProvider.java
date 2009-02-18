@@ -20,7 +20,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -344,6 +343,7 @@ public class DAVPropertiesProvider {
     }
 
     private void doOpen(boolean readOnly) throws DAVException {
+        myIsOperative = true;
         DAVResourceType resType = myResource.getType();
         if (resType == DAVResourceType.HISTORY || resType == DAVResourceType.ACTIVITY || resType == DAVResourceType.PRIVATE) {
             myIsOperative = false;

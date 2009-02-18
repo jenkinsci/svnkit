@@ -312,7 +312,6 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
                     }
                 }
             }
-            
         }
         
         private void handleError(DAVException dave, PropertyChangeContext propContext) {

@@ -56,6 +56,8 @@ public class DAVWorkingResourceHelper extends DAVResourceHelper {
                     "An activity was specified and found, but the corresponding SVN FS transaction was not found.", null);
         }
         
+        resource.setTxnInfo(txnInfo);
+        
         if (resource.isBaseLined()) {
             resource.setExists(true);
             return;
