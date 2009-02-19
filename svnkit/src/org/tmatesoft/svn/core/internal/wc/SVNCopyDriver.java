@@ -1233,7 +1233,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             SVNFileType srcType = SVNFileType.getType(src);
             if (srcType == SVNFileType.FILE || srcType == SVNFileType.SYMLINK) {
                 if (srcEntry.isScheduledForAddition() && !srcEntry.isCopied()) {
-                    copyAddedFileAdm(src, dstAccess, dstParent, dstName, true);
+                    copyAddedFileAdm(src, srcAccess, dstAccess, dstParent, dstName, true);
                 } else {
                     copyFileAdm(src, srcAccess, dstParent, dstAccess, dstName);
                 }
@@ -1301,12 +1301,12 @@ public class SVNCopyDriver extends SVNBasicClient {
         dstAccess.handleEvent(event);
     }
 
-
-    private void copyAddedFileAdm(File src, SVNWCAccess dstAccess, File dstParent, String dstName, boolean isAdded) throws SVNException {
+    private void copyAddedFileAdm(File src, SVNWCAccess srcAccess, SVNWCAccess dstAccess, File dstParent, String dstName, boolean isAdded) throws SVNException {
         File dst = new File(dstParent, dstName);
         SVNFileUtil.copyFile(src, dst, false);
         if (isAdded) {
             SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION);
+            copyProps(src, dst, srcAccess, dstAccess);
         }
     }
 
@@ -1360,6 +1360,8 @@ public class SVNCopyDriver extends SVNBasicClient {
             dst.mkdirs();
 
             SVNWCManager.add(dst, dstParentAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION);
+            copyProps(src, dst, srcAccess, dstParentAccess);
+            
             SVNAdminArea srcChildArea = srcAccess.retrieve(src);
 
             File[] entries = SVNFileListUtil.listFiles(src);
@@ -1376,12 +1378,24 @@ public class SVNCopyDriver extends SVNBasicClient {
                 if (fsEntry.isDirectory()) {
                     copyAddedDirAdm(fsEntry, srcAccess, dst, dstParentAccess, name, entry != null);
                 } else if (fsEntry.isFile()) {
-                    copyAddedFileAdm(fsEntry, dstParentAccess, dst, name, entry != null);
+                    copyAddedFileAdm(fsEntry, srcAccess, dstParentAccess, dst, name, entry != null);
                 }
             }
         }
     }
 
+    private void copyProps(File src, File dst, SVNWCAccess srcAccess, SVNWCAccess dstAccess) throws SVNException {
+        SVNEntry srcEntry = srcAccess.getVersionedEntry(src, false);
+        SVNAdminArea srcArea = srcEntry.getAdminArea();
+        SVNVersionedProperties srcProps = srcArea.getProperties(srcEntry.getName());
+        Collection propNames = srcProps.getPropertyNames(null);
+        for (Iterator propNamesIter = propNames.iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            SVNPropertyValue propValue = srcProps.getPropertyValue(propName);
+            SVNPropertiesManager.setProperty(dstAccess, dst, propName, propValue, false);
+        }
+    }
+    
     private SVNLocationEntry determineCopyFromInfo(File src, SVNWCAccess srcAccess, SVNEntry srcEntry, SVNEntry dstEntry) throws SVNException {
         String url;
         long rev;
