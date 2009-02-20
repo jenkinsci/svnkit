@@ -572,4 +572,13 @@ public class SVNClient implements SVNClientInterface {
         return myDelegate.getMergeinfo(path, pegRevision);
     }
 
+    public void logMessages(String path, Revision pegRevision, RevisionRange[] ranges, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, String[] revProps, long limit,
+            LogMessageCallback callback) throws ClientException {
+        myDelegate.logMessages(path, pegRevision, ranges, stopOnCopy, discoverPath, includeMergedRevisions, revProps, limit, callback);
+    }
+
+    public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
+        myDelegate.setRevProperty(path, name, rev, value, originalValue, force);
+    }
+
 }

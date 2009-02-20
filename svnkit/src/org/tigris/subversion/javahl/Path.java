@@ -33,5 +33,13 @@ public class Path {
         return true;
     }
 
+    public static boolean isURL(String path)
+    {
+        if (path == null) {
+            throw new IllegalArgumentException();
+        }
+        return (path.indexOf("://") > 0);
+    }
+
 
 }

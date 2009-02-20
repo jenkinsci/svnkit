@@ -2215,4 +2215,13 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNDepth(depth), changeListsCollection, handler);
         }
     }
+
+    public void logMessages(String path, Revision pegRevision, RevisionRange[] ranges, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, String[] revProps, long limit,
+            LogMessageCallback callback) throws ClientException {
+        // TODO
+    }
+
+    public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
+        // TODO
+    }
 }
