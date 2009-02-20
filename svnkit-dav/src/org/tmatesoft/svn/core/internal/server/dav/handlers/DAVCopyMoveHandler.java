@@ -49,7 +49,7 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
     public void execute() throws SVNException {
         DAVResource resource = getRequestedDAVResource(!myIsMove, false);
         if (!resource.exists()) {
-            setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
+            sendError(HttpServletResponse.SC_NOT_FOUND, null);
             return;
         }
         
@@ -74,7 +74,7 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
         
         if (destination == null) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "The request is missing a Destination header.");
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         
@@ -100,7 +100,7 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
         DAVResource newResource = getRequestedDAVResource(false, false, path);
         int overwrite = getOverwrite();
         if (overwrite < 0) {
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         
@@ -126,13 +126,13 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
         
         if (depth == DAVDepth.DEPTH_ONE) {
             //add logging here later
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         
         if (myIsMove && isDir && depth != DAVDepth.DEPTH_INFINITY) {
             //add logging here later
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         

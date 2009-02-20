@@ -43,20 +43,21 @@ public class DAVDeleteHandler extends ServletDAVHandler {
 
         DAVResource resource = getRequestedDAVResource(false, false);
         if (!resource.exists()) {
-            setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
+            sendError(HttpServletResponse.SC_NOT_FOUND, null);
             return;
         }
         
         DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
         if (resource.isCollection() && depth != DAVDepth.DEPTH_INFINITY) {
             SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, "Depth must be \"infinity\" for DELETE of a collection.");
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         
         if (!resource.isCollection() && depth == DAVDepth.DEPTH_ONE) {
             SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, "Depth of \"1\" is not allowed for DELETE.");
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
+            return;
         }
         
         try {
@@ -69,7 +70,7 @@ public class DAVDeleteHandler extends ServletDAVHandler {
         
         int respCode = unlock(resource, null);
         if (respCode != HttpServletResponse.SC_OK) {
-            setResponseStatus(respCode);
+            sendError(respCode, null);
             return;
         }
         

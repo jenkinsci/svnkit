@@ -36,13 +36,13 @@ public class DAVMakeCollectionHandler extends ServletDAVHandler {
     public void execute() throws SVNException {
         int status = processMkColBody();
         if (status != HttpServletResponse.SC_OK) {
-            setResponseStatus(status);
+            sendError(status, null);
             return;
         }
         
         DAVResource resource = getRequestedDAVResource(false, false);
         if (resource.exists()) {
-            setResponseStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED, null);
             return;
         }
         

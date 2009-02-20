@@ -50,7 +50,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
     public void execute() throws SVNException {
         DAVResource resource = getRequestedDAVResource(false, false);
         if (!resource.exists()) {
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         

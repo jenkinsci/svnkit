@@ -109,7 +109,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
         
         DAVResource resource = getRequestedDAVResource(false, false);
         if (!resource.exists()) {
-            setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
+            sendError(HttpServletResponse.SC_NOT_FOUND, null);
             return;
         }
         

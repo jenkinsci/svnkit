@@ -143,8 +143,8 @@ public class PythonTests {
 		}
 
 		if (Boolean.TRUE.toString().equals(properties.getProperty("python.http"))) {
-            String apacheEnabled = properties.getProperty("apache", "1");
-            if ("1".equals(apacheEnabled)) {
+            String apacheEnabled = properties.getProperty("apache", "true");
+            if (Boolean.TRUE.toString().equals(apacheEnabled.trim())) {
                 properties.setProperty("apache.conf", "apache/python.template.conf");
                 boolean started = false;
                 int port = -1;
@@ -173,8 +173,8 @@ public class PythonTests {
             }
 			
 			//now check the servlet flag
-			String servletContainer = properties.getProperty("servlet.container", "0");
-			if ("1".equals(servletContainer)) {
+			String servletContainer = properties.getProperty("servlet.container", "false");
+			if (Boolean.TRUE.toString().equals(servletContainer.trim())) {
 			    boolean started = false;
 	            int port = -1;
 	            try {

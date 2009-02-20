@@ -88,16 +88,10 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
     }
 
     public void execute1() throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "in propfind");
-
         readInput(false);
-
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "read the input");
         
         DAVResource resource = getRequestedDAVResource(true, false);
         
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "got the resource");
-
         StringBuffer body = new StringBuffer();
         DAVDepth depth = getRequestDepth(DAVDepth.DEPTH_INFINITY);
         generatePropertiesResponse(body, resource, depth);
@@ -125,7 +119,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         DAVResourceState resourceState = getResourceState(resource);
         if (resourceState == DAVResourceState.NULL) {
             //TODO: what body should we send?
-            setResponseStatus(HttpServletResponse.SC_NOT_FOUND);
+            sendError(HttpServletResponse.SC_NOT_FOUND, null);
             return;
         }
         
@@ -149,7 +143,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         if (readCount > 0 && rootElement.getName() != DAVElement.PROPFIND) {
             //TODO: maybe add logging here later
             //TODO: what body should we send?
-            setResponseStatus(HttpServletResponse.SC_BAD_REQUEST);
+            sendError(HttpServletResponse.SC_BAD_REQUEST, null);
             return;
         }
         

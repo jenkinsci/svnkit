@@ -1365,6 +1365,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         myResponse.setStatus(statusCode);
     }
 
+    protected void sendError(int errorCode, String message) {
+        try {
+            myResponse.sendError(errorCode, message);
+        } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, message);
+        }
+    }
+    
     protected void setResponseContentType(String contentType) {
         myResponse.setContentType(contentType);
     }
