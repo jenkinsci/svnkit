@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -106,14 +107,14 @@ public class DAVServletUtil {
             throw new DAVException("Destination URI contains invalid components (a query or a fragment).", HttpServletResponse.SC_BAD_REQUEST, 0);
         }
         
-        if (parsedURI.getScheme() != null || parsedURI.getPort() != 0 || mustBeAbsolute) {
+        if (parsedURI.getScheme() != null || parsedURI.getPort() != -1 || mustBeAbsolute) {
             String scheme = request.getScheme();
             if (scheme == null) {
                 //TODO: replace this code in future 
                 scheme = "http";
             }
             int parsedPort = parsedURI.getPort();
-            if (parsedURI.getPort() == 0) {
+            if (parsedURI.getPort() == -1) {
                 parsedPort = request.getServerPort();
             }
             
@@ -124,7 +125,19 @@ public class DAVServletUtil {
             }
         }
         
-        if (!parsedURI.getHost().equals(request.getServerName())) {
+        String parsedHost = parsedURI.getHost();
+        String serverHost = request.getServerName();
+        String domain = null;
+        int domainInd = serverHost != null ? serverHost.indexOf('.') : -1;  
+        if (domainInd != -1) {
+            domain = serverHost.substring(domainInd);
+        }
+        
+        if (parsedHost != null && parsedHost.indexOf('.') == -1 && domain != null) {
+            parsedHost += domain;
+        }
+        
+        if (parsedHost != null && !parsedHost.equals(request.getServerName())) {
             throw new DAVException("Destination URI refers to a different server.", HttpServletResponse.SC_BAD_GATEWAY, 0);
         }
         return parsedURI;

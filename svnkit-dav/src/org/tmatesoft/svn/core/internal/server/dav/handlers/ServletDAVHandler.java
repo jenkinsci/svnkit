@@ -1260,7 +1260,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     }
 
     protected String getURI() {
-        return myRequest.getPathInfo();
+        return myRequest.getRequestURI();
     }
 
     protected String getRequestHeader(String name) {

@@ -20,6 +20,7 @@ public class DAVActivityResourceHelper extends DAVResourceHelper {
     
     protected void prepare(DAVResource resource) throws DAVException {
         String txnName = DAVServletUtil.getTxn(resource.getActivitiesDB(), resource.getResourceURI().getActivityID());
+        resource.setTxnName(txnName);
         resource.setExists(txnName != null);
     }
 

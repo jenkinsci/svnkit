@@ -100,6 +100,8 @@ public class DAVMergeHandler extends ServletDAVHandler {
             throw new DAVException("Destination url starts with a wrong context", HttpServletResponse.SC_BAD_REQUEST, 0);
         }
         
+        //TODO: cut away the servlet context part
+        path = path.substring(resourceContext.length());
         DAVResource srcResource = getRequestedDAVResource(false, false, path);
 
         //NOTE: for now this all are no-ops, just commented them for a while 
