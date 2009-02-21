@@ -12,6 +12,9 @@
 package org.tmatesoft.svn.core.test.daemon;
 
 class SVNCommandExitException extends SecurityException {
+    
+    private static final long serialVersionUID = 1L;
+    
     private int myCode;
 
     public SVNCommandExitException(int code) {
