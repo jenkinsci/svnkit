@@ -8,7 +8,6 @@ contrib/sequence/bin-test
 doc/examples/bin
 /lib
 svnkit-cli/bin
-svnkit-dav/bin
 svnkit-eclipse/bin
 svnkit-test/bin
 svnkit-test/python-tests-log.xml

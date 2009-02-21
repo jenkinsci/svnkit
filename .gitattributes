@@ -8,8 +8,6 @@ contrib/jna/jna-src.zip -text
 contrib/jna/jna.jar -text
 contrib/junit/junit.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
-contrib/servlet-api/servlet-api-2.3src.zip -text
-contrib/servlet-api/servlet-api.jar -text
 contrib/trilead/trilead.jar -text
 contrib/trilead/trileadsrc.zip -text
 doc/JSPWikiDocs/Authentication/AuthManager_Architecture.png -text
@@ -76,8 +74,6 @@ svnkit-test/daemon/template eol=lf
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
-svnkit-test/tomcat/logging.properties -text
-svnkit-test/tomcat/tomcat.jar -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNCallbackHandler.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -text
