@@ -13,12 +13,14 @@ export ALL
 externals ALL 
 history ALL
 import ALL
+info ALL
 lock ALL
 log ALL
 merge ALL -4
 merge_authz ALL
 mergeinfo ALL
 prop ALL
+resolved ALL
 revert ALL
 schedule ALL
 special ALL
@@ -30,4 +32,5 @@ svndumpfilter ALL
 svnversion ALL
 switch ALL
 trans ALL
+tree_conflict ALL
 update ALL
