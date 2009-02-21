@@ -229,10 +229,18 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     private boolean hasExplicitCredentials(String kind) {
         if (ISVNAuthenticationManager.PASSWORD.equals(kind) || ISVNAuthenticationManager.USERNAME.equals(kind) || ISVNAuthenticationManager.SSH.equals(kind)) {
-            return 
-                myProviders[0] instanceof DumbAuthenticationProvider && 
-                ((DumbAuthenticationProvider) myProviders[0]).myUserName != null &&
-                !"".equals(((DumbAuthenticationProvider) myProviders[0]).myUserName);
+            if (myProviders[0] instanceof DumbAuthenticationProvider) {
+                DumbAuthenticationProvider authProvider = (DumbAuthenticationProvider) myProviders[0];
+                // for user name has to be user
+                String userName = authProvider.myUserName;
+                String password = authProvider.myPassword;
+                if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                    return userName != null && !"".equals(userName);
+                }
+                // do not look into cache when both password and user name specified
+                // if only username is specified, then do look, but only for that username
+                return password != null && !"".equals(password) && userName != null && !"".equals(userName);
+            }
         }
         return false;
     }
@@ -498,6 +506,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             String fileName = SVNFileUtil.computeChecksum(realm);
             File authFile = new File(dir, fileName);
+            String specifiedUserName = previousAuth != null ? previousAuth.getUserName() : null; 
             if (authFile.exists()) {
                 SVNWCProperties props = new SVNWCProperties(authFile, "");
                 try {
@@ -515,6 +524,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (userName == null || "".equals(userName.trim())) {
                         return null;
                     }
+                    if (specifiedUserName != null && !specifiedUserName.equals(userName)) {
+                        return null;
+                    }
+                    
                     String password = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("password"));
                     password = cipher.decrypt(password);
 
