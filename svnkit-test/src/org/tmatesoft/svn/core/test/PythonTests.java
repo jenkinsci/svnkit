@@ -184,7 +184,7 @@ public class PythonTests {
 	                    ourLoggers[i].startServer("tomcat", url);
 	                }
 	                //wait a little until tomcat
-	                Thread.sleep(1000);
+	                Thread.sleep(5000);
 	                started = true;
 	                runPythonTests(properties, defaultTestSuite, "dav", url, libPath);
 	            } catch (Throwable th) {
