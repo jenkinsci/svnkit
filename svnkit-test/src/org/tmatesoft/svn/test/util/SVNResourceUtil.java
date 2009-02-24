@@ -13,7 +13,7 @@ package org.tmatesoft.svn.test.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ResourceBundle;
+import java.util.*;
 
 import org.tmatesoft.svn.test.environments.AbstractSVNTestEnvironment;
 import org.tmatesoft.svn.test.tests.AbstractSVNTest;
@@ -60,11 +60,16 @@ public class SVNResourceUtil {
         return (AbstractSVNTestEnvironment) instance;
     }
 
-    public static AbstractSVNTest createTest(ResourceBundle bundle) {
-        String className = bundle.getString("test.class");
-        Class[] classes = new Class[]{};
-        Object[] parameters = new Object[]{};
-        Object instance = createClassInstance(className, classes, parameters);
-        return (AbstractSVNTest) instance;
+    public static Map createTests(ResourceBundle bundle) {
+        Map tests = new HashMap();
+        String classNamesString = bundle.getString("test.class");
+        for (StringTokenizer tokenizer = new StringTokenizer(classNamesString); tokenizer.hasMoreTokens();) {
+            String className = tokenizer.nextToken().trim();
+            Class[] classes = new Class[]{};
+            Object[] parameters = new Object[]{};
+            Object instance = createClassInstance(className, classes, parameters);
+            tests.put(className, instance);
+        }
+        return tests;
     }
 }
