@@ -161,7 +161,7 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
                 getSVNEnvironment().getOut().println("  " + property.getName());
                 if (getSVNEnvironment().isVerbose()) {
-                    getSVNEnvironment().getOut().println("    ");
+                    getSVNEnvironment().getOut().print("    ");
                     printProperty(property.getValue());
                     getSVNEnvironment().getOut().println();
                 }
