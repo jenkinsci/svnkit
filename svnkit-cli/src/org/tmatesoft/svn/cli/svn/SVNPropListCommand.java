@@ -159,12 +159,12 @@ public class SVNPropListCommand extends SVNPropertiesCommand {
             }
             for (Iterator plist = props.iterator(); plist.hasNext();) {
                 SVNPropertyData property = (SVNPropertyData) plist.next();
-                getSVNEnvironment().getOut().print("  " + property.getName());
+                getSVNEnvironment().getOut().println("  " + property.getName());
                 if (getSVNEnvironment().isVerbose()) {
-                    getSVNEnvironment().getOut().print(" : ");
+                    getSVNEnvironment().getOut().println("    ");
                     printProperty(property.getValue());
+                    getSVNEnvironment().getOut().println();
                 }
-                getSVNEnvironment().getOut().println();
             }
         }
     }
