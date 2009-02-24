@@ -2382,7 +2382,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	}
     }
     
-    private SVNRemoteDiffEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, 
+    protected SVNRemoteDiffEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, 
     		SVNURL url2, final long revision2, final List childrenWithMergeInfo, final boolean isRollBack, 
     		SVNDepth depth, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, 
             SVNRemoteDiffEditor editor) throws SVNException {
