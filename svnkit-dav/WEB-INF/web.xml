@@ -9,7 +9,7 @@
         <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
         <init-param>
             <param-name>SVNParentPath</param-name>
-            <param-value>%ant.dir%/build/python/python/cmdline/svn-test-work/repositories</param-value>
+            <param-value>%python.test.home%/python/cmdline/svn-test-work/repositories</param-value>
         </init-param>
         <!--<init-param>-->
             <!--<param-name>AuthzSVNAccessFile</param-name>-->
@@ -25,7 +25,7 @@
 	    <servlet-class>org.tmatesoft.svn.core.internal.server.dav.DAVServlet</servlet-class>
 	    <init-param>
 		    <param-name>SVNPath</param-name>
-		    <param-value>%ant.dir%/build/python/python/cmdline/svn-test-work/local_tmp/repos</param-value>
+		    <param-value>%python.test.home%/python/cmdline/svn-test-work/local_tmp/repos</param-value>
 	    </init-param>
 	    <!--<init-param>-->
 		    <!--<param-name>AuthzSVNAccessFile</param-name>-->
