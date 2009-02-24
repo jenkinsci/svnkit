@@ -624,7 +624,7 @@ public class SVNFileUtil {
             OutputStream dos = null;
             try {
                 sis = SVNFileUtil.openFileForReading(src, SVNLogType.WC);
-                dos = SVNFileUtil.openFileForWriting(dst);
+                dos = SVNFileUtil.openFileForWriting(tmpDst);
                 SVNTranslator.copy(sis, dos);
             } catch (IOException e) { 
                 error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
