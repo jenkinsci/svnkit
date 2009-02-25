@@ -319,6 +319,7 @@ public class SVNMergeInfoUtil {
                             }
                         }
                         newRanges.add(ranges[i]);
+                        lastRange = ranges[i];
                     }
                     ranges = (SVNMergeRange[]) newRanges.toArray(new SVNMergeRange[newRanges.size()]); 
                 }
