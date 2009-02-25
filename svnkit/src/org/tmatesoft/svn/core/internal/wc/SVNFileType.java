@@ -34,9 +34,9 @@ public class SVNFileType {
     public static final SVNFileType SYMLINK = new SVNFileType(3);
     public static final SVNFileType DIRECTORY = new SVNFileType(4);
     
-    private static final boolean fastSymlinkResoution = !"false".equalsIgnoreCase(System.getProperty("svnkit.fastSymlinkResolution", System.getProperty("javasvn.fastSymlinkResolution")));
-    private static final boolean canonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
-    private static boolean detectSymlinks = !"false".equalsIgnoreCase(System.getProperty("svnkit.symlinks", System.getProperty("javasvn.symlinks", "true")));
+    private static final boolean ourFastSymlinkResoution = !"false".equalsIgnoreCase(System.getProperty("svnkit.fastSymlinkResolution", System.getProperty("javasvn.fastSymlinkResolution")));
+    private static final boolean ourCanonPathCacheUsed = !"false".equalsIgnoreCase(System.getProperty("sun.io.useCanonCaches"));
+    private static boolean ourDetectSymlinks = !"false".equalsIgnoreCase(System.getProperty("svnkit.symlinks", System.getProperty("javasvn.symlinks", "true")));
     
     private static final Set ADMIN_FILE_PARENTS = new SVNHashSet();
     
@@ -66,15 +66,16 @@ public class SVNFileType {
     }
     
     
-    public static void setSymlinkSupportEnabled(boolean enabled) {
-        detectSymlinks = enabled;
+    public static synchronized void setSymlinkSupportEnabled(boolean enabled) {
+        ourDetectSymlinks = enabled;
     }
     
-    public static boolean isSymlinkSupportEnabled() {
-        return detectSymlinks;
+    public static synchronized boolean isSymlinkSupportEnabled() {
+        return ourDetectSymlinks;
     }
 
     public static SVNFileType getType(File file) {
+        final boolean detectSymlinks = isSymlinkSupportEnabled();
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
@@ -87,9 +88,9 @@ public class SVNFileType {
             }
         }
         if (detectSymlinks && !SVNFileUtil.isWindows && !isAdminFile(file)) {
-            if (canonPathCacheUsed && !fastSymlinkResoution && SVNFileType.isSymlink(file)) {
+            if (ourCanonPathCacheUsed && !ourFastSymlinkResoution && SVNFileType.isSymlink(file)) {
                 return SVNFileType.SYMLINK;
-            } else if (!canonPathCacheUsed || fastSymlinkResoution) {            
+            } else if (!ourCanonPathCacheUsed || ourFastSymlinkResoution) {
                 if (!file.exists()) {
                     File[] children = file.getParentFile() != null ? SVNFileListUtil.listFiles(file.getParentFile()) : null;
                     for (int i = 0; children != null && i < children.length; i++) {
