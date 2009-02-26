@@ -35,8 +35,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -161,7 +159,7 @@ public class DAVPutHandler extends ServletDAVHandler {
                     "The file was PUT successfully, but there was a problem opening the lock database which prevents inheriting locks from the parent resources.", 
                     null);
         }
-        
+
         notifyCreated(resource, lockProvider, resourceState, DAVDepth.DEPTH_ZERO);
 
         handleDAVCreated(null, "Resource", resourceState == DAVResourceState.EXISTS);

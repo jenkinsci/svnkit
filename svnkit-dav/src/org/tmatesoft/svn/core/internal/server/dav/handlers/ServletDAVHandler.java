@@ -204,7 +204,6 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     private HttpServletResponse myResponse;
     private FSCommitter myCommitter;
     private FSDeltaConsumer myDeltaConsumer;
-    private DAVServlet myServlet;
     
     static {
         REPORT_ELEMENTS.add(UPDATE_REPORT);
@@ -792,6 +791,8 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
             
             if (SVNRevision.isValidRevisionNumber(txnCreatedRevision)) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "resource.getRevision(): " + resource.getRevision() + ", txnCreatedRevision: " + txnCreatedRevision);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "resource type: " + resource.getType());
                 if (resource.getRevision() < txnCreatedRevision) {
                     throw new DAVException("resource out of date; try updating", null, HttpServletResponse.SC_CONFLICT, null, SVNLogType.NETWORK, 
                             Level.FINE, null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, 
@@ -1435,6 +1436,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         if (isReplaced) {
+            setResponseStatus(HttpServletResponse.SC_NO_CONTENT);
             return;
         }
 
