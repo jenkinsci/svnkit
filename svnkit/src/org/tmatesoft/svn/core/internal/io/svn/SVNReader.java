@@ -461,7 +461,7 @@ public class SVNReader {
         try {
             r = is.read();
             if (r < 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED);
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
         } catch (IOException e) {
