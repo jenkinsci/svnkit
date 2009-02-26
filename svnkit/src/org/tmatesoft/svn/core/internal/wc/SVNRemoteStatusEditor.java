@@ -440,13 +440,15 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                          myDepth == SVNDepth.FILES || 
                          myDepth == SVNDepth.IMMEDIATES || 
                          myDepth == SVNDepth.INFINITY)) {
-                    SVNAdminArea dir = getWCAccess().retrieve(myPath);
-                    getDirStatus(null, dir, null, SVNDepth.IMMEDIATES, true, true, null, true, this);
-                    SVNStatus thisDirStatus = (SVNStatus)myChildrenStatuses.get(myPath);
-                    if (thisDirStatus != null && thisDirStatus.getEntry() != null && (
-                            myDepth == SVNDepth.UNKNOWN || 
-                            myDepth.compareTo(parentStatus.getEntry().getDepth()) > 0)) {
-                        myDepth = thisDirStatus.getEntry().getDepth();
+                    SVNAdminArea dir = getWCAccess().getAdminArea(myPath);
+                    if (dir != null) {
+                        getDirStatus(null, dir, null, SVNDepth.IMMEDIATES, true, true, null, true, this);
+                        SVNStatus thisDirStatus = (SVNStatus)myChildrenStatuses.get(myPath);
+                        if (thisDirStatus != null && thisDirStatus.getEntry() != null && (
+                                myDepth == SVNDepth.UNKNOWN || 
+                                myDepth.compareTo(parentStatus.getEntry().getDepth()) > 0)) {
+                            myDepth = thisDirStatus.getEntry().getDepth();
+                        }
                     }
                 }
             }       
