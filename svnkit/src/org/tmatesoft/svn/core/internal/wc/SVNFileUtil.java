@@ -90,6 +90,8 @@ public class SVNFileUtil {
         }
     };
 
+    private static boolean ourUseUnsafeCopyOnly = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.no.safe.copy", System.getProperty("javasvn.no.safe.copy", "false")));    
+
     private static String nativeEOLMarker;
     private static String ourGroupID;
     private static String ourUserID;
@@ -158,6 +160,14 @@ public class SVNFileUtil {
         } catch (SecurityException e) {
         } catch (NoSuchMethodException e) {
         }
+    }
+
+    public static synchronized boolean useUnsafeCopyOnly() {
+        return ourUseUnsafeCopyOnly;
+    }
+
+    public static synchronized void setUseUnsafeCopyOnly(boolean useUnsafeCopyOnly) {
+        ourUseUnsafeCopyOnly = useUnsafeCopyOnly;
     }
 
     public static String getIdCommand() {
@@ -545,7 +555,7 @@ public class SVNFileUtil {
         }
         File tmpDst = dst;
         if (SVNFileType.getType(dst) != SVNFileType.NONE) {
-            if (safe) {
+            if (safe && !useUnsafeCopyOnly()) {
                 tmpDst = createUniqueFile(dst.getParentFile(), ".copy", ".tmp", true);
             } else {
                 dst.delete();
