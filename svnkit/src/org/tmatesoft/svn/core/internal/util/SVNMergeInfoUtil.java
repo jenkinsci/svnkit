@@ -274,16 +274,18 @@ public class SVNMergeInfoUtil {
         }
 
         try {
-            while (mergeInfo.length() > 0) { 
-                int ind = mergeInfo.lastIndexOf(":");
+            while (mergeInfo.length() > 0) {
+                int eolInd = mergeInfo.indexOf("\n");
+                eolInd = eolInd < 0 ? mergeInfo.length() - 1 : eolInd;
+                int ind = mergeInfo.lastIndexOf(":", eolInd);
                 if (ind == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                            "Pathname not terminated by '':''");
+                            "Pathname not terminated by ':'");
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 if (ind == 0) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                    "No path preceeding '':''");
+                    "No path preceeding ':'");
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);                    
                 }
                 String path = mergeInfo.substring(0, ind);
