@@ -1631,18 +1631,48 @@ public class SVNUpdateClient extends SVNBasicClient {
             dispatchEvent(event);
             return;
         }
+        
         externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
         externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
+        
+        SVNNodeKind kind = null;
+        if (newURL != null) {
+            long[] rev = { SVNRepository.INVALID_REVISION };
+            SVNRepository repos = createRepository(newURL, null, null, externalPegRevision, externalRevision, rev);
+            kind = repos.checkPath("", rev[0]);
+            if (kind == SVNNodeKind.NONE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' at revision {1} doesn''t exist", 
+                        new Object[] { repos.getLocation(), String.valueOf(rev[0]) });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            
+            if (kind != SVNNodeKind.DIR && kind != SVNNodeKind.FILE) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' at revision {1} is not a file or a directory",
+                        new Object[] { repos.getLocation(), String.valueOf(rev[0]) });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
         
         try {
             setEventPathPrefix("path");
             if (oldURL == null) {
-                target.mkdirs();
-                dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
-                if (externalDiff.isExport) {
-                    doExport(newURL, target, externalPegRevision, externalRevision, null, true, SVNDepth.INFINITY); 
+                if (kind == SVNNodeKind.DIR) {
+                    target.mkdirs();
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, 
+                            SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+                    if (externalDiff.isExport) {
+                        doExport(newURL, target, externalPegRevision, externalRevision, null, true, SVNDepth.INFINITY); 
+                    } else {
+                        doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
+                    }
                 } else {
-                    doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, 
+                            SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+                    if (externalDiff.isExport) {
+                        doExport(newURL, target, externalPegRevision, externalRevision, null, false, SVNDepth.INFINITY);
+                    } else {
+                        
+                    }
                 }
             } else if (newURL == null) {
                 SVNWCAccess wcAccess = createWCAccess();
