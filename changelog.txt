@@ -1,3 +1,12 @@
+== version 1.2.3
+
++ Changes made in Subversion since version 1.5.5 implemented, 
+  all Subversion 1.5.6 features are supported.
++ Merge tracking bugfixes
++ Better interacting with external diff programs
++ svnkit.no.safe.copy system property introduced for file system copy operations
++ Other bugfixes and performance improvements.
+
 == version 1.2.2
 
 + Changes made in Subversion since version 1.5.4 implemented, 
