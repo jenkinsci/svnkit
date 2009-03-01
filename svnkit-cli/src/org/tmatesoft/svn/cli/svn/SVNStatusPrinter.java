@@ -88,6 +88,7 @@ public class SVNStatusPrinter {
                 result.append(status.isCopied() ? '+' : ' ');
                 result.append(status.isSwitched() ? 'S' : ' ');
                 result.append(lockStatus);
+                result.append(' '); // tree status
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
@@ -105,6 +106,7 @@ public class SVNStatusPrinter {
                 result.append(status.isCopied() ? '+' : ' ');
                 result.append(status.isSwitched() ? 'S' : ' ');
                 result.append(lockStatus);
+                result.append(' '); // tree status
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
@@ -119,6 +121,7 @@ public class SVNStatusPrinter {
             result.append(status.isCopied() ? '+' : ' ');
             result.append(status.isSwitched() ? 'S' : ' ');
             result.append(status.getLocalLock() != null ? 'K' : ' ');
+            result.append(' '); // tree status
             result.append(" ");
             result.append(path);
         }
