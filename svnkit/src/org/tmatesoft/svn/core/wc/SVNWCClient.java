@@ -1548,27 +1548,9 @@ public class SVNWCClient extends SVNBasicClient {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         path = path.getAbsoluteFile();
         if (!mkdir && makeParents && path.getParentFile() != null) {
-            // check if parent is versioned. if not, add it.
             SVNWCAccess wcAccess = createWCAccess();
-            File parent = path.getParentFile();
             try {
-                wcAccess.open(parent, false, 0);
-            } catch (SVNException e) {
-                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                    if (parent == null) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    } else if (SVNFileUtil.getAdminDirectoryName().equals(parent.getName())) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RESERVED_FILENAME_SPECIFIED, 
-                                    "''{0}'' ends in a reserved name", path);
-                            SVNErrorManager.error(err, SVNLogType.WC);
-                    } else {
-                        doAdd(parent, false, false, climbUnversionedParents, SVNDepth.INFINITY, false, 
-                                makeParents);
-                    }
-                } else {
-                    throw e;
-                }
+                addParentDirectories(wcAccess, path.getParentFile());
             } finally {
                 wcAccess.close();
             }
@@ -2842,6 +2824,30 @@ public class SVNWCClient extends SVNBasicClient {
             boolean recursive, ISVNPropertyHandler handler) throws SVNException {
         doSetProperty(path, propName, propValue, force, SVNDepth.getInfinityOrEmptyDepth(recursive), handler, 
                 null);
+    }
+    
+    private SVNAdminArea addParentDirectories(SVNWCAccess wcAccess, File path) throws SVNException {
+        try {
+            return wcAccess.open(path, true, 0);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                if (path.getParentFile() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NO_VERSIONED_PARENT);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } else if (SVNFileUtil.getAdminDirectoryName().equals(path.getName())) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RESERVED_FILENAME_SPECIFIED, 
+                                "''{0}'' ends in a reserved name", path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                } else {
+                    File parentPath = path.getParentFile();
+                    SVNAdminArea parentDir = addParentDirectories(wcAccess, parentPath);
+                    SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, SVNDepth.INFINITY);
+                    return wcAccess.getAdminArea(path);
+                }
+            }
+            throw e;
+        }
+        
     }
 
     private void doGetRevisionProperty(SVNRepository repos, String propName, long revNumber, ISVNPropertyHandler handler) throws SVNException {
