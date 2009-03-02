@@ -164,7 +164,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 }
                 ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
                 dir.getWCAccess().setEventHandler(null);                
-                SVNWCManager.add(mergedFile, dir, copyFromURL, copyFromRevision);
+                SVNWCManager.add(mergedFile, dir, copyFromURL, copyFromRevision, null);
                 dir.getWCAccess().setEventHandler(oldEventHandler);
             }
             return SVNStatusType.CHANGED;
@@ -174,7 +174,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 if (!myIsDryRun) {
                     ISVNEventHandler oldEventHandler = dir.getWCAccess().getEventHandler();
                     dir.getWCAccess().setEventHandler(null);                
-                    SVNWCManager.add(mergedFile, dir, copyFromURL, copyFromRevision);
+                    SVNWCManager.add(mergedFile, dir, copyFromURL, copyFromRevision, null);
                     dir.getWCAccess().setEventHandler(oldEventHandler);
                 }
                 if (myIsDryRun) {

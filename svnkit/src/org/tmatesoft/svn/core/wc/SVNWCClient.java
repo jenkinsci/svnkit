@@ -1627,7 +1627,7 @@ public class SVNWCClient extends SVNBasicClient {
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 addFile(path, fileType, dir);
             } else {
-                SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
+                SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED, depth);
             }
         } catch (SVNException e) {
             if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
@@ -2864,7 +2864,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth) throws SVNException {
         checkCancelled();
         try {
-            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED);
+            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, depth);
         } catch (SVNException e) {
             if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
@@ -2909,7 +2909,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void addFile(File path, SVNFileType type, SVNAdminArea dir) throws SVNException {
         ISVNEventHandler handler = dir.getWCAccess().getEventHandler();
         dir.getWCAccess().setEventHandler(null);
-        SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED);
+        SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED, null);
         dir.getWCAccess().setEventHandler(handler);
 
         String mimeType = null;

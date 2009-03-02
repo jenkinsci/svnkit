@@ -56,11 +56,11 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCManager {
 
-    public static void add(File path, SVNAdminArea parentDir, SVNURL copyFromURL, SVNRevision copyFromRev) throws SVNException {
-        add(path, parentDir, copyFromURL, copyFromRev.getNumber());
+    public static void add(File path, SVNAdminArea parentDir, SVNURL copyFromURL, SVNRevision copyFromRev, SVNDepth depth) throws SVNException {
+        add(path, parentDir, copyFromURL, copyFromRev.getNumber(), depth);
     }
 
-    public static void add(File path, SVNAdminArea parentDir, SVNURL copyFromURL, long copyFromRev) throws SVNException {
+    public static void add(File path, SVNAdminArea parentDir, SVNURL copyFromURL, long copyFromRev, SVNDepth depth) throws SVNException {
         SVNWCAccess wcAccess = parentDir.getWCAccess();
         SVNFileType fileType = SVNFileType.getType(path);
         if (fileType == SVNFileType.NONE) {
@@ -139,11 +139,11 @@ public class SVNWCManager {
                 SVNURL newURL = pEntry.getSVNURL().appendPath(name, false);
                 SVNURL rootURL = pEntry.getRepositoryRootURL();
                 String uuid = pEntry.getUUID();
-                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, SVNDepth.INFINITY);
+                ensureAdminAreaExists(path, newURL.toString(), rootURL != null ? rootURL.toString() : null, uuid, 0, depth == null ? SVNDepth.INFINITY : depth);
             } else {
                 SVNURL rootURL = parentEntry.getRepositoryRootURL();
                 ensureAdminAreaExists(path, copyFromURL.toString(), rootURL != null ? rootURL.toString() : null, parentEntry.getUUID(), 
-                        copyFromRev, SVNDepth.INFINITY);
+                        copyFromRev, depth == null ? SVNDepth.INFINITY : depth);
             }
             if (entry == null || entry.isDeleted()) {
                 dir = wcAccess.open(path, true, copyFromURL != null ? SVNWCAccess.INFINITE_DEPTH : 0);
