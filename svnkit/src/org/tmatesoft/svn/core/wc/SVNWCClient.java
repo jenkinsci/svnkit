@@ -1563,7 +1563,7 @@ public class SVNWCClient extends SVNBasicClient {
                                     "''{0}'' ends in a reserved name", path);
                             SVNErrorManager.error(err, SVNLogType.WC);
                     } else {
-                        doAdd(parent, false, false, climbUnversionedParents, SVNDepth.EMPTY, false, 
+                        doAdd(parent, false, false, climbUnversionedParents, SVNDepth.INFINITY, false, 
                                 makeParents);
                     }
                 } else {
