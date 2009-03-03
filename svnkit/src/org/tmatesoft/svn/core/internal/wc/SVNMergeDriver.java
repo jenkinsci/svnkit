@@ -1987,7 +1987,16 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             result[1] = new TreeMap();//implicit merge info
             return result;
         }
-        
+
+        Map implicitMergeInfo = calculateImplicitMergeInfo(repos, url, targetRev, start, end, result);
+        if (implicitMergeInfo != null) {
+            result[1] = implicitMergeInfo;
+        }
+        return result;
+    }
+
+    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end, Map[] result) throws SVNException {
+        Map implicitMergeInfo = null;
         boolean closeSession = false;
         SVNURL sessionURL = null;
         try {
@@ -1997,14 +2006,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 repos = createRepository(url, null, null, false);
                 closeSession = true;
             }
-            
+
             if (targetRev[0] < start) {
-                getLocations(url, null, repos, SVNRevision.create(targetRev[0]), 
-                        SVNRevision.create(start), SVNRevision.UNDEFINED);
+                getLocations(url, null, repos, SVNRevision.create(targetRev[0]), SVNRevision.create(start), SVNRevision.UNDEFINED);
                 targetRev[0] = start;
             }
-            result[1] = getHistoryAsMergeInfo(url, null, SVNRevision.create(targetRev[0]), start, end, 
-            		repos, null);
+            implicitMergeInfo = getHistoryAsMergeInfo(url, null, SVNRevision.create(targetRev[0]), start, end, repos, null);
             if (sessionURL != null) {
                 repos.setLocation(sessionURL, false);
             }
@@ -2013,9 +2020,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 repos.closeSession();
             }
         }
-        return result;
+        return implicitMergeInfo;
     }
-    
+
     private int findNearestAncestor(Object[] childrenWithMergeInfoArray, boolean pathIsOwnAncestor, File path) {
         if (childrenWithMergeInfoArray == null) {
             return 0;

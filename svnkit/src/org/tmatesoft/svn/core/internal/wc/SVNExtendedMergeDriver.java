@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -383,6 +384,50 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
             myRepository1.setLocation(url1, false);
         }
         return new Object[]{myCurrentRemainingRanges, targetMergeInfo, implicitMergeInfo};
+    }
+
+    // Subversion has a bug for file merge:
+    // calculating natural history fails at certain conditions, it should not interrupt merge-ext process anyway
+    // TODO: remove this method after the fix
+    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end, Map[] result) throws SVNException {
+        if (skipExtendedMerge()) {
+            return super.calculateImplicitMergeInfo(repos, url, targetRev, start, end, result);
+        }
+        Map implicitMergeInfo = null;
+        boolean closeSession = false;
+        SVNURL sessionURL = null;
+        try {
+            if (repos != null) {
+                sessionURL = ensureSessionURL(repos, url);
+            } else {
+                repos = createRepository(url, null, null, false);
+                closeSession = true;
+            }
+
+            if (targetRev[0] < start) {
+                try {
+                    getLocations(url, null, repos, SVNRevision.create(targetRev[0]), SVNRevision.create(start), SVNRevision.UNDEFINED);
+                    targetRev[0] = start;
+                } catch (SVNException svne) {
+                    SVNErrorMessage error = svne.getErrorMessage();
+                    if (error.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+                        // Hack! Skipping error to let merge-ext continue.
+                        implicitMergeInfo = new TreeMap();
+                    }
+                }
+            }
+            if (implicitMergeInfo == null) {
+                implicitMergeInfo = getHistoryAsMergeInfo(url, null, SVNRevision.create(targetRev[0]), start, end, repos, null);
+            }
+            if (sessionURL != null) {
+                repos.setLocation(sessionURL, false);
+            }
+        } finally {
+            if (closeSession) {
+                repos.closeSession();
+            }
+        }
+        return implicitMergeInfo;
     }
 
     private static SVNAdminArea retrieve(SVNWCAccess access, File target) throws SVNException {
