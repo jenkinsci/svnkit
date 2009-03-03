@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
 /**
@@ -437,6 +438,20 @@ public class SVNEntry {
         return (String[]) myAttributes.get(SVNProperty.PRESENT_PROPS);
     }
 
+    public String getExternalFilePath() {
+        return (String) myAttributes.get(SVNProperty.FILE_EXTERNAL_PATH);
+    }
+    
+    public SVNRevision getExternalFileRevision() {
+        SVNRevision revision = (SVNRevision) myAttributes.get(SVNProperty.FILE_EXTERNAL_REVISION);
+        return revision;
+    }
+    
+    public SVNRevision getExternalFilePegRevision() {
+        SVNRevision pegRevision = (SVNRevision) myAttributes.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        return pegRevision;
+    }
+    
     public Map asMap() {
         return myAttributes;
     }

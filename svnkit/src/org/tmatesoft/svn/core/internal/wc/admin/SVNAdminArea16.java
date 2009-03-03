@@ -11,7 +11,18 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -24,7 +35,67 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         super(dir);
     }
 
+    protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
+        if (super.readExtraOptions(reader, entryAttrs)) {
+            return true;
+        }
+        
+        String line = reader.readLine();
+        if (isEntryFinished(line)) {
+            return true;
+        }
+        String treeConflictData = parseString(line);
+        if (treeConflictData != null) {
+            //TODO: parse here tree conflict data and put it into the entry object
+        }
+        
+        line = reader.readLine();
+        if (isEntryFinished(line)) {
+            return true;
+        }
+        String fileExternalData = parseString(line);
+        if (fileExternalData != null) {
+            unserializeExternalFileData(entryAttrs, fileExternalData);
+        }
+        
+        return false;
+    }
+
     protected int getFormatVersion() {
         return SVNAdminArea16Factory.WC_FORMAT;
+    }
+    
+    private void unserializeExternalFileData(Map entryAttrs, String rawExternalFileData) throws SVNException {
+        SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        SVNRevision revision = SVNRevision.UNDEFINED;
+        String path = null;
+        if (rawExternalFileData != null) {
+            StringBuffer buffer = new StringBuffer(rawExternalFileData);
+            pegRevision = parseRevision(buffer);
+            revision = parseRevision(buffer);
+            path = buffer.toString();
+        }
+        entryAttrs.put(SVNProperty.FILE_EXTERNAL_PATH, path);
+        entryAttrs.put(SVNProperty.FILE_EXTERNAL_REVISION, revision);
+        entryAttrs.put(SVNProperty.FILE_EXTERNAL_PEG_REVISION, pegRevision);
+    }
+    
+    private SVNRevision parseRevision(StringBuffer str) throws SVNException {
+        int ind = str.indexOf(":"); 
+        if ( ind == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
+                    "Found an unexpected \\0 in the file external ''{0}''", str);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        SVNRevision revision = null;
+        String subStr = str.substring(0, ind);
+        if (subStr.equals(SVNRevision.HEAD.getName())) {
+            revision = SVNRevision.HEAD;
+        } else {
+            revision = SVNRevision.parse(subStr);
+        }
+        str = str.delete(0, ind + 1);
+        return revision;
     }
 }

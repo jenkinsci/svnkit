@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -1665,11 +1666,14 @@ public class SVNUpdateClient extends SVNBasicClient {
                     } else {
                         doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, false);
                     }
-                } else {
+                } else if (kind == SVNNodeKind.FILE) {
                     dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, 
                             SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                     if (externalDiff.isExport) {
+                        boolean ignoreExternals = isIgnoreExternals();
+                        setIgnoreExternals(true);
                         doExport(newURL, target, externalPegRevision, externalRevision, null, false, SVNDepth.INFINITY);
+                        setIgnoreExternals(ignoreExternals);
                     } else {
                         
                     }
@@ -1760,6 +1764,12 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
+    private void switchFileExternal(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNRepository repos) throws SVNException {
+        String target = SVNWCManager.getActualTarget(path);
+        File anchor = "".equals(target) ? path : path.getParentFile();
+        
+    }
+    
     private void deleteExternal(File external) throws SVNException {
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminArea adminArea = wcAccess.open(external, true, SVNWCAccess.INFINITE_DEPTH);

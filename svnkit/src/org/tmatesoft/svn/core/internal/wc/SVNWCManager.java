@@ -834,6 +834,20 @@ public class SVNWCManager {
         cropChildren(wcAccess, fullPath, depth);
     }
     
+    public static String getActualTarget(File file) throws SVNException {
+        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+        try {
+            wcAccess.probeOpen(file, false, 0);
+            SVNFileType fileType = SVNFileType.getType(file);
+            if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) || !wcAccess.isWCRoot(file)) {
+                return file.getName();
+            }
+        } finally {
+            wcAccess.close();
+        }
+        return "";
+    }
+
     private static void cropChildren(SVNWCAccess wcAccess, File path, SVNDepth depth) throws SVNException {
         SVNAdminArea dir = wcAccess.retrieve(path);
         SVNEntry dotEntry = dir.getEntry(dir.getThisDirName(), false);

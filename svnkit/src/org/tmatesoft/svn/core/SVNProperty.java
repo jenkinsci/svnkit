@@ -157,6 +157,21 @@ public class SVNProperty {
     public static final String DEPTH = SVN_ENTRY_PREFIX + "depth";
 
     /**
+     * @since 1.3
+     */
+    public static final String FILE_EXTERNAL_PATH = SVN_ENTRY_PREFIX + "file-external-path";
+
+    /**
+     * @since 1.3
+     */
+    public static final String FILE_EXTERNAL_REVISION = SVN_ENTRY_PREFIX + "file-external-revision";
+
+    /**
+     * @since 1.3
+     */
+    public static final String FILE_EXTERNAL_PEG_REVISION = SVN_ENTRY_PREFIX + "file-external-peg-revision";
+
+    /**
      * An <span class="javastring">"svn:entry:checksum"</span> SVN untweakable metaproperty.
      */
     public static final String CHECKSUM = SVN_ENTRY_PREFIX + "checksum";

@@ -174,7 +174,7 @@ public class SVNCommitUtil {
         Collection dirsToLockRecursively = new SVNHashSet(); 
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
-            String target = getTargetName(baseDir);
+            String target = SVNWCManager.getActualTarget(baseDir);
             if (!"".equals(target)) {
                 // we will have to lock target as well, not only base dir.
                 SVNFileType targetType = SVNFileType.getType(new File(rootPath));
@@ -944,7 +944,7 @@ public class SVNCommitUtil {
 
     private static File adjustRelativePaths(File rootFile, Collection relativePaths) throws SVNException {
         if (relativePaths.contains("")) {
-            String targetName = getTargetName(rootFile);
+            String targetName = SVNWCManager.getActualTarget(rootFile);
             if (!"".equals(targetName) && rootFile.getParentFile() != null) {
                 // there is a versioned parent.
                 rootFile = rootFile.getParentFile();
@@ -964,20 +964,6 @@ public class SVNCommitUtil {
         return rootFile;
     }
 
-    private static String getTargetName(File file) throws SVNException {
-        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-        try {
-            wcAccess.probeOpen(file, false, 0);
-            SVNFileType fileType = SVNFileType.getType(file);
-            if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) || !wcAccess.isWCRoot(file)) {
-                return file.getName();
-            }
-        } finally {
-            wcAccess.close();
-        }
-        return "";
-    }
-    
     private static boolean isRecursiveCommitForced(File directory) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
