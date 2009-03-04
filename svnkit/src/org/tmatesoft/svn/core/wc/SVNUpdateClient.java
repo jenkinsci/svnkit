@@ -408,7 +408,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         path = path.getAbsoluteFile();
         SVNWCAccess wcAccess = createWCAccess();
         SVNAdminAreaInfo adminInfo = null;
-        int admOpenDepth = getLevelsToLockFromDepth(depth);
+        int admOpenDepth = depthIsSticky ? -1 : getLevelsToLockFromDepth(depth);
         try {
             if (isUpdateLocksOnDemand()) {
                 wcAccess.openAnchor(path, true, 0);
