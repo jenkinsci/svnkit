@@ -387,7 +387,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.INFINITY;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", depth);
+                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinity''", depth);
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.SET_DEPTH) {
@@ -402,7 +402,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 mySetDepth = SVNDepth.INFINITY;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", 
+                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinity''", 
                         depth);
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
