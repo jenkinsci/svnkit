@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -276,16 +277,16 @@ public class JavaHLObjectFactory {
         if (conflictDescription == null){
             return null;
         }
-        
-        String basePath = null;
-        String repositoryPath = null;
-        try {
-            basePath = conflictDescription.getMergeFiles().getBasePath();
-            repositoryPath = conflictDescription.getMergeFiles().getRepositoryPath();
-        } catch (SVNException e) {
-        }
 
-        return new ConflictDescriptor(conflictDescription.getMergeFiles().getLocalPath(),
+        SVNMergeFileSet mergeFiles = conflictDescription.getMergeFiles();
+
+        File localFile = mergeFiles.getLocalFile();        
+        File baseFile = mergeFiles.getBaseFile();
+        File theirFile = mergeFiles.getRepositoryFile();
+        File mineFile = mergeFiles.getWCFile();
+        File mergedFile = mergeFiles.getResultFile();
+
+        return new ConflictDescriptor(localFile != null ? localFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
                 getConflictKind(conflictDescription.isPropertyConflict()),
                 getNodeKind(conflictDescription.getNodeKind()),
                 conflictDescription.getPropertyName(),
@@ -293,10 +294,10 @@ public class JavaHLObjectFactory {
                 conflictDescription.getMergeFiles().getMimeType(),
                 getConflictAction(conflictDescription.getConflictAction()),
                 getConflictReason(conflictDescription.getConflictReason()),
-                basePath,
-                repositoryPath,
-                conflictDescription.getMergeFiles().getWCPath(),
-                conflictDescription.getMergeFiles().getResultPath()
+                baseFile != null ? baseFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
+                theirFile != null ? theirFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
+                mineFile != null ? mineFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
+                mergedFile != null ? mergedFile.getAbsolutePath().replace(File.separatorChar, '/') : null
                 );
     }
 
