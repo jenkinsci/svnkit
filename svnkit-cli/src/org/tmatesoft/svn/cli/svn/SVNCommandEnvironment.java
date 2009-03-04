@@ -400,9 +400,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 mySetDepth = SVNDepth.IMMEDIATES;
             } else if (SVNDepth.INFINITY.getName().equals(depth)) {
                 mySetDepth = SVNDepth.INFINITY;
+            } else if (SVNDepth.EXCLUDE.getName().equals(depth)) {
+                mySetDepth = SVNDepth.EXCLUDE;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinity''", 
+                        "''{0}'' is not a valid depth; try ''exclude'', ''empty'', ''files'', ''immediates'', or ''infinity''", 
                         depth);
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
