@@ -85,7 +85,7 @@ public class SVNWCManager {
         boolean replace = false;
         SVNNodeKind kind = SVNFileType.getNodeKind(fileType);
         if (entry != null) {
-            if (copyFromURL == null && !entry.isScheduledForDeletion() && !entry.isDeleted()) {
+            if ((copyFromURL == null && !entry.isScheduledForDeletion() && !entry.isDeleted()) || entry.getDepth() == SVNDepth.EXCLUDE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS, "''{0}'' is already under version control", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             } else if (entry.getKind() != kind) {
@@ -306,7 +306,7 @@ public class SVNWCManager {
         }
 
         excludePaths = excludePaths == null ? Collections.EMPTY_LIST : excludePaths;
-        if (entry.isFile() || (entry.isDirectory() && (entry.isAbsent() || entry.isDeleted()))) {
+        if (entry.isFile() || (entry.isDirectory() && (entry.isAbsent() || entry.isDeleted() || entry.getDepth() == SVNDepth.EXCLUDE))) {
             if (excludePaths.contains(path)) {
                 return;
             }
@@ -353,7 +353,7 @@ public class SVNWCManager {
                     childURL = SVNPathUtil.append(baseURL, SVNEncodingUtil.uriEncode(entry.getName()));
                 }
 
-                if (entry.isFile() || (entry.isAbsent() || entry.isDeleted())) {
+                if (entry.isFile() || (entry.isAbsent() || entry.isDeleted() || entry.getDepth() == SVNDepth.EXCLUDE)) {
                     if (!isExcluded) {
                         write |= dir.tweakEntry(entry.getName(), childURL, rootURL, newRevision, true);
                     }

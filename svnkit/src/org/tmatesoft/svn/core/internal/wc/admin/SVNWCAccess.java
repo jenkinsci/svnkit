@@ -379,6 +379,9 @@ public class SVNWCAccess implements ISVNEventHandler {
                 if (entry.getKind() != SVNNodeKind.DIR  || area.getThisDirName().equals(entry.getName())) {
                     continue;
                 }
+                if (entry.getDepth() == SVNDepth.EXCLUDE) {
+                    continue;
+                }
                 File childPath = new File(path, entry.getName());
                 try {
                     // this method will put created area into our map.

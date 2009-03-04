@@ -640,7 +640,7 @@ public abstract class SVNAdminArea {
                     }
                 } else if (entryName != null && nextEntry.isDirectory()) {
                     File entryPath = getFile(entryName);
-                    if (getWCAccess().isMissing(entryPath)) {
+                    if (getWCAccess().isMissing(entryPath) || nextEntry.getDepth() == SVNDepth.EXCLUDE) {
                         deleteEntry(entryName);
                     } else {
                         try {
@@ -660,8 +660,11 @@ public abstract class SVNAdminArea {
                 }
             }
             if (!getWCAccess().isWCRoot(getRoot())) {
-                getWCAccess().retrieve(getRoot().getParentFile()).deleteEntry(getRoot().getName());
-                getWCAccess().retrieve(getRoot().getParentFile()).saveEntries(false);
+                SVNEntry dirEntryInParent = getWCAccess().retrieve(getRoot().getParentFile()).getEntry(getRoot().getName(), false);
+                if (dirEntryInParent.getDepth() != SVNDepth.EXCLUDE) {
+                    getWCAccess().retrieve(getRoot().getParentFile()).deleteEntry(getRoot().getName());
+                    getWCAccess().retrieve(getRoot().getParentFile()).saveEntries(false);
+                }
             }
             destroyAdminArea();
             if (deleteWorkingFiles && !leftSomething) {
@@ -1223,7 +1226,10 @@ public abstract class SVNAdminArea {
         if (recursive) {
             for (Iterator ents = entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
-                if (getThisDirName().equals(entry.getName())) {
+                if (entry.isThisDir()) {
+                    continue;
+                }
+                if (entry.getDepth() == SVNDepth.EXCLUDE) {
                     continue;
                 }
                 if (entry.getKind() == SVNNodeKind.DIR) {

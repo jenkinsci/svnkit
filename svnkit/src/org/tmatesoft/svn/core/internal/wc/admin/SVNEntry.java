@@ -106,7 +106,8 @@ public class SVNEntry {
     }
 
     public boolean isHidden() {
-        return (isDeleted() || isAbsent()) && !isScheduledForAddition() && !isScheduledForReplacement();
+        return (isDeleted() && !isScheduledForAddition() && !isScheduledForReplacement()) || 
+            isAbsent() || getDepth() == SVNDepth.EXCLUDE;
     }
 
     public boolean isFile() {

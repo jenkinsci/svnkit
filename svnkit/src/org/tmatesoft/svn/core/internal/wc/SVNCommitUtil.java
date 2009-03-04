@@ -801,11 +801,14 @@ public class SVNCommitUtil {
                     dir.getWCAccess().checkCancelled();
                 }
                 SVNEntry currentEntry = (SVNEntry) ents.next();
-                if ("".equals(currentEntry.getName())) {
+                if (currentEntry.isThisDir()) {
                     continue;
                 }
                 // if recursion is forced and entry is explicitly copied, skip it.
                 if (forcedRecursion && currentEntry.isCopied() && currentEntry.getCopyFromURL() != null) {
+                    continue;
+                }
+                if (currentEntry.getDepth() == SVNDepth.EXCLUDE) {
                     continue;
                 }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;

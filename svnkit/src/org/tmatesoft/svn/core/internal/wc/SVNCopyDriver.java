@@ -371,6 +371,9 @@ public class SVNCopyDriver extends SVNBasicClient {
             boolean deleted = entry.isDeleted();
             SVNNodeKind kind = entry.getKind();
             boolean force = false;
+            if (entry.getDepth() == SVNDepth.EXCLUDE) {
+                continue;
+            }
 
             if (entry.isDeleted()) {
                 force = true;
@@ -870,11 +873,18 @@ public class SVNCopyDriver extends SVNBasicClient {
                 probeOpen(dstAccess, new File(topDst), true, 0);
                 for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
                     CopyPair pair = (CopyPair) pairs.next();
-                    SVNEntry dstEntry = dstAccess.getEntry(new File(pair.myDst), false);
-                    if (dstEntry != null && !dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
-                                "Entry for ''{0}'' exists (though the working file is missing)", new File(pair.myDst));
-                        SVNErrorManager.error(err, SVNLogType.WC);
+                    SVNEntry dstEntry = dstAccess.getEntry(new File(pair.myDst), true);
+                    if (dstEntry != null) {
+                        if (dstEntry.getDepth() == SVNDepth.EXCLUDE || dstEntry.isAbsent()) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS,
+                                    "''{0}'' is already under version control", new File(pair.myDst));
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        }
+                        if (!dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                                    "Entry for ''{0}'' exists (though the working file is missing)", new File(pair.myDst));
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        }
                     }
                 }
                 String srcUUID = null;

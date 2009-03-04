@@ -662,6 +662,13 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
             boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
+        if (depth == SVNDepth.UNKNOWN) {
+            depthIsSticky = false;
+        }
+        if (depthIsSticky && depth == SVNDepth.EXCLUDE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Cannot both exclude and switch a path");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         SVNWCAccess wcAccess = createWCAccess();
         try {
             SVNAdminAreaInfo info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
