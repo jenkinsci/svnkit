@@ -769,7 +769,7 @@ public class SVNWCManager {
         if (depth == SVNDepth.INFINITY) {
             return;
         }
-        if (depth.compareTo(SVNDepth.EXCLUDE) >= 0 && depth.compareTo(SVNDepth.INFINITY) < 0) {
+        if (!(depth.compareTo(SVNDepth.EXCLUDE) >= 0 && depth.compareTo(SVNDepth.INFINITY) < 0)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Can only crop a working copy with a restrictive depth");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
