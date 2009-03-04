@@ -860,6 +860,7 @@ public class SVNWCManager {
             if (entry.isThisDir()) {
                 continue;
             }
+            File entryPath = new File(path, entry.getName());
             if (entry.isFile()) {
                 if (depth == SVNDepth.EMPTY) {
                     try {
@@ -867,12 +868,34 @@ public class SVNWCManager {
                     } catch (SVNException e) {
                         handleLeftLocalModificationsError(e);
                     }
+                } else {
+                    continue;
                 }
-                continue;
             } else if (entry.isDirectory()) {
                 if (entry.getDepth() == SVNDepth.EXCLUDE) {
+                    if (depth.compareTo(SVNDepth.IMMEDIATES) < 0) {
+                        dir.deleteEntry(entry.getName());
+                        dir.saveEntries(false);
+                    }
+                    continue;
+                } else if (depth.compareTo(SVNDepth.IMMEDIATES) < 0) {
+                    SVNAdminArea childDir = wcAccess.retrieve(entryPath);
+                    try {
+                        childDir.removeFromRevisionControl(childDir.getThisDirName(), true, false);
+                    } catch (SVNException e) {
+                        handleLeftLocalModificationsError(e);
+                    }
+                } else {
+                    cropChildren(wcAccess, entryPath, SVNDepth.EMPTY);
+                    continue;
                 }
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND, "Unknown entry kind for ''{0}''", entryPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
+            SVNEvent event = SVNEventFactory.createSVNEvent(entryPath, entry.getKind(), null, 
+                    SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_DELETE, null, null, null);
+            wcAccess.handleEvent(event);
         }
     }
 

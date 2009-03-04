@@ -425,6 +425,16 @@ public class SVNUpdateClient extends SVNBasicClient {
                         "Entry ''{0}'' has no URL", anchorArea.getRoot());
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            
+            if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
+                SVNEntry targetEntry = anchorArea.getEntry(adminInfo.getTargetName(), true);
+                if (targetEntry != null && targetEntry.isDirectory()) {
+                    SVNWCManager.crop(adminInfo, depth);
+                    if (depth == SVNDepth.EXCLUDE) {
+                        return -1;
+                    }
+                }
+            }
   
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             
@@ -448,7 +458,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNUpdateEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, allowUnversionedObstructions, 
                     depthIsSticky, depth, preservedExts, fileFetcher, isUpdateLocksOnDemand());
 
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, adminInfo, depth, depthIsSticky);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, adminInfo, depthIsSticky);
 
             try {
                 repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
@@ -675,13 +685,20 @@ public class SVNUpdateClient extends SVNBasicClient {
                         new Object[] {url.toString(), sourceRoot.toString()});
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+            if (depthIsSticky && depth.compareTo(SVNDepth.INFINITY) < 0) {
+                SVNEntry targetEntry = anchorArea.getEntry(info.getTargetName(), true);
+                if (targetEntry != null && targetEntry.isDirectory()) {
+                    SVNWCManager.crop(info, depth);
+                }
+            }
+
             // reparent to the sourceURL
             repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
             SVNUpdateEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), 
                     allowUnversionedObstructions, depthIsSticky, depth, preservedExts, null, false);
 
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depth, depthIsSticky);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depthIsSticky);
             
             String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
             repository.update(url, revNumber, target, depth, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));

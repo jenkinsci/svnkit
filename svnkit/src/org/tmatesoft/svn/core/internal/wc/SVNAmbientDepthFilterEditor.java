@@ -44,22 +44,14 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     private LinkedList myDirs;
 
 
-    public static ISVNEditor wrap(ISVNEditor editor, SVNAdminAreaInfo info, SVNDepth depth, boolean depthIsSticky) throws SVNException {
-        if (depthIsSticky) {
-            SVNWCAccess wcAccess = info.getWCAccess();
-            SVNEntry targetEntry = wcAccess.getEntry(info.getAnchor().getFile(info.getTargetName()), false);
-            if (targetEntry != null && targetEntry.getDepth().compareTo(depth) > 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                        "Shallowing of working copy depths is not yet supported");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        } else {
+    public static ISVNEditor wrap(ISVNEditor editor, SVNAdminAreaInfo info, boolean depthIsSticky) {
+        if (!depthIsSticky) {
             return new SVNAmbientDepthFilterEditor(editor, info.getWCAccess(), info.getAnchor().getRoot(), info.getTargetName());
         }
         return editor;
     }
 
-    public SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
+    private SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
         myDelegate = delegate;
         myWCAccess = wcAccess;
         myAnchor = anchor;

@@ -2769,7 +2769,7 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, 
                     revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
                     depth, changeLists);
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depth, false);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, false);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
                     false, !serverSupportsDepth, depth, false, false, getDebugLog());
