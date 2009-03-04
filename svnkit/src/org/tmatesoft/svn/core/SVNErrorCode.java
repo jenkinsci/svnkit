@@ -348,6 +348,11 @@ public class SVNErrorCode implements Serializable {
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode RA_UUID_MISMATCH = new SVNErrorCode(RA_CATEGORY, 9, "Repository UUID does not match expected UUID");
+
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode RA_REPOS_ROOT_URL_MISMATCH = new SVNErrorCode(RA_CATEGORY, 10, "Repository root URL does not match expected root URL");
     
     public static final SVNErrorCode RA_DAV_SOCK_INIT = new SVNErrorCode(RA_DAV_CATEGORY, 0, "RA layer failed to init socket layer");
     public static final SVNErrorCode RA_DAV_CREATING_REQUEST = new SVNErrorCode(RA_DAV_CATEGORY, 1, "RA layer failed to create HTTP request");

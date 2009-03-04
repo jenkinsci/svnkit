@@ -460,7 +460,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             if (targetRevision >= 0) {
                 if ((depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN) && !isIgnoreExternals()) {
-                    handleExternals(adminInfo.getAnchor().getRoot(), 
+                    handleExternals(wcAccess, adminInfo.getAnchor().getRoot(), 
                             adminInfo.getOldExternals(), adminInfo.getNewExternals(), adminInfo.getDepths(), url, reposRoot, depth, false, true);
                 }
                 dispatchEvent(SVNEventFactory.createSVNEvent(adminInfo.getTarget().getRoot(), 
@@ -688,7 +688,7 @@ public class SVNUpdateClient extends SVNBasicClient {
 
             long targetRevision = editor.getTargetRevision();
             if (targetRevision >= 0 && !isIgnoreExternals() && depth.isRecursive()) {
-                handleExternals(info.getAnchor().getRoot(), info.getOldExternals(), info.getNewExternals(), 
+                handleExternals(wcAccess, info.getAnchor().getRoot(), info.getOldExternals(), info.getNewExternals(), 
                         info.getDepths(), url, sourceRoot, depth, false, false);
             }
             
@@ -1344,7 +1344,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             }
             if (!isIgnoreExternals() && depth == SVNDepth.INFINITY) {
                 Map externals = editor.getCollectedExternals();
-                handleExternals(dstPath, Collections.EMPTY_MAP, externals, Collections.EMPTY_MAP, repository.getLocation(), repository.getRepositoryRoot(true), 
+                handleExternals(null, dstPath, Collections.EMPTY_MAP, externals, Collections.EMPTY_MAP, repository.getLocation(), repository.getRepositoryRoot(true), 
                         depth, true, true);
             }
         } else if (dstKind == SVNNodeKind.FILE) {
@@ -1539,7 +1539,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         return null;
     }
 
-    private void handleExternals(File root, Map oldExternals, Map newExternals, Map depths, SVNURL fromURL, SVNURL rootURL, SVNDepth requestedDepth, boolean isExport, boolean updateUnchanged) throws SVNException {
+    private void handleExternals(SVNWCAccess wcAccess, File root, Map oldExternals, Map newExternals, Map depths, SVNURL fromURL, SVNURL rootURL, 
+            SVNDepth requestedDepth, boolean isExport, boolean updateUnchanged) throws SVNException {
         Set diff = new SVNHashSet();
         if (oldExternals != null) {
             diff.addAll(oldExternals.keySet());
@@ -1589,7 +1590,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 externalDiff.newExternal = (SVNExternal) newParsedExternals.get(path);
                 externalDiff.owner = new File(root, diffPath);
                 externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
-                handleExternalChange(externalDiff.oldExternal.getPath(), externalDiff);
+                handleExternalChange(wcAccess, externalDiff.oldExternal.getPath(), externalDiff);
             }
             for (Iterator paths = newParsedExternals.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
@@ -1598,14 +1599,29 @@ public class SVNUpdateClient extends SVNBasicClient {
                     externalDiff.newExternal = (SVNExternal) newParsedExternals.get(path);
                     externalDiff.owner = new File(root, diffPath);
                     externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
-                    handleExternalChange(externalDiff.newExternal.getPath(), externalDiff);
+                    handleExternalChange(wcAccess, externalDiff.newExternal.getPath(), externalDiff);
                 }
             }
         }
     }
     
-    private void handleExternalChange(String targetDir, ExternalDiff externalDiff) throws SVNException {
+    private void handleExternalChange(SVNWCAccess access, String targetDir, ExternalDiff externalDiff) throws SVNException {
         File target = new File(externalDiff.owner, targetDir);
+        /*
+         * oldURL is null when externals is added: 
+         * jsvn ps svn:externals "path URL" .
+         * jsvn up .
+         * 
+         * 
+         * newURL is null when external is deleted:
+         * jsvn pd svn:externals .
+         * jsvn up .
+         * 
+         * Also newURL or oldURL could be null, when external property is added or 
+         * removed by update itself (someone else has changed it). For instance, 
+         * oldURL is always null during checkout or export operation.
+         */
+        
         SVNURL oldURL = null;
         SVNURL newURL = null;
         String externalDefinition = null;
@@ -1764,10 +1780,38 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    private void switchFileExternal(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNRepository repos) throws SVNException {
+    private void switchFileExternal(SVNWCAccess wcAccess, File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNRepository repos, 
+            SVNURL reposRootURL) throws SVNException {
         String target = SVNWCManager.getActualTarget(path);
         File anchor = "".equals(target) ? path : path.getParentFile();
         
+        boolean closeTarget = false;
+        SVNAdminArea targetArea = null;
+        try {
+            try {
+                targetArea = wcAccess.retrieve(anchor);
+            } catch (SVNException svne) {
+                SVNErrorMessage err = svne.getErrorMessage();
+                if (err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                    SVNWCAccess targetAccess = SVNWCAccess.newInstance(null);
+                    targetArea = targetAccess.open(anchor, true, 1);
+                    closeTarget = true;
+                    SVNURL dstWCReposRootURL = getReposRoot(path, null, SVNRevision.BASE, targetArea, targetAccess);
+                    if (!reposRootURL.equals(dstWCReposRootURL)) {
+                        SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.RA_REPOS_ROOT_URL_MISMATCH, 
+                                "Cannot insert a file external from ''{0}'' into a working copy from a different repository rooted at ''{1}''", 
+                                new Object[] { url, dstWCReposRootURL });
+                        SVNErrorManager.error(err1, SVNLogType.WC);
+                    }
+                } else {
+                    throw svne;
+                }
+            }
+        } finally {
+            if (closeTarget) {
+                targetArea.getWCAccess().close();
+            }
+        }
     }
     
     private void deleteExternal(File external) throws SVNException {
