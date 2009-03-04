@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 
+import java.io.File;
+
 /**
  * The <b>ISVNCommitHandler</b> should be implemented to 
  * provide an ability to manage commit log messages for items to be committed in
@@ -56,4 +58,12 @@ public interface ISVNCommitHandler {
      * @throws SVNException 
      */
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException;
+
+    /**
+     * This method is called during an import to add extra filtering of files.
+     * @param file file to import
+     * @return     <span class="javakeyword">true</span> if the file should be imported and not ignored
+     * @since 1.2 
+     */
+    public boolean accept(File file) throws SVNException;
 }

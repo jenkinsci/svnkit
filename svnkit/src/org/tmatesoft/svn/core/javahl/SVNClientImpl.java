@@ -1840,7 +1840,10 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
                 public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
                     return revisionProperties == null ? new SVNProperties() : revisionProperties;
-                }                    
+                }
+                public boolean accept(File file) throws SVNException {
+                    return true;
+                }
             };
         }
         return null;

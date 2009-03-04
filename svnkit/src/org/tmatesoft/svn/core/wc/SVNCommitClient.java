@@ -1478,6 +1478,9 @@ public class SVNCommitClient extends SVNBasicClient {
             if (useGlobalIgnores && DefaultSVNOptions.isIgnored(getOptions(), file.getName())) {
                 continue;
             }
+            if (!getCommitHandler().accept(file)) {
+                continue;
+            }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
