@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -45,6 +46,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -1110,6 +1112,19 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         if (unassociated) {
             getWCAccess().closeAdminArea(dirFile.getParentFile());
         }
+    }
+
+    public boolean hasTreeConflicts(String name) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return false;
+    }
+
+    public void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
     }
 
     protected boolean isEntryPropertyApplicable(String propName) {

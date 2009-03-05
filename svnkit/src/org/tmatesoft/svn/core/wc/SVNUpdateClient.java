@@ -1810,11 +1810,17 @@ public class SVNUpdateClient extends SVNBasicClient {
         File anchor = "".equals(target) ? path : path.getParentFile();
         
         boolean closeTarget = false;
+        boolean revertFile = false;
+        boolean removeFromRevisionControl = false;
+        boolean unlinkFile = false;
+        boolean ignoreExternals = isIgnoreExternals();
+        SVNException exception = null;
         SVNAdminArea targetArea = null;
         try {
             try {
                 targetArea = wcAccess.retrieve(anchor);
             } catch (SVNException svne) {
+                exception = svne;
                 SVNErrorMessage err = svne.getErrorMessage();
                 if (err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     SVNWCAccess targetAccess = SVNWCAccess.newInstance(null);
@@ -1831,7 +1837,73 @@ public class SVNUpdateClient extends SVNBasicClient {
                     throw svne;
                 }
             }
+            
+            SVNEntry entry = targetArea.getEntry(target, false);
+            if (entry != null) {
+                if (entry.getExternalFilePath() == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED, 
+                            "The file external from ''{0}'' cannot overwrite the existing versioned item at ''{1}''", 
+                            new Object[] { url, path });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            } else {
+                SVNEntry anchorEntry = targetArea.getVersionedEntry(targetArea.getThisDirName(), false);
+                boolean hasPropConflicts = targetArea.hasPropConflict(targetArea.getThisDirName());
+                boolean hasTreeConflicts = targetArea.hasTreeConflicts(targetArea.getThisDirName());
+                if (hasPropConflicts || hasTreeConflicts) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                            "The file external from ''{0}'' cannot be written to ''{1}'' while ''{2}'' remains in conflict", 
+                            new Object[] { url, path, anchor });
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                
+                if (!path.exists()) {
+                    SVNFileUtil.createEmptyFile(path);
+                    unlinkFile = true;
+                }
+
+                SVNWCManager.add(path, targetArea, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
+                revertFile = true;
+                
+                targetArea.setFileExternalLocation(target, url, pegRevision, revision, reposRootURL);
+            }
+            
+            setIgnoreExternals(true);
+            doSwitch(path, url, pegRevision, revision, SVNDepth.EMPTY, false, false);
+            
+            if (unlinkFile) {
+                revertFile = false;
+                removeFromRevisionControl = true;
+                if (exception != null) {
+                    throw exception;
+                }
+            }
+        } catch (SVNException svne) {
+            if (revertFile) {
+                SVNWCClient wcClient = new SVNWCClient(getRepositoryPool(), getOptions());
+                try {
+                    wcClient.doRevert(new File[] { path }, SVNDepth.EMPTY, null);
+                } catch (SVNException svne2) {
+                    //ignore
+                }
+            }
+            if (removeFromRevisionControl) {
+                try {
+                    targetArea.removeFromRevisionControl(target, true, false);
+                } catch (SVNException svne2) {
+                    //ignore
+                }
+            }
+            if (unlinkFile) {
+                try {
+                    SVNFileUtil.deleteFile(path);
+                } catch (SVNException svne2) {
+                    //ignore
+                }
+            }
+            
         } finally {
+            setIgnoreExternals(ignoreExternals);
             if (closeTarget) {
                 targetArea.getWCAccess().close();
             }

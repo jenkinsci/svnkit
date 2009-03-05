@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -129,6 +130,10 @@ public abstract class SVNAdminArea {
 
     public abstract void handleKillMe() throws SVNException;
 
+    public abstract boolean hasTreeConflicts(String name) throws SVNException;
+
+    public abstract void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException;
+    
     public void updateURL(String rootURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = getWCAccess();
         for (Iterator ents = entries(false); ents.hasNext();) {
@@ -801,11 +806,15 @@ public abstract class SVNAdminArea {
                     atts.remove();
                     continue;                                        
                 }
-                String value = (String) attributes.get(attName);
-                if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
-                    String[] propsArray = SVNAdminArea.fromString(value, " ");
-                    entryAttrs.put(attName, propsArray);
-                    continue;
+                
+                Object value = attributes.get(attName);
+                if (value instanceof String) {
+                    String strValue = (String) value;
+                    if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
+                        String[] propsArray = SVNAdminArea.fromString(strValue, " ");
+                        entryAttrs.put(attName, propsArray);
+                        continue;
+                    }
                 }
 
                 if (value != null) {

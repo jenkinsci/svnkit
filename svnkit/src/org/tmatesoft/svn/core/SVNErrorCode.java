@@ -437,6 +437,12 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode CLIENT_NOT_READY_TO_MERGE = new SVNErrorCode(CLIENT_CATEGORY, 16, 
             "Working copy and merge source not ready for reintegration");
+
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED = new SVNErrorCode(CLIENT_CATEGORY, 17, 
+            "A file external cannot overwrite an existing versioned item");
     
     public static final SVNErrorCode BASE = new SVNErrorCode(MISC_CATEGORY, 0, "A problem occurred; see later errors for details");
     public static final SVNErrorCode PLUGIN_LOAD_FAILURE = new SVNErrorCode(MISC_CATEGORY, 1, "Failure loading plugin");    

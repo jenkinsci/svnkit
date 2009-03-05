@@ -14,12 +14,14 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -33,6 +35,31 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
 
     public SVNAdminArea16(File dir) {
         super(dir);
+    }
+
+    public boolean hasTreeConflicts(String name) throws SVNException {
+        //TODO: implement
+        return false;
+    }
+
+    public void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException {
+        Map attributes = new HashMap();
+        if (url != null) {
+            String strURL = url.toDecodedString();
+            String reposRootStrURL = reposRootURL.toDecodedString();
+            String path = strURL.substring(reposRootStrURL.length());
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+            attributes.put(SVNProperty.FILE_EXTERNAL_PEG_REVISION, pegRevision);
+            attributes.put(SVNProperty.FILE_EXTERNAL_REVISION, revision);
+            attributes.put(SVNProperty.FILE_EXTERNAL_PATH, path);
+        } else {
+            attributes.put(SVNProperty.FILE_EXTERNAL_PEG_REVISION, SVNRevision.UNDEFINED);
+            attributes.put(SVNProperty.FILE_EXTERNAL_REVISION, SVNRevision.UNDEFINED);
+            attributes.put(SVNProperty.FILE_EXTERNAL_PATH, null);
+        }
+        modifyEntry(name, attributes, true, false);
     }
 
     protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
