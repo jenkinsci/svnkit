@@ -46,6 +46,8 @@ public class SVNSSHConnector implements ISVNConnector {
     private static final String SVNSERVE_COMMAND = "svnserve -t";
     private static final String SVNSERVE_COMMAND_WITH_USER_NAME = "svnserve -t --tunnel-user ";
     
+    private static final boolean ourIsUseSessionPing = Boolean.getBoolean("svnkit.ssh2.ping");
+    
     private Session mySession;
     private InputStream myInputStream;
     private OutputStream myOutputStream;
@@ -212,6 +214,9 @@ public class SVNSSHConnector implements ISVNConnector {
         }
         if (myConnection == null || myConnection.isDisposed()) {
             return true;
+        }
+        if (!ourIsUseSessionPing) {
+            return false;
         }
         if (!myIsUseSessionPing) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "SKIPPING CHANNEL PING, IT HAS BEEN DISABLED");
