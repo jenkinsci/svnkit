@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea16Factory extends SVNAdminArea14Factory {
@@ -26,7 +26,7 @@ public class SVNAdminArea16Factory extends SVNAdminArea14Factory {
     public static final int WC_FORMAT = SVNAdminAreaFactory.WC_FORMAT_16;
 
     protected void doCreateVersionedDirectory(File path, String url, String rootURL, String uuid, long revNumber, SVNDepth depth) throws SVNException {
-        SVNAdminArea adminArea = new SVNAdminArea15(path); 
+        SVNAdminArea adminArea = new SVNAdminArea16(path); 
         adminArea.createVersionedDirectory(path, url, rootURL, uuid, revNumber, true, depth);
     }
 
@@ -34,14 +34,14 @@ public class SVNAdminArea16Factory extends SVNAdminArea14Factory {
         if (version != getSupportedVersion()) {
             return null;
         }
-        return new SVNAdminArea15(path);
+        return new SVNAdminArea16(path);
     }
 
     protected SVNAdminArea doChangeWCFormat(SVNAdminArea adminArea) throws SVNException {
-        if (adminArea == null || adminArea.getClass() == SVNAdminArea15.class) {
+        if (adminArea == null || adminArea.getClass() == SVNAdminArea16.class) {
             return adminArea;
         }
-        SVNAdminArea15 newAdminArea = new SVNAdminArea15(adminArea.getRoot());
+        SVNAdminArea16 newAdminArea = new SVNAdminArea16(adminArea.getRoot());
         newAdminArea.setLocked(true);
         return newAdminArea.formatWC(adminArea);
     }
