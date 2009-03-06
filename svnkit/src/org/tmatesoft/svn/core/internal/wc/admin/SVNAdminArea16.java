@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +29,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea16 extends SVNAdminArea15 {
@@ -88,8 +89,50 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         return false;
     }
 
+    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        String treeConflictData = (String) entryAttrs.get(SVNProperty.TREE_CONFLICT_DATA); 
+        if (writeString(writer, treeConflictData, emptyFields)) {
+            emptyFields = 0;
+        } else {
+            ++emptyFields;
+        }
+        
+        String serializedFileExternalData = serializeExternalFileData(entryAttrs);
+        if (writeString(writer, serializedFileExternalData, emptyFields)) {
+            emptyFields = 0;
+        } else {
+            ++emptyFields;
+        }
+    }
+
     protected int getFormatVersion() {
         return SVNAdminArea16Factory.WC_FORMAT;
+    }
+    
+    private String serializeExternalFileData(Map entryAttrs) throws SVNException {
+        String representation = null;
+        String path = (String) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PATH);
+        SVNRevision revision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_REVISION);
+        SVNRevision pegRevision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        if (path != null) {
+            String revStr = asString(revision, path);
+            String pegRevStr = asString(pegRevision, path);
+            representation = pegRevStr + ":" + revStr + ":" + path;
+        }
+        return representation;
+    }
+    
+    private String asString(SVNRevision revision, String path) throws SVNException {
+        if (revision == SVNRevision.HEAD || 
+                SVNRevision.isValidRevisionNumber(revision.getNumber())) {
+            return revision.toString();
+        }
+        
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Illegal file external revision kind {0} for path ''{1}''", 
+        
+                new Object[] { revision.toString(), path });
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return null;
     }
     
     private void unserializeExternalFileData(Map entryAttrs, String rawExternalFileData) throws SVNException {

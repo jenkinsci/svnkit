@@ -838,8 +838,10 @@ public class SVNWCManager {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {
             wcAccess.probeOpen(file, false, 0);
-            SVNFileType fileType = SVNFileType.getType(file);
-            if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) || !wcAccess.isWCRoot(file)) {
+            boolean isWCRoot = wcAccess.isWCRoot(file);
+            SVNEntry entry = wcAccess.getEntry(file, false);
+            SVNNodeKind kind = entry != null? entry.getKind() : SVNNodeKind.FILE;
+            if (kind == SVNNodeKind.FILE || !isWCRoot) {
                 return file.getName();
             }
         } finally {

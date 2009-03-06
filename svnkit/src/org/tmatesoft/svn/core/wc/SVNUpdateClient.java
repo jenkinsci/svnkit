@@ -1629,23 +1629,22 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * oldURL is null when externals is added: 
+     * jsvn ps svn:externals "path URL" .
+     * jsvn up .
+     * 
+     * 
+     * newURL is null when external is deleted:
+     * jsvn pd svn:externals .
+     * jsvn up .
+     * 
+     * Also newURL or oldURL could be null, when external property is added or 
+     * removed by update itself (someone else has changed it). For instance, 
+     * oldURL is always null during checkout or export operation.
+     */
     private void handleExternalChange(SVNWCAccess access, String targetDir, ExternalDiff externalDiff) throws SVNException {
         File target = new File(externalDiff.owner, targetDir);
-        /*
-         * oldURL is null when externals is added: 
-         * jsvn ps svn:externals "path URL" .
-         * jsvn up .
-         * 
-         * 
-         * newURL is null when external is deleted:
-         * jsvn pd svn:externals .
-         * jsvn up .
-         * 
-         * Also newURL or oldURL could be null, when external property is added or 
-         * removed by update itself (someone else has changed it). For instance, 
-         * oldURL is always null during checkout or export operation.
-         */
-        
         SVNURL oldURL = null;
         SVNURL newURL = null;
         String externalDefinition = null;
@@ -1676,20 +1675,23 @@ public class SVNUpdateClient extends SVNBasicClient {
         externalRevision = revs.length > 0 && revs[0] != null ? revs[0] : externalRevision;
         externalPegRevision = revs.length > 1 && revs[1] != null ? revs[1] : externalPegRevision;
         
+        SVNRepository repository = null;
         SVNNodeKind kind = null;
+        SVNURL reposRootURL = null;
         if (newURL != null) {
             long[] rev = { SVNRepository.INVALID_REVISION };
-            SVNRepository repos = createRepository(newURL, null, null, externalPegRevision, externalRevision, rev);
-            kind = repos.checkPath("", rev[0]);
+            repository = createRepository(newURL, null, null, externalPegRevision, externalRevision, rev);
+            reposRootURL = repository.getRepositoryRoot(false);
+            kind = repository.checkPath("", rev[0]);
             if (kind == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' at revision {1} doesn''t exist", 
-                        new Object[] { repos.getLocation(), String.valueOf(rev[0]) });
+                        new Object[] { repository.getLocation(), String.valueOf(rev[0]) });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             
             if (kind != SVNNodeKind.DIR && kind != SVNNodeKind.FILE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' at revision {1} is not a file or a directory",
-                        new Object[] { repos.getLocation(), String.valueOf(rev[0]) });
+                        new Object[] { repository.getLocation(), String.valueOf(rev[0]) });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
@@ -1715,7 +1717,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                         doExport(newURL, target, externalPegRevision, externalRevision, null, false, SVNDepth.INFINITY);
                         setIgnoreExternals(ignoreExternals);
                     } else {
-                        
+                        switchFileExternal(access, target, newURL, externalPegRevision, externalRevision, reposRootURL);
                     }
                 }
             } else if (newURL == null) {
@@ -1804,7 +1806,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
 
-    private void switchFileExternal(SVNWCAccess wcAccess, File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNRepository repos, 
+    private void switchFileExternal(SVNWCAccess wcAccess, File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, 
             SVNURL reposRootURL) throws SVNException {
         String target = SVNWCManager.getActualTarget(path);
         File anchor = "".equals(target) ? path : path.getParentFile();
@@ -1813,14 +1815,13 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean revertFile = false;
         boolean removeFromRevisionControl = false;
         boolean unlinkFile = false;
+        boolean cleanUp = false;
         boolean ignoreExternals = isIgnoreExternals();
-        SVNException exception = null;
         SVNAdminArea targetArea = null;
         try {
             try {
                 targetArea = wcAccess.retrieve(anchor);
             } catch (SVNException svne) {
-                exception = svne;
                 SVNErrorMessage err = svne.getErrorMessage();
                 if (err.getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     SVNWCAccess targetAccess = SVNWCAccess.newInstance(null);
@@ -1847,7 +1848,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             } else {
-                SVNEntry anchorEntry = targetArea.getVersionedEntry(targetArea.getThisDirName(), false);
+                targetArea.getVersionedEntry(targetArea.getThisDirName(), false);
                 boolean hasPropConflicts = targetArea.hasPropConflict(targetArea.getThisDirName());
                 boolean hasTreeConflicts = targetArea.hasTreeConflicts(targetArea.getThisDirName());
                 if (hasPropConflicts || hasTreeConflicts) {
@@ -1862,46 +1863,60 @@ public class SVNUpdateClient extends SVNBasicClient {
                     unlinkFile = true;
                 }
 
-                SVNWCManager.add(path, targetArea, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
+                try {
+                    SVNWCManager.add(path, targetArea, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
+                } catch (SVNException svne) {
+                    cleanUp = true;
+                    throw svne;
+                }
                 revertFile = true;
                 
-                targetArea.setFileExternalLocation(target, url, pegRevision, revision, reposRootURL);
+                try {
+                    targetArea.setFileExternalLocation(target, url, pegRevision, revision, reposRootURL);
+                } catch (SVNException svne) {
+                    cleanUp = true;
+                    throw svne;
+                }
             }
             
             setIgnoreExternals(true);
-            doSwitch(path, url, pegRevision, revision, SVNDepth.EMPTY, false, false);
+            try {
+                doSwitch(path, url, pegRevision, revision, SVNDepth.EMPTY, false, false);
+            } catch (SVNException svne) {
+                cleanUp = true;
+                throw svne;
+            }
             
             if (unlinkFile) {
                 revertFile = false;
                 removeFromRevisionControl = true;
-                if (exception != null) {
-                    throw exception;
-                }
             }
         } catch (SVNException svne) {
-            if (revertFile) {
-                SVNWCClient wcClient = new SVNWCClient(getRepositoryPool(), getOptions());
-                try {
-                    wcClient.doRevert(new File[] { path }, SVNDepth.EMPTY, null);
-                } catch (SVNException svne2) {
-                    //ignore
+            if (cleanUp) {
+                if (revertFile) {
+                    SVNWCClient wcClient = new SVNWCClient(getRepositoryPool(), getOptions());
+                    try {
+                        wcClient.doRevert(new File[] { path }, SVNDepth.EMPTY, null);
+                    } catch (SVNException svne2) {
+                        //ignore
+                    }
+                }
+                if (removeFromRevisionControl) {
+                    try {
+                        targetArea.removeFromRevisionControl(target, true, false);
+                    } catch (SVNException svne2) {
+                        //ignore
+                    }
+                }
+                if (unlinkFile) {
+                    try {
+                        SVNFileUtil.deleteFile(path);
+                    } catch (SVNException svne2) {
+                        //ignore
+                    }
                 }
             }
-            if (removeFromRevisionControl) {
-                try {
-                    targetArea.removeFromRevisionControl(target, true, false);
-                } catch (SVNException svne2) {
-                    //ignore
-                }
-            }
-            if (unlinkFile) {
-                try {
-                    SVNFileUtil.deleteFile(path);
-                } catch (SVNException svne2) {
-                    //ignore
-                }
-            }
-            
+            throw svne;
         } finally {
             setIgnoreExternals(ignoreExternals);
             if (closeTarget) {
