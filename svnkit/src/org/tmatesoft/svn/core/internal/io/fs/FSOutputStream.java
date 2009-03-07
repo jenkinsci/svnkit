@@ -216,7 +216,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setTxnId(myRevNode.getId().getTxnID());
             rep.setRevision(SVNRepository.INVALID_REVISION);
 
-            rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
+            rep.setMD5HexDigest(SVNFileUtil.toHexDigest(myDigest));
 
             myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
             myRevNode.setTextRepresentation(rep);

@@ -1053,7 +1053,7 @@ public abstract class SVNAdminArea {
 
     protected abstract boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException;
 
-    protected abstract void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException;
+    protected abstract int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException;
 
     protected SVNAdminArea(File dir){
         myDirectory = dir;

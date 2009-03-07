@@ -89,7 +89,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         return false;
     }
 
-    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        emptyFields = super.writeExtraOptions(writer, entryName, entryAttrs, emptyFields);
         String treeConflictData = (String) entryAttrs.get(SVNProperty.TREE_CONFLICT_DATA); 
         if (writeString(writer, treeConflictData, emptyFields)) {
             emptyFields = 0;
@@ -103,6 +104,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         } else {
             ++emptyFields;
         }
+        return emptyFields;
     }
 
     protected int getFormatVersion() {

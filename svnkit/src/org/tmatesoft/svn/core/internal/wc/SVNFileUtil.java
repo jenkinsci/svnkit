@@ -945,23 +945,23 @@ public class SVNFileUtil {
             return null;
         }
 
-        String hexMD5Digest = hexDigest.toLowerCase();
+        hexDigest = hexDigest.toLowerCase();
 
-        int digestLength = hexMD5Digest.length() / 2;
+        int digestLength = hexDigest.length() / 2;
 
-        if (digestLength == 0 || 2 * digestLength != hexMD5Digest.length()) {
+        if (digestLength == 0 || 2 * digestLength != hexDigest.length()) {
             return null;
         }
 
         byte[] digest = new byte[digestLength];
-        for (int i = 0; i < hexMD5Digest.length() / 2; i++) {
-            if (!isHex(hexMD5Digest.charAt(2 * i)) || !isHex(hexMD5Digest.charAt(2 * i + 1))) {
+        for (int i = 0; i < hexDigest.length() / 2; i++) {
+            if (!isHex(hexDigest.charAt(2 * i)) || !isHex(hexDigest.charAt(2 * i + 1))) {
                 return null;
             }
 
-            int hi = Character.digit(hexMD5Digest.charAt(2 * i), 16) << 4;
+            int hi = Character.digit(hexDigest.charAt(2 * i), 16) << 4;
 
-            int lo = Character.digit(hexMD5Digest.charAt(2 * i + 1), 16);
+            int lo = Character.digit(hexDigest.charAt(2 * i + 1), 16);
             Integer ib = new Integer(hi | lo);
             byte b = ib.byteValue();
 

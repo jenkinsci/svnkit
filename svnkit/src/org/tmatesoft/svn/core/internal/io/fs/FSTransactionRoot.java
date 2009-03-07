@@ -526,7 +526,7 @@ public class FSTransactionRoot extends FSRoot {
                     long size = writeHashRepresentation(unparsedEntries, protoFile, checksum);
                     String hexDigest = SVNFileUtil.toHexDigest(checksum);
                     textRep.setSize(size);
-                    textRep.setHexDigest(hexDigest);
+                    textRep.setMD5HexDigest(hexDigest);
                     textRep.setExpandedSize(textRep.getSize());
                 } catch (NoSuchAlgorithmException nsae) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
@@ -551,7 +551,7 @@ public class FSTransactionRoot extends FSRoot {
                 long size = writeHashRepresentation(props, protoFile, checksum);
                 String hexDigest = SVNFileUtil.toHexDigest(checksum);
                 propsRep.setSize(size);
-                propsRep.setHexDigest(hexDigest);
+                propsRep.setMD5HexDigest(hexDigest);
                 propsRep.setTxnId(null);
                 propsRep.setRevision(revision);
                 propsRep.setExpandedSize(size);

@@ -27,15 +27,17 @@ public class FSRepresentation {
     private long myOffset;
     private long mySize;
     private long myExpandedSize;
-    private String myHexDigest;
+    private String myMD5HexDigest;
+    private String mySHA1HexDigest;
     private String myTxnId;
-
+    private String myUniquifier;
+    
     public FSRepresentation(long revision, long offset, long size, long expandedSize, String hexDigest) {
         myRevision = revision;
         myOffset = offset;
         mySize = size;
         myExpandedSize = expandedSize;
-        myHexDigest = hexDigest;
+        myMD5HexDigest = hexDigest;
     }
 
     public FSRepresentation(FSRepresentation representation) {
@@ -43,7 +45,7 @@ public class FSRepresentation {
         myOffset = representation.getOffset();
         mySize = representation.getSize();
         myExpandedSize = representation.getExpandedSize();
-        myHexDigest = representation.getHexDigest();
+        myMD5HexDigest = representation.getMD5HexDigest();
         myTxnId = representation.myTxnId;
     }
 
@@ -52,7 +54,7 @@ public class FSRepresentation {
         myOffset = -1;
         mySize = -1;
         myExpandedSize = -1;
-        myHexDigest = null;
+        myMD5HexDigest = null;
     }
 
     public void setRevision(long rev) {
@@ -71,8 +73,25 @@ public class FSRepresentation {
         myExpandedSize = expandedSize;
     }
 
-    public void setHexDigest(String hexDigest) {
-        myHexDigest = hexDigest;
+    public void setMD5HexDigest(String hexDigest) {
+        myMD5HexDigest = hexDigest;
+    }
+
+    public String getSHA1HexDigest() {
+        return mySHA1HexDigest;
+    }
+    
+    public void setSHA1HexDigest(String hexDigest) {
+        mySHA1HexDigest = hexDigest;
+    }
+
+    public String getUniquifier() {
+        return myUniquifier;
+    }
+
+    
+    public void setUniquifier(String uniquifier) {
+        myUniquifier = uniquifier;
     }
 
     public long getRevision() {
@@ -91,8 +110,8 @@ public class FSRepresentation {
         return myExpandedSize;
     }
 
-    public String getHexDigest() {
-        return myHexDigest;
+    public String getMD5HexDigest() {
+        return myMD5HexDigest;
     }
 
     public static boolean compareRepresentations(FSRepresentation r1, FSRepresentation r2) {
@@ -113,7 +132,7 @@ public class FSRepresentation {
     }
 
     public String toString() {
-        return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myHexDigest;
+        return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myMD5HexDigest;
     }
 
     public String getTxnId() {

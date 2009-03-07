@@ -50,7 +50,7 @@ public class FSInputStream extends InputStream {
         myCombiner = combiner;
         myChunkIndex = 0;
         isChecksumFinalized = false;
-        myHexChecksum = representation.getHexDigest();
+        myHexChecksum = representation.getMD5HexDigest();
         myOffset = 0;
         myLength = representation.getExpandedSize();
         try {

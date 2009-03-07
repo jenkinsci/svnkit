@@ -473,17 +473,54 @@ public class FSRevisionNode {
         }
         rep.setExpandedSize(expandedSize);
 
-        String hexDigest = representation.substring(delimiterInd + 1);
-        if (hexDigest.length() != 32 || SVNFileUtil.fromHexDigest(hexDigest) == null) {
+        representation = representation.substring(delimiterInd + 1);
+        delimiterInd = representation.indexOf(' ');
+        String hexMD5Digest = null;
+        if (delimiterInd == -1) {
+            hexMD5Digest = representation;
+        } else {
+            hexMD5Digest = representation.substring(0, delimiterInd);
+        }
+        
+        if (hexMD5Digest.length() != 32 || SVNFileUtil.fromHexDigest(hexMD5Digest) == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        rep.setHexDigest(hexDigest);
+        rep.setMD5HexDigest(hexMD5Digest);
+        
         if (isData) {
             revNode.setTextRepresentation(rep);
         } else {
             revNode.setPropsRepresentation(rep);
         }
+        
+        if (delimiterInd == -1) {
+            return;
+        }
+        
+        representation = representation.substring(delimiterInd + 1);
+        delimiterInd = representation.indexOf(' ');
+        String hexSHA1Digest = null;
+        if (delimiterInd == -1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        hexSHA1Digest = representation.substring(0, delimiterInd);
+        if (hexSHA1Digest.length() != 40 || SVNFileUtil.fromHexDigest(hexSHA1Digest) == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        representation = representation.substring(delimiterInd + 1);
+        delimiterInd = representation.indexOf(' ');
+        String uniquifier = null;
+        if (delimiterInd != -1) {
+            uniquifier = representation.substring(0, delimiterInd);
+        } else {
+            uniquifier = representation;
+        }
+        
+        rep.setUniquifier(uniquifier);
     }
 
     private static void parseCopyFrom(String copyfrom, FSRevisionNode revNode) throws SVNException {
@@ -595,7 +632,7 @@ public class FSRevisionNode {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get checksum of a *non*-file node");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        return getTextRepresentation() != null ? getTextRepresentation().getHexDigest() : "";
+        return getTextRepresentation() != null ? getTextRepresentation().getMD5HexDigest() : "";
     }
 
     public long getFileLength() throws SVNException {

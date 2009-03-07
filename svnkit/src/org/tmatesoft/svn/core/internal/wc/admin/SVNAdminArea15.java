@@ -77,7 +77,9 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         return false;
     }
 
-    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        emptyFields = super.writeExtraOptions(writer, entryName, entryAttrs, emptyFields);
+        
         String changelist = (String) entryAttrs.get(SVNProperty.CHANGELIST); 
         if (writeString(writer, changelist, emptyFields)) {
             emptyFields = 0;
@@ -104,11 +106,14 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         boolean isSubDir = !isThisDir && SVNProperty.KIND_DIR.equals(entryAttrs.get(SVNProperty.KIND)); 
         String depth = (String) entryAttrs.get(SVNProperty.DEPTH);
         if (!isSubDir && SVNDepth.fromString(depth) != SVNDepth.INFINITY) {
-            writeValue(writer, depth, emptyFields);
-            emptyFields = 0;
-        } else {
-            ++emptyFields;
-        }
+            if (writeValue(writer, depth, emptyFields)) {
+                emptyFields = 0;    
+            } else {
+                ++emptyFields;
+            }
+        } 
+        
+        return emptyFields;
     }
 
     protected int getFormatVersion() {

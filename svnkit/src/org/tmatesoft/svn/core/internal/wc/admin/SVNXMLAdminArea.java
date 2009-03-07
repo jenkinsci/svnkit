@@ -1135,7 +1135,8 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return false;
     }
 
-    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        return emptyFields;
     }
 
 }

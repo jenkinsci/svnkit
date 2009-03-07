@@ -94,14 +94,17 @@ public class FSFS {
     public static final int DIGEST_SUBDIR_LEN = 3;
     public static final int REPOSITORY_FORMAT = 5;
     public static final int REPOSITORY_FORMAT_LEGACY = 3;
-    public static final int DB_FORMAT = 3;
+    public static final int DB_FORMAT = 4;
     public static final int DB_FORMAT_LOW = 1;
     public static final int LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT = 3;
     public static final int MIN_CURRENT_TXN_FORMAT = 3;
     public static final int MIN_PROTOREVS_DIR_FORMAT = 3;
     public static final int MIN_NO_GLOBAL_IDS_FORMAT = 3;
     public static final int MIN_MERGE_INFO_FORMAT = 3;
-
+    public static final int MIN_REP_SHARING_FORMAT = 4;
+    public static final int MIN_PACKED_FORMAT = 4;
+    public static final int MIN_KIND_IN_CHANGED_FORMAT = 4;
+    
     //TODO: we should be able to change this via some option
     private static long DEFAULT_MAX_FILES_PER_DIRECTORY = 1000;
     private static final String DB_TYPE = "fsfs";
@@ -590,9 +593,9 @@ public class FSFS {
                 SVNProperties rawEntries = revisionFile.readProperties(false, false);
                 String checksum = revisionFile.digest();
                
-                if (!checksum.equals(textRep.getHexDigest())) {
+                if (!checksum.equals(textRep.getMD5HexDigest())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
-                            checksum, textRep.getHexDigest()
+                            checksum, textRep.getMD5HexDigest()
                     });
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
@@ -635,9 +638,9 @@ public class FSFS {
                 SVNProperties props = revisionFile.readProperties(false, true);
                 String checksum = revisionFile.digest();
 
-                if (!checksum.equals(propsRep.getHexDigest())) {
+                if (!checksum.equals(propsRep.getMD5HexDigest())) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Checksum mismatch while reading representation:\n   expected:  {0}\n     actual:  {1}", new Object[] {
-                            checksum, propsRep.getHexDigest()
+                            checksum, propsRep.getMD5HexDigest()
                     });
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 }

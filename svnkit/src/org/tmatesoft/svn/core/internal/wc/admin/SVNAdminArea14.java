@@ -1438,7 +1438,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         writer.flush();
     }
     
-    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        return emptyFields;
     }
     
     protected boolean writeString(Writer writer, String str, int emptyFields) throws IOException {
