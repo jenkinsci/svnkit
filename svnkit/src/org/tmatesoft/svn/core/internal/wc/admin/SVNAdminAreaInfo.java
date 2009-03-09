@@ -52,13 +52,33 @@ public class SVNAdminAreaInfo {
     public SVNAdminArea getTarget() {
         return myTarget;
     }
-    
+
+    /**
+     * This method has been added to give an ability to replace 
+     * read-only areas with write enabled ones. 
+     */
+    public void setTarget(SVNAdminArea target) {
+        myTarget = target;
+    }
+
+    /**
+     * This method has been added to give an ability to replace 
+     * read-only areas with write enabled ones. 
+     */
+    public void setAnchor(SVNAdminArea anchor) {
+        myAnchor = anchor;
+    }
+
     public String getTargetName() {
         return myTargetName;
     }
 
     public SVNWCAccess getWCAccess() {
         return myAccess;
+    }
+
+    public void setWCAccess(SVNWCAccess wcAccess) {
+        myAccess = wcAccess;
     }
     
     public void addOldExternal(String path, String oldValue) {

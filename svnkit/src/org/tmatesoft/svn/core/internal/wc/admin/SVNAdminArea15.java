@@ -111,7 +111,9 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
             } else {
                 ++emptyFields;
             }
-        } 
+        } else {
+            ++emptyFields;
+        }
         
         return emptyFields;
     }
