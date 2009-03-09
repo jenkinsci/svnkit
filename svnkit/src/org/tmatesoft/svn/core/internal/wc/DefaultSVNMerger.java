@@ -269,7 +269,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	    if (mergeResult.getMergeStatus() == SVNStatusType.CONFLICTED) {
 	        if (myConflictCallback != null) {
                 SVNConflictDescription descr = new SVNConflictDescription(files, SVNNodeKind.FILE, null, false, 
-                        SVNConflictAction.EDIT, SVNConflictReason.EDITED);
+                        SVNConflictAction.EDIT, SVNConflictReason.EDITED, null, null, null);
                 
                 SVNConflictResult result = myConflictCallback.handleConflict(descr);
                 if (result == null) {
@@ -813,7 +813,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 reason = SVNConflictReason.OBSTRUCTED;
             }
             SVNConflictDescription description = new SVNConflictDescription(fileSet,
-                    isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propName, true, action, reason);
+                    isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propName, true, action, reason, null, null, null);
             SVNConflictResult result = myConflictCallback.handleConflict(description);
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,

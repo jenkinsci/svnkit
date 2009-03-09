@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 
 
 /**
@@ -30,6 +31,10 @@ public class SVNConflictDescription {
     private SVNConflictAction myConflictAction;
     private SVNConflictReason myConflictReason;
 
+    private SVNOperation myOperation;
+    private SVNConflictVersion mySourceLeftVersion;
+    private SVNConflictVersion mySourceRightVersion;
+
     /**
      * Creates a new <code>SVNConflictDescription</code> object.
      * 
@@ -46,13 +51,17 @@ public class SVNConflictDescription {
      * @param conflictReason        why the conflict ever occurred
      */
     public SVNConflictDescription(SVNMergeFileSet mergeFiles, SVNNodeKind nodeKind, String propertyName, 
-            boolean isPropertyConflict, SVNConflictAction conflictAction, SVNConflictReason conflictReason) {
+            boolean isPropertyConflict, SVNConflictAction conflictAction, SVNConflictReason conflictReason,
+            SVNOperation operation, SVNConflictVersion sourceLeftVersion, SVNConflictVersion sourceRightVersion) {
         myMergeFiles = mergeFiles;
         myNodeKind = nodeKind;
         myPropertyName = propertyName;
         myIsPropertyConflict = isPropertyConflict;
         myConflictAction = conflictAction;
         myConflictReason = conflictReason;
+        myOperation = operation;
+        mySourceLeftVersion = sourceLeftVersion;
+        mySourceRightVersion = sourceRightVersion;
     }
 
     /**
@@ -108,4 +117,15 @@ public class SVNConflictDescription {
         return myPropertyName;
     }
 
+    public SVNOperation getOperation() {
+        return myOperation;
+    }
+
+    public SVNConflictVersion getSourceLeftVersion() {
+        return mySourceLeftVersion;
+    }
+
+    public SVNConflictVersion getSourceRightVersion() {
+        return mySourceRightVersion;
+    }
 }

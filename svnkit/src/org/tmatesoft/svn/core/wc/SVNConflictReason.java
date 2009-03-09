@@ -41,6 +41,11 @@ public class SVNConflictReason {
      * Constant saying that an object is unversioned. Reserved (never passed currently).
      */
     public static final SVNConflictReason UNVERSIONED = new SVNConflictReason();
+
+    /**
+     * Constant saying that an object is already added or schedule-add
+     */
+    public static final SVNConflictReason ADDED = new SVNConflictReason();
     
     private SVNConflictReason() {
     }

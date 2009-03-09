@@ -128,6 +128,7 @@ public class SVNStatus {
     private SVNEntry myEntry;
     private String myChangelistName;
     private int myWorkingCopyFormat;
+    private SVNConflictDescription myTreeConflict;
     
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -644,6 +645,14 @@ public class SVNStatus {
      */
     public String getChangelistName() {
         return myChangelistName;
+    }
+
+    public SVNConflictDescription getTreeConflict() {
+        return myTreeConflict;
+    }
+
+    public void setTreeConflict(SVNConflictDescription treeConflict) {
+        myTreeConflict = treeConflict;
     }
 
     /**

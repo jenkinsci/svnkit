@@ -452,6 +452,10 @@ public class SVNEntry {
         SVNRevision pegRevision = (SVNRevision) myAttributes.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
         return pegRevision;
     }
+
+    public String getTreeConflictData() {
+        return (String) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
+    }
     
     public Map asMap() {
         return myAttributes;
