@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -278,7 +279,7 @@ public class SVNExternal {
                     // remove separate '-r' token.
                     tokens.remove(i);
                 } else if (tokens.size() == 3) {
-                    revisionStr = ((String) tokens.get(i)).substring(2); 
+                    revisionStr = token.substring(2); 
                 }
                 if (revisionStr == null || "".equals(revisionStr)) {
                     reportParsingError(owner, line);
@@ -287,14 +288,12 @@ public class SVNExternal {
                 try {
                     revNumber = Long.parseLong(revisionStr);
                     if (revNumber < 0) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
-                                "Negative revision number found parsing ''{0}''", revisionStr);
-                        SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Negative revision number found parsing '" + revisionStr + "'");
+                        reportParsingError(owner, line);
                     }
                 } catch (NumberFormatException nfe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
-                            "Invalid revision number found parsing ''{0}''", revisionStr);
-                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Invalid revision number found parsing '" + revisionStr + "'");
+                    reportParsingError(owner, line);
                 }
                 external.myRevision = SVNRevision.create(revNumber);
                 external.myIsRevisionExplicit = true;
