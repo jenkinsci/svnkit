@@ -62,6 +62,7 @@ public class FSFS {
     public static final String UUID_FILE = "uuid";
     public static final String FS_TYPE_FILE = "fs-type";
     public static final String TXN_CURRENT_FILE = "txn-current";
+    public static final String MIN_UNPACKED_REV_FILE = "min-unpacked-rev";
     public static final String TXN_CURRENT_LOCK_FILE = "txn-current-lock";
     public static final String REVISION_PROPERTIES_DIR = "revprops";
     public static final String WRITE_LOCK_FILE = "write-lock";

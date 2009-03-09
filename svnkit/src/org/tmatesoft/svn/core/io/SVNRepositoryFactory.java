@@ -403,6 +403,7 @@ public abstract class SVNRepositoryFactory {
         OutputStream reposFormatOS = null;
         OutputStream fsFormatOS = null;
         OutputStream txnCurrentOS = null;
+        OutputStream minUnpacledOS = null;
         OutputStream currentOS = null;
         try {
             copyToFile(is, jarFile);
@@ -546,6 +547,20 @@ public abstract class SVNRepositoryFactory {
                 SVNErrorManager.error(err, e, SVNLogType.FSFS);
             }
             
+            if (fsFormat >= FSFS.MIN_PACKED_FORMAT) {
+                File minUnpackedFile = new File(path, "db/" + FSFS.MIN_UNPACKED_REV_FILE);
+                SVNFileUtil.createEmptyFile(minUnpackedFile);
+                minUnpacledOS = SVNFileUtil.openFileForWriting(minUnpackedFile);
+                try {
+                    minUnpacledOS.write("0\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "Can not write to ''{0}'' file: {1}", 
+                            new Object[] { minUnpackedFile.getName(), e.getLocalizedMessage() });
+                    SVNErrorManager.error(err, e, SVNLogType.FSFS);
+                }
+            }
+            
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
                 File txnCurrentFile = new File(path, "db/" + FSFS.TXN_CURRENT_FILE);
                 SVNFileUtil.createEmptyFile(txnCurrentFile);
@@ -577,6 +592,7 @@ public abstract class SVNRepositoryFactory {
             SVNFileUtil.closeFile(reposFormatOS);
             SVNFileUtil.closeFile(fsFormatOS);
             SVNFileUtil.closeFile(txnCurrentOS);
+            SVNFileUtil.closeFile(minUnpacledOS);
             SVNFileUtil.closeFile(currentOS);
             SVNFileUtil.deleteFile(jarFile);
         }
