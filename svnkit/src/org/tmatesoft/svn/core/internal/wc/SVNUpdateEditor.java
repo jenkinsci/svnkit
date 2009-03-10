@@ -560,7 +560,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
         SVNEntry entry = adminArea.getEntry(myCurrentFile.Name, false);
         boolean replaced = entry != null && entry.isScheduledForReplacement();
-        boolean useRevertBase = replaced && entry.getCopyFromURL() != null;
+        boolean useRevertBase = replaced;
 
         if (useRevertBase) {
             myCurrentFile.baseFile = adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, false));
@@ -678,6 +678,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     
     private void completeDirectory(SVNDirectoryInfo dirInfo) throws SVNException {
         if (dirInfo.Parent == null && myTarget != null) {
+            if (myIsDepthSticky || myTarget != null) {
+                
+            }
             return;
         }
 
@@ -742,7 +745,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNEntry entry = adminArea.getEntry(info.Name, true);
         
         if (kind != SVNFileType.NONE) {
-            if (myIsUnversionedObstructionsAllowed || (entry != null && entry.isScheduledForAddition())) {
+            if (myIsUnversionedObstructionsAllowed || (entry != null && (entry.isScheduledForAddition() || entry.isScheduledForReplacement()))) {
                 if (entry != null && entry.isCopied()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
                             "Failed to add file ''{0}'': a file of the same name is already scheduled for " +
