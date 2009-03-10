@@ -40,6 +40,8 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslatorOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -189,6 +191,21 @@ public class SVNPropertiesManager {
         }
         SVNVersionedProperties properties = dir.getProperties(entry.getName());
         SVNPropertyValue oldValue = properties.getPropertyValue(propName);
+        SVNEventAction action;
+        if (oldValue == null) {
+            if (propValue == null) {
+                action = SVNEventAction.PROPERTY_DELETE_NONEXISTENT;
+            } else {
+                action = SVNEventAction.PROPERTY_ADD;
+            }
+        } else {
+            if (propValue == null) {
+                action = SVNEventAction.PROPERTY_DELETE;
+            } else {
+                action = SVNEventAction.PROPERTY_MODIFY;
+            }
+           
+        }
         if (!updateTimeStamp && (entry.getKind() == SVNNodeKind.FILE && SVNProperty.KEYWORDS.equals(propName))) {
             Collection oldKeywords = getKeywords(oldValue == null ? null : oldValue.getString());
             Collection newKeywords = getKeywords(propValue == null ? null : propValue.getString());
@@ -205,6 +222,7 @@ public class SVNPropertiesManager {
         dir.saveVersionedProperties(log, false);
         log.save();
         dir.runLogs();
+        dir.getWCAccess().handleEvent(new SVNEvent(path, entry.getKind(), null, -1, null, null, null, null, action, action, null, null, null));
         return oldValue == null ? propValue != null : !oldValue.equals(propValue);
     }
 

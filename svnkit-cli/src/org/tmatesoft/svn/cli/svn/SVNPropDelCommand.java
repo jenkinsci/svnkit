@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -25,6 +26,9 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -83,6 +87,17 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
 
             Collection changeLists = getSVNEnvironment().getChangelistsCollection();
             SVNWCClient client = getSVNEnvironment().getClientManager().getWCClient();
+            final boolean[] deletedNonExistent = new boolean[] {false}; 
+            client.setEventHandler(new ISVNEventHandler() {
+                public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    if (event.getAction() == SVNEventAction.PROPERTY_DELETE_NONEXISTENT) {
+                        deletedNonExistent[0] = true;
+                    }
+                }
+                public void checkCancelled() throws SVNCancelException {
+                    getSVNEnvironment().checkCancelled();
+                }
+            });
             for (Iterator ts = targets.iterator(); ts.hasNext();) {
                 String targetName = (String) ts.next();
                 SVNPath target = new SVNPath(targetName);
@@ -96,6 +111,10 @@ public class SVNPropDelCommand extends SVNPropertiesCommand {
                             client.setCommitHandler(getSVNEnvironment());
                             client.doSetProperty(target.getURL(), propertyName, null, SVNRevision.HEAD, getSVNEnvironment().getMessage(),
                                     getSVNEnvironment().getRevisionProperties(), getSVNEnvironment().isForce(), this);
+                        }
+                        if (deletedNonExistent[0]) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, "Attempting to delete nonexistent property ''{0}''", propertyName);
+                            SVNErrorManager.error(err, SVNLogType.CLIENT);
                         }
                     } catch (SVNException e) {
                         success = getSVNEnvironment().handleWarning(e.getErrorMessage(), 
