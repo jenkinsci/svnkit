@@ -71,7 +71,7 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     }
 
     public void absentFile(String path) throws SVNException {
-        if (myCurrentFileBaton.myIsAmbientlyExcluded) {
+        if (myCurrentDirBaton.myIsAmbientlyExcluded) {
             return;
         }
         myDelegate.absentFile(path);
