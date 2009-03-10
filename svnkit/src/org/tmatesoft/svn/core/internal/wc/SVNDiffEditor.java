@@ -204,6 +204,9 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNProperties propDiff = null;
         SVNProperties baseProps = null;
         File baseFile = dir.getBaseFile(fileName, false);
+        if (SVNFileType.getType(baseFile) == SVNFileType.NONE) {
+            baseFile = dir.getFile(SVNAdminUtil.getTextRevertPath(fileName, false));
+        }
         if (!entry.isScheduledForDeletion()) {
             if (getDiffCallback().isDiffCopiedAsAdded() && entry.isCopied()) {
                 propDiff = dir.getProperties(fileName).asMap();
