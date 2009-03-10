@@ -420,15 +420,15 @@ public class FSTransactionRoot extends FSRoot {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String changeString = changeKind.toString();
+        if (includeNodeKind) {
+            changeString += "-" + pathChange.getKind().toString();
+        }            
         String idString = null;
         if (pathChange.getRevNodeId() != null) {
             idString = pathChange.getRevNodeId().toString();
         } else {
             idString = FSPathChangeKind.ACTION_RESET;
         }
-        if (includeNodeKind) {
-            idString += "-" + pathChange.getKind().toString();
-        }            
 
         String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " "
                 + pathChange.getPath() + "\n";
