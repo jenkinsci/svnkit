@@ -3176,14 +3176,12 @@ public class SVNWCClient extends SVNBasicClient {
         boolean revertBase = false;
 
         if (entry.isScheduledForReplacement()) {
-            revertBase = entry.isCopied();
-            baseProperties = revertBase ? dir.getRevertProperties(name) : dir.getBaseProperties(name);
-            if (revertBase) {
-                String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
-                command.put(SVNLog.NAME_ATTR, propRevertPath);
-                log.addCommand(SVNLog.DELETE, command, false);
-                command.clear();
-            }
+            revertBase = true;
+            baseProperties = dir.getRevertProperties(name);
+            String propRevertPath = SVNAdminUtil.getPropRevertPath(name, entry.getKind(), false);
+            command.put(SVNLog.NAME_ATTR, propRevertPath);
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
             reverted = true;
         }
         boolean reinstallWorkingFile = false;
@@ -3205,13 +3203,13 @@ public class SVNWCClient extends SVNBasicClient {
             SVNProperties newProperties = baseProperties.asMap();
             SVNVersionedProperties originalBaseProperties = dir.getBaseProperties(name);
             SVNVersionedProperties workProperties = dir.getProperties(name);
-            if (entry.isScheduledForReplacement()) {
+            if (revertBase) {
                 originalBaseProperties.removeAll();
             }
             workProperties.removeAll();
             for (Iterator names = newProperties.nameSet().iterator(); names.hasNext();) {
                 String propName = (String) names.next();
-                if (entry.isScheduledForReplacement()) {
+                if (revertBase) {
                     originalBaseProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
                 }
                 workProperties.setPropertyValue(propName, newProperties.getSVNPropertyValue(propName));
@@ -3221,54 +3219,63 @@ public class SVNWCClient extends SVNBasicClient {
         }
         SVNProperties newEntryProperties = new SVNProperties();
         if (entry.getKind() == SVNNodeKind.FILE) {
+            String basePath = SVNAdminUtil.getTextBasePath(name, false);
+            String revertBasePath = SVNAdminUtil.getTextRevertPath(name, false);
+            
             if (!reinstallWorkingFile) {
                 SVNFileType fileType = SVNFileType.getType(dir.getFile(name));
                 if (fileType == SVNFileType.NONE) {
                     reinstallWorkingFile = true;
                 }
             }
-            String basePath = SVNAdminUtil.getTextBasePath(name, false);
-            if (!dir.getFile(basePath).isFile()) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error restoring text for ''{0}''", dir.getFile(name));
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            File revertFile = dir.getFile(SVNAdminUtil.getTextRevertPath(name, false));
-            if (revertFile.isFile()) {
-                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextRevertPath(name, false));
-                command.put(SVNLog.DEST_ATTR, SVNAdminUtil.getTextBasePath(name, false));
-                log.addCommand(SVNLog.MOVE, command, false);
-                command.clear();
+            if (dir.getFile(revertBasePath).isFile()) {
                 reinstallWorkingFile = true;
+            } else {
+                if (!dir.getFile(basePath).isFile()) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error restoring text for ''{0}''", dir.getFile(name));
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } 
+                revertBasePath = null;
             }
-            if (!reinstallWorkingFile) {
-                reinstallWorkingFile = dir.hasTextModifications(name, false, false, false);
-            }
-            if (reinstallWorkingFile) {
-                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+            if (revertBasePath != null) {
+                command.put(SVNLog.NAME_ATTR, revertBasePath);
                 command.put(SVNLog.DEST_ATTR, name);
                 log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                 command.clear();
-                if (useCommitTime && entry.getCommittedDate() != null) {
-                    command.put(SVNLog.NAME_ATTR, name);
-                    command.put(SVNLog.TIMESTAMP_ATTR, entry.getCommittedDate());
-                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                command.put(SVNLog.NAME_ATTR, revertBasePath);
+                command.put(SVNLog.DEST_ATTR, basePath);
+                log.addCommand(SVNLog.MOVE, command, false);
+                reverted = true;
+            } else {
+                if (!reinstallWorkingFile) {
+                    reinstallWorkingFile = dir.hasTextModifications(name, false, false, false);
+                }
+                if (reinstallWorkingFile) {
+                    command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+                    command.put(SVNLog.DEST_ATTR, name);
+                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                     command.clear();
-                } else {
+                    if (useCommitTime && entry.getCommittedDate() != null) {
+                        command.put(SVNLog.NAME_ATTR, name);
+                        command.put(SVNLog.TIMESTAMP_ATTR, entry.getCommittedDate());
+                        log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                        command.clear();
+                    } else {
+                        command.put(SVNLog.NAME_ATTR, name);
+                        command.put(SVNLog.TIMESTAMP_ATTR, SVNDate.formatDate(new Date(System.currentTimeMillis())));
+                        log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                        command.clear();
+                    }
                     command.put(SVNLog.NAME_ATTR, name);
-                    command.put(SVNLog.TIMESTAMP_ATTR, SVNDate.formatDate(new Date(System.currentTimeMillis())));
-                    log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
+                    command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
+                    log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
+                    command.clear();
+                    command.put(SVNLog.NAME_ATTR, name);
+                    command.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), SVNLog.WC_WORKING_SIZE);
+                    log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
                     command.clear();
                 }
-                command.put(SVNLog.NAME_ATTR, name);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
-                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-                command.clear();
-                command.put(SVNLog.NAME_ATTR, name);
-                command.put(SVNProperty.shortPropertyName(SVNProperty.WORKING_SIZE), SVNLog.WC_WORKING_SIZE);
-                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
-                command.clear();
             }
-            reverted |= reinstallWorkingFile;
         }
         if (entry.getConflictNew() != null) {
             command.put(SVNLog.NAME_ATTR, entry.getConflictNew());
