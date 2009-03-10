@@ -184,6 +184,7 @@ public class FSCommitEditor implements ISVNEditor {
 
     private void changeNodeProperties(String path, SVNProperties propNamesToValues) throws SVNException {
         FSParentPath parentPath = null;
+        SVNNodeKind kind = null;
         SVNProperties properties = null;
         boolean done = false;
         boolean haveRealChanges = false;
@@ -195,6 +196,7 @@ public class FSCommitEditor implements ISVNEditor {
 
             if (!done) {
                 parentPath = myTxnRoot.openPath(path, true, true);
+                kind = parentPath.getRevNode().getType();
 
                 if ((myTxnRoot.getTxnFlags() & FSTransactionRoot.SVN_FS_TXN_CHECK_LOCKS) != 0) {
                     FSCommitter.allowLockedOperation(myFSFS, path, getAuthor(), myLockTokens, false, false);
@@ -237,7 +239,7 @@ public class FSCommitEditor implements ISVNEditor {
 
         if (haveRealChanges) {
             myTxnRoot.setProplist(parentPath.getRevNode(), properties);
-            myCommitter.addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, SVNRepository.INVALID_REVISION, null);
+            myCommitter.addChange(path, parentPath.getRevNode().getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, false, true, SVNRepository.INVALID_REVISION, null, kind);
         }
     }
     

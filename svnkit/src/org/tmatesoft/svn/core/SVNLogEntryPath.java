@@ -57,6 +57,7 @@ public class SVNLogEntryPath implements Serializable {
     private char myType;
     private String myCopyPath;
     private long myCopyRevision;
+    private SVNNodeKind myNodeKind;
     
     /**
      * Constructs an <b>SVNLogEntryPath</b> object. 
@@ -76,12 +77,17 @@ public class SVNLogEntryPath implements Serializable {
      * @param copyRevision		the ancestor's revision if the <code>path</code> is a branch,
      * 							or -1 if not
      */
-    public SVNLogEntryPath(String path, char type, String copyPath,
-            long copyRevision) {
+    public SVNLogEntryPath(String path, char type, String copyPath, long copyRevision) {
+        this(path, type, copyPath, copyRevision, SVNNodeKind.UNKNOWN);
+    }
+
+    public SVNLogEntryPath(String path, char type, String copyPath, long copyRevision, SVNNodeKind kind) {
         myPath = path;
         myType = type;
         myCopyPath = copyPath;
         myCopyRevision = copyRevision;
+        myNodeKind = kind;
+        
     }
     
     /**
@@ -131,6 +137,10 @@ public class SVNLogEntryPath implements Serializable {
      */
     public char getType() {
         return myType;
+    }
+    
+    public SVNNodeKind getKind() {
+        return myNodeKind;
     }
     
     /**

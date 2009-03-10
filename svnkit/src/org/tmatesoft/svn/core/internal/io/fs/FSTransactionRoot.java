@@ -412,7 +412,7 @@ public class FSTransactionRoot extends FSRoot {
         }
     }
 
-    public void writeChangeEntry(OutputStream changesFile, FSPathChange pathChange) throws SVNException, IOException {
+    public void writeChangeEntry(OutputStream changesFile, FSPathChange pathChange, boolean includeNodeKind) throws SVNException, IOException {
         FSPathChangeKind changeKind = pathChange.getChangeKind();
         if (!(changeKind == FSPathChangeKind.FS_PATH_CHANGE_ADD || changeKind == FSPathChangeKind.FS_PATH_CHANGE_DELETE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY
                 || changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_RESET)) {
@@ -426,6 +426,9 @@ public class FSTransactionRoot extends FSRoot {
         } else {
             idString = FSPathChangeKind.ACTION_RESET;
         }
+        if (includeNodeKind) {
+            idString += "-" + pathChange.getKind().toString();
+        }            
 
         String output = idString + " " + changeString + " " + SVNProperty.toString(pathChange.isTextModified()) + " " + SVNProperty.toString(pathChange.arePropertiesModified()) + " "
                 + pathChange.getPath() + "\n";
@@ -444,6 +447,7 @@ public class FSTransactionRoot extends FSRoot {
     public long writeFinalChangedPathInfo(final CountingOutputStream protoFile) throws SVNException, IOException {
         long offset = protoFile.getPosition();
         Map changedPaths = getChangedPaths();
+        boolean includeNodeKind = getOwner().getDBFormat() >= FSFS.MIN_KIND_IN_CHANGED_FORMAT;
 
         for (Iterator paths = changedPaths.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
@@ -454,8 +458,7 @@ public class FSTransactionRoot extends FSRoot {
                 FSRevisionNode revNode = getOwner().getRevisionNode(id);
                 change.setRevNodeId(revNode.getId());
             }
-
-            writeChangeEntry(protoFile, change);
+            writeChangeEntry(protoFile, change, includeNodeKind);
         }
         return offset;
     }

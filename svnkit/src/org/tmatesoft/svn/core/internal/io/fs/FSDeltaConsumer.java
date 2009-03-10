@@ -19,6 +19,7 @@ import java.util.Collections;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -94,7 +95,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
             myTargetStream = (FSOutputStream) targetStream;
         }
 
-        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null);
+        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null, SVNNodeKind.FILE);
     }
 
     public void applyText(String path) throws SVNException {
@@ -126,7 +127,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
             myTargetStream = (FSOutputStream) targetStream;
         }
 
-        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null);
+        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null, SVNNodeKind.FILE);
     }
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
