@@ -464,6 +464,27 @@ public class SVNCopyDriver extends SVNBasicClient {
                 }
             }
         }
+        
+        if (isMove && !srcIsURL) {
+            for (Iterator ps = pairs.iterator(); ps.hasNext();) {
+                CopyPair pair = (CopyPair) ps.next();
+                SVNWCAccess wcAccess = getWCAccess();
+                try {
+                    File srcFile = new File(pair.mySource);
+                    probeOpen(wcAccess, srcFile, false, 0);
+                    SVNEntry entry = wcAccess.getVersionedEntry(new File(pair.mySource), false);
+                    if (entry.getExternalFilePath() != null) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_MOVE_FILE_EXTERNAL, 
+                                "Cannot move the file external at ''{0}''; please propedit the svn:externals description that created it", 
+                                srcFile);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                } finally {
+                    close(wcAccess);
+                }
+            }
+        }
+        
         if (isMove) {
             if (srcIsURL == dstIsURL) {
                 for (Iterator ps = pairs.iterator(); ps.hasNext();) {

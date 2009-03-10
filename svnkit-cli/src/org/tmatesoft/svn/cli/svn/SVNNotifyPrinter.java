@@ -17,6 +17,7 @@ import java.io.PrintStream;
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNNodeKind;
@@ -190,6 +191,20 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
         } else if (event.getAction() == SVNEventAction.UPDATE_EXTERNAL) {
             myIsInExternal = true;
             buffer.append("\nFetching external item into '" + path + "'\n");
+        } else if (event.getAction() == SVNEventAction.FAILED_EXTERNAL) {
+            if (myIsInExternal) {
+                myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { event.getErrorMessage().getErrorCode() },
+                        myEnvironment.isQuiet());
+                myIsInExternal = false;
+                return;
+            } 
+            
+            SVNErrorMessage warnMessage = SVNErrorMessage.create(SVNErrorCode.BASE, "Error handling externals definition for ''{0}'':", path);
+            myEnvironment.handleWarning(warnMessage, new SVNErrorCode[] { warnMessage.getErrorCode() }, 
+                    myEnvironment.isQuiet());
+            myEnvironment.handleWarning(event.getErrorMessage(), new SVNErrorCode[] { event.getErrorMessage().getErrorCode() },
+                    myEnvironment.isQuiet());
+            return;
         } else if (event.getAction() == SVNEventAction.UPDATE_COMPLETED) {
             if (!myIsSuppressLastLine) {
                 long rev = event.getRevision();

@@ -86,7 +86,13 @@ public class SVNStatusPrinter {
                 result.append(status.getPropertiesStatus().getCode());
                 result.append(status.isLocked() ? 'L' : ' ');
                 result.append(status.isCopied() ? '+' : ' ');
-                result.append(status.isSwitched() ? 'S' : ' ');
+                if (status.isSwitched()) {
+                    result.append('S');
+                } else if (status.isFileExternal()) {
+                    result.append('X');
+                } else {
+                    result.append(' ');   
+                }
                 result.append(lockStatus);
                 result.append(' '); // tree status
                 result.append(" ");

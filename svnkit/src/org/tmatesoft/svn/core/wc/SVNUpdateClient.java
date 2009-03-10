@@ -1645,7 +1645,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 externalDiff.newExternal = (SVNExternal) newParsedExternals.get(path);
                 externalDiff.owner = new File(root, diffPath);
                 externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
-                handleExternalChange(wcAccess, externalDiff.oldExternal.getPath(), externalDiff);
+                handleExternalItemChange(wcAccess, externalDiff.oldExternal.getPath(), externalDiff);
             }
             for (Iterator paths = newParsedExternals.keySet().iterator(); paths.hasNext();) {
                 String path = (String) paths.next();
@@ -1654,12 +1654,22 @@ public class SVNUpdateClient extends SVNBasicClient {
                     externalDiff.newExternal = (SVNExternal) newParsedExternals.get(path);
                     externalDiff.owner = new File(root, diffPath);
                     externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
-                    handleExternalChange(wcAccess, externalDiff.newExternal.getPath(), externalDiff);
+                    handleExternalItemChange(wcAccess, externalDiff.newExternal.getPath(), externalDiff);
                 }
             }
         }
     }
     
+    private void handleExternalItemChange(SVNWCAccess access, String targetDir, ExternalDiff externalDiff) throws SVNException {
+        try {
+            handleExternalChange(access, targetDir, externalDiff);
+        } catch (SVNException svne) {
+            File target = new File(externalDiff.owner, targetDir);
+            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
+                    SVNEventAction.FAILED_EXTERNAL, SVNEventAction.UPDATE_EXTERNAL, svne.getErrorMessage(), null);
+            dispatchEvent(event);
+        }
+    }
     /**
      * oldURL is null when externals is added: 
      * jsvn ps svn:externals "path URL" .
@@ -1698,7 +1708,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         SVNRevision[] revs = getExternalsHandler().handleExternal(target, newURL, externalRevision, 
                 externalPegRevision, externalDefinition, SVNRevision.UNDEFINED);
         if (revs == null) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, 
+                    SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null);
             dispatchEvent(event);
             return;
         }
@@ -1864,7 +1875,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     SVNWCAccess targetAccess = SVNWCAccess.newInstance(null);
                     targetArea = targetAccess.open(anchor, true, 1);
                     closeTarget = true;
-                    SVNURL dstWCReposRootURL = getReposRoot(path, null, SVNRevision.BASE, targetArea, targetAccess);
+                    SVNURL dstWCReposRootURL = getReposRoot(anchor, null, SVNRevision.BASE, targetArea, targetAccess);
                     if (!reposRootURL.equals(dstWCReposRootURL)) {
                         SVNErrorMessage err1 = SVNErrorMessage.create(SVNErrorCode.RA_REPOS_ROOT_URL_MISMATCH, 
                                 "Cannot insert a file external from ''{0}'' into a working copy from a different repository rooted at ''{1}''", 

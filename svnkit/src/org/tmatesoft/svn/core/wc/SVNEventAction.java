@@ -308,5 +308,42 @@ public class SVNEventAction {
      * @since 1.2.0, SVN 1.5.0
      */
     public static final SVNEventAction UPDATE_REPLACE = new SVNEventAction(30, "update_replace");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction PROPERTY_ADD = new SVNEventAction(31, "property_added");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction PROPERTY_MODIFY = new SVNEventAction(32, "property_modified");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction PROPERTY_DELETE = new SVNEventAction(33, "property_deleted");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction PROPERTY_DELETE_NONEXISTENT = new SVNEventAction(34, "property_deleted_nonexistent");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction REVPROPER_SET = new SVNEventAction(35, "revprop_set");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction REVPROP_DELETE = new SVNEventAction(36, "revprop_deleted");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction MERGE_COMPLETE = new SVNEventAction(37, "merge_completed");
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction TREE_CONFLICT = new SVNEventAction(38, "tree_conflict");
+    
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNEventAction FAILED_EXTERNAL = new SVNEventAction(39, "failed_external");
     
 }

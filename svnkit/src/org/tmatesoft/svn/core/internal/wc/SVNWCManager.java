@@ -462,10 +462,19 @@ public class SVNWCManager {
             SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);
             return;
         }
+        
         if (entry == null) {
             SVNWCManager.doDeleteUnversionedFiles(wcAccess, path, deleteFiles);
             return;
         }
+        
+        if (entry.getExternalFilePath() != null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL, 
+                    "Cannot remove the file external at ''{0}''; please propedit or propdel the svn:externals description that created it", 
+                    path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
         String schedule = entry.getSchedule();
         SVNNodeKind kind = entry.getKind();
         boolean copied = entry.isCopied();

@@ -109,6 +109,7 @@ public class SVNStatus {
     private boolean myIsLocked;
     private boolean myIsCopied;
     private boolean myIsSwitched;
+    private boolean myIsFileExternal;
     private File myConflictNewFile;
     private File myConflictOldFile;
     private File myConflictWrkFile;
@@ -170,7 +171,7 @@ public class SVNStatus {
             Date committedDate, String author, SVNStatusType contentsStatus,
             SVNStatusType propertiesStatus, SVNStatusType remoteContentsStatus,
             SVNStatusType remotePropertiesStatus, boolean isLocked,
-            boolean isCopied, boolean isSwitched, File conflictNewFile,
+            boolean isCopied, boolean isSwitched, boolean isFileExternal, File conflictNewFile,
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
             SVNLock remoteLock, SVNLock localLock, Map entryProperties,
@@ -194,6 +195,7 @@ public class SVNStatus {
         myIsLocked = isLocked;
         myIsCopied = isCopied;
         myIsSwitched = isSwitched;
+        myIsFileExternal = isFileExternal;
         myConflictNewFile = conflictNewFile;
         myConflictOldFile = conflictOldFile;
         myConflictWrkFile = conflictWrkFile;
@@ -371,6 +373,10 @@ public class SVNStatus {
         return myIsSwitched;
     }
     
+    public boolean isFileExternal() {
+        return myIsFileExternal;
+    }
+
     /**
      * Gets the temporary file that contains all latest changes from the 
      * repository which led to a conflict with local changes. This file is

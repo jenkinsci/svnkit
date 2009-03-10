@@ -270,7 +270,16 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode WC_CHANGELIST_MOVE = new SVNErrorCode(WC_CATEGORY, 29, "Moving a path from one changelist to another");
     
-    
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode WC_CANNOT_DELETE_FILE_EXTERNAL =  new SVNErrorCode(WC_CATEGORY, 30, "Cannot delete a file external");
+
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode WC_CANNOT_MOVE_FILE_EXTERNAL =  new SVNErrorCode(WC_CATEGORY, 31, "Cannot move a file external");
+
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
     public static final SVNErrorCode FS_ALREADY_OPEN = new SVNErrorCode(FS_CATEGORY, 2, "Filesystem is already open");

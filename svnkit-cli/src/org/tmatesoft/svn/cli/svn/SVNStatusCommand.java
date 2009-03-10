@@ -170,6 +170,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (status.isSwitched()) {
             xmlMap.put("switched", "true");
         }
+        if (status.isFileExternal()) {
+            xmlMap.put("file-external", "true");
+        }
         if (status.getEntry() != null && !status.isCopied()) {
             xmlMap.put("revision", status.getRevision().toString());
         }

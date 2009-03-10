@@ -133,6 +133,7 @@ public class SVNStatusUtil {
         boolean isLocked = false;
         boolean isSwitched = false;
         boolean isSpecial = false;
+        boolean isFileExternal = false;
         
         SVNStatusType textStatus = SVNStatusType.STATUS_NORMAL;
         SVNStatusType propStatus = SVNStatusType.STATUS_NONE;
@@ -161,7 +162,7 @@ public class SVNStatusUtil {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
-                    false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
+                    false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
                     null, null, -1);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
@@ -181,7 +182,10 @@ public class SVNStatusUtil {
                 textStatus = SVNStatusType.STATUS_OBSTRUCTED;
             }
         }
-        if (entry.getSVNURL() != null && parentEntry != null && parentEntry.getSVNURL() != null) {
+        
+        if (entry.getExternalFilePath() != null) {
+            isFileExternal = true;
+        } else if (entry.getSVNURL() != null && parentEntry != null && parentEntry.getSVNURL() != null) {
             String urlName = SVNPathUtil.tail(entry.getSVNURL().getURIEncodedPath());
             if (!SVNEncodingUtil.uriEncode(file.getName()).equals(urlName)) {
                 isSwitched = true;
@@ -247,7 +251,7 @@ public class SVNStatusUtil {
             if ((textStatus == SVNStatusType.STATUS_NONE || textStatus == SVNStatusType.STATUS_NORMAL) &&
                 (propStatus == SVNStatusType.STATUS_NONE || propStatus == SVNStatusType.STATUS_NORMAL) &&
                 !isLocked && !isSwitched && entry.getLockToken() == null && repositoryLock == null && 
-                entry.getChangelistName() == null) {
+                entry.getChangelistName() == null && !isFileExternal) {
                 return null;
             }
         }
@@ -266,7 +270,7 @@ public class SVNStatusUtil {
                 SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
                 SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
                 textStatus,  propStatus, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
-                isLocked, entry.isCopied(), isSwitched, conflictNew, conflictOld, conflictWrk, conflictProp, 
+                isLocked, entry.isCopied(), isSwitched, isFileExternal, conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
                 repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber);
         status.setEntry(entry);
