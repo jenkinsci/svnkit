@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -180,7 +181,12 @@ public class DAVLogHandler extends BasicDAVHandler {
             type = SVNLogEntryPath.TYPE_DELETED;
         }
         if (type != 0) {
-            myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision);
+            SVNNodeKind nodeKind = SVNNodeKind.UNKNOWN;
+            String nodeKindStr = attrs.getValue("node-kind");
+            if (nodeKindStr != null) {
+                nodeKind = SVNNodeKind.parseKind(nodeKindStr);
+            }
+            myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision, nodeKind);
         }
 
     }

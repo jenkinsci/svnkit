@@ -751,12 +751,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Changed-path entry not a list");
                             SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
-                        List pathItems = SVNReader.parseTuple("sw(?sr)", pathItem.getItems(), null);
+                        List pathItems = SVNReader.parseTuple("sw(?sr)?(?s)", pathItem.getItems(), null);
                         String path = SVNReader.getString(pathItems, 0);
                         String action = SVNReader.getString(pathItems, 1);
                         String copyPath = SVNReader.getString(pathItems, 2);
                         long copyRevision = SVNReader.getLong(pathItems, 3);
-                        changedPathsMap.put(path, new SVNLogEntryPath(path, action.charAt(0), copyPath, copyRevision));
+                        String kind = SVNReader.getString(pathItems, 4);
+                        changedPathsMap.put(path, new SVNLogEntryPath(path, action.charAt(0), copyPath, copyRevision, kind != null ? SVNNodeKind.parseKind(kind) : SVNNodeKind.UNKNOWN));
                     }
                 }
                 count++;
