@@ -135,6 +135,18 @@ public class SVNWCManager {
             File propFile = dir.getFile(propPath);
             SVNFileUtil.deleteFile(propFile);
         }
+        if (replace) {
+            SVNProperties props = new SVNProperties();
+            SVNLog log = parentDir.getLog();
+            if (entry.getKind() == SVNNodeKind.FILE) {
+                props.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(entry.getName(), false));
+                props.put(SVNLog.DEST_ATTR, SVNAdminUtil.getTextRevertPath(entry.getName(), false));
+                log.addCommand(SVNLog.MOVE, props, false);
+            }
+            createRevertProperties(parentDir, log, entry.getName(), true);
+            log.save();
+            parentDir.runLogs();
+        }
         if (kind == SVNNodeKind.DIR) {
             if (copyFromURL == null) {
                 SVNEntry pEntry = wcAccess.getEntry(path.getParentFile(), false);
@@ -857,6 +869,33 @@ public class SVNWCManager {
             wcAccess.close();
         }
         return "";
+    }
+    
+    public static void createRevertProperties(SVNAdminArea area, SVNLog log, String entryName, boolean removeBase) throws SVNException {
+        SVNEntry entry = area.getEntry(entryName, false);
+        String revertPropPath = SVNAdminUtil.getPropRevertPath(entryName, entry.getKind(), false);
+        String basePropPath = SVNAdminUtil.getPropBasePath(entryName, entry.getKind(), false);
+        
+        File basePropFile = area.getFile(basePropPath);
+        if (basePropFile.isFile()) {
+            SVNProperties command = new SVNProperties();
+            command.put(SVNLog.NAME_ATTR, basePropPath);
+            command.put(SVNLog.DEST_ATTR, revertPropPath);
+            if (removeBase) {
+                log.addCommand(SVNLog.MOVE, command, false);
+            } else {
+                log.addCommand(SVNLog.COPY, command, false);
+            }
+        } else {
+            // create empty props file and move it to revert props.
+            String tmpPath = SVNAdminUtil.getPropRevertPath(entryName, entry.getKind(), true);
+            File tmpFile = area.getFile(tmpPath);
+            SVNWCProperties.setProperties(new SVNProperties(), tmpFile, null, SVNWCProperties.SVN_HASH_TERMINATOR);
+            SVNProperties command = new SVNProperties();
+            command.put(SVNLog.NAME_ATTR, tmpPath);
+            command.put(SVNLog.DEST_ATTR, revertPropPath);
+            log.addCommand(SVNLog.MOVE, command, false);
+        }
     }
 
     private static void cropChildren(SVNWCAccess wcAccess, File path, SVNDepth depth) throws SVNException {
