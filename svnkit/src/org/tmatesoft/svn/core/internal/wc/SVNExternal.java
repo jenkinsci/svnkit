@@ -19,6 +19,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -268,6 +270,56 @@ public class SVNExternal {
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
     }
 
+    private List tokenizeExternalLine(String line) {
+        StringBuffer lineBuffer = new StringBuffer(line);
+        List tokens = new ArrayList();
+        List quotedTokens = null;
+        Pattern p = Pattern.compile("[\"'](.*?)[\"']");
+        //Pattern p = Pattern.compile("(.*)([\"'](.*?)[\"'])*?(.*)");
+
+        Matcher m = p.matcher(line);
+        while (m.find()) {
+            String token = m.group(0);
+            if (quotedTokens == null) {
+                quotedTokens = new LinkedList();
+            }
+            quotedTokens.add(token);
+        }
+
+        if (quotedTokens != null) {
+            
+        }
+        
+        while (lineBuffer.length() > 0) {
+            lineBuffer = skipWhitespaces(lineBuffer);
+            
+        }
+        return tokens;
+    }
+
+    private StringBuffer determineNextString(StringBuffer buffer) {
+        return null;
+    }
+    
+    private boolean isQuoted(StringBuffer buffer) {
+        return false;
+    }
+    
+    private StringBuffer skipWhitespaces(StringBuffer buffer) {
+        int ind = 0;
+        for (; ind < buffer.length(); ind++) {
+            char ch = buffer.charAt(ind); 
+            if (ch == ' ' ||  ch == '\t') {
+                continue;
+            }
+            break;
+        }
+        if (ind > 0) {
+            buffer.delete(0, ind);
+        }
+        return buffer;
+    }
+    
     private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
         for (int i = 0; i < tokens.size() && i < 2; i++) {
             String token = (String) tokens.get(i);
