@@ -126,7 +126,7 @@ public class FSCommitEditor implements ISVNEditor {
         SVNNodeKind kind = myTxnRoot.checkNodeKind(fullPath);
 
         if (kind == SVNNodeKind.NONE) {
-            return;
+            SVNErrorManager.error(FSErrors.errorOutOfDate(fullPath, kind), SVNLogType.FSFS);
         }
 
         FSRevisionNode existingNode = myTxnRoot.getRevisionNode(fullPath);
