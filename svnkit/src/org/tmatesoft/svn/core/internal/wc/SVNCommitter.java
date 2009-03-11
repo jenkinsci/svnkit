@@ -113,7 +113,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         }
         long cfRev = item.getCopyFromRevision().getNumber();//item.getCopyFromURL() != null ? rev : -1;
         if (item.isDeleted()) {
-            commitEditor.deleteEntry(commitPath, rev);
+            try {
+                commitEditor.deleteEntry(commitPath, rev);
+            } catch (SVNException e) {
+                fixError(commitPath, e, SVNNodeKind.FILE);
+            }
         }
         
         boolean fileOpen = false;
@@ -145,7 +149,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         if (item.isPropertiesModified()) {
             if (item.getKind() == SVNNodeKind.FILE) {
                 if (!fileOpen) {
-                    commitEditor.openFile(commitPath, rev);
+                    try {
+                        commitEditor.openFile(commitPath, rev);
+                    } catch (SVNException e) {
+                        fixError(commitPath, e, SVNNodeKind.FILE);
+                    }
                 }
                 fileOpen = true;
             } else if (!item.isAdded()) {
@@ -158,7 +166,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 closeDir = true;
             }
 
-            sendPropertiesDelta(commitPath, item, commitEditor);
+            try {
+                sendPropertiesDelta(commitPath, item, commitEditor);
+            } catch (SVNException e) {
+                fixError(commitPath, e, item.getKind());
+            }
             
             if (outgoingProperties != null) {
                 for (Iterator propsIter = outgoingProperties.keySet().iterator(); propsIter.hasNext();) {
@@ -175,7 +187,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         
         if (item.isContentsModified() && item.getKind() == SVNNodeKind.FILE) {
             if (!fileOpen) {
-                commitEditor.openFile(commitPath, rev);
+                try {
+                    commitEditor.openFile(commitPath, rev);
+                } catch (SVNException e) {
+                    fixError(commitPath, e, SVNNodeKind.FILE);
+                }
             }
             myModifiedFiles.put(commitPath, item);
         } else if (fileOpen) {
@@ -296,6 +312,16 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             return "/";
         }
         return path.substring(myRepositoryRoot.length());
+    }
+    
+    private void fixError(String path, SVNException e, SVNNodeKind kind) throws SVNException {
+        SVNErrorMessage err = e.getErrorMessage();
+        if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND || err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+            err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, kind == SVNNodeKind.DIR ? 
+                    "Directory ''{0}'' is out of date" : "File ''{0}'' is out of date", path);
+            throw new SVNException(err);
+        }
+        throw e;
     }
 
     public static SVNCommitInfo commit(Collection tmpFiles, Map commitItems, String repositoryRoot, ISVNEditor commitEditor) throws SVNException {
