@@ -280,13 +280,13 @@ public class JavaHLObjectFactory {
 
         SVNMergeFileSet mergeFiles = conflictDescription.getMergeFiles();
 
-        File localFile = mergeFiles.getLocalFile();        
+        File workingFile = mergeFiles.getWCFile();
         File baseFile = mergeFiles.getBaseFile();
         File theirFile = mergeFiles.getRepositoryFile();
-        File mineFile = mergeFiles.getWCFile();
+        File mineFile = mergeFiles.getLocalFile();
         File mergedFile = mergeFiles.getResultFile();
 
-        return new ConflictDescriptor(localFile != null ? localFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
+        return new ConflictDescriptor(workingFile != null ? workingFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
                 getConflictKind(conflictDescription.isPropertyConflict()),
                 getNodeKind(conflictDescription.getNodeKind()),
                 conflictDescription.getPropertyName(),
