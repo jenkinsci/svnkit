@@ -11,9 +11,11 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -41,7 +43,9 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -822,10 +826,20 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"), SVNLogType.CLIENT);
                 }
             }
+            String charset = getEncoding() != null ? getEncoding() : "UTF-8";
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            OutputStream os = SVNTranslator.getTranslatingOutputStream(bos, charset, new byte[] {'\n'}, false, null, false); 
             try {
-                return new String(getFileData(), getEncoding() != null ? getEncoding() : "UTF-8");
+                os.write(getFileData());
+                os.close();
+                os = null;
+                return new String(bos.toByteArray(), charset);
             } catch (UnsupportedEncodingException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.CLIENT);
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error normalizing log message to internal format"), SVNLogType.CLIENT);
+            } finally {
+                SVNFileUtil.closeFile(os);
             }
         } else if (getMessage() != null) {
             return getMessage();
