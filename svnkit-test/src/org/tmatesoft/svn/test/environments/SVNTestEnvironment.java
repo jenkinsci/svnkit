@@ -32,6 +32,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNCopySource;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 
 /**
  * @author TMate Software Ltd.
@@ -128,6 +129,10 @@ public class SVNTestEnvironment extends AbstractSVNTestEnvironment {
         getManager().getDiffClient().doMerge(url, pegRevision, mergeRanges, wc, depth, true, false, dryRun, recordOnly);
     }
 
+    public void mergeReintegrate(SVNURL src, SVNRevision pegRevision, File dst, boolean dryRun) throws SVNException {
+        getManager().getDiffClient().doMergeReIntegrate(src, pegRevision, dst, dryRun);
+    }
+
     public void merge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File wc, SVNDepth depth, boolean dryRun, boolean recordOnly) throws SVNException {
         getManager().getDiffClient().doMerge(url1, revision1, url2, revision2, wc, depth, true, false, dryRun, recordOnly);
     }
@@ -161,5 +166,13 @@ public class SVNTestEnvironment extends AbstractSVNTestEnvironment {
 
     public void delete(File path) throws SVNException {
         getManager().getWCClient().doDelete(path, false, false);
+    }
+
+    public void resolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
+        getManager().getWCClient().doResolve(path, depth, true, true, conflictChoice);
+    }
+
+    public void reset() {
+        myManager = SVNClientManager.newInstance(getOptions(), getAuthenticationManager());
     }
 }

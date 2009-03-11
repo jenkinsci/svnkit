@@ -30,12 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.ISVNExtendedMergeCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNClientManager;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.test.util.SVNTestDebugLog;
 
 /**
@@ -109,6 +104,10 @@ public abstract class AbstractSVNTestEnvironment {
 
     public abstract void merge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File wc, SVNDepth depth, boolean dryRun, boolean recordOnly) throws SVNException;
 
+    public abstract void mergeReintegrate(SVNURL src, SVNRevision pegRevision, File dst, boolean dryRun) throws SVNException;
+
+    public abstract void resolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException;
+
     public abstract void status(File wc, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException;
 
     public abstract void copy(File src, SVNRevision pegRevision, SVNRevision revision, File dst, boolean isMove, boolean makeParents, boolean failWhenDstExists) throws SVNException;
@@ -130,6 +129,8 @@ public abstract class AbstractSVNTestEnvironment {
     public abstract void setProperty(File path, String propName, SVNPropertyValue propValue, SVNDepth depth) throws SVNException;
 
     public abstract SVNPropertyValue getProperty(File path, String propName, SVNRevision revision) throws SVNException;
+
+    public abstract void reset();
 
     public void createFile(File file, String content) throws SVNException {
         SVNFileUtil.createFile(file, content, "UTF-8");

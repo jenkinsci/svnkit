@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tigris.subversion.javahl.SVNAdmin;
 
 /**
@@ -81,6 +82,12 @@ public class JavaHLTestEnvironment extends AbstractSVNTestEnvironment {
     public void merge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File wc, SVNDepth depth, boolean dryRun, boolean recordOnly) throws SVNException {
     }
 
+    public void mergeReintegrate(SVNURL src, SVNRevision pegRevision, File dst, boolean dryRun) throws SVNException {
+    }
+
+    public void resolve(File path, SVNDepth depth, SVNConflictChoice conflictChoice) throws SVNException {
+    }
+
     public void status(File wc, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, boolean collectParentExternals, ISVNStatusHandler handler) throws SVNException {
     }
 
@@ -101,5 +108,8 @@ public class JavaHLTestEnvironment extends AbstractSVNTestEnvironment {
     }
 
     public void delete(File path) throws SVNException {
+    }
+
+    public void reset() {
     }
 }
