@@ -19,8 +19,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -190,8 +188,8 @@ public class SVNExternal {
                 continue;
             }
             List tokens = new ArrayList();
-            for(StringTokenizer tokenizer = new StringTokenizer(line, " \t"); tokenizer.hasMoreTokens();) {
-                tokens.add(tokenizer.nextToken());
+            for(Iterator tokenizer = new ExternalTokenizer(line); tokenizer.hasNext();) {
+                tokens.add(tokenizer.next());
             }
             if (tokens.size() < 2 || tokens.size() > 4) {
                 reportParsingError(owner, line);
@@ -269,56 +267,6 @@ public class SVNExternal {
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
     }
-
-    private List tokenizeExternalLine(String line) {
-        StringBuffer lineBuffer = new StringBuffer(line);
-        List tokens = new ArrayList();
-        List quotedTokens = null;
-        Pattern p = Pattern.compile("[\"'](.*?)[\"']");
-        //Pattern p = Pattern.compile("(.*)([\"'](.*?)[\"'])*?(.*)");
-
-        Matcher m = p.matcher(line);
-        while (m.find()) {
-            String token = m.group(0);
-            if (quotedTokens == null) {
-                quotedTokens = new LinkedList();
-            }
-            quotedTokens.add(token);
-        }
-
-        if (quotedTokens != null) {
-            
-        }
-        
-        while (lineBuffer.length() > 0) {
-            lineBuffer = skipWhitespaces(lineBuffer);
-            
-        }
-        return tokens;
-    }
-
-    private StringBuffer determineNextString(StringBuffer buffer) {
-        return null;
-    }
-    
-    private boolean isQuoted(StringBuffer buffer) {
-        return false;
-    }
-    
-    private StringBuffer skipWhitespaces(StringBuffer buffer) {
-        int ind = 0;
-        for (; ind < buffer.length(); ind++) {
-            char ch = buffer.charAt(ind); 
-            if (ch == ' ' ||  ch == '\t') {
-                continue;
-            }
-            break;
-        }
-        if (ind > 0) {
-            buffer.delete(0, ind);
-        }
-        return buffer;
-    }
     
     private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
         for (int i = 0; i < tokens.size() && i < 2; i++) {
@@ -364,6 +312,73 @@ public class SVNExternal {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
         SVNErrorManager.error(err, SVNLogType.DEFAULT);
+    }
+
+    private static class ExternalTokenizer implements Iterator {
+        
+        private String myNextToken;
+        private String myLine;
+
+        public ExternalTokenizer(String line) {
+            myLine = line;
+            myNextToken = advance();
+        }
+        public boolean hasNext() {
+            return myNextToken != null;
+        }
+        public Object next() {
+            String next = myNextToken;
+            myNextToken = advance();
+            return next;
+        }
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+        private String advance() {
+            while(myLine.length() > 0 && Character.isWhitespace(myLine.charAt(0))) {
+                myLine = myLine.substring(1);
+            }
+            if (myLine.length() == 0) {
+                return null;
+            }
+            char ch = myLine.charAt(0);
+            int quouteType = ch == '\'' ? 1 : (ch == '\"' ? 2 : 0);
+            if (quouteType != 0) {
+                myLine = myLine.substring(1);
+            }
+            int index = 0;
+            while(index < myLine.length()) {
+                ch = myLine.charAt(index);
+                if (ch == '\\') {
+                    // skip escaped character.
+                    index++;
+                    index++;
+                    continue;
+                }
+                if (quouteType == 0) {
+                    if (Character.isWhitespace(ch)) {
+                        break;
+                    }
+                } else if (quouteType == 1) {
+                    if (ch == '\'') {
+                        break;
+                    }
+                } else if (quouteType == 2) {
+                    if (ch == '\"') {
+                        break;
+                    }
+                }
+                index++;
+            }
+            String token = myLine.substring(0, index);
+            if (index + 1 < myLine.length()) {
+                myLine = myLine.substring(index + 1);
+            } else {
+                myLine = "";
+            }
+            return token;
+        }
     }
 
 }
