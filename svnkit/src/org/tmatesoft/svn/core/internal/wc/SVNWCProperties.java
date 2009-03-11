@@ -360,8 +360,12 @@ public class SVNWCProperties {
     public static void setProperties(SVNProperties namesToValues, File target, File tmpFile, String terminator) throws SVNException {
         OutputStream dst = null;
         try {
-            tmpFile.getParentFile().mkdirs();
-            dst = SVNFileUtil.openFileForWriting(tmpFile);
+            if (tmpFile != null) {
+                tmpFile.getParentFile().mkdirs();
+            } else {
+                target.getParentFile().mkdirs();
+            }
+            dst = SVNFileUtil.openFileForWriting(tmpFile != null ? tmpFile : target);
             setProperties(namesToValues, dst, terminator);
         } finally {
             SVNFileUtil.closeFile(dst);
@@ -369,6 +373,8 @@ public class SVNWCProperties {
         if (tmpFile != null && target != null) {
             target.getParentFile().mkdirs();
             SVNFileUtil.rename(tmpFile, target);
+        } 
+        if (target != null) {
             SVNFileUtil.setReadonly(target, true);
         }
     }
