@@ -372,12 +372,31 @@ public class SVNExternal {
                 index++;
             }
             String token = myLine.substring(0, index);
+            StringBuffer result = new StringBuffer();
+            index = 0;
+            while(index < token.length()) {
+                ch = token.charAt(index);
+                if (ch != '\\') {
+                    result.append(ch);
+                } else {
+                    if (index + 1 < token.length()) {
+                        char escaped = token.charAt(index + 1);
+                        if (escaped == 't') {
+                            result.append("\t");
+                        } else {
+                            result.append(escaped);
+                        }
+                    }
+                    index++;
+                }
+                index++;
+            }
             if (index + 1 < myLine.length()) {
                 myLine = myLine.substring(index + 1);
             } else {
                 myLine = "";
             }
-            return token;
+            return result.toString();
         }
     }
 
