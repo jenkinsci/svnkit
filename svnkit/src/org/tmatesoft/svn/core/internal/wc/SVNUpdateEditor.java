@@ -268,7 +268,29 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
             if (adminArea != null) {
                 SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), false);
-                if (entry != null && entry.isScheduledForAddition() && !entry.isCopied()) {
+                SVNEntry parentEntry = parentArea.getEntry(parentArea.getThisDirName(), false);
+                SVNEntry entryInParent = (SVNEntry) parentArea.getEntries().get(name);
+                if (entry != null && parentEntry != null && entry.getUUID() != null && parentEntry.getUUID() != null &&
+                        !entry.getUUID().equals(parentEntry.getUUID())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                            "UUID mismatch: existing directory ''{0}'' was checked out from a different repository", 
+                            myCurrentDirectory.getPath());
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                if (entry != null && mySwitchURL == null && myCurrentDirectory.URL != null && !myCurrentDirectory.URL.equals(entry.getURL())) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                            "URL ''{0}'' of existing directory ''{1}'' does not match expected URL ''{2}''", 
+                            new Object[] {entry.getURL(), myCurrentDirectory.getPath(), myCurrentDirectory.URL});
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                if (entryInParent == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                            "Failed to add directory ''{0}'': a versioned directory of the same name already exists", 
+                            myCurrentDirectory.getPath());
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                
+                if (entry != null && (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) && !entry.isCopied()) {
                     myCurrentDirectory.isAddExisted = true;
                 } else {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
