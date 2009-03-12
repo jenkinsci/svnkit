@@ -96,6 +96,7 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
 
         String workingSize = (String) entryAttrs.get(SVNProperty.WORKING_SIZE);
+        workingSize = "-1".equals(workingSize) ? null : workingSize;
         if (writeString(writer, workingSize, emptyFields)) {
             emptyFields = 0;
         } else {
