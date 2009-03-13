@@ -12,9 +12,11 @@
 package org.tmatesoft.svn.core.internal.util;
 
 import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +40,7 @@ public class SVNSkel {
     public static final char TYPE_PAREN = 3;
     public static final char TYPE_NAME = 4;
 
-    private static final char[] CHAR_TYPES_TABLE = new char[]{
+    private static final char[] TYPES_TABLE = new char[]{
             0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             1, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0,
@@ -64,90 +66,102 @@ public class SVNSkel {
     };
 
     public static char getType(byte b) {
-        return CHAR_TYPES_TABLE[b & 0xFF];
+        return TYPES_TABLE[b & 0xFF];
     }
 
-    public static SVNSkel parse(byte[] data) {
+    public static SVNSkel parse(byte[] data) throws SVNException {
+        if (data == null) {
+            return null;
+        }
         return parse(data, 0, data.length);
     }
 
-    public static SVNSkel parse(byte[] data, int offset, int length) {
+    public static SVNSkel parse(byte[] data, int offset, int length) throws SVNException {
         if (data == null || length == 0 || offset + length > data.length) {
             return null;
         }
-
-        byte cur = data[offset];
-        if (cur == '(') {
-            return parseList(data, offset, length);
-        }
-        if (getType(cur) == TYPE_NAME) {
-            return parseImplicitAtom(data, offset, length);
-        }
-        return parseExplicitAtom(data, offset, length);
+        ByteBuffer buffer = ByteBuffer.wrap(data, offset, length);
+        return parse(buffer);
     }
 
-    public static SVNSkel parseList(byte[] data, final int offset, final int length) {
-        final int end = offset + length;
-        if (data == null || length == 0 || end > data.length || data[offset] != '(') {
+    public static SVNSkel parse(ByteBuffer buffer) throws SVNException {
+        if (buffer == null || !buffer.hasRemaining()) {
             return null;
         }
-// Skip the opening paren
-        int pos = offset + 1;
-        LinkedList children = new LinkedList();
+        byte cur = buffer.get(buffer.position());
+        if (cur == '(') {
+            return parseList(buffer);
+        }
+        if (getType(cur) == TYPE_NAME) {
+            return parseImplicitAtom(buffer);
+        }
+        return parseExplicitAtom(buffer);
+    }
+
+    public static SVNSkel parseList(ByteBuffer buffer) throws SVNException {
+        if (buffer == null || !buffer.hasRemaining()) {
+            return null;
+        }
+        if (buffer.get() != '(') {
+            return null;
+        }
+        if (!buffer.hasRemaining()) {
+            return null;
+        }
+        SVNSkel list = createEmptyList();
         while (true) {
-            SVNSkel element;
-            while (pos < end && getType(data[pos]) == TYPE_SPACE) {
-                pos++;
+            byte cur = 0;
+            while (buffer.hasRemaining()) {
+                cur = buffer.get();
+                if (getType(cur) != TYPE_SPACE) {
+                    break;
+                }
             }
-            if (pos >= end) {
-                return null;
-            }
-            if (data[pos] == ')') {
-                pos++;
+            if (cur == ')') {
                 break;
             }
-            element = parse(data, pos, end - pos);
+            buffer = unread(buffer, 1);
+            SVNSkel element = parse(buffer);
             if (element == null) {
                 return null;
             }
-            children.add(element);
-            pos = pos + element.getLength();
+            list.add(element);
         }
-
-        return createList(data, offset, pos - offset, children);
+        return list;
     }
 
-    public static SVNSkel parseImplicitAtom(byte[] data, final int offset, final int length) {
-        final int end = offset + length;
-        if (data == null || length == 0 || end > length || getType(data[offset]) != TYPE_NAME) {
+    public static SVNSkel parseImplicitAtom(ByteBuffer buffer) {
+        if (buffer == null || !buffer.hasRemaining()) {
             return null;
         }
-        int pos = offset;
-        while (pos < end && getType(data[pos]) != TYPE_SPACE && getType(data[pos]) != TYPE_PAREN) {
-            pos++;
+        if (getType(buffer.get(buffer.position())) != TYPE_NAME) {
+            return null;
         }
-        return createAtom(data, offset, pos - offset);
+        int start = buffer.position();
+        while (buffer.hasRemaining()) {
+            byte cur = buffer.get();
+            if (getType(cur) == TYPE_SPACE || getType(cur) == TYPE_PAREN) {
+                buffer = unread(buffer, 1);
+                break;
+            }
+        }
+        return createAtom(buffer.array(), buffer.arrayOffset() + start, buffer.position() - start);
     }
 
-    public static SVNSkel parseExplicitAtom(byte[] data, final int offset, final int length) {
-        final int end = offset + length;
-        if (data == null || end > data.length) {
+    public static SVNSkel parseExplicitAtom(ByteBuffer buffer) {
+        if (buffer == null || !buffer.hasRemaining()) {
             return null;
         }
-        int[] readed = new int[1];
-        int size = parseSize(data, offset, length, length, readed);
-        if (readed[0] < 0) {
+        int size = parseSize(buffer, buffer.remaining());
+        if (size < 0) {
             return null;
         }
-        int pos = offset + readed[0];
-        if (pos >= end || getType(data[pos]) != TYPE_SPACE) {
+        if (!buffer.hasRemaining() || getType(buffer.get()) != TYPE_SPACE) {
             return null;
         }
-        pos++;
-        if (pos + size > end) {
-            return null;
-        }
-        return createAtom(data, pos, size);
+        int start = buffer.arrayOffset() + buffer.position();
+        buffer.position(buffer.position() + size);
+        return createAtom(buffer.array(), start, size);
     }
 
     public static SVNSkel createAtom(String str) {
@@ -160,21 +174,14 @@ public class SVNSkel {
         } catch (UnsupportedEncodingException e) {
             data = str.getBytes();
         }
-        return createAtom(data, false);
+        return new SVNSkel(data);
     }
 
     public static SVNSkel createAtom(byte[] data) {
         if (data == null) {
             return null;
         }
-        return createAtom(data, true);
-    }
-
-    private static SVNSkel createAtom(byte[] data, boolean shared) {
-        if (shared) {
-            return createAtom(data, 0, data.length);
-        }
-        return new SVNSkel(true, data);
+        return createAtom(data);
     }
 
     public static SVNSkel createAtom(byte[] data, int offset, int length) {
@@ -183,33 +190,42 @@ public class SVNSkel {
         }
         byte[] raw = new byte[length];
         System.arraycopy(data, offset, raw, 0, length);
-        return new SVNSkel(true, raw);
+        return new SVNSkel(raw);
     }
 
     public static SVNSkel createEmptyList() {
-        return new SVNSkel(false, null);
+        return new SVNSkel();
     }
 
-    public static SVNSkel createList(byte[] data, int offset, int length, LinkedList children) {
-        if (data == null) {
-            return null;
+    public static SVNSkel createPropList(Map props) throws SVNException {
+        SVNSkel list = createEmptyList();
+        if (props == null) {
+            return list;
         }
-        byte[] raw = new byte[length];
-        System.arraycopy(data, offset, raw, 0, length);
-        return new SVNSkel(raw, children);
+        for (Iterator iterator = props.entrySet().iterator(); iterator.hasNext();) {
+            Map.Entry entry = (Map.Entry) iterator.next();
+            SVNSkel name = createAtom((String) entry.getKey());
+            SVNSkel value = createAtom((String) entry.getValue());
+            list.add(value);
+            list.add(name);
+        }
+        if (!list.isValidPropList()) {
+            error("proplist");
+        }
+        return list;
     }
 
     final private byte[] myRawData;
-    final private LinkedList myList;
+    final private List myList;
 
-    protected SVNSkel(boolean isAtom, byte[] data) {
+    protected SVNSkel(byte[] data) {
         myRawData = data;
-        myList = isAtom ? null : new LinkedList();
+        myList = null;
     }
 
-    private SVNSkel(byte[] data, LinkedList children) {
-        myRawData = data;
-        myList = children == null ? new LinkedList() : children;
+    protected SVNSkel() {
+        myRawData = null;
+        myList = new ArrayList();
     }
 
     public boolean isAtom() {
@@ -220,19 +236,23 @@ public class SVNSkel {
         return myRawData;
     }
 
-    public List getChildren() {
-        return myList;
+    public List getList() {
+        return Collections.unmodifiableList(myList);
     }
 
-    public void addChild(SVNSkel child) {
+    public void add(SVNSkel child) throws SVNException {
+        if (isAtom()) {
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to add a child to atom");
+            SVNErrorManager.error(error, SVNLogType.DEFAULT);
+        }
         myList.add(child);
     }
 
-    public int getLength() {
+    public int getListSize() {
         if (isAtom()) {
             return -1;
         }
-        return getChildren().size();
+        return getList().size();
     }
 
     public String getValue() {
@@ -250,20 +270,18 @@ public class SVNSkel {
 
     public String toString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("[SVNSkel atom = ");
-        buffer.append(isAtom());
-        buffer.append("; raw data = ");
         if (isAtom()) {
+            buffer.append("[");
             buffer.append(getValue());
+            buffer.append("]");
         } else {
-            buffer.append(" ( ");
-            for (Iterator iterator = getChildren().iterator(); iterator.hasNext();) {
+            buffer.append("(");
+            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 buffer.append(element.toString());
             }
-            buffer.append(" ) ");
+            buffer.append(")");
         }
-        buffer.append("]");
         return buffer.toString();
     }
 
@@ -276,9 +294,9 @@ public class SVNSkel {
     }
 
     public boolean isValidPropList() {
-        int length = getLength();
+        int length = getListSize();
         if (length >= 0 && (length & 1) == 0) {
-            for (Iterator iterator = getChildren().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 if (!element.isAtom()) {
                     return false;
@@ -289,14 +307,13 @@ public class SVNSkel {
         return false;
     }
 
-    public Map parsePropList(Map props) throws SVNException {
-// TODO: check if iterator returns correct result for proplist       
-        props = props == null ? new SVNHashMap() : props;
+    public Map parsePropList() throws SVNException {
         if (!isValidPropList()) {
             error("proplist");
         }
-        for (Iterator iterator = getChildren().iterator(); iterator.hasNext();) {
-// We always have name - value pair since children length is even
+        Map props = new SVNHashMap();
+        for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
+// We always have name - value pair since list length is even
             SVNSkel nameElement = (SVNSkel) iterator.next();
             SVNSkel valueElement = (SVNSkel) iterator.next();
             String name = nameElement.getValue();
@@ -304,24 +321,6 @@ public class SVNSkel {
             props.put(name, value);
         }
         return props;
-    }
-
-    public static SVNSkel unparseList(Map props) throws SVNException {
-        SVNSkel list = createEmptyList();
-        if (props == null) {
-            return list;
-        }
-        for (Iterator iterator = props.entrySet().iterator(); iterator.hasNext();) {
-            Map.Entry entry = (Map.Entry) iterator.next();
-            SVNSkel name = createAtom((String) entry.getKey());
-            SVNSkel value = createAtom((String) entry.getValue());
-            list.addChild(value);
-            list.addChild(name);
-        }
-        if (!list.isValidPropList()) {
-            error("proplist");
-        }
-        return list;
     }
 
     public byte[] unparse() throws SVNException {
@@ -336,24 +335,25 @@ public class SVNSkel {
 
     public ByteBuffer writeTo(ByteBuffer buffer) throws SVNException {
         if (isAtom()) {
+            byte[] data = getData();
             if (useImplicit()) {
-                buffer = allocate(buffer, getLength());
-                buffer = buffer.put(getData());
+                buffer = allocate(buffer, data.length);
+                buffer = buffer.put(data);
             } else {
-                byte[] sizeBytes = getSizeBytes(getLength(), Integer.MAX_VALUE);
+                byte[] sizeBytes = getSizeBytes(data.length);
                 if (sizeBytes == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to write size bytes to buffer");
                     SVNErrorManager.error(error, SVNLogType.DEFAULT);
                 }
-                buffer = allocate(buffer, sizeBytes.length + 1 + getLength());
+                buffer = allocate(buffer, sizeBytes.length + 1 + data.length);
                 buffer.put(sizeBytes);
                 buffer.putChar(' ');
-                buffer.put(getData());
+                buffer.put(data);
             }
         } else {
             buffer = allocate(buffer, 1);
             buffer.putChar('(');
-            for (Iterator iterator = getChildren().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 buffer = element.writeTo(buffer);
                 if (iterator.hasNext()) {
@@ -378,7 +378,7 @@ public class SVNSkel {
             }
         } else {
             int total = 2;
-            for (Iterator iterator = getChildren().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 total += element.estimateUnparsedSize();
 // space between a pair of elements
@@ -419,43 +419,41 @@ public class SVNSkel {
         return buffer;
     }
 
-    private static int parseSize(byte[] data, final int offset, final int maxLength, final int sizeLimit, int[] readed) {
-        final int maxPrefix = sizeLimit / 10;
-        final int maxDigit = sizeLimit % 10;
-        final boolean countReaded = readed != null && readed.length == 1;
-        int value = 0;
-        int pos = offset;
-        for (; pos < data.length && pos - offset < maxLength && '0' <= data[pos] && data[pos] <= '9'; pos++) {
-            int digit = data[pos] - '0';
-            if (value > maxPrefix || (value == maxPrefix && digit > maxDigit)) {
-                if (countReaded) {
-                    readed[0] = -1;
-                }
-                return 0;
-            }
-            value = (value * 10) + digit;
-        }
-        if (pos == offset) {
-            if (countReaded) {
-                readed[0] = -1;
-            }
-            return 0;
-        } else {
-            if (countReaded && pos < data.length) {
-                readed[0] = pos - offset;
-            }
-            return value;
-        }
+    private static ByteBuffer unread(ByteBuffer buffer, int length) {
+        buffer.position(buffer.position() - length);
+        return buffer;
     }
 
-    private static int writeSize(int value, byte[] data, int maxLength) {
+    private static int parseSize(ByteBuffer buffer, int limit) {
+        limit = limit < 0 ? Integer.MAX_VALUE : limit;
+        final int maxPrefix = limit / 10;
+        final int maxDigit = limit % 10;
+        int value = 0;
+        int start = buffer.position();
+        while (buffer.hasRemaining()) {
+            byte cur = buffer.get();
+            if ('0' <= cur && cur <= '9') {
+                int digit = cur - '0';
+                if (value > maxPrefix || (value == maxPrefix && digit > maxDigit)) {
+                    return -1;
+                }
+                value = (value * 10) + digit;
+            } else {
+                buffer = unread(buffer, 1);
+                break;
+            }
+        }
+        if (start == buffer.position()) {
+            return -1;
+        }
+        return value;
+    }
+
+    private static int writeSizeBytes(int value, byte[] data) {
         int i = 0;
         do {
-            if (i >= maxLength) {
-                return 0;
-            }
             if (i >= data.length) {
-                return 0;
+                return -1;
             }
             data[i] = (byte) ((value % 10) + '0');
             value = value / 10;
@@ -470,7 +468,7 @@ public class SVNSkel {
         return i;
     }
 
-    private static byte[] getSizeBytes(final int value, int maxLength) {
+    private static byte[] getSizeBytes(final int value) {
         int tmp = value;
         int length = 0;
         do {
@@ -478,12 +476,8 @@ public class SVNSkel {
             length++;
         } while (tmp > 0);
 
-        if (length >= maxLength) {
-            return null;
-        }
-
         byte[] data = new byte[length];
-        int count = writeSize(value, data, length);
+        int count = writeSizeBytes(value, data);
         if (count < 0) {
             return null;
         }
