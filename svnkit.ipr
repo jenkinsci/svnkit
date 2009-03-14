@@ -40,6 +40,9 @@
       <entry name="?*.jpg" />
     </wildcardResourcePatterns>
   </component>
+  <component name="CopyrightManager" default="">
+    <module2copyright />
+  </component>
   <component name="DependenciesAnalyzeManager">
     <option name="myForwardDirection" value="false" />
   </component>
@@ -307,6 +310,9 @@
     <option name="projectName" value="svnkit" />
   </component>
   <component name="ProjectFileVersion" converted="true" />
+  <component name="ProjectKey">
+    <option name="state" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit.ipr" />
+  </component>
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/contrib/javahl/javahl.iml" filepath="$PROJECT_DIR$/contrib/javahl/javahl.iml" />
@@ -334,6 +340,7 @@
   </component>
   <component name="SvnBranchConfigurationManager">
     <option name="myVersion" value="124" />
+    <option name="mySupportsUserInfoFilter" value="true" />
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="svn" />
