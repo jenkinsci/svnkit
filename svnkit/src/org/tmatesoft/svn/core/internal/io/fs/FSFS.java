@@ -45,7 +45,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -427,19 +426,11 @@ public class FSFS {
             }
             return myYoungestRevisionCache;
         } catch (NumberFormatException nfe) {
-            //dirty hack for svnadmin tests to pass
-            if (Boolean.getBoolean("svnkit.compatibleHash")) {
-                //SVNDebugLog.getDefaultLog().logFine(logType, message)
-                myYoungestRevisionCache = 0;
-                return myYoungestRevisionCache;
-            } 
+            myYoungestRevisionCache = 0;
         } finally {
             file.close();
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
-                "Can''t parse revision number in file ''{0}''", getCurrentFile()); 
-        SVNErrorManager.error(err, SVNLogType.FSFS);
-        return -1;
+        return myYoungestRevisionCache;
     }
     
     public void upgrade() throws SVNException {
