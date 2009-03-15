@@ -268,7 +268,7 @@ public class SVNAdminHelper {
             editor.addFile(editPath, null, -1);
             deltifyFiles(fsfs, editor, srcRoot, tgtRoot, null, tgtPath, editPath);
             FSRevisionNode tgtNode = tgtRoot.getRevisionNode(tgtPath);
-            editor.closeFile(editPath, tgtNode.getFileChecksum());
+            editor.closeFile(editPath, tgtNode.getFileMD5Checksum());
         }
     }
 
@@ -282,7 +282,7 @@ public class SVNAdminHelper {
             editor.openFile(editPath, baseRevision);
             deltifyFiles(fsfs, editor, srcRoot, tgtRoot, srcPath, tgtPath, editPath);
             FSRevisionNode tgtNode = tgtRoot.getRevisionNode(tgtPath);
-            editor.closeFile(editPath, tgtNode.getFileChecksum());
+            editor.closeFile(editPath, tgtNode.getFileMD5Checksum());
         }
     }
     
@@ -298,7 +298,7 @@ public class SVNAdminHelper {
             String srcHexDigest = null;
             if (srcPath != null) {
                 FSRevisionNode srcNode = srcRoot.getRevisionNode(srcPath);
-                srcHexDigest = srcNode.getFileChecksum();
+                srcHexDigest = srcNode.getFileMD5Checksum();
             }
             editor.applyTextDelta(editPath, srcHexDigest);
             editor.textDeltaChunk(editPath, SVNDiffWindow.EMPTY);

@@ -190,7 +190,7 @@ public class FSRepositoryUtil {
             return true;
         }
 
-        if (!revNode1.getFileChecksum().equals(revNode2.getFileChecksum())) {
+        if (!revNode1.getFileMD5Checksum().equals(revNode2.getFileMD5Checksum())) {
             return true;
         }
 

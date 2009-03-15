@@ -32,20 +32,14 @@ public class FSRepresentation {
     private String myTxnId;
     private String myUniquifier;
     
-    public FSRepresentation(long revision, long offset, long size, long expandedSize, String hexDigest) {
-        myRevision = revision;
-        myOffset = offset;
-        mySize = size;
-        myExpandedSize = expandedSize;
-        myMD5HexDigest = hexDigest;
-    }
-
     public FSRepresentation(FSRepresentation representation) {
-        myRevision = representation.getRevision();
-        myOffset = representation.getOffset();
-        mySize = representation.getSize();
-        myExpandedSize = representation.getExpandedSize();
-        myMD5HexDigest = representation.getMD5HexDigest();
+        myRevision = representation.myRevision;
+        myOffset = representation.myOffset;
+        mySize = representation.mySize;
+        myExpandedSize = representation.myExpandedSize;
+        myMD5HexDigest = representation.myMD5HexDigest;
+        mySHA1HexDigest = representation.mySHA1HexDigest;
+        myUniquifier = representation.myUniquifier;
         myTxnId = representation.myTxnId;
     }
 
@@ -54,7 +48,6 @@ public class FSRepresentation {
         myOffset = -1;
         mySize = -1;
         myExpandedSize = -1;
-        myMD5HexDigest = null;
     }
 
     public void setRevision(long rev) {
@@ -128,13 +121,28 @@ public class FSRepresentation {
             return false;
         }
         FSRepresentation rep = (FSRepresentation) obj;
-        return myRevision == rep.getRevision() && myOffset == rep.getOffset();
+        if (myRevision != rep.myRevision) {
+            return false;
+        }
+        if (myOffset != rep.myOffset) {
+            return false;
+        }
+        if (myUniquifier == null && rep.myUniquifier != null) {
+            return false;
+        } else if (myUniquifier != null) {
+            return myUniquifier.equals(rep.myUniquifier);
+        }
+        return true;
     }
 
-    public String toString() {
-        return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myMD5HexDigest;
+    public String getStringRepresentation(int dbFormat) {
+        if (dbFormat < FSFS.MIN_REP_SHARING_FORMAT || mySHA1HexDigest == null || myUniquifier == null) {
+            return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myMD5HexDigest;
+        }
+        return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myMD5HexDigest + " " + 
+               mySHA1HexDigest + " " + myUniquifier;
     }
-
+    
     public String getTxnId() {
         return myTxnId;
     }

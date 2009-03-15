@@ -50,7 +50,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private InputStream mySourceStream;
     private SVNDeltaGenerator myDeltaGenerator;
     private FSRevisionNode myRevNode;
-    private MessageDigest myDigest;
+    private MessageDigest myMD5Digest;
+    private MessageDigest mySHA1Digest;
     private FSTransactionRoot myTxnRoot;
     private long mySourceOffset;
     private ByteArrayOutputStream myTextBuffer;
@@ -75,11 +76,18 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myTextBuffer = new ByteArrayOutputStream();
 
         try {
-            myDigest = MessageDigest.getInstance("MD5");
+            myMD5Digest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
             SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
         }
+        try {
+            mySHA1Digest = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException nsae) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "SHA1 implementation not found: {0}", nsae.getLocalizedMessage());
+            SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
+        }
+
         myIsCompress = compress;
     }
 
@@ -94,7 +102,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myRevNode = revNode;
         mySourceOffset = 0;
         myIsClosed = false;
-        myDigest.reset();
+        myMD5Digest.reset();
+        mySHA1Digest.reset();
         myTextBuffer.reset();
         myTxnLock = txnLock;
     }
@@ -176,7 +185,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        myDigest.update(b, off, len);
+        myMD5Digest.update(b, off, len);
+        mySHA1Digest.update(b, off, len);
         myRepSize += len;
         int toWrite = 0;
         while (len > 0) {
@@ -214,10 +224,14 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setSize(offset - myDeltaStart);
             rep.setExpandedSize(myRepSize);
             rep.setTxnId(myRevNode.getId().getTxnID());
+            String uniqueSuffix = myTxnRoot.getNewTxnNodeId();
+            String uniquifier = rep.getTxnId() + '/' + uniqueSuffix;
+            rep.setUniquifier(uniquifier);
             rep.setRevision(SVNRepository.INVALID_REVISION);
 
-            rep.setMD5HexDigest(SVNFileUtil.toHexDigest(myDigest));
-
+            rep.setMD5HexDigest(SVNFileUtil.toHexDigest(myMD5Digest));
+            rep.setSHA1HexDigest(SVNFileUtil.toHexDigest(mySHA1Digest));
+            
             myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
             myRevNode.setTextRepresentation(rep);
             myRevNode.setIsFreshTxnRoot(false);

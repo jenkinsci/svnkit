@@ -211,7 +211,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 String checksum = null;
                 if (myCompareRoot != null && srcRoot != null && srcPath != null) {
                     FSRevisionNode node = srcRoot.getRevisionNode(srcPath);
-                    checksum = node.getFileChecksum();
+                    checksum = node.getFileMD5Checksum();
                 }
 
                 editor.applyTextDelta(path, checksum);
@@ -236,7 +236,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
 
         if (closeFile) {
             FSRevisionNode node = myRoot.getRevisionNode(absPath);
-            editor.closeFile(path, node.getFileChecksum());
+            editor.closeFile(path, node.getFileMD5Checksum());
         }
         return closeDir;
     }
@@ -282,7 +282,7 @@ public class FSReplayPathHandler implements ISVNCommitPathHandler {
                 } finally {
                     SVNFileUtil.closeFile(targetStream);
                 }
-                String checksum = srcNode.getFileChecksum();
+                String checksum = srcNode.getFileMD5Checksum();
                 editor.closeFile(newPath, checksum);
             }
 

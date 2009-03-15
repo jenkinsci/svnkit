@@ -510,6 +510,7 @@ public class FSRevisionNode {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Malformed text rep offset line in node-rev");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+        rep.setSHA1HexDigest(hexSHA1Digest);
         
         representation = representation.substring(delimiterInd + 1);
         delimiterInd = representation.indexOf(' ');
@@ -627,12 +628,20 @@ public class FSRevisionNode {
         return baseNode.getTextRepresentation();
     }
 
-    public String getFileChecksum() throws SVNException {
+    public String getFileMD5Checksum() throws SVNException {
         if (getType() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get checksum of a *non*-file node");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return getTextRepresentation() != null ? getTextRepresentation().getMD5HexDigest() : "";
+    }
+
+    public String getFileSHA1Checksum() throws SVNException {
+        if (getType() != SVNNodeKind.FILE) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FILE, "Attempted to get checksum of a *non*-file node");
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        return getTextRepresentation() != null ? getTextRepresentation().getSHA1HexDigest() : "";
     }
 
     public long getFileLength() throws SVNException {

@@ -67,7 +67,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
         myCommitter.makePathMutable(parentPath, fullPath);
         FSRevisionNode node = parentPath.getRevNode();
         if (baseChecksum != null) {
-            String md5HexChecksum = node.getFileChecksum();
+            String md5HexChecksum = node.getFileMD5Checksum();
             if (md5HexChecksum != null && !md5HexChecksum.equals(baseChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Base checksum mismatch on ''{0}'':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
                         path, baseChecksum, md5HexChecksum

@@ -444,7 +444,7 @@ public class FSUpdateContext {
                 return;
             }
             FSRevisionNode sourceNode = sourceRoot.getRevisionNode(sourcePath);
-            sourceHexDigest = sourceNode.getFileChecksum();
+            sourceHexDigest = sourceNode.getFileMD5Checksum();
         }
         
         FSRepositoryUtil.sendTextDelta(getEditor(), editPath, sourcePath, sourceHexDigest, 
@@ -524,7 +524,7 @@ public class FSUpdateContext {
                 }
             }
             FSRevisionNode targetNode = getTargetRoot().getRevisionNode(targetPath);
-            String targetHexDigest = targetNode.getFileChecksum();
+            String targetHexDigest = targetNode.getFileMD5Checksum();
             getEditor().closeFile(editPath, targetHexDigest);
         }
     }

@@ -396,7 +396,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(srcRevision);
         if (nodeBaton.myCopySourceChecksum != null) {
             FSRevisionNode revNode = copyRoot.getRevisionNode(nodeBaton.myCopyFromPath);
-            String hexDigest = revNode.getFileChecksum();
+            String hexDigest = revNode.getFileMD5Checksum();
             if (hexDigest != null && !hexDigest.equals(nodeBaton.myCopySourceChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
                         "Copy source checksum mismatch on copy from ''{0}''@{1}\n" +

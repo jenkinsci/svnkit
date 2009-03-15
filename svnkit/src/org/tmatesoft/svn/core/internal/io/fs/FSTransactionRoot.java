@@ -389,6 +389,9 @@ public class FSTransactionRoot extends FSRoot {
                 textRep = new FSRepresentation();
                 textRep.setRevision(SVNRepository.INVALID_REVISION);
                 textRep.setTxnId(myTxnID);
+                String uniqueSuffix = getNewTxnNodeId();
+                String uniquifier = myTxnID + '/' + uniqueSuffix;
+                textRep.setUniquifier(uniquifier);
                 parentRevNode.setTextRepresentation(textRep);
                 parentRevNode.setIsFreshTxnRoot(false);
                 getOwner().putTxnRevisionNode(parentRevNode.getId(), parentRevNode);
@@ -658,6 +661,15 @@ public class FSTransactionRoot extends FSRoot {
             myTxnChangesFile = new File(getOwner().getTransactionDir(myTxnID), "changes");
         }
         return myTxnChangesFile;
+    }
+
+    public String getNewTxnNodeId() throws SVNException {
+        String[] curIds = readNextIDs();
+        String curNodeId = curIds[0];
+        String curCopyId = curIds[1];
+        String nextNodeId = FSRepositoryUtil.generateNextKey(curNodeId);
+        getOwner().writeNextIDs(getTxnID(), nextNodeId, curCopyId);
+        return "_" + curNodeId;
     }
 
     private long writeHashRepresentation(SVNProperties hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {

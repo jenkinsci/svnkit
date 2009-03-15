@@ -335,11 +335,11 @@ public class FSCommitEditor implements ISVNEditor {
         if (textChecksum != null) {
             String fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myBasePath, path));
             FSRevisionNode revNode = myTxnRoot.getRevisionNode(fullPath);
-            if (revNode.getTextRepresentation() != null && !textChecksum.equals(revNode.getTextRepresentation().getMD5HexDigest())) {
+            FSRepresentation txtRep = revNode.getTextRepresentation();
+            if (txtRep != null && !textChecksum.equals(txtRep.getMD5HexDigest())) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH,
-                        "Checksum mismatch for resulting fulltext\n({0}):\n   expected checksum:  {1}\n   actual checksum:    {2}\n", new Object[] {
-                                fullPath, textChecksum, revNode.getTextRepresentation().getMD5HexDigest()
-                        });
+                        "Checksum mismatch for resulting fulltext\n({0}):\n   expected checksum:  {1}\n   actual checksum:    {2}\n",
+                        new Object[] { fullPath, textChecksum, txtRep.getMD5HexDigest() });
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }

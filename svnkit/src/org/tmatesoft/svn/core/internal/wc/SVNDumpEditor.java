@@ -249,7 +249,7 @@ public class SVNDumpEditor implements ISVNEditor {
                             mustDumpText = FSRepositoryUtil.areFileContentsChanged(compareRoot, comparePath, 
                                     myRoot, canonicalPath);
                             FSRevisionNode revNode = compareRoot.getRevisionNode(comparePath);
-                            String checkSum = revNode.getFileChecksum();
+                            String checkSum = revNode.getFileMD5Checksum();
                             if (checkSum != null && checkSum.length() > 0) {
                                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM + ": " + checkSum + "\n");
                             }
@@ -337,7 +337,7 @@ public class SVNDumpEditor implements ISVNEditor {
                         
                         if (compareRoot != null) {
                             FSRevisionNode revNode = compareRoot.getRevisionNode(comparePath);
-                            String hexDigest = revNode.getFileChecksum();
+                            String hexDigest = revNode.getFileMD5Checksum();
                             if (hexDigest != null && hexDigest.length() > 0) {
                                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM + ": " + hexDigest + "\n");
                             }
@@ -354,7 +354,7 @@ public class SVNDumpEditor implements ISVNEditor {
                 
                 contentLength += txtLength;
                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH + ": " + txtLength + "\n");
-                String checksum = node.getFileChecksum();
+                String checksum = node.getFileMD5Checksum();
                 if (checksum != null && checksum.length() > 0) {
                     writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM + ": " + checksum + "\n");
                 }

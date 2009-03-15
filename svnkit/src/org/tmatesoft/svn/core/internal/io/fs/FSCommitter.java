@@ -422,21 +422,12 @@ public class FSCommitter {
     }
 
     private FSID createNode(FSRevisionNode revNode, String copyId, String txnId) throws SVNException {
-        String nodeId = getNewTxnNodeId();
+        String nodeId = myTxnRoot.getNewTxnNodeId();
         FSID id = FSID.createTxnId(nodeId, copyId, txnId);
         revNode.setId(id);
         revNode.setIsFreshTxnRoot(false);
         myFSFS.putTxnRevisionNode(id, revNode);
         return id;
-    }
-
-    private String getNewTxnNodeId() throws SVNException {
-        String[] curIds = myTxnRoot.readNextIDs();
-        String curNodeId = curIds[0];
-        String curCopyId = curIds[1];
-        String nextNodeId = FSRepositoryUtil.generateNextKey(curNodeId);
-        myFSFS.writeNextIDs(myTxnRoot.getTxnID(), nextNodeId, curCopyId);
-        return "_" + curNodeId;
     }
 
     private long commit() throws SVNException {
