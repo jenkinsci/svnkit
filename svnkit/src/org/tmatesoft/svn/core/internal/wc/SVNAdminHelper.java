@@ -400,10 +400,13 @@ public class SVNAdminHelper {
     public static final String DUMPFILE_TEXT_CONTENT_LENGTH        = "Text-content-length";
     public static final String DUMPFILE_TEXT_DELTA                 = "Text-delta";
     public static final String DUMPFILE_UUID                       = "UUID";
-    public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM      = "Text-content-md5";    
-    public static final String DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM  = "Text-copy-source-md5";    
-    public static final String DUMPFILE_TEXT_DELTA_BASE_CHECKSUM   = "Text-delta-base-md5";    
-    public static final int DUMPFILE_FORMAT_VERSION            = 3;
+    public static final String DUMPFILE_TEXT_CONTENT_MD5           = "Text-content-md5";
+    public static final String DUMPFILE_TEXT_CONTENT_SHA1          = "Text-content-sha1";
+    public static final String DUMPFILE_TEXT_COPY_SOURCE_MD5       = "Text-copy-source-md5";
+    public static final String DUMPFILE_TEXT_COPY_SOURCE_SHA1      = "Text-copy-source-sha1"; 
+    public static final String DUMPFILE_TEXT_DELTA_BASE_MD5        = "Text-delta-base-md5";
+    public static final String DUMPFILE_TEXT_DELTA_BASE_SHA1       = "Text-delta-base-sha1";
+    public static final int DUMPFILE_FORMAT_VERSION                = 3;
 
     public static final int NODE_ACTION_ADD     = 1;
     public static final int NODE_ACTION_CHANGE  = 0;

@@ -464,16 +464,16 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             baton.myCopyFromPath = SVNPathUtil.getAbsolutePath(baton.myCopyFromPath);
         }
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM)) {
-            baton.myResultChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_MD5)) {
+            baton.myResultChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_MD5);
         }        
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM)) {
-            baton.myBaseChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_MD5)) {
+            baton.myBaseChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_MD5);
         }
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM)) {
-            baton.myCopySourceChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_MD5)) {
+            baton.myCopySourceChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_MD5);
         }
         return baton;
     }
