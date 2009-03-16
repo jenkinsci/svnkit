@@ -462,6 +462,29 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    public SVNSyncInfo doInfo(SVNURL toURL) throws SVNException {
+        SVNRepository toRepos = null;
+        try {
+            toRepos = createRepository(toURL, null, true);
+            checkIfRepositoryIsAtRoot(toRepos, toURL);
+            SVNPropertyValue fromURL = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
+            if (fromURL == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Repository ''{0}'' is not initialized for synchronization", 
+                        toURL);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            
+            SVNPropertyValue fromUUID = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID);
+            SVNPropertyValue lastMergedRevProp = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
+            long lastMergedRev = lastMergedRevProp != null ? Long.parseLong(lastMergedRevProp.getString()) : SVNRepository.INVALID_REVISION;
+            return new SVNSyncInfo(fromURL.getString(), fromUUID != null ? fromUUID.getString() : null, lastMergedRev);
+        } finally {
+            if (toRepos != null) {
+                toRepos.closeSession();
+            }
+        }
+    }
+    
     /**
      * Completely synchronizes two repositories.
      * 

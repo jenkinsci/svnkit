@@ -54,7 +54,8 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
     private boolean myIsVersion;
     private boolean myIsQuiet;
     private boolean myIsHelp;
-
+    private boolean myIsTrustServerCertificate;
+    
     public boolean isNonInteractive() {
         return myIsNonInteractive;
     }
@@ -145,6 +146,8 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
             myIsVersion = true;            
         } else if (option == SVNSyncOption.QUIET) {
             myIsQuiet = true;            
+        } else if (option == SVNSyncOption.TRUST_SERVER_CERT) {
+            myIsTrustServerCertificate = true;
         } else if (option == SVNSyncOption.HELP || option == SVNSyncOption.QUESTION) {
             myIsHelp = true;            
         }
@@ -167,6 +170,11 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
             mySourcePassword = myPassword;
             mySyncPassword = myPassword;
         }        
+        
+        if (myIsTrustServerCertificate && !myIsNonInteractive) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--trust-server-cert requires --non-interactive");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
     }
 
     protected String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException {
