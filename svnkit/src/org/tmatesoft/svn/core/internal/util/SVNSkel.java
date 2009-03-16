@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.util;
 
 import java.io.UnsupportedEncodingException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,7 +124,7 @@ public class SVNSkel {
             if (element == null) {
                 return null;
             }
-            list.add(element);
+            list.addChild(element);
         }
         return list;
     }
@@ -206,8 +205,8 @@ public class SVNSkel {
             Map.Entry entry = (Map.Entry) iterator.next();
             SVNSkel name = createAtom((String) entry.getKey());
             SVNSkel value = createAtom((String) entry.getValue());
-            list.add(value);
-            list.add(name);
+            list.addChild(value);
+            list.addChild(name);
         }
         if (!list.isValidPropList()) {
             error("proplist");
@@ -240,19 +239,27 @@ public class SVNSkel {
         return Collections.unmodifiableList(myList);
     }
 
-    public void add(SVNSkel child) throws SVNException {
+    public SVNSkel getChild(int i) throws SVNException {
+        if (isAtom()) {
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to get a child from atom");
+            SVNErrorManager.error(error, SVNLogType.DEFAULT);
+        }
+        return (SVNSkel) myList.get(i);
+    }
+
+    public void addChild(SVNSkel child) throws SVNException {
         if (isAtom()) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to add a child to atom");
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
         }
-        myList.add(child);
+        myList.add(0, child);
     }
 
     public int getListSize() {
         if (isAtom()) {
             return -1;
         }
-        return getList().size();
+        return myList.size();
     }
 
     public String getValue() {
@@ -276,7 +283,7 @@ public class SVNSkel {
             buffer.append("]");
         } else {
             buffer.append("(");
-            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 buffer.append(element.toString());
             }
@@ -293,16 +300,23 @@ public class SVNSkel {
         return value.equals(str);
     }
 
+    public boolean containsAtomsOnly() {
+        if (isAtom()) {
+            return false;
+        }
+        for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
+            SVNSkel element = (SVNSkel) iterator.next();
+            if (!element.isAtom()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean isValidPropList() {
         int length = getListSize();
         if (length >= 0 && (length & 1) == 0) {
-            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
-                SVNSkel element = (SVNSkel) iterator.next();
-                if (!element.isAtom()) {
-                    return false;
-                }
-            }
-            return true;
+            return containsAtomsOnly();
         }
         return false;
     }
@@ -312,7 +326,7 @@ public class SVNSkel {
             error("proplist");
         }
         Map props = new SVNHashMap();
-        for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
+        for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
 // We always have name - value pair since list length is even
             SVNSkel nameElement = (SVNSkel) iterator.next();
             SVNSkel valueElement = (SVNSkel) iterator.next();
@@ -353,7 +367,7 @@ public class SVNSkel {
         } else {
             buffer = allocate(buffer, 1);
             buffer.putChar('(');
-            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 buffer = element.writeTo(buffer);
                 if (iterator.hasNext()) {
@@ -378,7 +392,7 @@ public class SVNSkel {
             }
         } else {
             int total = 2;
-            for (Iterator iterator = getList().iterator(); iterator.hasNext();) {
+            for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 total += element.estimateUnparsedSize();
 // space between a pair of elements

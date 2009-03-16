@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 /**
  * @version 1.2.0
@@ -23,10 +22,10 @@ public class SVNConflictVersion {
 
     private final SVNURL myRepositoryRoot;
     private final String myPath;
-    private final SVNRevision myPegRevision;
+    private final long myPegRevision;
     private final SVNNodeKind myKind;
 
-    public SVNConflictVersion(SVNURL repositoryRoot, String path, SVNRevision pegRevision, SVNNodeKind kind) {
+    public SVNConflictVersion(SVNURL repositoryRoot, String path, long pegRevision, SVNNodeKind kind) {
         myRepositoryRoot = repositoryRoot;
         myPath = path;
         myPegRevision = pegRevision;
@@ -41,7 +40,7 @@ public class SVNConflictVersion {
         return myPath;
     }
 
-    public SVNRevision getPegRevision() {
+    public long getPegRevision() {
         return myPegRevision;
     }
 

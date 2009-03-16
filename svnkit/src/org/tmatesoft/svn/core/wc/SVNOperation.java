@@ -20,6 +20,22 @@ public class SVNOperation {
     public static final SVNOperation SWITCH = new SVNOperation("switch");
     public static final SVNOperation MERGE = new SVNOperation("merge");
     public static final SVNOperation NONE = new SVNOperation("none");
+
+    public static SVNOperation fromString(String operation) {
+        if (UPDATE.getName().equals(operation)) {
+            return UPDATE;
+        }
+        if (SWITCH.getName().equals(operation)) {
+            return SWITCH;
+        }
+        if (MERGE.getName().equals(operation)) {
+            return MERGE;
+        }
+        if (NONE.getName().equals(operation)) {
+            return NONE;
+        }
+        return null;
+    }
     
     private final String myName;
 
@@ -27,7 +43,11 @@ public class SVNOperation {
         myName = name;
     }
 
-    public String toString() {
+    public String getName() {
         return myName;
+    }
+
+    public String toString() {
+        return getName();
     }
 }

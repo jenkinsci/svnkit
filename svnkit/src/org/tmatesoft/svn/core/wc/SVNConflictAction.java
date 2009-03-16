@@ -24,16 +24,40 @@ public class SVNConflictAction {
     /**
      * Constant representing an attempt to change text or props.
      */
-    public static final SVNConflictAction EDIT = new SVNConflictAction();
+    public static final SVNConflictAction EDIT = new SVNConflictAction("edited");
     /**
      * Constant representing an attempt to add an object.
      */
-    public static final SVNConflictAction ADD = new SVNConflictAction();
+    public static final SVNConflictAction ADD = new SVNConflictAction("added");
     /**
      * Constant representing an attempt to delete an object.
      */
-    public static final SVNConflictAction DELETE = new SVNConflictAction();
-    
-    private SVNConflictAction() {
+    public static final SVNConflictAction DELETE = new SVNConflictAction("deleted");
+
+    public static SVNConflictAction fromString(String action) {
+        if (EDIT.getName().equals(action)) {
+            return EDIT;
+        }
+        if (ADD.getName().equals(action)) {
+            return ADD;
+        }
+        if (DELETE.getName().equals(action)) {
+            return DELETE;
+        }
+        return null;
+    }
+
+    private final String myName;
+
+    private SVNConflictAction(String name) {
+        myName = name;
+    }
+
+    public String getName() {
+        return myName;
+    }
+
+    public String toString() {
+        return getName();
     }
 }
