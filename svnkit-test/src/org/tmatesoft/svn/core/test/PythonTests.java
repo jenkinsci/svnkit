@@ -332,14 +332,16 @@ public class PythonTests {
 		final List combinedTestCases = new ArrayList();
 		Integer endInt = (Integer) availableTestCases.get(availableTestCases.size() - 1);
 		Integer startInt = (Integer) availableTestCases.get(0);
+		boolean isAllSpecified = false;
 		for (Iterator it = tokens.iterator(); it.hasNext();) {
 			final String token = (String)it.next();
 			if (token.equalsIgnoreCase("all")) {
-				combinedTestCases.addAll(availableTestCases);
+				isAllSpecified = true;
+			    combinedTestCases.addAll(availableTestCases);
 				continue;
 			}
 
-            if (token.indexOf("-") >= 0) {
+            if (token.indexOf("-") > 0 || (token.indexOf("-") == 0 && !isAllSpecified)) {
                 // parse range
                 String startNumber = token.substring(0, token.indexOf("-"));
                 String endNumber = token.substring(token.indexOf("-") + 1);
