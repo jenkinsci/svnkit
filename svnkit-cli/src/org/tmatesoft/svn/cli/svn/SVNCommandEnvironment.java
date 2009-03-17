@@ -352,7 +352,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             String fileName = optionValue.getValue();
             byte[] data = readFromFile(new File(fileName));
             try {
-                String[] targets = new String(data, "UTF-8").split("\n\r");
+                String[] targets = new String(data, "UTF-8").split("[\n\r]");
                 myTargets = new LinkedList();
                 for (int i = 0; i < targets.length; i++) {
                     if (targets[i].trim().length() > 0) {
