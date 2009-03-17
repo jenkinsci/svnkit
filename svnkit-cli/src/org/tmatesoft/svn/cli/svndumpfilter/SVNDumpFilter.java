@@ -58,6 +58,7 @@ public class SVNDumpFilter extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNDumpFilterOption.PRESERVE_REVISION_PROPERTIES);
         SVNCommandLine.registerOption(SVNDumpFilterOption.RENUMBER_REVISIONS);
         SVNCommandLine.registerOption(SVNDumpFilterOption.SKIP_MISSING_MERGE_SOURCES);
+        SVNCommandLine.registerOption(SVNDumpFilterOption.TARGETS);
     }
 
 }

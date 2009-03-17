@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.cli.AbstractSVNCommand;
 import org.tmatesoft.svn.cli.AbstractSVNCommandEnvironment;
@@ -48,6 +49,7 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
     private boolean myIsPreserveRevisionProperties;
     private boolean myIsSkipMissingMergeSources;
     private List myPrefixes;
+    private String myTargetsFile;
     
     public boolean isVersion() {
         return myIsVersion;
@@ -98,23 +100,35 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
         if (getCommand().getClass() == SVNDumpFilterHelpCommand.class) {
             return;            
         }
+
         List arguments = getArguments();
-        if (arguments == null || arguments.isEmpty()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, 
-                    "Error: no prefixes supplied.");
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
         
         myPrefixes = new LinkedList();
-        for (Iterator prefixesIter = arguments.iterator(); prefixesIter.hasNext();) {
-            String prefix = (String) prefixesIter.next();
-            prefix = prefix.replace(File.separatorChar, '/');
-            prefix = SVNPathUtil.canonicalizePath(prefix);
+        if (arguments != null) {
+            for (Iterator prefixesIter = arguments.iterator(); prefixesIter.hasNext();) {
+                String prefix = (String) prefixesIter.next();
+                prefix = prefix.replace(File.separatorChar, '/');
+                prefix = SVNPathUtil.canonicalizePath(prefix);
 
-            if (!prefix.startsWith("/")) {
-                prefix = "/" + prefix;
+                if (!prefix.startsWith("/")) {
+                    prefix = "/" + prefix;
+                }
+                myPrefixes.add(prefix);
             }
-            myPrefixes.add(prefix);
+        }
+        
+        if (myTargetsFile != null) {
+            File targetsFile = new File(myTargetsFile);
+            String contents = new String(readFromFile(targetsFile));
+            for (StringTokenizer tokens = new StringTokenizer(contents, "\n\r"); tokens.hasMoreTokens();) {
+                String prefix = tokens.nextToken();
+                myPrefixes.add(prefix);
+            }
+        }
+        
+        if (myPrefixes.isEmpty()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS, "Error: no prefixes supplied.");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     
@@ -132,6 +146,8 @@ public class SVNDumpFilterCommandEnvironment extends AbstractSVNCommandEnvironme
             myIsVersion = true;            
         } else if (option == SVNDumpFilterOption.QUIET) {
             myIsQuiet = true;            
+        } else if (option == SVNDumpFilterOption.TARGETS) {
+            myTargetsFile = optionValue.getValue();
         } else if (option == SVNDumpFilterOption.HELP || option == SVNDumpFilterOption.QUESTION) {
             myIsHelp = true;            
         }

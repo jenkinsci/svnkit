@@ -42,6 +42,7 @@ public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {
         options.add(SVNDumpFilterOption.SKIP_MISSING_MERGE_SOURCES);        
         options.add(SVNDumpFilterOption.PRESERVE_REVISION_PROPERTIES);        
         options.add(SVNDumpFilterOption.QUIET);
+        options.add(SVNDumpFilterOption.TARGETS);
         return options;
     }
 
