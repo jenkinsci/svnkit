@@ -88,6 +88,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption PASSWORD = new SVNOption("password", false);
     public static final SVNOption NO_AUTH_CACHE = new SVNOption("no-auth-cache");
     public static final SVNOption NON_INTERACTIVE = new SVNOption("non-interactive");
+    public static final SVNOption TRUST_SERVER_CERT = new SVNOption("trust-server-cert");
     
     public static Collection addLogMessageOptions(Collection target) {
         if (target != null) {

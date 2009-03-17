@@ -113,7 +113,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, 
                 myPassword, !myIsNoAuthCache);
         if (!myIsNonInteractive) {
-            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
+            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate));
         }
         return authManager;
     }

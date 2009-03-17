@@ -123,6 +123,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private boolean myIsChangeOptionUsed;
     private boolean myIsWithAllRevprops;
     private boolean myIsReIntegrate;
+    private boolean myIsTrustServerCertificate;
     private List myRevisionRanges;
     private SVNShowRevisionType myShowRevsType;
     private Collection myChangelists;
@@ -229,7 +230,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
         if (!myIsNonInteractive) {
-            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
+            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate));
         }
         return authManager;
     }
@@ -274,6 +275,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                         "--reintegrate cannot be used with --record-only");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
+        }
+        
+        if (myIsTrustServerCertificate && !myIsNonInteractive) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--trust-server-cert requires --non-interactive");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     
@@ -528,6 +534,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myAuthorOfInterest = optionValue.getValue();
         } else if (option == SVNOption.REGULAR_EXPRESSION) {
             myRegularExpression = optionValue.getValue();
+        } else if (option == SVNOption.TRUST_SERVER_CERT) {
+            myIsTrustServerCertificate = true;
         }
     }
     

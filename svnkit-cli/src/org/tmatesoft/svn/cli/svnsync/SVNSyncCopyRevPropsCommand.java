@@ -51,6 +51,7 @@ public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand implements ISVNAd
         options.add(SVNSyncOption.SYNC_PASSWORD);
         options.add(SVNSyncOption.CONFIG_DIR);
         options.add(SVNSyncOption.QUIET);
+        options.add(SVNSyncOption.TRUST_SERVER_CERT);
         return options;
     }
 

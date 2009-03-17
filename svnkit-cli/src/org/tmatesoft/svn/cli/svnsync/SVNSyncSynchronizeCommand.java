@@ -53,6 +53,7 @@ public class SVNSyncSynchronizeCommand extends SVNSyncCommand implements ISVNAdm
         options.add(SVNSyncOption.SYNC_PASSWORD);
         options.add(SVNSyncOption.CONFIG_DIR);
         options.add(SVNSyncOption.QUIET);
+        options.add(SVNSyncOption.TRUST_SERVER_CERT);
         return options;
     }
 

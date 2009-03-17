@@ -61,6 +61,7 @@ public abstract class SVNCommand extends AbstractSVNCommand {
             myGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
             myGlobalOptions.add(SVNOption.NON_INTERACTIVE);
             myGlobalOptions.add(SVNOption.CONFIG_DIR);
+            myGlobalOptions.add(SVNOption.TRUST_SERVER_CERT);
         }
         return myGlobalOptions;
     }
