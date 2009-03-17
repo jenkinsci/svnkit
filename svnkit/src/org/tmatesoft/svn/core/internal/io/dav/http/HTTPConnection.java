@@ -352,7 +352,7 @@ class HTTPConnection implements IHTTPConnection {
 			            keyManager.acknowledgeAndClearAuthentication(sslErr);
 		            }
                 err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, ssl);
-	            continue;
+	            // continue; http://svnkit.com/tracker/view.php?id=301 - Kohsuke
             } catch (IOException e) {
                 myRepository.getDebugLog().logFine(SVNLogType.NETWORK, e);
                 if (e instanceof SocketTimeoutException) {
