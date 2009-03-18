@@ -71,7 +71,11 @@ public abstract class SVNLog {
 
     public static final String UPGRADE_FORMAT = "upgrade-format";
 
+    public static final String ADD_TREE_CONFLICT = "add-tree-conflict";    
+
     public static final String NAME_ATTR = "name";
+
+    public static final String DATA_ATTR = "data";
 
     public static final String PROPERTY_NAME_ATTR = "propname";
 

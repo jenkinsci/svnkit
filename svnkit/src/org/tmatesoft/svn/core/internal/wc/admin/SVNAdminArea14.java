@@ -49,6 +49,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -1935,17 +1936,37 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
 
-    public void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+    public boolean hasTreeConflicts(String name) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return false;
+    }
+
+    public SVNConflictDescription getTreeConflict(String name) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return null;
+    }
+
+    public void addTreeConflict(SVNConflictDescription conflict) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                 "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
         SVNErrorManager.error(err, SVNLogType.WC);
     }
 
-    public boolean hasTreeConflicts(String name) throws SVNException {
+    public SVNConflictDescription deleteTreeConflict(String name) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return null;
+    }
+
+    public void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                 "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
         SVNErrorManager.error(err, SVNLogType.WC);
-        return false;
     }
 
     protected int getFormatVersion() {

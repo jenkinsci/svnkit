@@ -57,6 +57,7 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -131,6 +132,12 @@ public abstract class SVNAdminArea {
     public abstract void handleKillMe() throws SVNException;
 
     public abstract boolean hasTreeConflicts(String name) throws SVNException;
+
+    public abstract SVNConflictDescription getTreeConflict(String name) throws SVNException;
+
+    public abstract void addTreeConflict(SVNConflictDescription conflict) throws SVNException;
+
+    public abstract SVNConflictDescription deleteTreeConflict(String name) throws SVNException;
 
     public abstract void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException;
     

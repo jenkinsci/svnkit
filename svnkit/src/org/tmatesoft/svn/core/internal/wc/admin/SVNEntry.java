@@ -456,6 +456,10 @@ public class SVNEntry {
     public String getTreeConflictData() {
         return (String) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
     }
+
+    public void setTreeConflictData(String conflictData) {
+        setAttributeValue(SVNProperty.TREE_CONFLICT_DATA, conflictData);
+    }
     
     public Map asMap() {
         return myAttributes;

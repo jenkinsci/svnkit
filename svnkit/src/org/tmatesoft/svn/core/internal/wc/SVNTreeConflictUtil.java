@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNOperation;
@@ -35,15 +36,25 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2.0
  */
 public class SVNTreeConflictUtil {
-    public static boolean treeConflictExists(List conflicts, String basename) {
-        for (Iterator iterator = conflicts.iterator(); iterator.hasNext();) {
-            SVNConflictDescription description = (SVNConflictDescription) iterator.next();
-            String descriptionBasename = description.getMergeFiles().getLocalFile().getName();
-            if (basename.equals(descriptionBasename)) {
-                return true;
+    public static int getTreeConflictIndex(List conflicts, File path) {
+        for (int i = 0; i < conflicts.size(); i++) {
+            SVNConflictDescription conflict = (SVNConflictDescription) conflicts.get(i);
+            File conflictPath = conflict.getMergeFiles().getLocalFile().getAbsoluteFile();
+            if (conflictPath.equals(path)) {
+                return i;
             }
         }
-        return false;
+        return -1;
+    }
+
+    public static List readTreeConflicts(File dirPath, String conflictData) throws SVNException {
+        byte[] data;
+        try {
+            data = conflictData.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            data = conflictData.getBytes();
+        }
+        return readTreeConflicts(dirPath, data);
     }
 
     public static List readTreeConflicts(File dirPath, byte[] conflictData) throws SVNException {
@@ -58,9 +69,9 @@ public class SVNTreeConflictUtil {
         }
         for (Iterator iterator = skel.getList().iterator(); iterator.hasNext();) {
             SVNSkel conflictSkel = (SVNSkel) iterator.next();
-            SVNConflictDescription description = readSingleTreeConflict(conflictSkel, dirPath);
-            if (description != null) {
-                conflicts.add(description);
+            SVNConflictDescription conflict = readSingleTreeConflict(conflictSkel, dirPath);
+            if (conflict != null) {
+                conflicts.add(conflict);
             }
         }
         return conflicts;
@@ -127,44 +138,55 @@ public class SVNTreeConflictUtil {
         return isValidVersionInfo(skel.getChild(6)) && isValidVersionInfo(skel.getChild(7));
     }
 
-    public static byte[] writeTreeConflicts(List conflicts) throws SVNException {
+    public static String getTreeConflictData(List conflicts) throws SVNException {
+        byte[] rawData = getTreeConflictRawData(conflicts);
+        String conflictsData;
+        try {
+            conflictsData = new String(rawData, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            conflictsData = new String(rawData);
+        }
+        return conflictsData;
+    }
+
+    public static byte[] getTreeConflictRawData(List conflicts) throws SVNException {
         SVNConflictVersion nullVersion = new SVNConflictVersion(null, null, SVNRepository.INVALID_REVISION, SVNNodeKind.UNKNOWN);
         SVNSkel skel = SVNSkel.createEmptyList();
         for (int i = conflicts.size() - 1; i >= 0; i--) {
-            SVNConflictDescription description = (SVNConflictDescription) conflicts.get(i);
-            SVNSkel conflict = SVNSkel.createEmptyList();
+            SVNConflictDescription conflict = (SVNConflictDescription) conflicts.get(i);
+            SVNSkel conflictSkel = SVNSkel.createEmptyList();
 
-            SVNConflictVersion sourceRightVersion = description.getSourceRightVersion();
+            SVNConflictVersion sourceRightVersion = conflict.getSourceRightVersion();
             sourceRightVersion = sourceRightVersion == null ? nullVersion : sourceRightVersion;
-            prependVersionInfo(conflict, sourceRightVersion);
+            prependVersionInfo(conflictSkel, sourceRightVersion);
 
-            SVNConflictVersion sourceLeftVersion = description.getSourceRightVersion();
+            SVNConflictVersion sourceLeftVersion = conflict.getSourceRightVersion();
             sourceLeftVersion = sourceLeftVersion == null ? nullVersion : sourceLeftVersion;
-            prependVersionInfo(conflict, sourceLeftVersion);
+            prependVersionInfo(conflictSkel, sourceLeftVersion);
 
-            conflict.addChild(SVNSkel.createAtom(description.getConflictReason().toString()));
-            conflict.addChild(SVNSkel.createAtom(description.getConflictAction().toString()));
-            conflict.addChild(SVNSkel.createAtom(description.getOperation().toString()));
+            conflictSkel.addChild(SVNSkel.createAtom(conflict.getConflictReason().toString()));
+            conflictSkel.addChild(SVNSkel.createAtom(conflict.getConflictAction().toString()));
+            conflictSkel.addChild(SVNSkel.createAtom(conflict.getOperation().toString()));
 
-            if (description.getNodeKind() != SVNNodeKind.DIR && description.getNodeKind() != SVNNodeKind.FILE) {
+            if (conflict.getNodeKind() != SVNNodeKind.DIR && conflict.getNodeKind() != SVNNodeKind.FILE) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Invalid \'node_kind\' field in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            conflict.addChild(SVNSkel.createAtom(description.getNodeKind().toString()));
+            conflictSkel.addChild(SVNSkel.createAtom(conflict.getNodeKind().toString()));
 
-            String path = description.getMergeFiles().getLocalFile().getName();
+            String path = conflict.getMergeFiles().getLocalFile().getName();
             if (path.length() == 0) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Empty path basename in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            conflict.addChild(SVNSkel.createAtom(path));
-            conflict.addChild(SVNSkel.createAtom("conflict"));
+            conflictSkel.addChild(SVNSkel.createAtom(path));
+            conflictSkel.addChild(SVNSkel.createAtom("conflict"));
 
-            if (!isValidConflict(conflict)) {
+            if (!isValidConflict(conflictSkel)) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Failed to create valid conflict description skel: ''{0}''", skel.toString());
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            skel.addChild(conflict);
+            skel.addChild(conflictSkel);
         }
         return skel.unparse();
     }
