@@ -542,18 +542,18 @@ public class SVNLogClient extends SVNBasicClient {
         List editedRevisionRanges = new LinkedList();
         for (Iterator revRangesIter = revisionRanges.iterator(); revRangesIter.hasNext();) {
             SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
-            if (revRange.getStartRevision() != SVNRevision.UNDEFINED && revRange.getEndRevision() == SVNRevision.UNDEFINED) {
+            if (revRange.getStartRevision().isValid() && !revRange.getEndRevision().isValid()) {
                 revRange = new SVNRevisionRange(revRange.getStartRevision(), revRange.getStartRevision());   
-            } else if (revRange.getStartRevision() == SVNRevision.UNDEFINED) {
+            } else if (!revRange.getStartRevision().isValid()) {
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
-                if (pegRevision == SVNRevision.UNDEFINED) {
+                if (!pegRevision.isValid()) {
                     start = SVNRevision.BASE;
                 } else {
                     start = pegRevision;
                 }
                 
-                if (revRange.getEndRevision() == SVNRevision.UNDEFINED) {
+                if (!revRange.getEndRevision().isValid()) {
                     end = SVNRevision.create(0);
                 }
                 revRange = new SVNRevisionRange(start, end);
@@ -565,7 +565,7 @@ public class SVNLogClient extends SVNBasicClient {
             }
             
             editedRevisionRanges.add(revRange);
-            if (sessionRevision == SVNRevision.UNDEFINED) {
+            if (!sessionRevision.isValid()) {
                 SVNRevision start = revRange.getStartRevision();
                 SVNRevision end = revRange.getEndRevision();
                 if (SVNRevision.isValidRevisionNumber(start.getNumber()) && SVNRevision.isValidRevisionNumber(end.getNumber())) {
@@ -819,18 +819,18 @@ public class SVNLogClient extends SVNBasicClient {
         List editedRevisionRanges = new LinkedList();
         for (Iterator revRangesIter = revisionRanges.iterator(); revRangesIter.hasNext();) {
             SVNRevisionRange revRange = (SVNRevisionRange) revRangesIter.next();
-            if (revRange.getStartRevision() != SVNRevision.UNDEFINED && revRange.getEndRevision() == SVNRevision.UNDEFINED) {
+            if (revRange.getStartRevision().isValid() && !revRange.getEndRevision().isValid()) {
                 revRange = new SVNRevisionRange(revRange.getStartRevision(), revRange.getStartRevision());   
-            } else if (revRange.getStartRevision() == SVNRevision.UNDEFINED) {
+            } else if (!revRange.getStartRevision().isValid()) {
                 SVNRevision start = SVNRevision.UNDEFINED;
                 SVNRevision end = SVNRevision.UNDEFINED;
-                if (pegRevision == SVNRevision.UNDEFINED) {
+                if (!pegRevision.isValid()) {
                     start = SVNRevision.HEAD;
                 } else {
                     start = pegRevision;
                 }
                 
-                if (revRange.getEndRevision() == SVNRevision.UNDEFINED) {
+                if (!revRange.getEndRevision().isValid()) {
                     end = SVNRevision.create(0);
                 }
                 revRange = new SVNRevisionRange(start, end);
@@ -848,7 +848,7 @@ public class SVNLogClient extends SVNBasicClient {
             }
             
             editedRevisionRanges.add(revRange);
-            if (sessionRevision == SVNRevision.UNDEFINED) {
+            if (!sessionRevision.isValid()) {
                 SVNRevision start = revRange.getStartRevision();
                 SVNRevision end = revRange.getEndRevision();
                 if (SVNRevision.isValidRevisionNumber(start.getNumber()) && SVNRevision.isValidRevisionNumber(end.getNumber())) {
