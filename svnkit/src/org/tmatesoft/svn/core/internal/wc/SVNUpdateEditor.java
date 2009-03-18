@@ -152,6 +152,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             return;
         }
 
+        if (entry.getDepth() == SVNDepth.EXCLUDE) {
+            
+        }
+        
         SVNLog log = myCurrentDirectory.getLog();
         SVNProperties attributes = new SVNProperties();
 
@@ -701,7 +705,18 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     private void completeDirectory(SVNDirectoryInfo dirInfo) throws SVNException {
         if (dirInfo.Parent == null && myTarget != null) {
             if (myIsDepthSticky || myTarget != null) {
-                
+                SVNAdminArea adminArea = dirInfo.getAdminArea();
+                SVNEntry entry = adminArea.getEntry(myTarget, true);
+                if (entry != null && entry.getDepth() == SVNDepth.EXCLUDE) {
+                    File target = myAdminInfo.getAnchor().getFile(myTarget);
+                    SVNAdminArea targetArea = myWCAccess.getAdminArea(target);
+                    if (targetArea == null && entry.isDirectory()) {
+                        deleteEntry(myTarget, myTargetRevision);
+                    } else {
+                        entry.setDepth(SVNDepth.INFINITY);
+                        adminArea.saveEntries(false);
+                    }
+                }
             }
             return;
         }
@@ -736,7 +751,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             } else if (currentEntry.isAbsent() && currentEntry.getRevision() != myTargetRevision) {
                 adminArea.deleteEntry(currentEntry.getName());
             } else if (currentEntry.getKind() == SVNNodeKind.DIR) {
-                if (myWCAccess.isMissing(adminArea.getFile(currentEntry.getName())) && !currentEntry.isAbsent() && 
+                if (currentEntry.getDepth() == SVNDepth.EXCLUDE) {
+                    if (myIsDepthSticky && myRequestedDepth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
+                        currentEntry.setDepth(SVNDepth.INFINITY);
+                    }
+                } else if (myWCAccess.isMissing(adminArea.getFile(currentEntry.getName())) && !currentEntry.isAbsent() && 
                         !currentEntry.isScheduledForAddition()) {
                     adminArea.deleteEntry(currentEntry.getName());
                     myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(currentEntry.getName()), 

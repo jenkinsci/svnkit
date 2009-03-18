@@ -842,7 +842,7 @@ public class SVNWCManager {
             // remove dir.
             SVNAdminArea dir = wcAccess.retrieve(fullPath);
             try {
-                dir.removeFromRevisionControl(dir.getThisDirName(), true, true);
+                dir.removeFromRevisionControl(dir.getThisDirName(), true, false);
             } catch (SVNException svne) {                
                 handleLeftLocalModificationsError(svne);
             }

@@ -105,17 +105,18 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         
         boolean isThisDir = getThisDirName().equals(entryName);
         boolean isSubDir = !isThisDir && SVNProperty.KIND_DIR.equals(entryAttrs.get(SVNProperty.KIND)); 
-        String depth = (String) entryAttrs.get(SVNProperty.DEPTH);
-        if (!isSubDir && SVNDepth.fromString(depth) != SVNDepth.INFINITY) {
-            if (writeValue(writer, depth, emptyFields)) {
+        String depthStr = (String) entryAttrs.get(SVNProperty.DEPTH);
+        SVNDepth depth = SVNDepth.fromString(depthStr);
+        if ((isSubDir && depth != SVNDepth.EXCLUDE) || depth == SVNDepth.INFINITY) {
+            emptyFields++;
+        } else {
+            if (writeValue(writer, depthStr, emptyFields)) {
                 emptyFields = 0;    
             } else {
                 ++emptyFields;
             }
-        } else {
-            ++emptyFields;
         }
-        
+
         return emptyFields;
     }
 
