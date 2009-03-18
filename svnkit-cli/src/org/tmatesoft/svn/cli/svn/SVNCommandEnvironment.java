@@ -121,6 +121,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private long myLimit;
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionUsed;
+    private boolean myIsRevisionOptionUsed;
     private boolean myIsWithAllRevprops;
     private boolean myIsReIntegrate;
     private boolean myIsTrustServerCertificate;
@@ -237,7 +238,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
 
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
     	super.initOptions(commandLine);
-    	if (getCommand().getClass() != SVNMergeCommand.class) {
+    	if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
         	if (myRevisionRanges.size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 		"Multiple revision argument encountered; " +
@@ -344,6 +345,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             SVNRevisionRange range = new SVNRevisionRange(revisions[0], revisions[1]);
             myRevisionRanges.add(range);
+            myIsRevisionOptionUsed = true;
         } else if (option == SVNOption.VERBOSE) {
             myIsVerbose = true;
         } else if (option == SVNOption.UPDATE) {
@@ -592,6 +594,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     
     public boolean isChangeOptionUsed() {
         return myIsChangeOptionUsed;
+    }
+
+    public boolean isRevisionOptionUsed() {
+        return myIsRevisionOptionUsed;
     }
 
     public String getChangelist() {
