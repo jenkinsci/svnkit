@@ -44,16 +44,16 @@ public class SVNReporter implements ISVNReporterBaton {
     private boolean myIsRestore;
     private boolean myUseDepthCompatibilityTrick;
     private boolean myIsStatus;
+    private boolean myIsHonorDepthExclude;
     private File myTarget;
     private ISVNDebugLog myLog;
     private boolean myIsLockOnDemand;
-
     private long myTotalFilesCount;
     private long myReportedFilesCount;
 
     public SVNReporter(SVNAdminAreaInfo info, File file, boolean restoreFiles, 
             boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, 
-            boolean isStatus, ISVNDebugLog log) {
+            boolean isStatus, boolean isHonorDepthExclude, ISVNDebugLog log) {
         myInfo = info;
         myDepth = depth;
         myIsRestore = restoreFiles;
@@ -62,6 +62,7 @@ public class SVNReporter implements ISVNReporterBaton {
         myLog = log;
         myTarget = file;
         myIsLockOnDemand = lockOnDemand;
+        myIsHonorDepthExclude = isHonorDepthExclude;
         myTotalFilesCount = 0;
         myReportedFilesCount = 0;
     }
@@ -183,6 +184,18 @@ public class SVNReporter implements ISVNReporterBaton {
                 }
                 continue;
             }
+            
+            if (entry.getDepth() == SVNDepth.EXCLUDE) {
+                if (myIsHonorDepthExclude) {
+                    reporter.setPath(path, null, dirRevision, SVNDepth.EXCLUDE, false);
+                } else {
+                    if (!reportAll) {
+                        reporter.deletePath(path);
+                    }
+                }
+                continue;
+            }
+            
             if (entry.isScheduledForAddition()) {
                 continue;
             }

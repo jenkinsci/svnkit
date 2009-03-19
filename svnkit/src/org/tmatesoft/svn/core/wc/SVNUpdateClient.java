@@ -435,7 +435,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 info = wcAccess.openAnchor(path, true, SVNWCAccess.INFINITE_DEPTH);
             }
 
-            final SVNReporter reporter = new SVNReporter(info, path, true, false, depth, false, false, getDebugLog());
+            final SVNReporter reporter = new SVNReporter(info, path, true, false, depth, false, false, !depthIsSticky, getDebugLog());
             SVNAdminArea anchorArea = info.getAnchor();
             SVNEntry entry = anchorArea.getVersionedEntry(anchorArea.getThisDirName(), false);
             SVNURL sourceURL = entry.getSVNURL();
@@ -532,7 +532,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             SVNRepository repos = createRepository(url, anchorArea.getRoot(), wcAccess, true);
             boolean serverSupportsDepth = repos.hasCapability(SVNCapability.DEPTH);
             final SVNReporter reporter = new SVNReporter(adminInfo, path, true, !serverSupportsDepth, 
-                    depth, isUpdateLocksOnDemand(), false, getDebugLog());
+                    depth, isUpdateLocksOnDemand(), false, !depthIsSticky, getDebugLog());
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, path);
@@ -2101,8 +2101,8 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (adminArea.getThisDirName().equals(childEntry.getName())) {
                 continue;
             }
-            if (recursive && childEntry.isDirectory() && 
-                    (childEntry.isScheduledForAddition() || !childEntry.isDeleted()) && !childEntry.isAbsent()) {
+            if (recursive && childEntry.isDirectory() && (childEntry.isScheduledForAddition() || !childEntry.isDeleted()) && 
+                    !childEntry.isAbsent() && childEntry.getDepth() != SVNDepth.EXCLUDE) {
                 File childDir = adminArea.getFile(childEntry.getName());
                 if (wcAccess.isMissing(childDir)) {
                     continue;

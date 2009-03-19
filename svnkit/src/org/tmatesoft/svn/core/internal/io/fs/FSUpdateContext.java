@@ -349,7 +349,7 @@ public class FSUpdateContext {
                 }
                 
                 targetEntries.remove(entryName);
-                if (sourceEntries != null) {
+                if (sourceEntries != null && (pathInfo == null || pathInfo.getDepth() != SVNDepth.EXCLUDE || targetEntry != null)) {
                     sourceEntries.remove(entryName);
                 }
             }

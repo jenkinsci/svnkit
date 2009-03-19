@@ -147,13 +147,15 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         checkIfPathIsUnderRoot(path);
         String name = SVNPathUtil.tail(path);
         SVNAdminArea parentArea = myCurrentDirectory.getAdminArea();
-        SVNEntry entry = parentArea.getEntry(name, true);
-        if (entry == null) {
-            return;
-        }
+        SVNEntry entry = parentArea.getVersionedEntry(name, true);//parentArea.getEntry(name, true);
 
         if (entry.getDepth() == SVNDepth.EXCLUDE) {
-            
+            parentArea.deleteEntry(name);
+            parentArea.saveEntries(true);
+            if (path.equals(myTarget)) {
+                myIsTargetDeleted = true;
+            }
+            return;
         }
         
         SVNLog log = myCurrentDirectory.getLog();
