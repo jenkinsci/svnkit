@@ -48,6 +48,10 @@ public class SVNTreeConflictUtil {
     }
 
     public static List readTreeConflicts(File dirPath, String conflictData) throws SVNException {
+        if (conflictData == null) {
+            return new ArrayList();
+        }
+        
         byte[] data;
         try {
             data = conflictData.getBytes("UTF-8");
