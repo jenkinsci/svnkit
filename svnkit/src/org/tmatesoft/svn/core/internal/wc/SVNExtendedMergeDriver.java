@@ -208,7 +208,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         if (rangeList == null) {
             return false;
         }
-        rangeList = rangeList.compactMergeRanges();
         SVNMergeRange currentRange = new SVNMergeRange(Math.min(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), false);
         SVNMergeRange[] ranges = rangeList.getRanges();
         for (int i = 0; i < ranges.length; i++) {

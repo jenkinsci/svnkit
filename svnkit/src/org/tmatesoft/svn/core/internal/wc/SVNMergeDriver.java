@@ -1800,7 +1800,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	}
     	
     	SVNMergeRangeList mergeRangesList = SVNMergeRangeList.fromCollection(mergeRanges);
-    	mergeRangesList = mergeRangesList.compactMergeRanges();
     	mergeRanges = mergeRangesList.getRangesAsList();
     	if (mergeRanges.isEmpty()) {
     		return mergeRanges;
