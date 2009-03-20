@@ -480,8 +480,18 @@ public class SVNFileUtil {
         }
         try {
             if (isWindows) {
-                Process p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
-                p.waitFor();
+                Process p = null;
+                try {
+                    p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
+                    p.waitFor();
+                } finally {
+                    if (p != null) {
+                        closeFile(p.getInputStream());
+                        closeFile(p.getOutputStream());
+                        closeFile(p.getErrorStream());
+                        p.destroy();
+                    }
+                }
             } else {
                 execCommand(new String[] {
                         CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
@@ -848,10 +858,18 @@ public class SVNFileUtil {
         if (!isWindows || file == null || !file.exists() || file.isHidden()) {
             return;
         }
+        Process p = null;
         try {
-            Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
+            p = Runtime.getRuntime().exec("attrib " + (hidden ? "+" : "-") + "H \"" + file.getAbsolutePath() + "\"");
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
+        } finally {
+            if (p != null) {
+                closeFile(p.getErrorStream());
+                closeFile(p.getInputStream());
+                closeFile(p.getOutputStream());
+                p.destroy();
+            }
         }
     }
 
