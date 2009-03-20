@@ -123,8 +123,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         }
         String treeConflictData = parseString(line);
         if (treeConflictData != null) {
-            List conflicts = SVNTreeConflictUtil.readTreeConflicts(getRoot(), treeConflictData);
-            entryAttrs.put(SVNProperty.TREE_CONFLICT_DATA, conflicts);
+            entryAttrs.put(SVNProperty.TREE_CONFLICT_DATA, treeConflictData);
         }
         
         line = reader.readLine();

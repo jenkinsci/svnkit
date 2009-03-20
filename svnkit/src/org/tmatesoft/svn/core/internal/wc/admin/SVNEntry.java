@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -454,14 +455,24 @@ public class SVNEntry {
         return pegRevision;
     }
 
-    public List getTreeConflicts() {
-        return (List) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
+    public String getTreeConflictData() {
+        return (String) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
     }
 
-    public void setTreeConflicts(List treeConflicts) {
-        myAttributes.put(SVNProperty.TREE_CONFLICT_DATA, treeConflicts);
+    public List getTreeConflicts() throws SVNException {
+        String conflictData = getTreeConflictData();
+        return SVNTreeConflictUtil.readTreeConflicts(getAdminArea().getRoot(), conflictData);
+    }
+
+    public void setTreeConflictData(String conflictData) {
+        setAttributeValue(SVNProperty.TREE_CONFLICT_DATA, conflictData);
     }
     
+    public void setTreeConflicts(List treeConflicts) throws SVNException {
+        String conflictData = SVNTreeConflictUtil.getTreeConflictData(treeConflicts);
+        setTreeConflictData(conflictData);
+    }
+
     public Map asMap() {
         return myAttributes;
     }
