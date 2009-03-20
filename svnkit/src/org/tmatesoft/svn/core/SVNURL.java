@@ -309,9 +309,14 @@ public class SVNURL {
                 myPort = defaultPort != null ? defaultPort.intValue() : 0;
             } 
         }
+        
         if (myEncodedPath.equals("/")) {
             myEncodedPath = "";
             myPath = "";
+        }
+        
+        if (myHost != null) {
+            myHost = myHost.toLowerCase();
         }
     }
     
