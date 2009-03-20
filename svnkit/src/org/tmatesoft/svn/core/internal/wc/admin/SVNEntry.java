@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -453,12 +454,12 @@ public class SVNEntry {
         return pegRevision;
     }
 
-    public String getTreeConflictData() {
-        return (String) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
+    public List getTreeConflicts() {
+        return (List) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
     }
 
-    public void setTreeConflictData(String conflictData) {
-        setAttributeValue(SVNProperty.TREE_CONFLICT_DATA, conflictData);
+    public void setTreeConflicts(List treeConflicts) {
+        myAttributes.put(SVNProperty.TREE_CONFLICT_DATA, treeConflicts);
     }
     
     public Map asMap() {

@@ -17,7 +17,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -30,7 +32,9 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -41,6 +45,17 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNLogRunner {
     private boolean myIsEntriesChanged;
     private boolean myIsWCPropertiesChanged;
+    private List myTreeConflicts;
+    private boolean myHasAddedTreeConflicts;
+
+    private int myLogCount;
+
+    private List getTreeConflicts() {
+        if (myTreeConflicts == null) {
+            myTreeConflicts = new ArrayList();
+        }
+        return myTreeConflicts;
+    }
 
     public void runCommand(SVNAdminArea adminArea, String name, SVNProperties attributes, int count) throws SVNException {
         SVNException error = null;
@@ -354,6 +369,16 @@ public class SVNLogRunner {
             } catch (SVNException svne) {
                 error = svne;
             }
+        } else if (SVNLog.ADD_TREE_CONFLICT.equals(name)) {
+            File dirPath = adminArea.getRoot();
+            String conflictData = attributes.getStringValue(SVNLog.DATA_ATTR);
+            List newConflicts = SVNTreeConflictUtil.readTreeConflicts(dirPath, conflictData);
+            SVNConflictDescription newConflict = (SVNConflictDescription) newConflicts.get(0);
+            int index = SVNTreeConflictUtil.getTreeConflictIndex(getTreeConflicts(), newConflict.getMergeFiles().getLocalFile());
+            if (index < 0) {
+                getTreeConflicts().add(newConflict);
+                setTreeConflictsAdded(true);
+            }
         } else if (SVNLog.MERGE.equals(name)) {
             File target = adminArea.getFile(fileName);
             try {
@@ -429,12 +454,18 @@ public class SVNLogRunner {
             SVNErrorMessage err = SVNErrorMessage.create(code, "Unrecognized logfile element ''{0}'' in ''{1}''", new Object[]{name, adminArea.getRoot()});
             SVNErrorManager.error(err.wrap("In directory ''{0}''", adminArea.getRoot()), SVNLogType.WC);
         }
+
+        myLogCount = count;
         
         if (error != null) {
             SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
             SVNErrorMessage err = SVNErrorMessage.create(code, "Error processing command ''{0}'' in ''{1}''", new Object[]{name, adminArea.getRoot()});
             SVNErrorManager.error(err, error, SVNLogType.WC);
         }
+    }
+
+    private void setTreeConflictsAdded(boolean added) {
+        myHasAddedTreeConflicts |= added;
     }
 
     private void setEntriesChanged(boolean modified) {
@@ -445,7 +476,34 @@ public class SVNLogRunner {
         myIsWCPropertiesChanged |= modified;
     }
 
+    private void saveTreeConflicts(SVNAdminArea adminArea) throws SVNException {
+        Map attributes = new SVNHashMap();
+        String conflictData = SVNTreeConflictUtil.getTreeConflictData(getTreeConflicts());
+        attributes.put(SVNProperty.TREE_CONFLICT_DATA, conflictData);
+        try {
+            adminArea.modifyEntry(adminArea.getThisDirName(), attributes, false, false);
+        } catch (SVNException e) {
+            SVNErrorCode errorCode = myLogCount <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
+            SVNErrorMessage error = SVNErrorMessage.create(errorCode, "Error recording tree conflicts in ''{0}''", adminArea.getRoot());
+            SVNErrorManager.error(error, e, SVNLogType.WC);
+        }
+        myIsEntriesChanged = true;
+    }
+
+    public void logStarted(SVNAdminArea adminArea) throws SVNException {
+        SVNEntry dirEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
+        List currentConflicts = dirEntry.getTreeConflicts();
+        if (currentConflicts != null) {
+            getTreeConflicts().addAll(currentConflicts);
+        }
+        myHasAddedTreeConflicts = false;
+        myLogCount = 0;
+    }
+
     public void logFailed(SVNAdminArea adminArea) throws SVNException {
+        if (myHasAddedTreeConflicts) {
+            saveTreeConflicts(adminArea);
+        }
         if (myIsWCPropertiesChanged) {
             adminArea.saveWCProperties(true);
         } else {
@@ -456,19 +514,25 @@ public class SVNLogRunner {
         } else {
             adminArea.closeEntries();
         }
+        myLogCount = 0;
     }
 
     public void logCompleted(SVNAdminArea adminArea) throws SVNException {
+        if (myHasAddedTreeConflicts) {
+            saveTreeConflicts(adminArea);            
+        }
         if (myIsWCPropertiesChanged) {
             adminArea.saveWCProperties(true);
         } 
         if (myIsEntriesChanged) {
             adminArea.saveEntries(false);
-        } 
+        }
 
         adminArea.handleKillMe();
         myIsEntriesChanged = false;
         myIsWCPropertiesChanged = false;
+        myHasAddedTreeConflicts = false;
+        myLogCount = 0;
     }
 
 }

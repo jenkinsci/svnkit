@@ -44,15 +44,13 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         super(dir);
     }
 
-    public boolean hasTreeConflicts(String name) throws SVNException {
-        //TODO: implement
-        return false;
+    public boolean hasTreeConflict(String victimName) throws SVNException {
+        return getTreeConflict(victimName) != null;
     }
     
     public SVNConflictDescription getTreeConflict(String victimName) throws SVNException {
-        SVNEntry dirEntry = getEntry(THIS_DIR, false);
-        String conflictData = dirEntry.getTreeConflictData();
-        List conflicts = SVNTreeConflictUtil.readTreeConflicts(getRoot(), conflictData);
+        SVNEntry dirEntry = getEntry(getThisDirName(), false);
+        List conflicts = dirEntry.getTreeConflicts();
         int index = SVNTreeConflictUtil.getTreeConflictIndex(conflicts, getFile(victimName).getAbsoluteFile());
         if (index >= 0) {
             return (SVNConflictDescription) conflicts.get(index);
@@ -70,7 +68,7 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         conflicts.add(conflict);
         String conflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
         SVNProperties command = new SVNProperties();
-        command.put(SVNLog.NAME_ATTR, THIS_DIR);
+        command.put(SVNLog.NAME_ATTR, getThisDirName());
         command.put(SVNLog.DATA_ATTR, conflictData);
 
         SVNLog log = getLog();
@@ -80,16 +78,15 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
     }
 
     public SVNConflictDescription deleteTreeConflict(String victimName) throws SVNException {
-        SVNEntry dirEntry = getEntry(THIS_DIR, false);
-        String tcData = dirEntry.getTreeConflictData();
-        List conflicts = SVNTreeConflictUtil.readTreeConflicts(getRoot(), tcData);
+        SVNEntry dirEntry = getEntry(getThisDirName(), false);
+        List conflicts = dirEntry.getTreeConflicts();
         int index = SVNTreeConflictUtil.getTreeConflictIndex(conflicts, getFile(victimName));
         if (index >= 0) {
             SVNConflictDescription conflict = (SVNConflictDescription) conflicts.remove(index);
             String conflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
             Map attributes = new SVNHashMap();
             attributes.put(SVNProperty.TREE_CONFLICT_DATA, conflictData);
-            modifyEntry(victimName, attributes, true, false);
+            modifyEntry(getThisDirName(), attributes, true, false);
             return conflict;
         }
         return null;
@@ -126,7 +123,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         }
         String treeConflictData = parseString(line);
         if (treeConflictData != null) {
-            //TODO: parse here tree conflict data and put it into the entry object
+            List conflicts = SVNTreeConflictUtil.readTreeConflicts(getRoot(), treeConflictData);
+            entryAttrs.put(SVNProperty.TREE_CONFLICT_DATA, conflicts);
         }
         
         line = reader.readLine();

@@ -131,7 +131,7 @@ public abstract class SVNAdminArea {
 
     public abstract void handleKillMe() throws SVNException;
 
-    public abstract boolean hasTreeConflicts(String name) throws SVNException;
+    public abstract boolean hasTreeConflict(String name) throws SVNException;
 
     public abstract SVNConflictDescription getTreeConflict(String name) throws SVNException;
 
@@ -560,6 +560,7 @@ public abstract class SVNAdminArea {
         SVNLogRunner runner = new SVNLogRunner();
         int index = 0;
         SVNLog log = null;
+        runner.logStarted(this);
         try {
             File logFile = null;
             while (true) {

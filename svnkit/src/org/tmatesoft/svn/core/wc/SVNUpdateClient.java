@@ -1898,7 +1898,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             } else {
                 targetArea.getVersionedEntry(targetArea.getThisDirName(), false);
                 boolean hasPropConflicts = targetArea.hasPropConflict(targetArea.getThisDirName());
-                boolean hasTreeConflicts = targetArea.hasTreeConflicts(targetArea.getThisDirName());
+                boolean hasTreeConflicts = targetArea.hasTreeConflict(targetArea.getThisDirName());
                 if (hasPropConflicts || hasTreeConflicts) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                             "The file external from ''{0}'' cannot be written to ''{1}'' while ''{2}'' remains in conflict", 
