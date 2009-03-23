@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -373,8 +374,8 @@ public class SVNLogRunner {
             File dirPath = adminArea.getRoot();
             String conflictData = attributes.getStringValue(SVNLog.DATA_ATTR);
             List newConflicts = SVNTreeConflictUtil.readTreeConflicts(dirPath, conflictData);
-            SVNConflictDescription newConflict = (SVNConflictDescription) newConflicts.get(0);
-            int index = SVNTreeConflictUtil.getTreeConflictIndex(getTreeConflicts(), newConflict.getMergeFiles().getLocalFile());
+            SVNTreeConflictDescription newConflict = (SVNTreeConflictDescription) newConflicts.get(0);
+            int index = SVNTreeConflictUtil.getTreeConflictIndex(getTreeConflicts(), newConflict.getPath());
             if (index < 0) {
                 getTreeConflicts().add(newConflict);
                 setTreeConflictsAdded(true);

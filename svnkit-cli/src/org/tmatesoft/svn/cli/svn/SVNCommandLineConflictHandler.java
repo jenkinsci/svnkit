@@ -45,6 +45,10 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
     }
     
     public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+        if (conflictDescription.isTreeConflict()) {
+// TODO: SVNKit 1.3           
+            return null;
+        }
         SVNMergeFileSet files = conflictDescription.getMergeFiles();
         if (myAccept == SVNConflictAcceptPolicy.POSTPONE) {
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);

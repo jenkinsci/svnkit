@@ -47,6 +47,8 @@ import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import de.regnis.q.sequence.line.QSequenceLineRAByteData;
@@ -70,7 +72,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 		STATUS_ORDERING.add(SVNStatusType.MERGED);
 		STATUS_ORDERING.add(SVNStatusType.OBSTRUCTED); 
 		STATUS_ORDERING.add(SVNStatusType.CONFLICTED);
-	};
+	}
 	
     private ISVNConflictHandler myConflictCallback;
 
@@ -268,8 +270,8 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	protected DefaultSVNMergerAction getMergeAction(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
 	    if (mergeResult.getMergeStatus() == SVNStatusType.CONFLICTED) {
 	        if (myConflictCallback != null) {
-                SVNConflictDescription descr = new SVNConflictDescription(files, SVNNodeKind.FILE, null, false, 
-                        SVNConflictAction.EDIT, SVNConflictReason.EDITED, null, null, null);
+                SVNConflictDescription descr = new SVNTextConflictDescription(files, SVNNodeKind.FILE, 
+                        SVNConflictAction.EDIT, SVNConflictReason.EDITED);
                 
                 SVNConflictResult result = myConflictCallback.handleConflict(descr);
                 if (result == null) {
@@ -812,8 +814,8 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             } else if (baseValue == null && workingValue != null) {
                 reason = SVNConflictReason.OBSTRUCTED;
             }
-            SVNConflictDescription description = new SVNConflictDescription(fileSet,
-                    isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propName, true, action, reason, null, null, null);
+            SVNConflictDescription description = new SVNPropertyConflictDescription(fileSet,
+                    isDir ? SVNNodeKind.DIR : SVNNodeKind.FILE, propName, action, reason);
             SVNConflictResult result = myConflictCallback.handleConflict(description);
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE,

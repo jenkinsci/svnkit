@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -276,29 +277,33 @@ public class JavaHLObjectFactory {
         if (conflictDescription == null){
             return null;
         }
-        
+// tree conflict description doesn't have merged files set       
+        SVNMergeFileSet mergeFiles = conflictDescription.getMergeFiles();
+        if (mergeFiles == null) {
+            return null;
+        }
         String basePath = null;
         String repositoryPath = null;
         try {
-            basePath = conflictDescription.getMergeFiles().getBasePath();
-            repositoryPath = conflictDescription.getMergeFiles().getRepositoryPath();
+            basePath = mergeFiles.getBasePath();
+            repositoryPath = mergeFiles.getRepositoryPath();
         } catch (SVNException e) {
         }
 
         // TODO 16
-        return new ConflictDescriptor(conflictDescription.getMergeFiles().getLocalPath(),
+        return new ConflictDescriptor(mergeFiles.getLocalPath(),
                 getConflictKind(conflictDescription.isPropertyConflict()),
                 getNodeKind(conflictDescription.getNodeKind()),
                 conflictDescription.getPropertyName(),
-                conflictDescription.getMergeFiles().isBinary(),
-                conflictDescription.getMergeFiles().getMimeType(),
+                mergeFiles.isBinary(),
+                mergeFiles.getMimeType(),
                 getConflictAction(conflictDescription.getConflictAction()),
                 getConflictReason(conflictDescription.getConflictReason()),
                 0,
                 basePath,
                 repositoryPath,
-                conflictDescription.getMergeFiles().getWCPath(),
-                conflictDescription.getMergeFiles().getResultPath(), 
+                mergeFiles.getWCPath(),
+                mergeFiles.getResultPath(),
                 null, 
                 null
                 );
