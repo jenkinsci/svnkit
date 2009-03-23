@@ -12,9 +12,6 @@
 package org.tmatesoft.svn.core;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -253,7 +250,6 @@ public class SVNMergeRangeList {
         return output;
     }
 
-
     /** 
      * Removes <code>eraserRangeList</code> (the subtrahend) from this range list (the
      * minuend), and places the resulting difference into a new <code>SVNMergeRangeList</code> object.
@@ -358,37 +354,6 @@ public class SVNMergeRangeList {
     }
     
     /**
-     * This method is not intended for API users.
-     * @return compacted merge ranges 
-     */
-    public SVNMergeRangeList compactMergeRanges() {
-    	List additiveSources = new LinkedList();
-    	List subtractiveSources = new LinkedList();
-    	for (int i = 0; i < myRanges.length; i++) {
-    		SVNMergeRange range = myRanges[i].dup();
-    		if (range.getStartRevision() > range.getEndRevision()) {
-    			subtractiveSources.add(range);
-    		} else {
-    			additiveSources.add(range);
-    		}
-    	}
-    	RangeComparator1 comparator = new RangeComparator1(); 
-    	Collections.sort(additiveSources, comparator);
-    	removeRedundantRanges(additiveSources);
-        Collections.sort(subtractiveSources, comparator);
-        removeRedundantRanges(subtractiveSources);
-        for (Iterator subtractiveSrcsIter = subtractiveSources.iterator(); subtractiveSrcsIter.hasNext();) {
-            SVNMergeRange range = (SVNMergeRange) subtractiveSrcsIter.next();
-            range = range.dup();
-            additiveSources.add(range);
-        }
-        Collections.sort(additiveSources, comparator);
-        List compactedSources = compactAddSubRanges(additiveSources);
-    	Collections.sort(compactedSources, new RangeComparator2());
-        return SVNMergeRangeList.fromCollection(compactedSources);
-    }
-
-    /**
      * Creates a new <code>SVNMergeRangeList</code> from a collection of 
      * {@link SVNMergeRange merge ranges}.
      * 
@@ -400,135 +365,6 @@ public class SVNMergeRangeList {
                 mergeRanges.toArray(new SVNMergeRange[mergeRanges.size()]));
     }
 
-    private void removeRedundantRanges(List ranges) {
-    	SVNMergeRange range1 = null;
-    	SVNMergeRange range2 = null;
-    	for (int i = 0; i < ranges.size(); i++) {
-			if (range1 == null) {
-				range1 = (SVNMergeRange) ranges.get(i);
-				continue;
-			} 
-            range2 = (SVNMergeRange) ranges.get(i);
-			SVNMergeRange twoRanges[] = { range1, range2 };
-			boolean isCompacted = compactRange(twoRanges); 
-            range1 = twoRanges[0];
-            range2 = twoRanges[1];
-            if (isCompacted) {
-                if (range2 == null) {
-                    ranges.remove(i);
-                    i--;
-                }
-            }
-		}
-    }
-    
-    private List compactAddSubRanges(List sources) {
-        List mergeRanges = new LinkedList(sources);
-    	SVNMergeRange range1 = null;
-    	SVNMergeRange range2 = null;
-        for (int i = 0; i < mergeRanges.size(); i++) {
-			if (range1 == null) {
-				range1 = (SVNMergeRange) sources.get(i);
-				continue;
-			}
-			range2 = (SVNMergeRange) sources.get(i);
-			SVNMergeRange twoRanges[] = { range1, range2 };
-			boolean isCompacted = compactRange(twoRanges);
-			range1 = twoRanges[0];
-			range2 = twoRanges[1];
-			if (isCompacted) {
-				if (range1 == null && range2 == null) {
-					mergeRanges.remove(i - 1);
-					mergeRanges.remove(i - 1);
-					if (i > 1) {
-						range1 = (SVNMergeRange) mergeRanges.get(i - 2);
-					}
-				} else if (range2 == null) {
-					mergeRanges.remove(i);
-					i--;
-				} else {
-					range1 = range2;
-				}
-			}
-		}
-    	return mergeRanges;
-    }
-    
-    private boolean compactRange(SVNMergeRange ranges[]) {
-        SVNMergeRange range1 = ranges[0];
-        SVNMergeRange range2 = ranges[1];
-        if (range1 == null || range2 == null || 
-                !SVNRevision.isValidRevisionNumber(range1.getStartRevision()) ||
-                !SVNRevision.isValidRevisionNumber(range2.getStartRevision())) {
-            return false;
-        }
-        boolean range1IsReversed = range1.getStartRevision() > range1.getEndRevision();
-        boolean range2IsReversed = range2.getStartRevision() > range2.getEndRevision();
-        if (range1IsReversed) {
-            range1 = range1.swapEndPoints();
-        }
-        if (range2IsReversed) {
-            range2 = range2.swapEndPoints();
-        }
-        
-        boolean isCompacted = false;
-        if (range1.getStartRevision() <= range2.getEndRevision() && 
-                range2.getStartRevision() <= range1.getEndRevision()) {
-            if (range1IsReversed == range2IsReversed) {
-                range1.setStartRevision(Math.min(range1.getStartRevision(), range2.getStartRevision()));
-                range1.setEndRevision(Math.min(range1.getEndRevision(), range2.getEndRevision()));
-                range2 = null;
-                ranges[1] = null;
-            } else {
-                if (range1.getStartRevision() == range2.getStartRevision()) {
-                    if (range1.getEndRevision() == range2.getEndRevision()) {
-                        range1 = null;
-                        range2 = null;
-                        ranges[0] = null;
-                        ranges[1] = null;
-                    } else {
-                        range1.setStartRevision(range1.getEndRevision());
-                        range1.setEndRevision(range2.getEndRevision());
-                        range2 = null;
-                        ranges[1] = null;
-                        range1IsReversed = range2IsReversed;
-                    }
-                } else {
-                    if (range1.getEndRevision() > range2.getEndRevision()) {
-                        if (range1.getStartRevision() < range2.getStartRevision()) {
-                            long tmpRev = range1.getEndRevision();
-                            range1.setEndRevision(range2.getStartRevision());
-                            range2.setStartRevision(range2.getEndRevision());
-                            range2.setEndRevision(tmpRev);
-                            range2IsReversed = range1IsReversed;
-                        } else {
-                            long tmpRev = range1.getStartRevision();
-                            range1.setStartRevision(range2.getEndRevision());
-                            range2.setEndRevision(tmpRev);
-                        }
-                    } else if (range1.getEndRevision() < range2.getEndRevision()) {
-                        long tmpRev = range1.getEndRevision();
-                        range1.setEndRevision(range2.getStartRevision());
-                        range2.setStartRevision(tmpRev);
-                    } else {
-                        range1.setEndRevision(range2.getStartRevision());
-                        range2 = null;
-                        ranges[1] = null;
-                    }
-                }
-            }
-            isCompacted = true;
-        }
-        
-        if (range1 != null && range1IsReversed) {
-            range1 = range1.swapEndPoints();
-        }
-        if (range2 != null && range2IsReversed) {
-            range2 = range2.swapEndPoints();
-        }
-        return isCompacted;
-    }
-    
     private SVNMergeRangeList removeOrIntersect(SVNMergeRangeList eraserRangeList, boolean remove, boolean considerInheritance) {
         Collection ranges = new LinkedList();
         SVNMergeRange lastRange = null;
@@ -758,37 +594,4 @@ public class SVNMergeRangeList {
         return lastRange;
     }
     
-    private static int compareMergeRanges(Object o1, Object o2) {
-		SVNMergeRange r1 = (SVNMergeRange) o1;
-		SVNMergeRange r2 = (SVNMergeRange) o2;
-		SVNMergeRange range1 = new SVNMergeRange(Math.min(r1.getStartRevision(), 
-				r1.getEndRevision()), Math.max(r1.getStartRevision(), r1.getEndRevision()), true);
-		SVNMergeRange range2 = new SVNMergeRange(Math.min(r2.getStartRevision(), 
-				r2.getEndRevision()), Math.max(r2.getStartRevision(), r2.getEndRevision()), true);
-		return range1.compareTo(range2);
-    }
-    
-    private static class RangeComparator1 implements Comparator {
-		public int compare(Object o1, Object o2) {
-			return compareMergeRanges(o1, o2);
-		}
-    }
-
-    private static class RangeComparator2 implements Comparator {
-		public int compare(Object o1, Object o2) {
-			SVNMergeRange r1 = (SVNMergeRange) o1;
-			SVNMergeRange r2 = (SVNMergeRange) o2;
-			boolean r1IsReversed = r1.getStartRevision() > r1.getEndRevision(); 
-			boolean r2IsReversed = r2.getStartRevision() > r2.getEndRevision();
-			if (r1IsReversed && r2IsReversed) {
-				return -1 * compareMergeRanges(o1, o2);
-			} else if (r1IsReversed) {
-				return 1;
-			} else if (r2IsReversed) {
-				return -1;
-			} 
-			return compareMergeRanges(o1, o2);
-		}
-    }
-
 }
