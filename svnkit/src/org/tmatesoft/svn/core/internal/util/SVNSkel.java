@@ -124,7 +124,7 @@ public class SVNSkel {
             if (element == null) {
                 return null;
             }
-            list.addChild(element);
+            list.appendChild(element);
         }
         return list;
     }
@@ -245,6 +245,14 @@ public class SVNSkel {
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
         }
         return (SVNSkel) myList.get(i);
+    }
+
+    private void appendChild(SVNSkel child) throws SVNException {
+        if (isAtom()) {
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.FS_MALFORMED_SKEL, "Unable to add a child to atom");
+            SVNErrorManager.error(error, SVNLogType.DEFAULT);
+        }
+        myList.add(child);
     }
 
     public void addChild(SVNSkel child) throws SVNException {
