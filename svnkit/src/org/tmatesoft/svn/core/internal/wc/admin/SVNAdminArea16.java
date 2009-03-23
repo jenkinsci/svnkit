@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
-import java.util.ArrayList;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -30,7 +28,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -51,12 +48,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
     
     public SVNTreeConflictDescription getTreeConflict(String victimName) throws SVNException {
         SVNEntry dirEntry = getEntry(getThisDirName(), false);
-        List conflicts = dirEntry.getTreeConflicts();
-        int index = SVNTreeConflictUtil.getTreeConflictIndex(conflicts, getFile(victimName).getAbsoluteFile());
-        if (index >= 0) {
-            return (SVNTreeConflictDescription) conflicts.get(index);
-        }
-        return null;
+        Map conflicts = dirEntry.getTreeConflicts();
+        return (SVNTreeConflictDescription) conflicts.get(getFile(victimName));
     }
 
     public void addTreeConflict(SVNTreeConflictDescription conflict) throws SVNException {
@@ -65,8 +58,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Attempt to add tree conflict that already exists");
             SVNErrorManager.error(error, SVNLogType.WC);
         }
-        List conflicts = new ArrayList(1);
-        conflicts.add(conflict);
+        Map conflicts = new SVNHashMap();
+        conflicts.put(conflict.getPath(), conflict);
         String conflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
         SVNProperties command = new SVNProperties();
         command.put(SVNLog.NAME_ATTR, getThisDirName());
@@ -80,10 +73,10 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
 
     public SVNTreeConflictDescription deleteTreeConflict(String victimName) throws SVNException {
         SVNEntry dirEntry = getEntry(getThisDirName(), false);
-        List conflicts = dirEntry.getTreeConflicts();
-        int index = SVNTreeConflictUtil.getTreeConflictIndex(conflicts, getFile(victimName));
-        if (index >= 0) {
-            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) conflicts.remove(index);
+        Map conflicts = dirEntry.getTreeConflicts();
+        File victimPath = getFile(victimName);
+        if (conflicts.containsKey(victimPath)) {
+            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) conflicts.remove(victimPath);
             String conflictData = SVNTreeConflictUtil.getTreeConflictData(conflicts);
             Map attributes = new SVNHashMap();
             attributes.put(SVNProperty.TREE_CONFLICT_DATA, conflictData);

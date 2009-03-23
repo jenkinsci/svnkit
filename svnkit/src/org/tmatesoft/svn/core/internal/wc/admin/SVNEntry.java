@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.List;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -459,7 +458,7 @@ public class SVNEntry {
         return (String) myAttributes.get(SVNProperty.TREE_CONFLICT_DATA);
     }
 
-    public List getTreeConflicts() throws SVNException {
+    public Map getTreeConflicts() throws SVNException {
         String conflictData = getTreeConflictData();
         return SVNTreeConflictUtil.readTreeConflicts(getAdminArea().getRoot(), conflictData);
     }
@@ -468,7 +467,7 @@ public class SVNEntry {
         setAttributeValue(SVNProperty.TREE_CONFLICT_DATA, conflictData);
     }
     
-    public void setTreeConflicts(List treeConflicts) throws SVNException {
+    public void setTreeConflicts(Map treeConflicts) throws SVNException {
         String conflictData = SVNTreeConflictUtil.getTreeConflictData(treeConflicts);
         setTreeConflictData(conflictData);
     }

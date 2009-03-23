@@ -13,19 +13,18 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -36,20 +35,10 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2.0
  */
 public class SVNTreeConflictUtil {
-    public static int getTreeConflictIndex(List conflicts, File path) {
-        for (int i = 0; i < conflicts.size(); i++) {
-            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) conflicts.get(i);
-            File conflictPath = conflict.getPath().getAbsoluteFile();
-            if (conflictPath.equals(path)) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
-    public static List readTreeConflicts(File dirPath, String conflictData) throws SVNException {
+    public static Map readTreeConflicts(File dirPath, String conflictData) throws SVNException {
         if (conflictData == null) {
-            return new ArrayList();
+            return new SVNHashMap();
         }
         
         byte[] data;
@@ -61,8 +50,8 @@ public class SVNTreeConflictUtil {
         return readTreeConflicts(dirPath, data);
     }
 
-    public static List readTreeConflicts(File dirPath, byte[] conflictData) throws SVNException {
-        List conflicts = new ArrayList();
+    public static Map readTreeConflicts(File dirPath, byte[] conflictData) throws SVNException {
+        Map conflicts = new SVNHashMap();
         if (conflictData == null) {
             return conflicts;
         }
@@ -75,7 +64,7 @@ public class SVNTreeConflictUtil {
             SVNSkel conflictSkel = (SVNSkel) iterator.next();
             SVNTreeConflictDescription conflict = readSingleTreeConflict(conflictSkel, dirPath);
             if (conflict != null) {
-                conflicts.add(conflict);
+                conflicts.put(conflict.getPath(), conflict);
             }
         }
         return conflicts;
@@ -141,22 +130,28 @@ public class SVNTreeConflictUtil {
         return isValidVersionInfo(skel.getChild(6)) && isValidVersionInfo(skel.getChild(7));
     }
 
-    public static String getTreeConflictData(List conflicts) throws SVNException {
-        byte[] rawData = getTreeConflictRawData(conflicts);
-        String conflictsData;
-        try {
-            conflictsData = new String(rawData, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            conflictsData = new String(rawData);
+    public static String getTreeConflictData(Map conflicts) throws SVNException {
+        if (conflicts == null) {
+            return null;
         }
-        return conflictsData;
+        byte[] rawData = getTreeConflictRawData(conflicts);
+        String conflictData;
+        try {
+            conflictData = new String(rawData, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            conflictData = new String(rawData);
+        }
+        return conflictData;
     }
 
-    public static byte[] getTreeConflictRawData(List conflicts) throws SVNException {
+    public static byte[] getTreeConflictRawData(Map conflicts) throws SVNException {
+        if (conflicts != null) {
+            return null;
+        }
         SVNConflictVersion nullVersion = new SVNConflictVersion(null, null, SVNRepository.INVALID_REVISION, SVNNodeKind.UNKNOWN);
         SVNSkel skel = SVNSkel.createEmptyList();
-        for (int i = conflicts.size() - 1; i >= 0; i--) {
-            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) conflicts.get(i);
+        for (Iterator iterator = conflicts.values().iterator(); iterator.hasNext();) {
+            SVNTreeConflictDescription conflict = (SVNTreeConflictDescription) iterator.next();
             SVNSkel conflictSkel = SVNSkel.createEmptyList();
 
             SVNConflictVersion sourceRightVersion = conflict.getSourceRightVersion();
