@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
@@ -34,6 +35,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -129,6 +131,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     }
 
     public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "directoryAdded(" + path + ")");
+        
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
@@ -203,6 +207,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     }
 
     public SVNStatusType directoryDeleted(final String path) throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "directoryDeleted(" + path + ")");
         final File mergedFile = getFile(path);
         final SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
@@ -238,6 +243,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
 
     public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, 
             long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fileChanged(" + path + ")");
         boolean needsMerge = true;
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), myIsDryRun);
@@ -306,6 +312,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     
     public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, 
             String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fileAdded(" + path + ")");
+
         SVNStatusType[] result = new SVNStatusType[] {null, SVNStatusType.UNKNOWN};
         
         SVNProperties newProps = new SVNProperties(originalProperties);
@@ -380,6 +388,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     }
 
     public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fileDeleted(" + path + ")");
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
@@ -433,4 +442,33 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
     }
 
+    protected void recortTreeConflict() {
+        
+    }
+
+    private SVNStatusType getStatusForObstructedOrMissing(SVNAdminArea adminArea, String path) {
+        File file = getFile(path);
+        SVNEntry entry = null;
+        try {
+            entry = getWCAccess().getEntry(file, true);
+        } catch (SVNException svne) {
+            //
+        }
+        
+        if (entry != null && entry.isAbsent()) {
+            return SVNStatusType.MISSING;
+        }
+        
+        return null;
+        
+        
+    }
+    
+    private SVNNodeKind getWorkingNodeKing(SVNEntry entry, String path) {
+        if (entry == null || entry.isScheduledForDeletion() || (myIsDryRun && isPathDeleted(path)) || (entry.isDeleted() && !entry.isScheduledForAddition())) {
+            
+        }
+        
+        return null;
+    }
 }
