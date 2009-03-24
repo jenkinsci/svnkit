@@ -111,7 +111,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 SVNFileInfo file = new SVNFileInfo(path, false);
                 file.loadFromRepository(myRevision1);
                 String baseType = file.myBaseProperties.getStringValue(SVNProperty.MIME_TYPE);
-                type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties);
+                type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties, null);
             } else if (nodeKind == SVNNodeKind.DIR) {
                 type = getDiffCallback().directoryDeleted(path);
             }
@@ -143,7 +143,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
         SVNEventAction expectedAction = SVNEventAction.UPDATE_ADD;
         SVNEventAction action = expectedAction;
-        SVNStatusType type = getDiffCallback().directoryAdded(path, myRevision2);
+        SVNStatusType type = getDiffCallback().directoryAdded(path, myRevision2, null);
         if (type == SVNStatusType.MISSING || type == SVNStatusType.OBSTRUCTED) {
             action = SVNEventAction.SKIP;
         }
@@ -212,7 +212,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             }
             if (!myIsDryRun || dir != null) {
                 type = getDiffCallback().propertiesChanged(myCurrentDirectory.myRepositoryPath,
-                        myCurrentDirectory.myBaseProperties, myCurrentDirectory.myPropertyDiff);
+                        myCurrentDirectory.myBaseProperties, myCurrentDirectory.myPropertyDiff, null);
             }
         }
 
@@ -304,12 +304,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 type = getDiffCallback().fileAdded(commitPath,
                         file != null ? baseFile : null, file,
                         0, myRevision2, baseMimeType, mimeType,
-                        baseProperties, propertyDiff);
+                        baseProperties, propertyDiff, null);
             } else {
                 type = getDiffCallback().fileChanged(commitPath,
                         file != null ? baseFile : null, file,
                         myRevision1, myRevision2, baseMimeType, mimeType,
-                        baseProperties, propertyDiff);
+                        baseProperties, propertyDiff, null);
             }
         }
 

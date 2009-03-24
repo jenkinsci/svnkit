@@ -257,7 +257,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 String baseType = baseProperties.getStringPropertyValue(SVNProperty.MIME_TYPE);
                 File baseFile = dir.getBaseFile(file.getName(), false);
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: del " + path);
-                type = getDiffCallback().fileDeleted(path, baseFile, null, baseType, null, baseProperties.asMap());
+                type = getDiffCallback().fileDeleted(path, baseFile, null, baseType, null, baseProperties.asMap(), null);
             } else if (nodeKind == SVNNodeKind.DIR) {
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: attempt to delete directory " + path + " skipped");
             }
@@ -801,7 +801,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                     fileInfo.loadFromRepository(myRevision1);
                     String baseType = fileInfo.myBaseProperties.getStringValue(SVNProperty.MIME_TYPE);
                     SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: del " + myPath);
-                    type = getDiffCallback().fileDeleted(myPath, fileInfo.myBaseFile, null, baseType, null, fileInfo.myBaseProperties);
+                    type = getDiffCallback().fileDeleted(myPath, fileInfo.myBaseFile, null, baseType, null, fileInfo.myBaseProperties, null);
                 } else if (nodeKind == SVNNodeKind.DIR) {
                     SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "merge ext: attempt to delete directory skipped");
                 }

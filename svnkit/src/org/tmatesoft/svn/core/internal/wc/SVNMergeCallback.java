@@ -81,8 +81,14 @@ public class SVNMergeCallback extends AbstractDiffCallback {
     public Map getConflictedPaths() {
         return myConflictedPaths;
     }
-    
-    public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+
+    public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
+        SVNStatusType obstructedStatus = getStatusForObstructedOrMissing(path);
+        if (obstructedStatus != SVNStatusType.INAPPLICABLE) {
+            return obstructedStatus;
+        }
+        
         SVNProperties regularProps = new SVNProperties();
         categorizeProperties(diff, regularProps, null, null);
         if (regularProps.isEmpty()) {
@@ -130,9 +136,8 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
     }
 
-    public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "directoryAdded(" + path + ")");
-        
+    public SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
@@ -241,14 +246,19 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return SVNStatusType.UNKNOWN;
     }
 
-    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, 
-            long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fileChanged(" + path + ")");
+    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
         boolean needsMerge = true;
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), myIsDryRun);
         if (dir == null) {
             return new SVNStatusType[] {SVNStatusType.MISSING, SVNStatusType.MISSING};
+        }
+        
+        SVNStatusType obstructedStatus = getStatusForObstructedOrMissing(path);
+        if (obstructedStatus != SVNStatusType.INAPPLICABLE) {
+            return new SVNStatusType[] { obstructedStatus, SVNStatusType.UNCHANGED };
         }
         
         SVNStatusType[] result = new SVNStatusType[] {SVNStatusType.UNCHANGED, SVNStatusType.UNCHANGED};
@@ -263,7 +273,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         
         if (diff != null && !diff.isEmpty()) {
-            result[1] = propertiesChanged(path, originalProperties, diff);
+            result[1] = propertiesChanged(path, originalProperties, diff, null);
         } 
         
         String name = mergedFile.getName();
@@ -309,13 +319,11 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         } 
         return result;
     }
-    
-    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, 
-            String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fileAdded(" + path + ")");
 
+    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, 
+            String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
         SVNStatusType[] result = new SVNStatusType[] {null, SVNStatusType.UNKNOWN};
-        
         SVNProperties newProps = new SVNProperties(originalProperties);
         for (Iterator propChangesIter = diff.nameSet().iterator(); propChangesIter.hasNext();) {
             String propName = (String) propChangesIter.next();
@@ -344,13 +352,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             return result;
         }
         
+        SVNStatusType obstructedStatus = getStatusForObstructedOrMissing(path);
+        if (obstructedStatus != SVNStatusType.INAPPLICABLE) {
+            return new SVNStatusType[] { obstructedStatus, SVNStatusType.UNCHANGED };
+        }
+        
         SVNFileType fileType = SVNFileType.getType(mergedFile);
         if (fileType == SVNFileType.NONE) {
-            SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
-            if (entry != null && !entry.isScheduledForDeletion()) {
-                result[0] = SVNStatusType.OBSTRUCTED;
-                return result;
-            }
             if (!myIsDryRun) {
                 String copyFromURL = null;
                 long copyFromRevision = SVNRepository.INVALID_REVISION;
@@ -380,20 +388,27 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 result[0] = SVNStatusType.CHANGED;
             } else {
                 myIsAddNecessitatedMerge = true;
-                result = fileChanged(path, file1, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff);
+                result = fileChanged(path, file1, file2, revision1, revision2, mimeType1, mimeType2, originalProperties, diff, null);
                 myIsAddNecessitatedMerge = false;
             }
         }
         return result;
     }
 
-    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
-        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "fileDeleted(" + path + ")");
+    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, 
+            SVNProperties originalProperties, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
             return SVNStatusType.MISSING;
         }
+        
+        SVNStatusType obstructedStatus = getStatusForObstructedOrMissing(path);
+        if (obstructedStatus != SVNStatusType.INAPPLICABLE) {
+            return obstructedStatus;
+        }
+        
         SVNFileType fileType = SVNFileType.getType(mergedFile);
         if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
             ISVNEventHandler oldEventHandler = getWCAccess().getEventHandler();
@@ -446,7 +461,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         
     }
 
-    private SVNStatusType getStatusForObstructedOrMissing(SVNAdminArea adminArea, String path) {
+    private SVNStatusType getStatusForObstructedOrMissing(String path) {
         File file = getFile(path);
         SVNEntry entry = null;
         try {
@@ -458,17 +473,44 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         if (entry != null && entry.isAbsent()) {
             return SVNStatusType.MISSING;
         }
-        
-        return null;
-        
-        
+
+        SVNNodeKind expectedKind = getWorkingNodeKind(entry, path);
+        SVNNodeKind diskKind = getDiskKind(path);
+        if (entry != null && entry.isDirectory() && entry.isScheduledForDeletion() && diskKind == SVNNodeKind.DIR) {
+            expectedKind = SVNNodeKind.DIR;
+        }
+        if (expectedKind == diskKind) {
+            return SVNStatusType.INAPPLICABLE;
+        } else if (diskKind == SVNNodeKind.NONE) {
+            return SVNStatusType.MISSING;
+        }
+        return SVNStatusType.OBSTRUCTED;
     }
     
-    private SVNNodeKind getWorkingNodeKing(SVNEntry entry, String path) {
-        if (entry == null || entry.isScheduledForDeletion() || (myIsDryRun && isPathDeleted(path)) || (entry.isDeleted() && !entry.isScheduledForAddition())) {
-            
+    private SVNNodeKind getWorkingNodeKind(SVNEntry entry, String path) {
+        if (entry == null || entry.isScheduledForDeletion() || (myIsDryRun && isPathDeleted(path)) || 
+                (entry.isDeleted() && !entry.isScheduledForAddition())) {
+            return SVNNodeKind.NONE;
         }
-        
-        return null;
+        return entry.getKind();
+    }
+    
+    private SVNNodeKind getDiskKind(String path) {
+        File file = getFile(path);
+        SVNFileType type = null;
+        type = SVNFileType.getType(file);
+        if (type == SVNFileType.UNKNOWN) {
+            return SVNNodeKind.UNKNOWN;
+        }
+        if (myIsDryRun && isPathDeleted(path)) {
+            return SVNNodeKind.NONE;
+        }
+        return SVNFileType.getNodeKind(type);
+    }
+    
+    private void setIsConflicted(boolean[] isConflictedResult, boolean isConflicted) {
+        if (isConflictedResult != null && isConflictedResult.length > 0) {
+            isConflictedResult[0] = isConflicted;
+        }
     }
 }

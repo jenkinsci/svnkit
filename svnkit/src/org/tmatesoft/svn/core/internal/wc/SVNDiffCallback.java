@@ -56,7 +56,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return myGenerator.isDiffCopied();
     }
 
-    public SVNStatusType directoryAdded(String path, long revision) throws SVNException {
+    public SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflictAdded) throws SVNException {
         myGenerator.displayAddedDirectory(getDisplayPath(path), getRevision(myRevision1), getRevision(revision));
         return SVNStatusType.UNKNOWN;
     }
@@ -66,7 +66,8 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return SVNStatusType.UNKNOWN;
     }
 
-    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+    public SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
         if (file2 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, diff);
             myGenerator.displayFileDiff(getDisplayPath(path), null, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, myResult);
@@ -75,12 +76,13 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             }
         }
         if (diff != null && !diff.isEmpty()) {
-            propertiesChanged(path, originalProperties, diff);
+            propertiesChanged(path, originalProperties, diff, null);
         }
         return EMPTY_STATUS;
     }
 
-    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
         if (file1 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, diff);
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, myResult);
@@ -89,12 +91,13 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             }
         }
         if (diff != null && !diff.isEmpty()) {
-            propertiesChanged(path, originalProperties, diff);
+            propertiesChanged(path, originalProperties, diff, null);
         }
         return EMPTY_STATUS;
     }
 
-    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties) throws SVNException {
+    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties, 
+            boolean[] isTreeConflicted) throws SVNException {
         if (file1 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, null);
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(myRevision1), getRevision(myRevision2), mimeType1, mimeType2, myResult);
@@ -105,7 +108,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return SVNStatusType.UNKNOWN;
     }
 
-    public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException {
+    public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
         originalProperties = originalProperties == null ? new SVNProperties() : originalProperties;
         diff = diff == null ? new SVNProperties() : diff;
         SVNProperties regularDiff = new SVNProperties();

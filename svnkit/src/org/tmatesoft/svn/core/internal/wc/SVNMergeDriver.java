@@ -992,19 +992,19 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     
                     if (!(myIsIgnoreAncestry || sourcesRelated)) {
                         SVNStatusType cstatus = callback.fileDeleted(targetName, f1, f2, mimeType1, 
-                                mimeType2, props1);
+                                mimeType2, props1, null);
                         headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_DELETE, cstatus, 
                                 SVNStatusType.UNKNOWN, event, headerSent);
                         
                         mergeResult = callback.fileAdded(targetName, f1, f2, nextRange.getStartRevision(), 
                                                          nextRange.getEndRevision(), mimeType1, mimeType2, 
-                                                         props1, propsDiff);
+                                                         props1, propsDiff, null);
                         headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_ADD, 
                                         mergeResult[0], mergeResult[1], event, headerSent);
                     } else {
                         mergeResult = callback.fileChanged(targetName, f1, f2, nextRange.getStartRevision(), 
                                                            nextRange.getEndRevision(), mimeType1, 
-                                                           mimeType2, props1, propsDiff);
+                                                           mimeType2, props1, propsDiff, null);
                         headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_UPDATE, 
                                         mergeResult[0], mergeResult[1], event, headerSent);
                     }

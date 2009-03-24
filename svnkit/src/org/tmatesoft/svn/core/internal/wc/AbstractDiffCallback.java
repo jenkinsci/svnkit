@@ -48,18 +48,19 @@ public abstract class AbstractDiffCallback {
     
     public abstract File createTempDirectory() throws SVNException;
 
-    public abstract SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException;
+    public abstract SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff, 
+            boolean[] isTreeConflicted) throws SVNException;
 
-    public abstract SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
+    public abstract SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException;
     
-    public abstract SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
+    public abstract SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException;
     
     public abstract SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, 
-            SVNProperties originalProperties) throws SVNException;
+            SVNProperties originalProperties, boolean[] isTreeConflicted) throws SVNException;
     
-    public abstract SVNStatusType directoryAdded(String path, long revision) throws SVNException;
+    public abstract SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflicted) throws SVNException;
 
     public abstract SVNStatusType directoryDeleted(String path) throws SVNException;
     
