@@ -23,6 +23,13 @@ import org.tmatesoft.svn.core.SVNURL;
  */
 public class SVNURLUtil {
 
+    public static String getRelativeURL(SVNURL parent, SVNURL child) {
+        String parentURLAsString = parent.toString();
+        String childURLAsString = child.toString();
+        String relativePath = SVNPathUtil.getPathAsChild(parentURLAsString, childURLAsString);
+        return relativePath == null ? "" : relativePath;
+    }
+    
     public static SVNURL getCommonURLAncestor(SVNURL url1, SVNURL url2) {
         // skip protocol and host, if they are different -> return null;
         if (url1 == null || url2 == null) {

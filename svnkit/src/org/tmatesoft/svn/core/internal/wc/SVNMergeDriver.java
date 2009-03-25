@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -62,15 +63,20 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.core.wc.SVNBasicClient;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -1368,6 +1374,33 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return myLogClient;
     }
     
+    protected void recortTreeConflict(File victim, SVNAdminArea adminArea, SVNNodeKind kind, SVNConflictAction action, 
+            SVNConflictReason reason) throws SVNException {
+        if (myIsRecordOnly || myIsDryRun) {
+            return;
+        }
+        
+        SVNURL srcReposRoot = myRepository1.getRepositoryRoot(true);
+        String child = SVNPathUtil.getRelativePath(myTarget.getAbsolutePath(), victim.getAbsolutePath());
+        SVNURL leftURL = null;
+        SVNURL rightURL = null;
+        if (child != null) {
+            leftURL = myCurrentMergeSource.myURL1.appendPath(child, false);
+            rightURL = myCurrentMergeSource.myURL2.appendPath(child, false);
+        } else {
+            leftURL = myCurrentMergeSource.myURL1;
+            rightURL = myCurrentMergeSource.myURL2;
+        }
+        
+        SVNConflictVersion leftConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, leftURL), 
+                myCurrentMergeSource.myRevision1, kind);
+        SVNConflictVersion rightConflictVersion = new SVNConflictVersion(srcReposRoot, SVNURLUtil.getRelativeURL(srcReposRoot, rightURL), 
+                myCurrentMergeSource.myRevision2, kind);
+        SVNTreeConflictDescription conflictDescription  = new SVNTreeConflictDescription(victim, kind, action, reason, SVNOperation.MERGE, 
+                leftConflictVersion, rightConflictVersion);
+        adminArea.addTreeConflict(conflictDescription);
+    }
+
     private void processChildrenWithNewMergeInfo() throws SVNException {
         if (myPathsWithNewMergeInfo != null && !myIsDryRun) {
             for (Iterator pathsIter = myPathsWithNewMergeInfo.iterator(); pathsIter.hasNext();) {

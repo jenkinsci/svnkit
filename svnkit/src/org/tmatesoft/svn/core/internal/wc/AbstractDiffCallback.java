@@ -62,7 +62,9 @@ public abstract class AbstractDiffCallback {
     
     public abstract SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflicted) throws SVNException;
 
-    public abstract SVNStatusType directoryDeleted(String path) throws SVNException;
+    public abstract SVNStatusType directoryDeleted(String path, boolean[] isTreeConflicted) throws SVNException;
+    
+    public abstract SVNStatusType directoryOpened(String path, long revision, boolean[] isTreeConflicted) throws SVNException;
     
     protected String getDisplayPath(String path) {
         if (myAdminArea == null) {

@@ -150,4 +150,12 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return true;
     }
 
+    public SVNStatusType directoryDeleted(String path, boolean[] isTreeConflicted) throws SVNException {
+        return null;
+    }
+
+    public SVNStatusType directoryOpened(String path, long revision, boolean[] isTreeConflicted) throws SVNException {
+        return null;
+    }
+
 }

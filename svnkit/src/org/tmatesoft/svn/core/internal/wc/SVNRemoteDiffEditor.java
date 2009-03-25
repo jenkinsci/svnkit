@@ -113,7 +113,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 String baseType = file.myBaseProperties.getStringValue(SVNProperty.MIME_TYPE);
                 type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties, null);
             } else if (nodeKind == SVNNodeKind.DIR) {
-                type = getDiffCallback().directoryDeleted(path);
+                type = getDiffCallback().directoryDeleted(path, null);
             }
             if (type != SVNStatusType.MISSING && type != SVNStatusType.OBSTRUCTED) {
                 action = SVNEventAction.UPDATE_DELETE;
