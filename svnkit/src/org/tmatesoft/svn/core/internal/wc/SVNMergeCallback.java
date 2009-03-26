@@ -193,10 +193,15 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     myAddedPath = path;
                 }
                 return SVNStatusType.CHANGED;
-            } else if (myIsDryRun && isPathDeleted(path)) {
-                return SVNStatusType.CHANGED;
+            }  
                 
+            if (myIsDryRun && isPathDeleted(path)) {
+                return SVNStatusType.CHANGED;
             }
+            
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.ADD, SVNConflictReason.ADDED);
+            setIsConflicted(isTreeConflicted, true);
+            
             return SVNStatusType.OBSTRUCTED;
         } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
             if (myIsDryRun) {
@@ -205,7 +210,10 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             SVNEntry entry = getWCAccess().getEntry(mergedFile, false);
             if (entry != null && myIsDryRun && isPathDeleted(path)) {
                 return SVNStatusType.CHANGED;
-            }
+            } 
+            
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
+            setIsConflicted(isTreeConflicted, true);
             return SVNStatusType.OBSTRUCTED;
         }
         if (myIsDryRun) {
@@ -222,6 +230,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             return SVNStatusType.MISSING;
         }
         
+        SVNEntry entry = getWCAccess().getEntry(mergedFile, true); 
         SVNStatusType obstructedStatus = getStatusForObstructedOrMissing(path);
         if (obstructedStatus != SVNStatusType.INAPPLICABLE) {
             return obstructedStatus;
@@ -229,26 +238,32 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         
         SVNFileType fileType = SVNFileType.getType(mergedFile);
         if (fileType == SVNFileType.DIRECTORY) {
-            final ISVNEventHandler oldEventHandler = getWCAccess().getEventHandler();            
-            ISVNEventHandler handler = new ISVNEventHandler() {
-                public void checkCancelled() throws SVNCancelException {
-                    oldEventHandler.checkCancelled();
+            if (entry != null && !entry.isScheduledForDeletion()) {
+                final ISVNEventHandler oldEventHandler = getWCAccess().getEventHandler();            
+                ISVNEventHandler handler = new ISVNEventHandler() {
+                    public void checkCancelled() throws SVNCancelException {
+                        oldEventHandler.checkCancelled();
+                    }
+                    public void handleEvent(SVNEvent event, double progress) throws SVNException {
+                    }
+                };
+                getWCAccess().setEventHandler(handler);
+                try {
+                    delete(mergedFile, myIsForce, myIsDryRun);
+                } catch (SVNException e) {
+                    return SVNStatusType.OBSTRUCTED;
+                } finally {
+                    getWCAccess().setEventHandler(oldEventHandler);
                 }
-                public void handleEvent(SVNEvent event, double progress) throws SVNException {
-                }
-            };
-            getWCAccess().setEventHandler(handler);
-            try {
-                delete(mergedFile, myIsForce, myIsDryRun);
-            } catch (SVNException e) {
-                return SVNStatusType.OBSTRUCTED;
-            } finally {
-                getWCAccess().setEventHandler(oldEventHandler);
+                return SVNStatusType.CHANGED;
             }
-            return SVNStatusType.CHANGED;
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.DELETE, SVNConflictReason.DELETED);
+            setIsConflicted(isTreeConflicted, true);
         } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
             return SVNStatusType.OBSTRUCTED;
         } else if (fileType == SVNFileType.NONE) {
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.DELETE, SVNConflictReason.DELETED);
+            setIsConflicted(isTreeConflicted, true);
             return SVNStatusType.MISSING;
         }
         
