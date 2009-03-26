@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -510,6 +511,44 @@ public class SVNWCAccess implements ISVNEventHandler {
             }
         }
         return false;
+    }
+
+    public SVNTreeConflictDescription getTreeConflict(File path) throws SVNException {
+        File parent = path.getParentFile();
+        if (parent == null) {
+            return null;
+        }
+        boolean closeParentArea = false;
+        SVNAdminArea parentArea = null;
+        try {
+            parentArea = retrieve(parent);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
+                e = null;
+                try {
+                    parentArea = open(parent, false, 0);
+                    closeParentArea = true;
+                } catch (SVNException internal) {
+                    if (internal.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                        return null;
+                    }
+                    e = internal;
+                }
+            }
+            if (e != null) {
+                throw e;
+            }
+        }
+        SVNTreeConflictDescription treeConflict = parentArea.getTreeConflict(path.getName());
+        if (closeParentArea) {
+            closeAdminArea(parent);
+        }
+        return treeConflict;
+    }
+
+    public boolean hasTreeConflict(File path) throws SVNException {
+        SVNTreeConflictDescription treeConflict = getTreeConflict(path);
+        return treeConflict != null;
     }
     
     public SVNEntry getEntry(File path, boolean showHidden) throws SVNException {
