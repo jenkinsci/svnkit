@@ -369,22 +369,39 @@ public class SVNSkel {
                 }
                 buffer = allocate(buffer, sizeBytes.length + 1 + data.length);
                 buffer.put(sizeBytes);
-                buffer.putChar(' ');
+                
+                try {
+                    buffer.put(" ".getBytes("UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    buffer.put(" ".getBytes());
+                }
                 buffer.put(data);
             }
         } else {
             buffer = allocate(buffer, 1);
-            buffer.putChar('(');
+            try {
+                buffer.put("(".getBytes("UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                buffer.put("(".getBytes());
+            }
             for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
                 SVNSkel element = (SVNSkel) iterator.next();
                 buffer = element.writeTo(buffer);
                 if (iterator.hasNext()) {
                     buffer = allocate(buffer, 1);
-                    buffer.putChar(' ');
+                    try {
+                        buffer.put(" ".getBytes("UTF-8"));
+                    } catch (UnsupportedEncodingException e) {
+                        buffer.put(" ".getBytes());
+                    }
                 }
             }
             buffer = allocate(buffer, 1);
-            buffer.putChar(')');
+            try {
+                buffer.put(")".getBytes("UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                buffer.put(")".getBytes());
+            }
         }
         return buffer;
     }

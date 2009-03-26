@@ -31,8 +31,8 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @author TMate Software Ltd.
- * @version 1.2.0
+ * @author  TMate Software Ltd.
+ * @version 1.3
  */
 public class SVNTreeConflictUtil {
 
@@ -206,6 +206,7 @@ public class SVNTreeConflictUtil {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Failed to create valid conflict version skel: ''{0}''", skel.toString());
             SVNErrorManager.error(error, SVNLogType.WC);
         }
+        parent.addChild(skel);
         return parent;
     }
 
