@@ -145,7 +145,7 @@ public class SVNTreeConflictUtil {
     }
 
     public static byte[] getTreeConflictRawData(Map conflicts) throws SVNException {
-        if (conflicts != null) {
+        if (conflicts == null) {
             return null;
         }
         SVNConflictVersion nullVersion = new SVNConflictVersion(null, null, SVNRepository.INVALID_REVISION, SVNNodeKind.UNKNOWN);
@@ -167,21 +167,24 @@ public class SVNTreeConflictUtil {
             conflictSkel.addChild(SVNSkel.createAtom(conflict.getOperation().toString()));
 
             if (conflict.getNodeKind() != SVNNodeKind.DIR && conflict.getNodeKind() != SVNNodeKind.FILE) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Invalid \'node_kind\' field in tree conflict description");
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                        "Invalid \'node_kind\' field in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
             conflictSkel.addChild(SVNSkel.createAtom(conflict.getNodeKind().toString()));
 
             String path = conflict.getPath().getName();
             if (path.length() == 0) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Empty path basename in tree conflict description");
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                        "Empty path basename in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
             conflictSkel.addChild(SVNSkel.createAtom(path));
             conflictSkel.addChild(SVNSkel.createAtom("conflict"));
 
             if (!isValidConflict(conflictSkel)) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Failed to create valid conflict description skel: ''{0}''", skel.toString());
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, 
+                        "Failed to create valid conflict description skel: ''{0}''", skel.toString());
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
             skel.addChild(conflictSkel);

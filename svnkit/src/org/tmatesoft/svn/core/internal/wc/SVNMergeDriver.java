@@ -1374,7 +1374,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return myLogClient;
     }
     
-    protected void recortTreeConflict(File victim, SVNAdminArea adminArea, SVNNodeKind kind, SVNConflictAction action, 
+    protected void recordTreeConflict(File victim, SVNAdminArea adminArea, SVNNodeKind kind, SVNConflictAction action, 
             SVNConflictReason reason) throws SVNException {
         if (myIsRecordOnly || myIsDryRun) {
             return;

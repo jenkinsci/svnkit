@@ -282,7 +282,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         
         if (entry == null || (fileType != SVNFileType.FILE && fileType != SVNFileType.SYMLINK)) {
-            myMergeDriver.recortTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.EDIT, SVNConflictReason.MISSING);
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.EDIT, SVNConflictReason.MISSING);
             setIsConflicted(isTreeConflicted, true);
             return new SVNStatusType[] {SVNStatusType.MISSING, SVNStatusType.MISSING};
         }
@@ -395,7 +395,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 result[1] = SVNStatusType.CHANGED;
             }
         } else if (fileType == SVNFileType.DIRECTORY) {
-            myMergeDriver.recortTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
             setIsConflicted(isTreeConflicted, true);
             if (myIsDryRun && isPathDeleted(path)) {
                 result[0] = SVNStatusType.CHANGED;
@@ -406,7 +406,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (myIsDryRun && isPathDeleted(path)) {
                 result[0] = SVNStatusType.CHANGED;
             } else {
-                myMergeDriver.recortTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
+                myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
                 setIsConflicted(isTreeConflicted, true);
             }
         }
@@ -442,15 +442,15 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 return SVNStatusType.CHANGED;
             } 
             
-            myMergeDriver.recortTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.EDITED);
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.EDITED);
             setIsConflicted(isTreeConflicted, true);
             return SVNStatusType.OBSTRUCTED; 
         } else if (fileType == SVNFileType.DIRECTORY) {
-            myMergeDriver.recortTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.OBSTRUCTED);
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.OBSTRUCTED);
             setIsConflicted(isTreeConflicted, true);
             return SVNStatusType.OBSTRUCTED;
         } else if (fileType == SVNFileType.NONE) {
-            myMergeDriver.recortTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.DELETED);
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.DELETE, SVNConflictReason.DELETED);
             setIsConflicted(isTreeConflicted, true);
             return SVNStatusType.MISSING;
         }
