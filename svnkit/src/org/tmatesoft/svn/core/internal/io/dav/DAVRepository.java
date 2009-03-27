@@ -1164,6 +1164,10 @@ public class DAVRepository extends SVNRepository {
         }
     }
 
+    protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
+        return 0;
+    }
+
     protected DAVConnection getConnection() {
         return myConnection;
     }

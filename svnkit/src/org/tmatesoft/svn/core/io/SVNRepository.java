@@ -2724,6 +2724,41 @@ public abstract class SVNRepository {
         myConnectionListeners.remove(listener);
     }
     
+    public long getDeletedRevision(String path, long pegRevision, long endRevision) throws SVNException {
+        if (path == null || path.length() == 0 || "/".equals(path)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "root path could not be deleted");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        
+        if (isInvalidRevision(pegRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Invalid peg revision {0}", String.valueOf(pegRevision));
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+
+        if (isInvalidRevision(endRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Invalid end revision {0}", String.valueOf(endRevision));
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        
+        if (endRevision <= pegRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Peg revision must precede end revision");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        
+        try {
+            return getDeletedRevisionImpl(path, pegRevision, endRevision);
+        } catch (SVNException svne) {
+            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
+            if (errCode == SVNErrorCode.UNSUPPORTED_FEATURE || errCode == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                
+            }
+        }
+        
+        return -1;
+    }
+    
+    protected abstract long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException;
+    
     protected abstract long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, 
             ISVNLocationSegmentHandler handler) throws SVNException;
     
@@ -2914,6 +2949,11 @@ public abstract class SVNRepository {
             return SVNDebugLog.getDefaultLog();
         }
         return myDebugLog;
+    }
+    
+    private long getDeletedRevisionFromLog(String path, long pegRevision, long endRevision) {
+        //TODO implement
+        return -1;
     }
     
     private long getLocationSegmentsFromLog(String path, long pegRevision, long startRevision, long endRevision, 
@@ -3151,6 +3191,14 @@ public abstract class SVNRepository {
         }
        
         return previousPath;
+    }
+    
+    private static class DeletedRevisionLogHandler implements ISVNLogEntryHandler {
+
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+
+        }
+        
     }
     
     private static class FileRevisionsLogHandler implements ISVNLogEntryHandler {

@@ -1614,6 +1614,10 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         }
     }
 
+    protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
+        return 0;
+    }
+
     private static boolean getRecurseFromDepth(SVNDepth depth) {
         return depth == null || depth == SVNDepth.UNKNOWN || depth.compareTo(SVNDepth.FILES) > 0;
     }

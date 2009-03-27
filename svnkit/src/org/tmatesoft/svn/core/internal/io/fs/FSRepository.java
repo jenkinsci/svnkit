@@ -725,6 +725,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         SVNErrorManager.error(err, SVNLogType.FSFS);
     }
 
+    protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
+        return 0;
+    }
+
     private void openRepository() throws SVNException {
         try {
             openRepositoryRoot();
@@ -956,4 +960,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return myLogDriver;
     }
+
 }
