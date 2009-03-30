@@ -726,7 +726,12 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
-        return 0;
+        try {
+            openRepository();
+            return myFSFS.getDeletedRevision(path, pegRevision, endRevision);
+        } finally {
+            closeRepository();
+        }
     }
 
     private void openRepository() throws SVNException {

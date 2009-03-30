@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDeletedRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationSegmentsHandler;
@@ -1165,7 +1166,23 @@ public class DAVRepository extends SVNRepository {
     }
 
     protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
-        return 0;
+        try {
+            openConnection();
+            DAVConnection connection = getConnection();
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, this, path, pegRevision, false, false, null);
+            String finalBCPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+            StringBuffer requestBody = DAVDeletedRevisionHandler.generateGetDeletedRevisionRequest(null, path, pegRevision, endRevision);
+            DAVDeletedRevisionHandler handler = new DAVDeletedRevisionHandler();
+            HTTPStatus status = connection.doReport(finalBCPath, requestBody, handler);
+            if (status.getCode() == 501) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'get-deleted-rev' REPORT not implemented");
+                SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
+            }
+            handler.getRevision();
+        } finally {
+            closeConnection();
+        }
+        return INVALID_REVISION;
     }
 
     protected DAVConnection getConnection() {

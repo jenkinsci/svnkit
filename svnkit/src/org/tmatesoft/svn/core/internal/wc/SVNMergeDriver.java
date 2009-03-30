@@ -2781,7 +2781,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 targetMergeInfo, implicitMergeInfo, revision1, revision2, primaryURL, repository); 
         
         if (isSubtree) {
-        
+            adjustDeletedSubTreeRanges(child, parent, mergeInfoPath, revision1, revision2, primaryURL, repository);
         }
 
         if ((child.myRemainingRanges == null || child.myRemainingRanges.isEmpty()) &&
@@ -2808,20 +2808,81 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     private void adjustDeletedSubTreeRanges(MergePath child, MergePath parent, String mergeInfoPath, long revision1, long revision2, 
-            SVNURL primaryURL, SVNRepository repository) {
-        /*
-         *            if (isSubtree) {
-                boolean[] childDeletedOrNonExistant = new boolean[1];
-                requestedMerge = prepareSubtreeRangeList(childDeletedOrNonExistant, mergeInfoPath, parent, rev1, rev2, primaryURL, repos);
-                if (childDeletedOrNonExistant[0] && parent != null) {
+            SVNURL primaryURL, SVNRepository repository) throws SVNException {
+        if (parent.myRemainingRanges == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertions failed: parent must already have non-null remaining ranges set");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        String relativePath = getPathRelativeToRoot(null, primaryURL, repository.getLocation(), null, repository);
+        if (relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+        
+        boolean isRollback = revision2 < revision1;
+        long pegRev = isRollback ? revision1 : revision2;
+        long youngerRev = pegRev;
+        long olderRev = isRollback ? revision2 : revision1;
+        
+        List locationSegments = null;
+        try {
+            locationSegments = repository.getLocationSegments(relativePath, pegRev, youngerRev, olderRev);
+        } catch (SVNException e) {
+            SVNErrorCode errCode = e.getErrorMessage().getErrorCode();
+            if (errCode == SVNErrorCode.FS_NOT_FOUND || errCode == SVNErrorCode.RA_DAV_REQUEST_FAILED) {
+                SVNNodeKind kind = repository.checkPath(relativePath, olderRev);
+                if (kind == SVNNodeKind.NONE) {
                     child.myRemainingRanges = parent.myRemainingRanges.dup();
-                    return;
+                } else {
+                    long primaryURLDeletedRevision = repository.getDeletedRevision(relativePath, olderRev, youngerRev);
+                    if (!SVNRevision.isValidRevisionNumber(primaryURLDeletedRevision)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: deleted revision must exist");
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    if (isRollback) {
+                        child.myRemainingRanges = child.myRemainingRanges.reverse();
+                        parent.myRemainingRanges = parent.myRemainingRanges.reverse();
+                    }
+                    
+                    SVNMergeRangeList existingRangeList = new SVNMergeRangeList(new SVNMergeRange(olderRev, primaryURLDeletedRevision - 1, true));
+                    child.myRemainingRanges = child.myRemainingRanges.intersect(existingRangeList, false);
+                    
+                    SVNMergeRangeList deletedRangeList = new SVNMergeRangeList(new SVNMergeRange(primaryURLDeletedRevision - 1, pegRev, true));
+                    deletedRangeList = parent.myRemainingRanges.intersect(deletedRangeList, false);
+                    child.myRemainingRanges = child.myRemainingRanges.merge(deletedRangeList);
+                    
+                    if (isRollback) {
+                        child.myRemainingRanges = child.myRemainingRanges.reverse();
+                        parent.myRemainingRanges = parent.myRemainingRanges.reverse();
+                    }
                 }
             } else {
-                requestedMerge = new SVNMergeRangeList(rev1, rev2, true);
+                throw e;            
             }
- 
-         **/
+        }
+        
+        if (locationSegments != null && !locationSegments.isEmpty()) {
+            SVNLocationSegment segment = (SVNLocationSegment) locationSegments.get(locationSegments.size() - 1);
+            if (segment.getStartRevision() == olderRev) {
+                return;
+            }
+            if (isRollback) {
+                child.myRemainingRanges = child.myRemainingRanges.reverse();
+                parent.myRemainingRanges = parent.myRemainingRanges.reverse();
+            }
+            
+            SVNMergeRangeList existingRangeList = new SVNMergeRangeList(new SVNMergeRange(segment.getStartRevision(), pegRev, true));
+            child.myRemainingRanges = child.myRemainingRanges.intersect(existingRangeList, false);
+            SVNMergeRangeList nonExistentRangeList = new SVNMergeRangeList(new SVNMergeRange(olderRev, segment.getStartRevision(), true));
+            nonExistentRangeList = parent.myRemainingRanges.intersect(nonExistentRangeList, false);
+            child.myRemainingRanges = child.myRemainingRanges.merge(nonExistentRangeList);
+
+            if (isRollback) {
+                child.myRemainingRanges = child.myRemainingRanges.reverse();
+                parent.myRemainingRanges = parent.myRemainingRanges.reverse();
+            }
+        }
     }
     
     private SVNMergeRangeList prepareSubtreeRangeList(boolean[] childDeletedOrNonexistant, String mergeinfoPath, MergePath parent, long rev1, long rev2, SVNURL primaryURL, SVNRepository repository) throws SVNException {

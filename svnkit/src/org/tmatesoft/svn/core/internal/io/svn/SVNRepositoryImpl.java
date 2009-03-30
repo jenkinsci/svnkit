@@ -1615,7 +1615,22 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
     }
 
     protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
-        return 0;
+        try {
+            openConnection();
+            Long srev = getRevisionObject(pegRevision);
+            Long erev = getRevisionObject(endRevision);
+            Object[] buffer = new Object[] { "get-deleted-rev", path, srev, erev };
+            write("(w(snn))", buffer);
+            authenticate();
+            List values = read("r", null, false);
+            return SVNReader.getLong(values, 0);
+        } catch (SVNException e) {
+            closeSession();
+            handleUnsupportedCommand(e, "'get-deleted-rev' not implemented");
+        } finally {
+            closeConnection();
+        }
+        return INVALID_REVISION; 
     }
 
     private static boolean getRecurseFromDepth(SVNDepth depth) {

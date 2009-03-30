@@ -2725,7 +2725,8 @@ public abstract class SVNRepository {
     }
     
     public long getDeletedRevision(String path, long pegRevision, long endRevision) throws SVNException {
-        if (path == null || path.length() == 0 || "/".equals(path)) {
+        path = getRepositoryPath(path);
+        if ("/".equals(path)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "root path could not be deleted");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
@@ -2750,11 +2751,10 @@ public abstract class SVNRepository {
         } catch (SVNException svne) {
             SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
             if (errCode == SVNErrorCode.UNSUPPORTED_FEATURE || errCode == SVNErrorCode.RA_NOT_IMPLEMENTED) {
-                
+                return getDeletedRevisionFromLog(path, pegRevision, endRevision);
             }
+            throw svne;
         }
-        
-        return -1;
     }
     
     protected abstract long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException;
@@ -2951,9 +2951,10 @@ public abstract class SVNRepository {
         return myDebugLog;
     }
     
-    private long getDeletedRevisionFromLog(String path, long pegRevision, long endRevision) {
-        //TODO implement
-        return -1;
+    private long getDeletedRevisionFromLog(String path, long pegRevision, long endRevision) throws SVNException {
+        DeletedRevisionLogHandler handler = new DeletedRevisionLogHandler(path);
+        log(new String[] { path }, pegRevision, endRevision, true, true, 0, false, null, handler);
+        return handler.getDeletedRevision();
     }
     
     private long getLocationSegmentsFromLog(String path, long pegRevision, long startRevision, long endRevision, 
@@ -3194,11 +3195,31 @@ public abstract class SVNRepository {
     }
     
     private static class DeletedRevisionLogHandler implements ISVNLogEntryHandler {
+        private String myPath;
+        private long myDeletedRevision;
+        
+        public DeletedRevisionLogHandler(String path) {
+            myPath = path;
+            myDeletedRevision = INVALID_REVISION;
+        }
 
         public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-
+            Map changedPaths = logEntry.getChangedPaths();
+            for (Iterator changedPathsIter = changedPaths.keySet().iterator(); changedPathsIter.hasNext();) {
+                String path = (String) changedPathsIter.next();
+                SVNLogEntryPath change = (SVNLogEntryPath) changedPaths.get(path);
+                if (myPath.equals(path) && (change.getType() == SVNLogEntryPath.TYPE_DELETED || 
+                        change.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
+                    
+                    myDeletedRevision = logEntry.getRevision();
+                }
+            }
         }
-        
+
+        public long getDeletedRevision() {
+            return myDeletedRevision;
+        }
+
     }
     
     private static class FileRevisionsLogHandler implements ISVNLogEntryHandler {
