@@ -1169,7 +1169,10 @@ public class DAVRepository extends SVNRepository {
         try {
             openConnection();
             DAVConnection connection = getConnection();
-            DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, this, path, pegRevision, false, false, null);
+            String thisSessionPath = doGetFullPath("");
+            thisSessionPath = SVNEncodingUtil.uriEncode(thisSessionPath);
+            
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, this, thisSessionPath, pegRevision, false, false, null);
             String finalBCPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
             StringBuffer requestBody = DAVDeletedRevisionHandler.generateGetDeletedRevisionRequest(null, path, pegRevision, endRevision);
             DAVDeletedRevisionHandler handler = new DAVDeletedRevisionHandler();
@@ -1178,11 +1181,10 @@ public class DAVRepository extends SVNRepository {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'get-deleted-rev' REPORT not implemented");
                 SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
             }
-            handler.getRevision();
+            return handler.getRevision();
         } finally {
             closeConnection();
         }
-        return INVALID_REVISION;
     }
 
     protected DAVConnection getConnection() {

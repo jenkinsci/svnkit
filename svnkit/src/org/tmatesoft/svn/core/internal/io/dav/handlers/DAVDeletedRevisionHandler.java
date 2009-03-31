@@ -40,7 +40,12 @@ public class DAVDeletedRevisionHandler extends BasicDAVHandler {
         return xmlBuffer;
     }
     
-    private long myRevision = SVNRepository.INVALID_REVISION;
+    private long myRevision;
+    
+    public DAVDeletedRevisionHandler() {
+        init();
+        myRevision = SVNRepository.INVALID_REVISION;
+    }
     
     protected void endElement(DAVElement parent, DAVElement element, StringBuffer cdata) throws SVNException {
         if (element == DAVElement.VERSION_NAME && cdata != null) {
