@@ -90,7 +90,8 @@ public class SVNFileUtil {
         }
     };
 
-    private static boolean ourUseUnsafeCopyOnly = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.no.safe.copy", System.getProperty("javasvn.no.safe.copy", "false")));    
+    private static boolean ourUseUnsafeCopyOnly = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.no.safe.copy", System.getProperty("javasvn.no.safe.copy", "false")));
+    private static boolean ourCopyOnSetWritable = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.fast.setWritable", "true"));
 
     private static String nativeEOLMarker;
     private static String ourGroupID;
@@ -168,6 +169,14 @@ public class SVNFileUtil {
 
     public static synchronized void setUseUnsafeCopyOnly(boolean useUnsafeCopyOnly) {
         ourUseUnsafeCopyOnly = useUnsafeCopyOnly;
+    }
+
+    public static synchronized boolean useCopyOnSetWritable() {
+        return ourCopyOnSetWritable;
+    }
+
+    public static synchronized void setUseCopyOnSetWritable(boolean useCopyOnSetWritable) {
+        ourCopyOnSetWritable = useCopyOnSetWritable;
     }
 
     public static String getIdCommand() {
@@ -479,7 +488,7 @@ public class SVNFileUtil {
             }
         }
         try {
-            if (file.length() < 1024 * 100) {
+            if (useCopyOnSetWritable() && file.length() < 1024 * 100) {
                 // faster way for small files.
                 File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro", true);
                 copyFile(file, tmp, false);
