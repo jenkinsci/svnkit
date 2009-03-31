@@ -479,23 +479,31 @@ public class SVNFileUtil {
             }
         }
         try {
-            if (isWindows) {
-                Process p = null;
-                try {
-                    p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
-                    p.waitFor();
-                } finally {
-                    if (p != null) {
-                        closeFile(p.getInputStream());
-                        closeFile(p.getOutputStream());
-                        closeFile(p.getErrorStream());
-                        p.destroy();
-                    }
-                }
+            if (file.length() < 1024 * 100) {
+                // faster way for small files.
+                File tmp = createUniqueFile(file.getParentFile(), file.getName(), ".ro", true);
+                copyFile(file, tmp, false);
+                copyFile(tmp, file, false);
+                deleteFile(tmp);
             } else {
-                execCommand(new String[] {
-                        CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
-                });
+                if (isWindows) {
+                    Process p = null;
+                    try {
+                        p = Runtime.getRuntime().exec(ATTRIB_COMMAND + " -R \"" + file.getAbsolutePath() + "\"");
+                        p.waitFor();
+                    } finally {
+                        if (p != null) {
+                            closeFile(p.getInputStream());
+                            closeFile(p.getOutputStream());
+                            closeFile(p.getErrorStream());
+                            p.destroy();
+                        }
+                    }
+                } else {
+                    execCommand(new String[]{
+                            CHMOD_COMMAND, "ugo+w", file.getAbsolutePath()
+                    });
+                }
             }
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logFinest(SVNLogType.DEFAULT, th);
