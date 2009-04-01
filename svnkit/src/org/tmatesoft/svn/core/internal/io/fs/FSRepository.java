@@ -762,9 +762,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+        
+        String dirPath = rootPath.replaceFirst("\\|", "\\:");
 
-        myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, rootPath).getAbsoluteFile() :
-                                             new File(rootPath).getAbsoluteFile();
+        myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, dirPath).getAbsoluteFile() :
+                                             new File(dirPath).getAbsoluteFile();
         myFSFS = new FSFS(myReposRootDir);
         myFSFS.open();
         setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootPath, false));
