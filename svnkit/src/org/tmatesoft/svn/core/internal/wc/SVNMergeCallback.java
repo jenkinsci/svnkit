@@ -270,8 +270,20 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         return SVNStatusType.UNKNOWN;
     }
 
-    public SVNStatusType directoryOpened(String path, long revision, boolean[] isTreeConflicted) throws SVNException {
-        return null;
+    public void directoryOpened(String path, long revision, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
+        File mergedFile = getFile(path);
+        SVNAdminArea dir = retrieve(mergedFile.getParentFile(), myIsDryRun);
+        if (dir == null) {
+            return;
+        }
+        
+        SVNEntry entry = getWCAccess().getEntry(mergedFile, true);
+        SVNFileType type = SVNFileType.getType(mergedFile);
+        if (entry == null || entry.isScheduledForDeletion() || type != SVNFileType.DIRECTORY) {
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.EDIT, SVNConflictReason.DELETED);
+            setIsConflicted(isTreeConflicted, true);
+        }
     }
 
     public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
@@ -471,7 +483,12 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         return SVNStatusType.UNKNOWN;
     }
-    
+
+    public SVNStatusType[] directoryClosed(String path, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
+        return new SVNStatusType[] { SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN };
+    }
+
     protected File getFile(String path) {
         return getAdminArea().getFile(path);
     }
@@ -573,4 +590,5 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
         return true;
     }
+
 }

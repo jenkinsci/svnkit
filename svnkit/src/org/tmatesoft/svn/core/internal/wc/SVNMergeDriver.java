@@ -841,6 +841,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 if (!dryRun) {
                     elideMergeInfo(myWCAccess, target, targetEntry, null);
                 }
+                SVNEvent mergeCompletedEvent = SVNEventFactory.createSVNEvent(target, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, 
+                        SVNStatusType.INAPPLICABLE, SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.MERGE_COMPLETE, 
+                        null, null, null); 
+                super.handleEvent(mergeCompletedEvent, ISVNEventHandler.UNKNOWN);
             } finally {
                 if (myRepository1 != null) {
                     myRepository1.closeSession();
@@ -920,6 +924,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         boolean recordMergeInfo = isRecordMergeInfo();
         myIsSingleFileMerge = true;
         boolean[] indirect = { false };
+        boolean[] isTreeConflict = { false };
         Map targetMergeInfo;
         Map implicitMergeInfo;
         SVNURL sourceRootURL = null;
@@ -997,21 +1002,20 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     
                     if (!(myIsIgnoreAncestry || sourcesRelated)) {
                         SVNStatusType cstatus = callback.fileDeleted(targetName, f1, f2, mimeType1, 
-                                mimeType2, props1, null);
-                        headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_DELETE, cstatus, 
-                                SVNStatusType.UNKNOWN, event, headerSent);
-                        
+                                mimeType2, props1, isTreeConflict);
+                        headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
+                            SVNEventAction.UPDATE_DELETE, cstatus, SVNStatusType.UNKNOWN, event, headerSent);
                         mergeResult = callback.fileAdded(targetName, f1, f2, nextRange.getStartRevision(), 
                                                          nextRange.getEndRevision(), mimeType1, mimeType2, 
-                                                         props1, propsDiff, null);
-                        headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_ADD, 
-                                        mergeResult[0], mergeResult[1], event, headerSent);
+                                                         props1, propsDiff, isTreeConflict);
+                        headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
+                            SVNEventAction.UPDATE_ADD, mergeResult[0], mergeResult[1], event, headerSent);
                     } else {
                         mergeResult = callback.fileChanged(targetName, f1, f2, nextRange.getStartRevision(), 
                                                            nextRange.getEndRevision(), mimeType1, 
-                                                           mimeType2, props1, propsDiff, null);
-                        headerSent = notifySingleFileMerge(targetWCPath, SVNEventAction.UPDATE_UPDATE, 
-                                        mergeResult[0], mergeResult[1], event, headerSent);
+                                                           mimeType2, props1, propsDiff, isTreeConflict);
+                        headerSent = notifySingleFileMerge(targetWCPath, isTreeConflict[0] ? SVNEventAction.TREE_CONFLICT : 
+                            SVNEventAction.UPDATE_UPDATE, mergeResult[0], mergeResult[1], event, headerSent);
                     }
                 } finally {
                     SVNFileUtil.deleteAll(f1, null);
@@ -2654,7 +2658,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 event.getPropertiesStatus() == SVNStatusType.CONFLICTED ||
                 event.getPropertiesStatus() == SVNStatusType.MERGED ||
                 event.getPropertiesStatus() == SVNStatusType.CHANGED ||
-                event.getAction() == SVNEventAction.UPDATE_ADD;
+                event.getAction() == SVNEventAction.UPDATE_ADD ||
+                event.getAction() == SVNEventAction.TREE_CONFLICT;
     }
     
     private Map determinePerformedMerges(File targetPath, SVNMergeRangeList rangeList, SVNDepth depth) throws SVNException {

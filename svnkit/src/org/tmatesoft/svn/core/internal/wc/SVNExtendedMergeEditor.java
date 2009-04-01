@@ -281,7 +281,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
                 }
             }
         }
-        super.addDeletedPath(path, nodeKind, type, action, expectedAction);
+        super.addDeletedPath(path, nodeKind, type, action, expectedAction, false);
     }
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
@@ -768,7 +768,8 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
 
         protected void close() throws SVNException {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "ext merge: close " + myPath);
-            closeFile(myPath, myCurrentFile.myIsAdded, myWCFile, myFile, myCurrentFile.myPropertyDiff, myCurrentFile.myBaseProperties, myCurrentFile.myBaseFile);
+            closeFile(myPath, myCurrentFile.myIsAdded, myWCFile, myFile, myCurrentFile.myPropertyDiff, myCurrentFile.myBaseProperties, 
+                    myCurrentFile.myBaseFile, null);
 
             if (myCopySource == null) {
                 return;
