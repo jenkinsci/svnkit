@@ -96,7 +96,7 @@ class SVNWin32Util {
         }
         final char[] commonAppDataPath = new char[1024];
         int type = common ? ISVNWin32Library.CSIDL_COMMON_APPDATA : ISVNWin32Library.CSIDL_APPDATA;
-        HRESULT result = library.SHGetFolderPathW(Pointer.NULL, type, Pointer.NULL, ISVNWin32Library.SHGFP_TYPE_DEFAULT, commonAppDataPath);
+        HRESULT result = library.SHGetFolderPathW(Pointer.NULL, type, Pointer.NULL, ISVNWin32Library.SHGFP_TYPE_CURRENT, commonAppDataPath);
         if (result == null || result.longValue() != 0) {
             return null;
         }

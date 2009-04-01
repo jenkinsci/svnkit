@@ -502,7 +502,7 @@ class HTTPConnection implements IHTTPConnection {
                     continue;
                 }
 
-                if (negoAuth != null) {
+                if (negoAuth != null && !negoAuth.needsLogin()) {
                     continue;
                 }
 

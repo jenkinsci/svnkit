@@ -206,7 +206,11 @@ abstract class HTTPAuthentication {
                 if (HTTPNegotiateAuthentication.isSupported()) {
                     HTTPNegotiateAuthentication negoAuth = null;
                     if (source.length() == 0) {
-                        negoAuth = new HTTPNegotiateAuthentication();
+                        if (prevResponse instanceof HTTPNegotiateAuthentication) {
+                            negoAuth = new HTTPNegotiateAuthentication((HTTPNegotiateAuthentication)prevResponse);
+                        } else {
+                            negoAuth = new HTTPNegotiateAuthentication();
+                        }
                         negoAuth.respondTo(null);
                     } else {
                         negoAuth = (HTTPNegotiateAuthentication)prevResponse;

@@ -760,7 +760,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                         changedPathsMap.put(path, new SVNLogEntryPath(path, action.charAt(0), copyPath, copyRevision, kind != null ? SVNNodeKind.parseKind(kind) : SVNNodeKind.UNKNOWN));
                     }
                 }
-                count++;
+                if (nestLevel == 0) {
+                    count++;
+                }
                 long revision = 0;
                 SVNProperties revisionProperties = null;
                 SVNProperties logEntryProperties = new SVNProperties();
