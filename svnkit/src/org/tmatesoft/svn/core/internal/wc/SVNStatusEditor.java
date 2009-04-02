@@ -155,7 +155,7 @@ public class SVNStatusEditor {
                 SVNNodeKind fileKind = SVNFileType.getNodeKind(fileType);
                 sendUnversionedStatus(file, entryName, fileKind, special, dir, ignorePatterns, noIgnore, handler);
             } else {
-                SVNTreeConflictDescription treeConflict = dir.getTreeConflict(entryName);
+                SVNTreeConflictDescription treeConflict = myWCAccess.getTreeConflict(dir.getFile(entryName));
                 if (treeConflict != null) {
                     if (ignorePatterns == null) {
                         ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);

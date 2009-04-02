@@ -159,8 +159,7 @@ public class SVNStatusUtil {
             special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         }
         
-        SVNTreeConflictDescription treeConflict = dir.getTreeConflict(file.getName());
-        
+        SVNTreeConflictDescription treeConflict = wcAccess.getTreeConflict(file);
         if (entry == null) {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
