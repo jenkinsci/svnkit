@@ -33,6 +33,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
  * @version 1.2.0
@@ -158,12 +159,14 @@ public class SVNStatusUtil {
             special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
         }
         
+        SVNTreeConflictDescription treeConflict = dir.getTreeConflict(file.getName());
+        
         if (entry == null) {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
                     false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
-                    null, null, -1);
+                    null, null, -1, treeConflict);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
             SVNFileType fileType = SVNFileType.getType(file);
@@ -251,7 +254,7 @@ public class SVNStatusUtil {
             if ((textStatus == SVNStatusType.STATUS_NONE || textStatus == SVNStatusType.STATUS_NORMAL) &&
                 (propStatus == SVNStatusType.STATUS_NONE || propStatus == SVNStatusType.STATUS_NORMAL) &&
                 !isLocked && !isSwitched && entry.getLockToken() == null && repositoryLock == null && 
-                entry.getChangelistName() == null && !isFileExternal) {
+                entry.getChangelistName() == null && !isFileExternal && treeConflict == null) {
                 return null;
             }
         }
@@ -272,7 +275,7 @@ public class SVNStatusUtil {
                 textStatus,  propStatus, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
                 isLocked, entry.isCopied(), isSwitched, isFileExternal, conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber);
+                repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
         return status;
     }

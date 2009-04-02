@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 
 /**
@@ -135,6 +136,7 @@ public class SVNStatusEditor {
                 myExternalsMap.put(SVNPathUtil.append(path, external.getPath()), external);
             }
         }
+        
         if (entryName != null) {
             File file = (File) childrenFiles.get(entryName);
             SVNEntry entry = dir.getEntry(entryName, false);
@@ -148,7 +150,18 @@ public class SVNStatusEditor {
                 if (ignorePatterns == null) {
                     ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
                 }
-                sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
+                SVNFileType fileType = SVNFileType.getType(file);
+                boolean special = fileType == SVNFileType.SYMLINK;
+                SVNNodeKind fileKind = SVNFileType.getNodeKind(fileType);
+                sendUnversionedStatus(file, entryName, fileKind, special, dir, ignorePatterns, noIgnore, handler);
+            } else {
+                SVNTreeConflictDescription treeConflict = dir.getTreeConflict(entryName);
+                if (treeConflict != null) {
+                    if (ignorePatterns == null) {
+                        ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
+                    }
+                    sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, true, handler);
+                }
             }
             return;
         }
@@ -183,6 +196,7 @@ public class SVNStatusEditor {
             sendUnversionedStatus(file, fileName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, 
                     handler);
         }
+        
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
             if (dir.getThisDirName().equals(entry.getName())) {

@@ -175,7 +175,7 @@ public class SVNStatus {
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
             SVNLock remoteLock, SVNLock localLock, Map entryProperties,
-            String changelistName, int wcFormatVersion) {
+            String changelistName, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
         myURL = url;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;

@@ -47,15 +47,15 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
     private boolean myIsExport;
     private boolean myIsSuppressLastLine;
     
-    private int myTextConflicts;
-    private int myPropConflicts;
-    private int myTreeConflicts;
-    private int mySkippedPaths;
+    private int myTextConflicts = 0;
+    private int myPropConflicts = 0;
+    private int myTreeConflicts = 0;
+    private int mySkippedPaths = 0;
     
-    private int myExternalTextConflicts;
-    private int myExternalPropConflicts;
-    private int myExternalTreeConflicts;
-    private int myExternalSkippedPaths;
+    private int myExternalTextConflicts = 0;
+    private int myExternalPropConflicts = 0;
+    private int myExternalTreeConflicts = 0;
+    private int myExternalSkippedPaths = 0;
     
     public SVNNotifyPrinter(SVNCommandEnvironment env) {
         this(env, false, false, false);
