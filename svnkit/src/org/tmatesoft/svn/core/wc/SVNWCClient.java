@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
@@ -3069,15 +3070,15 @@ public class SVNWCClient extends SVNBasicClient {
         checkCancelled();
         SVNWCAccess wcAccess = parent.getWCAccess();
         SVNAdminArea dir = wcAccess.probeRetrieve(path);
-        SVNEntry entry = null;
-        try {
-            entry = wcAccess.getVersionedEntry(path, false);
-        } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Cannot revert.");
+        SVNEntry entry = wcAccess.getEntry(path, false);
+        SVNTreeConflictDescription treeConflict = wcAccess.getTreeConflict(path);
+        if (entry == null && treeConflict == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, "Cannot revert unversioned item ''{0}''", 
+                    path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-
-        if (entry.getKind() == SVNNodeKind.DIR) {
+        
+        if (entry != null && entry.getKind() == SVNNodeKind.DIR) {
             SVNFileType fileType = SVNFileType.getType(path);
             if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
                 SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.FAILED_REVERT, null, null, null);
@@ -3086,7 +3087,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
 
-        if (entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
+        if (entry != null && entry.getKind() != SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.FILE) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Cannot revert ''{0}'': unsupported entry node kind", path);
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -3101,54 +3102,68 @@ public class SVNWCClient extends SVNBasicClient {
 
         boolean reverted = false;
         if (SVNWCAccess.matchesChangeList(changeLists, entry)) {
-            if (entry.isScheduledForAddition()) {
-                boolean wasDeleted = false;
-                if (entry.getKind() == SVNNodeKind.FILE) {
-                    wasDeleted = entry.isDeleted();
-                    parent.removeFromRevisionControl(path.getName(), false, false);
-                } else if (entry.getKind() == SVNNodeKind.DIR) {
-                    SVNEntry entryInParent = parent.getEntry(path.getName(), true);
-                    if (entryInParent != null) {
-                        wasDeleted = entryInParent.isDeleted();
-                    }
-                    if (fileType == SVNFileType.NONE || wcAccess.isMissing(path)) {
-                        parent.deleteEntry(path.getName());
-                        parent.saveEntries(false);
-                    } else {
-                        dir.removeFromRevisionControl("", false, false);
-                    }
-                }
-
+            if (treeConflict != null) {
+                parent.deleteTreeConflict(path.getName());
                 reverted = true;
-                depth = SVNDepth.EMPTY;
-                if (wasDeleted) {
-                    Map attributes = new SVNHashMap();
-                    attributes.put(SVNProperty.KIND, entry.getKind().toString());
-                    attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
-                    parent.modifyEntry(path.getName(), attributes, true, false);
-                }
-            } else if (entry.getSchedule() == null || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
-                if (entry.getKind() == SVNNodeKind.FILE) {
-                    reverted = revert(parent, entry.getName(), entry, useCommitTimes);
-                } else if (entry.getKind() == SVNNodeKind.DIR) {
-                    reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);
-                    if (reverted && parent != dir) {
-                        SVNEntry entryInParent = parent.getEntry(path.getName(), false);
-                        revert(parent, path.getName(), entryInParent, useCommitTimes);
+            }
+            
+            if (entry != null) {
+                if (entry.isScheduledForAddition()) {
+                    boolean wasDeleted = false;
+                    if (entry.getKind() == SVNNodeKind.FILE) {
+                        wasDeleted = entry.isDeleted();
+                        parent.removeFromRevisionControl(path.getName(), false, false);
+                    } else if (entry.getKind() == SVNNodeKind.DIR) {
+                        SVNEntry entryInParent = parent.getEntry(path.getName(), true);
+                        if (entryInParent != null) {
+                            wasDeleted = entryInParent.isDeleted();
+                        }
+                        if (fileType == SVNFileType.NONE || wcAccess.isMissing(path)) {
+                            parent.deleteEntry(path.getName());
+                            parent.saveEntries(false);
+                        } else {
+                            dir.removeFromRevisionControl("", false, false);
+                        }
                     }
-                    if (entry.isScheduledForReplacement()) {
-                        depth = SVNDepth.INFINITY;
+
+                    reverted = true;
+                    depth = SVNDepth.EMPTY;
+                    if (wasDeleted) {
+                        Map attributes = new SVNHashMap();
+                        attributes.put(SVNProperty.KIND, entry.getKind().toString());
+                        attributes.put(SVNProperty.DELETED, Boolean.TRUE.toString());
+                        parent.modifyEntry(path.getName(), attributes, true, false);
+                    }
+                } else if (entry.getSchedule() == null || entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
+                    if (entry.getKind() == SVNNodeKind.FILE) {
+                        reverted = revert(parent, entry.getName(), entry, useCommitTimes);
+                    } else if (entry.getKind() == SVNNodeKind.DIR) {
+                        reverted = revert(dir, dir.getThisDirName(), entry, useCommitTimes);
+                        if (reverted && parent != dir) {
+                            SVNEntry entryInParent = parent.getEntry(path.getName(), false);
+                            revert(parent, path.getName(), entryInParent, useCommitTimes);
+                        }
+                        if (entry.isScheduledForReplacement()) {
+                            depth = SVNDepth.INFINITY;
+                        }
                     }
                 }
             }
             if (reverted) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.REVERT, null, null, null);
+                SVNEvent event = null;
+                if (entry != null) {
+                    event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), 
+                            SVNEventAction.REVERT, null, null, null);
+                } else {
+                    event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, 
+                            SVNEventAction.REVERT, null, null, null);
+                }
                 dispatchEvent(event);
             }
         }
         
         
-        if (entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
+        if (entry != null && entry.getKind() == SVNNodeKind.DIR && depth.compareTo(SVNDepth.EMPTY) > 0) {
             SVNDepth depthBelowHere = depth;
             if (depth == SVNDepth.FILES || depth == SVNDepth.IMMEDIATES) {
                 depthBelowHere = SVNDepth.EMPTY;
@@ -3163,6 +3178,14 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 File childPath = new File(path, childEntry.getName());
                 reverted |= doRevert(childPath, dir, depthBelowHere, useCommitTimes, changeLists);
+            }
+            
+            Map conflicts = SVNTreeConflictUtil.readTreeConflicts(path, entry.getTreeConflictData());
+            for (Iterator conflictsIter = conflicts.keySet().iterator(); conflictsIter.hasNext();) {
+                File conflictedPath = (File) conflictsIter.next();
+                if (dir.getEntry(conflictedPath.getName(), false) == null) {
+                    reverted |= doRevert(conflictedPath, dir, SVNDepth.EMPTY, useCommitTimes, changeLists);
+                }
             }
         }
         return reverted;
