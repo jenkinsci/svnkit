@@ -197,6 +197,21 @@ public class SVNStatusEditor {
                     handler);
         }
         
+        Map treeConflicts = SVNTreeConflictUtil.readTreeConflicts(dir.getRoot(), dirEntry.getTreeConflictData());
+        for (Iterator treeConflictsIter = treeConflicts.keySet().iterator(); treeConflictsIter.hasNext();) {
+            File conflictPath = (File) treeConflictsIter.next();
+            if (childrenFiles.containsKey(conflictPath.getName()) || dir.getEntry(conflictPath.getName(), false) != null) {
+                continue;
+            }
+            
+            if (ignorePatterns == null) {
+                ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
+            }
+            
+            sendUnversionedStatus(conflictPath, conflictPath.getName(), SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, 
+                    handler);
+        }
+       
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
             if (dir.getThisDirName().equals(entry.getName())) {

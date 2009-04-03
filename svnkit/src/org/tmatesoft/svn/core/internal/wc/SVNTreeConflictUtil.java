@@ -192,6 +192,44 @@ public class SVNTreeConflictUtil {
         return skel.unparse();
     }
 
+    public static String getHumanReadableConflictDescription(SVNTreeConflictDescription treeConflict) {
+        String reasonStr = getReasonString(treeConflict);
+        String actionStr = getActionString(treeConflict);
+        String operationStr = treeConflict.getOperation().getName();
+        String description = "local " + reasonStr + ", incoming " + actionStr + " upon " + operationStr;
+        return description;
+    }
+    
+    private static String getReasonString(SVNTreeConflictDescription treeConflict) {
+        SVNConflictReason reason = treeConflict.getConflictReason();
+        if (reason == SVNConflictReason.EDITED) {
+            return "edit";
+        } else if (reason == SVNConflictReason.OBSTRUCTED) {
+            return "obstruction";
+        } else if (reason == SVNConflictReason.DELETED) {
+            return "delete";
+        } else if (reason == SVNConflictReason.ADDED) {
+            return "add";
+        } else if (reason == SVNConflictReason.MISSING) {
+            return "missing";
+        } else if (reason == SVNConflictReason.UNVERSIONED) {
+            return "unversioned";
+        } 
+        return null;
+    }
+    
+    private static String getActionString(SVNTreeConflictDescription treeConflict) {
+        SVNConflictAction action = treeConflict.getConflictAction();
+        if (action == SVNConflictAction.ADD) {
+            return "add";
+        } else if (action == SVNConflictAction.EDIT) {
+            return "edit";
+        } else if (action == SVNConflictAction.DELETE) {
+            return "delete";
+        }
+        return null;
+    }
+    
     private static SVNSkel prependVersionInfo(SVNSkel parent, SVNConflictVersion versionInfo) throws SVNException {
         parent = parent == null ? SVNSkel.createEmptyList() : parent;
         SVNSkel skel = SVNSkel.createEmptyList();

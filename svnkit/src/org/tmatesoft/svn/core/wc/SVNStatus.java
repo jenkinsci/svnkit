@@ -208,6 +208,7 @@ public class SVNStatus {
         myEntryProperties = entryProperties;
         myChangelistName = changelistName;
         myWorkingCopyFormat = wcFormatVersion;
+        myTreeConflict = treeConflict;
     }
     
     /**
@@ -655,10 +656,6 @@ public class SVNStatus {
 
     public SVNTreeConflictDescription getTreeConflict() {
         return myTreeConflict;
-    }
-
-    public void setTreeConflict(SVNTreeConflictDescription treeConflict) {
-        myTreeConflict = treeConflict;
     }
 
     /**

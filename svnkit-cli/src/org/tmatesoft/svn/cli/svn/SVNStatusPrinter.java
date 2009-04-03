@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli.svn;
 
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
@@ -34,6 +35,15 @@ public class SVNStatusPrinter {
                 (status.getContentsStatus() == SVNStatusType.STATUS_NONE && status.getRemoteContentsStatus() == SVNStatusType.STATUS_NONE)) {
             return;
         }
+        
+        char treeStatusCode = ' ';
+        String treeDescriptionLine = "";
+        if (status.getTreeConflict() != null) {
+            String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(status.getTreeConflict());
+            treeStatusCode = 'C';
+            treeDescriptionLine = "\n      >   " + description;
+        }
+        
         StringBuffer result = new StringBuffer();
         if (detailed) {
             String wcRevision;
@@ -94,7 +104,7 @@ public class SVNStatusPrinter {
                     result.append(' ');   
                 }
                 result.append(lockStatus);
-                result.append(' '); // tree status
+                result.append(treeStatusCode); // tree status
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
@@ -105,6 +115,7 @@ public class SVNStatusPrinter {
                 result.append(SVNFormatUtil.formatString(commitAuthor, 12, true)); // 12 chars
                 result.append(" ");
                 result.append(path);
+                result.append(treeDescriptionLine);
             }  else {
                 result.append(status.getContentsStatus().getCode());
                 result.append(status.getPropertiesStatus().getCode());
@@ -112,13 +123,14 @@ public class SVNStatusPrinter {
                 result.append(status.isCopied() ? '+' : ' ');
                 result.append(status.isSwitched() ? 'S' : ' ');
                 result.append(lockStatus);
-                result.append(' '); // tree status
+                result.append(treeStatusCode); // tree status
                 result.append(" ");
                 result.append(remoteStatus);
                 result.append("   ");
                 result.append(SVNFormatUtil.formatString(wcRevision, 6, false)); // 6 chars
                 result.append("   ");
                 result.append(path);
+                result.append(treeDescriptionLine);
             }
         } else {
             result.append(status.getContentsStatus().getCode());
@@ -127,9 +139,10 @@ public class SVNStatusPrinter {
             result.append(status.isCopied() ? '+' : ' ');
             result.append(status.isSwitched() ? 'S' : ' ');
             result.append(status.getLocalLock() != null ? 'K' : ' ');
-            result.append(' '); // tree status
+            result.append(treeStatusCode); // tree status
             result.append(" ");
             result.append(path);
+            result.append(treeDescriptionLine);
         }
         myEnvironment.getOut().println(result);
     }

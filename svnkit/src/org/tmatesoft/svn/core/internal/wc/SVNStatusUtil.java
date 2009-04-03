@@ -172,6 +172,9 @@ public class SVNStatusUtil {
             if (fileType != SVNFileType.NONE) {
                 text = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
             }
+            if (fileType == SVNFileType.NONE && treeConflict != null) {
+                text = SVNStatusType.STATUS_MISSING;
+            }
             status.setContentsStatus(text);
             return status;
         }
