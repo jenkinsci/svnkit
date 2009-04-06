@@ -316,9 +316,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             boolean isWCRoot = access.isWCRoot(ancestor);
             if (isWCRoot) {
                 break;
-            } else {
-                ancestors.add(ancestor);
             }
+            ancestors.add(ancestor);            
             ancestor = ancestor.getParentFile();
         }
         for (int i = ancestors.size() - 1; i >= 0; i--) {
@@ -1187,7 +1186,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "UUID mismatch: existing file ''{0}'' was checked out from a different repository", fullPath);
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            if (mySwitchURL == null && info.URL.equals(entry.getURL())) {
+            if (mySwitchURL == null && !info.URL.equals(entry.getURL())) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' of existing file ''{1}'' does not match expected URL ''{2}''", new Object[]{entry.getURL(), fullPath, info.URL});
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
