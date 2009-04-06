@@ -206,6 +206,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                         		SVNStatusType.MISSING, null, action, expectedAction, null, null);
                         myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                     }
+                    myCurrentDirectory = myCurrentDirectory.myParent;
                     return;
                 }
                 throw e;
