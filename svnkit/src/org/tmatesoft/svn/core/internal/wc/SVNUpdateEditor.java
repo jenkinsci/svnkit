@@ -233,6 +233,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 parent.flushLog();
                 parent.runLogs();
                 scheduleExistingEntryForReAdd(entry, fullPath, theirURL);
+                return;
             } else if (treeConflict.getConflictReason() == SVNConflictReason.DELETED) {
 //          The item does not exist locally (except perhaps as a skeleton
 //          directory tree) because it was already scheduled for delete.
