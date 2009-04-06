@@ -201,7 +201,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         File fullPath = myAdminInfo.getAnchor().getFile(path);
         String name = SVNPathUtil.tail(path);
         SVNAdminArea parentArea = parent.getAdminArea();
-        SVNEntry entry = parentArea.getVersionedEntry(name, true);
+        SVNEntry entry = myWCAccess.getVersionedEntry(fullPath, true);
 
         if (entry.getDepth() == SVNDepth.EXCLUDE) {
             parentArea.deleteEntry(name);
