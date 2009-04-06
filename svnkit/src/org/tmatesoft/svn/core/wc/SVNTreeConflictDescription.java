@@ -23,14 +23,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
  */
 public class SVNTreeConflictDescription extends SVNConflictDescription {
 
-    private File myPath;
     private SVNOperation myOperation;
     private SVNConflictVersion mySourceLeftVersion;
     private SVNConflictVersion mySourceRightVersion;
 
     public SVNTreeConflictDescription(File path, SVNNodeKind nodeKind, SVNConflictAction conflictAction, SVNConflictReason conflictReason, SVNOperation operation, SVNConflictVersion sourceLeftVersion, SVNConflictVersion sourceRightVersion) {
-        super(null, nodeKind, conflictAction, conflictReason);
-        myPath = path;
+        super(new SVNMergeFileSet(null, null, null, path, null, null, null, null, null), nodeKind, conflictAction, conflictReason);
         myOperation = operation;
         mySourceLeftVersion = sourceLeftVersion;
         mySourceRightVersion = sourceRightVersion;
@@ -49,7 +47,7 @@ public class SVNTreeConflictDescription extends SVNConflictDescription {
     }
 
     public File getPath() {
-        return myPath;
+        return getMergeFiles().getLocalFile();
     }
 
     public SVNOperation getOperation() {

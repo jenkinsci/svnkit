@@ -281,16 +281,14 @@ public class JavaHLObjectFactory {
         if (conflictDescription == null){
             return null;
         }
-// tree conflict description doesn't have merged files set       
         SVNMergeFileSet mergeFiles = conflictDescription.getMergeFiles();
         String basePath = null;
         String repositoryPath = null;
-        if (mergeFiles != null) {
-	        try {
-	            basePath = mergeFiles.getBasePath();
-	            repositoryPath = mergeFiles.getRepositoryPath();
-	        } catch (SVNException e) {
-	        }
+        try {
+            basePath = mergeFiles.getBasePath();
+            repositoryPath = mergeFiles.getRepositoryPath();
+        } catch (SVNException e) {
+            //
         }
         ConflictVersion left = null;
         ConflictVersion right = null;
