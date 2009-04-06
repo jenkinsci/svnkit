@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
@@ -50,11 +51,13 @@ import org.tmatesoft.svn.core.wc.SVNDiffStatus;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -237,8 +240,9 @@ public class JavaHLObjectFactory {
             reposKind = NodeKind.none;
         }
         
+        SVNTreeConflictDescription tc = status.getTreeConflict();
         Status st = new Status(path, url, nodeKind, revision, lastChangedRevision, lastChangedDate, lastCommitAuthor, textStatus, propStatus,
-                repositoryTextStatus, repositoryPropStatus, locked, copied, false, null, conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
+                repositoryTextStatus, repositoryPropStatus, locked, copied, tc != null, createConflictDescription(tc), conflictOld, conflictNew, conflictWorking, urlCopiedFrom, revisionCopiedFrom,
                 switched, false, lockToken, lockOwner, lockComment, lockCreationDate, reposLock,
                 /* remote: rev, date, kind, author */
                 reposRev, reposDate, reposKind, reposAuthor, status.getChangelistName());
@@ -279,18 +283,25 @@ public class JavaHLObjectFactory {
         }
 // tree conflict description doesn't have merged files set       
         SVNMergeFileSet mergeFiles = conflictDescription.getMergeFiles();
-        if (mergeFiles == null) {
-            return null;
-        }
         String basePath = null;
         String repositoryPath = null;
-        try {
-            basePath = mergeFiles.getBasePath();
-            repositoryPath = mergeFiles.getRepositoryPath();
-        } catch (SVNException e) {
+        if (mergeFiles != null) {
+	        try {
+	            basePath = mergeFiles.getBasePath();
+	            repositoryPath = mergeFiles.getRepositoryPath();
+	        } catch (SVNException e) {
+	        }
+        }
+        ConflictVersion left = null;
+        ConflictVersion right = null;
+        int op = 0;
+        if (conflictDescription.isTreeConflict()) {
+        	SVNTreeConflictDescription tc = (SVNTreeConflictDescription) conflictDescription;
+        	left = createConflictVersion(tc.getSourceLeftVersion());
+        	right = createConflictVersion(tc.getSourceRightVersion());
+        	op = getConflictOperation(tc.getOperation());
         }
 
-        // TODO 16
         return new ConflictDescriptor(mergeFiles.getLocalPath(),
                 getConflictKind(conflictDescription.isPropertyConflict()),
                 getNodeKind(conflictDescription.getNodeKind()),
@@ -299,17 +310,38 @@ public class JavaHLObjectFactory {
                 mergeFiles.getMimeType(),
                 getConflictAction(conflictDescription.getConflictAction()),
                 getConflictReason(conflictDescription.getConflictReason()),
-                0,
+                op,
                 basePath,
                 repositoryPath,
                 mergeFiles.getWCPath(),
                 mergeFiles.getResultPath(),
-                null, 
-                null
+                left, 
+                right
                 );
     }
 
-    public static SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
+    private static int getConflictOperation(SVNOperation operation) {
+    	if (operation == SVNOperation.MERGE) {
+    		return Operation.merge;
+    	} else if (operation == SVNOperation.NONE) {
+    		return Operation.none;
+    	} else if (operation == SVNOperation.UPDATE) {
+    		return Operation.update;
+    	} else if (operation == SVNOperation.SWITCH) {
+    		return Operation.switched;
+    	}
+		return Operation.none;
+	}
+
+	private static ConflictVersion createConflictVersion(SVNConflictVersion version) {
+		if (version == null) {
+			return null;
+		}
+		String url = version.getRepositoryRoot() != null ? version.getRepositoryRoot().toString() : null;
+		return new ConflictVersion(url, version.getPegRevision(), version.getPath(), getNodeKind(version.getKind()));
+	}
+
+	public static SVNConflictResult getSVNConflictResult(ConflictResult conflictResult) {
         if (conflictResult == null){
             return null;
         }
@@ -447,8 +479,7 @@ public class JavaHLObjectFactory {
                 String path = (String) iter.next();
                 SVNLogEntryPath entryPath = (SVNLogEntryPath)cpaths.get(path);
                 if(entryPath != null){
-                    // TODO 
-                    clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType(), NodeKind.unknown));
+                    clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType(), getNodeKind(entryPath.getKind())));
                 }
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
@@ -522,8 +553,7 @@ public class JavaHLObjectFactory {
                 String path = (String) iter.next();
                 SVNLogEntryPath entryPath = (SVNLogEntryPath)cpaths.get(path);
                 if(entryPath != null){
-                    // TODO 16
-                    clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType(), NodeKind.unknown));
+                    clientChangePaths.add(new ChangePath(path, entryPath.getCopyRevision(), entryPath.getCopyPath(), entryPath.getType(), getNodeKind(entryPath.getKind())));
                 }
             }
             cp = (ChangePath[]) clientChangePaths.toArray(new ChangePath[clientChangePaths.size()]);
@@ -646,7 +676,10 @@ public class JavaHLObjectFactory {
         if (path != null) {
             path = path.replace(File.separatorChar, '/');
         }
-        // TODO 16
+        int depth = info.getDepth() != null ? info.getDepth().getId() : Depth.unknown;
+        if (info.getKind() == SVNNodeKind.FILE) {
+        	depth = 0;
+        }
         return new Info2(
                 path,
                 info.getURL() != null ? info.getURL().toString() : null,
@@ -668,8 +701,8 @@ public class JavaHLObjectFactory {
                 info.getConflictWrkFile() != null ? info.getConflictWrkFile().getName() : null,
                 info.getPropConflictFile() != null ? info.getPropConflictFile().getName() : null,
                 info.getChangelistName(), info.getWorkingSize(), info.getRepositorySize(),
-                Depth.unknown,
-                null
+                depth,
+                createConflictDescription(info.getTreeConflict())
                 );
     }
 

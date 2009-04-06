@@ -37,7 +37,7 @@ public class SVNTreeConflictDescription extends SVNConflictDescription {
     }
 
     public boolean isTextConflict() {
-        return true;
+        return false;
     }
 
     public boolean isPropertyConflict() {
@@ -45,7 +45,7 @@ public class SVNTreeConflictDescription extends SVNConflictDescription {
     }
 
     public boolean isTreeConflict() {
-        return false;
+        return true;
     }
 
     public File getPath() {
