@@ -199,6 +199,20 @@ public class SVNTreeConflictUtil {
         String description = "local " + reasonStr + ", incoming " + actionStr + " upon " + operationStr;
         return description;
     }
+
+    public static String getHumanReadableConflictVersion(SVNConflictVersion version) {
+    	String url = version.getRepositoryRoot() != null ? version.getRepositoryRoot().toString() : null;
+    	if (url != null && version.getPath() != null) {
+    		url = url + "/" + version.getPath();
+    	} else if (url != null) {
+    		url = url + "/..."; 
+    	} else if (version.getPath() != null) {
+    		url = version.getPath();
+    	} else {
+    		url = "...";
+    	}
+        return "(" + version.getKind().toString() + ") " + url + "@" + version.getPegRevision();
+    }
     
     private static String getReasonString(SVNTreeConflictDescription treeConflict) {
         SVNConflictReason reason = treeConflict.getConflictReason();

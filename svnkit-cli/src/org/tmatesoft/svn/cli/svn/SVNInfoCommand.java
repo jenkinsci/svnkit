@@ -27,13 +27,19 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -225,6 +231,19 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         if (info.getChangelistName() != null) {
             buffer.append("Changelist: " + info.getChangelistName() + "\n");
         }
+        if (info.getTreeConflict() != null) {
+        	SVNTreeConflictDescription tc = info.getTreeConflict();
+        	String description = SVNTreeConflictUtil.getHumanReadableConflictDescription(tc);
+            buffer.append("Tree conflict: " + description + "\n");
+            SVNConflictVersion left = tc.getSourceLeftVersion();
+            if (left != null) {
+                buffer.append("  Source  left: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(left) + "\n");
+            }
+            SVNConflictVersion right = tc.getSourceRightVersion();
+            if (right != null) {
+                buffer.append("  Source right: " + SVNTreeConflictUtil.getHumanReadableConflictVersion(right) + "\n");
+            }
+        }
         buffer.append("\n");
         getSVNEnvironment().getOut().print(buffer.toString());
     }
@@ -323,9 +342,63 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
             }
             buffer = closeXMLTag("lock", buffer);
         }
+        if (info.getTreeConflict() != null) {
+        	SVNTreeConflictDescription tc = info.getTreeConflict();
+        	Map attributes = new SVNHashMap();
+        	attributes.put("victim", tc.getPath().getAbsolutePath().replace(File.separatorChar, '/'));
+        	attributes.put("kind", tc.getNodeKind().toString());
+        	attributes.put("operation", tc.getOperation().getName());
+        	if (tc.getConflictAction() == SVNConflictAction.EDIT) {
+            	attributes.put("action", "edit");
+        	} else if (tc.getConflictAction() == SVNConflictAction.ADD) {
+            	attributes.put("action", "add");
+        	} else if (tc.getConflictAction() == SVNConflictAction.DELETE) {
+            	attributes.put("action", "delete");
+        	}
+        	if (tc.getConflictReason() == SVNConflictReason.EDITED) {
+            	attributes.put("reason", "edit");
+        	} else if (tc.getConflictReason() == SVNConflictReason.OBSTRUCTED) {
+            	attributes.put("reason", "obstruction");
+        	} else if (tc.getConflictReason() == SVNConflictReason.DELETED) {
+        		attributes.put("reason", "delete");
+        	} else if (tc.getConflictReason() == SVNConflictReason.ADDED) {
+        		attributes.put("reason", "add");
+        	} else if (tc.getConflictReason() == SVNConflictReason.MISSING) {
+        		attributes.put("reason", "missing");
+        	} else if (tc.getConflictReason() == SVNConflictReason.UNVERSIONED) {
+        		attributes.put("reason", "unversioned");
+        	}
+        	buffer = openXMLTag("tree-conflict", SVNXMLUtil.XML_STYLE_NORMAL, attributes, buffer);
+        	SVNConflictVersion left = tc.getSourceLeftVersion();
+        	if (left != null) {
+        		buffer = printConflictVersionXML(left, "source-left", buffer);        		
+        	}
+        	SVNConflictVersion right = tc.getSourceLeftVersion();
+        	if (right != null) {
+        		buffer = printConflictVersionXML(right, "source-right", buffer);        		
+        	}
+        	buffer = closeXMLTag("tree-confict", buffer);
+        }
         buffer = closeXMLTag("entry", buffer);
         
         getSVNEnvironment().getOut().print(buffer.toString());
     }
 
+    private StringBuffer printConflictVersionXML(SVNConflictVersion version, String name, StringBuffer target) {
+    	Map attributes = new SVNHashMap();
+    	attributes.put("side", name);
+    	if (version.getRepositoryRoot() != null) {
+    		attributes.put("repos-url", version.getRepositoryRoot().toString());
+    	}
+    	if (version.getPath() != null) {
+    		attributes.put("path-in-repos", version.getPath());
+    	}
+    	if (version.getPegRevision() >= 0) {
+    		attributes.put("revision", Long.toString(version.getPegRevision()));
+    	}
+    	if (version.getKind() != SVNNodeKind.UNKNOWN) {
+    		attributes.put("kind", version.getKind().toString());
+    	}    	
+    	return openXMLTag("version", SVNXMLUtil.XML_STYLE_SELF_CLOSING, attributes, target);
+    }
 }
