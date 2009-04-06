@@ -82,7 +82,23 @@ class HTTPConnection implements IHTTPConnection {
         }
     };
     
+    
+    private static final int requestAttempts; 
     private static final int DEFAULT_HTTP_TIMEOUT = 3600*1000;
+    
+    static {
+        String attemptsString = System.getProperty("svnkit.http.requestAttempts", "1" );
+        int attempts = 1;
+        try {
+            attempts = Integer.parseInt(attemptsString);
+        } catch (NumberFormatException nfe) {
+            attempts = 1;
+        }
+        if (attempts <= 0) {
+            attempts = 1;
+        }
+        requestAttempts = attempts;
+    }
 
     private static SAXParserFactory ourSAXParserFactory;
     private byte[] myBuffer;
@@ -518,18 +534,17 @@ class HTTPConnection implements IHTTPConnection {
                 
                 if (httpAuth == null) {
                     httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
-                } else {
+                } else if (authAttempts >= requestAttempts) {
                     authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.PASSWORD, realm, request.getErrorMessage(), httpAuth);
                     httpAuth = authManager.getNextAuthentication(ISVNAuthenticationManager.PASSWORD, realm, myRepository.getLocation());
                 }
                 
                 if (httpAuth == null) {
-                    err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, 
-                            "HTTP authorization cancelled");
+                    err = SVNErrorMessage.create(SVNErrorCode.CANCELLED, "HTTP authorization cancelled");
                     break;
                 } 
                 if (httpAuth != null) {
-                    myChallengeCredentials.setCredentials((SVNPasswordAuthentication)httpAuth);
+                    myChallengeCredentials.setCredentials((SVNPasswordAuthentication) httpAuth);
                 }
                 continue;
             } else if (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP) {

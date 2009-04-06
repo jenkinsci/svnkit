@@ -58,6 +58,12 @@ doc/wiki/access_protocols.png -text
 doc/wiki/repository_tree.png -text
 doc/wiki/svnkit_architecture.png -text
 doc/wiki/svnrepository_connection.png -text
+svnkit-cli/scripts/jsvn eol=lf
+svnkit-cli/scripts/jsvnadmin eol=lf
+svnkit-cli/scripts/jsvndumpfilter eol=lf
+svnkit-cli/scripts/jsvnlook eol=lf
+svnkit-cli/scripts/jsvnsync eol=lf
+svnkit-cli/scripts/jsvnversion eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/commands.properties eol=lf
 svnkit-cli/src/org/tmatesoft/svn/cli/svn/options.properties eol=lf
 svnkit-eclipse/com.sun.jna/MANIFEST.MF eol=lf

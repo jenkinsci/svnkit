@@ -717,13 +717,23 @@ public class SVNWCAccess implements ISVNEventHandler {
                    "''{0}'' has an unrecognized node kind", path));
         }
     }
+    
+    private static boolean ourNeverDescendIntoSymlinks = Boolean.getBoolean("svnkit.symlinks.neverDescend");
 
     private File probe(File path, Level logLevel) throws SVNException {
         int wcFormat = -1;
         SVNFileType type = SVNFileType.getType(path);
-        boolean eligible = type == SVNFileType.DIRECTORY || (type == SVNFileType.SYMLINK && path.isDirectory());
+        boolean eligible = type == SVNFileType.DIRECTORY;
+        // only treat as directories those, that are not versioned in parent wc.
         if (eligible) {
             wcFormat = SVNAdminAreaFactory.checkWC(path, true, logLevel);
+        } else if (type == SVNFileType.SYMLINK && path.isDirectory()) {
+            // either wc root which is a link or link within wc.
+            // check for being root.
+            eligible = !ourNeverDescendIntoSymlinks && isWCRoot(path);
+            if (eligible) {
+                wcFormat = SVNAdminAreaFactory.checkWC(path, true, logLevel);
+            }
         } else {
             wcFormat = 0;
         }
