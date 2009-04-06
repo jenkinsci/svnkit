@@ -345,7 +345,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         if (info.getTreeConflict() != null) {
         	SVNTreeConflictDescription tc = info.getTreeConflict();
         	Map attributes = new SVNHashMap();
-        	attributes.put("victim", tc.getPath().getAbsolutePath().replace(File.separatorChar, '/'));
+        	attributes.put("victim", tc.getPath().getName());
         	attributes.put("kind", tc.getNodeKind().toString());
         	attributes.put("operation", tc.getOperation().getName());
         	if (tc.getConflictAction() == SVNConflictAction.EDIT) {
@@ -377,7 +377,7 @@ public class SVNInfoCommand extends SVNXMLCommand implements ISVNInfoHandler {
         	if (right != null) {
         		buffer = printConflictVersionXML(right, "source-right", buffer);        		
         	}
-        	buffer = closeXMLTag("tree-confict", buffer);
+        	buffer = closeXMLTag("tree-conflict", buffer);
         }
         buffer = closeXMLTag("entry", buffer);
         
