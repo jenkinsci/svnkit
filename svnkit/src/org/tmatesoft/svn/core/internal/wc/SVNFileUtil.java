@@ -42,6 +42,7 @@ import java.util.logging.Level;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -1160,6 +1161,22 @@ public class SVNFileUtil {
         } else {
             return mod.toLowerCase().indexOf('x', 7) >= 7;
         }
+    }
+
+    public static File ensureDirectoryExists(File path) throws SVNException {
+        SVNFileType type = SVNFileType.getType(path);
+        SVNNodeKind kind = SVNFileType.getNodeKind(type);
+        if (kind != SVNNodeKind.NONE && kind != SVNNodeKind.DIR) {
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' is not a directory", path);
+            SVNErrorManager.error(error, SVNLogType.WC);
+        } else if (kind == SVNNodeKind.NONE) {
+            boolean created = path.mkdirs();
+            if (!created) {
+                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Unable to make directories", path);
+                SVNErrorManager.error(error, SVNLogType.WC);
+            }
+        }
+        return path;
     }
 
     public static void copyDirectory(File srcDir, File dstDir, boolean copyAdminDir, ISVNEventHandler cancel) throws SVNException {
