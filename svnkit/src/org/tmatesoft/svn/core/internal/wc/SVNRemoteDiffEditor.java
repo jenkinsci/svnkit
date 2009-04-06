@@ -217,6 +217,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void closeDir() throws SVNException {
         if (myCurrentDirectory.myIsSkip) {
+            myCurrentDirectory = myCurrentDirectory.myParent;
             return;
         }
         
