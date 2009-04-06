@@ -675,6 +675,8 @@ public class SVNWCAccess implements ISVNEventHandler {
                    "''{0}'' has an unrecognized node kind", path));
         }
     }
+    
+    private static boolean ourNeverDescendIntoSymlinks = Boolean.getBoolean("svnkit.symlinks.neverDescend");
 
     private File probe(File path, Level logLevel) throws SVNException {
         int wcFormat = -1;
@@ -686,7 +688,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         } else if (type == SVNFileType.SYMLINK && path.isDirectory()) {
             // either wc root which is a link or link within wc.
             // check for being root.
-            eligible = isWCRoot(path);
+            eligible = !ourNeverDescendIntoSymlinks && isWCRoot(path);
             if (eligible) {
                 wcFormat = SVNAdminAreaFactory.checkWC(path, true, logLevel);
             }
