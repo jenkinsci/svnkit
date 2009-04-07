@@ -1162,6 +1162,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             addSkippedTree(fullPath);
             SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE, null, -1, SVNEventAction.SKIP, null, null, null);
             myWCAccess.handleEvent(event);
+            return info;
         }
 
         if (fileType == SVNFileType.DIRECTORY || fileType == SVNFileType.UNKNOWN) {
