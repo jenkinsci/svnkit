@@ -283,7 +283,7 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             buffer = closeXMLTag("path", buffer);
             getSVNEnvironment().getOut().print(buffer.toString());
         } else {
-            getSVNEnvironment().getOut().print(diffStatus.getModificationType().getCode() + (diffStatus.isPropertiesModified() ? "M" : " ") + "     " + path + "\n");
+            getSVNEnvironment().getOut().print(diffStatus.getModificationType().getCode() + (diffStatus.isPropertiesModified() ? "M" : " ") + "      " + path + "\n");
             getSVNEnvironment().getOut().flush();
         }
     }
