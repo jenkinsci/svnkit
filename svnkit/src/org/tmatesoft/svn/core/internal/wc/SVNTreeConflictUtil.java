@@ -171,7 +171,7 @@ public class SVNTreeConflictUtil {
                         "Invalid \'node_kind\' field in tree conflict description");
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            conflictSkel.addChild(SVNSkel.createAtom(conflict.getNodeKind().toString()));
+            conflictSkel.addChild(SVNSkel.createAtom(getNodeKindString(conflict.getNodeKind())));
 
             String path = conflict.getPath().getName();
             if (path.length() == 0) {
@@ -211,7 +211,7 @@ public class SVNTreeConflictUtil {
     	} else {
     		url = "...";
     	}
-        return "(" + version.getKind().toString() + ") " + url + "@" + version.getPegRevision();
+        return "(" + getNodeKindString(version.getKind()) + ") " + url + "@" + version.getPegRevision();
     }
     
     private static String getReasonString(SVNTreeConflictDescription treeConflict) {
@@ -247,7 +247,7 @@ public class SVNTreeConflictUtil {
     private static SVNSkel prependVersionInfo(SVNSkel parent, SVNConflictVersion versionInfo) throws SVNException {
         parent = parent == null ? SVNSkel.createEmptyList() : parent;
         SVNSkel skel = SVNSkel.createEmptyList();
-        skel.addChild(SVNSkel.createAtom(versionInfo.getKind().toString()));
+        skel.addChild(SVNSkel.createAtom(getNodeKindString(versionInfo.getKind())));
         String path = versionInfo.getPath() == null ? "" : versionInfo.getPath();
         skel.addChild(SVNSkel.createAtom(path));
         skel.addChild(SVNSkel.createAtom(String.valueOf(versionInfo.getPegRevision())));
@@ -271,6 +271,13 @@ public class SVNTreeConflictUtil {
             mappingError("node kind");
         }
         return kind;
+    }
+
+    private static String getNodeKindString(SVNNodeKind kind) {
+        if (kind ==SVNNodeKind.UNKNOWN) {
+            return "";
+        }
+        return kind.toString();
     }
 
     private static SVNOperation getOperation(String name) throws SVNException {
