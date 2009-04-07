@@ -176,6 +176,9 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (status.getEntry() != null && !status.isCopied()) {
             xmlMap.put("revision", status.getRevision().toString());
         }
+        if (status.getTreeConflict() != null) {
+            xmlMap.put("tree-conflicted", "true");
+        }
         xmlBuffer = openXMLTag("wc-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
         if (status.getEntry() != null && status.getCommittedRevision().isValid()) {
             xmlBuffer = openXMLTag("commit", SVNXMLUtil.XML_STYLE_NORMAL, "revision", status.getCommittedRevision().toString(), xmlBuffer);
