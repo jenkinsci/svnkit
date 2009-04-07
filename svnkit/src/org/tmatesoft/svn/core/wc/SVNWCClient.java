@@ -1858,6 +1858,11 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, 
             SVNConflictChoice conflictChoice) throws SVNException {
+        doResolve(path, depth, resolveContents, resolveProperties, true, conflictChoice);
+    }
+    
+    public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, 
+            final boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
         final SVNConflictChoice choice = conflictChoice == null ? SVNConflictChoice.MERGED : conflictChoice;
         path = path.getAbsoluteFile();
         final SVNWCAccess wcAccess = createWCAccess();
@@ -1877,7 +1882,22 @@ public class SVNWCClient extends SVNBasicClient {
 
                     File conflictDir = entry.isDirectory() ? path : path.getParentFile();
                     SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
-                    if (conflictArea.markResolved(entry.getName(), resolveContents, resolveProperties, choice)) {
+                    boolean resolved = false;
+                    boolean wcRoot = false;
+                    if (entry.isDirectory()) {
+                        wcRoot = wcAccess.isWCRoot(path);
+                    }
+                    if (resolveTree && !wcRoot) {                        
+                        File parentDir = path.getParentFile();
+                        SVNAdminArea parentArea = wcAccess.probeRetrieve(parentDir);
+                        SVNTreeConflictDescription tc = parentArea.getTreeConflict(path.getName());
+                        if (tc != null) {
+                            parentArea.deleteTreeConflict(path.getName());                            
+                            resolved = true;
+                        }
+                    }
+                    resolved |= conflictArea.markResolved(entry.getName(), resolveContents, resolveProperties, choice);
+                    if (resolved) {
                         SVNEvent event = SVNEventFactory.createSVNEvent(conflictArea.getFile(entry.getName()), entry.getKind(), null, 
                                 entry.getRevision(), SVNEventAction.RESOLVED, null, null, null);
                         dispatchEvent(event);
