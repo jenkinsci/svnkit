@@ -896,7 +896,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         } else {
             myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"),
                                     target, fullTargetPath, switchURL == null ? false : true, depth,
-                                    ignoreAncestry, textDeltas, editor);
+                                    ignoreAncestry, textDeltas, sendCopyFromArgs, editor);
         }
     }
 

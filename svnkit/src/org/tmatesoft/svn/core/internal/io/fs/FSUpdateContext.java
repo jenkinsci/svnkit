@@ -86,7 +86,7 @@ public class FSUpdateContext {
     }
 
     public void reset(FSRepository repository, FSFS owner, long revision, File reportFile, String target, String targetPath, boolean isSwitch, SVNDepth depth, boolean ignoreAncestry,
-            boolean textDeltas, ISVNEditor editor) throws SVNException {
+            boolean textDeltas, boolean sendCopyFrom, ISVNEditor editor) throws SVNException {
         dispose();
         myRepository = repository;
         myFSFS = owner;
@@ -99,6 +99,7 @@ public class FSUpdateContext {
         sendTextDeltas = textDeltas;
         myTargetPath = targetPath;
         this.isSwitch = isSwitch;
+        mySendCopyFromArgs = sendCopyFrom;
     }
 
     public OutputStream getReportFileForWriting() throws SVNException {
