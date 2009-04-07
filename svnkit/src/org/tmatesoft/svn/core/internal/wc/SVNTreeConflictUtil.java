@@ -158,7 +158,7 @@ public class SVNTreeConflictUtil {
             sourceRightVersion = sourceRightVersion == null ? nullVersion : sourceRightVersion;
             prependVersionInfo(conflictSkel, sourceRightVersion);
 
-            SVNConflictVersion sourceLeftVersion = conflict.getSourceRightVersion();
+            SVNConflictVersion sourceLeftVersion = conflict.getSourceLeftVersion();
             sourceLeftVersion = sourceLeftVersion == null ? nullVersion : sourceLeftVersion;
             prependVersionInfo(conflictSkel, sourceLeftVersion);
 
