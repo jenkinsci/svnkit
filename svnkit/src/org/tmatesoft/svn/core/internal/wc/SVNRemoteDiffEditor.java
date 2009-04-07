@@ -248,17 +248,19 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 throw e;
             }
             if (!myIsDryRun || dir != null) {
-                boolean[] isTreeConflicted = { true };
+                boolean[] isTreeConflicted = { false };
                 type = getDiffCallback().propertiesChanged(myCurrentDirectory.myRepositoryPath, myCurrentDirectory.myBaseProperties, 
                         myCurrentDirectory.myPropertyDiff, isTreeConflicted);
-                myCurrentDirectory.myIsTreeConflicted = isTreeConflicted[0];
+                if (isTreeConflicted[0]) {
+                    myCurrentDirectory.myIsTreeConflicted = true;
+                }
             }
         }
 
         getDiffCallback().directoryClosed(myCurrentDirectory.myRepositoryPath, null);
         
         if (type == SVNStatusType.UNKNOWN) {
-            action = myCurrentDirectory.myIsTreeConflicted ? SVNEventAction.TREE_CONFLICT : SVNEventAction.UPDATE_NONE;
+            action = SVNEventAction.UPDATE_NONE;
         }
 
         if (!myCurrentDirectory.myIsAdded && myEventHandler != null) {
@@ -272,6 +274,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 deletedPathsIter.remove();
             }
 
+            action = myCurrentDirectory.myIsTreeConflicted ? SVNEventAction.TREE_CONFLICT : action;
             SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
             		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, type,
             		SVNStatusType.INAPPLICABLE, action, expectedAction, null, null);

@@ -3326,6 +3326,7 @@ public class SVNWCClient extends SVNBasicClient {
                     log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
                     command.clear();
                 }
+                reverted |= reinstallWorkingFile;
             }
         }
         if (entry.getConflictNew() != null) {

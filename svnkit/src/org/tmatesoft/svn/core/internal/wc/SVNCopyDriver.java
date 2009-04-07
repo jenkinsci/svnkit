@@ -901,7 +901,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                                     "''{0}'' is already under version control", new File(pair.myDst));
                             SVNErrorManager.error(err, SVNLogType.WC);
                         }
-                        if (!dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
+                        if (!dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion() && !dstEntry.isDeleted()) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
                                     "Entry for ''{0}'' exists (though the working file is missing)", new File(pair.myDst));
                             SVNErrorManager.error(err, SVNLogType.WC);

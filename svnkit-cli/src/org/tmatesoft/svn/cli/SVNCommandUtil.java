@@ -323,6 +323,39 @@ public class SVNCommandUtil {
         return count;
     }
 
+    public static String[] breakToLines(String str) {
+        if (str == null) {
+            return null;
+        }
+        
+        if ("".equals(str)) {
+            return new String[] { "" };
+        }
+        
+        LinkedList list = new LinkedList();
+        int i = 0;
+        int start = 0;
+        for (; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (ch == '\r' || ch == '\n') {
+                if (i < str.length() - 1) {
+                    char nextCh = str.charAt(i + 1);
+                    if ((ch == '\r' && nextCh == '\n') || (ch == '\n' && nextCh == '\r')) {
+                        i++;
+                    }
+                    list.add(str.substring(start, i + 1));
+                } else {
+                    list.add(str.substring(start, i + 1));
+                }
+                start = i + 1;
+            }
+        }
+        if (start != i) {
+            list.add(str.substring(start, i));
+        }
+        return (String[]) list.toArray(new String[list.size()]); 
+    }
+
     public static String getCommandHelp(AbstractSVNCommand command, String programName, boolean printOptionAlias) {
         StringBuffer help = new StringBuffer();
         help.append(command.getName());

@@ -249,7 +249,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 };
                 getWCAccess().setEventHandler(handler);
                 try {
-                    delete(mergedFile, myIsForce, myIsDryRun);
+                    delete(mergedFile, myIsForce, myIsDryRun, false);
                 } catch (SVNException e) {
                     return SVNStatusType.OBSTRUCTED;
                 } finally {
@@ -460,7 +460,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 ISVNEventHandler oldEventHandler = getWCAccess().getEventHandler();
                 getWCAccess().setEventHandler(null);
                 try {
-                    delete(mergedFile, myIsForce, myIsDryRun);
+                    delete(mergedFile, true, myIsDryRun, false);
                 } catch (SVNException e) {
                     return SVNStatusType.OBSTRUCTED;
                 } finally {
@@ -507,13 +507,13 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
     }
     
-    protected void delete(File path, boolean force, boolean dryRun) throws SVNException {
-        if (!force) {
+    protected void delete(File path, boolean force, boolean dryRun, boolean keepLocal) throws SVNException {
+        if (!force && !keepLocal) {
             SVNWCManager.canDelete(path, getWCAccess().getOptions(), getWCAccess());
         }
         SVNAdminArea root = getWCAccess().retrieve(path.getParentFile()); 
         if (!dryRun) {
-            SVNWCManager.delete(getWCAccess(), root, path, true, false);
+            SVNWCManager.delete(getWCAccess(), root, path, !keepLocal, false);
         }
     }
 
