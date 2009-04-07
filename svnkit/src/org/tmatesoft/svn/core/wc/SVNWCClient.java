@@ -1873,6 +1873,14 @@ public class SVNWCClient extends SVNBasicClient {
 
         try {
             wcAccess.probeOpen(path, true, admLockLevel);
+            if (!wcAccess.isWCRoot(path)) {
+                // not a wc root, open from parent
+                wcAccess.close();
+                if (admLockLevel >= 0) {
+                    admLockLevel++;
+                }
+                wcAccess.probeOpen(path.getParentFile(), true, admLockLevel);
+            }
             ISVNEntryHandler resolveEntryHandler = new ISVNEntryHandler() {
                 public void handleEntry(File path, SVNEntry entry) throws SVNException {
                     SVNAdminArea adminArea = entry.getAdminArea();
