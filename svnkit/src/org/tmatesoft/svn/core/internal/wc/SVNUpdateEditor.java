@@ -1194,8 +1194,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 info.isExisted = true;                
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
-                        "Failed to add file ''{0}'': a file of the same name is already scheduled for " +
-                                "addition with history", path);
+                        "Failed to add file ''{0}'': an unversioned file of the same name already exists", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
