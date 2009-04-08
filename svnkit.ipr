@@ -255,7 +255,6 @@
       <module fileurl="file://$PROJECT_DIR$/contrib/sequence/sequence.iml" filepath="$PROJECT_DIR$/contrib/sequence/sequence.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit/svnkit.iml" filepath="$PROJECT_DIR$/svnkit/svnkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" filepath="$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" />
-      <module fileurl="file://$PROJECT_DIR$/svnkit-dav/svnkit-dav.iml" filepath="$PROJECT_DIR$/svnkit-dav/svnkit-dav.iml" />
       <module fileurl="file://$PROJECT_DIR$/doc/examples/svnkit-examples.iml" filepath="$PROJECT_DIR$/doc/examples/svnkit-examples.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
     </modules>
