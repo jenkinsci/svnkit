@@ -394,7 +394,20 @@ public class SVNCommitUtil {
             String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
             SVNAdminArea dir = baseAccess.probeRetrieve(targetFile);
-            SVNEntry entry = baseAccess.getVersionedEntry(targetFile, false);
+            SVNEntry entry = null;
+            try {
+                entry = baseAccess.getVersionedEntry(targetFile, false);
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null &&
+                        e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
+                    SVNTreeConflictDescription tc = baseAccess.getTreeConflict(targetFile);
+                    if (tc != null) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", targetFile);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }                    
+                }
+                throw e;                
+            }
             String url = null;
             if (entry.getURL() == null) {
                 // it could be missing directory.
@@ -483,8 +496,8 @@ public class SVNCommitUtil {
                 // deleted anyway.
                 forcedDepth = SVNDepth.INFINITY;
             }
+            
             // check ancestors for tc.
-
             File ancestorPath = dir.getRoot();
             
             SVNWCAccess localAccess = SVNWCAccess.newInstance(null);
