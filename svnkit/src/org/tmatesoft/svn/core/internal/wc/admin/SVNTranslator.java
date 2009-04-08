@@ -512,7 +512,7 @@ public class SVNTranslator {
                     }
                     map.put("Id", expand ? id : null);
                 } else if ("Header".equalsIgnoreCase(token)) {
-                    if (expand && id == null) {
+                    if (expand && header == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
                         url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
                         idDate = idDate == null ? SVNDate.formatShortDate(jDate).getBytes("UTF-8") : idDate;
