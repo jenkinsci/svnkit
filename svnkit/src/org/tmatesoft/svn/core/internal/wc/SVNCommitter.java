@@ -158,10 +158,14 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 fileOpen = true;
             } else if (!item.isAdded()) {
                 // do not open dir twice.
-                if ("".equals(commitPath)) {
-                    commitEditor.openRoot(rev);
-                } else {
-                    commitEditor.openDir(commitPath, rev);
+                try {
+                    if ("".equals(commitPath)) {
+                        commitEditor.openRoot(rev);
+                    } else {
+                        commitEditor.openDir(commitPath, rev);
+                    }
+                } catch (SVNException svne) {
+                    fixError(commitPath, svne, SVNNodeKind.DIR);
                 }
                 closeDir = true;
             }
