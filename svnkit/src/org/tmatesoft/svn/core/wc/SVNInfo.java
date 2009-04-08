@@ -123,6 +123,15 @@ public class SVNInfo {
                 lock, entry.getDepth(), entry.getChangelistName(), entry.getWorkingSize(), tc);
     }
 
+    static SVNInfo createInfo(File file, SVNTreeConflictDescription tc) {
+        return new SVNInfo(file, null, null, 
+                -1, null, null, -1,
+                null, null, null, 
+                null, -1, null, null, null, 
+                null, null, null, null, 
+                null, SVNDepth.UNKNOWN, null, -1, tc);
+    }
+
     static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
             SVNURL url, SVNRevision revision, SVNDirEntry dirEntry, SVNLock lock) {
         if (dirEntry == null) {

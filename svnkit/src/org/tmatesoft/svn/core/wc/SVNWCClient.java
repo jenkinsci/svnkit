@@ -3078,7 +3078,7 @@ public class SVNWCClient extends SVNBasicClient {
 
     private void crawlEntries(File path, SVNDepth depth, final Collection changeLists, 
             final ISVNInfoHandler handler) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
+        final SVNWCAccess wcAccess = createWCAccess();
         int admLockLevel = getLevelsToLockFromDepth(depth);
         try {
             wcAccess.probeOpen(path, false, admLockLevel);
@@ -3093,6 +3093,15 @@ public class SVNWCClient extends SVNBasicClient {
                 }
                 
                 public void handleError(File path, SVNErrorMessage error) throws SVNException {
+                    if (error != null && error.getErrorCode() == SVNErrorCode.UNVERSIONED_RESOURCE) {
+                        SVNAdminArea dir = wcAccess.probeTry(path.getParentFile(), false, 0);
+                        SVNTreeConflictDescription tc = dir.getTreeConflict(path.getName());
+                        if (tc != null) {
+                            SVNInfo info = SVNInfo.createInfo(path, tc);
+                            handler.handleInfo(info);
+                            return;
+                        }
+                    }
                     SVNErrorManager.error(error, SVNLogType.WC);
                 }
             }, false, depth);
