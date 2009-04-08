@@ -1173,7 +1173,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         SVNAdminArea adminArea = parent.getAdminArea();
         SVNFileType fileType = SVNFileType.getType(adminArea.getFile(info.name));
-        SVNEntry entry = adminArea.getEntry(info.name, true);
+        SVNEntry entry = adminArea.getEntry(info.name, false);
 
         File victim = alreadyInTreeConflict(fullPath);
         if (victim != null) {
