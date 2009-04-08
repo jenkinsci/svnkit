@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -482,6 +483,28 @@ public class SVNCommitUtil {
                 // deleted anyway.
                 forcedDepth = SVNDepth.INFINITY;
             }
+            // check ancestors for tc.
+
+            SVNWCAccess wcAccess = dir.getWCAccess();
+            SVNAdminArea ancestor = dir;
+            File ancestorPath = dir.getRoot();
+            while (true) {
+                boolean isRoot = wcAccess.isWCRoot(ancestorPath);
+                if (ancestor != dir) {
+                    wcAccess.closeAdminArea(ancestor.getRoot());
+                }
+                if (isRoot) {
+                    break;
+                }
+                File pPath = ancestorPath.getParentFile();
+                ancestor = wcAccess.open(pPath, false, 0);
+                if (wcAccess.hasTreeConflict(ancestorPath)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                            "Aborting commit: ''{0}'' remains in tree-conflict", ancestorPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                ancestorPath = pPath;
+            }
 //            String relativePath = entry.getKind() == SVNNodeKind.DIR ? target : SVNPathUtil.removeTail(target);
             harvestCommitables(commitables, dir, targetFile, parentEntry, entry, url, null, false, false, 
                     justLocked, lockTokens, forcedDepth, isRecursionForced, changelists, params, null);
@@ -623,6 +646,8 @@ public class SVNCommitUtil {
         
         boolean propConflicts;
         boolean textConflicts = false;
+        boolean treeConflicts = dir.hasTreeConflict(entry.getName());
+        
         SVNAdminArea entries = null;
         if (entry.getKind() == SVNNodeKind.DIR) {
             SVNAdminArea childDir = null;
@@ -643,12 +668,38 @@ public class SVNCommitUtil {
                 }
             } 
             propConflicts = dir.hasPropConflict(entry.getName());
+
+            Map tcs = entry.getTreeConflicts();
+            for (Iterator keys = tcs.keySet().iterator(); keys.hasNext();) {
+                File entryPath = (File) keys.next();
+                SVNTreeConflictDescription tc = (SVNTreeConflictDescription) tcs.get(entryPath);
+                if (tc.getNodeKind() == SVNNodeKind.DIR && depth == SVNDepth.FILES) {
+                    continue;
+                }
+                SVNEntry conflictingEntry = null;
+                if (tc.getNodeKind() == SVNNodeKind.DIR) {
+                    // get dir admin area and root entry
+                    SVNAdminArea childConflictingDir = dir.getWCAccess().getAdminArea(entryPath);
+                    if (childConflictingDir != null) {
+                        conflictingEntry = childConflictingDir.getEntry("", true);
+                    }
+                    conflictingEntry = childDir.getEntry(entryPath.getName(), true);
+                } else {
+                    conflictingEntry = dir.getEntry(entryPath.getName(), true);
+                }
+                if (changelists == null || changelists.isEmpty() || 
+                        (conflictingEntry != null && SVNWCAccess.matchesChangeList(changelists, conflictingEntry))) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                            "Aborting commit: ''{0}'' remains in conflict", path);                    
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
         } else {
             propConflicts = dir.hasPropConflict(entry.getName());
             textConflicts = dir.hasTextConflict(entry.getName());
         }
         
-        if (propConflicts || textConflicts) {
+        if (propConflicts || textConflicts || treeConflicts) {
             if (SVNWCAccess.matchesChangeList(changelists, entry)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                         "Aborting commit: ''{0}'' remains in conflict", path);                    
