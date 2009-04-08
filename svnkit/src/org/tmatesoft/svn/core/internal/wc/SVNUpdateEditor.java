@@ -144,7 +144,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     private boolean inDeletedTree(File path, boolean includeRoot) {
-        if (includeRoot) {
+        if (!includeRoot) {
             path = path.getParentFile();
         }
         while (path != null && !path.equals(myAdminInfo.getAnchor().getRoot())) {
@@ -929,7 +929,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (myTarget != null && myWCAccess.isMissing(myAdminInfo.getAnchor().getFile(myTarget))) {
             myCurrentDirectory = createDirectoryInfo(null, "", false);
             myWCAccess.registerCleanupHandler(myCurrentDirectory.getAdminArea(), myCurrentDirectory);
-            doDeleteEntry(myTarget, null, null);
+            doDeleteEntry(myTarget, myCurrentDirectory, null);
         }
 
         if (!myIsRootOpen) {
