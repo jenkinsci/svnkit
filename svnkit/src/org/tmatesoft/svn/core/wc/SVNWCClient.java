@@ -1886,6 +1886,8 @@ public class SVNWCClient extends SVNBasicClient {
                     if (entry != null && entry.isDirectory() && !"".equals(entry.getName())) {
                         return;
                     }
+                    SVNNodeKind kind = SVNNodeKind.UNKNOWN;
+                    long revision = -1;
                     boolean wcRoot = false;
                     boolean resolved = false;
                     if (entry != null && entry.isDirectory()) {
@@ -1896,18 +1898,21 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNAdminArea parentArea = wcAccess.probeRetrieve(parentDir);
                         SVNTreeConflictDescription tc = parentArea.getTreeConflict(path.getName());
                         if (tc != null) {
-                            parentArea.deleteTreeConflict(path.getName());                            
+                            parentArea.deleteTreeConflict(path.getName());
+                            kind = tc.getNodeKind();
                             resolved = true;
                         }
                     }
                     if (entry != null && (resolveContents || resolveProperties)) {
+                        kind = entry.getKind();
+                        revision = entry.getRevision();
                         File conflictDir = entry.isDirectory() ? path : path.getParentFile();
                         SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
                         resolved |= conflictArea.markResolved(entry.getName(), resolveContents, resolveProperties, choice);
                     }
                     if (resolved) {
-                        SVNEvent event = SVNEventFactory.createSVNEvent(path, entry.getKind(), null, 
-                                entry.getRevision(), SVNEventAction.RESOLVED, null, null, null);
+                        SVNEvent event = SVNEventFactory.createSVNEvent(path, kind, null, 
+                                revision, SVNEventAction.RESOLVED, null, null, null);
                         dispatchEvent(event);
                     }
                 }
