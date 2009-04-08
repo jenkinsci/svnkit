@@ -96,13 +96,7 @@ public class SVNStatusPrinter {
                 result.append(status.getPropertiesStatus().getCode());
                 result.append(status.isLocked() ? 'L' : ' ');
                 result.append(status.isCopied() ? '+' : ' ');
-                if (status.isSwitched()) {
-                    result.append('S');
-                } else if (status.isFileExternal()) {
-                    result.append('X');
-                } else {
-                    result.append(' ');   
-                }
+                result.append(getSwitchCharacter(status));
                 result.append(lockStatus);
                 result.append(treeStatusCode); // tree status
                 result.append(" ");
@@ -121,7 +115,7 @@ public class SVNStatusPrinter {
                 result.append(status.getPropertiesStatus().getCode());
                 result.append(status.isLocked() ? 'L' : ' ');
                 result.append(status.isCopied() ? '+' : ' ');
-                result.append(status.isSwitched() ? 'S' : ' ');
+                result.append(getSwitchCharacter(status));
                 result.append(lockStatus);
                 result.append(treeStatusCode); // tree status
                 result.append(" ");
@@ -137,7 +131,7 @@ public class SVNStatusPrinter {
             result.append(status.getPropertiesStatus().getCode());
             result.append(status.isLocked() ? 'L' : ' ');
             result.append(status.isCopied() ? '+' : ' ');
-            result.append(status.isSwitched() ? 'S' : ' ');
+            result.append(getSwitchCharacter(status));
             result.append(status.getLocalLock() != null ? 'K' : ' ');
             result.append(treeStatusCode); // tree status
             result.append(" ");
@@ -145,5 +139,12 @@ public class SVNStatusPrinter {
             result.append(treeDescriptionLine);
         }
         myEnvironment.getOut().println(result);
+    }
+    
+    private static char getSwitchCharacter(SVNStatus status) {
+        if (status == null) {
+            return ' ';
+        }
+        return status.isSwitched() ? 'S' : (status.isFileExternal() ? 'X' : ' ');
     }
 }
