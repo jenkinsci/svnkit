@@ -990,7 +990,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 boolean overwritten = false;
                 SVNFileType fileType = SVNFileType.getType(tmpFile);
                 boolean special = getProperties(fileName).getPropertyValue(SVNProperty.SPECIAL) != null;
-                if (SVNFileUtil.isWindows || !special) {
+                if (!SVNFileUtil.symlinksSupported() || !special) {
                     if (fileType == SVNFileType.FILE) {
                         SVNTranslator.translate(this, fileName, 
                                 SVNFileUtil.getBasePath(tmpFile), SVNFileUtil.getBasePath(tmpFile2), true);

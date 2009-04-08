@@ -590,7 +590,7 @@ public class SVNDiffEditor implements ISVNEditor {
         ISVNOptions options = dir.getWCAccess().getOptions();
         String charset = SVNTranslator.getCharset(charsetProp, dir.getFile(name).getPath(), options);
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
-        if (charset == null && keywords == null && eolStyle == null && (!special || SVNFileUtil.isWindows)) {
+        if (charset == null && keywords == null && eolStyle == null && (!special || !SVNFileUtil.symlinksSupported())) {
             return dir.getFile(name);
         }
         byte[] eol = SVNTranslator.getEOL(eolStyle, options);

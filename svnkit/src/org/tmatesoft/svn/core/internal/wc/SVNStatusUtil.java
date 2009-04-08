@@ -154,7 +154,7 @@ public class SVNStatusUtil {
         if (fileKind == SVNNodeKind.UNKNOWN || fileKind == null) {
             SVNFileType fileType = SVNFileType.getType(file);
             fileKind = SVNFileType.getNodeKind(fileType);
-            special = SVNFileUtil.isWindows ? false : fileType == SVNFileType.SYMLINK;
+            special = !SVNFileUtil.symlinksSupported() ? false : fileType == SVNFileType.SYMLINK;
         }
         
         if (entry == null) {

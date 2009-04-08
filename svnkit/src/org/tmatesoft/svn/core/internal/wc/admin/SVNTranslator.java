@@ -136,7 +136,7 @@ public class SVNTranslator {
             if (SVNFileType.getType(dst) != SVNFileType.NONE) {
                 dst.delete();
             }
-            if (SVNFileUtil.isWindows) {
+            if (!SVNFileUtil.symlinksSupported()) {
                 SVNFileUtil.copyFile(src, dst, true);
             } else if (expand) {
                 // create symlink to target, and create it at dst
@@ -174,7 +174,7 @@ public class SVNTranslator {
         boolean special = adminArea.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
         File src = adminArea.getFile(name);
         if (special) {
-            if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            if (!SVNFileUtil.symlinksSupported()) {
                 return SVNFileUtil.openFileForReading(src, SVNLogType.WC);
             }
             if (SVNFileType.getType(src) != SVNFileType.SYMLINK) {
@@ -327,7 +327,7 @@ public class SVNTranslator {
 
     private static void copyAndTranslate(File source, File destination, String charset, byte[] eol, Map keywords, boolean special, boolean expand, boolean repair) throws SVNException {
         boolean isSpecialPath = false;
-        if (!SVNFileUtil.isWindows) {
+        if (SVNFileUtil.symlinksSupported()) {
             SVNFileType type = SVNFileType.getType(source);
             isSpecialPath = type == SVNFileType.SYMLINK;
         }
@@ -336,7 +336,7 @@ public class SVNTranslator {
             if (destination.exists()) {
                 destination.delete();
             }
-            if (SVNFileUtil.isWindows) {
+            if (!SVNFileUtil.symlinksSupported()) {
                 SVNFileUtil.copyFile(source, destination, true);
             } else if (expand) {
                 // create symlink to target, and create it at dst
