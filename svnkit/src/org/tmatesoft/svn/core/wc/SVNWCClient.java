@@ -1883,16 +1883,12 @@ public class SVNWCClient extends SVNBasicClient {
             }
             ISVNEntryHandler resolveEntryHandler = new ISVNEntryHandler() {
                 public void handleEntry(File path, SVNEntry entry) throws SVNException {
-                    SVNAdminArea adminArea = entry.getAdminArea();
-                    if (entry.isDirectory() && !adminArea.getThisDirName().equals(entry.getName())) {
+                    if (entry != null && entry.isDirectory() && !"".equals(entry.getName())) {
                         return;
                     }
-
-                    File conflictDir = entry.isDirectory() ? path : path.getParentFile();
-                    SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
-                    boolean resolved = false;
                     boolean wcRoot = false;
-                    if (entry.isDirectory()) {
+                    boolean resolved = false;
+                    if (entry != null && entry.isDirectory()) {
                         wcRoot = wcAccess.isWCRoot(path);
                     }
                     if (resolveTree && !wcRoot) {                        
@@ -1904,9 +1900,13 @@ public class SVNWCClient extends SVNBasicClient {
                             resolved = true;
                         }
                     }
-                    resolved |= conflictArea.markResolved(entry.getName(), resolveContents, resolveProperties, choice);
+                    if (entry != null && (resolveContents || resolveProperties)) {
+                        File conflictDir = entry.isDirectory() ? path : path.getParentFile();
+                        SVNAdminArea conflictArea = wcAccess.retrieve(conflictDir);
+                        resolved |= conflictArea.markResolved(entry.getName(), resolveContents, resolveProperties, choice);
+                    }
                     if (resolved) {
-                        SVNEvent event = SVNEventFactory.createSVNEvent(conflictArea.getFile(entry.getName()), entry.getKind(), null, 
+                        SVNEvent event = SVNEventFactory.createSVNEvent(path, entry.getKind(), null, 
                                 entry.getRevision(), SVNEventAction.RESOLVED, null, null, null);
                         dispatchEvent(event);
                     }
@@ -1918,10 +1918,21 @@ public class SVNWCClient extends SVNBasicClient {
             };
 
             if (depth == SVNDepth.EMPTY) {
-                SVNEntry entry = wcAccess.getVersionedEntry(path, false);
-                resolveEntryHandler.handleEntry(path, entry);
+                SVNEntry entry = wcAccess.getEntry(path, false);
+                if (entry != null) {
+                    resolveEntryHandler.handleEntry(path, entry);
+                } else {
+                    SVNTreeConflictDescription tc = wcAccess.getTreeConflict(path);
+                    if (tc != null) {
+                        resolveEntryHandler.handleEntry(path, null);
+                    } else {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
+                                "''{0}'' is not under version control", path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }                
             } else {
-                wcAccess.walkEntries(path, resolveEntryHandler, false, depth);
+                wcAccess.walkEntries(path, resolveEntryHandler, false, true, depth);
             }
         } finally {
             wcAccess.close();

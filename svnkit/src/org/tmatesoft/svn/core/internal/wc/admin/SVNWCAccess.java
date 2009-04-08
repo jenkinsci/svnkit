@@ -690,10 +690,21 @@ public class SVNWCAccess implements ISVNEventHandler {
         }
         return adminArea;
     }
-    
+
     public void walkEntries(File path, ISVNEntryHandler handler, boolean showHidden, SVNDepth depth) throws SVNException {
+        walkEntries(path, handler, showHidden, false, depth);
+    }
+    
+    public void walkEntries(File path, ISVNEntryHandler handler, boolean showHidden, boolean includeTC, SVNDepth depth) throws SVNException {
         SVNEntry entry = getEntry(path, showHidden);
         if (entry == null) {
+            if (includeTC) {
+                SVNTreeConflictDescription tc = getTreeConflict(path);
+                if (tc != null) {
+                    handler.handleEntry(path, null);
+                    return;
+                }
+            }
             handler.handleError(path, SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, 
                     "''{0}'' is not under version control", path));
             return;
