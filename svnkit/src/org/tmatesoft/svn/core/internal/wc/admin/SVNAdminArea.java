@@ -1304,7 +1304,7 @@ public abstract class SVNAdminArea {
                     handler.handleError(childPath, svne.getErrorMessage());
                 }
             }
-            if (entry.isDirectory() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
+            if (entry.isDirectory() && !entry.isHidden() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 SVNAdminArea childArea = null;
                 SVNDepth depthBelowHere = depth;
                 if (depth == SVNDepth.IMMEDIATES) {
