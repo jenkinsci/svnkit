@@ -87,7 +87,7 @@ public class SVNFileType {
                 }
             }
         }
-        if (detectSymlinks && !SVNFileUtil.isWindows && !isAdminFile(file)) {
+        if (detectSymlinks && SVNFileUtil.symlinksSupported() && !isAdminFile(file)) {
             if (ourCanonPathCacheUsed && !ourFastSymlinkResoution && SVNFileType.isSymlink(file)) {
                 return SVNFileType.SYMLINK;
             } else if (!ourCanonPathCacheUsed || ourFastSymlinkResoution) {

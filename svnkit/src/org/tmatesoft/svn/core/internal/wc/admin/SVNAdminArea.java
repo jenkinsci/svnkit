@@ -606,7 +606,7 @@ public abstract class SVNAdminArea {
         if (isFile) {
             File path = getFile(name);
             boolean wcSpecial = getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
-            boolean localSpecial = SVNFileUtil.isWindows ? false : SVNFileType.getType(path) == SVNFileType.SYMLINK;
+            boolean localSpecial = !SVNFileUtil.symlinksSupported() ? false : SVNFileType.getType(path) == SVNFileType.SYMLINK;
             boolean textModified = false;
             if (wcSpecial || !localSpecial) {
                 textModified = hasTextModifications(name, false);

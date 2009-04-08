@@ -541,6 +541,10 @@ public class SVNFileUtil {
         }
     }
 
+    public static boolean symlinksSupported() {
+        return !(isWindows || isOpenVMS);
+    }
+
     public static void setSGID(File dir) {
         if (isWindows || isOpenVMS ||
                 dir == null || !dir.exists() || !dir.isDirectory()) {
@@ -559,6 +563,9 @@ public class SVNFileUtil {
     }
 
     public static File resolveSymlinkToFile(File file) {
+        if (!symlinksSupported()) {
+            return null;
+        }
         File targetFile = resolveSymlink(file);
         if (targetFile == null || !targetFile.isFile()) {
             return null;
@@ -567,6 +574,9 @@ public class SVNFileUtil {
     }
 
     public static File resolveSymlink(File file) {
+        if (!symlinksSupported()) {
+            return null;
+        }
         File targetFile = file;
         while (SVNFileType.getType(targetFile) == SVNFileType.SYMLINK) {
             String symlinkName = getSymlinkName(targetFile);
@@ -686,7 +696,7 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, File linkName) throws SVNException {
-        if (isWindows || isOpenVMS) {
+        if (!symlinksSupported()) {
             return false;
         }
         if (SVNFileType.getType(link) != SVNFileType.NONE) {
@@ -711,6 +721,9 @@ public class SVNFileUtil {
     }
 
     public static boolean createSymlink(File link, String linkName) {
+        if (!symlinksSupported()) {
+            return false;
+        }
         if (SVNJNAUtil.createSymlink(link, linkName)) {
             return true;
         }
@@ -725,7 +738,7 @@ public class SVNFileUtil {
     }
 
     public static boolean detranslateSymlink(File src, File linkFile) throws SVNException {
-        if (isWindows || isOpenVMS) {
+        if (!symlinksSupported()) {
             return false;
         }
         if (SVNFileType.getType(src) != SVNFileType.SYMLINK) {
@@ -748,7 +761,7 @@ public class SVNFileUtil {
     }
 
     public static String getSymlinkName(File link) {
-        if (isWindows || isOpenVMS || link == null) {
+        if (!symlinksSupported() || link == null) {
             return null;
         }
         String ls = null;

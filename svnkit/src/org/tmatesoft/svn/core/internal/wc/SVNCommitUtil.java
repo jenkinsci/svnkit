@@ -639,7 +639,7 @@ public class SVNCommitUtil {
         String specialPropertyValue = dir.getProperties(entry.getName()).getStringPropertyValue(SVNProperty.SPECIAL);
         boolean specialFile = fileType == SVNFileType.SYMLINK;
         if (SVNFileType.isSymlinkSupportEnabled()) {
-            if (((specialPropertyValue == null && specialFile) || (!SVNFileUtil.isWindows && specialPropertyValue != null && !specialFile)) 
+            if (((specialPropertyValue == null && specialFile) || (SVNFileUtil.symlinksSupported() && specialPropertyValue != null && !specialFile))
                     && fileType != SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "Entry ''{0}'' has unexpectedly changed special status", path);                    
                 SVNErrorManager.error(err, SVNLogType.WC);
