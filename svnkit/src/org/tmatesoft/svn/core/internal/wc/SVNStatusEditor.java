@@ -160,7 +160,7 @@ public class SVNStatusEditor {
                     if (ignorePatterns == null) {
                         ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
                     }
-                    sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, true, handler);
+                    sendUnversionedStatus(dir.getFile(entryName), entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, true, handler);
                 }
             }
             return;
