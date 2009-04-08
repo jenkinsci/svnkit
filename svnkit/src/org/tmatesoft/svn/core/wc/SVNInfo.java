@@ -125,7 +125,7 @@ public class SVNInfo {
 
     static SVNInfo createInfo(File file, SVNTreeConflictDescription tc) {
         return new SVNInfo(file, null, null, 
-                -1, null, null, -1,
+                -1, SVNNodeKind.NONE, null, -1,
                 null, null, null, 
                 null, -1, null, null, null, 
                 null, null, null, null, 
