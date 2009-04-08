@@ -485,25 +485,27 @@ public class SVNCommitUtil {
             }
             // check ancestors for tc.
 
-            SVNWCAccess wcAccess = dir.getWCAccess();
-            SVNAdminArea ancestor = dir;
             File ancestorPath = dir.getRoot();
-            while (true) {
-                boolean isRoot = wcAccess.isWCRoot(ancestorPath);
-                if (ancestor != dir) {
-                    wcAccess.closeAdminArea(ancestor.getRoot());
+            
+            SVNWCAccess localAccess = SVNWCAccess.newInstance(null);
+            localAccess.open(ancestorPath, false, 0);
+            try {
+                while (true) {
+                    boolean isRoot = localAccess.isWCRoot(ancestorPath);
+                    if (isRoot) {
+                        break;
+                    }
+                    File pPath = ancestorPath.getParentFile();
+                    localAccess.open(pPath, false, 0);
+                    if (localAccess.hasTreeConflict(ancestorPath)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                                "Aborting commit: ''{0}'' remains in tree-conflict", ancestorPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    ancestorPath = pPath;
                 }
-                if (isRoot) {
-                    break;
-                }
-                File pPath = ancestorPath.getParentFile();
-                ancestor = wcAccess.open(pPath, false, 0);
-                if (wcAccess.hasTreeConflict(ancestorPath)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
-                            "Aborting commit: ''{0}'' remains in tree-conflict", ancestorPath);
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                ancestorPath = pPath;
+            } finally {
+                localAccess.close();
             }
 //            String relativePath = entry.getKind() == SVNNodeKind.DIR ? target : SVNPathUtil.removeTail(target);
             harvestCommitables(commitables, dir, targetFile, parentEntry, entry, url, null, false, false, 
