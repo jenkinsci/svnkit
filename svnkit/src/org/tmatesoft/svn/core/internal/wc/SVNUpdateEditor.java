@@ -77,16 +77,16 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     //File objects
     private Collection mySkippedTrees;
     private Collection myDeletedTrees;
-    private SVNWCAccess myWCAccess; 
+    private SVNWCAccess myWCAccess;
     private SVNDeltaProcessor myDeltaProcessor;
     private SVNDepth myRequestedDepth;
     private String[] myExtensionPatterns;
     private ISVNFileFetcher myFileFetcher;
-    
+
     private boolean myIsLockOnDemand;
 
-    private SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions, 
-            boolean depthIsSticky, SVNDepth depth, String[] preservedExtensions, String targetURL, 
+    private SVNUpdateEditor(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions,
+            boolean depthIsSticky, SVNDepth depth, String[] preservedExtensions, String targetURL,
             String rootURL, ISVNFileFetcher fileFetcher, boolean lockOnDemand) {
         myAdminInfo = info;
         myWCAccess = info.getWCAccess();
@@ -102,7 +102,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         myTargetURL = targetURL;
         myRootURL = rootURL;
         myIsLockOnDemand = lockOnDemand;
-        
+
         if (myTarget != null) {
             myTargetURL = SVNPathUtil.append(myTargetURL, SVNEncodingUtil.uriEncode(myTarget));
         }
@@ -184,7 +184,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 attributes.put(SVNProperty.REPOS, myRootURL);
             }
             adminArea.modifyEntry(adminArea.getThisDirName(), attributes, true, false);
-            
+
             if (mySwitchURL != null) {
                 clearWCProperty(myCurrentDirectory.getAdminArea(), null);
             }
@@ -273,7 +273,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         try {
             if (parent != null) {
-                parent.flushLog();                
+                parent.flushLog();
             } else {
                 if (log != null) {
                     log.save();
@@ -333,7 +333,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             if (isWCRoot) {
                 break;
             }
-            ancestors.add(ancestor);            
+            ancestors.add(ancestor);
             ancestor = ancestor.getParentFile();
         }
         for (int i = ancestors.size() - 1; i >= 0; i--) {
@@ -361,7 +361,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         } else if (action == SVNConflictAction.DELETE) {
             if (entry.isScheduledForDeletion() || entry.isScheduledForReplacement()) {
                 if (!isSubtreeOfLocallyDeleted) {
-                    reason = SVNConflictReason.DELETED;                    
+                    reason = SVNConflictReason.DELETED;
                 }
             } else {
                 boolean modified = false;
@@ -373,7 +373,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 } else if (entry.isDirectory()) {
                     SVNAdminArea adminArea = myWCAccess.probeRetrieve(path);
                     if (adminArea.getRoot().equals(path)) {
-                        boolean[] allEditsAreDeletes = new boolean[1]; 
+                        boolean[] allEditsAreDeletes = new boolean[1];
                         modified = treeHasLocalModifications(adminArea, allEditsAreDeletes);
                         allModsAreDeletes = allEditsAreDeletes[0];
                     }
@@ -474,7 +474,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             } else {
                 propsModified = adminArea.hasPropConflict(path.getName());
             }
-            modified = textModified || propsModified; 
+            modified = textModified || propsModified;
         }
         return modified;
     }
@@ -536,7 +536,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             if (error.getErrorMessage().getErrorCode() == SVNErrorCode.WC_LEFT_LOCAL_MOD) {
                 break;
             }
-            error = (error.getCause() instanceof SVNException) ? (SVNException) error.getCause() : null; 
+            error = (error.getCause() instanceof SVNException) ? (SVNException) error.getCause() : null;
         }
         if (error != null) {
             return;
@@ -546,7 +546,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         File fullPath = myAdminInfo.getAnchor().getFile(path);
-        String name = SVNPathUtil.tail(path);        
+        String name = SVNPathUtil.tail(path);
         boolean isLocallyDeleted = inDeletedTree(fullPath, true);
         SVNAdminArea parentArea = myCurrentDirectory.getAdminArea();
         SVNDirectoryInfo parentDirectory = myCurrentDirectory;
@@ -555,13 +555,13 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         if (path.equals(myTarget)) {
             myCurrentDirectory.myAmbientDepth = myRequestedDepth == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : myRequestedDepth;
-        } else if (myRequestedDepth == SVNDepth.IMMEDIATES || (myRequestedDepth == SVNDepth.UNKNOWN && 
+        } else if (myRequestedDepth == SVNDepth.IMMEDIATES || (myRequestedDepth == SVNDepth.UNKNOWN &&
                 parentDirectory.myAmbientDepth == SVNDepth.IMMEDIATES)) {
             myCurrentDirectory.myAmbientDepth = SVNDepth.EMPTY;
         } else {
             myCurrentDirectory.myAmbientDepth = SVNDepth.INFINITY;
         }
-        
+
         parentDirectory.flushLog();
         checkIfPathIsUnderRoot(path);
 
@@ -578,11 +578,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         SVNFileType kind = SVNFileType.getType(fullPath);
         if (kind == SVNFileType.FILE || kind == SVNFileType.UNKNOWN) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                    "Failed to add directory ''{0}'': a non-directory object of the same name already exists", 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                    "Failed to add directory ''{0}'': a non-directory object of the same name already exists",
                     path);
             SVNErrorManager.error(err, SVNLogType.WC);
-        } 
+        }
 
         if (kind == SVNFileType.DIRECTORY) {
             SVNAdminArea adminArea = null;
@@ -595,8 +595,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 if (myIsUnversionedObstructionsAllowed) {
                     myCurrentDirectory.isExisted = true;
                 } else {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                            "Failed to add directory ''{0}'': an unversioned directory of the same name already exists", 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                            "Failed to add directory ''{0}'': an unversioned directory of the same name already exists",
                             myCurrentDirectory.getPath());
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
@@ -609,32 +609,32 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     SVNEntry entryInParent = (SVNEntry) parentArea.getEntries().get(name);
                     if (entry != null && parentEntry != null && entry.getUUID() != null && parentEntry.getUUID() != null &&
                             !entry.getUUID().equals(parentEntry.getUUID())) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                                "UUID mismatch: existing directory ''{0}'' was checked out from a different repository", 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                                "UUID mismatch: existing directory ''{0}'' was checked out from a different repository",
                                 myCurrentDirectory.getPath());
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                     if (entry != null && mySwitchURL == null && myCurrentDirectory.URL != null && !myCurrentDirectory.URL.equals(entry.getURL())) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                                "URL ''{0}'' of existing directory ''{1}'' does not match expected URL ''{2}''", 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                                "URL ''{0}'' of existing directory ''{1}'' does not match expected URL ''{2}''",
                                 new Object[] {entry.getURL(), myCurrentDirectory.getPath(), myCurrentDirectory.URL});
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                     if (entryInParent == null) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                                "Failed to add directory ''{0}'': a versioned directory of the same name already exists", 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                                "Failed to add directory ''{0}'': a versioned directory of the same name already exists",
                                 myCurrentDirectory.getPath());
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
-                    
+
                     if (entry != null && (entry.isScheduledForAddition() || entry.isScheduledForReplacement()) && !entry.isCopied()) {
                         myCurrentDirectory.isAddExisted = true;
                     } else {
                         SVNURL theirURL = SVNURL.parseURIEncoded(myCurrentDirectory.URL);
                         SVNTreeConflictDescription treeConflict = checkTreeConflict(fullPath, entry, parentArea, parentDirectory.getLog(), SVNConflictAction.ADD, SVNNodeKind.DIR, theirURL);
                         parentDirectory.flushLog();
-                        
-                        if (treeConflict != null) {                            
+
+                        if (treeConflict != null) {
                             addSkippedTree(fullPath);
                             SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, -1, SVNEventAction.TREE_CONFLICT, null, null, null);
                             myWCAccess.handleEvent(event);
@@ -646,19 +646,19 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
             }
         }
-        
+
         if (SVNFileUtil.getAdminDirectoryName().equals(name)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                    "Failed to add directory ''{0}'':  object of the same name as the administrative directory", 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                    "Failed to add directory ''{0}'':  object of the same name as the administrative directory",
                     path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         if (copyFromPath != null || SVNRevision.isValidRevisionNumber(copyFromRevision)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
                     "Failed to add directory ''{0}'': copyfrom arguments not yet supported", path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
+
         SVNEntry entry = parentArea.getEntry(name, false);
         Map attributes = new SVNHashMap();
         attributes.put(SVNProperty.KIND, SVNProperty.KIND_DIR);
@@ -670,7 +670,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             force = true;
         }
         entry = parentArea.modifyEntry(name, attributes, true, force);
-        
+
         if (myCurrentDirectory.isAddExisted) {
             attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
             if (mySwitchURL != null) {
@@ -679,7 +679,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
             adminArea.modifyEntry(adminArea.getThisDirName(), attributes, true, true);
         }
-        
+
         SVNFileUtil.ensureDirectoryExists(fullPath);
         String rootURL = null;
         if (myRootURL != null && SVNPathUtil.isAncestor(myRootURL, myCurrentDirectory.URL)) {
@@ -712,7 +712,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             childArea = myWCAccess.retrieve(fullPath);
             childArea.modifyEntry(name, attributes, true, false);
         }
-        
+
         try {
             childArea = myWCAccess.open(fullPath, true, 0);
         } catch (SVNException e) {
@@ -725,10 +725,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (childArea != null) {
             myWCAccess.registerCleanupHandler(childArea, myCurrentDirectory);
         }
-        
+
         if (!myCurrentDirectory.isAddExisted && !isLocallyDeleted) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(entry.getName()), 
-                    SVNNodeKind.DIR, null, myTargetRevision, myCurrentDirectory.isExisted ? 
+            SVNEvent event = SVNEventFactory.createSVNEvent(parentArea.getFile(entry.getName()),
+                    SVNNodeKind.DIR, null, myTargetRevision, myCurrentDirectory.isExisted ?
                             SVNEventAction.UPDATE_EXISTS : SVNEventAction.UPDATE_ADD, null, null, null);
             event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
             event.setPreviousURL(entry.getSVNURL());
@@ -769,7 +769,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         if (treeConflict != null && treeConflict.getConflictReason() == SVNConflictReason.DELETED && !inDeletedTree(fullPath, true)) {
-            addDeletedTree(fullPath);            
+            addDeletedTree(fullPath);
         }
 
         boolean hasPropConflicts = adminArea.hasPropConflict(adminArea.getThisDirName());
@@ -816,8 +816,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
         SVNEntry entry = adminArea.getEntry(name, false);
         if (entry != null && entry.isScheduledForAddition()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
-                    "Failed to mark ''{0}'' absent: item of the same name is already scheduled for addition", 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                    "Failed to mark ''{0}'' absent: item of the same name is already scheduled for addition",
                     path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -865,6 +865,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         File fullPath = myAdminInfo.getAnchor().getFile(myCurrentDirectory.getPath());
         if (inSkippedTree(fullPath) && !inDeletedTree(fullPath, true)) {
             maybeBumpDirInfo(myCurrentDirectory);
+            myCurrentDirectory = myCurrentDirectory.Parent;
             return;
         }
 
@@ -874,7 +875,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
-        
+
         if (myCurrentDirectory.wasIncomplete) {
             // delete all props.
             SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
@@ -889,7 +890,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
             }
         }
-        
+
         if (modifiedWCProps != null || modifiedEntryProps != null || modifiedProps != null) {
             SVNLog log = myCurrentDirectory.getLog();
             if (modifiedProps != null && !modifiedProps.isEmpty()) {
@@ -910,7 +911,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 }
                 SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
                 try {
-                    propStatus = adminArea.mergeProperties(adminArea.getThisDirName(), oldBaseProps.asMap(), 
+                    propStatus = adminArea.mergeProperties(adminArea.getThisDirName(), oldBaseProps.asMap(),
                     		modifiedProps, null, null, true, false, log);
                 } catch (SVNException svne) {
                     SVNErrorMessage err = svne.getErrorMessage().wrap("Couldn't do property merge");
@@ -955,7 +956,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             completeDirectory(myCurrentDirectory);
         }
         if (!myIsTargetDeleted) {
-            File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot(); 
+            File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot();
             SVNWCManager.updateCleanup(targetFile, myWCAccess, mySwitchURL, myRootURL, myTargetRevision, true, mySkippedTrees, myRequestedDepth, myIsLockOnDemand);
         }
         return null;
@@ -978,7 +979,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             return;
         }
         myCurrentFile.receivedTextDelta = true;
-        
+
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
         SVNEntry entry = adminArea.getEntry(myCurrentFile.name, false);
         boolean replaced = entry != null && entry.isScheduledForReplacement();
@@ -991,28 +992,28 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             myCurrentFile.baseFile = adminArea.getBaseFile(myCurrentFile.name, false);
             myCurrentFile.newBaseFile = adminArea.getBaseFile(myCurrentFile.name, true);
         }
-        
+
         if (entry != null && entry.getChecksum() != null) {
             String realChecksum = SVNFileUtil.computeChecksum(myCurrentFile.baseFile);
             if (baseChecksum != null) {
                 if (!baseChecksum.equals(realChecksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE,
                             "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
-                            new Object[] {myCurrentFile.baseFile, baseChecksum, realChecksum}); 
+                            new Object[] {myCurrentFile.baseFile, baseChecksum, realChecksum});
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
-            
+
             String realChecksumSafe = realChecksum == null ? "" : realChecksum;
             String entryChecksumSafe = entry.getChecksum() == null ? "" : entry.getChecksum();
             if (!replaced && !realChecksumSafe.equals(entryChecksumSafe)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE,
                         "Checksum mismatch for ''{0}''; recorded: ''{1}'', actual: ''{2}''",
-                        new Object[] {myCurrentFile.baseFile, entry.getChecksum(), realChecksum}); 
+                        new Object[] {myCurrentFile.baseFile, entry.getChecksum(), realChecksum});
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        
+
         File baseSrcFile = null;
         if (!myCurrentFile.IsAdded) {
             baseSrcFile = myCurrentFile.baseFile;
@@ -1054,10 +1055,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     }
 
     private void checkIfPathIsUnderRoot(String path) throws SVNException {
-        if (SVNFileUtil.isWindows && path != null) { 
+        if (SVNFileUtil.isWindows && path != null) {
             String testPath = path.replace(File.separatorChar, '/');
             int ind = -1;
-            
+
             while (testPath.length() > 0 && (ind = testPath.indexOf("..")) != -1) {
                 if (ind == 0 || testPath.charAt(ind - 1) == '/') {
                     int i;
@@ -1065,7 +1066,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                         if (testPath.charAt(i) == '.') {
                             continue;
                         } else if (testPath.charAt(i) == '/') {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
                                     "Path ''{0}'' is not in the working copy", path);
                             SVNErrorManager.error(err, SVNLogType.WC);
                         } else {
@@ -1073,7 +1074,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                         }
                     }
                     if (i == testPath.length()) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, 
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
                                 "Path ''{0}'' is not in the working copy", path);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
@@ -1084,7 +1085,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
         }
     }
-    
+
     private void maybeBumpDirInfo(SVNDirectoryInfo dirInfo) throws SVNException {
         while (dirInfo != null) {
             dirInfo.RefCount--;
@@ -1095,9 +1096,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 completeDirectory(dirInfo);
             }
             dirInfo = dirInfo.Parent;
-        }        
+        }
     }
-    
+
     private void completeDirectory(SVNDirectoryInfo dirInfo) throws SVNException {
         File file = myAdminInfo.getAnchor().getFile(dirInfo.getPath());
         if (inSkippedTree(file) && !inDeletedTree(file, true)) {
@@ -1122,17 +1123,17 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         SVNAdminArea adminArea = dirInfo.getAdminArea();
-        SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true); 
+        SVNEntry entry = adminArea.getEntry(adminArea.getThisDirName(), true);
         if (entry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_NOT_FOUND,
                     "No ''.'' entry found in ''{0}''", adminArea.getRoot());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-                
+
         entry.setIncomplete(false);
         File target = myAdminInfo.getTarget().getRoot();
 
-        if (myIsDepthSticky && (myRequestedDepth == SVNDepth.INFINITY || (adminArea.getRoot().equals(target) && 
+        if (myIsDepthSticky && (myRequestedDepth == SVNDepth.INFINITY || (adminArea.getRoot().equals(target) &&
                 myRequestedDepth.compareTo(entry.getDepth()) > 0))) {
             entry.setDepth(myRequestedDepth);
             myAdminInfo.addDepth(dirInfo.getPath(), myRequestedDepth);
@@ -1155,11 +1156,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     if (myIsDepthSticky && myRequestedDepth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                         currentEntry.setDepth(SVNDepth.INFINITY);
                     }
-                } else if (myWCAccess.isMissing(adminArea.getFile(currentEntry.getName())) && !currentEntry.isAbsent() && 
+                } else if (myWCAccess.isMissing(adminArea.getFile(currentEntry.getName())) && !currentEntry.isAbsent() &&
                         !currentEntry.isScheduledForAddition()) {
                     adminArea.deleteEntry(currentEntry.getName());
-                    myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(currentEntry.getName()), 
-                            currentEntry.getKind(), null, currentEntry.getRevision(), SVNEventAction.UPDATE_DELETE, 
+                    myWCAccess.handleEvent(SVNEventFactory.createSVNEvent(adminArea.getFile(currentEntry.getName()),
+                            currentEntry.getKind(), null, currentEntry.getRevision(), SVNEventAction.UPDATE_DELETE,
                             null, null, null));
                 }
             }
@@ -1167,14 +1168,14 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         adminArea.saveEntries(true);
     }
 
-    private SVNFileInfo addFile(SVNDirectoryInfo parent, String path, String copyFromPath, 
+    private SVNFileInfo addFile(SVNDirectoryInfo parent, String path, String copyFromPath,
             long copyFromRevision) throws SVNException {
         File fullPath = myAdminInfo.getAnchor().getFile(path);
         boolean isLocallyDeleted = inDeletedTree(fullPath, true);
-        
+
         if (copyFromPath != null || SVNRevision.isValidRevisionNumber(copyFromRevision)) {
             if (copyFromPath == null || !SVNRevision.isValidRevisionNumber(copyFromRevision)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
                         "Bad copyfrom arguments received.");
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
@@ -1207,7 +1208,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         if (entry == null && (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK)) {
             if (myIsUnversionedObstructionsAllowed) {
-                info.isExisted = true;                
+                info.isExisted = true;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
                         "Failed to add file ''{0}'': an unversioned file of the same name already exists", path);
@@ -1250,10 +1251,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         return info;
     }
 
-    private SVNFileInfo addFileWithHistory(SVNDirectoryInfo parent, SVNFileInfo info, String path, 
+    private SVNFileInfo addFileWithHistory(SVNDirectoryInfo parent, SVNFileInfo info, String path,
             String copyFromPath, long copyFromRevision) throws SVNException {
         info.addedWithHistory = true;
-        
+
         SVNAdminArea adminArea = parent.getAdminArea();
         SVNEntry pathEntry = adminArea.getEntry(adminArea.getThisDirName(), false);
         SVNEntry srcEntry = null;
@@ -1266,7 +1267,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         info.copiedBaseText = SVNAdminUtil.createTmpFile(adminArea);
-        
+
         SVNProperties baseProperties = null;
         SVNProperties workingProperties = null;
         if (srcEntry != null) {
@@ -1281,20 +1282,20 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 baseProperties = srcArea.getBaseProperties(srcEntry.getName()).asMap();
                 workingProperties = srcArea.getProperties(srcEntry.getName()).asMap();
             }
-            
+
             SVNFileUtil.copyFile(srcArea.getFile(srcTextBasePath), info.copiedBaseText, true);
-            
+
             if (srcArea.hasTextModifications(srcEntry.getName(), false, true, false)) {
                 info.copiedWorkingText = SVNAdminUtil.createTmpFile(adminArea);
                 SVNFileUtil.copyFile(srcArea.getFile(srcEntry.getName()), info.copiedWorkingText, true);
             }
         } else {
             if (myFileFetcher == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_OP_ON_CWD,
                         "No fetch_func supplied to update_editor.");
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
-        
+
             baseProperties = new SVNProperties();
             OutputStream baseTextOS = null;
             try {
@@ -1311,26 +1312,26 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         return info;
     }
 
-    private SVNEntry locateCopyFrom(String copyFromPath, long copyFromRevision, File dstDir, 
+    private SVNEntry locateCopyFrom(String copyFromPath, long copyFromRevision, File dstDir,
             SVNEntry dstEntry) throws SVNException {
         if (dstEntry.getRepositoryRoot() == null || dstEntry.getURL() == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_COPYFROM_PATH_NOT_FOUND, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_COPYFROM_PATH_NOT_FOUND,
                     "Destination directory of add-with-history is missing a URL");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
         dstDir = new File(SVNPathUtil.validateFilePath(dstDir.getAbsolutePath())).getAbsoluteFile();
-        String dstReposPath = SVNPathUtil.getPathAsChild(dstEntry.getRepositoryRootURL().toDecodedString(), 
+        String dstReposPath = SVNPathUtil.getPathAsChild(dstEntry.getRepositoryRootURL().toDecodedString(),
                 dstEntry.getSVNURL().toDecodedString());
         if (dstReposPath == null) {
             if (dstEntry.getURL().equals(dstEntry.getRepositoryRoot())) {
                 dstReposPath = "";
             } else {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_COPYFROM_PATH_NOT_FOUND, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_COPYFROM_PATH_NOT_FOUND,
                         "Destination URLs are broken");
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        
+
         dstReposPath = "/" + dstReposPath;
         dstReposPath = SVNPathUtil.canonicalizePath(dstReposPath);
         String copyFromParent = SVNPathUtil.removeTail(copyFromPath);
@@ -1338,7 +1339,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if ("".equals(ancestorPath)) {
             return null;
         }
-        
+
         int levelsUP = SVNPathUtil.getSegmentsCount(dstReposPath) - SVNPathUtil.getSegmentsCount(ancestorPath);
         File currentWD = dstDir;
         for (int i = 0; i < levelsUP && currentWD != null; i++) {
@@ -1351,7 +1352,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (kind != SVNFileType.DIRECTORY) {
             return null;
         }
-        
+
         SVNWCAccess ancestorAccess = SVNWCAccess.newInstance(null);
         SVNAdminArea ancestorArea = null;
         try {
@@ -1363,30 +1364,30 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
             throw svne;
         }
-        
+
         SVNEntry ancestorEntry = ancestorArea.getEntry(ancestorArea.getThisDirName(), false);
-        if (dstEntry.getUUID() != null && ancestorEntry.getUUID() != null && 
+        if (dstEntry.getUUID() != null && ancestorEntry.getUUID() != null &&
                 !dstEntry.getUUID().equals(ancestorEntry.getUUID())) {
             ancestorAccess.close();
             return null;
         }
-        
+
         SVNURL ancestorURL = dstEntry.getRepositoryRootURL().appendPath(ancestorPath, false);
         if (!ancestorURL.equals(ancestorEntry.getSVNURL())) {
             ancestorAccess.close();
             return null;
         }
-        
+
         String extraComponents = SVNPathUtil.getPathAsChild(ancestorPath, copyFromPath);
         currentWD = new File(currentWD, extraComponents);
         File currentWDParent = currentWD.getParentFile();
-        
+
         kind = SVNFileType.getType(currentWD);
         if (kind != SVNFileType.FILE) {
             ancestorAccess.close();
             return null;
         }
-        
+
         try {
             ancestorAccess.close();
             ancestorArea = ancestorAccess.open(currentWDParent, false, 0);
@@ -1397,40 +1398,40 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             }
             throw svne;
         }
-        
+
         SVNEntry fileEntry = ancestorArea.getEntry(currentWD.getName(), false);
         if (fileEntry == null) {
             ancestorAccess.close();
             return null;
         }
-        
-        if (fileEntry.getUUID() != null && dstEntry.getUUID() != null && 
+
+        if (fileEntry.getUUID() != null && dstEntry.getUUID() != null &&
                 !fileEntry.getUUID().equals(dstEntry.getUUID())) {
             ancestorAccess.close();
             return null;
         }
-        
+
         SVNURL fileURL = fileEntry.getRepositoryRootURL().appendPath(copyFromPath, false);
         if (!fileURL.equals(fileEntry.getSVNURL())) {
             ancestorAccess.close();
             return null;
         }
-        
-        if (!SVNRevision.isValidRevisionNumber(fileEntry.getCommittedRevision()) || 
+
+        if (!SVNRevision.isValidRevisionNumber(fileEntry.getCommittedRevision()) ||
                 !SVNRevision.isValidRevisionNumber(fileEntry.getRevision())) {
             ancestorAccess.close();
             return null;
         }
-        
-        if (!(fileEntry.getCommittedRevision() <= copyFromRevision 
+
+        if (!(fileEntry.getCommittedRevision() <= copyFromRevision
                 && copyFromRevision <= fileEntry.getRevision())) {
             ancestorAccess.close();
             return null;
         }
-        
+
         return fileEntry;
     }
-    
+
     private void changeFileProperty(String name, SVNPropertyValue value, SVNFileInfo fileInfo) {
         if (!fileInfo.isSkipped) {
             fileInfo.propertyChanged(name, value);
@@ -1453,7 +1454,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     new Object[] {info.name, adminArea.getRoot()});
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
+
         boolean isLocallyDeleted = inDeletedTree(fullPath, true);
         if (inSkippedTree(fullPath) && !isLocallyDeleted) {
             info.isSkipped = true;
@@ -1492,7 +1493,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
         return info;
     }
-    
+
     private void closeFile(String textChecksum, SVNFileInfo fileInfo, SVNDirectoryInfo dirInfo) throws SVNException {
         if (fileInfo.isSkipped) {
             maybeBumpDirInfo(dirInfo);
@@ -1504,7 +1505,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             if (fileInfo.baseFile != null || fileInfo.newBaseFile != null || fileInfo.copiedBaseText == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "assertion failure in " +
                         "SVNUpdateEditor.closeFile(): fileInfo.baseFile = {0}, fileInfo.newBaseFile = {1}, " +
-                        "fileInfo.copiedBaseText = {2}", new Object[] { fileInfo.baseFile, fileInfo.newBaseFile, 
+                        "fileInfo.copiedBaseText = {2}", new Object[] { fileInfo.baseFile, fileInfo.newBaseFile,
                         fileInfo.copiedBaseText });
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
@@ -1522,26 +1523,26 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             SVNFileUtil.copyFile(fileInfo.copiedBaseText, fileInfo.newBaseFile, true);
             fileInfo.checksum = SVNFileUtil.computeChecksum(fileInfo.newBaseFile);
         }
-        
+
         // check checksum.
         String checksum = null;
         boolean isTextUpdated = fileInfo.newBaseFile != null;
-        if (textChecksum != null && isTextUpdated) {            
+        if (textChecksum != null && isTextUpdated) {
             if (fileInfo.checksum != null && !textChecksum.equals(fileInfo.checksum)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH,
                         "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
                         new Object[] {fileInfo.getPath(), textChecksum, fileInfo.checksum});
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             checksum = textChecksum;
         }
-        
+
         SVNAdminArea adminArea = fileInfo.getAdminArea();
         SVNLog log = dirInfo.getLog();
         String name = fileInfo.name;
         SVNEntry fileEntry = adminArea.getEntry(name, false);
         if (fileEntry == null && !fileInfo.IsAdded) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNVERSIONED_RESOURCE,
                     "''{0}'' is not under version control", fileInfo.getPath());
             SVNErrorManager.error(err, SVNLogType.WC);
         }
@@ -1558,7 +1559,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         SVNStatusType textStatus = SVNStatusType.UNCHANGED;
         SVNStatusType lockStatus = SVNStatusType.LOCK_UNCHANGED;
-        
+
         if (myAdminInfo.isIncomplete(fileInfo.getPath()) && fileEntry != null) {
             // delete all props.
             SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(fileEntry.getName());
@@ -1584,8 +1585,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             modifiedProps.containsName(SVNProperty.CHARSET) ||
             modifiedProps.containsName(SVNProperty.SPECIAL);
         }
-        
-        SVNStatusType propStatus = adminArea.mergeProperties(name, null, fileInfo.copiedBaseProperties, 
+
+        SVNStatusType propStatus = adminArea.mergeProperties(name, null, fileInfo.copiedBaseProperties,
                 fileInfo.copiedWorkingProperties, modifiedProps, null, null, true, false, log);
         if (modifiedEntryProps != null) {
             lockStatus = log.logChangedEntryProperties(name, modifiedEntryProps);
@@ -1597,23 +1598,23 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         boolean isLocallyModified = false;
         if (fileInfo.copiedWorkingText != null) {
             isLocallyModified = true;
-        } else if (!fileInfo.isExisted) { 
+        } else if (!fileInfo.isExisted) {
             isLocallyModified = adminArea.hasTextModifications(name, false, false, false);
         } else if (isTextUpdated) {
-            isLocallyModified = adminArea.hasVersionedFileTextChanges(adminArea.getFile(name), 
+            isLocallyModified = adminArea.hasVersionedFileTextChanges(adminArea.getFile(name),
                     fileInfo.newBaseFile, false);
         }
-        
+
         boolean isReplaced = fileEntry != null && fileEntry.isScheduledForReplacement();
-        
+
         SVNProperties logAttributes = new SVNProperties();
         if (fileInfo.isAddExisted) {
             logAttributes.put(SVNLog.FORCE_ATTR, "true");
             logAttributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), "");
-        } 
-        
+        }
+
         log.logTweakEntry(name, fileInfo.URL, myTargetRevision);
-        
+
         String absDirPath = adminArea.getRoot().getAbsolutePath().replace(File.separatorChar, '/');
         String basePath = null;
         if (fileInfo.baseFile != null) {
@@ -1623,7 +1624,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 basePath = basePath.substring(1);
             }
         }
-        
+
         String tmpBasePath = null;
         if (fileInfo.newBaseFile != null) {
             String absTmpBasePath = fileInfo.newBaseFile.getAbsolutePath().replace(File.separatorChar, '/');
@@ -1657,7 +1658,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     File mergeLeftFile = fileInfo.baseFile;
                     String pathExt = null;
                     if (myExtensionPatterns != null && myExtensionPatterns.length > 0) {
-                        int dotInd = name.lastIndexOf('.'); 
+                        int dotInd = name.lastIndexOf('.');
                         if (dotInd != -1 && dotInd != 0 && dotInd != name.length() - 1) {
                             pathExt = name.substring(dotInd + 1);
                         }
@@ -1665,7 +1666,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                             boolean matches = false;
                             for (int i = 0; i < myExtensionPatterns.length; i++) {
                                 String extPattern = myExtensionPatterns[i];
-                                matches = DefaultSVNOptions.matches(extPattern, pathExt);    
+                                matches = DefaultSVNOptions.matches(extPattern, pathExt);
                                 if (matches) {
                                     break;
                                 }
@@ -1684,7 +1685,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     } else if (fileInfo.copiedBaseText != null) {
                         deleteLeftMergeFile = deleteCopiedBaseText = true;
                         mergeLeftFile = fileInfo.copiedBaseText;
-                    } 
+                    }
 
                     String absMergeLeftFilePath = mergeLeftFile.getAbsolutePath().replace(File.separatorChar, '/');
                     String mergeLeftFilePath = absMergeLeftFilePath.substring(absDirPath.length());
@@ -1696,14 +1697,14 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     if (fileInfo.addedWithHistory) {
                         leftLabel = ".copied" + (pathExt != null ? "." + pathExt : "");
                     } else {
-                        leftLabel = ".r" + fileEntry.getRevision() + (pathExt != null ? "." + pathExt : ""); 
+                        leftLabel = ".r" + fileEntry.getRevision() + (pathExt != null ? "." + pathExt : "");
                     }
-                    
+
                     String rightLabel = ".r" + myTargetRevision + (pathExt != null ? "." + pathExt : "");
                     String mineLabel = ".mine" + (pathExt != null ? "." + pathExt : "");
                     // do test merge.
-                    mergeOutcome = adminArea.mergeText(name, mergeLeftFile, adminArea.getFile(tmpBasePath), 
-                            fileInfo.copiedWorkingText, mineLabel, leftLabel, rightLabel, modifiedProps, false, 
+                    mergeOutcome = adminArea.mergeText(name, mergeLeftFile, adminArea.getFile(tmpBasePath),
+                            fileInfo.copiedWorkingText, mineLabel, leftLabel, rightLabel, modifiedProps, false,
                             null, log);
                     if (mergeOutcome == SVNStatusType.UNCHANGED) {
                         textStatus = SVNStatusType.MERGED;
@@ -1717,7 +1718,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                             deletedCopiedBaseText = true;
                         }
                     }
-                    
+
                     if (fileInfo.copiedWorkingText != null) {
                         String absCopiedWorkingTextPath = fileInfo.copiedWorkingText.getAbsolutePath().replace(File.separatorChar, '/');
                         String copiedWorkingTextPath = absCopiedWorkingTextPath.substring(absDirPath.length());
@@ -1751,7 +1752,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 command.clear();
             }
         }
-        
+
         if (tmpBasePath != null) {
             command.put(SVNLog.NAME_ATTR, tmpBasePath);
             command.put(SVNLog.DEST_ATTR, basePath);
@@ -1769,7 +1770,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             logAttributes.put(SVNLog.NAME_ATTR, name);
             log.addCommand(SVNLog.MODIFY_ENTRY, logAttributes, false);
         }
-        
+
         if (!isLocallyModified && (fileInfo.IsAdded || fileEntry.getSchedule() == null)) {
             if (commitTime != null && !fileInfo.isExisted) {
                 command.put(SVNLog.NAME_ATTR, name);
@@ -1777,7 +1778,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 log.addCommand(SVNLog.SET_TIMESTAMP, command, false);
                 command.clear();
             }
-            
+
             if (tmpBasePath != null || magicPropsChanged) {
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
@@ -1801,7 +1802,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
         }
-        
+
         // bump.
         maybeBumpDirInfo(dirInfo);
 
@@ -1818,8 +1819,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         // notify.
-        if ((textStatus != SVNStatusType.UNCHANGED || 
-                propStatus != SVNStatusType.UNCHANGED || 
+        if ((textStatus != SVNStatusType.UNCHANGED ||
+                propStatus != SVNStatusType.UNCHANGED ||
                 lockStatus != SVNStatusType.LOCK_UNCHANGED ||
                 fileInfo.treeConficted) &&
                 !inDeletedTree(fullPath, true)) {
@@ -1829,7 +1830,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             } else if (fileInfo.isExisted || fileInfo.isAddExisted) {
                 if (textStatus != SVNStatusType.CONFLICTED_UNRESOLVED && textStatus != SVNStatusType.CONFLICTED) {
                     action = SVNEventAction.UPDATE_EXISTS;
-                } 
+                }
             } else if (fileInfo.IsAdded) {
                 action = SVNEventAction.UPDATE_ADD;
             }
@@ -1865,7 +1866,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         return info;
     }
 
-    private SVNDirectoryInfo createDirectoryInfo(SVNDirectoryInfo parent, String path, 
+    private SVNDirectoryInfo createDirectoryInfo(SVNDirectoryInfo parent, String path,
             boolean added) {
         SVNDirectoryInfo info = new SVNDirectoryInfo(path);
         info.Parent = parent;
@@ -1875,8 +1876,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (mySwitchURL == null) {
             SVNAdminArea area = null;
             SVNEntry dirEntry = null;
-            
-            File areaPath = new File(myAdminInfo.getAnchor().getRoot(), info.getPath());            
+
+            File areaPath = new File(myAdminInfo.getAnchor().getRoot(), info.getPath());
             try {
                 area = myWCAccess.getAdminArea(areaPath);
                 if (area != null) {
@@ -1886,7 +1887,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             } catch (SVNException svne) {
                 //
             }
-            
+
             if (area != null && dirEntry != null) {
                 info.URL = dirEntry.getURL();
             }
@@ -1916,12 +1917,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         info.log = null;
         info.myAmbientDepth = SVNDepth.UNKNOWN;
         info.wasIncomplete = false;
-        
+
         return info;
     }
 
-    public static SVNUpdateEditor createUpdateEditor(SVNAdminAreaInfo info, String switchURL, 
-            boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, 
+    public static SVNUpdateEditor createUpdateEditor(SVNAdminAreaInfo info, String switchURL,
+            boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth,
             String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
             depthIsSticky = false;
@@ -1930,14 +1931,14 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNEntry entry = info.getAnchor().getEntry(info.getAnchor().getThisDirName(), false);
         if (switchURL != null && entry != null && entry.getRepositoryRoot() != null) {
             if (!SVNPathUtil.isAncestor(entry.getRepositoryRoot(), switchURL)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_INVALID_SWITCH,
                         "''{0}''\nis not the same repository as\n''{1}''",
                         new Object[] { switchURL, entry.getRepositoryRoot() });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
 
-        SVNUpdateEditor editor = 
+        SVNUpdateEditor editor =
             new SVNUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, 
                     entry != null ? entry.getURL() : null, entry != null ? entry.getRepositoryRoot() : null, fileFetcher, lockOnDemand);
         info.getTarget().closeEntries();
@@ -2006,16 +2007,16 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         private SVNProperties copiedWorkingProperties;
         private File copiedBaseText;
         private File copiedWorkingText;
-        
+
         private boolean treeConficted;
-        
+
 //     Set if this file is locally deleted or is being added
 //     within a locally deleted tree.
         private boolean isDeleted;
 
 //     The checksum for the file located at newBaseFile.
         private String actualChecksum;
-        
+
 //     If this file was added with history, this is the checksum of the
 //     text base (see copied_text_base). May be NULL if unknown.
         private String copiedBaseChecksum;
@@ -2056,7 +2057,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
         public SVNLog getLog() throws SVNException {
             if (log == null) {
-                log = getAdminArea().getLog();    
+                log = getAdminArea().getLog();
                 LogCount++;
             }
             return log;
