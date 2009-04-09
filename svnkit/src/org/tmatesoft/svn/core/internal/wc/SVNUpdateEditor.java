@@ -875,7 +875,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNStatusType propStatus = SVNStatusType.UNKNOWN;
         SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
         
-        if (myAdminInfo.isIncomplete(myCurrentDirectory.getPath())) {
+        if (myCurrentDirectory.wasIncomplete) {
             // delete all props.
             SVNVersionedProperties oldBaseProps = adminArea.getBaseProperties(adminArea.getThisDirName());
             SVNProperties baseMap = oldBaseProps.asMap();
