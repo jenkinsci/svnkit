@@ -120,16 +120,7 @@ class DAVCommitEditor implements ISVNEditor {
             url = SVNPathUtil.append(parentResource.getURL(), SVNPathUtil.tail(path));
 		}
         // call DELETE for the composed path
-        HTTPStatus status = myConnection.doDelete(url, wPath, revision);
-        if (status.getError() != null) {
-            SVNErrorCode errCode = status.getError().getErrorCode();
-            if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN || 
-                    errCode == SVNErrorCode.FS_LOCK_OWNER_MISMATCH || errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED) {
-                //TODO: reattempt the delete
-            } else {
-                SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);    
-            }
-        }
+        myConnection.doDelete(url, wPath, revision);
 		if (myDirsStack.size() == 1) {
 			myPathsMap.put(SVNPathUtil.append(parentResource.getURL(), path), path);
 		} else {
