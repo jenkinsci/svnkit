@@ -349,7 +349,7 @@ public class FSRepositoryUtil {
         return new String(nextKey, 0, nextKeyLength);
     }
    
-    public static void checkReposDBForma(int format) throws SVNException {
+    public static void checkReposDBFormat(int format) throws SVNException {
         if (format < FSFS.DB_FORMAT_LOW || format > FSFS.DB_FORMAT) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
                     "Expected FS format between ''{0}'' and ''{1}''; found format ''{2}''", 

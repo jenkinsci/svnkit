@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -72,6 +73,9 @@ public class FSFS {
     public static final String TRANSACTION_PROTOS_DIR = "txn-protorevs";
     public static final String NODE_ORIGINS_DIR = "node-origins";
     
+    public static final String ENABLE_REP_SHARING_OPTION = "enable-rep-sharing";
+    public static final String REP_SHARING_SECTION = "rep-sharing";
+    public static final String PATH_CONFIG = "fsfs.conf";
     public static final String TXN_PATH_EXT = ".txn";
     public static final String TXN_MERGEINFO_PATH = "mergeinfo";
     public static final String TXN_PATH_EXT_CHILDREN = ".children";
@@ -130,8 +134,11 @@ public class FSFS {
     private File myDBFormatFile;
     private File myUUIDFile;
     private File myFSTypeFile;
+    private File myMinUnpackedRevFile;
     private long myMaxFilesPerDirectory;
     private long myYoungestRevisionCache;
+    private long myMinUnpackedRevision;
+    private SVNConfigFile myConfig;
     
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -204,13 +211,27 @@ public class FSFS {
     
     public void openDB() throws SVNException {
         int format = readDBFormat();
-        FSRepositoryUtil.checkReposDBForma(format);
+        FSRepositoryUtil.checkReposDBFormat(format);
 
         myDBFormat = format;
 
         // fs type /root/db/fs-type
         getFSType();
 
+        if (myDBFormat >= MIN_PACKED_FORMAT) {
+            getMinUnpackedRev();
+        }
+        
+        boolean isRepSharingAllowed = false;
+        SVNConfigFile config = loadConfig();
+        if (config != null) {
+            isRepSharingAllowed = Boolean.getBoolean(config.getPropertyValue(REP_SHARING_SECTION, ENABLE_REP_SHARING_OPTION));
+        }
+        
+        if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {
+            //TODO: open rep cache
+        }
+        
         File dbCurrentFile = getCurrentFile();
         if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
@@ -432,7 +453,20 @@ public class FSFS {
         }
         return myYoungestRevisionCache;
     }
-    
+
+    public long getMinUnpackedRev() throws SVNException {
+        FSFile file = new FSFile(getMinUnpackedRevFile());
+        try {
+            myMinUnpackedRevision = file.readLong();
+            return myMinUnpackedRevision;
+        } catch (NumberFormatException nfe) {
+            myMinUnpackedRevision = 0;
+        } finally {
+            file.close();
+        }
+        return myMinUnpackedRevision;
+
+    }
     public void upgrade() throws SVNException {
         FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(this);
         synchronized (writeLock) {
@@ -1505,6 +1539,10 @@ public class FSFS {
         DEFAULT_MAX_FILES_PER_DIRECTORY = maxFilesPerDirectory;
     }
 
+    protected  boolean isPackedRevision(long revNumber) {
+        return revNumber < myMinUnpackedRevision;
+    }
+    
     protected File getNodeOriginFile(String nodeID) {
         String nodeIDMinusLastChar = nodeID.length() == 1 ? "0" : nodeID.substring(0, nodeID.length() - 1);
         return new File(getNodeOriginsDir(), nodeIDMinusLastChar);
@@ -1552,6 +1590,13 @@ public class FSFS {
         return revisionFile;
     }
 
+    protected File getMinUnpackedRevFile() {
+        if (myMinUnpackedRevFile == null) {
+            myMinUnpackedRevFile = new File(getDBRoot(), MIN_UNPACKED_REV_FILE);
+        }
+        return myMinUnpackedRevFile;
+    }
+    
     protected File getTransactionCurrentFile(){
         if(myTransactionCurrentFile == null){
             myTransactionCurrentFile = new File(getDBRoot(), TXN_CURRENT_FILE); 
@@ -1566,6 +1611,10 @@ public class FSFS {
         return myTransactionCurrentLockFile;
     }
 
+    protected File getConfigFile() {
+        return new File(getDBRoot(), PATH_CONFIG);
+    }
+    
     protected void writeCurrentFile(long revision, String nextNodeID, String nextCopyID) throws SVNException, IOException {
         String line = null;
         if (getDBFormat() >= FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
@@ -1586,6 +1635,15 @@ public class FSFS {
             SVNFileUtil.closeFile(currentOS);
         }
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
+    }
+    
+    private SVNConfigFile loadConfig() {
+        File confFile = getConfigFile();
+        if (myDBFormat < MIN_REP_SHARING_FORMAT || !confFile.exists()) {
+            return null;
+        }
+        myConfig = new SVNConfigFile(confFile);
+        return myConfig;
     }
     
     private void ensureRevisionsExists(long revision) throws SVNException {

@@ -130,7 +130,7 @@ public class FSHotCopier {
 
     private void hotCopy(FSFS srcOwner, FSFS dstOwner) throws SVNException {
         int format = srcOwner.readDBFormat();
-        FSRepositoryUtil.checkReposDBForma(format);
+        FSRepositoryUtil.checkReposDBFormat(format);
         SVNFileUtil.copyFile(srcOwner.getCurrentFile(), dstOwner.getCurrentFile(), true);
         SVNFileUtil.copyFile(srcOwner.getUUIDFile(), dstOwner.getUUIDFile(), true);
         long youngestRev = dstOwner.getYoungestRevision();
