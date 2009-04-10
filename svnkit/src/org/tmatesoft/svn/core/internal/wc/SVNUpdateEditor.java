@@ -680,7 +680,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             adminArea.modifyEntry(adminArea.getThisDirName(), attributes, true, true);
         }
 
-        SVNFileUtil.ensureDirectoryExists(fullPath);
         String rootURL = null;
         if (myRootURL != null && SVNPathUtil.isAncestor(myRootURL, myCurrentDirectory.URL)) {
             rootURL = myRootURL;
@@ -689,7 +688,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNWCManager.ensureAdminAreaExists(fullPath, myCurrentDirectory.URL, rootURL, null, myTargetRevision, myCurrentDirectory.myAmbientDepth);
 
         SVNAdminArea childArea = null;
-        if (myAdminInfo.getAnchor().getRoot().equals(fullPath)) {
+        if (!myAdminInfo.getAnchor().getRoot().equals(fullPath)) {
             ISVNEventHandler eventHandler = myWCAccess.getEventHandler();
             try {
                 myWCAccess.setEventHandler(null);
@@ -710,7 +709,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             attributes.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_DELETE);
             parentArea.modifyEntry(name, attributes, true, false);
             childArea = myWCAccess.retrieve(fullPath);
-            childArea.modifyEntry(name, attributes, true, false);
+            childArea.modifyEntry(childArea.getThisDirName(), attributes, true, false);
         }
 
         try {
