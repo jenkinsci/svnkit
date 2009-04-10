@@ -2589,7 +2589,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                         //TODO: optimize these repeating sorts
                         Collections.sort(childrenWithMergeInfo);
                         if (!myIsDryRun && myIsSameRepository) {
-                        	Map mergeInfo = getWCMergeInfo(childPath, entry, myTarget, 
+                            SVNEntry childOfNonInheritableEntry = myWCAccess.getVersionedEntry(childOfNonInheritable.myPath, false);
+                            
+                        	Map mergeInfo = getWCMergeInfo(childOfNonInheritable.myPath, childOfNonInheritableEntry, myTarget, 
                         			SVNMergeInfoInheritance.NEAREST_ANCESTOR, false, new boolean[1]);
                         	SVNPropertiesManager.recordWCMergeInfo(childPath, mergeInfo, myWCAccess);
                         }
