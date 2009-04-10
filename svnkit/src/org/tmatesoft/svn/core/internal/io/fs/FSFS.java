@@ -1539,8 +1539,8 @@ public class FSFS {
         DEFAULT_MAX_FILES_PER_DIRECTORY = maxFilesPerDirectory;
     }
 
-    protected  boolean isPackedRevision(long revNumber) {
-        return revNumber < myMinUnpackedRevision;
+    protected  boolean isPackedRevision(long revision) {
+        return revision < myMinUnpackedRevision;
     }
     
     protected File getNodeOriginFile(String nodeID) {
@@ -1574,11 +1574,52 @@ public class FSFS {
         return new FSFile(revisionFile);
     }
 
+    protected FSFile getPackOrRevisionFSFile(long revision) throws SVNException {
+        File file = getAbsoluteRevisionPath(revision);
+        if (!file.exists()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        return new FSFile(file);
+    }
+
+    protected File getAbsoluteRevisionPath(long revision) throws SVNException {
+        if (!isPackedRevision(revision)) {
+            File revFile = getRevisionFile(revision);
+            if (revFile.exists()) {
+                return revFile;
+            } 
+            getMinUnpackedRev();
+            if (!isPackedRevision(revision)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "Revision file ''{0}'' does not exist, and r{1} is not packed", 
+                        new Object[] { revFile, String.valueOf(revision) });
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+        }
+        return getPackedRevPath(revision, "pack");
+    }
+    
     protected FSFile getTransactionRevisionNodePropertiesFile(FSID id) {
         File revNodePropsFile = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID() + TXN_PATH_EXT_PROPS);
         return new FSFile(revNodePropsFile);
     }
 
+    protected File getPackedRevPath(long revision, String kind) throws SVNException {
+        if (myMaxFilesPerDirectory == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Asserion failed: myMaxFilesPerDirectory is {0}", String.valueOf(myMaxFilesPerDirectory));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        if (!isPackedRevision(revision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: revision {0} is not packed", String.valueOf(revision));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        File file = new File(getDBRevsDir(), (revision/myMaxFilesPerDirectory) + ".pack");
+        file = new File(file, kind);
+        return file;
+    }
+    
     protected File getRevisionFile(long revision) {
         File revisionFile = null;
         if (myMaxFilesPerDirectory > 0) {
@@ -1852,6 +1893,16 @@ public class FSFS {
     private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
         ensureRevisionsExists(revision);
         FSFile file = getRevisionFSFile(revision);
+        file.seek(offset);
+        return file;
+    }
+
+    private FSFile openAndSeekRevision2(long revision, long offset) throws SVNException {
+        ensureRevisionsExists(revision);
+        FSFile file = getPackOrRevisionFSFile(revision);
+        if (isPackedRevision(revision)) {
+            
+        }
         file.seek(offset);
         return file;
     }
