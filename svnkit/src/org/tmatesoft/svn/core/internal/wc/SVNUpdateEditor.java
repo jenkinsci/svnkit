@@ -1246,12 +1246,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         if (copyFromPath != null && !info.isSkipped) {
-            return addFileWithHistory(parent, info, path, copyFromPath, copyFromRevision);
+            return addFileWithHistory(parent, info, copyFromPath, copyFromRevision);
         }
         return info;
     }
 
-    private SVNFileInfo addFileWithHistory(SVNDirectoryInfo parent, SVNFileInfo info, String path,
+    private SVNFileInfo addFileWithHistory(SVNDirectoryInfo parent, SVNFileInfo info,
             String copyFromPath, long copyFromRevision) throws SVNException {
         info.addedWithHistory = true;
 
@@ -1640,13 +1640,17 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (tmpBasePath != null) {
             textStatus = SVNStatusType.CHANGED;
             // there is a text to replace the working copy with.
-            if (!isLocallyModified && !isReplaced) {
-                if (fileEntry == null || !fileEntry.isScheduledForDeletion()) {
+            if (isReplaced) {
+                // do nothing.
+            } else if (!isLocallyModified) {
+                if (!fileInfo.isDeleted) {
                     command.put(SVNLog.NAME_ATTR, tmpBasePath);
                     command.put(SVNLog.DEST_ATTR, name);
                     log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                     command.clear();
                 }
+//                if (fileEntry == null || !fileEntry.isScheduledForDeletion()) {
+//                }
             } else {
                 SVNFileType kind = SVNFileType.getType(workingFile);
                 if (kind == SVNFileType.NONE && !fileInfo.addedWithHistory) {
@@ -1761,9 +1765,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             command.put(SVNLog.NAME_ATTR, basePath);
             log.addCommand(SVNLog.READONLY, command, false);
             command.clear();
-            if (!isReplaced) {
-                logAttributes.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
-            }
+            logAttributes.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), checksum);
+        }
+        if (fileInfo.isDeleted && !isReplaced) {
+            logAttributes.put(SVNProperty.shortPropertyName(SVNProperty.SCHEDULE), SVNProperty.SCHEDULE_DELETE);
         }
 
         if (logAttributes.size() > 0) {
@@ -1779,7 +1784,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 command.clear();
             }
 
-            if (tmpBasePath != null || magicPropsChanged) {
+            if ((tmpBasePath != null || magicPropsChanged) && !fileInfo.isDeleted) {
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.TEXT_TIME), SVNLog.WC_TIMESTAMP);
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);
@@ -2015,15 +2020,16 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         private boolean isDeleted;
 
 //     The checksum for the file located at newBaseFile.
-        private String actualChecksum;
+        //private String actualChecksum;
 
 //     If this file was added with history, this is the checksum of the
 //     text base (see copied_text_base). May be NULL if unknown.
-        private String copiedBaseChecksum;
+        //private String copiedBaseChecksum;
 
         public SVNFileInfo(SVNDirectoryInfo parent, String path) {
             super(path);
             this.Parent = parent;
+            this.isDeleted = false;
         }
 
         public SVNAdminArea getAdminArea() throws SVNException {
