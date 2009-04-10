@@ -1275,18 +1275,20 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
     protected SVNProperties filterSelfReferentialMergeInfo(SVNProperties props, File path) throws SVNException {
         boolean honorMergeInfo = isHonorMergeInfo();
-        if (!honorMergeInfo) {
+        if (!honorMergeInfo && myIsSameRepository) {
             return null;
         }
         SVNEntry targetEntry = myWCAccess.getVersionedEntry(path, false);
-        if (targetEntry.isScheduledForAddition() || targetEntry.isScheduledForReplacement()) {
+        if (myIsSameRepository && (targetEntry.isScheduledForAddition() || targetEntry.isScheduledForReplacement())) {
             return null;
         }
         SVNProperties adjustedProperties = new SVNProperties();
         for (Iterator propNamesIter = props.nameSet().iterator(); propNamesIter.hasNext();) {
             String propName = (String) propNamesIter.next();
             SVNPropertyValue propValue = props.getSVNPropertyValue(propName);
-            if (!propName.equals(SVNProperty.MERGE_INFO) || propValue == null ||
+            if (SVNProperty.MERGE_INFO.equals(propName) && !myIsSameRepository) { 
+                // skip mergeinfo from foreign repository
+            } else if (!SVNProperty.MERGE_INFO.equals(propName) || propValue == null ||
                     "".equals(propValue.getString())) {
                 adjustedProperties.put(propName, propValue);
             } else {
