@@ -390,7 +390,8 @@ public class SVNDumpEditor implements ISVNEditor {
                     } else {
                         source = myRoot.getFileStreamForPath(getDeltaCombiner(), canonicalPath);
                     }
-                    FSRepositoryUtil.copy(source, myDumpStream);
+                    //TODO: provide canceller?
+                    FSRepositoryUtil.copy(source, myDumpStream, null);
                 } finally {
                     SVNFileUtil.closeFile(source);
                 }

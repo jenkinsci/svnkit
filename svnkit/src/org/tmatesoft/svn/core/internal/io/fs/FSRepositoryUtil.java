@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -99,9 +100,12 @@ public class FSRepositoryUtil {
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
     }
     
-    public synchronized static void copy(InputStream src, OutputStream dst) throws SVNException {
+    public synchronized static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
         try {
             while (true) {
+                if (canceller != null) {
+                    canceller.checkCancelled();
+                }
                 int length = src.read(ourCopyBuffer);
                 if (length > 0) {
                     dst.write(ourCopyBuffer, 0, length);

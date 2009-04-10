@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNLock;
 public class SVNAdminEvent {
     private String myTxnName;
     private File myTxnDir;
+    private long myShard;
     private long myRevision;
     private long myOriginalRevision;
     private long myDroppedRevisionsCount;
@@ -70,6 +71,11 @@ public class SVNAdminEvent {
         myMessage = message;
     }
 
+    public SVNAdminEvent(SVNAdminEventAction action, long shard) {
+        myAction = action;
+        myShard = shard;
+    }
+    
     /**
      * Creates a new event.
      * 

@@ -189,5 +189,9 @@ public class SVNAdminEventAction {
      * @since 1.2.0
      */
     public static final SVNAdminEventAction DUMP_FILTER_DROPPED_NODE = new SVNAdminEventAction(22);
+    
+    public static final SVNAdminEventAction PACK_START = new SVNAdminEventAction(23);
+    
+    public static final SVNAdminEventAction PACK_END = new SVNAdminEventAction(24);
 
 }

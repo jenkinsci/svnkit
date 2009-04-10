@@ -338,7 +338,7 @@ public class SVNNodeEditor implements ISVNEditor {
             try {
                 contents = root.getFileStreamForPath(new SVNDeltaCombiner(), path);
                 tmpOS = SVNFileUtil.openFileForWriting(tmpFile);
-                FSRepositoryUtil.copy(contents, tmpOS);
+                FSRepositoryUtil.copy(contents, tmpOS, myCancelHandler);
             } finally {
                 SVNFileUtil.closeFile(contents);
                 SVNFileUtil.closeFile(tmpOS);

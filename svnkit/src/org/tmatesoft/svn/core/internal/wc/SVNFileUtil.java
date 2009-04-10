@@ -39,6 +39,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -916,7 +917,7 @@ public class SVNFileUtil {
         }
     }
 
-    public static void deleteAll(File dir, boolean deleteDirs, ISVNEventHandler cancelBaton) throws SVNException {
+    public static void deleteAll(File dir, boolean deleteDirs, ISVNCanceller cancelBaton) throws SVNException {
         if (dir == null) {
             return;
         }

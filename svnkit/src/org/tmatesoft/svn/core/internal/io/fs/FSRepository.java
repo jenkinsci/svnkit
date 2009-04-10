@@ -219,7 +219,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 InputStream fileStream = null;
                 try {
                     fileStream = root.getFileStreamForPath(new SVNDeltaCombiner(), repositoryPath);
-                    FSRepositoryUtil.copy(fileStream, contents);
+                    FSRepositoryUtil.copy(fileStream, contents, getCanceller());
                 } finally {
                     SVNFileUtil.closeFile(fileStream);
                 }
