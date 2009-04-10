@@ -11,9 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -73,6 +75,9 @@ public class FSFS {
     public static final String TRANSACTION_PROTOS_DIR = "txn-protorevs";
     public static final String NODE_ORIGINS_DIR = "node-origins";
     
+    public static final String PACK_EXT = ".pack";
+    public static final String PACK_KIND_PACK = "pack";
+    public static final String PACK_KIND_MANIFEST = "manifest";
     public static final String ENABLE_REP_SHARING_OPTION = "enable-rep-sharing";
     public static final String REP_SHARING_SECTION = "rep-sharing";
     public static final String PATH_CONFIG = "fsfs.conf";
@@ -579,8 +584,7 @@ public class FSFS {
             File file = new File(getTransactionDir(id.getTxnID()), PATH_PREFIX_NODE + id.getNodeID() + "." + id.getCopyID());
             revisionFile = new FSFile(file);
         } else {
-            revisionFile = getRevisionFSFile(id.getRevision());
-            revisionFile.seek(id.getOffset());
+            revisionFile = openAndSeekRevision(id.getRevision(), id.getOffset());
         }
 
         Map headers = null;
@@ -1596,7 +1600,7 @@ public class FSFS {
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
-        return getPackedRevPath(revision, "pack");
+        return getPackedRevPath(revision, PACK_KIND_PACK);
     }
     
     protected FSFile getTransactionRevisionNodePropertiesFile(FSID id) {
@@ -1615,12 +1619,29 @@ public class FSFS {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         
-        File file = new File(getDBRevsDir(), (revision/myMaxFilesPerDirectory) + ".pack");
+        File file = new File(getDBRevsDir(), (revision/myMaxFilesPerDirectory) + PACK_EXT);
         file = new File(file, kind);
         return file;
     }
     
-    protected File getRevisionFile(long revision) {
+    protected File getPackDir(long revision) {
+        return new File(getDBRevsDir(), revision + PACK_EXT);
+    }
+
+    protected File getPackFile(long revision) {
+        return new File(getPackDir(revision), PACK_KIND_PACK);
+    }
+
+    protected File getManifestFile(long revision) {
+        return new File(getPackDir(revision), PACK_KIND_MANIFEST);
+    }
+
+    protected File getRevisionFile(long revision) throws SVNException {
+        if (isPackedRevision(revision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: revision {0} is not expected to be packed", 
+                    String.valueOf(revision));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
         File revisionFile = null;
         if (myMaxFilesPerDirectory > 0) {
             File shardDir = new File(getDBRevsDir(), String.valueOf(revision/myMaxFilesPerDirectory));
@@ -1678,6 +1699,41 @@ public class FSFS {
         SVNFileUtil.rename(tmpCurrentFile, currentFile);
     }
     
+    protected long getPackedOffset(long revision) throws SVNException {
+        //TODO: later on introduce invoking memcache here to fetch\store the requested data
+        //long shard = revision / myMaxFilesPerDirectory;
+        File manifestFile = getPackedRevPath(revision, PACK_KIND_MANIFEST);
+        BufferedReader reader = null;
+        LinkedList manifest = new LinkedList();
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(manifestFile)));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                Long offset = null;
+                try {
+                    offset = Long.valueOf(line);
+                } catch (NumberFormatException nfe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
+                }
+                manifest.add(offset);
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
+        } finally {
+            SVNFileUtil.closeFile(reader);
+        }
+        
+        Long revOffsetLong = (Long) manifest.get((int) (revision % myMaxFilesPerDirectory));
+        if (revOffsetLong == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: offset for revision {0} is null", 
+                    String.valueOf(revision));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        return revOffsetLong.longValue();
+    }
+
     private SVNConfigFile loadConfig() {
         File confFile = getConfigFile();
         if (myDBFormat < MIN_REP_SHARING_FORMAT || !confFile.exists()) {
@@ -1892,16 +1948,10 @@ public class FSFS {
 
     private FSFile openAndSeekRevision(long revision, long offset) throws SVNException {
         ensureRevisionsExists(revision);
-        FSFile file = getRevisionFSFile(revision);
-        file.seek(offset);
-        return file;
-    }
-
-    private FSFile openAndSeekRevision2(long revision, long offset) throws SVNException {
-        ensureRevisionsExists(revision);
         FSFile file = getPackOrRevisionFSFile(revision);
         if (isPackedRevision(revision)) {
-            
+            long revOffset = getPackedOffset(revision);
+            offset += revOffset;
         }
         file.seek(offset);
         return file;

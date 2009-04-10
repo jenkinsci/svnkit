@@ -45,9 +45,9 @@ public class FSRevisionRoot extends FSRoot {
     }
 
     public Map getChangedPaths() throws SVNException {
-        FSFile file = getOwner().getRevisionFSFile(getRevision());
-        loadOffsets(file);
+        FSFile file = getOwner().getPackOrRevisionFSFile(getRevision());
         try {
+            loadOffsets(file);
             file.seek(myChangesOffset);
             return fetchAllChanges(file, true);
         } finally {
@@ -97,7 +97,7 @@ public class FSRevisionRoot extends FSRoot {
 
     public FSRevisionNode getRootRevisionNode() throws SVNException {
         if (myRootRevisionNode == null) {
-            FSFile file = getOwner().getRevisionFSFile(getRevision());
+            FSFile file = getOwner().getPackOrRevisionFSFile(getRevision());
             try {
                 loadOffsets(file);
                 file.seek(myRootOffset);
@@ -198,7 +198,7 @@ public class FSRevisionRoot extends FSRoot {
         }
         long[] rootOffset = { -1 };
         long[] changesOffset = { -1 };
-        FSRepositoryUtil.loadRootChangesOffset(file, rootOffset, changesOffset);
+        FSRepositoryUtil.loadRootChangesOffset(getOwner(), getRevision(), file, rootOffset, changesOffset);
         myRootOffset = rootOffset[0];
         myChangesOffset = changesOffset[0];
     }

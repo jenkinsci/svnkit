@@ -75,7 +75,7 @@ public class FSRecoverer {
                 FSFile revFile = null;
                 try {
                     revFile = myOwner.getRevisionFSFile(rev);
-                    FSRepositoryUtil.loadRootChangesOffset(revFile, rootOffset, null);
+                    FSRepositoryUtil.loadRootChangesOffset(myOwner, rev, revFile, rootOffset, null);
                     findMaxIDs(rev, revFile, rootOffset[0], maxNodeID, maxCopyID);
                 } finally {
                     if (revFile != null) {
@@ -193,7 +193,7 @@ public class FSRecoverer {
         }
     }
     
-    private long getLargestRevision() {
+    private long getLargestRevision() throws SVNException {
         long right = 1;
         while (true) {
             File revFile = myOwner.getRevisionFile(right);

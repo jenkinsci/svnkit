@@ -249,19 +249,36 @@ public class FSRepositoryUtil {
         }
     }
     
-    public static void loadRootChangesOffset(FSFile file, long[] rootOffset, long[] changesOffset) throws SVNException {
+    public static void loadRootChangesOffset(FSFS fsfs, long revision, FSFile file, long[] rootOffset, long[] changesOffset) throws SVNException {
         ByteBuffer buffer = ByteBuffer.allocate(64);
-        file.seek(file.size() - 64);
+        long offset = 0; 
+
+        if (fsfs.isPackedRevision(revision) && ((revision + 1) % fsfs.getMaxFilesPerDirectory()) != 0) {
+            offset = fsfs.getPackedOffset(revision + 1);
+        } else {
+            offset = file.size();
+        }
+        
+        long revOffset = 0;
+        if (fsfs.isPackedRevision(revision)) {
+            revOffset = fsfs.getPackedOffset(revision);
+        }
+
+        file.seek(offset - 64);
         try {
             file.read(buffer);
         } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
+        
         buffer.flip();
         if (buffer.get(buffer.limit() - 1) != '\n') {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Revision file lacks trailing newline");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+        
         int spaceIndex = -1;
         int eolIndex = -1;
         for (int i = buffer.limit() - 2; i >= 0; i--) {
@@ -289,14 +306,14 @@ public class FSRepositoryUtil {
             buffer.position(spaceIndex + 1);
             String line = decoder.decode(buffer).toString();
             if (changesOffset != null && changesOffset.length > 0) {
-                changesOffset[0] = Long.parseLong(line);
+                changesOffset[0] = revOffset + Long.parseLong(line);
             }
 
             buffer.limit(spaceIndex);
             buffer.position(eolIndex + 1);
             line = decoder.decode(buffer).toString();
             if (rootOffset != null && rootOffset.length > 0) {
-                rootOffset[0] = Long.parseLong(line); 
+                rootOffset[0] = revOffset + Long.parseLong(line); 
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
