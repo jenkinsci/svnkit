@@ -343,10 +343,11 @@ public class SVNWCManager {
     }
 
     private static void tweakEntries(SVNAdminArea dir, String baseURL, String rootURL, long newRevision, boolean removeMissingDirs, Collection excludePaths, SVNDepth depth, boolean skipUnlocked) throws SVNException {
-        boolean write = false;
-        if (!excludePaths.contains(dir.getRoot())) {
-            write = dir.tweakEntry(dir.getThisDirName(), baseURL, rootURL, newRevision, false);
+        if (excludePaths.contains(dir.getRoot())) {
+            return;
         }
+        boolean write = false;
+        write = dir.tweakEntry(dir.getThisDirName(), baseURL, rootURL, newRevision, false);
         if (depth == SVNDepth.UNKNOWN) {
             depth = SVNDepth.INFINITY;
         }

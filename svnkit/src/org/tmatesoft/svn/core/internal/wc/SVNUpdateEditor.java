@@ -957,7 +957,8 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
         if (!myIsTargetDeleted) {
             File targetFile = myTarget != null ? myAdminInfo.getAnchor().getFile(myTarget) : myAdminInfo.getAnchor().getRoot();
-            SVNWCManager.updateCleanup(targetFile, myWCAccess, mySwitchURL, myRootURL, myTargetRevision, true, mySkippedTrees, myRequestedDepth, myIsLockOnDemand);
+             getSkippedTrees().removeAll(getDeletedTrees());
+            SVNWCManager.updateCleanup(targetFile, myWCAccess, mySwitchURL, myRootURL, myTargetRevision, true, getSkippedTrees(), myRequestedDepth, myIsLockOnDemand);
         }
         return null;
     }
