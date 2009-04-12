@@ -346,4 +346,12 @@ public class SVNMergeFileSet {
     public File getCopyFromFile() {
         return myCopyFromFile;
     }
+
+    public String getCopyFromPath() {
+        String root = myAdminArea.getRoot().getAbsolutePath().replace(File.separatorChar, '/');
+        String copyFrom = getCopyFromFile().getAbsolutePath().replace(File.separatorChar, '/');
+        String copyFromPath = copyFrom.substring(root.length());
+        copyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring("/".length()) : copyFromPath;
+        return copyFromPath;
+    }
 }

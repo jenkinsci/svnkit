@@ -381,6 +381,15 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
 
+        if (files.getCopyFromFile() != null) {
+            String copyFromPath = files.getCopyFromPath();
+            String detranslatedPath = files.getWCPath();
+            command.put(SVNLog.NAME_ATTR, copyFromPath);
+            command.put(SVNLog.DEST_ATTR, detranslatedPath);
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
+        }
+
         File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel(), false);
         File oldFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getBaseLabel(), false);
         File newFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getRepositoryLabel(), false);
@@ -464,7 +473,6 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
         }
     }
-    
 
     protected SVNMergeResult handleMarkResolved(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
         if (!files.isBinary()) {

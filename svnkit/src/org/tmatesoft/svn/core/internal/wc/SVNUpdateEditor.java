@@ -1606,7 +1606,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         boolean isReplaced = fileEntry != null && fileEntry.isScheduledForReplacement();
-
+        
         SVNProperties logAttributes = new SVNProperties();
         if (fileInfo.isAddExisted) {
             logAttributes.put(SVNLog.FORCE_ATTR, "true");
@@ -1659,7 +1659,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                     log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
                     command.clear();
                 } else if (!fileInfo.isExisted) {
-                    File mergeLeftFile = fileInfo.baseFile;
                     String pathExt = null;
                     if (myExtensionPatterns != null && myExtensionPatterns.length > 0) {
                         int dotInd = name.lastIndexOf('.');
@@ -1680,9 +1679,10 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                             }
                         }
                     }
-
+                    
                     boolean deleteLeftMergeFile = false;
                     boolean deleteCopiedBaseText = false;
+                    File mergeLeftFile = fileInfo.baseFile;
                     if (fileInfo.isAddExisted && !isReplaced) {
                         deleteLeftMergeFile = true;
                         mergeLeftFile = SVNAdminUtil.createTmpFile(adminArea);
