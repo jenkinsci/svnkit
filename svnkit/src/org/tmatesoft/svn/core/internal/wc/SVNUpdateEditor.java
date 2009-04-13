@@ -324,24 +324,32 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         File ancestor = path;
         List ancestors = new ArrayList();
         SVNWCAccess access = SVNWCAccess.newInstance(myWCAccess);
-        access.probeOpen(ancestor, false, 0);
+        try {
+            access.probeOpen(ancestor, false, 0);
+        } finally {
+            access.close();
+        }
         SVNEntry entry = access.getEntry(path, true);
         if (entry != null) {
             ancestors.add(ancestor);
         }
         ancestor = ancestor.getParentFile();
-        while (ancestor != null) {
-            access =SVNWCAccess.newInstance(myWCAccess);
-            SVNAdminArea adminArea = access.probeOpen(ancestor, false, 0);
-            if (adminArea == null) {
-                break;
+        access = SVNWCAccess.newInstance(myWCAccess);
+        try {
+            while (ancestor != null) {
+                SVNAdminArea adminArea = access.probeOpen(ancestor, false, 0);
+                if (adminArea == null) {
+                    break;
+                }
+                boolean isWCRoot = access.isWCRoot(ancestor);
+                if (isWCRoot) {
+                    break;
+                }
+                ancestors.add(ancestor);
+                ancestor = ancestor.getParentFile();
             }
-            boolean isWCRoot = access.isWCRoot(ancestor);
-            if (isWCRoot) {
-                break;
-            }
-            ancestors.add(ancestor);
-            ancestor = ancestor.getParentFile();
+        } finally {
+            access.close();
         }
         for (int i = ancestors.size() - 1; i >= 0; i--) {
             ancestor = (File) ancestors.get(i);
