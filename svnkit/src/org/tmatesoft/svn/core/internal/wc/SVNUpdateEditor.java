@@ -469,10 +469,17 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 textModified = adminArea.hasTextModifications(path.getName(), false);
             }
             boolean propsModified;
-            if (path.equals(adminArea.getRoot())) {
+            if (kind == SVNNodeKind.FILE) {
+                propsModified = adminArea.hasPropModifications(path.getName());
+            } else if (path.equals(adminArea.getRoot())) {
                 propsModified = adminArea.hasPropModifications(adminArea.getThisDirName());
             } else {
-                propsModified = adminArea.hasPropConflict(path.getName());
+                SVNAdminArea tmpArea = myWCAccess.probeRetrieve(path);
+                if (tmpArea.getRoot().equals(path)) {
+                    propsModified = tmpArea.hasPropModifications(tmpArea.getThisDirName());
+                } else {
+                    propsModified = tmpArea.hasPropConflict(path.getName());
+                }
             }
             modified = textModified || propsModified;
         }
