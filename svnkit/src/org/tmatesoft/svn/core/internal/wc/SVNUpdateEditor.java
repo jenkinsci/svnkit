@@ -211,13 +211,19 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             return;
         }
 
+        SVNNodeKind kind = entry.getKind();
+        long previousRevision = entry.getRevision();
+        SVNURL url = entry.getSVNURL();
+
         if (inSkippedTree(fullPath) && !inDeletedTree(fullPath, true)) {
             return;
         }
         File victim = alreadyInTreeConflict(fullPath);
         if (victim != null) {
             addSkippedTree(fullPath);
-            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.UNKNOWN, null, -1, SVNEventAction.SKIP, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, entry.getKind(), null, myTargetRevision, SVNEventAction.SKIP, SVNEventAction.UPDATE_DELETE, null, null);
+            event.setPreviousRevision(previousRevision);
+            event.setPreviousURL(url);
             myWCAccess.handleEvent(event);
             return;
         }
@@ -226,8 +232,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         SVNTreeConflictDescription treeConflict = checkTreeConflict(fullPath, entry, parentArea, log, SVNConflictAction.DELETE, SVNNodeKind.NONE, theirURL);
         if (treeConflict != null) {
             addSkippedTree(fullPath);
-            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.UNKNOWN, null, -1, SVNEventAction.TREE_CONFLICT, null, null, null);
+            
+            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, entry.getKind(), null, myTargetRevision, SVNEventAction.TREE_CONFLICT, SVNEventAction.UPDATE_DELETE, null, null);
+            event.setPreviousRevision(entry.getRevision());
+            event.setPreviousURL(entry.getSVNURL());
             myWCAccess.handleEvent(event);
+            
             if (treeConflict.getConflictReason() == SVNConflictReason.EDITED) {
                 if (parent != null) {
                     parent.flushLog();
@@ -258,9 +268,6 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         attributes.put(SVNLog.NAME_ATTR, name);
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
         attributes.clear();
-        SVNNodeKind kind = entry.getKind();
-        long previousRevision = entry.getRevision();
-	    SVNURL url = entry.getSVNURL();
         if (path.equals(myTarget)) {
             attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put(SVNLog.NAME_ATTR, name);
@@ -306,7 +313,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         }
 
         if (treeConflict == null && !inDeletedTree(fullPath, true)) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.UNKNOWN, null, -1, SVNEventAction.UPDATE_DELETE, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, kind, null, myTargetRevision, SVNEventAction.UPDATE_DELETE, null, null, null);
             event.setPreviousRevision(previousRevision);
             event.setPreviousURL(url);
             myWCAccess.handleEvent(event);
@@ -579,7 +586,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         File victim = alreadyInTreeConflict(fullPath);
         if (victim != null) {
             addSkippedTree(fullPath);
-            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, -1, SVNEventAction.SKIP, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, myTargetRevision, SVNEventAction.SKIP, SVNEventAction.UPDATE_ADD, null, null);
             myWCAccess.handleEvent(event);
         }
 
@@ -643,7 +650,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
 
                         if (treeConflict != null) {
                             addSkippedTree(fullPath);
-                            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, -1, SVNEventAction.TREE_CONFLICT, null, null, null);
+                            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, myTargetRevision, SVNEventAction.TREE_CONFLICT, SVNEventAction.UPDATE_ADD, null, null);
+                            if (entry != null) {
+                                event.setPreviousRevision(entry.getRevision());
+                                event.setPreviousURL(entry.getSVNURL());
+                            }
                             myWCAccess.handleEvent(event);
                             return;
                         }
@@ -789,7 +800,14 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             if (!inDeletedTree(fullPath, false)) {
                 SVNEventAction eventAction = hasPropConflicts ? SVNEventAction.SKIP : SVNEventAction.TREE_CONFLICT;
                 SVNStatusType propStatus = hasPropConflicts ? SVNStatusType.CONFLICTED : null;
-                SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, -1, null, propStatus, null, eventAction, null, null, null);
+                SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.DIR, null, myTargetRevision, null, propStatus, null, eventAction, SVNEventAction.UPDATE_UPDATE, null, null);
+                event.setPreviousRevision(myCurrentDirectory.myPreviousRevision);
+                if (myCurrentDirectory.URL != null) {
+                    event.setURL(SVNURL.parseURIEncoded(myCurrentDirectory.URL));
+                }
+                if (entry != null) {
+                    event.setPreviousURL(entry.getSVNURL());
+                }
                 myWCAccess.handleEvent(event);
             }
 
@@ -1203,7 +1221,11 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         if (victim != null) {
             info.isSkipped = true;
             addSkippedTree(fullPath);
-            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE, null, -1, SVNEventAction.SKIP, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE, null, myTargetRevision, SVNEventAction.SKIP, SVNEventAction.UPDATE_ADD, null, null);
+            if (entry != null) {
+                event.setPreviousRevision(entry.getRevision());
+                event.setPreviousURL(entry.getSVNURL());
+            }
             myWCAccess.handleEvent(event);
             return info;
         }
@@ -1245,7 +1267,9 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 if (treeConflict != null) {
                     addSkippedTree(fullPath);
                     info.isSkipped = true;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE, null, -1, SVNEventAction.TREE_CONFLICT, null, null, null);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE, null, myTargetRevision, SVNEventAction.TREE_CONFLICT, SVNEventAction.UPDATE_ADD, null, null);
+                    event.setPreviousRevision(entry.getRevision());
+                    event.setPreviousURL(entry.getSVNURL());
                     myWCAccess.handleEvent(event);
                     return info;
                 }
@@ -1837,16 +1861,19 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 fileInfo.treeConficted) &&
                 !inDeletedTree(fullPath, true)) {
             SVNEventAction action = SVNEventAction.UPDATE_UPDATE;
+            SVNEventAction expectedAction = action;
             if (fileInfo.treeConficted) {
                 action = SVNEventAction.TREE_CONFLICT;
             } else if (fileInfo.isExisted || fileInfo.isAddExisted) {
                 if (textStatus != SVNStatusType.CONFLICTED_UNRESOLVED && textStatus != SVNStatusType.CONFLICTED) {
                     action = SVNEventAction.UPDATE_EXISTS;
+                    expectedAction = action;
                 }
             } else if (fileInfo.IsAdded) {
                 action = SVNEventAction.UPDATE_ADD;
+                expectedAction = action;
             }
-            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE,  null, myTargetRevision, textStatus, propStatus, lockStatus, action, null, null, null);
+            SVNEvent event = SVNEventFactory.createSVNEvent(fullPath, SVNNodeKind.FILE,  null, myTargetRevision, textStatus, propStatus, lockStatus, action, expectedAction, null, null);
             event.setPreviousRevision(previousRevision);
 	        event.setPreviousURL(previousURL);
 	        event.setURL(fileInfo.URL != null ? SVNURL.parseURIEncoded(fileInfo.URL) : null);
