@@ -308,7 +308,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 parentArea.runLogs();
             }
         } catch (SVNException svne) {
-            SVNErrorMessage err = svne.getErrorMessage().wrap("Error running log file for ''{0}''", parent.getPath());
+            SVNErrorMessage err = svne.getErrorMessage().wrap("Error running log file for ''{0}''", parentArea.getRoot());
             SVNErrorManager.error(err, svne, SVNLogType.WC);
         }
 
