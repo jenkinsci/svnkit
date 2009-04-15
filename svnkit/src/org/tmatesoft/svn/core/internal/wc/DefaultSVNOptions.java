@@ -428,20 +428,34 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             String pattern = (String) names.next();
             String value = (String) autoProperties.get(pattern);
             if (value != null && !"".equals(value) && matches(pattern, fileName)) {
-                for (StringTokenizer tokens = new StringTokenizer(value, ";"); tokens.hasMoreTokens();) {
-                    String token = tokens.nextToken().trim();
-                    int i = token.indexOf('=');
-                    if (i < 0) {
-                        target.put(token, "");
-                    } else {
-                        String name = token.substring(0, i).trim();
-                        String pValue = i == token.length() - 1 ? "" : token.substring(i + 1).trim();
-                        if (!"".equals(name.trim())) {
-                            if (pValue.startsWith("\"") && pValue.endsWith("\"") && pValue.length() > 1) {
-                                pValue = pValue.substring(1, pValue.length() - 1);
+                StringBuffer token = new StringBuffer();
+                for (int i = 0; i < value.length(); i++) {
+                    char ch = value.charAt(i);
+                    if (ch == ';') {
+                        if (i + 1 < value.length() && value.charAt(i + 1) == ';') {
+                            // escaped ;
+                            token.append(';');
+                            i++;
+                        } else {
+                            // another token.
+                            String t = token.toString().trim();
+                            int index = t.indexOf('=');
+                            if (index < 0) {
+                                target.put(t, "");
+                            } else {
+                                String name = t.substring(0, index).trim();
+                                String pValue = index == t.length() - 1 ? "" : t.substring(index + 1).trim();
+                                if (!"".equals(name.trim())) {
+                                    if (pValue.startsWith("\"") && pValue.endsWith("\"") && pValue.length() > 1) {
+                                        pValue = pValue.substring(1, pValue.length() - 1);
+                                    }
+                                    target.put(name, pValue);
+                                }
                             }
-                            target.put(name, pValue);
+                            token.delete(0, token.length());
                         }
+                    } else {
+                        token.append(ch);
                     }
                 }
             }
