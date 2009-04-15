@@ -434,7 +434,7 @@ public class SVNCommandUtil {
         }
         if (!quiet) {
             message += 
-                "\nCopyright (c) 2004-2008 TMate Software.\n" +
+                "\nCopyright (c) 2004-2009 TMate Software.\n" +
                 "SVNKit is open source (GPL) software, see http://svnkit.com/ for more information.\n" +
                 "SVNKit is pure Java (TM) version of Subversion, see http://subversion.tigris.org/";
         }
