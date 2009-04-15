@@ -90,8 +90,9 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
         } else if (element == DAVElement.SVN_LOCK_OWNER && cdata != null) {
             myOwner = cdata.toString();
             if (myIsBase64) {
-                byte[] buffer = allocateBuffer(myComment.trim().length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), buffer);
+                StringBuffer sb = SVNBase64.normalizeBase64(new StringBuffer(myComment));
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
                 try {
                     myOwner = new String(buffer, 0, length, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
@@ -106,8 +107,9 @@ public class DAVGetLocksHandler extends BasicDAVHandler {
                 myComment = "";
             }
             if (myIsBase64) {
-                byte[] buffer = allocateBuffer(myComment.trim().length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(myComment.trim()), buffer);
+                StringBuffer sb = SVNBase64.normalizeBase64(new StringBuffer(myComment));
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
                 try {
                     myComment = new String(buffer, 0, length, "UTF-8");
                 } catch (UnsupportedEncodingException e) {

@@ -229,8 +229,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myPropertyName != null) {
-                byte[] buffer = allocateBuffer(cdata.length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
+                StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
                 SVNPropertyValue property = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
                 if (element == CHANGE_FILE_PROPERTY) {
                     myEditor.changeFileProperty(myPath, myPropertyName, property);

@@ -90,6 +90,17 @@ public class SVNBase64 {
     public static int base64ToByteArray(StringBuffer s, byte[] buffer) {
         return base64ToByteArray(s, buffer, false);
     }
+    
+    public static StringBuffer normalizeBase64(StringBuffer in) {
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < in.length(); i++) {
+            if (Character.isWhitespace(in.charAt(i))) {
+                continue;
+            }
+            result.append(in.charAt(i));
+        }
+        return result;
+    }
 
     private static int base64ToByteArray(StringBuffer s, byte[] result, boolean alternate) {
         byte[] alphaToInt = (alternate ? altBase64ToInt : base64ToInt);

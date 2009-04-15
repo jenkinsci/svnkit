@@ -167,9 +167,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             }
             if (myPropertyName != null) {
                 if ("base64".equals(myPropertyEncoding)) {
-                    byte[] bytes = allocateBuffer(cdata.length());
-                    int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), bytes);
-                    SVNPropertyValue value = SVNPropertyValue.create(myPropertyName, bytes, 0, length);
+                    StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                    byte[] buffer = allocateBuffer(sb.length());
+                    int length = SVNBase64.base64ToByteArray(sb, buffer);
+                    SVNPropertyValue value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
                     myPropertiesDelta.put(myPropertyName, value);
                 } else {
                     myPropertiesDelta.put(myPropertyName, cdata.toString());
