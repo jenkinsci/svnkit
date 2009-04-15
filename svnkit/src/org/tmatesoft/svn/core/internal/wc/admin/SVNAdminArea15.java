@@ -16,10 +16,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 
 
 /**
@@ -31,6 +33,15 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
     public static final int WC_FORMAT = SVNAdminArea15Factory.WC_FORMAT;
 
     protected static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
+
+    private static final Set INAPPLICABLE_PROPERTIES = new SVNHashSet();
+
+    static {
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_PATH);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_REVISION);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.TREE_CONFLICT_DATA);
+    }
 
     public SVNAdminArea15(File dir) {
         super(dir);
@@ -129,6 +140,6 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
     }
 
     protected boolean isEntryPropertyApplicable(String propName) {
-        return propName != null;
+        return propName != null && !INAPPLICABLE_PROPERTIES.contains(propName);
     }
 }

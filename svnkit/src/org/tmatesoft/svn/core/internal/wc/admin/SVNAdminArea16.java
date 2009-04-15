@@ -213,4 +213,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         str = str.delete(0, ind + 1);
         return revision;
     }
+
+    protected boolean isEntryPropertyApplicable(String propName) {
+        return propName != null;
+    }
 }
