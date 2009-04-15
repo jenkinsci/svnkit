@@ -38,12 +38,22 @@ public class FSPacker {
     private ISVNCanceller myCanceller;
     private ISVNAdminEventHandler myNotifyHandler;
     
-    public FSPacker(ISVNCanceller canceller) {
-        myCanceller = canceller == null ? ISVNCanceller.NULL : canceller;
+    public FSPacker(ISVNAdminEventHandler notifyHandler) {
+        myCanceller = notifyHandler == null ? ISVNCanceller.NULL : notifyHandler;
+        myNotifyHandler = notifyHandler;
     }
     
-    public void pack(FSFS fsfs) {
-        //TODO: lock write-lock file and call packImpl()
+    public void pack(FSFS fsfs) throws SVNException {
+        FSWriteLock writeLock = FSWriteLock.getWriteLockForDB(fsfs);
+        synchronized (writeLock) {
+            try {
+                writeLock.lock();
+                packImpl(fsfs);
+            } finally {
+                writeLock.unlock();
+                FSWriteLock.release(writeLock);
+            }
+        }
     }
     
     private void packImpl(FSFS fsfs) throws SVNException {
@@ -82,7 +92,7 @@ public class FSPacker {
         SVNFileUtil.deleteAll(packDir, false, myCanceller);
         
         long startRev = shard * fsfs.getMaxFilesPerDirectory();
-        long endRev = (shard + 1) * fsfs.getMaxFilesPerDirectory();
+        long endRev = (shard + 1) * fsfs.getMaxFilesPerDirectory() - 1;
         long nextOffset = 0;
         OutputStream packFileOS = null;
         OutputStream manifestFileOS = null;
@@ -126,6 +136,5 @@ public class FSPacker {
             myNotifyHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
-
 
 }

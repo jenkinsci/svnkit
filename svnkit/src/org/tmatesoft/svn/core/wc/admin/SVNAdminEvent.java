@@ -297,4 +297,9 @@ public class SVNAdminEvent {
     public void setDroppedNodesCount(int droppedNodesCount) {
         myDroppedNodesCount = droppedNodesCount;
     }
+    
+    public long getShard() {
+        return myShard;
+    }
+
 }

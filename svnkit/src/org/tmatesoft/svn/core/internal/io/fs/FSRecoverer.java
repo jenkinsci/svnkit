@@ -36,7 +36,7 @@ public class FSRecoverer {
     
     public FSRecoverer(FSFS owner, ISVNCanceller canceller) {
         myOwner = owner;
-        myCanceller = canceller;
+        myCanceller = canceller == null ? ISVNCanceller.NULL : canceller;
     }
     
     public void runRecovery() throws SVNException {
@@ -69,12 +69,10 @@ public class FSRecoverer {
             String[] maxNodeID = { "0" };
             String[] maxCopyID = { "0" };
             for (long rev = 0; rev <= maxRev; rev++) {
-                if (myCanceller != null) {
-                    myCanceller.checkCancelled();
-                }
+                myCanceller.checkCancelled();
                 FSFile revFile = null;
                 try {
-                    revFile = myOwner.getRevisionFSFile(rev);
+                    revFile = myOwner.getPackOrRevisionFSFile(rev);
                     FSRepositoryUtil.loadRootChangesOffset(myOwner, rev, revFile, rootOffset, null);
                     findMaxIDs(rev, revFile, rootOffset[0], maxNodeID, maxCopyID);
                 } finally {
@@ -196,9 +194,13 @@ public class FSRecoverer {
     private long getLargestRevision() throws SVNException {
         long right = 1;
         while (true) {
-            File revFile = myOwner.getRevisionFile(right);
-            if (!revFile.exists()) {
-                break;
+            try {
+                myOwner.getPackOrRevisionFSFile(right); 
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                    break;
+                } 
+                throw svne;
             }
             right <<= 1;
         }
@@ -207,11 +209,15 @@ public class FSRecoverer {
         
         while (left + 1 < right) {
             long probe = left + (right - left)/2;
-            File revFile = myOwner.getRevisionFile(probe);
-            if (!revFile.exists()) {
-                right = probe;
-            } else {
+            try {
+                myOwner.getPackOrRevisionFSFile(probe); 
                 left = probe;
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                    right = probe;
+                } else {
+                    throw svne;
+                }
             }
         }
         return left;

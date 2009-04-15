@@ -133,13 +133,32 @@ public class FSHotCopier {
         FSRepositoryUtil.checkReposDBFormat(format);
         SVNFileUtil.copyFile(srcOwner.getCurrentFile(), dstOwner.getCurrentFile(), true);
         SVNFileUtil.copyFile(srcOwner.getUUIDFile(), dstOwner.getUUIDFile(), true);
+        
+        long minUnpackedRevision = 0;
+        if (format >= FSFS.MIN_PACKED_FORMAT) {
+            SVNFileUtil.copyFile(srcOwner.getMinUnpackedRevFile(), dstOwner.getMinUnpackedRevFile(), true);
+            minUnpackedRevision = srcOwner.getMinUnpackedRev();
+        }
         long youngestRev = dstOwner.getYoungestRevision();
         
         File dstRevsDir = dstOwner.getDBRevsDir();
         dstRevsDir.mkdirs();
         
         long maxFilesPerDirectory = srcOwner.getMaxFilesPerDirectory();
-        for (long rev = 0; rev <= youngestRev; rev++) {
+        long rev = 0;
+        for (; rev < minUnpackedRevision; rev += srcOwner.getMaxFilesPerDirectory()) {
+            long packedShard = rev / maxFilesPerDirectory;
+            SVNFileUtil.copyDirectory(srcOwner.getPackDir(packedShard), dstOwner.getPackDir(packedShard), false, null);
+        }
+        
+        if (rev != minUnpackedRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed: expected minimal unpacked revision {0}, but real revision is {1}", 
+                    new Object[] { String.valueOf(minUnpackedRevision), String.valueOf(rev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+            
+        for (; rev <= youngestRev; rev++) {
             File dstDir = dstRevsDir;
             if (maxFilesPerDirectory > 0) {
                 String shard = String.valueOf(rev / maxFilesPerDirectory);
@@ -149,7 +168,7 @@ public class FSHotCopier {
         }
 
         File dstRevPropsDir = dstOwner.getRevisionPropertiesRoot();
-        for (long rev = 0; rev <= youngestRev; rev++) {
+        for (rev = 0; rev <= youngestRev; rev++) {
             File dstDir = dstRevPropsDir;
             if (maxFilesPerDirectory > 0) {
                 String shard = String.valueOf(rev / maxFilesPerDirectory);

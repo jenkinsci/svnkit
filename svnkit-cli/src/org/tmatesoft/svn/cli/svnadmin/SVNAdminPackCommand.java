@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,9 +11,7 @@
  */
 package org.tmatesoft.svn.cli.svnadmin;
 
-import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.LinkedList;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
@@ -25,37 +23,30 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNAdminRecoverCommand extends SVNAdminCommand implements ISVNAdminEventHandler {
+public class SVNAdminPackCommand extends SVNAdminCommand implements ISVNAdminEventHandler {
 
-    public SVNAdminRecoverCommand() {
-        super("recover", null);
+    public SVNAdminPackCommand() {
+        super("pack", null);
     }
-
+    
     protected Collection createSupportedOptions() {
-        Collection options = new LinkedList();
-        options.add(SVNAdminOption.WAIT);
-        return options;
+        return null;
     }
 
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
         client.setEventHandler(this);
-        client.doRecover(getLocalRepository());
-        getEnvironment().getOut().println();
-        getEnvironment().getOut().println("Recovery completed.");
-        long youngestRevision = client.getYoungestRevision(getLocalRepository());
-        String message = "The latest repos revision is {0}.";
-        message = MessageFormat.format(message, new Object[] { String.valueOf(youngestRevision) });
-        getEnvironment().getOut().println(message);
+        client.doPack(getLocalRepository());
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
-        if (event.getAction() == SVNAdminEventAction.RECOVERY_STARTED) {
-            getEnvironment().getOut().println("Repository lock acquired.");
-            getEnvironment().getOut().println("Please wait; recovering the repository may take some time...");
+        if (event.getAction() == SVNAdminEventAction.PACK_START) {
+            getEnvironment().getOut().print("Packing shard " + event.getShard() + "...");
+        } else if (event.getAction() == SVNAdminEventAction.PACK_END) {
+            getEnvironment().getOut().println("done.");
         }
     }
 

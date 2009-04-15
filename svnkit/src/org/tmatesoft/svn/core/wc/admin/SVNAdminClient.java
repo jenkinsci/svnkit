@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSHotCopier;
+import org.tmatesoft.svn.core.internal.io.fs.FSPacker;
 import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -483,6 +484,12 @@ public class SVNAdminClient extends SVNBasicClient {
                 toRepos.closeSession();
             }
         }
+    }
+    
+    public void doPack(File repositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
+        FSPacker packer = new FSPacker(myEventHandler);
+        packer.pack(fsfs);
     }
     
     /**

@@ -489,7 +489,11 @@ public class FSFS {
                     File txnProtoRevsDir = getTransactionProtoRevsDir();
                     txnProtoRevsDir.mkdirs();
                 }
-                writeDBFormat(DB_FORMAT, 0, true);
+                
+                if (myDBFormat < MIN_PACKED_FORMAT) {
+                    SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
+                }
+                writeDBFormat(DB_FORMAT, myMaxFilesPerDirectory, true);
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
