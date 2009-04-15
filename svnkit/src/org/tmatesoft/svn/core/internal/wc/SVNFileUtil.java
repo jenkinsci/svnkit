@@ -543,7 +543,7 @@ public class SVNFileUtil {
     }
 
     public static boolean symlinksSupported() {
-        return !(isWindows || isOpenVMS);
+        return !(isWindows || isOpenVMS) && SVNFileType.isSymlinkSupportEnabled();
     }
 
     public static void setSGID(File dir) {

@@ -1356,7 +1356,7 @@ public abstract class SVNAdminArea {
         String charset = SVNTranslator.getCharset(charsetProp, text.getPath(), getWCAccess().getOptions());
         String eolStyle = getProperties(text.getName()).getStringPropertyValue(SVNProperty.EOL_STYLE);
         String keywords = getProperties(text.getName()).getStringPropertyValue(SVNProperty.KEYWORDS);
-        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null;
+        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null && SVNFileUtil.symlinksSupported();
 
         if (special) {
             compareTextBase = true;
