@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -229,7 +230,11 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         myCurrentRevision = fileRevision.getRevision();
         boolean known = fileRevision.getRevision() >= myStartRevision;
         if (myCancelBaton != null) {
-            SVNEvent event = SVNEventFactory.createSVNEvent(new File(myPath), SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null);
+            File file = SVNPathUtil.isURL(myPath) ? null : new File(myPath);
+            SVNEvent event = SVNEventFactory.createSVNEvent(file, SVNNodeKind.NONE, null, myCurrentRevision, SVNEventAction.ANNOTATE, null, null, null);
+            if (file == null) {
+                event.setURL(SVNURL.parseURIDecoded(myPath));
+            }
             myCancelBaton.handleEvent(event, ISVNEventHandler.UNKNOWN);
             myCancelBaton.checkCancelled();
         }
