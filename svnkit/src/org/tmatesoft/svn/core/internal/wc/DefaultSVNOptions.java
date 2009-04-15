@@ -431,29 +431,36 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
                 StringBuffer token = new StringBuffer();
                 for (int i = 0; i < value.length(); i++) {
                     char ch = value.charAt(i);
-                    if (ch == ';') {
+                    if (ch == ';' || i == value.length() - 1) {
                         if (i + 1 < value.length() && value.charAt(i + 1) == ';') {
                             // escaped ;
                             token.append(';');
                             i++;
-                        } else {
-                            // another token.
-                            String t = token.toString().trim();
-                            int index = t.indexOf('=');
-                            if (index < 0) {
-                                target.put(t, "");
-                            } else {
-                                String name = t.substring(0, index).trim();
-                                String pValue = index == t.length() - 1 ? "" : t.substring(index + 1).trim();
-                                if (!"".equals(name.trim())) {
-                                    if (pValue.startsWith("\"") && pValue.endsWith("\"") && pValue.length() > 1) {
-                                        pValue = pValue.substring(1, pValue.length() - 1);
-                                    }
-                                    target.put(name, pValue);
-                                }
+                            if (i < value.length() - 1) {
+                                continue;
                             }
-                            token.delete(0, token.length());
+                            // escaped at the end of the line.
+                        } 
+                        if (ch != ';') {
+                            // just last character.
+                            token.append(ch);
                         }
+                        // another token.
+                        String t = token.toString().trim();
+                        int index = t.indexOf('=');
+                        if (index < 0) {
+                            target.put(t, "");
+                        } else {
+                            String name = t.substring(0, index).trim();
+                            String pValue = index == t.length() - 1 ? "" : t.substring(index + 1).trim();
+                            if (!"".equals(name.trim())) {
+                                if (pValue.startsWith("\"") && pValue.endsWith("\"") && pValue.length() > 1) {
+                                    pValue = pValue.substring(1, pValue.length() - 1);
+                                }
+                                target.put(name, pValue);
+                            }
+                        }
+                        token = token.delete(0, token.length());
                     } else {
                         token.append(ch);
                     }
