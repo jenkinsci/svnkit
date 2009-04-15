@@ -22,10 +22,23 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.trilead</groupId>
+      <groupId>org.jvnet.hudson</groupId>
       <artifactId>trilead-ssh2</artifactId>
       <version>build212-hudson-1</version>
       <optional>true</optional>
     </dependency>
   </dependencies>
+  
+  <repositories>
+    <repository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
 </project>

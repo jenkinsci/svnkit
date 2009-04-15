@@ -185,6 +185,13 @@
     <option name="Skip Tests" value="false" />
     <pom-list />
   </component>
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/pom.xml" />
+      </list>
+    </option>
+  </component>
   <component name="Palette2">
     <group name="Swing">
       <item class="com.intellij.uiDesigner.HSpacer" tooltip-text="Horizontal Spacer" icon="/com/intellij/uiDesigner/icons/hspacer.png" removable="false" auto-create-binding="false" can-attach-label="false">
@@ -317,7 +324,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/contrib/javahl/javahl.iml" filepath="$PROJECT_DIR$/contrib/javahl/javahl.iml" />
       <module fileurl="file://$PROJECT_DIR$/contrib/sequence/sequence.iml" filepath="$PROJECT_DIR$/contrib/sequence/sequence.iml" />
-      <module fileurl="file://$PROJECT_DIR$/svnkit/svnkit.iml" filepath="$PROJECT_DIR$/svnkit/svnkit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/svnkit.iml" filepath="$PROJECT_DIR$/svnkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" filepath="$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/doc/examples/svnkit-examples.iml" filepath="$PROJECT_DIR$/doc/examples/svnkit-examples.iml" />
       <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
@@ -358,7 +365,32 @@
       <setting name="state" value="2" />
     </Base>
   </component>
+  <component name="libraryTable">
+    <library name="Maven: com.sun.jna:jna:3.0.5">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/sun/jna/jna/3.0.5/jna-3.0.5.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/sun/jna/jna/3.0.5/jna-3.0.5-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/sun/jna/jna/3.0.5/jna-3.0.5-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.jvnet.hudson:trilead-ssh2:build212-hudson-1">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-1/trilead-ssh2-build212-hudson-1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-1/trilead-ssh2-build212-hudson-1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-1/trilead-ssh2-build212-hudson-1-sources.jar!/" />
+      </SOURCES>
+    </library>
+  </component>
   <UsedPathMacros>
+    <macro name="MAVEN_REPOSITORY" description="Maven Local Repostiry" />
     <macro name="TEMPLATE" />
   </UsedPathMacros>
 </project>
