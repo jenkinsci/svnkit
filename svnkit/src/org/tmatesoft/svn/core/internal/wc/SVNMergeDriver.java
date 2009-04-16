@@ -1078,7 +1078,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	SVNURL sourceRootURL = repository.getRepositoryRoot(true);
     	String mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, null);
     	myChildrenWithMergeInfo = getMergeInfoPaths(myChildrenWithMergeInfo, mergeInfoPath, parentEntry, 
-    			sourceRootURL, revision1, revision2, repository, depth);
+    			sourceRootURL, revision1, revision2, honorMergeInfo, repository, depth);
 
     	MergePath targetMergePath = (MergePath) myChildrenWithMergeInfo.get(0);
         myIsTargetMissingChild = targetMergePath.myHasMissingChildren;
@@ -2559,14 +2559,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     
     private List getMergeInfoPaths(final List children, final String mergeSrcPath, 
     		SVNEntry entry, final SVNURL sourceRootURL, final long revision1, 
-    		final long revision2, final SVNRepository repository, final SVNDepth depth) throws SVNException {
+    		final long revision2, boolean honorMergeInfo, final SVNRepository repository, final SVNDepth depth) throws SVNException {
     	final List childrenWithMergeInfo = children == null ? new LinkedList() : children;
         ISVNEntryHandler handler = getMergeInfoEntryHandler(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, childrenWithMergeInfo);
 
         if (entry.isFile()) {
             handler.handleEntry(myTarget, entry);
         } else {
-            myWCAccess.walkEntries(myTarget, handler, true, depth);
+            myWCAccess.walkEntries(myTarget, handler, true, honorMergeInfo ? depth : SVNDepth.EMPTY);
         }
         
         Collections.sort(childrenWithMergeInfo);
