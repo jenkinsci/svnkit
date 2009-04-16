@@ -576,6 +576,16 @@ public class SVNMergeInfoUtil {
         return (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
     }
 
+    /**
+     * @return [deletedList, addedList]
+     */
+    public static SVNMergeRangeList[] diffMergeRangeLists(SVNMergeRangeList fromRangeList, SVNMergeRangeList toRangeList, 
+            boolean considerInheritance) {
+        SVNMergeRangeList deletedRangeList = fromRangeList.diff(toRangeList, considerInheritance);
+        SVNMergeRangeList addedRangeList = toRangeList.diff(fromRangeList, considerInheritance);
+        return new SVNMergeRangeList[] { deletedRangeList, addedRangeList };
+    }
+    
     private static long parseRevision(StringBuffer mergeInfo) throws SVNException {
         int ind = 0;
         while (ind < mergeInfo.length() && Character.isDigit(mergeInfo.charAt(ind))) {
@@ -618,10 +628,10 @@ public class SVNMergeInfoUtil {
             SVNMergeRangeList fromRangeList = (SVNMergeRangeList) from.get(path);
             SVNMergeRangeList toRangeList = (SVNMergeRangeList) to.get(path);
             if (toRangeList != null) {
-                SVNMergeRangeList deletedRangeList = fromRangeList.diff(toRangeList, 
-                                                                        considerInheritance);
-                SVNMergeRangeList addedRangeList = toRangeList.diff(fromRangeList, 
-                                                                    considerInheritance);
+                SVNMergeRangeList[] rangeListDiff = diffMergeRangeLists(fromRangeList, toRangeList, considerInheritance);
+                
+                SVNMergeRangeList deletedRangeList = rangeListDiff[0];
+                SVNMergeRangeList addedRangeList = rangeListDiff[1];
                 if (deleted != null && deletedRangeList.getSize() > 0) {
                     deleted.put(path, deletedRangeList);
                 }

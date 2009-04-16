@@ -2790,7 +2790,12 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 targetMergeInfo, implicitMergeInfo, revision1, revision2, primaryURL, repository); 
         
         if (isSubtree) {
-            adjustDeletedSubTreeRanges(child, parent, mergeInfoPath, revision1, revision2, primaryURL, repository);
+            SVNMergeRangeList[] rangeListDiff = SVNMergeInfoUtil.diffMergeRangeLists(child.myRemainingRanges, parent.myRemainingRanges, true);
+            SVNMergeRangeList deletedRangeList = rangeListDiff[0];
+            SVNMergeRangeList addedRangeList = rangeListDiff[1];
+            if (!deletedRangeList.isEmpty() || !addedRangeList.isEmpty()) {
+                adjustDeletedSubTreeRanges(child, parent, mergeInfoPath, revision1, revision2, primaryURL, repository);
+            }
         }
 
         if ((child.myRemainingRanges == null || child.myRemainingRanges.isEmpty()) &&
