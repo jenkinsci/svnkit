@@ -358,7 +358,7 @@ public class Export {
          * like to store the result of delta application. 
          */
         public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-            myDeltaProcessor.applyTextDelta(null, new File(myRootDirectory, path), false);
+            myDeltaProcessor.applyTextDelta((File) null, new File(myRootDirectory, path), false);
         }
 
         /*

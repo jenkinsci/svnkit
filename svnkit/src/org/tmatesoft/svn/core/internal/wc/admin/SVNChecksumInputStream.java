@@ -25,23 +25,46 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  */
 public class SVNChecksumInputStream extends InputStream {
     
+    public static final String MD5_ALGORITHM = "MD5";
+    
     private InputStream mySource;
     private MessageDigest myDigest;
     private byte[] myDigestResult;
-
-    public SVNChecksumInputStream(InputStream source) {
+    private boolean myCloseSource;
+    private boolean myReadToEnd;
+    private boolean myStreamIsFinished;
+    
+    public SVNChecksumInputStream(InputStream source, String algorithm, boolean closeSource, boolean readToEnd) {
         mySource = source;
+        myCloseSource = closeSource;
+        myReadToEnd = readToEnd;
+        algorithm = algorithm == null ? MD5_ALGORITHM : algorithm;
         try {
-            myDigest = MessageDigest.getInstance("MD5");
+            myDigest = MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
         }
     }
 
+    public long skip(long n) throws IOException {
+        long skippedN = 0;
+        int r = -1;
+        while ((r = read()) != -1 && n-- > 0) {
+            skippedN++;
+        }
+        if (r == -1) {
+            myStreamIsFinished = true;
+        }
+        return skippedN;
+    }
+    
     public int read(byte[] b, int off, int len) throws IOException {
         int r = mySource.read(b, off, len);
         if (r >= 0) {
             myDigest.update(b, 0, r);
+        } else {
+            myStreamIsFinished = true;
         }
+        
         return r;
     }
 
@@ -49,6 +72,8 @@ public class SVNChecksumInputStream extends InputStream {
         int r = mySource.read(b);
         if (r >= 0) {
             myDigest.update(b, 0, r);
+        } else {
+            myStreamIsFinished = true;
         }
         return r;
     }
@@ -57,11 +82,23 @@ public class SVNChecksumInputStream extends InputStream {
         int r = mySource.read();
         if (r >= 0) {
             myDigest.update((byte) (r & 0xFF));
+        } else {
+            myStreamIsFinished = true;
         }
         return r;
     }
 
     public void close() throws IOException {
+        if (myReadToEnd && !myStreamIsFinished) {
+            while (read() != -1) {
+                continue;
+            }
+            myStreamIsFinished = true;
+        }
+        if (myCloseSource) {
+            mySource.close();
+        }
+
         myDigestResult = myDigest.digest();
     }
     

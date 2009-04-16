@@ -1375,7 +1375,7 @@ public abstract class SVNAdminArea {
                 textStream = special ? null : SVNFileUtil.openFileForReading(text, SVNLogType.WC);
                 if (checksum) {
                     if (entry.getChecksum() != null) {
-                        checksumStream = new SVNChecksumInputStream(baseStream);
+                        checksumStream = new SVNChecksumInputStream(baseStream, SVNChecksumInputStream.MD5_ALGORITHM, false, false);
                         baseStream = checksumStream;
                     }
                 }

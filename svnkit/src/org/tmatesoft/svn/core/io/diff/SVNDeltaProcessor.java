@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 public class SVNDeltaProcessor {
     
     private SVNDiffWindowApplyBaton myApplyBaton;
-    
+
     /**
      * Creates a processor. 
      */
@@ -103,7 +103,14 @@ public class SVNDeltaProcessor {
         InputStream base = baseFile != null && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile) : SVNFileUtil.DUMMY_IN;
         applyTextDelta(base, SVNFileUtil.openFileForWriting(targetFile), computeCheksum);
     }
-    
+
+    public void applyTextDelta(InputStream baseIS, File targetFile, boolean computeTargetCheksum) throws SVNException {
+        if (!targetFile.exists()) {
+            SVNFileUtil.createEmptyFile(targetFile);
+        }
+        applyTextDelta(baseIS, SVNFileUtil.openFileForWriting(targetFile), computeTargetCheksum);
+    }
+
     /**
      * Receives a next diff window to be applied. The return value is a 
      * dummy stream (left for backward compatibility) since new data should 

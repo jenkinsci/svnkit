@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
@@ -36,6 +37,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -1026,25 +1028,12 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
             myCurrentFile.newBaseFile = adminArea.getBaseFile(myCurrentFile.name, true);
         }
 
-        if (entry != null && entry.getChecksum() != null) {
-            String realChecksum = SVNFileUtil.computeChecksum(myCurrentFile.baseFile);
-            if (baseChecksum != null) {
-                if (!baseChecksum.equals(realChecksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE,
-                            "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
-                            new Object[] {myCurrentFile.baseFile, baseChecksum, realChecksum});
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-            }
-
-            String realChecksumSafe = realChecksum == null ? "" : realChecksum;
-            String entryChecksumSafe = entry.getChecksum() == null ? "" : entry.getChecksum();
-            if (!replaced && !realChecksumSafe.equals(entryChecksumSafe)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE,
-                        "Checksum mismatch for ''{0}''; recorded: ''{1}'', actual: ''{2}''",
-                        new Object[] {myCurrentFile.baseFile, entry.getChecksum(), realChecksum});
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+        String checksum = entry != null ? entry.getChecksum() : null; 
+        if (!replaced && baseChecksum != null && checksum != null && !baseChecksum.equals(checksum)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE,
+                    "Checksum mismatch for ''{0}''; expected: ''{1}'', recorded: ''{2}''",
+                    new Object[] { myCurrentFile.baseFile, baseChecksum, checksum });
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
 
         File baseSrcFile = null;
@@ -1055,8 +1044,24 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
                 baseSrcFile = myCurrentFile.copiedBaseText;
             }
         }
+        
+        if (replaced || checksum == null) {
+            checksum = baseChecksum;
+        }
+
         File baseTmpFile = myCurrentFile.newBaseFile;
-        myDeltaProcessor.applyTextDelta(baseSrcFile, baseTmpFile, true);
+
+        if (checksum != null) {
+            myCurrentFile.expectedSrcChecksum = checksum;
+            InputStream baseIS = baseSrcFile != null && baseSrcFile.exists() ? SVNFileUtil.openFileForReading(baseSrcFile) : 
+                SVNFileUtil.DUMMY_IN;
+            myCurrentFile.sourceChecksumStream = baseIS != SVNFileUtil.DUMMY_IN ? new SVNChecksumInputStream(baseIS, SVNChecksumInputStream.MD5_ALGORITHM, true, true) :
+                null;
+            myDeltaProcessor.applyTextDelta(myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream : baseIS, 
+                    baseTmpFile, true);
+        } else {
+            myDeltaProcessor.applyTextDelta(baseSrcFile, baseTmpFile, true);
+        }
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
@@ -1076,6 +1081,16 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
     public void textDeltaEnd(String commitPath) throws SVNException {
         if (!myCurrentFile.isSkipped) {
             myCurrentFile.checksum = myDeltaProcessor.textDeltaEnd();
+        }
+
+        if (myCurrentFile.expectedSrcChecksum != null) {
+            String actualSourceChecksum = myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream.getDigest() : null;
+            if (!myCurrentFile.expectedSrcChecksum.equals(actualSourceChecksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                        "Checksum mismatch while updating ''{0}''; expected: ''{1}'', actual: ''{2}''", 
+                        new Object[] { myCurrentFile.baseFile, myCurrentFile.expectedSrcChecksum, actualSourceChecksum });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
     }
 
@@ -2046,6 +2061,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         public String name;
         public String commitTime;
         public String checksum;
+        public String expectedSrcChecksum;
         public File baseFile;
         public File newBaseFile;
         public boolean addedWithHistory;
@@ -2054,7 +2070,7 @@ public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
         private SVNProperties copiedWorkingProperties;
         private File copiedBaseText;
         private File copiedWorkingText;
-
+        private SVNChecksumInputStream sourceChecksumStream;
         private boolean treeConficted;
 
 //     Set if this file is locally deleted or is being added
