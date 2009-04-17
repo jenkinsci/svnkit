@@ -60,7 +60,8 @@ public class SVNWinSecurity {
         if (token != null) {
             StringBuffer tokenBuffer = new StringBuffer(token);
             byte[] tmp = new byte[tokenBuffer.length()];
-            int resultLength = SVNBase64.base64ToByteArray(tokenBuffer, tmp);
+            StringBuffer sb = SVNBase64.normalizeBase64(tokenBuffer);
+            int resultLength = SVNBase64.base64ToByteArray(sb, tmp);
             input = new byte[resultLength];
             System.arraycopy(tmp, 0, input, 0, resultLength);
         }

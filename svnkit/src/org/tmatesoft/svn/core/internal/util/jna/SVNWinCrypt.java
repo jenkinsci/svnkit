@@ -35,7 +35,8 @@ class SVNWinCrypt {
             return encryptedData;
         }
         byte[] buffer = new byte[encryptedData.length()];
-        int decodedBytes = SVNBase64.base64ToByteArray(new StringBuffer(encryptedData), buffer);
+        StringBuffer sb = SVNBase64.normalizeBase64(new StringBuffer(encryptedData));
+        int decodedBytes = SVNBase64.base64ToByteArray(sb, buffer);
         byte[] decodedBuffer = new byte[decodedBytes];
         System.arraycopy(buffer, 0, decodedBuffer, 0, decodedBytes);
         

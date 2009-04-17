@@ -532,8 +532,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myEncoding == null || "".equals(myEncoding)) {
                 value = SVNPropertyValue.create(cdata.toString());
             } else if ("base64".equals(myEncoding)) {
-                byte[] buffer = allocateBuffer(cdata.length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
+                StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
                 value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);                
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING, 
