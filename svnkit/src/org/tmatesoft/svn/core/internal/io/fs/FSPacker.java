@@ -101,7 +101,7 @@ public class FSPacker {
             manifestFileOS = SVNFileUtil.openFileForWriting(manifestFile);
             for (long rev = startRev; rev <= endRev; rev++) {
                 File path = new File(shardPath, String.valueOf(rev));
-                String line = String.valueOf(nextOffset);
+                String line = String.valueOf(nextOffset) + '\n';
                 manifestFileOS.write(line.getBytes("UTF-8"));
                 nextOffset += path.length();
                 InputStream revIS = null;
