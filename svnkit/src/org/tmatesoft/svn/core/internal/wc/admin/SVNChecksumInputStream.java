@@ -90,7 +90,8 @@ public class SVNChecksumInputStream extends InputStream {
 
     public void close() throws IOException {
         if (myReadToEnd && !myStreamIsFinished) {
-            while (read() != -1) {
+            byte[] buffer = new byte[16384];
+            while (read(buffer) != -1) {
                 continue;
             }
             myStreamIsFinished = true;
