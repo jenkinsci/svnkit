@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -947,8 +948,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         implicitMergeInfo = (Map) mergeInfoBundle[1];
 
         SVNMergeRange[] remainingRanges = remainingRangeList.getRanges();
-        SVNMergeCallback callback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
-                getMergeOptions(), myConflictedPaths, this);
+        AbstractDiffCallback callback = getMergeCallback(adminArea);
 
         String targetName = targetWCPath.getName();
         if (!myIsRecordOnly) {
@@ -1058,8 +1058,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	boolean recordMergeInfo = isRecordMergeInfo();
     	boolean sameURLs = url1.equals(url2);
 
-    	SVNMergeCallback mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
-                getMergeOptions(), myConflictedPaths, this);
+    	SVNMergeCallback mergeCallback = getMergeCallback(adminArea);
     	
     	myChildrenWithMergeInfo = new LinkedList();
     	if (!(myAreSourcesAncestral && myIsSameRepository)) {
@@ -1404,6 +1403,19 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         SVNTreeConflictDescription conflictDescription  = new SVNTreeConflictDescription(victim, kind, action, reason, SVNOperation.MERGE, 
                 leftConflictVersion, rightConflictVersion);
         adminArea.addTreeConflict(conflictDescription);
+    }
+
+    private SVNMergeCallback getMergeCallback(SVNAdminArea adminArea) {
+        SVNMergeCallback mergeCallback = null;
+        if (adminArea.getFormatVersion() < SVNAdminAreaFactory.WC_FORMAT_16 ) {
+            mergeCallback = new SVNMergeCallback2(adminArea, myURL, myIsForce, myIsDryRun, 
+                    getMergeOptions(), myConflictedPaths, this);
+        } else {
+            mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
+                    getMergeOptions(), myConflictedPaths, this); 
+        }
+         
+        return mergeCallback;
     }
 
     private void processChildrenWithNewMergeInfo() throws SVNException {
@@ -2537,7 +2549,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
 
     protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
-            SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+            AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
         if (editor == null) {
             editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
                     defaultStart, revision, myIsDryRun, this, this);

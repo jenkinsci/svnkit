@@ -825,7 +825,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         return myLockFile.isFile();
     }
 
-    protected int getFormatVersion() {
+    public int getFormatVersion() {
         return WC_FORMAT;
     }
 

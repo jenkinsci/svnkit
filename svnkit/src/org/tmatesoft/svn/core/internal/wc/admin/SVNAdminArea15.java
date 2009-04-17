@@ -47,6 +47,10 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         super(dir);
     }
 
+    public int getFormatVersion() {
+        return WC_FORMAT;
+    }
+
     protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
         String line = reader.readLine();
         if (isEntryFinished(line)) {
@@ -129,10 +133,6 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
 
         return emptyFields;
-    }
-
-    protected int getFormatVersion() {
-        return WC_FORMAT;
     }
 
     protected SVNAdminArea createAdminAreaForDir(File dir) {

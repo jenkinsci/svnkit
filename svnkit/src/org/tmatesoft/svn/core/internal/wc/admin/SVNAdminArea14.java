@@ -1967,7 +1967,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         SVNErrorManager.error(err, SVNLogType.WC);
     }
 
-    protected int getFormatVersion() {
+    public int getFormatVersion() {
         return WC_FORMAT;
     }
 

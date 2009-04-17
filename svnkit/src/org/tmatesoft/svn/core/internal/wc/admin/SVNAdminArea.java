@@ -141,6 +141,8 @@ public abstract class SVNAdminArea {
 
     public abstract void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException;
     
+    public abstract int getFormatVersion();
+
     public void updateURL(String rootURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = getWCAccess();
         for (Iterator ents = entries(false); ents.hasNext();) {
@@ -1054,8 +1056,6 @@ public abstract class SVNAdminArea {
     }
     
     protected abstract void writeEntries(Writer writer) throws IOException, SVNException;
-
-    protected abstract int getFormatVersion();
 
     protected abstract Map fetchEntries() throws SVNException;
 

@@ -106,6 +106,10 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         modifyEntry(name, attributes, true, false);
     }
 
+    public int getFormatVersion() {
+        return SVNAdminArea16Factory.WC_FORMAT;
+    }
+
     protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
         if (super.readExtraOptions(reader, entryAttrs)) {
             return true;
@@ -150,10 +154,6 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
         return emptyFields;
     }
 
-    protected int getFormatVersion() {
-        return SVNAdminArea16Factory.WC_FORMAT;
-    }
-    
     private String serializeExternalFileData(Map entryAttrs) throws SVNException {
         String representation = null;
         String path = (String) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PATH);
