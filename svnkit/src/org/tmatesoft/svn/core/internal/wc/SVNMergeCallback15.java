@@ -41,9 +41,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class SVNMergeCallback2 extends SVNMergeCallback {
+public class SVNMergeCallback15 extends SVNMergeCallback {
 
-    public SVNMergeCallback2(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, SVNDiffOptions options, 
+    public SVNMergeCallback15(SVNAdminArea adminArea, SVNURL url, boolean force, boolean dryRun, SVNDiffOptions options,
             Map conflictedPathsGetter, SVNMergeDriver mergeDriver) {
         super(adminArea, url, force, dryRun, options, conflictedPathsGetter, mergeDriver);
     }

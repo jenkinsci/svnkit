@@ -1408,7 +1408,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     private SVNMergeCallback getMergeCallback(SVNAdminArea adminArea) {
         SVNMergeCallback mergeCallback = null;
         if (adminArea.getFormatVersion() < SVNAdminAreaFactory.WC_FORMAT_16 ) {
-            mergeCallback = new SVNMergeCallback2(adminArea, myURL, myIsForce, myIsDryRun, 
+            mergeCallback = new SVNMergeCallback15(adminArea, myURL, myIsForce, myIsDryRun,
                     getMergeOptions(), myConflictedPaths, this);
         } else {
             mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
