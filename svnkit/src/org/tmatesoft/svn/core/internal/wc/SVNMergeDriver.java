@@ -784,7 +784,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
         
         if (depth == SVNDepth.UNKNOWN) {
-            depth = targetEntry.getDepth();
+            depth = SVNDepth.INFINITY;
         }
         
         myIsForce = force;
