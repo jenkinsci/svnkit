@@ -31,6 +31,10 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor15;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -766,6 +770,28 @@ public class SVNWCAccess implements ISVNEventHandler {
 
     public static boolean matchesChangeList(Collection changeLists, SVNEntry entry) {
         return changeLists == null || changeLists.isEmpty() || (entry != null && entry.getChangelistName() != null && changeLists.contains(entry.getChangelistName()));
+    }
+
+    private int getMaxFormatVersion() {
+        int maxVersion = -1;
+        for (Iterator iterator = myAdminAreas.values().iterator(); iterator.hasNext();) {
+            SVNAdminArea adminArea = (SVNAdminArea) iterator.next();
+            if (adminArea.getFormatVersion() > maxVersion) {
+                maxVersion = adminArea.getFormatVersion();
+            }
+        }
+        return maxVersion;
+    }
+
+    public ISVNUpdateEditor createUpdateEditor(SVNAdminAreaInfo info, String switchURL,
+            boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth,
+            String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
+        int maxVersion = getMaxFormatVersion();
+        if (maxVersion == SVNAdminArea15.WC_FORMAT || maxVersion == SVNAdminArea14.WC_FORMAT || maxVersion == SVNXMLAdminArea.WC_FORMAT) {
+            return SVNUpdateEditor15.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
+        } else {
+            return SVNUpdateEditor.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
+        }
     }
     
     private static class TCEntryHandler implements ISVNEntryHandler {

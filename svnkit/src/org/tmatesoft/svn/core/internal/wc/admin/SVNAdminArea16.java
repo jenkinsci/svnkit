@@ -39,6 +39,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNAdminArea16 extends SVNAdminArea15 {
 
+    public static final int WC_FORMAT = SVNAdminArea16Factory.WC_FORMAT;
+
     public SVNAdminArea16(File dir) {
         super(dir);
     }

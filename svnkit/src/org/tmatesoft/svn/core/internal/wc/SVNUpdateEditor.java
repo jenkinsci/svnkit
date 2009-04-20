@@ -62,7 +62,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class SVNUpdateEditor implements ISVNEditor, ISVNCleanupHandler {
+public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
 
     private String mySwitchURL;
     private String myTarget;

@@ -49,8 +49,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
-import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
+import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
@@ -465,7 +465,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             // reparent to the sourceURL
             repository.setLocation(sourceURL, false);
             String[] preservedExts = getOptions().getPreservedConflictFileExtensions();
-            SVNUpdateEditor editor = SVNUpdateEditor.createUpdateEditor(info, url.toString(), 
+            ISVNUpdateEditor editor = wcAccess.createUpdateEditor(info, url.toString(), 
                     allowUnversionedObstructions, depthIsSticky, depth, preservedExts, null, false);
 
             ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depthIsSticky);
@@ -546,7 +546,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             };
             
-            SVNUpdateEditor editor = SVNUpdateEditor.createUpdateEditor(adminInfo, null, allowUnversionedObstructions, 
+            ISVNUpdateEditor editor = wcAccess.createUpdateEditor(adminInfo, null, allowUnversionedObstructions, 
                     depthIsSticky, depth, preservedExts, fileFetcher, isUpdateLocksOnDemand());
 
             ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, adminInfo, depthIsSticky);

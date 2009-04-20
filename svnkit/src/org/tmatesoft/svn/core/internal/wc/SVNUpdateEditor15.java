@@ -53,7 +53,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.2.0
  * @author  TMate Software Ltd.
  */
-public class SVNUpdateEditor12 implements ISVNEditor, ISVNCleanupHandler {
+public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
 
     private String mySwitchURL;
     private String myTarget;
@@ -77,7 +77,7 @@ public class SVNUpdateEditor12 implements ISVNEditor, ISVNCleanupHandler {
     
     private boolean myIsLockOnDemand;
 
-    private SVNUpdateEditor12(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions,
+    private SVNUpdateEditor15(SVNAdminAreaInfo info, String switchURL, boolean allowUnversionedObstructions,
             boolean depthIsSticky, SVNDepth depth, String[] preservedExtensions, String targetURL, 
             String rootURL, ISVNFileFetcher fileFetcher, boolean lockOnDemand) {
         myAdminInfo = info;
@@ -1414,7 +1414,7 @@ public class SVNUpdateEditor12 implements ISVNEditor, ISVNCleanupHandler {
         return info;
     }
 
-    public static SVNUpdateEditor12 createUpdateEditor(SVNAdminAreaInfo info, String switchURL,
+    public static SVNUpdateEditor15 createUpdateEditor(SVNAdminAreaInfo info, String switchURL,
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth, 
             String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
         if (depth == SVNDepth.UNKNOWN) {
@@ -1431,8 +1431,8 @@ public class SVNUpdateEditor12 implements ISVNEditor, ISVNCleanupHandler {
             }
         }
 
-        SVNUpdateEditor12 editor =
-            new SVNUpdateEditor12(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions,
+        SVNUpdateEditor15 editor =
+            new SVNUpdateEditor15(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions,
                     entry != null ? entry.getURL() : null, entry != null ? entry.getRepositoryRoot() : null, fileFetcher, lockOnDemand);
         info.getTarget().closeEntries();
 
