@@ -50,7 +50,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
@@ -1406,16 +1405,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
 
     private SVNMergeCallback getMergeCallback(SVNAdminArea adminArea) {
-        SVNMergeCallback mergeCallback = null;
-        if (adminArea.getFormatVersion() < SVNAdminAreaFactory.WC_FORMAT_16 ) {
-            mergeCallback = new SVNMergeCallback15(adminArea, myURL, myIsForce, myIsDryRun,
-                    getMergeOptions(), myConflictedPaths, this);
-        } else {
-            mergeCallback = new SVNMergeCallback(adminArea, myURL, myIsForce, myIsDryRun, 
-                    getMergeOptions(), myConflictedPaths, this); 
-        }
-         
-        return mergeCallback;
+        return myWCAccess.createMergeCallback(this, adminArea, myURL, getMergeOptions(), myConflictedPaths, myIsForce, myIsDryRun);
     }
 
     private void processChildrenWithNewMergeInfo() throws SVNException {

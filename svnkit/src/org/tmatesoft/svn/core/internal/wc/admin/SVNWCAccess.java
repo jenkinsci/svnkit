@@ -35,10 +35,14 @@ import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor15;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback15;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -787,10 +791,22 @@ public class SVNWCAccess implements ISVNEventHandler {
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth,
             String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
         int maxVersion = getMaxFormatVersion();
-        if (maxVersion == SVNAdminArea15.WC_FORMAT || maxVersion == SVNAdminArea14.WC_FORMAT || maxVersion == SVNXMLAdminArea.WC_FORMAT) {
+        if (0 < maxVersion && maxVersion < SVNAdminArea16.WC_FORMAT) {
             return SVNUpdateEditor15.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
         } else {
             return SVNUpdateEditor.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
+        }
+    }
+
+    public SVNMergeCallback createMergeCallback(SVNMergeDriver mergeDriver, SVNAdminArea adminArea, SVNURL url,
+            SVNDiffOptions mergeOptions, Map conflictedPaths, boolean force, boolean dryRun) {
+        int maxVersion = getMaxFormatVersion();
+        if (maxVersion < SVNAdminAreaFactory.WC_FORMAT_16) {
+            return new SVNMergeCallback15(adminArea, url, force, dryRun,
+                    mergeOptions, conflictedPaths, mergeDriver);
+        } else {
+            return new SVNMergeCallback(adminArea, url, force, dryRun,
+                    mergeOptions, conflictedPaths, mergeDriver);
         }
     }
     
