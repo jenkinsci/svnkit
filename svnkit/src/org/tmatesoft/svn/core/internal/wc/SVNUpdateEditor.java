@@ -334,12 +334,12 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         SVNWCAccess access = SVNWCAccess.newInstance(myWCAccess);
         try {
             access.probeOpen(ancestor, false, 0);
+            SVNEntry entry = access.getEntry(path, true);
+            if (entry != null) {
+                ancestors.add(ancestor);
+            }
         } finally {
             access.close();
-        }
-        SVNEntry entry = access.getEntry(path, true);
-        if (entry != null) {
-            ancestors.add(ancestor);
         }
         ancestor = ancestor.getParentFile();
         access = SVNWCAccess.newInstance(myWCAccess);
