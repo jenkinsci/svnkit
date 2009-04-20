@@ -285,6 +285,11 @@ public class SVNLogRunner {
                     SVNErrorMessage err = SVNErrorMessage.create(code, "Invalid 'format' attribute");
                     SVNErrorManager.error(err, e, SVNLogType.WC);
                 }
+                if (number == 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(code, "Invalid 'format' attribute");
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+               
                 adminArea.postUpgradeFormat(number);
                 setEntriesChanged(true);
             } catch (SVNException svne) {

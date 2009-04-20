@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -108,6 +109,18 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
 
     public int getFormatVersion() {
         return SVNAdminArea16Factory.WC_FORMAT;
+    }
+
+    public void postUpgradeFormat(int format) throws SVNException {
+        super.postUpgradeFormat(format);
+        try {
+            SVNFileUtil.deleteFile(getAdminFile("format"));
+        } catch (SVNException svne) {
+        }
+    }
+
+    protected void createFormatFile(File formatFile, boolean createMyself) throws SVNException {
+        //does nothing since the working copy format v10
     }
 
     protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
