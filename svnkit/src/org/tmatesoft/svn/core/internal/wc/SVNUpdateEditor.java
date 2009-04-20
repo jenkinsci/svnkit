@@ -293,8 +293,15 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             SVNErrorManager.error(err, svne, SVNLogType.WC);
         }
 
-        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
+        if (myIsLockOnDemand && kind == SVNNodeKind.DIR) {
             SVNAdminArea childArea = myWCAccess.getAdminArea(parentArea.getFile(name));
+            if (childArea != null && !childArea.isLocked()) {
+                childArea.lock(false);
+            }
+        }
+
+        if (mySwitchURL != null && kind == SVNNodeKind.DIR) {
+            SVNAdminArea childArea = myWCAccess.retrieve(parentArea.getFile(name));
             if (childArea != null) {
                 try {
                     childArea.removeFromRevisionControl(childArea.getThisDirName(), true, false);
@@ -512,6 +519,12 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         attributes.put(SVNProperty.COPYFROM_URL, entry.getURL());
         attributes.put(SVNProperty.COPYFROM_REVISION, String.valueOf(entry.getRevision()));
         attributes.put(SVNProperty.COPIED, Boolean.TRUE.toString());
+        if (myIsLockOnDemand && entry.isDirectory()) {
+            SVNAdminArea area = myWCAccess.getAdminArea(path);
+            if (area != null && !area.isLocked()) {
+                area.lock(false);
+            }
+        }
         final SVNAdminArea adminArea = myWCAccess.retrieve(entry.isDirectory() ? path : parentPath);
         adminArea.modifyEntry(entry.isDirectory() ? adminArea.getThisDirName() : entryName, attributes, true, true);
         if (entry.isDirectory()) {
@@ -519,6 +532,14 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 public void handleEntry(File ePath, SVNEntry e) throws SVNException {
                     if (!path.equals(ePath)) {
                         SVNAdminArea eArea;
+
+                        if (myIsLockOnDemand && e.isDirectory() && !adminArea.getThisDirName().equals(e.getName())) {
+                            SVNAdminArea childArea = myWCAccess.getAdminArea(ePath);
+                            if (childArea != null && !childArea.isLocked()) {
+                                childArea.lock(false);
+                            }
+                        }
+
                         if (adminArea.getThisDirName().equals(e.getName())) {
                             eArea = myWCAccess.retrieve(ePath);
                         } else {
@@ -656,7 +677,13 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                     } else {
                         SVNURL theirURL = SVNURL.parseURIEncoded(myCurrentDirectory.URL);
                         SVNTreeConflictDescription treeConflict = checkTreeConflict(fullPath, entry, parentArea, parentDirectory.getLog(), SVNConflictAction.ADD, SVNNodeKind.DIR, theirURL);
-                        parentDirectory.flushLog();
+
+                        try {
+                            parentDirectory.flushLog();
+                        } catch (SVNException svne) {
+                            SVNErrorMessage err = svne.getErrorMessage().wrap("Error writing log file for ''{0}''", parentDirectory.getPath());
+                            SVNErrorManager.error(err, svne, SVNLogType.WC);
+                        }
 
                         if (treeConflict != null) {
                             addSkippedTree(fullPath);
