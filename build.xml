@@ -752,7 +752,7 @@
     			<include name="**/**"/>
     	    </fileset>
         </delete>
-    	<echo>##teamcity[publishArtifacts '${basedir}/build/lib/svnkit.jar']</echo>
+    	<echo>##teamcity[publishArtifacts '${basedir}/build/lib']</echo>
     	<java classpathref="python.classpath" 
               dir="${python.test.home}"
               fork="true"
