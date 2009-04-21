@@ -140,7 +140,7 @@ public class SVNCommandDaemonEnvironment {
             System.setOut(oldOut);
             System.setErr(oldErr);
             if (testName != null) {
-                commandOut.println("##teamcity[publishArtifacts '" + getPathFromTestName(testName) + "']");
+                System.out.println("##teamcity[publishArtifacts '" + getPathFromTestName(testName) + "']");
             }
             commandOut.close();
             commandErr.close();
