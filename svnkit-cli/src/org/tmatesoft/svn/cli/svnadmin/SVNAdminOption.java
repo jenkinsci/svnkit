@@ -44,6 +44,7 @@ public class SVNAdminOption extends AbstractSVNOption {
     public static final SVNAdminOption WAIT = new SVNAdminOption("wait");
     public static final SVNAdminOption PRE_14_COMPATIBLE = new SVNAdminOption("pre-1.4-compatible");
     public static final SVNAdminOption PRE_15_COMPATIBLE = new SVNAdminOption("pre-1.5-compatible");
+    public static final SVNAdminOption PRE_16_COMPATIBLE = new SVNAdminOption("pre-1.6-compatible");
 
     private SVNAdminOption(String name) {
         this(name, null, true);

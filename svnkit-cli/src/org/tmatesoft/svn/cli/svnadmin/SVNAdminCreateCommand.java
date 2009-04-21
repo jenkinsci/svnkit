@@ -36,6 +36,7 @@ public class SVNAdminCreateCommand extends SVNAdminCommand {
         options.add(SVNAdminOption.FS_TYPE);
         options.add(SVNAdminOption.PRE_14_COMPATIBLE);
         options.add(SVNAdminOption.PRE_15_COMPATIBLE);
+        options.add(SVNAdminOption.PRE_16_COMPATIBLE);
         return options;
     }
 
