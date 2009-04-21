@@ -47,6 +47,7 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
+        options.add(SVNOption.VERBOSE);
         options.add(SVNOption.RECURSIVE);
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.REVISION);
@@ -54,7 +55,6 @@ public class SVNPropGetCommand extends SVNPropertiesCommand {
         options.add(SVNOption.STRICT);
         options.add(SVNOption.XML);
         options.add(SVNOption.CHANGELIST);
-        options.add(SVNOption.VERBOSE);
         return options;
     }
 

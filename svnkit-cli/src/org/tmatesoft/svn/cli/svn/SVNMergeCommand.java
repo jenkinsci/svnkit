@@ -43,7 +43,6 @@ public class SVNMergeCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
-
         options.add(SVNOption.REVISION);
         options.add(SVNOption.CHANGE);
         options.add(SVNOption.NON_RECURSIVE);
@@ -51,6 +50,7 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.QUIET);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.DRY_RUN);
+        options.add(SVNOption.DIFF3_CMD);
         options.add(SVNOption.RECORD_ONLY);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.IGNORE_ANCESTRY);

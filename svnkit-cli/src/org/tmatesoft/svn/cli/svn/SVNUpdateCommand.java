@@ -43,6 +43,7 @@ public class SVNUpdateCommand extends SVNCommand {
         options.add(SVNOption.DEPTH);
         options.add(SVNOption.SET_DEPTH);
         options.add(SVNOption.QUIET);
+        options.add(SVNOption.DIFF3_CMD);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.CHANGELIST);

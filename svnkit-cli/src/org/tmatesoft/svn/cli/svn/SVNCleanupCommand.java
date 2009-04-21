@@ -33,6 +33,7 @@ public class SVNCleanupCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
+        options.add(SVNOption.DIFF3_CMD);
         return options;
     }
 

@@ -45,6 +45,7 @@ public class SVNCopyCommand extends SVNCommand {
         Collection options = new LinkedList();
         options.add(SVNOption.REVISION);
         options.add(SVNOption.QUIET);
+        options.add(SVNOption.IGNORE_EXTERNALS);
         options.add(SVNOption.PARENTS);
         options = SVNOption.addLogMessageOptions(options);
         return options;

@@ -32,6 +32,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption INCREMENTAL = new SVNOption("incremental");
     public static final SVNOption XML = new SVNOption("xml");
     public static final SVNOption CONFIG_DIR = new SVNOption("config-dir", false);
+    public static final SVNOption CONFIG_OPTION = new SVNOption("config-option", false);
     public static final SVNOption IGNORE_EXTERNALS = new SVNOption("ignore-externals");
     public static final SVNOption CHANGELIST = new SVNOption("changelist", false);
     public static final SVNOption HELP = new SVNOption("help", "h");
@@ -53,6 +54,7 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption WITH_REVPROP = new SVNOption("with-revprop", false);
     public static final SVNOption EDITOR_CMD = new SVNOption("editor-cmd", false);
     public static final SVNOption DIFF_CMD = new SVNOption("diff-cmd", false);
+    public static final SVNOption DIFF3_CMD = new SVNOption("diff3-cmd", false);
 
     public static final SVNOption NO_UNLOCK = new SVNOption("no-unlock");
     public static final SVNOption DRY_RUN = new SVNOption("dry-run");
@@ -82,7 +84,8 @@ public class SVNOption extends AbstractSVNOption {
     public static final SVNOption AUTHOR_OF_INTEREST = new SVNOption("author", "a", false);
     public static final SVNOption REGULAR_EXPRESSION = new SVNOption("regexp", false);
     public static final SVNOption WITH_ALL_REVPROPS = new SVNOption("with-all-revprops");
-    
+    public static final SVNOption WITH_NO_REVPROPS = new SVNOption("with-no-revprops");
+
     // auth options.
     public static final SVNOption USERNAME = new SVNOption("username", false);
     public static final SVNOption PASSWORD = new SVNOption("password", false);
