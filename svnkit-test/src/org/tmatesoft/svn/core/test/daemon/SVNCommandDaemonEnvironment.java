@@ -139,13 +139,6 @@ public class SVNCommandDaemonEnvironment {
             System.setIn(oldIn);
             System.setOut(oldOut);
             System.setErr(oldErr);
-            if (testName != null) {
-                String antBaseDir = System.getProperty("ant.basedir", "");
-                if (!"".equals(antBaseDir) && !antBaseDir.endsWith("/")) {
-                    antBaseDir += '/';
-                }
-                System.out.println("##teamcity[publishArtifacts '" + getPathFromTestName(antBaseDir, testName) + "']");
-            }
             commandOut.close();
             commandErr.close();
         }
