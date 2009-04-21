@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc.admin;
  * The <b>SVNAdminPath</b> is used to pass path information 
  * to <b>ISVNHistoryHandler</b> and <b>ISVNTreeHandler</b> 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

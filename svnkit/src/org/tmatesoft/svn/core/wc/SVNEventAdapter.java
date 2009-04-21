@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNException;
  * in future, users' event handler implementations won't get broken since the changes will be reflected in 
  * this adapter class. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

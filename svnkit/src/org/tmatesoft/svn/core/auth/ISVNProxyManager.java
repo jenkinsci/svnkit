@@ -28,7 +28,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
  * the native SVN options - read more on <b>servers</b> options in the  
  * <a href="http://svnbook.red-bean.com/nightly/en/svn.advanced.html#svn.advanced.confarea.opts.servers">Subversion online book</a>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNAuthenticationManager
  */

@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core;
 /**
  * This class contains enumeration that describes the ways of requesting merge information.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
  * file mimeType; labels to append to the file name to produce conflict files in case a merge fails with a 
  * conflict, and so on.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

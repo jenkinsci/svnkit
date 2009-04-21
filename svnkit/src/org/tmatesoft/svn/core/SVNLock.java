@@ -18,7 +18,7 @@ import java.util.Date;
  * information on a lock path, token, owner, comment, creation  
  * and expiration dates.
  * 
- * @version     1.2.0
+ * @version     1.3
  * @author      TMate Software Ltd.
  * @since 		SVN 1.2
  * @see         <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

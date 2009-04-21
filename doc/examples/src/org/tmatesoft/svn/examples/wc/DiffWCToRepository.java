@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 /**
  * This examples demonstrate how you can run WORKING:HEAD diff.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DiffWCToRepository {

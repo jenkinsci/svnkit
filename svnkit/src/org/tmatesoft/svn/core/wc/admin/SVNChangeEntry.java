@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * <b>SVNChangeEntry</b> objects are used to pass path change information to clients.
  * These objects are passed to {@link ISVNChangeEntryHandler}.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

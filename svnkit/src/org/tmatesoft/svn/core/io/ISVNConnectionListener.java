@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.io;
  * The <b>ISVNConnectionListener</b> is an interface for listeners which are invoked by {@link SVNRepository} 
  * when its connection is opened or closed.
  *  
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

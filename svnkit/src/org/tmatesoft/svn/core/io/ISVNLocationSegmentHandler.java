@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
  * The <b>ISVNLocationSegmentHandler</b> is an interface for location segment handlers which is used in the
  * {@link SVNRepository#getLocationSegments(String, long, long, long, ISVNLocationSegmentHandler)} method. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.wc;
  * in the description for 
  * {@link SVNDiffClient#doMerge(java.io.File, SVNRevision, java.util.Collection, java.io.File, org.tmatesoft.svn.core.SVNDepth, boolean, boolean, boolean, boolean)}.
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2
  */

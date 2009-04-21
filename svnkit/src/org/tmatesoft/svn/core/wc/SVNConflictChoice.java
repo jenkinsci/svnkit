@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc;
  * The <b>SVNConflictChoice</b> is an enumeration of constants representing the way in which the conflict 
  * {@link ISVNConflictHandler callback} chooses a course of action.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

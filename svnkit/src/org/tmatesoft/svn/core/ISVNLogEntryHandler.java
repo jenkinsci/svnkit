@@ -20,7 +20,7 @@ package org.tmatesoft.svn.core;
  * a revisions history operation)- log entries (represented by 
  * <b>SVNLogEntry</b> objects).  
  * 
- * @version     1.2.0
+ * @version     1.3
  * @author      TMate Software Ltd.
  * @see 		SVNLogEntry
  */

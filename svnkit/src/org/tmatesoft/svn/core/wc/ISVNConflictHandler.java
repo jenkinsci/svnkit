@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
  * conflicts to handle; it's also free to decide which types of conflicts are automatically resolvable and which 
  * require user interaction.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

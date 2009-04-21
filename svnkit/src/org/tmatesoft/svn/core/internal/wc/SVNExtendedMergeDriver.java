@@ -48,7 +48,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2
+ * @version 1.3
  * @since 1.2
  */
 public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {

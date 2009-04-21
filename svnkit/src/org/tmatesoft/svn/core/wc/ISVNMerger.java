@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
  * {@link ISVNMergerFactory} interface. Read more about that interface to
  * find out how to get a default implementation of <code>ISVNMerger</code>.  
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public interface ISVNMerger {

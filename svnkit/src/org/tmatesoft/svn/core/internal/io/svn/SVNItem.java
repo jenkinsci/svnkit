@@ -18,7 +18,7 @@ import java.util.Iterator;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNItem {
     public static final int WORD = 0;

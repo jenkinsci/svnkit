@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * Categories are fixed-size; if a category has fewer than 5000 errors, then it just ends with a range of 
  * unused numbers.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNErrorCode implements Serializable {

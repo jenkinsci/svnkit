@@ -44,7 +44,7 @@ import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.transport.ClientServerHello;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSSHSession {

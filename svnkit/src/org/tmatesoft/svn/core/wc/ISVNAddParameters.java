@@ -26,7 +26,7 @@ import java.io.File;
  * the three constants predefined in this interface. According to the return value the file may be added as-is, as 
  * binary or addition may be cancelled and an exception may be thrown indicating an error.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */
@@ -62,7 +62,7 @@ public interface ISVNAddParameters {
      * This class is simply used to define an action add 
      * operation should undertake in case of a inconsistent EOLs. 
      * 
-     * @version 1.2
+     * @version 1.3
      * @author  TMate Software Ltd.
      * @since   1.2
      */

@@ -21,7 +21,7 @@ import java.util.logging.LogRecord;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNDebugFormatter extends Formatter {

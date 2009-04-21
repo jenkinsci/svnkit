@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * The <b>SVNConflictDescription</b> represents an object that describes a conflict that has occurred in the
  * working copy. It's passed to {@link ISVNConflictHandler#handleConflict(SVNConflictDescription)}.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

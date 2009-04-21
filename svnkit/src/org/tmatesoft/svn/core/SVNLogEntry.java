@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  * a revision number, the datestamp when the revision was committed, the author 
  * of the revision, a commit log message and all paths changed in that revision. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see 	SVNLogEntryPath
  * @see     ISVNLogEntryHandler

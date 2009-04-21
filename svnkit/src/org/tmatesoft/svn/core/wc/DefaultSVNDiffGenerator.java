@@ -55,7 +55,7 @@ import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
  * interface, SVNKit uses this default implementation. To set a custom
  * diff driver use {@link SVNDiffClient#setDiffGenerator(ISVNDiffGenerator) setDiffGenerator()}.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {

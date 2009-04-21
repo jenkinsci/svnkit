@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.internal.io.svn;
 import java.io.InputStream;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 class SVNDataSource {

@@ -15,7 +15,7 @@ package org.tmatesoft.svn.core.io;
  * This class contains enumeration that describes the repository capabilities or,
  * in other words, features that the repository may be capable of.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

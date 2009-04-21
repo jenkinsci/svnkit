@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNTestFileDescriptor extends AbstractSVNTestFile {
 

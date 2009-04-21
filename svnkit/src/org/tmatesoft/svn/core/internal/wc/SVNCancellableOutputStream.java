@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNCancellableOutputStream extends FilterOutputStream {
@@ -56,7 +56,7 @@ public class SVNCancellableOutputStream extends FilterOutputStream {
     }
     
     /**
-     * @version 1.2.0
+     * @version 1.3
      * @author  TMate Software Ltd.
      */
     public static class IOCancelException extends IOException {

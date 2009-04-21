@@ -45,7 +45,7 @@ import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
  * driver you get calling a <b>createDefaultOptions()</b> method 
  * of the {@link org.tmatesoft.svn.core.wc.SVNWCUtil} class.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public interface ISVNTunnelProvider {

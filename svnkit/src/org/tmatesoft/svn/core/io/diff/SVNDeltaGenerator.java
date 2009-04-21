@@ -41,7 +41,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * and the X-Delta algorithm for generating delta as a difference between target and 
  * non-empty source streams.    
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaGenerator {

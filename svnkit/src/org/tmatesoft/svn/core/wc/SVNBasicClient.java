@@ -66,7 +66,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that allow you to set your {@link ISVNEventHandler event handler}, 
  * obtain run-time configuration options, and others. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNBasicClient implements ISVNEventHandler {

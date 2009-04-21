@@ -49,7 +49,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * the calls of that driver to calls to a commit editor of the destination <b>SVNRepository</b> 
  * driver.   
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
  * @since   1.1.0

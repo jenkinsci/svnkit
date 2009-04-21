@@ -32,7 +32,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 /**
  * Reads diff windows from stream and feeds them to the ISVNDeltaConsumer instance.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDeltaReader {

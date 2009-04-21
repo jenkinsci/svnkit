@@ -57,7 +57,7 @@ import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

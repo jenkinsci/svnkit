@@ -18,7 +18,7 @@ import java.io.File;
  * The <b>SVNConflictResult</b> represents the decision of the user's {@link ISVNConflictHandler conflict handler}
  * regarding a conflict situation.   
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

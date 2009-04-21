@@ -91,7 +91,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  *   
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */

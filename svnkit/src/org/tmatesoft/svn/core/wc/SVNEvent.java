@@ -93,7 +93,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * will be dispatched progress events. 
  * </p>
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     SVNStatusType

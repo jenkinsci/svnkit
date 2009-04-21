@@ -19,7 +19,7 @@ package org.tmatesoft.svn.core;
  * the deeper it descends.  You can use it to compare two depths
  * numerically to decide which goes deeper.
  *   
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

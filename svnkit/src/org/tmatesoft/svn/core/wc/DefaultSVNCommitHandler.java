@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * special implementation of <b>ISVNCommitHandler</b> is provided into those 
  * classes then <b>DefaultSVNCommitHandler</b> is the one that is used by default.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see		ISVNCommitHandler
  */

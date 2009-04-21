@@ -71,7 +71,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Overloaded <b>doCopy()</b> methods of <b>SVNCopyClient</b> are similar to
  * <code>'svn copy'</code> and <code>'svn move'</code> commands of the SVN command line client. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */

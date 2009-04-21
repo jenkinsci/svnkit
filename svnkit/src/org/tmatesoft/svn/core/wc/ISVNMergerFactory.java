@@ -23,7 +23,7 @@ package org.tmatesoft.svn.core.wc;
  * configuration driver. How to obtain a default run-time configuration
  * driver read more on {@link ISVNOptions} and {@link SVNWCUtil}.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNMerger
  */

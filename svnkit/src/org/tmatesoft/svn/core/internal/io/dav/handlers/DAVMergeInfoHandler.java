@@ -26,7 +26,7 @@ import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVMergeInfoHandler extends BasicDAVHandler {
 

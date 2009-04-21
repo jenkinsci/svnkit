@@ -18,7 +18,7 @@ import java.io.File;
  * The <b>ISVNChangelistHandler</b> is an interface for handlers used in 
  * changelist retrieval methods of {@link SVNChangelistClient}. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

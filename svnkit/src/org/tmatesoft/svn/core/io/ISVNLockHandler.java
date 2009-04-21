@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNLock;
  * The <b>ISVNLockHandler</b> interface is used to provide some extra 
  * processing of locked/unlocked paths. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNRepository#lock(java.util.Map, String, boolean, ISVNLockHandler)
  * @see     SVNRepository#unlock(java.util.Map, boolean, ISVNLockHandler)

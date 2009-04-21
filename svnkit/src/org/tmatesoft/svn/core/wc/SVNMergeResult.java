@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.wc;
  * finished and, if the merge finished with a conflict, the reason of the conflict (why did the conflict ever 
  * occur?).    
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

@@ -30,7 +30,7 @@ import org.tigris.subversion.javahl.PromptUserPassword2;
 import org.tigris.subversion.javahl.PromptUserPassword3;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {

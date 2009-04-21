@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class ElideFileMergedMergeinfoTargetTest extends AbstractExtMergeTest {
 

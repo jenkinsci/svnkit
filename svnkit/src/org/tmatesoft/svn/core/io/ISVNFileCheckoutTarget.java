@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * The <b>ISVNFileCheckoutTarget</b> interface is used in the {@link SVNRepository#checkoutFiles(long, String[], ISVNFileCheckoutTarget)}
  * method to receive versioned file data from the repository.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd. 
  * @since   1.2.0
  */

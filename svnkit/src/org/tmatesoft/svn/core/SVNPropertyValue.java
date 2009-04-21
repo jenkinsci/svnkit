@@ -24,7 +24,7 @@ import java.util.Arrays;
  * Since version 1.2 the <code>SVNKit</code> library supports binary properties as well.
  * 
  * @author  TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  * @since   1.2.0
  */
 public class SVNPropertyValue implements Serializable {

@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
  * {@link SVNUpdateClient#doUpdate(File[], SVNRevision, org.tmatesoft.svn.core.SVNDepth, boolean, boolean)}
  * where the handler is called before updating a next working copy path from the <code>paths</code> array.     
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

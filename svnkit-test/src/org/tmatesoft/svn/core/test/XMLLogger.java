@@ -26,7 +26,7 @@ import java.util.Properties;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class XMLLogger extends AbstractTestLogger {

@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractSVNMerger implements ISVNMerger {

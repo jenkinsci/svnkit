@@ -69,7 +69,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * methods are called non-recursively and allow to get status info on a single 
  * item. 
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see		ISVNStatusHandler
  * @see		SVNStatus

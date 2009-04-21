@@ -19,7 +19,7 @@ import java.io.File;
  * <b>DefaultSVNCommitParameters</b> is the default commit parameters 
  * implementation. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNCommitParameters implements ISVNCommitParameters {

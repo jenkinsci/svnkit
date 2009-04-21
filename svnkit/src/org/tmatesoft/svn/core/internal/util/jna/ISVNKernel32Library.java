@@ -19,7 +19,7 @@ import com.sun.jna.win32.StdCallLibrary;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 interface ISVNKernel32Library extends StdCallLibrary {

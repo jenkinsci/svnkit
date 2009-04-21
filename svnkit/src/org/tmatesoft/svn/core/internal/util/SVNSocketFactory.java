@@ -43,7 +43,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
  * The created socket then used by the inner engine of <b><i>SVNKit</i></b>
  * library to communicate with a Subversion repository.
  *
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSocketFactory {

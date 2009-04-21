@@ -60,7 +60,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * all the necessary administrative version control information.
  * </ul>
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNMoveClient extends SVNCopyDriver {

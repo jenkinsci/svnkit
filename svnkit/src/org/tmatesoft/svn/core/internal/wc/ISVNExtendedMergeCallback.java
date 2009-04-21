@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.wc.SVNEditorAction;
  * files while merge operation
  *
  * @author TMate Software Ltd.
- * @version 1.2
+ * @version 1.3
  * @since 1.2
  */
 public interface ISVNExtendedMergeCallback {

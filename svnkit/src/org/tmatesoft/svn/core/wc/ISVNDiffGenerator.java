@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * contents difference between files in order to be used in 'diff' operations 
  * performed by <b>SVNDiffClient</b>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNDiffClient
  * @see     DefaultSVNDiffGenerator

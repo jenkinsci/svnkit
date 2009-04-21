@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.io.dav;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DAVBaselineInfo {

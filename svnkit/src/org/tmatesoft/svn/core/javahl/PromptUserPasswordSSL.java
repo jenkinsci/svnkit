@@ -16,7 +16,7 @@ import org.tigris.subversion.javahl.PromptUserPassword3;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public interface PromptUserPasswordSSL extends PromptUserPassword3 {

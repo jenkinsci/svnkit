@@ -19,7 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import com.sun.jna.Memory;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author TMate Software Ltd.
  */
 public class SVNLinuxUtil {

@@ -56,7 +56,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that use a single socket connection (i.e. don't close a connection after every repository
  * access operation but reuse a single one). 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession, ISVNConnectionListener {

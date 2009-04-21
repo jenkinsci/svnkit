@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 class JavaHLPropertyHandler implements ISVNPropertyHandler{

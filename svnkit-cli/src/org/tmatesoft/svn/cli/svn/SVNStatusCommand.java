@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler {

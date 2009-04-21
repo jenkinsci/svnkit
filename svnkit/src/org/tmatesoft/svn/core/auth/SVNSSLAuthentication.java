@@ -18,7 +18,7 @@ import java.io.File;
  * to authenticate a user in secure connections. Used along with the 
  * {@link ISVNAuthenticationManager#SSL SSL} credential kind. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSSLAuthentication extends SVNAuthentication {

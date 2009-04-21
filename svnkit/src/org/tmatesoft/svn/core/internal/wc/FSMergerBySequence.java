@@ -35,7 +35,7 @@ import de.regnis.q.sequence.line.simplifier.QSequenceLineWhiteSpaceSkippingSimpl
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSMergerBySequence {

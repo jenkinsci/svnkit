@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc;
  * The <b>SVNConflictReason</b> class represents an enumeration of constants describing the reason of a 
  * conflict state in a working copy produced by a merge operation. 
  *  
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

@@ -24,7 +24,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * The <b>SVNMergeRangeList</b> represents an array of merge ranges applied to a single target. 
  * Provides addition functionality to operate with merge range lists.
  * 
- * @version 1.2.0 
+ * @version 1.3 
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 /**
  * The <b>SVNCopySource</b> class is used to provide copy source information in copy operations.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

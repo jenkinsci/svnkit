@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc.admin;
  * The <b>SVNUUIDAction</b> class is an enumeration of possible actions 
  * that <b>SVNAdminClient</b> can perform with uuids when loading a dumpstream.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNUUIDAction {

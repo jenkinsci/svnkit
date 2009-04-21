@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
  * The <b>ISVNGNUDiffGenerator</b> is the interface for diff generators used 
  * in diff operations of <b>SVNLookClient</b>.  
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

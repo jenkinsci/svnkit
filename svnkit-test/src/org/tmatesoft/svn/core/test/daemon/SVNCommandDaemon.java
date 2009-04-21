@@ -31,7 +31,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNCommandDaemon implements Runnable {

@@ -37,9 +37,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <code>SVNReplayHandler</code> is an implementation of {@link ISVNReplayHandler} that is used in 
  * {@link SVNAdminClient#doSynchronize(org.tmatesoft.svn.core.SVNURL)}. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNReplayHandler implements ISVNReplayHandler {
     private SVNRepository myTargetRepository;

@@ -77,7 +77,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * for repository replication purposes.
  * 
  * @author  TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  * @since   1.1.0
  */
 public class SVNRepositoryReplicator implements ISVNEventHandler {

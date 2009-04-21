@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * packed into a single <b>SVNCommitPacket</b> object. This object is 
  * returned by the method to the caller.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNCommitPacket
  */

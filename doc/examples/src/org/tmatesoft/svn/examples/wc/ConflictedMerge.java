@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class ConflictedMerge {
@@ -131,7 +131,7 @@ public class ConflictedMerge {
     /**
      * Conflict resolver which always selects the local version of a file.
      * 
-     * @version 1.2.0
+     * @version 1.3
      * @author  TMate Software Ltd.
      */
     private static class ConflictResolverHandler implements ISVNConflictHandler {

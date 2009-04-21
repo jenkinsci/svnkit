@@ -17,7 +17,7 @@ package org.tmatesoft.svn.core;
  * occured exactly during an authentication try. Provides the same kind 
  * of information as its base class does.
  *   
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see		SVNException
  */

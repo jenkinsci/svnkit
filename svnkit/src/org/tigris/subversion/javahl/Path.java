@@ -15,7 +15,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class Path {

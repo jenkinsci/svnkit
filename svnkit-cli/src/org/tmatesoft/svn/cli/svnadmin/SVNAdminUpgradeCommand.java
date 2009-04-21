@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminUpgradeCommand extends SVNAdminCommand implements ISVNAdminEventHandler {

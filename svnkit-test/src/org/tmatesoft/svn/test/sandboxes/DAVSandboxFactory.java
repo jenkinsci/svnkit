@@ -19,7 +19,7 @@ import org.tmatesoft.svn.test.SVNTestScheme;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVSandboxFactory extends AbstractSVNSandboxFactory {
 

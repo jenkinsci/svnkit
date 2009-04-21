@@ -85,7 +85,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDiffClient extends SVNExtendedMergeDriver {

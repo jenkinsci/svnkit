@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * <b>SVNFileRevision</b> objects are passed to an <b>ISVNFileRevisionHandler</b>'s {@link ISVNFileRevisionHandler#openRevision(SVNFileRevision) openRevision()}
  * method.  
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see		ISVNFileRevisionHandler

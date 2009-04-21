@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * {@link org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator delta
  * generator} when generating a series of diff windows from sources (text/binary streams). 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public interface ISVNDeltaConsumer {

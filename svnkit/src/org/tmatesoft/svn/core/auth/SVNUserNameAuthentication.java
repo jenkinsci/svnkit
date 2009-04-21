@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.auth;
  * authenticate a user. Used along with the 
  * {@link ISVNAuthenticationManager#USERNAME} credential kind.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNUserNameAuthentication extends SVNAuthentication {

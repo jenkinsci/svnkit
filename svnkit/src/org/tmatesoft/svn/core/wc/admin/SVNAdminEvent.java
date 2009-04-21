@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.SVNLock;
  * The <b>SVNAdminEvent</b> is a type of an event used to notify callers' handlers 
  * in several methods of <b>SVNAdminClient</b>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

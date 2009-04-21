@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * The <b>SVNFileCheckoutEditor</b> is an adapter which only handles file contents and properties during a 
  * checkout and redirects that information to its {@link ISVNFileCheckoutTarget} handler. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

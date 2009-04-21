@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * data storage (mainly instructions and new text data for deltas) as well
  * as for caching and getting some kind of wcprops.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see		SVNRepository#getCommitEditor(String, java.util.Map, boolean, org.tmatesoft.svn.core.SVNProperties, ISVNWorkspaceMediator)
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

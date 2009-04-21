@@ -24,7 +24,7 @@ import java.io.File;
  * a committer object, for example, to 
  * {@link SVNCommitClient#setCommitParameters(ISVNCommitParameters) SVNCommitClient}. 
  *   
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     DefaultSVNCommitParameters
  */

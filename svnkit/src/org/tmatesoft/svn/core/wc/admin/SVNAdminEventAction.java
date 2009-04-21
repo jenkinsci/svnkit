@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc.admin;
  * The <b>SVNAdminEventAction</b> is an enumeration of possible actions that 
  * may take place in different methods of <b>SVNAdminClient</b>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

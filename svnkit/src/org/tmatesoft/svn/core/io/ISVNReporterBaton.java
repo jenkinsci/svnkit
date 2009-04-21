@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  * For more information on using reporters, please, read these on-line article: 
  * <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see 	ISVNReporter
  * @see 	SVNRepository

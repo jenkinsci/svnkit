@@ -15,7 +15,7 @@ import org.tmatesoft.svn.cli.AbstractSVNOption;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNVersionOption extends AbstractSVNOption {

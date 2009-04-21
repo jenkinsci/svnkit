@@ -47,7 +47,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * <li><a href="http://svnkit.com/kb/dev-guide-commit-operation.html">Using ISVNEditor in commit operations</a>
  * </ul>
  *  
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see		ISVNReporterBaton
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

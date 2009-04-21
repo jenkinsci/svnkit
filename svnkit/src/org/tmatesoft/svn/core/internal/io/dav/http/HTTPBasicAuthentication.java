@@ -17,7 +17,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 class HTTPBasicAuthentication extends HTTPAuthentication {

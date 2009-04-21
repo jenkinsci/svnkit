@@ -23,7 +23,7 @@ import de.regnis.q.sequence.line.QSequenceLineRAByteData;
 
 /**
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSMergerBySequenceTest extends TestCase {

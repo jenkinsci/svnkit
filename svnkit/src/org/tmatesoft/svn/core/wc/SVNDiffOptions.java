@@ -21,7 +21,7 @@ import java.util.LinkedList;
  * when it's necessary to say whether a file should be or should not be considered as 
  * changed. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.0
  */

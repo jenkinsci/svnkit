@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.SVNProperties;
  * code can process those items and add some generated additional comment to that one 
  * passed into the method. There could be plenty of scenarios.  
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     DefaultSVNCommitHandler      
  */

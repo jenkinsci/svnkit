@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
  * All calls to a <b>handleInfo()</b> method are synchronous - that is the
  * caller is blocked till the method finishes.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNWCClient
  * @see     SVNInfo

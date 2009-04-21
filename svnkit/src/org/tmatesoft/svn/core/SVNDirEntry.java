@@ -26,7 +26,7 @@ import java.util.Date;
  * commit log message for the last changed revision. <b>SVNDirEntry</b> also knows 
  * if the entry has any properties. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see 	ISVNDirEntryHandler
  */

@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNException;
  * The <b>ISVNTreeHandler</b> is used in traversing tree 
  * operations of <b>SVNLookClient</b>.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

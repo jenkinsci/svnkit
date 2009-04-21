@@ -20,7 +20,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNImportThread extends Thread {

@@ -137,7 +137,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * To authenticate a user over network <b>SVNRepository</b> drivers use
  * <b>ISVNAuthenticationManager</b> auth drivers.
  * 
- * @version     1.2.0
+ * @version     1.3
  * @author      TMate Software Ltd.
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager

@@ -39,7 +39,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * string (like <span class="javastring">"http://userInfo@host:port/path"</span>)
  * to a corresponding <i>parse</i> method of this class. 
  *  
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */

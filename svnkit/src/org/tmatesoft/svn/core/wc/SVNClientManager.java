@@ -106,7 +106,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  * <li>
  * </ol>
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNEventHandler
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

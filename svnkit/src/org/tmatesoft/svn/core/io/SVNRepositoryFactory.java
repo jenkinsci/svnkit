@@ -91,7 +91,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Also <b>SVNRepositoryFactory</b> may be used to create local 
  * FSFS-type repositories.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
