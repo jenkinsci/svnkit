@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea16;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -1753,6 +1754,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 } else if (kind == SVNNodeKind.FILE) {
                     dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, 
                             SVNEventAction.UPDATE_EXTERNAL, null, null, null));
+
                     if (externalDiff.isExport) {
                         boolean ignoreExternals = isIgnoreExternals();
                         setIgnoreExternals(true);
@@ -1838,7 +1840,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                     dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                     doCheckout(newURL, target, externalPegRevision, externalRevision, SVNDepth.INFINITY, true);
                 } else {
-                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, 
+                    dispatchEvent(SVNEventFactory.createSVNEvent(target, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, 
                             SVNEventAction.UPDATE_EXTERNAL, null, null, null));
                     switchFileExternal(access, target, newURL, externalPegRevision, externalRevision, reposRootURL);
                 }
@@ -1887,6 +1889,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
             
+            if (targetArea.getFormatVersion() < SVNAdminArea16.WC_FORMAT) {
+                dispatchEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, 
+                        SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null));
+                return;
+            }
+
             SVNEntry entry = targetArea.getEntry(target, false);
             if (entry != null) {
                 if (entry.getExternalFilePath() == null) {
