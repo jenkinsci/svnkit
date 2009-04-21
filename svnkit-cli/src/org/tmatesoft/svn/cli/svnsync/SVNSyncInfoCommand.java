@@ -33,7 +33,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNSyncInfoCommand extends SVNSyncCommand {
 
     public SVNSyncInfoCommand() {
-        super("info", null, 0);
+        super("info", null, 1);
     }
 
     protected Collection createSupportedOptions() {
@@ -42,12 +42,12 @@ public class SVNSyncInfoCommand extends SVNSyncCommand {
         options.add(SVNSyncOption.NO_AUTH_CACHE);
         options.add(SVNSyncOption.USERNAME);
         options.add(SVNSyncOption.PASSWORD);
+        options.add(SVNSyncOption.TRUST_SERVER_CERT);
         options.add(SVNSyncOption.SOURCE_USERNAME);
         options.add(SVNSyncOption.SOURCE_PASSWORD);
         options.add(SVNSyncOption.SYNC_USERNAME);
         options.add(SVNSyncOption.SYNC_PASSWORD);
         options.add(SVNSyncOption.CONFIG_DIR);
-        options.add(SVNSyncOption.TRUST_SERVER_CERT);
         return options;
     }
 

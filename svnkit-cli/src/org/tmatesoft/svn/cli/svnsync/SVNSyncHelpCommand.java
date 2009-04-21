@@ -45,7 +45,7 @@ public class SVNSyncHelpCommand extends SVNSyncCommand {
         "  - handles 'file' scheme (only FSFS repositories are supported)\n";
 
     public SVNSyncHelpCommand() {
-        super("help", new String[] {"?", "h"}, 1);
+        super("help", new String[] {"?", "h"}, 2);
     }
     
     protected Collection createSupportedOptions() {

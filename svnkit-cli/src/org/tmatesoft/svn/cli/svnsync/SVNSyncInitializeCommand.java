@@ -45,13 +45,13 @@ public class SVNSyncInitializeCommand extends SVNSyncCommand implements ISVNAdmi
         options.add(SVNSyncOption.NO_AUTH_CACHE);
         options.add(SVNSyncOption.USERNAME);
         options.add(SVNSyncOption.PASSWORD);
+        options.add(SVNSyncOption.TRUST_SERVER_CERT);
         options.add(SVNSyncOption.SOURCE_USERNAME);
         options.add(SVNSyncOption.SOURCE_PASSWORD);
         options.add(SVNSyncOption.SYNC_USERNAME);
         options.add(SVNSyncOption.SYNC_PASSWORD);
         options.add(SVNSyncOption.CONFIG_DIR);
         options.add(SVNSyncOption.QUIET);
-        options.add(SVNSyncOption.TRUST_SERVER_CERT);
         return options;
     }
 
