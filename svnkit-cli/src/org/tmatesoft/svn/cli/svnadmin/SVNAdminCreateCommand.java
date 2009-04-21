@@ -42,7 +42,8 @@ public class SVNAdminCreateCommand extends SVNAdminCommand {
 
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
-        client.doCreateRepository(getLocalRepository(), null, false, false, getSVNAdminEnvironment().isPre14Compatible(), getSVNAdminEnvironment().isPre15Compatible());
+        client.doCreateRepository(getLocalRepository(), null, false, false, 
+                getSVNAdminEnvironment().isPre14Compatible(), getSVNAdminEnvironment().isPre15Compatible(), getSVNAdminEnvironment().isPre16Compatible());
     }
 
 }

@@ -53,6 +53,7 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
     private boolean myIsForceUUID;
     private boolean myIsPre14Compatible;
     private boolean myIsPre15Compatible;
+    private boolean myIsPre16Compatible;
     private boolean myIsUsePreCommitHook;
     private boolean myIsUsePostCommitHook;
     private boolean myIsUsePostRevPropChangeHook;
@@ -114,6 +115,8 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
             myIsPre14Compatible = true;
         } else if (option == SVNAdminOption.PRE_15_COMPATIBLE) {
             myIsPre15Compatible = true;
+        } else if (option == SVNAdminOption.PRE_16_COMPATIBLE) {
+            myIsPre16Compatible = true;
         }  else if (option == SVNAdminOption.PARENT_DIR) {
             myParentDir = optionValue.getValue();
             myParentDir = myParentDir.replace(File.separatorChar, '/');
@@ -220,6 +223,10 @@ public class SVNAdminCommandEnvironment extends AbstractSVNCommandEnvironment {
     
     public boolean isPre15Compatible() {
         return myIsPre15Compatible;
+    }
+
+    public boolean isPre16Compatible() {
+        return myIsPre16Compatible;
     }
     
     public boolean isUsePreCommitHook() {

@@ -275,14 +275,22 @@ public class SVNAdminClient extends SVNBasicClient {
      *                                     create a repository with pre-1.4 format
      * @param  pre15Compatible             <span class="javakeyword">true</span> to
      *                                     create a repository with pre-1.5 format
+     * @param  pre16Compatible             <span class="javakeyword">true</span> to
+     *                                     create a repository with pre-1.6 format
      * @return                             a local URL (file:///) of a newly created repository
      * @throws SVNException
      * @since                              1.2.0, SVN 1.5.0 
      */
     public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
-            boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
-        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible);
+            boolean pre14Compatible, boolean pre15Compatible, boolean pre16Compatible) throws SVNException {
+        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, pre16Compatible);
     }
+
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
+            boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+        return doCreateRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, false);
+    }
+
     
     /**
      * Copies revision properties from the source repository starting at <code>startRevision</code> and up to 
