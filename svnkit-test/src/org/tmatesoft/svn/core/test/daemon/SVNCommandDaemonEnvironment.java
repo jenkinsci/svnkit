@@ -140,7 +140,11 @@ public class SVNCommandDaemonEnvironment {
             System.setOut(oldOut);
             System.setErr(oldErr);
             if (testName != null) {
-                System.out.println("##teamcity[publishArtifacts '" + getPathFromTestName(testName) + "']");
+                String antBaseDir = System.getProperty("ant.basedir", "");
+                if (!"".equals(antBaseDir) && !antBaseDir.endsWith("/")) {
+                    antBaseDir += '/';
+                }
+                System.out.println("##teamcity[publishArtifacts '" + getPathFromTestName(antBaseDir, testName) + "']");
             }
             commandOut.close();
             commandErr.close();
@@ -158,7 +162,7 @@ public class SVNCommandDaemonEnvironment {
     
     private Handler createTestLogger(String testName) throws IOException {
         File logFile = new File(System.getProperty("ant.basedir", ""));
-        String path = getPathFromTestName(testName); 
+        String path = getPathFromTestName(null, testName); 
         logFile = new File(logFile, path);
         FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
         fileHandler.setLevel(Level.FINEST);
@@ -166,7 +170,7 @@ public class SVNCommandDaemonEnvironment {
         return fileHandler;
     }
 
-    private String getPathFromTestName(String testName) {
-        return "build/logs/" + (myTestType != null ? myTestType : "") + "_" + testName.trim() + ".log"; 
+    private String getPathFromTestName(String prefix, String testName) {
+        return (prefix != null ? prefix : "") + "build/logs/" + (myTestType != null ? myTestType : "") + "_" + testName.trim() + ".log"; 
     }
 }
