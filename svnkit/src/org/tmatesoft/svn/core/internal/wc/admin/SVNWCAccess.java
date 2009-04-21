@@ -780,7 +780,7 @@ public class SVNWCAccess implements ISVNEventHandler {
         int maxVersion = -1;
         for (Iterator iterator = myAdminAreas.values().iterator(); iterator.hasNext();) {
             SVNAdminArea adminArea = (SVNAdminArea) iterator.next();
-            if (adminArea.getFormatVersion() > maxVersion) {
+            if (adminArea != null && adminArea.getFormatVersion() > maxVersion) {
                 maxVersion = adminArea.getFormatVersion();
             }
         }
@@ -793,9 +793,8 @@ public class SVNWCAccess implements ISVNEventHandler {
         int maxVersion = getMaxFormatVersion();
         if (0 < maxVersion && maxVersion < SVNAdminArea16.WC_FORMAT) {
             return SVNUpdateEditor15.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
-        } else {
-            return SVNUpdateEditor.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
-        }
+        } 
+        return SVNUpdateEditor.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
     }
 
     public SVNMergeCallback createMergeCallback(SVNMergeDriver mergeDriver, SVNAdminArea adminArea, SVNURL url,
@@ -804,10 +803,8 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (maxVersion < SVNAdminAreaFactory.WC_FORMAT_16) {
             return new SVNMergeCallback15(adminArea, url, force, dryRun,
                     mergeOptions, conflictedPaths, mergeDriver);
-        } else {
-            return new SVNMergeCallback(adminArea, url, force, dryRun,
-                    mergeOptions, conflictedPaths, mergeDriver);
-        }
+        } 
+        return new SVNMergeCallback(adminArea, url, force, dryRun, mergeOptions, conflictedPaths, mergeDriver);
     }
     
     private static class TCEntryHandler implements ISVNEntryHandler {
