@@ -43,6 +43,7 @@ public class SVNLookPropListCommand extends SVNLookCommand {
         options.add(SVNLookOption.TRANSACTION);
         options.add(SVNLookOption.VERBOSE);
         options.add(SVNLookOption.REVPROP);
+        options.add(SVNLookOption.XML);
         return options;
     }
 
