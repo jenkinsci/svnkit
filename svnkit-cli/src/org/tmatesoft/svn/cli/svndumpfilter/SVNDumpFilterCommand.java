@@ -40,9 +40,9 @@ public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {
         options.add(SVNDumpFilterOption.DROP_EMPTY_REVISIONS);
         options.add(SVNDumpFilterOption.RENUMBER_REVISIONS);
         options.add(SVNDumpFilterOption.SKIP_MISSING_MERGE_SOURCES);        
+        options.add(SVNDumpFilterOption.TARGETS);
         options.add(SVNDumpFilterOption.PRESERVE_REVISION_PROPERTIES);        
         options.add(SVNDumpFilterOption.QUIET);
-        options.add(SVNDumpFilterOption.TARGETS);
         return options;
     }
 
