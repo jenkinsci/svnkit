@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -38,6 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -1363,7 +1365,19 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 workingProperties = srcArea.getProperties(srcEntry.getName()).asMap();
             }
 
-            SVNFileUtil.copyFile(srcArea.getFile(srcTextBasePath), info.copiedBaseText, true);
+            InputStream srcIS = null;
+            OutputStream copiedBaseOS = null;
+            try {
+                srcIS = SVNFileUtil.openFileForReading(srcArea.getFile(srcTextBasePath));
+                copiedBaseOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
+                SVNChecksumOutputStream checksumOS = new SVNChecksumOutputStream(copiedBaseOS, 
+                        SVNChecksumOutputStream.MD5_ALGORITHM, false);
+                FSRepositoryUtil.copy(srcIS, checksumOS, myWCAccess);
+                info.copiedBaseChecksum = checksumOS.getDigest();
+            } finally {
+                SVNFileUtil.closeFile(srcIS);
+                SVNFileUtil.closeFile(copiedBaseOS);
+            }
 
             if (srcArea.hasTextModifications(srcEntry.getName(), false, true, false)) {
                 info.copiedWorkingText = SVNAdminUtil.createTmpFile(adminArea);
@@ -1380,10 +1394,14 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             OutputStream baseTextOS = null;
             try {
                 baseTextOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
-                myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, baseProperties);
+                SVNChecksumOutputStream checksumBaseTextOS = new SVNChecksumOutputStream(baseTextOS, 
+                        SVNChecksumOutputStream.MD5_ALGORITHM, false);
+                myFileFetcher.fetchFile(copyFromPath, copyFromRevision, checksumBaseTextOS, baseProperties);
+                info.copiedBaseChecksum = checksumBaseTextOS.getDigest();
             } finally {
                 SVNFileUtil.closeFile(baseTextOS);
             }
+            
             workingProperties = baseProperties;
         }
 
@@ -1604,7 +1622,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 fileInfo.newBaseFile = adminArea.getBaseFile(fileInfo.name, true);
             }
             SVNFileUtil.copyFile(fileInfo.copiedBaseText, fileInfo.newBaseFile, true);
-            fileInfo.checksum = SVNFileUtil.computeChecksum(fileInfo.newBaseFile);
+            fileInfo.checksum = fileInfo.copiedBaseChecksum;
         }
 
         // check checksum.
@@ -2099,6 +2117,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         public String commitTime;
         public String checksum;
         public String expectedSrcChecksum;
+        public String copiedBaseChecksum;
         public File baseFile;
         public File newBaseFile;
         public boolean addedWithHistory;
