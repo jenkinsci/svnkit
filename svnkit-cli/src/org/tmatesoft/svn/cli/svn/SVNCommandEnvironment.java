@@ -544,7 +544,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     protected SVNCommand getSVNCommand() {
         return (SVNCommand) getCommand();
     }
-    
+
     protected void validateOptions(SVNCommandLine commandLine) throws SVNException {
         super.validateOptions(commandLine);
         

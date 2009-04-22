@@ -64,5 +64,4 @@ public class DefaultSVNCommitHandler implements ISVNCommitHandler {
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
         return revisionProperties == null ? new SVNProperties() : revisionProperties;
     }
-
 }
