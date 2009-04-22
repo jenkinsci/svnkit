@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDateRevisionHandler;
+import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVDeletedRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVEditorHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVFileRevisionHandler;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVLocationSegmentsHandler;
@@ -71,7 +72,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DAVRepository extends SVNRepository {
@@ -1161,6 +1162,28 @@ public class DAVRepository extends SVNRepository {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "can not get commit editor: ''{0}''", th.getLocalizedMessage());
             SVNErrorManager.error(err, th, SVNLogType.NETWORK);
             return null;
+        }
+    }
+
+    protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
+        try {
+            openConnection();
+            DAVConnection connection = getConnection();
+            String thisSessionPath = doGetFullPath("");
+            thisSessionPath = SVNEncodingUtil.uriEncode(thisSessionPath);
+            
+            DAVBaselineInfo info = DAVUtil.getBaselineInfo(connection, this, thisSessionPath, pegRevision, false, false, null);
+            String finalBCPath = SVNPathUtil.append(info.baselineBase, info.baselinePath);
+            StringBuffer requestBody = DAVDeletedRevisionHandler.generateGetDeletedRevisionRequest(null, path, pegRevision, endRevision);
+            DAVDeletedRevisionHandler handler = new DAVDeletedRevisionHandler();
+            HTTPStatus status = connection.doReport(finalBCPath, requestBody, handler);
+            if (status.getCode() == 501) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_IMPLEMENTED, "'get-deleted-rev' REPORT not implemented");
+                SVNErrorManager.error(err, status.getError(), SVNLogType.NETWORK);
+            }
+            return handler.getRevision();
+        } finally {
+            closeConnection();
         }
     }
 

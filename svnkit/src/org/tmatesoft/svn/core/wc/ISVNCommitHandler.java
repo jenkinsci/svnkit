@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import java.io.File;
  * code can process those items and add some generated additional comment to that one 
  * passed into the method. There could be plenty of scenarios.  
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     DefaultSVNCommitHandler      
  */

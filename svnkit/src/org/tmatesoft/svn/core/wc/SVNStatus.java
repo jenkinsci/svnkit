@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -87,7 +87,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * for remote status invocations - that is when a doStatus() method of <b>SVNStatusClient</b>
  * is called with the flag <code>remote</code> set to <span class="javakeyword">true</span>.
  *  
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNStatusHandler
  * @see     SVNStatusType
@@ -109,6 +109,7 @@ public class SVNStatus {
     private boolean myIsLocked;
     private boolean myIsCopied;
     private boolean myIsSwitched;
+    private boolean myIsFileExternal;
     private File myConflictNewFile;
     private File myConflictOldFile;
     private File myConflictWrkFile;
@@ -128,6 +129,7 @@ public class SVNStatus {
     private SVNEntry myEntry;
     private String myChangelistName;
     private int myWorkingCopyFormat;
+    private SVNTreeConflictDescription myTreeConflict;
     
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
@@ -169,11 +171,11 @@ public class SVNStatus {
             Date committedDate, String author, SVNStatusType contentsStatus,
             SVNStatusType propertiesStatus, SVNStatusType remoteContentsStatus,
             SVNStatusType remotePropertiesStatus, boolean isLocked,
-            boolean isCopied, boolean isSwitched, File conflictNewFile,
+            boolean isCopied, boolean isSwitched, boolean isFileExternal, File conflictNewFile,
             File conflictOldFile, File conflictWrkFile, File projRejectFile,
             String copyFromURL, SVNRevision copyFromRevision,
             SVNLock remoteLock, SVNLock localLock, Map entryProperties,
-            String changelistName, int wcFormatVersion) {
+            String changelistName, int wcFormatVersion, SVNTreeConflictDescription treeConflict) {
         myURL = url;
         myFile = file;
         myKind = kind == null ? SVNNodeKind.NONE : kind;
@@ -193,6 +195,7 @@ public class SVNStatus {
         myIsLocked = isLocked;
         myIsCopied = isCopied;
         myIsSwitched = isSwitched;
+        myIsFileExternal = isFileExternal;
         myConflictNewFile = conflictNewFile;
         myConflictOldFile = conflictOldFile;
         myConflictWrkFile = conflictWrkFile;
@@ -205,6 +208,7 @@ public class SVNStatus {
         myEntryProperties = entryProperties;
         myChangelistName = changelistName;
         myWorkingCopyFormat = wcFormatVersion;
+        myTreeConflict = treeConflict;
     }
     
     /**
@@ -370,6 +374,10 @@ public class SVNStatus {
         return myIsSwitched;
     }
     
+    public boolean isFileExternal() {
+        return myIsFileExternal;
+    }
+
     /**
      * Gets the temporary file that contains all latest changes from the 
      * repository which led to a conflict with local changes. This file is
@@ -644,6 +652,10 @@ public class SVNStatus {
      */
     public String getChangelistName() {
         return myChangelistName;
+    }
+
+    public SVNTreeConflictDescription getTreeConflict() {
+        return myTreeConflict;
     }
 
     /**

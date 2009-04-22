@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSHotCopier;
+import org.tmatesoft.svn.core.internal.io.fs.FSPacker;
 import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -115,7 +116,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.0
  */
@@ -274,14 +275,22 @@ public class SVNAdminClient extends SVNBasicClient {
      *                                     create a repository with pre-1.4 format
      * @param  pre15Compatible             <span class="javakeyword">true</span> to
      *                                     create a repository with pre-1.5 format
+     * @param  pre16Compatible             <span class="javakeyword">true</span> to
+     *                                     create a repository with pre-1.6 format
      * @return                             a local URL (file:///) of a newly created repository
      * @throws SVNException
      * @since                              1.2.0, SVN 1.5.0 
      */
     public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
-            boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
-        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible);
+            boolean pre14Compatible, boolean pre15Compatible, boolean pre16Compatible) throws SVNException {
+        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, pre16Compatible);
     }
+
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
+            boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+        return doCreateRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, false);
+    }
+
     
     /**
      * Copies revision properties from the source repository starting at <code>startRevision</code> and up to 
@@ -462,6 +471,35 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    public SVNSyncInfo doInfo(SVNURL toURL) throws SVNException {
+        SVNRepository toRepos = null;
+        try {
+            toRepos = createRepository(toURL, null, true);
+            checkIfRepositoryIsAtRoot(toRepos, toURL);
+            SVNPropertyValue fromURL = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
+            if (fromURL == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Repository ''{0}'' is not initialized for synchronization", 
+                        toURL);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            
+            SVNPropertyValue fromUUID = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID);
+            SVNPropertyValue lastMergedRevProp = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
+            long lastMergedRev = lastMergedRevProp != null ? Long.parseLong(lastMergedRevProp.getString()) : SVNRepository.INVALID_REVISION;
+            return new SVNSyncInfo(fromURL.getString(), fromUUID != null ? fromUUID.getString() : null, lastMergedRev);
+        } finally {
+            if (toRepos != null) {
+                toRepos.closeSession();
+            }
+        }
+    }
+    
+    public void doPack(File repositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
+        FSPacker packer = new FSPacker(myEventHandler);
+        packer.pack(fsfs);
+    }
+    
     /**
      * Completely synchronizes two repositories.
      * 

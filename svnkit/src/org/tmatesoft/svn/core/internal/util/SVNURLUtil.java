@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,10 +19,17 @@ import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNURLUtil {
 
+    public static String getRelativeURL(SVNURL parent, SVNURL child) {
+        String parentURLAsString = parent.toString();
+        String childURLAsString = child.toString();
+        String relativePath = SVNPathUtil.getPathAsChild(parentURLAsString, childURLAsString);
+        return relativePath == null ? "" : relativePath;
+    }
+    
     public static SVNURL getCommonURLAncestor(SVNURL url1, SVNURL url2) {
         // skip protocol and host, if they are different -> return null;
         if (url1 == null || url2 == null) {

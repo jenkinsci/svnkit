@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,7 +16,7 @@ package org.tmatesoft.svn.core.wc.admin;
  * The <b>SVNAdminEventAction</b> is an enumeration of possible actions that 
  * may take place in different methods of <b>SVNAdminClient</b>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
@@ -189,5 +189,9 @@ public class SVNAdminEventAction {
      * @since 1.2.0
      */
     public static final SVNAdminEventAction DUMP_FILTER_DROPPED_NODE = new SVNAdminEventAction(22);
+    
+    public static final SVNAdminEventAction PACK_START = new SVNAdminEventAction(23);
+    
+    public static final SVNAdminEventAction PACK_END = new SVNAdminEventAction(24);
 
 }

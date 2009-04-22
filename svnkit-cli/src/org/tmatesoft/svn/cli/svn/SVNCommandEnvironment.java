@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,9 +11,11 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -41,7 +43,9 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
 import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
@@ -52,7 +56,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment implements ISVNCommitHandler {
@@ -117,8 +121,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private long myLimit;
     private boolean myIsStopOnCopy;
     private boolean myIsChangeOptionUsed;
+    private boolean myIsRevisionOptionUsed;
     private boolean myIsWithAllRevprops;
     private boolean myIsReIntegrate;
+    private boolean myIsTrustServerCertificate;
     private List myRevisionRanges;
     private SVNShowRevisionType myShowRevsType;
     private Collection myChangelists;
@@ -225,14 +231,14 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
         if (!myIsNonInteractive) {
-            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
+            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate));
         }
         return authManager;
     }
 
     protected void initOptions(SVNCommandLine commandLine) throws SVNException {
     	super.initOptions(commandLine);
-    	if (getCommand().getClass() != SVNMergeCommand.class) {
+    	if (getCommand().getClass() != SVNMergeCommand.class && getCommand().getClass() != SVNLogCommand.class) {
         	if (myRevisionRanges.size() > 1) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                 		"Multiple revision argument encountered; " +
@@ -270,6 +276,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                         "--reintegrate cannot be used with --record-only");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
+        }
+        
+        if (myIsTrustServerCertificate && !myIsNonInteractive) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--trust-server-cert requires --non-interactive");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
     
@@ -334,6 +345,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             SVNRevisionRange range = new SVNRevisionRange(revisions[0], revisions[1]);
             myRevisionRanges.add(range);
+            myIsRevisionOptionUsed = true;
         } else if (option == SVNOption.VERBOSE) {
             myIsVerbose = true;
         } else if (option == SVNOption.UPDATE) {
@@ -387,7 +399,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 myDepth = SVNDepth.INFINITY;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", depth);
+                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinity''", depth);
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
         } else if (option == SVNOption.SET_DEPTH) {
@@ -400,9 +412,11 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 mySetDepth = SVNDepth.IMMEDIATES;
             } else if (SVNDepth.INFINITY.getName().equals(depth)) {
                 mySetDepth = SVNDepth.INFINITY;
+            } else if (SVNDepth.EXCLUDE.getName().equals(depth)) {
+                mySetDepth = SVNDepth.EXCLUDE;
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
-                        "''{0}'' is not a valid depth; try ''empty'', ''files'', ''immediates'', or ''infinit''", 
+                        "''{0}'' is not a valid depth; try ''exclude'', ''empty'', ''files'', ''immediates'', or ''infinity''", 
                         depth);
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
             }
@@ -522,6 +536,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myAuthorOfInterest = optionValue.getValue();
         } else if (option == SVNOption.REGULAR_EXPRESSION) {
             myRegularExpression = optionValue.getValue();
+        } else if (option == SVNOption.TRUST_SERVER_CERT) {
+            myIsTrustServerCertificate = true;
         }
     }
     
@@ -582,6 +598,10 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     
     public boolean isChangeOptionUsed() {
         return myIsChangeOptionUsed;
+    }
+
+    public boolean isRevisionOptionUsed() {
+        return myIsRevisionOptionUsed;
     }
 
     public String getChangelist() {
@@ -824,10 +844,20 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"), SVNLogType.CLIENT);
                 }
             }
+            String charset = getEncoding() != null ? getEncoding() : "UTF-8";
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            OutputStream os = SVNTranslator.getTranslatingOutputStream(bos, charset, new byte[] {'\n'}, false, null, false); 
             try {
-                return new String(getFileData(), getEncoding() != null ? getEncoding() : "UTF-8");
+                os.write(getFileData());
+                os.close();
+                os = null;
+                return new String(bos.toByteArray(), charset);
             } catch (UnsupportedEncodingException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.CLIENT);
+            } catch (IOException e) {
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Error normalizing log message to internal format"), SVNLogType.CLIENT);
+            } finally {
+                SVNFileUtil.closeFile(os);
             }
         } else if (getMessage() != null) {
             return getMessage();

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -48,7 +48,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * For more information on using reporters, please, read these on-line article: 
  * <a href="http://svnkit.com/kb/dev-guide-update-operation.html">Using ISVNReporter/ISVNEditor in update-related operations</a>
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see 	ISVNReporterBaton
  * @see 	SVNRepository

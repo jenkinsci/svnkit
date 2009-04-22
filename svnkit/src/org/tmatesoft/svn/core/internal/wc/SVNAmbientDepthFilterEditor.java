@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,7 +30,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAmbientDepthFilterEditor implements ISVNEditor {
@@ -44,22 +44,14 @@ public class SVNAmbientDepthFilterEditor implements ISVNEditor {
     private LinkedList myDirs;
 
 
-    public static ISVNEditor wrap(ISVNEditor editor, SVNAdminAreaInfo info, SVNDepth depth, boolean depthIsSticky) throws SVNException {
-        if (depthIsSticky) {
-            SVNWCAccess wcAccess = info.getWCAccess();
-            SVNEntry targetEntry = wcAccess.getEntry(info.getAnchor().getFile(info.getTargetName()), false);
-            if (targetEntry != null && targetEntry.getDepth().compareTo(depth) > 0) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                        "Shallowing of working copy depths is not yet supported");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        } else {
+    public static ISVNEditor wrap(ISVNEditor editor, SVNAdminAreaInfo info, boolean depthIsSticky) {
+        if (!depthIsSticky) {
             return new SVNAmbientDepthFilterEditor(editor, info.getWCAccess(), info.getAnchor().getRoot(), info.getTargetName());
         }
         return editor;
     }
 
-    public SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
+    private SVNAmbientDepthFilterEditor(ISVNEditor delegate, SVNWCAccess wcAccess, File anchor, String target) {
         myDelegate = delegate;
         myWCAccess = wcAccess;
         myAnchor = anchor;

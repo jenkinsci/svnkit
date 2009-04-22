@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -91,7 +91,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * Also <b>SVNRepositoryFactory</b> may be used to create local 
  * FSFS-type repositories.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNRepository
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -311,6 +311,11 @@ public abstract class SVNRepositoryFactory {
     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, boolean pre14Compatible) throws SVNException {
         return createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, false);
     }
+
+    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, 
+            boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+        return createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, false);
+    }
     
     /**
      * Creates a local blank FSFS-type repository. This is just similar to 
@@ -340,6 +345,10 @@ public abstract class SVNRepositoryFactory {
      * <p>
      * Set <code>pre15Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
      * to be compatible with pre-1.5 servers.
+     *
+     * <p>
+     * Set <code>pre16Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * to be compatible with pre-1.6 servers.
      * 
      * <p>
      * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code>) 
@@ -354,13 +363,15 @@ public abstract class SVNRepositoryFactory {
      *                                       create a repository with pre-1.4 format
      * @param  pre15Compatible               <span class="javakeyword">true</span> to
      *                                       create a repository with pre-1.5 format
+     * @param  pre16Compatible               <span class="javakeyword">true</span> to
+     *                                       create a repository with pre-1.6 format
      * @return                               a local URL (file:///) of a newly
      *                                       created repository
      * @throws SVNException
      * @since                                1.2.0
      */
-    public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, 
-            boolean force, boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
+     public static SVNURL createLocalRepository(File path, String uuid, boolean enableRevisionProperties, 
+            boolean force, boolean pre14Compatible, boolean pre15Compatible, boolean pre16Compatible) throws SVNException {
         SVNFileType fType = SVNFileType.getType(path);
         if (fType != SVNFileType.NONE) {
             if (fType == SVNFileType.DIRECTORY) {
@@ -403,6 +414,7 @@ public abstract class SVNRepositoryFactory {
         OutputStream reposFormatOS = null;
         OutputStream fsFormatOS = null;
         OutputStream txnCurrentOS = null;
+        OutputStream minUnpacledOS = null;
         OutputStream currentOS = null;
         try {
             copyToFile(is, jarFile);
@@ -475,9 +487,15 @@ public abstract class SVNRepositoryFactory {
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
-                
+            if (pre16Compatible) {
+                fsFormat = 3;
+            }
             if (pre14Compatible || pre15Compatible) {
-                fsFormat = pre14Compatible ? 1 : 2; 
+                if (pre14Compatible) {
+                    fsFormat = 1;
+                } else if (pre15Compatible) {
+                    fsFormat = 2;
+                } //else 
                 File fsFormatFile = new File(path, "db/format");
                 try {
                     fsFormatOS = SVNFileUtil.openFileForWriting(fsFormatFile);
@@ -546,6 +564,20 @@ public abstract class SVNRepositoryFactory {
                 SVNErrorManager.error(err, e, SVNLogType.FSFS);
             }
             
+            if (fsFormat >= FSFS.MIN_PACKED_FORMAT) {
+                File minUnpackedFile = new File(path, "db/" + FSFS.MIN_UNPACKED_REV_FILE);
+                SVNFileUtil.createEmptyFile(minUnpackedFile);
+                minUnpacledOS = SVNFileUtil.openFileForWriting(minUnpackedFile);
+                try {
+                    minUnpacledOS.write("0\n".getBytes("US-ASCII"));
+                } catch (IOException e) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                            "Can not write to ''{0}'' file: {1}", 
+                            new Object[] { minUnpackedFile.getName(), e.getLocalizedMessage() });
+                    SVNErrorManager.error(err, e, SVNLogType.FSFS);
+                }
+            }
+            
             if (fsFormat >= FSFS.MIN_CURRENT_TXN_FORMAT) {
                 File txnCurrentFile = new File(path, "db/" + FSFS.TXN_CURRENT_FILE);
                 SVNFileUtil.createEmptyFile(txnCurrentFile);
@@ -577,6 +609,7 @@ public abstract class SVNRepositoryFactory {
             SVNFileUtil.closeFile(reposFormatOS);
             SVNFileUtil.closeFile(fsFormatOS);
             SVNFileUtil.closeFile(txnCurrentOS);
+            SVNFileUtil.closeFile(minUnpacledOS);
             SVNFileUtil.closeFile(currentOS);
             SVNFileUtil.deleteFile(jarFile);
         }

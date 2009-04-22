@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,7 +39,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNExportEditor implements ISVNEditor {
@@ -140,7 +140,7 @@ public class SVNExportEditor implements ISVNEditor {
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
         String name = SVNPathUtil.tail(commitPath);
         myCurrentTmpFile = SVNFileUtil.createUniqueFile(myCurrentDirectory, name, ".tmp", false);
-        myDeltaProcessor.applyTextDelta(null, myCurrentTmpFile, true);
+        myDeltaProcessor.applyTextDelta((File)null, myCurrentTmpFile, true);
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {

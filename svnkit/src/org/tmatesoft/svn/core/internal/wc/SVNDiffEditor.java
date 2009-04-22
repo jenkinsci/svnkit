@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -45,7 +45,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDiffEditor implements ISVNEditor {
@@ -104,7 +104,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (myIsReverseDiff) {
                 File baseFile = dir.getBaseFile(name, false);
                 SVNProperties baseProps = dir.getBaseProperties(name).asMap();
-                getDiffCallback().fileDeleted(path, baseFile, null, null, null, baseProps);
+                getDiffCallback().fileDeleted(path, baseFile, null, null, null, baseProps, null);
             } else {
                 reportAddedFile(myCurrentDirectory, path, entry);
             }
@@ -126,7 +126,7 @@ public class SVNDiffEditor implements ISVNEditor {
             }
             SVNProperties propDiff = computePropsDiff(new SVNProperties(), wcProps);
             if (!propDiff.isEmpty()) {
-                getDiffCallback().propertiesChanged(info.myPath, null, propDiff);
+                getDiffCallback().propertiesChanged(info.myPath, null, propDiff, null);
             }
         }
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
@@ -185,7 +185,7 @@ public class SVNDiffEditor implements ISVNEditor {
         } else {
             sourceFile = detranslateFile(dir, name);
         }
-        getDiffCallback().fileAdded(path, null, sourceFile, 0, entry.getRevision(), null, mimeType, null, propDiff);
+        getDiffCallback().fileAdded(path, null, sourceFile, 0, entry.getRevision(), null, mimeType, null, propDiff, null);
     }
     
     private void reportModifiedFile(SVNDirectoryInfo dirInfo, SVNEntry entry) throws SVNException {
@@ -204,6 +204,9 @@ public class SVNDiffEditor implements ISVNEditor {
         SVNProperties propDiff = null;
         SVNProperties baseProps = null;
         File baseFile = dir.getBaseFile(fileName, false);
+        if (SVNFileType.getType(baseFile) == SVNFileType.NONE) {
+            baseFile = dir.getFile(SVNAdminUtil.getTextRevertPath(fileName, false));
+        }
         if (!entry.isScheduledForDeletion()) {
             if (getDiffCallback().isDiffCopiedAsAdded() && entry.isCopied()) {
                 propDiff = dir.getProperties(fileName).asMap();
@@ -223,7 +226,7 @@ public class SVNDiffEditor implements ISVNEditor {
         String filePath = SVNPathUtil.append(dirInfo.myPath, fileName);
         if (schedule != null && (entry.isScheduledForDeletion() || entry.isScheduledForReplacement())) {
             String mimeType = dir.getBaseProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
-            getDiffCallback().fileDeleted(filePath, baseFile, null, mimeType, null, dir.getBaseProperties(fileName).asMap());
+            getDiffCallback().fileDeleted(filePath, baseFile, null, mimeType, null, dir.getBaseProperties(fileName).asMap(), null);
             isAdded = entry.isScheduledForReplacement();
         }
         if (isAdded) {
@@ -238,7 +241,7 @@ public class SVNDiffEditor implements ISVNEditor {
             } else {
                 originalProperties = dir.getBaseProperties(fileName).asMap();
             }
-            getDiffCallback().fileAdded(filePath, null, tmpFile, 0, revision, mimeType, null, originalProperties, propDiff);
+            getDiffCallback().fileAdded(filePath, null, tmpFile, 0, revision, mimeType, null, originalProperties, propDiff, null);
         } else if (schedule == null) {
             boolean modified = dir.hasTextModifications(fileName, false);
             File tmpFile = null;
@@ -250,7 +253,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 String mimeType = dir.getProperties(fileName).getStringPropertyValue(SVNProperty.MIME_TYPE);
 
                 getDiffCallback().fileChanged(filePath, modified ? baseFile : null, tmpFile, entry.getRevision(), -1, 
-                        baseMimeType, mimeType, baseProps, propDiff);
+                        baseMimeType, mimeType, baseProps, propDiff, null);
             }
         }
         
@@ -302,7 +305,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (!myIsReverseDiff) {
                 reversePropChanges(originalProps, diff);
             }
-            getDiffCallback().propertiesChanged(myCurrentDirectory.myPath, originalProps, diff);
+            getDiffCallback().propertiesChanged(myCurrentDirectory.myPath, originalProps, diff, null);
             myCurrentDirectory.myComparedEntries.add("");
         }
         if (!myCurrentDirectory.myIsAdded) {
@@ -377,9 +380,10 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         if (myCurrentFile.myIsAdded || (!myIsCompareToBase && entry.isScheduledForDeletion())) {
             if (myIsReverseDiff) {
-                getDiffCallback().fileAdded(commitPath, null, reposFile, 0, myTargetRevision, null, reposMimeType, null, myCurrentFile.myPropertyDiff);
+                getDiffCallback().fileAdded(commitPath, null, reposFile, 0, myTargetRevision, null, reposMimeType, null, 
+                        myCurrentFile.myPropertyDiff, null);
             } else {
-                getDiffCallback().fileDeleted(commitPath, reposFile, null, reposMimeType, null, reposProperties);
+                getDiffCallback().fileDeleted(commitPath, reposFile, null, reposMimeType, null, reposProperties, null);
             }
             return;
         }
@@ -419,7 +423,7 @@ public class SVNDiffEditor implements ISVNEditor {
                         myIsReverseDiff ? myTargetRevision : -1,
                         myIsReverseDiff ? originalMimeType : reposMimeType, 
                         myIsReverseDiff ? reposMimeType : originalMimeType,
-                        originalProps, myCurrentFile.myPropertyDiff);
+                        originalProps, myCurrentFile.myPropertyDiff, null);
             }
         }
     }
@@ -476,7 +480,7 @@ public class SVNDiffEditor implements ISVNEditor {
             if (dir.hasPropModifications(dir.getThisDirName())) {
                 SVNVersionedProperties baseProps = dir.getBaseProperties(dir.getThisDirName());
                 SVNProperties propDiff = baseProps.compareTo(dir.getProperties(dir.getThisDirName())).asMap();
-                getDiffCallback().propertiesChanged(info.myPath, baseProps.asMap(), propDiff);
+                getDiffCallback().propertiesChanged(info.myPath, baseProps.asMap(), propDiff, null);
             }
         }
         
@@ -554,7 +558,7 @@ public class SVNDiffEditor implements ISVNEditor {
                 String mimeType1 = null;
                 String mimeType2 = SVNFileUtil.detectMimeType(file, null);
                 String filePath = SVNPathUtil.append(parentRelativePath, file.getName());
-                getDiffCallback().fileAdded(filePath, null, file, 0, 0, mimeType1, mimeType2, null, null);
+                getDiffCallback().fileAdded(filePath, null, file, 0, 0, mimeType1, mimeType2, null, null, null);
             }
         }
     }

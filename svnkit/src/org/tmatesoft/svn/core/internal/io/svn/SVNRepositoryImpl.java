@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -71,7 +71,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
 
@@ -751,12 +751,13 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Changed-path entry not a list");
                             SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }
-                        List pathItems = SVNReader.parseTuple("sw(?sr)", pathItem.getItems(), null);
+                        List pathItems = SVNReader.parseTuple("sw(?sr)?(?s)", pathItem.getItems(), null);
                         String path = SVNReader.getString(pathItems, 0);
                         String action = SVNReader.getString(pathItems, 1);
                         String copyPath = SVNReader.getString(pathItems, 2);
                         long copyRevision = SVNReader.getLong(pathItems, 3);
-                        changedPathsMap.put(path, new SVNLogEntryPath(path, action.charAt(0), copyPath, copyRevision));
+                        String kind = SVNReader.getString(pathItems, 4);
+                        changedPathsMap.put(path, new SVNLogEntryPath(path, action.charAt(0), copyPath, copyRevision, kind != null ? SVNNodeKind.parseKind(kind) : SVNNodeKind.UNKNOWN));
                     }
                 }
                 if (nestLevel == 0) {
@@ -1613,6 +1614,25 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
         } finally {
             closeConnection();
         }
+    }
+
+    protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
+        try {
+            openConnection();
+            Long srev = getRevisionObject(pegRevision);
+            Long erev = getRevisionObject(endRevision);
+            Object[] buffer = new Object[] { "get-deleted-rev", path, srev, erev };
+            write("(w(snn))", buffer);
+            authenticate();
+            List values = read("r", null, false);
+            return SVNReader.getLong(values, 0);
+        } catch (SVNException e) {
+            closeSession();
+            handleUnsupportedCommand(e, "'get-deleted-rev' not implemented");
+        } finally {
+            closeConnection();
+        }
+        return INVALID_REVISION; 
     }
 
     private static boolean getRecurseFromDepth(SVNDepth depth) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -17,7 +17,7 @@ import org.tmatesoft.svn.cli.AbstractSVNLauncher;
 import org.tmatesoft.svn.cli.SVNCommandLine;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVN extends AbstractSVNLauncher {
@@ -136,6 +136,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.SHOW_REVS);
         SVNCommandLine.registerOption(SVNOption.REINTEGRATE);
         SVNCommandLine.registerOption(SVNOption.DIFF_CMD);
+        SVNCommandLine.registerOption(SVNOption.TRUST_SERVER_CERT);
     }
 
     protected boolean needArgs() {

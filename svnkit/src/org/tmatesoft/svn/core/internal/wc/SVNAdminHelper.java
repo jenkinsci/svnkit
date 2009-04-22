@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,7 +42,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminHelper {
@@ -268,7 +268,7 @@ public class SVNAdminHelper {
             editor.addFile(editPath, null, -1);
             deltifyFiles(fsfs, editor, srcRoot, tgtRoot, null, tgtPath, editPath);
             FSRevisionNode tgtNode = tgtRoot.getRevisionNode(tgtPath);
-            editor.closeFile(editPath, tgtNode.getFileChecksum());
+            editor.closeFile(editPath, tgtNode.getFileMD5Checksum());
         }
     }
 
@@ -282,7 +282,7 @@ public class SVNAdminHelper {
             editor.openFile(editPath, baseRevision);
             deltifyFiles(fsfs, editor, srcRoot, tgtRoot, srcPath, tgtPath, editPath);
             FSRevisionNode tgtNode = tgtRoot.getRevisionNode(tgtPath);
-            editor.closeFile(editPath, tgtNode.getFileChecksum());
+            editor.closeFile(editPath, tgtNode.getFileMD5Checksum());
         }
     }
     
@@ -298,7 +298,7 @@ public class SVNAdminHelper {
             String srcHexDigest = null;
             if (srcPath != null) {
                 FSRevisionNode srcNode = srcRoot.getRevisionNode(srcPath);
-                srcHexDigest = srcNode.getFileChecksum();
+                srcHexDigest = srcNode.getFileMD5Checksum();
             }
             editor.applyTextDelta(editPath, srcHexDigest);
             editor.textDeltaChunk(editPath, SVNDiffWindow.EMPTY);
@@ -400,10 +400,13 @@ public class SVNAdminHelper {
     public static final String DUMPFILE_TEXT_CONTENT_LENGTH        = "Text-content-length";
     public static final String DUMPFILE_TEXT_DELTA                 = "Text-delta";
     public static final String DUMPFILE_UUID                       = "UUID";
-    public static final String DUMPFILE_TEXT_CONTENT_CHECKSUM      = "Text-content-md5";    
-    public static final String DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM  = "Text-copy-source-md5";    
-    public static final String DUMPFILE_TEXT_DELTA_BASE_CHECKSUM   = "Text-delta-base-md5";    
-    public static final int DUMPFILE_FORMAT_VERSION            = 3;
+    public static final String DUMPFILE_TEXT_CONTENT_MD5           = "Text-content-md5";
+    public static final String DUMPFILE_TEXT_CONTENT_SHA1          = "Text-content-sha1";
+    public static final String DUMPFILE_TEXT_COPY_SOURCE_MD5       = "Text-copy-source-md5";
+    public static final String DUMPFILE_TEXT_COPY_SOURCE_SHA1      = "Text-copy-source-sha1"; 
+    public static final String DUMPFILE_TEXT_DELTA_BASE_MD5        = "Text-delta-base-md5";
+    public static final String DUMPFILE_TEXT_DELTA_BASE_SHA1       = "Text-delta-base-sha1";
+    public static final int DUMPFILE_FORMAT_VERSION                = 3;
 
     public static final int NODE_ACTION_ADD     = 1;
     public static final int NODE_ACTION_CHANGE  = 0;

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -66,7 +66,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * ...</pre>
  * </p> 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNInfoHandler
  * @see     SVNWCClient
@@ -100,6 +100,7 @@ public class SVNInfo {
     private String myChangelistName;
     private long myWorkingSize;
     private long myRepositorySize;
+    private SVNTreeConflictDescription myTreeConflict;
     
     static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
@@ -110,12 +111,25 @@ public class SVNInfo {
             lock = new SVNLock(null, entry.getLockToken(),
                     entry.getLockOwner(), entry.getLockComment(), SVNDate.parseDate(entry.getLockCreationDate()), null);
         }
+        SVNTreeConflictDescription tc = null;
+        if (entry.getAdminArea() != null && entry.getAdminArea().getWCAccess() != null) {
+        	tc = entry.getAdminArea().getWCAccess().getTreeConflict(file); 
+        }        
         return new SVNInfo(file, entry.getSVNURL(), entry.getRepositoryRootURL(), 
                 entry.getRevision(), entry.getKind(), entry.getUUID(), entry.getCommittedRevision(),
                 entry.getCommittedDate(), entry.getAuthor(), entry.getSchedule(), 
                 entry.getCopyFromSVNURL(), entry.getCopyFromRevision(), entry.getTextTime(), entry.getPropTime(), entry.getChecksum(), 
                 entry.getConflictOld(), entry.getConflictNew(), entry.getConflictWorking(), entry.getPropRejectFile(), 
-                lock, entry.getDepth(), entry.getChangelistName(), entry.getWorkingSize());
+                lock, entry.getDepth(), entry.getChangelistName(), entry.getWorkingSize(), tc);
+    }
+
+    static SVNInfo createInfo(File file, SVNTreeConflictDescription tc) {
+        return new SVNInfo(file, null, null, 
+                -1, SVNNodeKind.NONE, null, -1,
+                null, null, null, 
+                null, -1, null, null, null, 
+                null, null, null, null, 
+                null, SVNDepth.UNKNOWN, null, -1, tc);
     }
 
     static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
@@ -134,7 +148,7 @@ public class SVNInfo {
             long copyFromRevision, String textTime, String propTime,
             String checksum, String conflictOld, String conflictNew,
             String conflictWorking, String propRejectFile, SVNLock lock, 
-            SVNDepth depth, String changelistName, long wcSize) {
+            SVNDepth depth, String changelistName, long wcSize, SVNTreeConflictDescription treeConflict) {
         myFile = file;
         myURL = url;
         myRevision = SVNRevision.create(revision);
@@ -157,6 +171,7 @@ public class SVNInfo {
 
         myLock = lock;
         myChangelistName = changelistName;
+        myTreeConflict = treeConflict;
         
         if (file != null) {
             if (conflictOld != null) {
@@ -292,6 +307,10 @@ public class SVNInfo {
      */
     public File getConflictWrkFile() {
         return myConflictWrkFile;
+    }
+    
+    public SVNTreeConflictDescription getTreeConflict() {
+    	return myTreeConflict;
     }
 
     /**

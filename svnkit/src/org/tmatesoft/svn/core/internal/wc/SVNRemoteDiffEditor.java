@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -40,7 +40,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNRemoteDiffEditor implements ISVNEditor {
@@ -64,9 +64,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     protected Map myDeletedPaths;
     private boolean myIsUseGlobalTmp;
 
-    public SVNRemoteDiffEditor(SVNAdminArea adminArea, File target, AbstractDiffCallback callback,
-                               SVNRepository repos, long revision1, long revision2, boolean dryRun,
-                               ISVNEventHandler handler, ISVNEventHandler cancelHandler) {
+    public SVNRemoteDiffEditor(SVNAdminArea adminArea, File target, AbstractDiffCallback callback, SVNRepository repos, 
+            long revision1, long revision2, boolean dryRun, ISVNEventHandler handler, ISVNEventHandler cancelHandler) {
         myAdminArea = adminArea;
         myTarget = target;
         myDiffCallback = callback;
@@ -95,6 +94,10 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void deleteEntry(String path, long revision) throws SVNException {
+        if (myCurrentDirectory.myIsSkip || myCurrentDirectory.myIsTreeConflicted) {
+            return;
+        }
+        
         SVNNodeKind nodeKind = myRepos.checkPath(path, myRevision1);
         SVNAdminArea dir = retrieve(myCurrentDirectory.myWCFile, true);
 
@@ -105,27 +108,31 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         SVNStatusType type = SVNStatusType.INAPPLICABLE;
         SVNEventAction action = SVNEventAction.SKIP;
         SVNEventAction expectedAction = SVNEventAction.UPDATE_DELETE;
-
+        boolean[] isTreeConflicted = { false };
+        
         if (myAdminArea == null || dir != null) {
             if (nodeKind == SVNNodeKind.FILE) {
                 SVNFileInfo file = new SVNFileInfo(path, false);
                 file.loadFromRepository(myRevision1);
                 String baseType = file.myBaseProperties.getStringValue(SVNProperty.MIME_TYPE);
-                type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties);
+                type = getDiffCallback().fileDeleted(path, file.myBaseFile, null, baseType, null, file.myBaseProperties, isTreeConflicted);
             } else if (nodeKind == SVNNodeKind.DIR) {
-                type = getDiffCallback().directoryDeleted(path);
+                type = getDiffCallback().directoryDeleted(path, isTreeConflicted);
             }
-            if (type != SVNStatusType.MISSING && type != SVNStatusType.OBSTRUCTED) {
+            if (type != SVNStatusType.MISSING && type != SVNStatusType.OBSTRUCTED && !isTreeConflicted[0]) {
                 action = SVNEventAction.UPDATE_DELETE;
                 if (myIsDryRun) {
                     getDiffCallback().addDeletedPath(path);
                 }
             }
         }
-        addDeletedPath(path, nodeKind, type, action, expectedAction);
+        
+        action = isTreeConflicted[0] ? SVNEventAction.TREE_CONFLICT : action;
+        addDeletedPath(path, nodeKind, type, action, expectedAction, isTreeConflicted[0]);
     }
 
-    protected void addDeletedPath(String path, SVNNodeKind nodeKind, SVNStatusType type, SVNEventAction action, SVNEventAction expectedAction) {
+    protected void addDeletedPath(String path, SVNNodeKind nodeKind, SVNStatusType type, SVNEventAction action, SVNEventAction expectedAction, 
+            boolean isTreeConflicted) {
         if (myEventHandler != null) {
             File deletedFile = new File(myTarget, path);
             KindActionState kas = new KindActionState();
@@ -133,18 +140,30 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             kas.myKind = nodeKind;
             kas.myStatus = type;
             kas.myExpectedAction = expectedAction;
+            kas.myIsTreeConflicted = isTreeConflicted;
             myDeletedPaths.put(deletedFile, kas);
         }
     }
 
     public void addDir(String path, String copyFromPath, long copyFromRevision)  throws SVNException {
+        SVNDirectoryInfo parentDir = myCurrentDirectory;
+        
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path, true);
         myCurrentDirectory.myBaseProperties = new SVNProperties();
 
+        if (parentDir.myIsSkip || parentDir.myIsTreeConflicted) {
+            myCurrentDirectory.myIsSkip = true;
+            return;
+        }
+
         SVNEventAction expectedAction = SVNEventAction.UPDATE_ADD;
         SVNEventAction action = expectedAction;
-        SVNStatusType type = getDiffCallback().directoryAdded(path, myRevision2);
-        if (type == SVNStatusType.MISSING || type == SVNStatusType.OBSTRUCTED) {
+        boolean[] isTreeConflicted = { false };
+        SVNStatusType type = getDiffCallback().directoryAdded(path, myRevision2, isTreeConflicted);
+        myCurrentDirectory.myIsTreeConflicted = isTreeConflicted[0];
+        if (myCurrentDirectory.myIsTreeConflicted) {
+            action = SVNEventAction.TREE_CONFLICT;
+        } else if (type == SVNStatusType.MISSING || type == SVNStatusType.OBSTRUCTED) {
             action = SVNEventAction.SKIP;
         }
 
@@ -176,15 +195,32 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public void openDir(String path, long revision) throws SVNException {
+        SVNDirectoryInfo parentDir = myCurrentDirectory;
         myCurrentDirectory = new SVNDirectoryInfo(myCurrentDirectory, path, false);
+        if (parentDir.myIsSkip || parentDir.myIsTreeConflicted) {
+            myCurrentDirectory.myIsSkip = true;
+            return;
+        }
+        
         myCurrentDirectory.loadFromRepository(revision);
+        boolean[] isTreeConflicted = { false };
+        getDiffCallback().directoryOpened(path, revision, isTreeConflicted);
+        myCurrentDirectory.myIsTreeConflicted = isTreeConflicted[0];
     }
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
+        if (myCurrentDirectory.myIsSkip) {
+            return;
+        }
         myCurrentDirectory.myPropertyDiff.put(name, value);
     }
 
     public void closeDir() throws SVNException {
+        if (myCurrentDirectory.myIsSkip) {
+            myCurrentDirectory = myCurrentDirectory.myParent;
+            return;
+        }
+        
         SVNStatusType type = SVNStatusType.UNKNOWN;
         SVNEventAction expectedAction = SVNEventAction.UPDATE_UPDATE;
         SVNEventAction action = expectedAction;
@@ -200,7 +236,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                     if (myEventHandler != null) {
-                        action = SVNEventAction.SKIP;
+                        action = myCurrentDirectory.myIsTreeConflicted ? SVNEventAction.TREE_CONFLICT : SVNEventAction.SKIP;
                         SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
                         		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING,
                         		SVNStatusType.MISSING, null, action, expectedAction, null, null);
@@ -212,11 +248,17 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 throw e;
             }
             if (!myIsDryRun || dir != null) {
-                type = getDiffCallback().propertiesChanged(myCurrentDirectory.myRepositoryPath,
-                        myCurrentDirectory.myBaseProperties, myCurrentDirectory.myPropertyDiff);
+                boolean[] isTreeConflicted = { false };
+                type = getDiffCallback().propertiesChanged(myCurrentDirectory.myRepositoryPath, myCurrentDirectory.myBaseProperties, 
+                        myCurrentDirectory.myPropertyDiff, isTreeConflicted);
+                if (isTreeConflicted[0]) {
+                    myCurrentDirectory.myIsTreeConflicted = true;
+                }
             }
         }
 
+        getDiffCallback().directoryClosed(myCurrentDirectory.myRepositoryPath, null);
+        
         if (type == SVNStatusType.UNKNOWN) {
             action = SVNEventAction.UPDATE_NONE;
         }
@@ -232,6 +274,7 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 deletedPathsIter.remove();
             }
 
+            action = myCurrentDirectory.myIsTreeConflicted ? SVNEventAction.TREE_CONFLICT : action;
             SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
             		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE, type,
             		SVNStatusType.INAPPLICABLE, action, expectedAction, null, null);
@@ -242,20 +285,36 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
 
     public void addFile(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         myCurrentFile = createFileInfo(path, true);
+        if (myCurrentDirectory.myIsSkip || myCurrentDirectory.myIsTreeConflicted) {
+            myCurrentFile.myIsSkip = true;
+            return;
+        }
+        
         myCurrentFile.myBaseProperties = new SVNProperties();
         myCurrentFile.myBaseFile = SVNFileUtil.createUniqueFile(getTempDirectory(), ".diff", ".tmp", myIsUseGlobalTmp);
     }
 
     public void openFile(String path, long revision) throws SVNException {
         myCurrentFile = createFileInfo(path, false);
+        if (myCurrentDirectory.myIsSkip || myCurrentDirectory.myIsTreeConflicted) {
+            myCurrentFile.myIsSkip = true;
+            return;
+        }
         myCurrentFile.loadFromRepository(revision);
     }
 
     public void changeFileProperty(String commitPath, String name, SVNPropertyValue value) throws SVNException {
+        if (myCurrentFile.myIsSkip) {
+            return;
+        }
         myCurrentFile.myPropertyDiff.put(name, value);
     }
 
     public void applyTextDelta(String commitPath, String baseChecksum) throws SVNException {
+        if (myCurrentFile.myIsSkip) {
+            return;
+        }
+        
         SVNAdminArea dir = null;
         try {
             dir = retrieveParent(myCurrentFile.myWCFile, true);
@@ -267,19 +326,32 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
+        if (myCurrentFile.myIsSkip) {
+            return SVNFileUtil.DUMMY_OUT;
+        }
         return myDeltaProcessor.textDeltaChunk(diffWindow);
     }
 
     public void textDeltaEnd(String commitPath) throws SVNException {
+        if (myCurrentFile.myIsSkip) {
+            return;
+        }
         myDeltaProcessor.textDeltaEnd();
     }
 
     public void closeFile(String commitPath, String textChecksum) throws SVNException {
+        if (myCurrentFile.myIsSkip) {
+            return;
+        }
+        
+        boolean[] isTreeConflicted = { false };
         closeFile(commitPath, myCurrentFile.myIsAdded, myCurrentFile.myWCFile, myCurrentFile.myFile,
-                myCurrentFile.myPropertyDiff, myCurrentFile.myBaseProperties, myCurrentFile.myBaseFile);
+                myCurrentFile.myPropertyDiff, myCurrentFile.myBaseProperties, myCurrentFile.myBaseFile, isTreeConflicted);
+        myCurrentFile.myIsTreeConflicted = isTreeConflicted[0];
     }
 
-    protected void closeFile(String commitPath, boolean added, File wcFile, File file, SVNProperties propertyDiff, SVNProperties baseProperties, File baseFile) throws SVNException {
+    protected void closeFile(String commitPath, boolean added, File wcFile, File file, SVNProperties propertyDiff, SVNProperties baseProperties, 
+            File baseFile, boolean[] isTreeConflicted) throws SVNException {
         SVNEventAction expectedAction = added ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
         SVNEventAction action;
         SVNStatusType[] type = {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
@@ -305,16 +377,18 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
                 type = getDiffCallback().fileAdded(commitPath,
                         file != null ? baseFile : null, file,
                         0, myRevision2, baseMimeType, mimeType,
-                        baseProperties, propertyDiff);
+                        baseProperties, propertyDiff, isTreeConflicted);
             } else {
                 type = getDiffCallback().fileChanged(commitPath,
                         file != null ? baseFile : null, file,
                         myRevision1, myRevision2, baseMimeType, mimeType,
-                        baseProperties, propertyDiff);
+                        baseProperties, propertyDiff, isTreeConflicted);
             }
         }
-
-        if (type[0] == SVNStatusType.MISSING || type[0] == SVNStatusType.OBSTRUCTED) {
+        
+        if (isTreeConflicted != null && isTreeConflicted.length > 0 && isTreeConflicted[0]) {
+            action = SVNEventAction.TREE_CONFLICT;
+        } else if (type[0] == SVNStatusType.MISSING || type[0] == SVNStatusType.OBSTRUCTED) {
             action = SVNEventAction.SKIP;
         } else if (added) {
             action = SVNEventAction.UPDATE_ADD;
@@ -435,6 +509,12 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         return new SVNFileInfo(path, added);
     }
 
+    protected void setIsConflicted(boolean[] isConflictedResult, boolean isConflicted) {
+        if (isConflictedResult != null && isConflictedResult.length > 0) {
+            isConflictedResult[0] = isConflicted;
+        }
+    }
+
     public void setUseGlobalTmp(boolean global) {
         myIsUseGlobalTmp = global;
     }
@@ -455,6 +535,8 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         }
 
         protected boolean myIsAdded;
+        protected boolean myIsSkip;
+        protected boolean myIsTreeConflicted;
         protected String myRepositoryPath;
         protected File myWCFile;
 
@@ -488,7 +570,9 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
         protected String myRepositoryPath;
         protected File myWCFile;
         protected boolean myIsAdded;
-
+        protected boolean myIsSkip;
+        protected boolean myIsTreeConflicted;
+        
         protected File myFile;
         protected File myBaseFile;
         protected SVNProperties myBaseProperties;
@@ -500,5 +584,6 @@ public class SVNRemoteDiffEditor implements ISVNEditor {
     	protected SVNEventAction myAction;
     	protected SVNEventAction myExpectedAction;
     	protected SVNStatusType myStatus;
+    	protected boolean myIsTreeConflicted;
     }
 }

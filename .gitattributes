@@ -88,6 +88,8 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator$SVNC
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SVNSaslAuthenticator.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea16.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea16Factory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf

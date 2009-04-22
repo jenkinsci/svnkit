@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,7 +25,7 @@ import java.io.Serializable;
  * they are representations of all the changed paths in the revision represented
  * by that <b>SVNLogEntry</b> object.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see 	SVNLogEntry
  */
@@ -57,6 +57,7 @@ public class SVNLogEntryPath implements Serializable {
     private char myType;
     private String myCopyPath;
     private long myCopyRevision;
+    private SVNNodeKind myNodeKind;
     
     /**
      * Constructs an <b>SVNLogEntryPath</b> object. 
@@ -76,12 +77,17 @@ public class SVNLogEntryPath implements Serializable {
      * @param copyRevision		the ancestor's revision if the <code>path</code> is a branch,
      * 							or -1 if not
      */
-    public SVNLogEntryPath(String path, char type, String copyPath,
-            long copyRevision) {
+    public SVNLogEntryPath(String path, char type, String copyPath, long copyRevision) {
+        this(path, type, copyPath, copyRevision, SVNNodeKind.UNKNOWN);
+    }
+
+    public SVNLogEntryPath(String path, char type, String copyPath, long copyRevision, SVNNodeKind kind) {
         myPath = path;
         myType = type;
         myCopyPath = copyPath;
         myCopyRevision = copyRevision;
+        myNodeKind = kind;
+        
     }
     
     /**
@@ -131,6 +137,10 @@ public class SVNLogEntryPath implements Serializable {
      */
     public char getType() {
         return myType;
+    }
+    
+    public SVNNodeKind getKind() {
+        return myNodeKind;
     }
     
     /**

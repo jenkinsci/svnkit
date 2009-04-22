@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,7 +31,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNCommandDaemon implements Runnable {
@@ -39,6 +39,8 @@ public class SVNCommandDaemon implements Runnable {
     private String myCurrentTestsType;
     private int myPort;
     private SecurityManager myDefaultSecurityManager;
+    
+    private volatile int myLastExitCode = 0;
 
     public SVNCommandDaemon(int port) {
         SVNRepositoryFactoryImpl.setup();
@@ -49,6 +51,9 @@ public class SVNCommandDaemon implements Runnable {
         myDefaultSecurityManager = System.getSecurityManager();
         System.setSecurityManager(new SecurityManager() {
             public void checkExit(int status) {
+                synchronized (SVNCommandDaemon.class) {
+                    myLastExitCode = status;
+                }
                 super.checkExit(status);
                 throw new SVNCommandExitException(status);
             }
@@ -99,8 +104,12 @@ public class SVNCommandDaemon implements Runnable {
                 SVNCommandDaemonEnvironment environment = createEnvironment(is);
                 // run!
                 int rc = environment.run();
-                // send back
+                // throwing exception doesn't work :(
+                synchronized (SVNCommandDaemon.class) {
+                    rc = myLastExitCode;
+                }
                 log.logSevere(SVNLogType.DEFAULT, "command exit code: " + rc);
+                // send back
                 try {
                     os.write(escape(environment.getStdOut()));
                     os.write(new byte[] {

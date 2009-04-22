@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,13 +21,14 @@ import org.tmatesoft.svn.core.SVNLock;
  * The <b>SVNAdminEvent</b> is a type of an event used to notify callers' handlers 
  * in several methods of <b>SVNAdminClient</b>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */
 public class SVNAdminEvent {
     private String myTxnName;
     private File myTxnDir;
+    private long myShard;
     private long myRevision;
     private long myOriginalRevision;
     private long myDroppedRevisionsCount;
@@ -70,6 +71,11 @@ public class SVNAdminEvent {
         myMessage = message;
     }
 
+    public SVNAdminEvent(SVNAdminEventAction action, long shard) {
+        myAction = action;
+        myShard = shard;
+    }
+    
     /**
      * Creates a new event.
      * 
@@ -291,4 +297,9 @@ public class SVNAdminEvent {
     public void setDroppedNodesCount(int droppedNodesCount) {
         myDroppedNodesCount = droppedNodesCount;
     }
+    
+    public long getShard() {
+        return myShard;
+    }
+
 }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,6 +34,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFile;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -47,11 +48,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea14 extends SVNAdminArea {
@@ -81,6 +84,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
         INAPPLICABLE_PROPERTIES.add(SVNProperty.WORKING_SIZE);
         INAPPLICABLE_PROPERTIES.add(SVNProperty.DEPTH);
         INAPPLICABLE_PROPERTIES.add(SVNProperty.PROP_TIME);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_PATH);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_REVISION);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.TREE_CONFLICT_DATA);
     }
 
     private File myLockFile;
@@ -1436,7 +1443,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         writer.flush();
     }
     
-    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        return emptyFields;
     }
     
     protected boolean writeString(Writer writer, String str, int emptyFields) throws IOException {
@@ -1932,7 +1940,34 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return false;
     }
 
-    protected int getFormatVersion() {
+    public boolean hasTreeConflict(String name) throws SVNException {
+        return false;
+    }
+
+    public SVNTreeConflictDescription getTreeConflict(String name) throws SVNException {
+        return null;
+    }
+
+    public void addTreeConflict(SVNTreeConflictDescription conflict) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+    }
+
+    public SVNTreeConflictDescription deleteTreeConflict(String name) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return null;
+    }
+
+    public void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
+        SVNErrorManager.error(err, SVNLogType.WC);
+    }
+
+    public int getFormatVersion() {
         return WC_FORMAT;
     }
 

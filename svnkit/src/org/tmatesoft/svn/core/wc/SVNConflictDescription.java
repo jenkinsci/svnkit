@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.wc;
 
+import java.io.File;
+
 import org.tmatesoft.svn.core.SVNNodeKind;
 
 
@@ -18,15 +20,13 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * The <b>SVNConflictDescription</b> represents an object that describes a conflict that has occurred in the
  * working copy. It's passed to {@link ISVNConflictHandler#handleConflict(SVNConflictDescription)}.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */
-public class SVNConflictDescription {
+public abstract class SVNConflictDescription {
     private SVNMergeFileSet myMergeFiles;
     private SVNNodeKind myNodeKind;
-    private String myPropertyName;
-    private boolean myIsPropertyConflict;
     private SVNConflictAction myConflictAction;
     private SVNConflictReason myConflictReason;
 
@@ -39,20 +39,30 @@ public class SVNConflictDescription {
      * 
      * @param mergeFiles            files involved in the merge 
      * @param nodeKind              node kind of the item which the conflict occurred on           
-     * @param propertyName          name of the property property which the conflict occurred on          
-     * @param isPropertyConflict    <span class="javakeyword">true</span> if this object describes a property
      *                              conflict; otherwise <span class="javakeyword">false</span> 
      * @param conflictAction        action which lead to the conflict
      * @param conflictReason        why the conflict ever occurred
      */
-    public SVNConflictDescription(SVNMergeFileSet mergeFiles, SVNNodeKind nodeKind, String propertyName, 
-            boolean isPropertyConflict, SVNConflictAction conflictAction, SVNConflictReason conflictReason) {
+    public SVNConflictDescription(SVNMergeFileSet mergeFiles, SVNNodeKind nodeKind, SVNConflictAction conflictAction, SVNConflictReason conflictReason) {
         myMergeFiles = mergeFiles;
         myNodeKind = nodeKind;
-        myPropertyName = propertyName;
-        myIsPropertyConflict = isPropertyConflict;
         myConflictAction = conflictAction;
         myConflictReason = conflictReason;
+    }
+
+    public abstract boolean isTextConflict();
+
+    /**
+     * Tells whether it's a property merge conflict or not.
+     * @return <span class="javakeyword">true</span> if the conflict occurred while modifying a property;
+     *         otherwise <span class="javakeyword">false</span>
+     */
+    public abstract boolean isPropertyConflict();
+
+    public abstract boolean isTreeConflict();
+
+    public File getPath() {
+        return getMergeFiles().getWCFile();
     }
 
     /**
@@ -80,15 +90,6 @@ public class SVNConflictDescription {
     }
     
     /**
-     * Tells whether it's a property merge conflict or not.
-     * @return <span class="javakeyword">true</span> if the conflict occurred while modifying a property; 
-     *         otherwise <span class="javakeyword">false</span> 
-     */
-    public boolean isPropertyConflict() {
-        return myIsPropertyConflict;
-    }
-    
-    /**
      * Returns the node kind of the item which the conflict occurred on.
      * @return node kind 
      */
@@ -104,25 +105,5 @@ public class SVNConflictDescription {
      * 
      * @return conflicted property name 
      */
-    public String getPropertyName() {
-        return myPropertyName;
-    }
-
-    public String toString() {
-        final StringBuffer buffer = new StringBuffer();
-        buffer.append("[Conflict descriptor: merge files = ");
-        buffer.append(getMergeFiles());
-        buffer.append("; kind = ");
-        buffer.append(getNodeKind());
-        buffer.append("; reason = ");
-        buffer.append(getConflictReason());
-        buffer.append("; action = ");
-        buffer.append(getConflictAction());
-        buffer.append("; property conflicts = ");
-        buffer.append(isPropertyConflict());
-        buffer.append("; property name = ");
-        buffer.append(getPropertyName());
-        buffer.append("]");
-        return buffer.toString();
-    }
+    public abstract String getPropertyName();
 }

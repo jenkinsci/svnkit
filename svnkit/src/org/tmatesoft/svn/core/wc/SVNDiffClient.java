@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -85,7 +85,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDiffClient extends SVNExtendedMergeDriver {
@@ -2719,7 +2719,7 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
                     depth, changeLists);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, 
-                    !serverSupportsDepth, depth, false, false, getDebugLog());
+                    !serverSupportsDepth, depth, false, false, true, getDebugLog());
             
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
             try {
@@ -2769,10 +2769,10 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
             SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, 
                     revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /* compare to base */, 
                     depth, changeLists);
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, depth, false);
+            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, false);
             boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
             SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), 
-                    false, !serverSupportsDepth, depth, false, false, getDebugLog());
+                    false, !serverSupportsDepth, depth, false, false, true, getDebugLog());
             
             // this should be rev2.
             long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);

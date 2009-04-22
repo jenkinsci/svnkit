@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,7 +32,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNWCProperties {
@@ -360,8 +360,12 @@ public class SVNWCProperties {
     public static void setProperties(SVNProperties namesToValues, File target, File tmpFile, String terminator) throws SVNException {
         OutputStream dst = null;
         try {
-            tmpFile.getParentFile().mkdirs();
-            dst = SVNFileUtil.openFileForWriting(tmpFile);
+            if (tmpFile != null) {
+                tmpFile.getParentFile().mkdirs();
+            } else {
+                target.getParentFile().mkdirs();
+            }
+            dst = SVNFileUtil.openFileForWriting(tmpFile != null ? tmpFile : target);
             setProperties(namesToValues, dst, terminator);
         } finally {
             SVNFileUtil.closeFile(dst);
@@ -369,6 +373,8 @@ public class SVNWCProperties {
         if (tmpFile != null && target != null) {
             target.getParentFile().mkdirs();
             SVNFileUtil.rename(tmpFile, target);
+        } 
+        if (target != null) {
             SVNFileUtil.setReadonly(target, true);
         }
     }

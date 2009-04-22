@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -50,12 +50,13 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNCommitUtil {
@@ -174,7 +175,7 @@ public class SVNCommitUtil {
         Collection dirsToLockRecursively = new SVNHashSet(); 
         if (relativePaths.isEmpty()) {
             statusClient.checkCancelled();
-            String target = getTargetName(baseDir);
+            String target = SVNWCManager.getActualTarget(baseDir);
             if (!"".equals(target)) {
                 // we will have to lock target as well, not only base dir.
                 SVNFileType targetType = SVNFileType.getType(new File(rootPath));
@@ -393,7 +394,20 @@ public class SVNCommitUtil {
             String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
             SVNAdminArea dir = baseAccess.probeRetrieve(targetFile);
-            SVNEntry entry = baseAccess.getVersionedEntry(targetFile, false);
+            SVNEntry entry = null;
+            try {
+                entry = baseAccess.getVersionedEntry(targetFile, false);
+            } catch (SVNException e) {
+                if (e.getErrorMessage() != null &&
+                        e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND) {
+                    SVNTreeConflictDescription tc = baseAccess.getTreeConflict(targetFile);
+                    if (tc != null) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, "Aborting commit: ''{0}'' remains in conflict", targetFile);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }                    
+                }
+                throw e;                
+            }
             String url = null;
             if (entry.getURL() == null) {
                 // it could be missing directory.
@@ -481,6 +495,30 @@ public class SVNCommitUtil {
                 // this recursion is not considered as "forced", all children should be 
                 // deleted anyway.
                 forcedDepth = SVNDepth.INFINITY;
+            }
+            
+            // check ancestors for tc.
+            File ancestorPath = dir.getRoot();
+            
+            SVNWCAccess localAccess = SVNWCAccess.newInstance(null);
+            localAccess.open(ancestorPath, false, 0);
+            try {
+                while (true) {
+                    boolean isRoot = localAccess.isWCRoot(ancestorPath);
+                    if (isRoot) {
+                        break;
+                    }
+                    File pPath = ancestorPath.getParentFile();
+                    localAccess.open(pPath, false, 0);
+                    if (localAccess.hasTreeConflict(ancestorPath)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                                "Aborting commit: ''{0}'' remains in tree-conflict", ancestorPath);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    ancestorPath = pPath;
+                }
+            } finally {
+                localAccess.close();
             }
 //            String relativePath = entry.getKind() == SVNNodeKind.DIR ? target : SVNPathUtil.removeTail(target);
             harvestCommitables(commitables, dir, targetFile, parentEntry, entry, url, null, false, false, 
@@ -623,6 +661,8 @@ public class SVNCommitUtil {
         
         boolean propConflicts;
         boolean textConflicts = false;
+        boolean treeConflicts = dir.hasTreeConflict(entry.getName());
+        
         SVNAdminArea entries = null;
         if (entry.getKind() == SVNNodeKind.DIR) {
             SVNAdminArea childDir = null;
@@ -643,12 +683,38 @@ public class SVNCommitUtil {
                 }
             } 
             propConflicts = dir.hasPropConflict(entry.getName());
+
+            Map tcs = entry.getTreeConflicts();
+            for (Iterator keys = tcs.keySet().iterator(); keys.hasNext();) {
+                File entryPath = (File) keys.next();
+                SVNTreeConflictDescription tc = (SVNTreeConflictDescription) tcs.get(entryPath);
+                if (tc.getNodeKind() == SVNNodeKind.DIR && depth == SVNDepth.FILES) {
+                    continue;
+                }
+                SVNEntry conflictingEntry = null;
+                if (tc.getNodeKind() == SVNNodeKind.DIR) {
+                    // get dir admin area and root entry
+                    SVNAdminArea childConflictingDir = dir.getWCAccess().getAdminArea(entryPath);
+                    if (childConflictingDir != null) {
+                        conflictingEntry = childConflictingDir.getEntry("", true);
+                    }
+                    conflictingEntry = childDir.getEntry(entryPath.getName(), true);
+                } else {
+                    conflictingEntry = dir.getEntry(entryPath.getName(), true);
+                }
+                if (changelists == null || changelists.isEmpty() || 
+                        (conflictingEntry != null && SVNWCAccess.matchesChangeList(changelists, conflictingEntry))) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
+                            "Aborting commit: ''{0}'' remains in conflict", path);                    
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+            }
         } else {
             propConflicts = dir.hasPropConflict(entry.getName());
             textConflicts = dir.hasTextConflict(entry.getName());
         }
         
-        if (propConflicts || textConflicts) {
+        if (propConflicts || textConflicts || treeConflicts) {
             if (SVNWCAccess.matchesChangeList(changelists, entry)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_FOUND_CONFLICT, 
                         "Aborting commit: ''{0}'' remains in conflict", path);                    
@@ -801,11 +867,14 @@ public class SVNCommitUtil {
                     dir.getWCAccess().checkCancelled();
                 }
                 SVNEntry currentEntry = (SVNEntry) ents.next();
-                if ("".equals(currentEntry.getName())) {
+                if (currentEntry.isThisDir()) {
                     continue;
                 }
                 // if recursion is forced and entry is explicitly copied, skip it.
                 if (forcedRecursion && currentEntry.isCopied() && currentEntry.getCopyFromURL() != null) {
+                    continue;
+                }
+                if (currentEntry.getDepth() == SVNDepth.EXCLUDE) {
                     continue;
                 }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;
@@ -944,7 +1013,7 @@ public class SVNCommitUtil {
 
     private static File adjustRelativePaths(File rootFile, Collection relativePaths) throws SVNException {
         if (relativePaths.contains("")) {
-            String targetName = getTargetName(rootFile);
+            String targetName = SVNWCManager.getActualTarget(rootFile);
             if (!"".equals(targetName) && rootFile.getParentFile() != null) {
                 // there is a versioned parent.
                 rootFile = rootFile.getParentFile();
@@ -964,20 +1033,6 @@ public class SVNCommitUtil {
         return rootFile;
     }
 
-    private static String getTargetName(File file) throws SVNException {
-        SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
-        try {
-            wcAccess.probeOpen(file, false, 0);
-            SVNFileType fileType = SVNFileType.getType(file);
-            if ((fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) || !wcAccess.isWCRoot(file)) {
-                return file.getName();
-            }
-        } finally {
-            wcAccess.close();
-        }
-        return "";
-    }
-    
     private static boolean isRecursiveCommitForced(File directory) throws SVNException {
         SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
         try {

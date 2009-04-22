@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -35,7 +35,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * Categories are fixed-size; if a category has fewer than 5000 errors, then it just ends with a range of 
  * unused numbers.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNErrorCode implements Serializable {
@@ -270,7 +270,16 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode WC_CHANGELIST_MOVE = new SVNErrorCode(WC_CATEGORY, 29, "Moving a path from one changelist to another");
     
-    
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode WC_CANNOT_DELETE_FILE_EXTERNAL =  new SVNErrorCode(WC_CATEGORY, 30, "Cannot delete a file external");
+
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode WC_CANNOT_MOVE_FILE_EXTERNAL =  new SVNErrorCode(WC_CATEGORY, 31, "Cannot move a file external");
+
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
     public static final SVNErrorCode FS_ALREADY_OPEN = new SVNErrorCode(FS_CATEGORY, 2, "Filesystem is already open");
@@ -348,6 +357,11 @@ public class SVNErrorCode implements Serializable {
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode RA_UUID_MISMATCH = new SVNErrorCode(RA_CATEGORY, 9, "Repository UUID does not match expected UUID");
+
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode RA_REPOS_ROOT_URL_MISMATCH = new SVNErrorCode(RA_CATEGORY, 10, "Repository root URL does not match expected root URL");
     
     public static final SVNErrorCode RA_DAV_SOCK_INIT = new SVNErrorCode(RA_DAV_CATEGORY, 0, "RA layer failed to init socket layer");
     public static final SVNErrorCode RA_DAV_CREATING_REQUEST = new SVNErrorCode(RA_DAV_CATEGORY, 1, "RA layer failed to create HTTP request");
@@ -432,6 +446,12 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode CLIENT_NOT_READY_TO_MERGE = new SVNErrorCode(CLIENT_CATEGORY, 16, 
             "Working copy and merge source not ready for reintegration");
+
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode CLIENT_FILE_EXTERNAL_OVERWRITE_VERSIONED = new SVNErrorCode(CLIENT_CATEGORY, 17, 
+            "A file external cannot overwrite an existing versioned item");
     
     public static final SVNErrorCode BASE = new SVNErrorCode(MISC_CATEGORY, 0, "A problem occurred; see later errors for details");
     public static final SVNErrorCode PLUGIN_LOAD_FAILURE = new SVNErrorCode(MISC_CATEGORY, 1, "Failure loading plugin");    

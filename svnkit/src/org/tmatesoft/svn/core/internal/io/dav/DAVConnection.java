@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -52,7 +52,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DAVConnection {
@@ -343,10 +343,52 @@ public class DAVConnection {
             locationPath = SVNEncodingUtil.uriEncode(locationPath);
             request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, myLocks);
         }
+        
         IHTTPConnection httpConnection = getConnection();
-        return httpConnection.request("DELETE", path, header, request, 204, 404, null, null);
+        HTTPStatus status = httpConnection.request("DELETE", path, header, request, 204, 0, null, null);
+        if (status.getError() != null) {
+            SVNErrorCode errCode = status.getError().getErrorCode();
+            if (errCode == SVNErrorCode.FS_BAD_LOCK_TOKEN || errCode == SVNErrorCode.FS_NO_LOCK_TOKEN || 
+                    errCode == SVNErrorCode.FS_LOCK_OWNER_MISMATCH || errCode == SVNErrorCode.FS_PATH_ALREADY_LOCKED) {
+                Map childTokens = null;
+                if (myLocks != null) {
+                    childTokens = new SVNHashMap();
+                    for (Iterator locksIter = myLocks.keySet().iterator(); locksIter.hasNext();) {
+                        String lockPath = (String) locksIter.next();
+                        if (lockPath.startsWith(path)) {
+                            childTokens.put(lockPath, myLocks.get(lockPath));
+                        }
+                    }
+                }
+                
+                if (childTokens == null || childTokens.isEmpty()) {
+                    SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);
+                } else {
+                    status.setError(null);
+                }
+                
+                String token = myLocks != null ? (String) myLocks.get(path) : null;
+                if (token != null) {
+                    childTokens.put(path, token);
+                }
+                
+                request = new StringBuffer();
+                String locationPath = getLocation().getPath();
+                locationPath = SVNEncodingUtil.uriEncode(locationPath);
+                
+                request = DAVMergeHandler.generateLockDataRequest(request, locationPath, repositoryPath, childTokens);
+                HTTPStatus status2 = httpConnection.request("DELETE", path, header, request, 204, 404, null, null);
+                if (status2.getError() != null) {
+                    SVNErrorManager.error(status2.getError(), SVNLogType.NETWORK);
+                }
+                return status2;
+            } 
+            SVNErrorManager.error(status.getError(), SVNLogType.NETWORK);    
+        }
+        
+        return status;
     }
-    
+
     public HTTPStatus doMakeCollection(String path) throws SVNException {
         IHTTPConnection httpConnection = getConnection();
         return httpConnection.request("MKCOL", path, null, (StringBuffer) null, 201, 0, null, null);

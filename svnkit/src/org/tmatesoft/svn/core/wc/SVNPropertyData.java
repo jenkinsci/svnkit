@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * <b>handleProperty()</b> methods of <b>ISVNPropertyHandler</b> for processing
  * or simply return that 'properties object' as a target.
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     ISVNPropertyHandler
  * @see     SVNWCClient

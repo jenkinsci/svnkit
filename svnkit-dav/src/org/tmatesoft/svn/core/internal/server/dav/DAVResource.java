@@ -456,7 +456,7 @@ public class DAVResource {
     public String getMD5Checksum(String path) throws SVNException {
         path = path == null ? getResourceURI().getPath() : path;
         FSRevisionNode node = myRoot.getRevisionNode(path);
-        return node.getFileChecksum();
+        return node.getFileMD5Checksum();
     }
 
     public String getLog(long revision) throws SVNException {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
@@ -56,12 +57,13 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNMergeResult;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminArea {
@@ -128,6 +130,18 @@ public abstract class SVNAdminArea {
     public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException;
 
     public abstract void handleKillMe() throws SVNException;
+
+    public abstract boolean hasTreeConflict(String name) throws SVNException;
+
+    public abstract SVNTreeConflictDescription getTreeConflict(String name) throws SVNException;
+
+    public abstract void addTreeConflict(SVNTreeConflictDescription conflict) throws SVNException;
+
+    public abstract SVNTreeConflictDescription deleteTreeConflict(String name) throws SVNException;
+
+    public abstract void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException;
+    
+    public abstract int getFormatVersion();
 
     public void updateURL(String rootURL, boolean recursive) throws SVNException {
         SVNWCAccess wcAccess = getWCAccess();
@@ -548,6 +562,7 @@ public abstract class SVNAdminArea {
         SVNLogRunner runner = new SVNLogRunner();
         int index = 0;
         SVNLog log = null;
+        runner.logStarted(this);
         try {
             File logFile = null;
             while (true) {
@@ -640,7 +655,7 @@ public abstract class SVNAdminArea {
                     }
                 } else if (entryName != null && nextEntry.isDirectory()) {
                     File entryPath = getFile(entryName);
-                    if (getWCAccess().isMissing(entryPath)) {
+                    if (getWCAccess().isMissing(entryPath) || nextEntry.getDepth() == SVNDepth.EXCLUDE) {
                         deleteEntry(entryName);
                     } else {
                         try {
@@ -660,8 +675,11 @@ public abstract class SVNAdminArea {
                 }
             }
             if (!getWCAccess().isWCRoot(getRoot())) {
-                getWCAccess().retrieve(getRoot().getParentFile()).deleteEntry(getRoot().getName());
-                getWCAccess().retrieve(getRoot().getParentFile()).saveEntries(false);
+                SVNEntry dirEntryInParent = getWCAccess().retrieve(getRoot().getParentFile()).getEntry(getRoot().getName(), false);
+                if (dirEntryInParent.getDepth() != SVNDepth.EXCLUDE) {
+                    getWCAccess().retrieve(getRoot().getParentFile()).deleteEntry(getRoot().getName());
+                    getWCAccess().retrieve(getRoot().getParentFile()).saveEntries(false);
+                }
             }
             destroyAdminArea();
             if (deleteWorkingFiles && !leftSomething) {
@@ -798,11 +816,15 @@ public abstract class SVNAdminArea {
                     atts.remove();
                     continue;                                        
                 }
-                String value = (String) attributes.get(attName);
-                if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
-                    String[] propsArray = SVNAdminArea.fromString(value, " ");
-                    entryAttrs.put(attName, propsArray);
-                    continue;
+                
+                Object value = attributes.get(attName);
+                if (value instanceof String) {
+                    String strValue = (String) value;
+                    if (SVNProperty.CACHABLE_PROPS.equals(attName) || SVNProperty.PRESENT_PROPS.equals(attName)) {
+                        String[] propsArray = SVNAdminArea.fromString(strValue, " ");
+                        entryAttrs.put(attName, propsArray);
+                        continue;
+                    }
                 }
 
                 if (value != null) {
@@ -1035,13 +1057,11 @@ public abstract class SVNAdminArea {
     
     protected abstract void writeEntries(Writer writer) throws IOException, SVNException;
 
-    protected abstract int getFormatVersion();
-
     protected abstract Map fetchEntries() throws SVNException;
 
     protected abstract boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException;
 
-    protected abstract void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException;
+    protected abstract int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException;
 
     protected SVNAdminArea(File dir){
         myDirectory = dir;
@@ -1223,7 +1243,10 @@ public abstract class SVNAdminArea {
         if (recursive) {
             for (Iterator ents = entries(true); ents.hasNext();) {
                 SVNEntry entry = (SVNEntry) ents.next();
-                if (getThisDirName().equals(entry.getName())) {
+                if (entry.isThisDir()) {
+                    continue;
+                }
+                if (entry.getDepth() == SVNDepth.EXCLUDE) {
                     continue;
                 }
                 if (entry.getKind() == SVNNodeKind.DIR) {
@@ -1281,7 +1304,7 @@ public abstract class SVNAdminArea {
                     handler.handleError(childPath, svne.getErrorMessage());
                 }
             }
-            if (entry.isDirectory() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
+            if (entry.isDirectory() && !entry.isHidden() && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 SVNAdminArea childArea = null;
                 SVNDepth depthBelowHere = depth;
                 if (depth == SVNDepth.IMMEDIATES) {
@@ -1333,7 +1356,7 @@ public abstract class SVNAdminArea {
         String charset = SVNTranslator.getCharset(charsetProp, text.getPath(), getWCAccess().getOptions());
         String eolStyle = getProperties(text.getName()).getStringPropertyValue(SVNProperty.EOL_STYLE);
         String keywords = getProperties(text.getName()).getStringPropertyValue(SVNProperty.KEYWORDS);
-        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null;
+        boolean special = getProperties(text.getName()).getStringPropertyValue(SVNProperty.SPECIAL) != null && SVNFileUtil.symlinksSupported();
 
         if (special) {
             compareTextBase = true;
@@ -1352,7 +1375,7 @@ public abstract class SVNAdminArea {
                 textStream = special ? null : SVNFileUtil.openFileForReading(text, SVNLogType.WC);
                 if (checksum) {
                     if (entry.getChecksum() != null) {
-                        checksumStream = new SVNChecksumInputStream(baseStream);
+                        checksumStream = new SVNChecksumInputStream(baseStream, SVNChecksumInputStream.MD5_ALGORITHM, false, false);
                         baseStream = checksumStream;
                     }
                 }

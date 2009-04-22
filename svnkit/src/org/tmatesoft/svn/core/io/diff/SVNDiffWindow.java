@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -37,7 +37,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * for subsequent iterations an iterator simply uses the same instruction object 
  * to return as a newly read and decoded instruction.      
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     SVNDiffInstruction
  */

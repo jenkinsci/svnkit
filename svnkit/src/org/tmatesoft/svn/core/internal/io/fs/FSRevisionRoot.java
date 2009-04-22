@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,7 +25,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSRevisionRoot extends FSRoot {
@@ -45,9 +45,9 @@ public class FSRevisionRoot extends FSRoot {
     }
 
     public Map getChangedPaths() throws SVNException {
-        FSFile file = getOwner().getRevisionFSFile(getRevision());
-        loadOffsets(file);
+        FSFile file = getOwner().getPackOrRevisionFSFile(getRevision());
         try {
+            loadOffsets(file);
             file.seek(myChangesOffset);
             return fetchAllChanges(file, true);
         } finally {
@@ -97,7 +97,7 @@ public class FSRevisionRoot extends FSRoot {
 
     public FSRevisionNode getRootRevisionNode() throws SVNException {
         if (myRootRevisionNode == null) {
-            FSFile file = getOwner().getRevisionFSFile(getRevision());
+            FSFile file = getOwner().getPackOrRevisionFSFile(getRevision());
             try {
                 loadOffsets(file);
                 file.seek(myRootOffset);
@@ -198,7 +198,7 @@ public class FSRevisionRoot extends FSRoot {
         }
         long[] rootOffset = { -1 };
         long[] changesOffset = { -1 };
-        FSRepositoryUtil.loadRootChangesOffset(file, rootOffset, changesOffset);
+        FSRepositoryUtil.loadRootChangesOffset(getOwner(), getRevision(), file, rootOffset, changesOffset);
         myRootOffset = rootOffset[0];
         myChangesOffset = changesOffset[0];
     }

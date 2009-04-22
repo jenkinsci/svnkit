@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -56,7 +56,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that use a single socket connection (i.e. don't close a connection after every repository
  * access operation but reuse a single one). 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession, ISVNConnectionListener {

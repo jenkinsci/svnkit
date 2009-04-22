@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -45,7 +45,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDumpEditor implements ISVNEditor {
@@ -249,9 +249,14 @@ public class SVNDumpEditor implements ISVNEditor {
                             mustDumpText = FSRepositoryUtil.areFileContentsChanged(compareRoot, comparePath, 
                                     myRoot, canonicalPath);
                             FSRevisionNode revNode = compareRoot.getRevisionNode(comparePath);
-                            String checkSum = revNode.getFileChecksum();
+                            String checkSum = revNode.getFileMD5Checksum();
                             if (checkSum != null && checkSum.length() > 0) {
-                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM + ": " + checkSum + "\n");
+                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_MD5 + ": " + checkSum + "\n");
+                            }
+                            
+                            checkSum = revNode.getFileSHA1Checksum();
+                            if (checkSum != null && checkSum.length() > 0) {
+                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_SHA1 + ": " + checkSum + "\n");
                             }
                         }
                     }
@@ -337,9 +342,14 @@ public class SVNDumpEditor implements ISVNEditor {
                         
                         if (compareRoot != null) {
                             FSRevisionNode revNode = compareRoot.getRevisionNode(comparePath);
-                            String hexDigest = revNode.getFileChecksum();
+                            String hexDigest = revNode.getFileMD5Checksum();
                             if (hexDigest != null && hexDigest.length() > 0) {
-                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM + ": " + hexDigest + "\n");
+                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_MD5 + ": " + hexDigest + "\n");
+                            }
+                            
+                            hexDigest = revNode.getFileSHA1Checksum();
+                            if (hexDigest != null && hexDigest.length() > 0) {
+                                writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_SHA1 + ": " + hexDigest + "\n");
                             }
                         }
                     } finally {
@@ -354,9 +364,15 @@ public class SVNDumpEditor implements ISVNEditor {
                 
                 contentLength += txtLength;
                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_LENGTH + ": " + txtLength + "\n");
-                String checksum = node.getFileChecksum();
+                
+                String checksum = node.getFileMD5Checksum();
                 if (checksum != null && checksum.length() > 0) {
-                    writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM + ": " + checksum + "\n");
+                    writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_MD5 + ": " + checksum + "\n");
+                }
+                
+                checksum = node.getFileSHA1Checksum();
+                if (checksum != null && checksum.length() > 0) {
+                    writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_SHA1 + ": " + checksum + "\n");
                 }
             }
             
@@ -374,7 +390,8 @@ public class SVNDumpEditor implements ISVNEditor {
                     } else {
                         source = myRoot.getFileStreamForPath(getDeltaCombiner(), canonicalPath);
                     }
-                    FSRepositoryUtil.copy(source, myDumpStream);
+                    //TODO: provide canceller?
+                    FSRepositoryUtil.copy(source, myDumpStream, null);
                 } finally {
                     SVNFileUtil.closeFile(source);
                 }

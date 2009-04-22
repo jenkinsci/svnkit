@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -133,7 +133,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNClientImpl implements SVNClientInterface {
 
@@ -167,7 +167,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     /**
      * @author TMate Software Ltd.
-     * @version 1.2.0
+     * @version 1.3
      */
     public static final class LogLevel implements SVNClientLogLevel {
     }
@@ -2217,5 +2217,14 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNRevision(revision),
                     JavaHLObjectFactory.getSVNDepth(depth), changeListsCollection, handler);
         }
+    }
+
+    public void logMessages(String path, Revision pegRevision, RevisionRange[] ranges, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, String[] revProps, long limit,
+            LogMessageCallback callback) throws ClientException {
+        // TODO
+    }
+
+    public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
+        // TODO
     }
 }

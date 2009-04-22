@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,7 +39,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSTransactionRoot extends FSRoot {
@@ -389,6 +389,9 @@ public class FSTransactionRoot extends FSRoot {
                 textRep = new FSRepresentation();
                 textRep.setRevision(SVNRepository.INVALID_REVISION);
                 textRep.setTxnId(myTxnID);
+                String uniqueSuffix = getNewTxnNodeId();
+                String uniquifier = myTxnID + '/' + uniqueSuffix;
+                textRep.setUniquifier(uniquifier);
                 parentRevNode.setTextRepresentation(textRep);
                 parentRevNode.setIsFreshTxnRoot(false);
                 getOwner().putTxnRevisionNode(parentRevNode.getId(), parentRevNode);
@@ -412,7 +415,7 @@ public class FSTransactionRoot extends FSRoot {
         }
     }
 
-    public void writeChangeEntry(OutputStream changesFile, FSPathChange pathChange) throws SVNException, IOException {
+    public void writeChangeEntry(OutputStream changesFile, FSPathChange pathChange, boolean includeNodeKind) throws SVNException, IOException {
         FSPathChangeKind changeKind = pathChange.getChangeKind();
         if (!(changeKind == FSPathChangeKind.FS_PATH_CHANGE_ADD || changeKind == FSPathChangeKind.FS_PATH_CHANGE_DELETE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_MODIFY
                 || changeKind == FSPathChangeKind.FS_PATH_CHANGE_REPLACE || changeKind == FSPathChangeKind.FS_PATH_CHANGE_RESET)) {
@@ -420,6 +423,9 @@ public class FSTransactionRoot extends FSRoot {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String changeString = changeKind.toString();
+        if (includeNodeKind) {
+            changeString += "-" + pathChange.getKind().toString();
+        }            
         String idString = null;
         if (pathChange.getRevNodeId() != null) {
             idString = pathChange.getRevNodeId().toString();
@@ -444,6 +450,7 @@ public class FSTransactionRoot extends FSRoot {
     public long writeFinalChangedPathInfo(final CountingOutputStream protoFile) throws SVNException, IOException {
         long offset = protoFile.getPosition();
         Map changedPaths = getChangedPaths();
+        boolean includeNodeKind = getOwner().getDBFormat() >= FSFS.MIN_KIND_IN_CHANGED_FORMAT;
 
         for (Iterator paths = changedPaths.keySet().iterator(); paths.hasNext();) {
             String path = (String) paths.next();
@@ -454,8 +461,7 @@ public class FSTransactionRoot extends FSRoot {
                 FSRevisionNode revNode = getOwner().getRevisionNode(id);
                 change.setRevNodeId(revNode.getId());
             }
-
-            writeChangeEntry(protoFile, change);
+            writeChangeEntry(protoFile, change, includeNodeKind);
         }
         return offset;
     }
@@ -526,7 +532,7 @@ public class FSTransactionRoot extends FSRoot {
                     long size = writeHashRepresentation(unparsedEntries, protoFile, checksum);
                     String hexDigest = SVNFileUtil.toHexDigest(checksum);
                     textRep.setSize(size);
-                    textRep.setHexDigest(hexDigest);
+                    textRep.setMD5HexDigest(hexDigest);
                     textRep.setExpandedSize(textRep.getSize());
                 } catch (NoSuchAlgorithmException nsae) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
@@ -551,7 +557,7 @@ public class FSTransactionRoot extends FSRoot {
                 long size = writeHashRepresentation(props, protoFile, checksum);
                 String hexDigest = SVNFileUtil.toHexDigest(checksum);
                 propsRep.setSize(size);
-                propsRep.setHexDigest(hexDigest);
+                propsRep.setMD5HexDigest(hexDigest);
                 propsRep.setTxnId(null);
                 propsRep.setRevision(revision);
                 propsRep.setExpandedSize(size);
@@ -655,6 +661,15 @@ public class FSTransactionRoot extends FSRoot {
             myTxnChangesFile = new File(getOwner().getTransactionDir(myTxnID), "changes");
         }
         return myTxnChangesFile;
+    }
+
+    public String getNewTxnNodeId() throws SVNException {
+        String[] curIds = readNextIDs();
+        String curNodeId = curIds[0];
+        String curCopyId = curIds[1];
+        String nextNodeId = FSRepositoryUtil.generateNextKey(curNodeId);
+        getOwner().writeNextIDs(getTxnID(), nextNodeId, curCopyId);
+        return "_" + curNodeId;
     }
 
     private long writeHashRepresentation(SVNProperties hashContents, OutputStream protoFile, MessageDigest digest) throws IOException, SVNException {

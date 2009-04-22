@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,7 +41,7 @@ import org.tmatesoft.svn.core.test.daemon.SVNCommandDaemon;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class PythonTests {
@@ -330,20 +330,32 @@ public class PythonTests {
 
 	private static List combineTestCases(List tokens, List availableTestCases) {
 		final List combinedTestCases = new ArrayList();
+		Integer endInt = (Integer) availableTestCases.get(availableTestCases.size() - 1);
+		Integer startInt = (Integer) availableTestCases.get(0);
+		boolean isAllSpecified = false;
 		for (Iterator it = tokens.iterator(); it.hasNext();) {
 			final String token = (String)it.next();
 			if (token.equalsIgnoreCase("all")) {
-				combinedTestCases.addAll(availableTestCases);
+				isAllSpecified = true;
+			    combinedTestCases.addAll(availableTestCases);
 				continue;
 			}
 
-            if (token.indexOf("-") > 0) {
+            if (token.indexOf("-") > 0 || (token.indexOf("-") == 0 && !isAllSpecified)) {
                 // parse range
                 String startNumber = token.substring(0, token.indexOf("-"));
                 String endNumber = token.substring(token.indexOf("-") + 1);
                 try {
-                    int start = Integer.parseInt(startNumber);
-                    int end = Integer.parseInt(endNumber);
+                    int start = startInt.intValue();
+                    int end = endInt.intValue();
+                    if (!"".equals(startNumber)) {
+                        start = Integer.parseInt(startNumber);
+                    }
+                    
+                    if (!"".equals(endNumber)) {
+                        end = Integer.parseInt(endNumber);
+                    }
+                    
                     if (start > end) {
                         int i = start;
                         start = end;

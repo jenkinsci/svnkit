@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -33,9 +33,10 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNStatusUtil {
@@ -133,6 +134,7 @@ public class SVNStatusUtil {
         boolean isLocked = false;
         boolean isSwitched = false;
         boolean isSpecial = false;
+        boolean isFileExternal = false;
         
         SVNStatusType textStatus = SVNStatusType.STATUS_NORMAL;
         SVNStatusType propStatus = SVNStatusType.STATUS_NONE;
@@ -157,17 +159,21 @@ public class SVNStatusUtil {
             special = !SVNFileUtil.symlinksSupported() ? false : fileType == SVNFileType.SYMLINK;
         }
         
+        SVNTreeConflictDescription treeConflict = wcAccess.getTreeConflict(file);
         if (entry == null) {
             SVNStatus status = new SVNStatus(null, file, SVNNodeKind.UNKNOWN,
                     SVNRevision.UNDEFINED, SVNRevision.UNDEFINED, null, null, SVNStatusType.STATUS_NONE, 
                     SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, false,
-                    false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
-                    null, null, -1);
+                    false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, repositoryLock, null, 
+                    null, null, -1, treeConflict);
             status.setRemoteStatus(SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, repositoryLock, SVNNodeKind.NONE);
             SVNStatusType text = SVNStatusType.STATUS_NONE;
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType != SVNFileType.NONE) {
                 text = isIgnored ? SVNStatusType.STATUS_IGNORED : SVNStatusType.STATUS_UNVERSIONED;
+            }
+            if (fileType == SVNFileType.NONE && treeConflict != null) {
+                text = SVNStatusType.STATUS_MISSING;
             }
             status.setContentsStatus(text);
             return status;
@@ -181,7 +187,10 @@ public class SVNStatusUtil {
                 textStatus = SVNStatusType.STATUS_OBSTRUCTED;
             }
         }
-        if (entry.getSVNURL() != null && parentEntry != null && parentEntry.getSVNURL() != null) {
+        
+        if (entry.getExternalFilePath() != null) {
+            isFileExternal = true;
+        } else if (entry.getSVNURL() != null && parentEntry != null && parentEntry.getSVNURL() != null) {
             String urlName = SVNPathUtil.tail(entry.getSVNURL().getURIEncodedPath());
             if (!SVNEncodingUtil.uriEncode(file.getName()).equals(urlName)) {
                 isSwitched = true;
@@ -247,7 +256,7 @@ public class SVNStatusUtil {
             if ((textStatus == SVNStatusType.STATUS_NONE || textStatus == SVNStatusType.STATUS_NORMAL) &&
                 (propStatus == SVNStatusType.STATUS_NONE || propStatus == SVNStatusType.STATUS_NORMAL) &&
                 !isLocked && !isSwitched && entry.getLockToken() == null && repositoryLock == null && 
-                entry.getChangelistName() == null) {
+                entry.getChangelistName() == null && !isFileExternal && treeConflict == null) {
                 return null;
             }
         }
@@ -266,9 +275,9 @@ public class SVNStatusUtil {
                 SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
                 SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
                 textStatus,  propStatus, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
-                isLocked, entry.isCopied(), isSwitched, conflictNew, conflictOld, conflictWrk, conflictProp, 
+                isLocked, entry.isCopied(), isSwitched, isFileExternal, conflictNew, conflictOld, conflictWrk, conflictProp, 
                 entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber);
+                repositoryLock, localLock, entry.asMap(), entry.getChangelistName(), wcFormatNumber, treeConflict);
         status.setEntry(entry);
         return status;
     }

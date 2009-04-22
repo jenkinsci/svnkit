@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,7 +19,7 @@ package org.tmatesoft.svn.core;
  * names, and gives some useful methods to operate with properties (in particular).
  *
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNProperty {
     /**
@@ -156,6 +156,26 @@ public class SVNProperty {
      */
     public static final String DEPTH = SVN_ENTRY_PREFIX + "depth";
 
+    /**
+     * @since 1.3, new in Subversion 1.6
+     */
+    public static final String FILE_EXTERNAL_PATH = SVN_ENTRY_PREFIX + "file-external-path";
+
+    /**
+     * @since 1.3, new in Subversion 1.6
+     */
+    public static final String FILE_EXTERNAL_REVISION = SVN_ENTRY_PREFIX + "file-external-revision";
+
+    /**
+     * @since 1.3, new in Subversion 1.6
+     */
+    public static final String FILE_EXTERNAL_PEG_REVISION = SVN_ENTRY_PREFIX + "file-external-peg-revision";
+
+    /**
+     * @since 1.3, new in Subversion 1.6
+     */
+    public static final String TREE_CONFLICT_DATA = SVN_ENTRY_PREFIX + "tree-conflicts";
+    
     /**
      * An <span class="javastring">"svn:entry:checksum"</span> SVN untweakable metaproperty.
      */

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,6 +21,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
@@ -35,7 +36,7 @@ import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVLogHandler extends BasicDAVHandler {
 
@@ -180,7 +181,12 @@ public class DAVLogHandler extends BasicDAVHandler {
             type = SVNLogEntryPath.TYPE_DELETED;
         }
         if (type != 0) {
-            myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision);
+            SVNNodeKind nodeKind = SVNNodeKind.UNKNOWN;
+            String nodeKindStr = attrs.getValue("node-kind");
+            if (nodeKindStr != null) {
+                nodeKind = SVNNodeKind.parseKind(nodeKindStr);
+            }
+            myPath = new SVNLogEntryPath(null, type, copyPath, copyRevision, nodeKind);
         }
 
     }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
  * <b>ISVNAdminEventHandler</b> extends {@link org.tmatesoft.svn.core.wc.ISVNEventHandler}, so at the same time you 
  * may use it with other <b>SVN</b>*<b>Client</b> objects and as a cancellation editor.   
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.1.1
  */

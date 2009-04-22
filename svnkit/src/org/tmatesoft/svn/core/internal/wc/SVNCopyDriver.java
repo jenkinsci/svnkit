@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -371,6 +371,9 @@ public class SVNCopyDriver extends SVNBasicClient {
             boolean deleted = entry.isDeleted();
             SVNNodeKind kind = entry.getKind();
             boolean force = false;
+            if (entry.getDepth() == SVNDepth.EXCLUDE) {
+                continue;
+            }
 
             if (entry.isDeleted()) {
                 force = true;
@@ -461,6 +464,27 @@ public class SVNCopyDriver extends SVNBasicClient {
                 }
             }
         }
+        
+        if (isMove && !srcIsURL) {
+            for (Iterator ps = pairs.iterator(); ps.hasNext();) {
+                CopyPair pair = (CopyPair) ps.next();
+                SVNWCAccess wcAccess = getWCAccess();
+                try {
+                    File srcFile = new File(pair.mySource);
+                    probeOpen(wcAccess, srcFile, false, 0);
+                    SVNEntry entry = wcAccess.getVersionedEntry(new File(pair.mySource), false);
+                    if (entry.getExternalFilePath() != null) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_MOVE_FILE_EXTERNAL, 
+                                "Cannot move the file external at ''{0}''; please propedit the svn:externals description that created it", 
+                                srcFile);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                } finally {
+                    close(wcAccess);
+                }
+            }
+        }
+        
         if (isMove) {
             if (srcIsURL == dstIsURL) {
                 for (Iterator ps = pairs.iterator(); ps.hasNext();) {
@@ -870,11 +894,18 @@ public class SVNCopyDriver extends SVNBasicClient {
                 probeOpen(dstAccess, new File(topDst), true, 0);
                 for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
                     CopyPair pair = (CopyPair) pairs.next();
-                    SVNEntry dstEntry = dstAccess.getEntry(new File(pair.myDst), false);
-                    if (dstEntry != null && !dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion()) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
-                                "Entry for ''{0}'' exists (though the working file is missing)", new File(pair.myDst));
-                        SVNErrorManager.error(err, SVNLogType.WC);
+                    SVNEntry dstEntry = dstAccess.getEntry(new File(pair.myDst), true);
+                    if (dstEntry != null) {
+                        if (dstEntry.getDepth() == SVNDepth.EXCLUDE || dstEntry.isAbsent()) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_EXISTS,
+                                    "''{0}'' is already under version control", new File(pair.myDst));
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        }
+                        if (!dstEntry.isDirectory() && !dstEntry.isScheduledForDeletion() && !dstEntry.isDeleted()) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE,
+                                    "Entry for ''{0}'' exists (though the working file is missing)", new File(pair.myDst));
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        }
                     }
                 }
                 String srcUUID = null;
@@ -938,7 +969,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                     srcRevNum = dstRootEntry.getRevision();
                 }
                 SVNAdminArea dir = dstAccess.getAdminArea(dstFile.getParentFile());
-                SVNWCManager.add(dstFile, dir, url, srcRevNum);
+                SVNWCManager.add(dstFile, dir, url, srcRevNum, SVNDepth.INFINITY);
                 Map srcMergeInfo = calculateTargetMergeInfo(null, null, url, srcRevNum, topSrcRepos, false);
                 extendWCMergeInfo(dstFile, dstRootEntry, srcMergeInfo, dstAccess);
             } else {
@@ -1134,7 +1165,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             nestedWCAccess.close();
         }
         SVNWCManager.add(nestedWC, parentAccess.getAdminArea(nestedWCParent),
-                SVNURL.parseURIEncoded(copyFromURL), copyFromRevision);
+                SVNURL.parseURIEncoded(copyFromURL), copyFromRevision, SVNDepth.INFINITY);
     }
 
     private void copyWCToWC(List pairs) throws SVNException {
@@ -1305,7 +1336,7 @@ public class SVNCopyDriver extends SVNBasicClient {
         File dst = new File(dstParent, dstName);
         SVNFileUtil.copyFile(src, dst, false);
         if (isAdded) {
-            SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION);
+            SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
             copyProps(src, dst, srcAccess, dstAccess);
         }
     }
@@ -1348,7 +1379,7 @@ public class SVNCopyDriver extends SVNBasicClient {
         } finally {
             close(tgtAccess);
         }
-        SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), SVNURL.parseURIEncoded(copyFromURL), copyFromRevision);
+        SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), SVNURL.parseURIEncoded(copyFromURL), copyFromRevision, SVNDepth.INFINITY);
     }
 
     private void copyAddedDirAdm(File src, SVNWCAccess srcAccess, File dstParent, SVNWCAccess dstParentAccess, String dstName, boolean isAdded) throws SVNException {
@@ -1359,7 +1390,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             checkCancelled();
             dst.mkdirs();
 
-            SVNWCManager.add(dst, dstParentAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION);
+            SVNWCManager.add(dst, dstParentAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
             copyProps(src, dst, srcAccess, dstParentAccess);
             
             SVNAdminArea srcChildArea = srcAccess.retrieve(src);

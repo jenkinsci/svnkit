@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * configuration and authentication drivers and some others.
  * 
  * 
- * @version 1.2
+ * @version 1.3
  * @author TMate Software Ltd., Peter Skoog
  * @see ISVNOptions
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

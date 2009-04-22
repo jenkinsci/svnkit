@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
  * conflicts to handle; it's also free to decide which types of conflicts are automatically resolvable and which 
  * require user interaction.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */

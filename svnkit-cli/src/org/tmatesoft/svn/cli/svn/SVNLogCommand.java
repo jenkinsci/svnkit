@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,11 +39,12 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNRevisionRange;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler {
@@ -75,6 +76,7 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         options.add(SVNOption.XML);
         options.add(SVNOption.LIMIT);
         options.add(SVNOption.WITH_ALL_REVPROPS);
+        options.add(SVNOption.WITH_NO_REVPROPS);
         options.add(SVNOption.WITH_REVPROP);
         options.add(SVNOption.AUTHOR_OF_INTEREST);
         options.add(SVNOption.REGULAR_EXPRESSION);
@@ -107,13 +109,35 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         
         SVNRevision start = getSVNEnvironment().getStartRevision();
         SVNRevision end = getSVNEnvironment().getEndRevision();
+        List revisionRanges = getSVNEnvironment().getRevisionRanges();
+        List editedRevisionRangesList = revisionRanges;
         if (getSVNEnvironment().isChangeOptionUsed()) {
+            editedRevisionRangesList = new LinkedList();
+            
+            if (getSVNEnvironment().isRevisionOptionUsed() && revisionRanges.size() > 1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "-c and -r are mutually exclusive");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
+            
+            for (Iterator revisionsIter = revisionRanges.iterator(); revisionsIter.hasNext();) {
+                SVNRevisionRange revRange = (SVNRevisionRange) revisionsIter.next();
+                SVNRevision startRev = revRange.getStartRevision();
+                SVNRevision endRev = revRange.getEndRevision();
+                if (startRev.getNumber() < endRev.getNumber()) {
+                    revRange = new SVNRevisionRange(endRev, endRev);
+                } else {
+                    revRange = new SVNRevisionRange(startRev, startRev);
+                }
+                editedRevisionRangesList.add(revRange);
+            }
+
             if (start.getNumber() < end.getNumber()) {
                 start = end;
             } else {
                 end = start;
             }
         }
+        
         if (start != SVNRevision.UNDEFINED && end == SVNRevision.UNDEFINED) {
             end = start;
         } else if (start == SVNRevision.UNDEFINED) {
@@ -199,18 +223,19 @@ public class SVNLogCommand extends SVNXMLCommand implements ISVNLogEntryHandler 
         }
 
         if (target.isFile()) {
-            client.doLog(new File[] {target.getFile()}, start, end, target.getPegRevision(), 
+            client.doLog(new File[] {target.getFile()}, editedRevisionRangesList, target.getPegRevision(), 
                     getSVNEnvironment().isStopOnCopy(), getSVNEnvironment().isVerbose(), 
                     getSVNEnvironment().isUseMergeHistory(), getSVNEnvironment().getLimit(), 
                     revProps, this);
         } else {
             targets.remove(0);
             String[] paths = (String[]) targets.toArray(new String[targets.size()]);
-            client.doLog(target.getURL(), paths, target.getPegRevision(), start, end, 
+            client.doLog(target.getURL(), paths, target.getPegRevision(), editedRevisionRangesList, 
                     getSVNEnvironment().isStopOnCopy(), 
                     getSVNEnvironment().isVerbose(),
                     getSVNEnvironment().isUseMergeHistory(),
                     getSVNEnvironment().getLimit(), revProps, this);
+
         }
 
         if (getSVNEnvironment().isXML() && !getSVNEnvironment().isIncremental()) {
