@@ -310,9 +310,7 @@ public class JavaHLObjectFactory {
         	op = getConflictOperation(tc.getOperation());
         }
 
-        File workingFile = mergeFiles.getWCFile();
-
-        return new ConflictDescriptor(workingFile != null ? workingFile.getAbsolutePath().replace(File.separatorChar, '/') : null,
+        return new ConflictDescriptor(mergeFiles.getLocalPath(),
                 getConflictKind(conflictDescription.isPropertyConflict()),
                 getNodeKind(conflictDescription.getNodeKind()),
                 conflictDescription.getPropertyName(),
