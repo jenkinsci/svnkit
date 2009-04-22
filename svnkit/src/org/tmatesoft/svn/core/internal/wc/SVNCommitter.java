@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -221,31 +222,47 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             File tmpFile = dir.getBaseFile(name, true);
             myTmpFiles.add(tmpFile);
 
+            String expectedChecksum = null;
             String checksum = null;
-            if (!item.isAdded()) {
-                checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name, false));
-                String realChecksum = entry.getChecksum();
-                if (realChecksum != null && !realChecksum.equals(checksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
-                            new Object[] {dir.getFile(name), realChecksum, checksum}); 
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-            }
-            editor.applyTextDelta(path, checksum);
-            if (myDeltaGenerator == null) {
-                myDeltaGenerator = new SVNDeltaGenerator();
-            }
+            String newChecksum = null;
+
+            SVNChecksumInputStream baseChecksummedIS = null;
             InputStream sourceIS = null;
             InputStream targetIS = null;
             OutputStream tmpBaseStream = null;
             File baseFile = dir.getBaseFile(name, false);
-            String newChecksum = null;
+            SVNErrorMessage error = null;
             try {
-                sourceIS = !item.isAdded() && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : SVNFileUtil.DUMMY_IN;
+                if (!item.isAdded()) {
+                    expectedChecksum = entry.getChecksum();
+                    if (expectedChecksum != null) {
+                        if (baseFile.exists()) {
+                            sourceIS = SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC);
+                            baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM, false, true);
+                            sourceIS = baseChecksummedIS;
+                        } else {
+                            sourceIS = SVNFileUtil.DUMMY_IN;
+                        }
+                    } else {
+                        expectedChecksum = SVNFileUtil.computeChecksum(baseFile);
+                    }
+                } else {
+                    sourceIS = SVNFileUtil.DUMMY_IN;
+                }
+  
+                editor.applyTextDelta(path, expectedChecksum);
+                if (myDeltaGenerator == null) {
+                    myDeltaGenerator = new SVNDeltaGenerator();
+                }
+
                 targetIS = SVNTranslator.getTranslatedStream(dir, name, true, false);
                 tmpBaseStream = SVNFileUtil.openFileForWriting(tmpFile);
                 CopyingStream localStream = new CopyingStream(tmpBaseStream, targetIS);
-                newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true);
+                try {
+                    newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true);
+                } catch (SVNException svne) {
+                    error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
+                }
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -254,6 +271,22 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 SVNFileUtil.closeFile(targetIS);
                 SVNFileUtil.closeFile(tmpBaseStream);
             }
+
+            if (baseChecksummedIS != null) {
+                checksum = baseChecksummedIS.getDigest();
+            }
+            
+            if (expectedChecksum != null && checksum != null && !expectedChecksum.equals(checksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                        "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
+                        new Object[] { dir.getFile(name), expectedChecksum, checksum }); 
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (error != null) {
+                SVNErrorManager.error(error, SVNLogType.WC);
+            }
+            
             editor.closeFile(path, newChecksum);
         }
     }
