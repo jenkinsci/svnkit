@@ -14,8 +14,6 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 
-import java.io.File;
-
 /**
  * This is a default implementation for <b>ISVNCommitHandler</b>.
  * 
@@ -65,9 +63,5 @@ public class DefaultSVNCommitHandler implements ISVNCommitHandler {
      */
     public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
         return revisionProperties == null ? new SVNProperties() : revisionProperties;
-    }
-
-    public boolean accept(File file) throws SVNException {
-        return true;
     }
 }

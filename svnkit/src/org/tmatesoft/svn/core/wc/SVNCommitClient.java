@@ -1468,6 +1468,7 @@ public class SVNCommitClient extends SVNBasicClient {
         checkCancelled();
         File[] children = SVNFileListUtil.listFiles(dir);
         boolean changed = false;
+        ISVNFileFilter filter = getCommitHandler() instanceof ISVNFileFilter ? (ISVNFileFilter) getCommitHandler() : null;
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
@@ -1478,7 +1479,7 @@ public class SVNCommitClient extends SVNBasicClient {
             if (useGlobalIgnores && DefaultSVNOptions.isIgnored(getOptions(), file.getName())) {
                 continue;
             }
-            if (!getCommitHandler().accept(file)) {
+            if (filter != null && !filter.accept(file)) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());

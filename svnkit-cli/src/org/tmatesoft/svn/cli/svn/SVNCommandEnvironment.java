@@ -545,10 +545,6 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return (SVNCommand) getCommand();
     }
 
-    public boolean accept(File file) throws SVNException {
-        return true;
-    }
-
     protected void validateOptions(SVNCommandLine commandLine) throws SVNException {
         super.validateOptions(commandLine);
         

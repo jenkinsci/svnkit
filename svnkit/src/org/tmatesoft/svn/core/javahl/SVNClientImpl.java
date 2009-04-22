@@ -127,8 +127,8 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.Version;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.util.Version;
 
 
 /**
@@ -1840,9 +1840,6 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
                 public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
                     return revisionProperties == null ? new SVNProperties() : revisionProperties;
-                }
-                public boolean accept(File file) throws SVNException {
-                    return true;
                 }
             };
         }

@@ -94,6 +94,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
+svnkit/src/org/tmatesoft/svn/core/wc/ISVNFileFilter.java -text
 www/favicon.ico -text
 www/feed/feedcreator.class.php eol=lf
 www/feed/lgpl.txt eol=lf
