@@ -151,7 +151,16 @@ public class JavaHLObjectFactory {
         ACTION_CONVERSION_MAP.put(SVNEventAction.CHANGELIST_CLEAR, new Integer(NotifyAction.changelist_clear));
         ACTION_CONVERSION_MAP.put(SVNEventAction.MERGE_BEGIN, new Integer(NotifyAction.merge_begin));
         ACTION_CONVERSION_MAP.put(SVNEventAction.FOREIGN_MERGE_BEGIN, new Integer(NotifyAction.foreign_merge_begin));
-        
+
+        ACTION_CONVERSION_MAP.put(SVNEventAction.PROPERTY_ADD, new Integer(NotifyAction.property_added));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.PROPERTY_MODIFY, new Integer(NotifyAction.property_modified));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.PROPERTY_DELETE, new Integer(NotifyAction.property_deleted));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.PROPERTY_DELETE_NONEXISTENT, new Integer(NotifyAction.property_deleted_nonexistent));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.REVPROPER_SET, new Integer(NotifyAction.revprop_set));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.REVPROP_DELETE, new Integer(NotifyAction.revprop_deleted));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.MERGE_COMPLETE, new Integer(NotifyAction.merge_completed));
+        ACTION_CONVERSION_MAP.put(SVNEventAction.TREE_CONFLICT, new Integer(NotifyAction.tree_conflict));
+
         // undocumented thing.
         ACTION_CONVERSION_MAP.put(SVNEventAction.COMMIT_COMPLETED, new Integer(-11));
 
