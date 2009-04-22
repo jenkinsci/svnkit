@@ -2064,10 +2064,12 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
                 // trim value of svn:entry property
-                String strValue = value.getString();
-                if (strValue != null) {
-                    strValue = strValue.trim();
-                    value = SVNPropertyValue.create(strValue);
+                if (value != null) {
+                    String strValue = value.getString();
+                    if (strValue != null) {
+                        strValue = strValue.trim();
+                        value = SVNPropertyValue.create(strValue);
+                    }
                 }
                 myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
             } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
