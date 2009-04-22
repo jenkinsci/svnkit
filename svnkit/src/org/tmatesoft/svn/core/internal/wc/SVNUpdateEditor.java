@@ -1517,6 +1517,9 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             fileInfo.propertyChanged(name, value);
             if (myWCAccess.getOptions().isUseCommitTimes() && SVNProperty.COMMITTED_DATE.equals(name)) {
                 fileInfo.commitTime = value.getString();
+                if (fileInfo.commitTime != null) {
+                    fileInfo.commitTime = fileInfo.commitTime.trim();
+                }
             }
         }
     }
@@ -2060,6 +2063,12 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         public void propertyChanged(String name, SVNPropertyValue value) {
             if (name.startsWith(SVNProperty.SVN_ENTRY_PREFIX)) {
                 myChangedEntryProperties = myChangedEntryProperties == null ? new SVNProperties() : myChangedEntryProperties;
+                // trim value of svn:entry property
+                String strValue = value.getString();
+                if (strValue != null) {
+                    strValue = strValue.trim();
+                    value = SVNPropertyValue.create(strValue);
+                }
                 myChangedEntryProperties.put(name.substring(SVNProperty.SVN_ENTRY_PREFIX.length()), value);
             } else if (name.startsWith(SVNProperty.SVN_WC_PREFIX)) {
                 myChangedWCProperties = myChangedWCProperties == null ? new SVNProperties() : myChangedWCProperties;
