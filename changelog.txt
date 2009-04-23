@@ -1,3 +1,13 @@
+== version 1.3.0-beta2
++ Changes made in Subversion since version 1.5.6 implemented, 
+  all Subversion 1.6.1 features are supported.
++ JavaHL implementation bugfixes.
++ Compatibility with pre-1.6 working copies improved for 
+  'no working copy upgrade' cases.
++ Update performance on large files improved.
++ Command line client improvements.
++ Other bugfixes and performance improvements.
+
 == version 1.3.0-beta
 
 + Changes made in Subversion since version 1.5.6 implemented, 
