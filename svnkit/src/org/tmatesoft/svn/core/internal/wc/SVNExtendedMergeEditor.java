@@ -107,7 +107,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         return checkSparseWC(path, entry, kind);
     }
 
-    private boolean checkReportDepth(File path, SVNNodeKind kind) throws SVNException {
+    private boolean checkReportDepth(File path, SVNNodeKind kind) {
         if (myDepth == SVNDepth.EMPTY) {
             return false;
         }
@@ -200,7 +200,7 @@ public class SVNExtendedMergeEditor extends SVNRemoteDiffEditor {
         myCurrentFile = null;
     }
 
-    private File getCopySourcePath(SVNCopySource source) throws SVNException {
+    private File getCopySourcePath(SVNCopySource source) {
         if (source == null) {
             return null;
         }

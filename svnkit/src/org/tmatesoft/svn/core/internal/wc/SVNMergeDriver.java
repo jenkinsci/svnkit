@@ -1445,7 +1445,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
     }
     
-    private void processChildrenWithDeletedMergeInfo() throws SVNException {
+    private void processChildrenWithDeletedMergeInfo() {
         if (myPathsWithDeletedMergeInfo != null && !myIsDryRun) {
             Iterator children = myChildrenWithMergeInfo.iterator();
             children.next(); // skip first.
@@ -2027,14 +2027,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             return result;
         }
 
-        Map implicitMergeInfo = calculateImplicitMergeInfo(repos, url, targetRev, start, end, result);
+        Map implicitMergeInfo = calculateImplicitMergeInfo(repos, url, targetRev, start, end);
         if (implicitMergeInfo != null) {
             result[1] = implicitMergeInfo;
         }
         return result;
     }
 
-    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end, Map[] result) throws SVNException {
+    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end) throws SVNException {
         Map implicitMergeInfo = null;
         boolean closeSession = false;
         SVNURL sessionURL = null;
@@ -2546,7 +2546,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
 
     protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
-            AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+            AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) {
         if (editor == null) {
             editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
                     defaultStart, revision, myIsDryRun, this, this);
@@ -2795,15 +2795,15 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         SVNURL primaryURL = revision1 < revision2 ? url2 : url1;
         String mergeInfoPath = getPathRelativeToRoot(null, primaryURL, sourceRootURL, null, repository);
         
-        filterMergedRevisions(parent, child, mergeInfoPath, 
-                targetMergeInfo, implicitMergeInfo, revision1, revision2, primaryURL, repository); 
+        filterMergedRevisions(child, mergeInfoPath, 
+                targetMergeInfo, implicitMergeInfo, revision1, revision2); 
         
         if (isSubtree) {
             SVNMergeRangeList[] rangeListDiff = SVNMergeInfoUtil.diffMergeRangeLists(child.myRemainingRanges, parent.myRemainingRanges, true);
             SVNMergeRangeList deletedRangeList = rangeListDiff[0];
             SVNMergeRangeList addedRangeList = rangeListDiff[1];
             if (!deletedRangeList.isEmpty() || !addedRangeList.isEmpty()) {
-                adjustDeletedSubTreeRanges(child, parent, mergeInfoPath, revision1, revision2, primaryURL, repository);
+                adjustDeletedSubTreeRanges(child, parent, revision1, revision2, primaryURL, repository);
             }
         }
 
@@ -2830,7 +2830,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
     }
     
-    private void adjustDeletedSubTreeRanges(MergePath child, MergePath parent, String mergeInfoPath, long revision1, long revision2, 
+    private void adjustDeletedSubTreeRanges(MergePath child, MergePath parent, long revision1, long revision2, 
             SVNURL primaryURL, SVNRepository repository) throws SVNException {
         if (parent.myRemainingRanges == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
@@ -2908,8 +2908,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
     }
 
-    private void filterMergedRevisions(MergePath parent, MergePath child, String mergeInfoPath, Map targetMergeInfo, Map implicitMergeInfo,
-            long rev1, long rev2, SVNURL primaryURL, SVNRepository repos) throws SVNException {
+    private void filterMergedRevisions(MergePath child, String mergeInfoPath, Map targetMergeInfo, Map implicitMergeInfo,
+            long rev1, long rev2) throws SVNException {
         Map mergeInfo = implicitMergeInfo;
         SVNMergeRangeList targetRangeList = null;
         

@@ -388,9 +388,9 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
     // Subversion has a bug for file merge:
     // calculating natural history fails at certain conditions, it should not interrupt merge-ext process anyway
     // TODO: remove this method after the fix
-    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end, Map[] result) throws SVNException {
+    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end) throws SVNException {
         if (skipExtendedMerge()) {
-            return super.calculateImplicitMergeInfo(repos, url, targetRev, start, end, result);
+            return super.calculateImplicitMergeInfo(repos, url, targetRev, start, end);
         }
         Map implicitMergeInfo = null;
         boolean closeSession = false;

@@ -14,8 +14,6 @@ package org.tmatesoft.svn.core.wc;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 
-import java.io.File;
-
 /**
  * The <b>ISVNCommitHandler</b> should be implemented to 
  * provide an ability to manage commit log messages for items to be committed in
