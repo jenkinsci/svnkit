@@ -60,11 +60,10 @@ public class SVNChecksumInputStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         int r = mySource.read(b, off, len);
         if (r >= 0) {
-            myDigest.update(b, 0, r);
+            myDigest.update(b, off, r);
         } else {
             myStreamIsFinished = true;
         }
-        
         return r;
     }
 
@@ -94,6 +93,7 @@ public class SVNChecksumInputStream extends InputStream {
             while (read(buffer) != -1) {
                 continue;
             }
+
             myStreamIsFinished = true;
         }
         if (myCloseSource) {
