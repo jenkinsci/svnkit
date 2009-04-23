@@ -55,7 +55,7 @@ public class SVNChecksumOutputStream extends OutputStream {
     
     public void write(byte[] b, int off, int len) throws IOException {
         if (b != null) {
-            myDigest.update(b, 0, len);
+            myDigest.update(b, off, len);
         }
         myTarget.write(b, off, len);
     }

@@ -232,40 +232,38 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             OutputStream tmpBaseStream = null;
             File baseFile = dir.getBaseFile(name, false);
             SVNErrorMessage error = null;
-            try {
-                if (!item.isAdded()) {
-                    expectedChecksum = entry.getChecksum();
-                    if (expectedChecksum != null) {
-                        if (baseFile.exists()) {
-                            sourceIS = SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC);
-                            baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM, false, true);
-                            sourceIS = baseChecksummedIS;
-                        } else {
-                            sourceIS = SVNFileUtil.DUMMY_IN;
-                        }
-                    } else {
-                        expectedChecksum = SVNFileUtil.computeChecksum(baseFile);
-                    }
+            boolean useChecksummedStream = false;
+            boolean openSrcStream = false;
+            if (!item.isAdded()) {
+                openSrcStream = true;
+                expectedChecksum = entry.getChecksum();
+                if (expectedChecksum != null) {
+                    useChecksummedStream = true;
                 } else {
-                    sourceIS = SVNFileUtil.DUMMY_IN;
+                    expectedChecksum = SVNFileUtil.computeChecksum(baseFile);
                 }
+            } else {
+                sourceIS = SVNFileUtil.DUMMY_IN;
+            }
   
-                editor.applyTextDelta(path, expectedChecksum);
-                if (myDeltaGenerator == null) {
-                    myDeltaGenerator = new SVNDeltaGenerator();
-                }
+            editor.applyTextDelta(path, expectedChecksum);
+            if (myDeltaGenerator == null) {
+                myDeltaGenerator = new SVNDeltaGenerator();
+            }
 
+            try {
+                sourceIS = openSrcStream ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : sourceIS;
+                if (useChecksummedStream) {
+                    baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM, false, true);
+                    sourceIS = baseChecksummedIS;
+                }
+                    
                 targetIS = SVNTranslator.getTranslatedStream(dir, name, true, false);
                 tmpBaseStream = SVNFileUtil.openFileForWriting(tmpFile);
                 CopyingStream localStream = new CopyingStream(tmpBaseStream, targetIS);
-                try {
-                    newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true);
-                } catch (SVNException svne) {
-                    error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
-                }
+                newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true);
             } catch (SVNException svne) {
-                SVNErrorMessage err = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
-                SVNErrorManager.error(err, SVNLogType.WC);
+                error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
             } finally {
                 SVNFileUtil.closeFile(sourceIS);
                 SVNFileUtil.closeFile(targetIS);
