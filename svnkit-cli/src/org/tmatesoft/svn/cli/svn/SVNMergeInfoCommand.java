@@ -124,7 +124,7 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
     }
     
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-        String message = MessageFormat.format("r{0}", new Object[] { new Long(logEntry.getRevision()) });
+        String message = MessageFormat.format("r{0}", new Object[] { String.valueOf(logEntry.getRevision()) });
         getSVNEnvironment().getOut().println(message);
     }
     
