@@ -2561,8 +2561,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 "One or more conflicts were produced while merging r{0}:{1} into\n" + 
                 "''{2}'' --\n" +
                 "resolve all conflicts and rerun the merge to apply the remaining\n" + 
-                "unmerged revisions", new Object[] { new Long(range.getStartRevision()), 
-                new Long(range.getEndRevision()), targetPath} );
+                "unmerged revisions", new Object[] { Long.toString(range.getStartRevision()), 
+                Long.toString(range.getEndRevision()), targetPath} );
         return error;
     }
     
