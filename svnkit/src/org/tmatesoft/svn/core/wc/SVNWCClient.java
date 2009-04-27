@@ -1550,6 +1550,20 @@ public class SVNWCClient extends SVNBasicClient {
             SVNDepth depth, boolean includeIgnored, boolean makeParents) throws SVNException {
         doAdd(path, force, mkdir, climbUnversionedParents, depth, true, includeIgnored, makeParents);
     }
+
+    public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
+        setEventPathPrefix("");
+        try {
+            if (paths != null) {
+                for (int i = 0; i < paths.length; i++) {
+                    doAdd(paths[i], force, mkdir, climbUnversionedParents,depth, depthIsSticky, includeIgnored, makeParents);
+                }
+            }
+        } finally {
+            setEventPathPrefix(null);
+        }
+    }
     
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
