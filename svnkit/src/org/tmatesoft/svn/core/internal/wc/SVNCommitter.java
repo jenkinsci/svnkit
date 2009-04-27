@@ -254,7 +254,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             try {
                 sourceIS = openSrcStream ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : sourceIS;
                 if (useChecksummedStream) {
-                    baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM, false, true);
+                    baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM, true, true);
                     sourceIS = baseChecksummedIS;
                 }
                     
