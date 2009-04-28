@@ -222,8 +222,11 @@ public class SVNPropertiesManager {
         dir.saveVersionedProperties(log, false);
         log.save();
         dir.runLogs();
-        dir.getWCAccess().handleEvent(new SVNEvent(path, entry.getKind(), null, -1, null, null, null, null, action, action, null, null, null));
-        return oldValue == null ? propValue != null : !oldValue.equals(propValue);
+        final boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
+        if (modified || action == SVNEventAction.PROPERTY_DELETE_NONEXISTENT) {
+            dir.getWCAccess().handleEvent(new SVNEvent(path, entry.getKind(), null, -1, null, null, null, null, action, action, null, null, null));
+        }
+        return modified;
     }
 
     public static SVNStatusType mergeProperties(SVNWCAccess wcAccess, File path, SVNProperties baseProperties, SVNProperties diff, boolean baseMerge, boolean dryRun) throws SVNException {
