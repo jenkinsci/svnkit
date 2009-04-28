@@ -223,7 +223,7 @@ public class SVNPropertiesManager {
         log.save();
         dir.runLogs();
         final boolean modified = oldValue == null ? propValue != null : !oldValue.equals(propValue);
-        if (modified) {
+        if (modified || action == SVNEventAction.PROPERTY_DELETE_NONEXISTENT) {
             dir.getWCAccess().handleEvent(new SVNEvent(path, entry.getKind(), null, -1, null, null, null, null, action, action, null, null, null));
         }
         return modified;
