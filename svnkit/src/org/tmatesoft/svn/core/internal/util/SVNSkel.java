@@ -412,19 +412,17 @@ public class SVNSkel {
             if (data.length < 100) {
 // length bytes + whitespace
                 return data.length + 3;
-            } else {
-                return data.length + 30;
             }
-        } else {
-            int total = 2;
-            for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
-                SVNSkel element = (SVNSkel) iterator.next();
-                total += element.estimateUnparsedSize();
-// space between a pair of elements
-                total++;
-            }
-            return total;
+            return data.length + 30;
         }
+        int total = 2;
+        for (Iterator iterator = myList.iterator(); iterator.hasNext();) {
+            SVNSkel element = (SVNSkel) iterator.next();
+            total += element.estimateUnparsedSize();
+// space between a pair of elements
+            total++;
+        }
+        return total;
     }
 
     private boolean useImplicit() {
