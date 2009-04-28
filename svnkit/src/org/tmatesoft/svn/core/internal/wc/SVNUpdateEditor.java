@@ -1371,8 +1371,9 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 srcIS = SVNFileUtil.openFileForReading(srcArea.getFile(srcTextBasePath));
                 copiedBaseOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
                 SVNChecksumOutputStream checksumOS = new SVNChecksumOutputStream(copiedBaseOS, 
-                        SVNChecksumOutputStream.MD5_ALGORITHM, false);
-                FSRepositoryUtil.copy(srcIS, checksumOS, myWCAccess);
+                        SVNChecksumOutputStream.MD5_ALGORITHM, true);
+                copiedBaseOS = checksumOS;
+                FSRepositoryUtil.copy(srcIS, copiedBaseOS, myWCAccess);
                 info.copiedBaseChecksum = checksumOS.getDigest();
             } finally {
                 SVNFileUtil.closeFile(srcIS);
@@ -1395,8 +1396,9 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             try {
                 baseTextOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
                 SVNChecksumOutputStream checksumBaseTextOS = new SVNChecksumOutputStream(baseTextOS, 
-                        SVNChecksumOutputStream.MD5_ALGORITHM, false);
-                myFileFetcher.fetchFile(copyFromPath, copyFromRevision, checksumBaseTextOS, baseProperties);
+                        SVNChecksumOutputStream.MD5_ALGORITHM, true);
+                baseTextOS = checksumBaseTextOS;
+                myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, baseProperties);
                 info.copiedBaseChecksum = checksumBaseTextOS.getDigest();
             } finally {
                 SVNFileUtil.closeFile(baseTextOS);

@@ -61,13 +61,18 @@ public class SVNChecksumOutputStream extends OutputStream {
     }
     
     public void close() throws IOException {
-        myDigestResult = myDigest.digest();
+        if (myDigestResult == null) {
+            myDigestResult = myDigest.digest();
+        }
         if (myCloseTarget) {
             myTarget.close();
         }
     }
     
     public String getDigest() {
+        if (myDigestResult == null) {
+            myDigestResult = myDigest.digest();
+        }
         return SVNFileUtil.toHexDigest(myDigestResult);
     }
 
