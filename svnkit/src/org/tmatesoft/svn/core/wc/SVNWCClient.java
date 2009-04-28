@@ -1446,7 +1446,8 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             boolean recursive) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), false, 
+        SVNDepth depth = SVNDepth.getInfinityOrEmptyDepth(recursive);
+        doAdd(path, force, mkdir, climbUnversionedParents, depth, true, false, 
                 climbUnversionedParents);
     }
 
@@ -1488,7 +1489,8 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             boolean recursive, boolean includeIgnored) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, SVNDepth.getInfinityOrEmptyDepth(recursive), 
+        SVNDepth depth = SVNDepth.getInfinityOrEmptyDepth(recursive);
+        doAdd(path, force, mkdir, climbUnversionedParents, depth, true,
                 includeIgnored, climbUnversionedParents);
     }
 
@@ -1546,6 +1548,25 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             SVNDepth depth, boolean includeIgnored, boolean makeParents) throws SVNException {
+        doAdd(path, force, mkdir, climbUnversionedParents, depth, true, includeIgnored, makeParents);
+    }
+
+    public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
+        setEventPathPrefix("");
+        try {
+            if (paths != null) {
+                for (int i = 0; i < paths.length; i++) {
+                    doAdd(paths[i], force, mkdir, climbUnversionedParents,depth, depthIsSticky, includeIgnored, makeParents);
+                }
+            }
+        } finally {
+            setEventPathPrefix(null);
+        }
+    }
+    
+    public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
+            SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
         path = path.getAbsoluteFile();
         if (!mkdir && makeParents && path.getParentFile() != null) {
@@ -1560,7 +1581,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNFileType kind = SVNFileType.getType(path);
         if (force && mkdir && kind == SVNFileType.DIRECTORY) {
             // directory is already there.
-            doAdd(path, force, false, true, SVNDepth.EMPTY, true, makeParents);
+            doAdd(path, force, false, true, SVNDepth.EMPTY, depthIsSticky, true, makeParents);
             return;
         } else if (mkdir) {
             // attempt to create dir
@@ -1587,7 +1608,7 @@ public class SVNWCClient extends SVNBasicClient {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             try {
-                doAdd(firstCreated, false, false, climbUnversionedParents, depth, true, makeParents);
+                doAdd(firstCreated, false, false, climbUnversionedParents, depth, depthIsSticky, true, makeParents);
             } catch (SVNException e) {
                 SVNFileUtil.deleteAll(firstCreated, true);
                 throw e;
@@ -1606,11 +1627,11 @@ public class SVNWCClient extends SVNBasicClient {
                 dir = wcAccess.open(path.getParentFile(), true, 0);
             }
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.FILES) >= 0) {
-                addDirectory(path, dir, force, includeIgnored, depth);
+                addDirectory(path, dir, force, includeIgnored, depth, depthIsSticky);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 addFile(path, fileType, dir);
             } else {
-                SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED, depth);
+                SVNWCManager.add(path, dir, null, SVNRevision.UNDEFINED, depthIsSticky ? depth : null);
             }
         } catch (SVNException e) {
             if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
@@ -2912,10 +2933,10 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth) throws SVNException {
+    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth, boolean setDepth) throws SVNException {
         checkCancelled();
         try {
-            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, depth);
+            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, setDepth ? depth : null);
         } catch (SVNException e) {
             if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
@@ -2942,7 +2963,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                addDirectory(children[i], dir, force, noIgnore, depthBelowHere);
+                addDirectory(children[i], dir, force, noIgnore, depthBelowHere, setDepth);
             } else if (childType != SVNFileType.UNKNOWN && childType != SVNFileType.DIRECTORY && 
                     depth.compareTo(SVNDepth.FILES) >= 0) {
                 try {
