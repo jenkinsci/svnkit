@@ -24,7 +24,7 @@
          id="com.sun.jna"
          download-size="0"
          install-size="0"
-         unpack="true"
+         unpack="false"
          version="%jna.version%"/>
 
 </feature>
