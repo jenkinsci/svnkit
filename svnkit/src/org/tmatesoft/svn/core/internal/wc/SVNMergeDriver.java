@@ -1203,8 +1203,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 }
                 updateWCMergeInfo(child.myPath, childMergeSourcePath, childEntry, childMerges, isRollBack);
 
-				markMergeInfoAsInheritableForARange(child.myPath, childMergeSourcePath, 
-						child.myPreMergeMergeInfo, range, myChildrenWithMergeInfo, true, i);
                 if (i > 0) {
                     boolean isInSwitchedSubTree = false;
                     if (child.myIsSwitched) {
@@ -2123,27 +2121,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             mergeInfoEntry.setValue(SVNMergeRangeList.fromCollection(pathRanges));
         }
         return mergeInfo;
-    }
-    
-    private void markMergeInfoAsInheritableForARange(File target, String reposPath, Map targetMergeInfo, 
-            SVNMergeRange range, List childrenWithMergeInfo, boolean sameURLs, int targetIndex) throws SVNException {
-        if (targetMergeInfo != null && sameURLs && !myIsDryRun && myIsSameRepository && targetIndex >= 0) {
-            MergePath mergePath = (MergePath) childrenWithMergeInfo.get(targetIndex);
-            if (mergePath != null && mergePath.myHasNonInheritableMergeInfo && !mergePath.myHasMissingChildren) {
-                SVNMergeRangeList inheritableRangeList = new SVNMergeRangeList(range);
-                Map inheritableMerges = new TreeMap();
-                inheritableMerges.put(reposPath, inheritableRangeList);
-                Map merges = SVNMergeInfoUtil.getInheritableMergeInfo(targetMergeInfo, 
-                                                                         reposPath, 
-                                                                         range.getStartRevision(), 
-                                                                         range.getEndRevision());
-                if (!SVNMergeInfoUtil.mergeInfoEquals(merges, targetMergeInfo, false)) {
-                    merges = SVNMergeInfoUtil.mergeMergeInfos(merges, inheritableMerges);
-                
-                    SVNPropertiesManager.recordWCMergeInfo(target, merges, myWCAccess);
-                }
-            }
-        }
     }
     
     private void recordMergeInfoOnMergedChildren(SVNDepth depth) throws SVNException {
