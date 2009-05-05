@@ -2547,7 +2547,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     		SVNEntry entry, final SVNURL sourceRootURL, final long revision1, 
     		final long revision2, boolean honorMergeInfo, final SVNRepository repository, final SVNDepth depth) throws SVNException {
     	final List childrenWithMergeInfo = children == null ? new LinkedList() : children;
-        ISVNEntryHandler handler = getMergeInfoEntryHandler(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, childrenWithMergeInfo);
+        ISVNEntryHandler handler = getMergeInfoEntryHandler(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, 
+                childrenWithMergeInfo);
 
         if (entry.isFile()) {
             handler.handleEntry(myTarget, entry);
@@ -2555,65 +2556,79 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             myWCAccess.walkEntries(myTarget, handler, true, honorMergeInfo ? depth : SVNDepth.EMPTY);
         }
         
-        Collections.sort(childrenWithMergeInfo);
-        for (int i = 0; i < childrenWithMergeInfo.size(); i++) {
-            MergePath child = (MergePath) childrenWithMergeInfo.get(i);
-            
-            if (child.myHasNonInheritableMergeInfo) {
-                SVNAdminArea childArea = myWCAccess.probeTry(child.myPath, true, SVNWCAccess.INFINITE_DEPTH);
+        if (honorMergeInfo && SVNDepth.EMPTY.compareTo(depth) < 0) {
+            Collections.sort(childrenWithMergeInfo);
+            for (int i = 0; i < childrenWithMergeInfo.size(); i++) {
+                MergePath child = (MergePath) childrenWithMergeInfo.get(i);
                 
-                for (Iterator entries = childArea.entries(false); entries.hasNext();) {
-                    SVNEntry childEntry = (SVNEntry) entries.next();
-                    if (childArea.getThisDirName().equals(childEntry.getName())) {
-                        continue;
-                    }
+                if (child.myHasNonInheritableMergeInfo) {
+                    SVNAdminArea childArea = myWCAccess.probeTry(child.myPath, true, SVNWCAccess.INFINITE_DEPTH);
                     
-                    File childPath = childArea.getFile(childEntry.getName()); 
-                	MergePath childOfNonInheritable = new MergePath(childPath);
-                    if (!childrenWithMergeInfo.contains(childOfNonInheritable)) {
-                        childrenWithMergeInfo.add(childOfNonInheritable);
-                        //TODO: optimize these repeating sorts
-                        Collections.sort(childrenWithMergeInfo);
-                        if (!myIsDryRun && myIsSameRepository) {
-                            SVNEntry childOfNonInheritableEntry = myWCAccess.getVersionedEntry(childOfNonInheritable.myPath, false);
-                            
-                        	Map mergeInfo = getWCMergeInfo(childOfNonInheritable.myPath, childOfNonInheritableEntry, myTarget, 
-                        			SVNMergeInfoInheritance.NEAREST_ANCESTOR, false, new boolean[1]);
-                        	SVNPropertiesManager.recordWCMergeInfo(childPath, mergeInfo, myWCAccess);
+                    for (Iterator entries = childArea.entries(false); entries.hasNext();) {
+                        SVNEntry childEntry = (SVNEntry) entries.next();
+                        if (childArea.getThisDirName().equals(childEntry.getName())) {
+                            continue;
+                        }
+                        
+                        File childPath = childArea.getFile(childEntry.getName()); 
+                        MergePath childOfNonInheritable = new MergePath(childPath);
+                        if (!childrenWithMergeInfo.contains(childOfNonInheritable)) {
+                            if (depth == SVNDepth.FILES) {
+                                SVNEntry childEntry2 = myWCAccess.getEntry(childPath, false);
+                                if (childEntry2 == null || !childEntry2.isFile()) {
+                                    continue;
+                                }
+                            }
+                            childrenWithMergeInfo.add(childOfNonInheritable);
+                            //TODO: optimize these repeating sorts
+                            Collections.sort(childrenWithMergeInfo);
+                            if (!myIsDryRun && myIsSameRepository) {
+                                SVNEntry childOfNonInheritableEntry = myWCAccess.getVersionedEntry(childOfNonInheritable.myPath, false);
+                                
+                                Map mergeInfo = getWCMergeInfo(childOfNonInheritable.myPath, childOfNonInheritableEntry, myTarget, 
+                                        SVNMergeInfoInheritance.NEAREST_ANCESTOR, false, new boolean[1]);
+                                SVNPropertiesManager.recordWCMergeInfo(childPath, mergeInfo, myWCAccess);
+                            }
                         }
                     }
                 }
-            }
-            
-            if (child.myIsAbsent || (child.myIsSwitched && !myTarget.equals(child.myPath))) {
-                File parentPath = child.myPath.getParentFile();
-                int parentInd = childrenWithMergeInfo.indexOf(new MergePath(parentPath));
-                MergePath parent = parentInd != -1 ? (MergePath) childrenWithMergeInfo.get(parentInd) : null;
-                if (parent != null) {
-                    parent.myHasMissingChildren = true; 
-                } else {
-                    parent = new MergePath(parentPath);
-                    parent.myHasMissingChildren = true;
-                    childrenWithMergeInfo.add(parent);
-                    //TODO: optimize these repeating sorts
-                    Collections.sort(childrenWithMergeInfo);
-                    i++;
-                }
                 
-                SVNAdminArea parentArea = myWCAccess.probeTry(parentPath, true, 
-                		SVNWCAccess.INFINITE_DEPTH);
-                for (Iterator siblings = parentArea.entries(false); siblings.hasNext();) {
-                    SVNEntry siblingEntry = (SVNEntry) siblings.next();
-                    if (parentArea.getThisDirName().equals(siblingEntry.getName())) {
-                        continue;
-                    }
-                    
-                    File siblingPath = parentArea.getFile(siblingEntry.getName());
-                    MergePath siblingOfMissing = new MergePath(siblingPath);
-                    if (!childrenWithMergeInfo.contains(siblingOfMissing)) {
-                        childrenWithMergeInfo.add(siblingOfMissing);
+                if (child.myIsAbsent || (child.myIsSwitched && !myTarget.equals(child.myPath))) {
+                    File parentPath = child.myPath.getParentFile();
+                    int parentInd = childrenWithMergeInfo.indexOf(new MergePath(parentPath));
+                    MergePath parent = parentInd != -1 ? (MergePath) childrenWithMergeInfo.get(parentInd) : null;
+                    if (parent != null) {
+                        parent.myHasMissingChildren = true; 
+                    } else {
+                        parent = new MergePath(parentPath);
+                        parent.myHasMissingChildren = true;
+                        childrenWithMergeInfo.add(parent);
                         //TODO: optimize these repeating sorts
                         Collections.sort(childrenWithMergeInfo);
+                        i++;
+                    }
+                    
+                    SVNAdminArea parentArea = myWCAccess.probeTry(parentPath, true, 
+                            SVNWCAccess.INFINITE_DEPTH);
+                    for (Iterator siblings = parentArea.entries(false); siblings.hasNext();) {
+                        SVNEntry siblingEntry = (SVNEntry) siblings.next();
+                        if (parentArea.getThisDirName().equals(siblingEntry.getName())) {
+                            continue;
+                        }
+                        
+                        File siblingPath = parentArea.getFile(siblingEntry.getName());
+                        MergePath siblingOfMissing = new MergePath(siblingPath);
+                        if (!childrenWithMergeInfo.contains(siblingOfMissing)) {
+                            if (depth == SVNDepth.FILES) {
+                                SVNEntry childEntry = myWCAccess.getEntry(siblingPath, false);
+                                if (childEntry == null || !childEntry.isFile()) {
+                                    continue;
+                                }
+                            }
+                            childrenWithMergeInfo.add(siblingOfMissing);
+                            //TODO: optimize these repeating sorts
+                            Collections.sort(childrenWithMergeInfo);
+                        }
                     }
                 }
             }
@@ -3251,8 +3266,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     entry.getDepth() == SVNDepth.EMPTY ||
                     entry.getDepth() == SVNDepth.FILES ||
                     entry.isAbsent() ||
-                    (myDepth == SVNDepth.IMMEDIATES && entry.isDirectory() &&
-                            parent != null && !parent.equals(path) && parent.equals(target))) {
+                    (myDepth == SVNDepth.IMMEDIATES && entry.isDirectory() && parent != null && 
+                            !parent.equals(path) && parent.equals(target)) ||
+                    (myDepth == SVNDepth.FILES && entry.isFile() && parent != null && parent.equals(target))) {
 
                 boolean hasMissingChild = entry.getDepth() == SVNDepth.EMPTY || entry.getDepth() == SVNDepth.FILES ||
                         (myDepth == SVNDepth.IMMEDIATES && entry.isDirectory() && parent != null && parent.equals(target));
