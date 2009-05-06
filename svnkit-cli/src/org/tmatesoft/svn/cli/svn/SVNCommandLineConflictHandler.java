@@ -11,15 +11,22 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.MessageFormat;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
+import org.tmatesoft.svn.core.wc.ISVNMerger;
+import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -27,6 +34,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -54,6 +62,8 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
         } else if (myAccept == SVNConflictAcceptPolicy.BASE) {
             return new SVNConflictResult(SVNConflictChoice.BASE, null);
+        } else if (myAccept == SVNConflictAcceptPolicy.WORKING) {
+            return new SVNConflictResult(SVNConflictChoice.MERGED, null);
         } else if (myAccept == SVNConflictAcceptPolicy.MINE) {
             return new SVNConflictResult(SVNConflictChoice.MINE_CONFLICT, null);
         } else if (myAccept == SVNConflictAcceptPolicy.THEIRS) {
@@ -115,6 +125,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             }
         }
         
+        boolean saveMerged = false;
         SVNConflictChoice choice = SVNConflictChoice.POSTPONE;
         if ((conflictDescription.getNodeKind() == SVNNodeKind.FILE && 
                 conflictDescription.getConflictAction() == SVNConflictAction.EDIT && 
@@ -123,11 +134,12 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             
             boolean performedEdit = false;
             boolean diffAllowed = false;
+            boolean knowsSmth = false;
             String path = mySVNEnvironment.getRelativePath(files.getWCFile());
             path = SVNCommandUtil.getLocalPath(path);
 
             if (conflictDescription.isPropertyConflict()) {
-                String message = "Property conflict for ''{0}'' discovered on ''{1}''.";
+                String message = "Conflict for property ''{0}'' discovered on ''{1}''.";
                 message = MessageFormat.format(message, new Object[] { conflictDescription.getPropertyName(), 
                         path });
                 mySVNEnvironment.getErr().println(message);
@@ -158,69 +170,110 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             }
             
             while (true) {
-                String message = "Select: (p)ostpone";
+                String message = "Select: (p) postpone";
                 if (diffAllowed) {
-                    message += ", (D)iff in full, (e)dit"; 
-                } else {
-                    message += ", (M)ine in full, (T)heirs in full";
-                }
-                if (performedEdit) {
-                    message += ", (r)esolved";
-                }
-                if (!diffAllowed && performedEdit) {
-                    message += ",\n        ";
-                } else {
-                    message += ", ";
-                }
-                message += "(h)elp for more options : ";
-                String answer = SVNCommandUtil.prompt(message, mySVNEnvironment);
-                char answerChar = '\0';
-                if (answer != null) {
-                    if (answer.length() == 1) {
-                        answerChar = answer.charAt(0);
-                    } else {
-                        continue;
+                    message += ", (df) diff-full, (e) edit";
+                    
+                    if (knowsSmth) {
+                        message += ", (r) resolved";
                     }
+                    
+                    if (!files.isBinary() && !conflictDescription.isPropertyConflict()) {
+                        message += ",\n        (mc) mine-conflict, (tc) theirs-conflict";
+                    }
+                } else {
+                    if (knowsSmth) {
+                        message += ", (r) resolved";
+                    }
+                    message += ",\n        (mf) mine-full, (tf) theirs-full";
                 }
-                if (answerChar == 'h' || answerChar == '?') {
-                    mySVNEnvironment.getErr().println("  (p)ostpone    - mark the conflict to be resolved later");
-                    mySVNEnvironment.getErr().println("  (D)iff-full   - show all changes made to merged file");
-                    mySVNEnvironment.getErr().println("  (e)dit        - change merged file in an editor");
-                    mySVNEnvironment.getErr().println("  (r)esolved    - accept merged version of file");
-                    mySVNEnvironment.getErr().println("  (M)ine-full   - accept my version of entire file (ignore their changes)");
-                    mySVNEnvironment.getErr().println("  (T)heirs-full - accept their version of entire file (lose my changes)");
-                    mySVNEnvironment.getErr().println("  (l)aunch      - use third-party tool to resolve conflict");
-                    mySVNEnvironment.getErr().println("  (h)elp        - show this list");
+                
+                message += ",\n        (s) show all options: ";
+                
+                String answer = SVNCommandUtil.prompt(message, mySVNEnvironment);
+                
+                if ("s".equals(answer)) {
                     mySVNEnvironment.getErr().println();
-                } else  if (answerChar == 'p') {
+                    mySVNEnvironment.getErr().println("  (e)  edit             - change merged file in an editor");
+                    mySVNEnvironment.getErr().println("  (df) diff-full        - show all changes made to merged file");
+                    mySVNEnvironment.getErr().println("  (r)  resolved         - accept merged version of file");
+                    mySVNEnvironment.getErr().println();
+                    mySVNEnvironment.getErr().println("  (dc) display-conflict - show all conflicts (ignoring merged version)");
+                    mySVNEnvironment.getErr().println("  (mc) mine-conflict    - accept my version for all conflicts (same)");
+                    mySVNEnvironment.getErr().println("  (tc) theirs-conflict  - accept their version for all conflicts (same)");
+                    mySVNEnvironment.getErr().println();
+                    mySVNEnvironment.getErr().println("  (mf) mine-full        - accept my version of entire file (even non-conflicts)");
+                    mySVNEnvironment.getErr().println("  (tf) theirs-full      - accept their version of entire file (same)");
+                    mySVNEnvironment.getErr().println();
+                    mySVNEnvironment.getErr().println("  (p)  postpone         - mark the conflict to be resolved later");
+                    mySVNEnvironment.getErr().println("  (l)  launch           - launch external tool to resolve conflict");
+                    mySVNEnvironment.getErr().println("  (s)  show all         - show this list");
+                    mySVNEnvironment.getErr().println();
+                } else  if ("p".equals(answer)) {
                     choice = SVNConflictChoice.POSTPONE;
                     break;
-                } else if (answerChar == 'm') {
-                    //choice = SVNConflictChoice.MINE;
-                    //break;
-                    mySVNEnvironment.getErr().println("Sorry, '(m)ine' is not yet implemented; see");
-                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
-                    mySVNEnvironment.getErr().println();
-                    continue;
-                } else if (answerChar == 't') {
-                    //choice = SVNConflictChoice.THEIRS;
-                    //break;
-                    mySVNEnvironment.getErr().println("Sorry, '(t)heirs' is not yet implemented; see");
-                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
-                    mySVNEnvironment.getErr().println();
-                    continue;
-                } else if (answerChar == 'M') {
+                } else if ("mc".equals(answer)) {
+                    if (files.isBinary()) {
+                        mySVNEnvironment.getErr().println("Invalid option; cannot choose based on conflicts in a binary file.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    } else if (conflictDescription.isPropertyConflict()) {
+                        mySVNEnvironment.getErr().println("Invalid option; cannot choose based on conflicts for properties.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    }
+                    choice = SVNConflictChoice.MINE_CONFLICT;
+                    if (performedEdit) {
+                        saveMerged = true;
+                    }
+                    break;
+                } else if ("tc".equals(answer)) {
+                    if (files.isBinary()) {
+                        mySVNEnvironment.getErr().println("Invalid option; cannot choose based on conflicts in a binary file.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    } else if (conflictDescription.isPropertyConflict()) {
+                        mySVNEnvironment.getErr().println("Invalid option; cannot choose based on conflicts for properties.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    }
+                    choice = SVNConflictChoice.THEIRS_CONFLICT;
+                    if (performedEdit) {
+                        saveMerged = true;
+                    }
+                    break;
+                } else if ("mf".equals(answer)) {
                     choice = SVNConflictChoice.MINE_FULL;
+                    if (performedEdit) {
+                        saveMerged = true;
+                    }
                     break;
-                } else if (answerChar == 'T') {
+                } else if ("tf".equals(answer)) {
                     choice = SVNConflictChoice.THEIRS_FULL;
+                    if (performedEdit) {
+                        saveMerged = true;
+                    }
                     break;
-                } else if (answerChar == 'd') {
-                    mySVNEnvironment.getErr().println("Sorry, '(d)iff' is not yet implemented; see");
-                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3048");
-                    mySVNEnvironment.getErr().println();
+                } else if ("dc".equals(answer)) {
+                    if (files.isBinary()) {
+                        mySVNEnvironment.getErr().println("Invalid option; cannot display conflicts for a binary file.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    } else if (conflictDescription.isPropertyConflict()) {
+                        mySVNEnvironment.getErr().println("Invalid option; cannot display conflicts for properties.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    } else if (files.getLocalFile() == null || files.getBaseFile() == null || files.getRepositoryFile() == null) {
+                        mySVNEnvironment.getErr().println("Invalid option; original files not available.");
+                        mySVNEnvironment.getErr().println();
+                        continue;
+                    }
+                    
+                    //TODO: re-implement in future  
+                    showConflictedChunks(files);
+                    knowsSmth = true;
                     continue;
-                } else if (answerChar == 'D') {
+                } else if ("df".equals(answer)) {
                     if (!diffAllowed) {
                         mySVNEnvironment.getErr().println("Invalid option; there's no merged version to diff.");
                         mySVNEnvironment.getErr().println();
@@ -240,8 +293,8 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                     DefaultSVNCommandLineDiffGenerator diffGenerator = new DefaultSVNCommandLineDiffGenerator(path1, path2);
                     diffGenerator.setDiffOptions(new SVNDiffOptions(false, false, true));
                     diffGenerator.displayFileDiff("", path1, path2, null, null, null, null, System.out);
-                    performedEdit = true;
-                } else if (answerChar == 'e') {
+                    knowsSmth = true;
+                } else if ("e".equals(answer)) {
                     if (files.getResultFile() != null) {
                         try {
                             String resultPath = files.getResultFile().getAbsolutePath();
@@ -263,12 +316,15 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println("Invalid option; there's no merged version to edit.");
                         mySVNEnvironment.getErr().println();
                     }
-                } else if (answerChar == 'l') {
-                    if (files.getBaseFile() != null && files.getLocalFile() != null && 
-                            files.getRepositoryFile() != null && files.getResultFile() != null) {
+                    if (performedEdit) {
+                        knowsSmth = true;
+                    }
+                } else if ("l".equals(answer)) {
+                    if (files.getBaseFile() != null && files.getLocalFile() != null && files.getRepositoryFile() != null && 
+                            files.getResultFile() != null) {
                         try {
-                            SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBasePath(), 
-                                    files.getRepositoryPath(), files.getLocalPath(), files.getResultPath());
+                            SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBasePath(), files.getRepositoryPath(), 
+                                    files.getLocalPath(), files.getResultPath());
                             performedEdit = true;
                         } catch (SVNException svne) {
                             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL) {
@@ -287,14 +343,14 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println("Invalid option.");
                         mySVNEnvironment.getErr().println();
                     }
-                } else if (answerChar == 'r') {
-                    if (performedEdit) {
+                } else if ("r".equals(answer)) {
+                    if (knowsSmth) {
                         choice = SVNConflictChoice.MERGED;
                         break;
                     } 
                     mySVNEnvironment.getErr().println("Invalid option.");
                     mySVNEnvironment.getErr().println();
-                }
+                } 
             }
         } else if (conflictDescription.getConflictAction() == SVNConflictAction.ADD && 
                 conflictDescription.getConflictReason() == SVNConflictReason.OBSTRUCTED) {
@@ -303,57 +359,77 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             mySVNEnvironment.getErr().println(message);
             mySVNEnvironment.getErr().println("An object of the same name already exists.");
             
-            String prompt = "Select: (p)ostpone, (M)ine-full, (T)heirs-full, (h)elp :";
+            String prompt = "Select: (p) postpone, (mf) mine-full, (tf) theirs-full, (h) help:";
             while (true) {
                 String answer = SVNCommandUtil.prompt(prompt, mySVNEnvironment);
-                char answerChar = '\0';
-                if (answer != null) {
-                    if (answer.length() == 1) {
-                        answer = answer.toLowerCase();
-                        answerChar = answer.charAt(0);
-                    } else {
-                        continue;
-                    }
-                }
                  
-                if (answerChar == 'h' || answerChar == '?') {
-                    mySVNEnvironment.getErr().println("  (p)ostpone    - resolve the conflict later");
-                    mySVNEnvironment.getErr().println("  (M)ine-full   - accept pre-existing item");
-                    mySVNEnvironment.getErr().println("  (T)heirs-full - accept incoming item");
-                    mySVNEnvironment.getErr().println("  (h)elp        - show this list");
+                if ("h".equals(answer) || "?".equals(answer)) {
+                    mySVNEnvironment.getErr().println("  (p)  postpone    - resolve the conflict later");
+                    mySVNEnvironment.getErr().println("  (mf) mine-full   - accept pre-existing item (ignore upstream addition)");
+                    mySVNEnvironment.getErr().println("  (tf) theirs-full - accept incoming item (overwrite pre-existing item)");
+                    mySVNEnvironment.getErr().println("  (h)  help        - show this help");
                     mySVNEnvironment.getErr().println();
                 }
-                if (answerChar == 'p') {
+
+                if ("p".equals(answer)) {
                     choice = SVNConflictChoice.POSTPONE;
                     break;
                 }
-                if (answerChar == 'M') {
+                if ("mf".equals(answer)) {
                     choice = SVNConflictChoice.MINE_FULL;
                     break;
                 }
-                if (answerChar == 'T') {
+                if ("tf".equals(answer)) {
                     choice = SVNConflictChoice.THEIRS_FULL;
                     break;
                 }
-                if (answerChar == 'm') {
-                    mySVNEnvironment.getErr().println("Sorry, '(m)ine' is not yet implemented; see");
-                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
-                    mySVNEnvironment.getErr().println();
-                    continue;
-                }
-                if (answerChar == 't') {
-                    mySVNEnvironment.getErr().println("Sorry, '(t)heirs' is not yet implemented; see");
-                    mySVNEnvironment.getErr().println("http://subversion.tigris.org/issues/show_bug.cgi?id=3049");
-                    mySVNEnvironment.getErr().println();
-                    continue;
-                }
-                
             }
         } else {
             choice = SVNConflictChoice.POSTPONE;
         }
         
         return new SVNConflictResult(choice, null);
+    }
+    
+    private void showConflictedChunks(SVNMergeFileSet files) throws SVNException {
+        String mineMarker = "<<<<<<< " + files.getLocalLabel();
+        String newMineMarker = "<<<<<<< MINE (select with 'mc')";
+        String theirsMarker = ">>>>>>> " + files.getRepositoryLabel();
+        String newTheirsMarker = ">>>>>>> THEIRS (select with 'tc')"; 
+        BufferedReader reader = null;
+        boolean output = false;
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(files.getResultFile())));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                if (mineMarker.equals(line)) {
+                    line = newMineMarker;
+                    output = true;
+                } else if (theirsMarker.equals(line)) {
+                    mySVNEnvironment.getErr().println(newTheirsMarker);
+                    output = false;
+                } else if (line.endsWith(mineMarker)) {
+                    int ind = line.indexOf(mineMarker);
+                    line = line.substring(0, ind) + newMineMarker;
+                    output = true;
+                } else if (line.endsWith(theirsMarker)) {
+                    int ind = line.indexOf(theirsMarker);
+                    line = line.substring(0, ind) + newTheirsMarker;
+                    mySVNEnvironment.getErr().println(line);
+                    output = false;
+                    continue;
+                }
+                if (output) {
+                    mySVNEnvironment.getErr().println(line);
+                }
+            }
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Error occured while showing conflict chunks: {0}", ioe.getMessage());
+            SVNErrorManager.error(err, ioe, SVNLogType.CLIENT);
+        } finally {
+            SVNFileUtil.closeFile(reader);
+        }
     }
 
 }

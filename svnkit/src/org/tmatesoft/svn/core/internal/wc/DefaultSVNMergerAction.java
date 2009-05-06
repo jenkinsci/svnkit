@@ -26,6 +26,8 @@ public class DefaultSVNMergerAction {
 
     public static final DefaultSVNMergerAction MARK_RESOLVED = new DefaultSVNMergerAction();
     public static final DefaultSVNMergerAction CHOOSE_MERGED_FILE = new DefaultSVNMergerAction();
+    public static final DefaultSVNMergerAction CHOOSE_REPOSITORY_CONFLICTED = new DefaultSVNMergerAction();
+    public static final DefaultSVNMergerAction CHOOSE_WORKING_CONFLICTED = new DefaultSVNMergerAction();
     
     private DefaultSVNMergerAction() {
     }
