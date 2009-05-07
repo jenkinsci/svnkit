@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.wc;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNConflictAction {
     /**
@@ -34,6 +34,14 @@ public class SVNConflictAction {
      */
     public static final SVNConflictAction DELETE = new SVNConflictAction("deleted");
 
+    /**
+     * Converts string to an <code>SVNConflictAction</code> object when possible.
+     * @param   action    action name
+     * @return  <code>SVNConflictAction</code> object which {@link #getName()} 
+     *          equals to <code>action</code>; <code>null</code> in case <code>action</code>
+     *          matches no <code>SVNConflictAction</code> constant 
+     * @since   1.3
+     */
     public static SVNConflictAction fromString(String action) {
         if (EDIT.getName().equals(action)) {
             return EDIT;
@@ -53,10 +61,20 @@ public class SVNConflictAction {
         myName = name;
     }
 
+    /**
+     * Returns the string representation of this action.
+     * @return string representation
+     * @since  1.3
+     */
     public String getName() {
         return myName;
     }
 
+    /**
+     * Returns the string representation of this action.
+     * @return string representation
+     * @since 1.3
+     */
     public String toString() {
         return getName();
     }

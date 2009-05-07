@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.wc;
  *  
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNConflictReason {
     /**
@@ -46,6 +46,14 @@ public class SVNConflictReason {
      */
     public static final SVNConflictReason ADDED = new SVNConflictReason("added");
 
+    /**
+     * Converts a string reason name to an <code>SVNConflictReason</code> object.
+     *  
+     * @param   reason name
+     * @return  an <code>SVNConflictReason</code> that matches the <code>reason</code> name;
+     *          <code>null</code> if no match is found 
+     * @since   1.3
+     */
     public static SVNConflictReason fromString(String reason) {
         if (EDITED.getName().equals(reason)) {
             return EDITED;
@@ -74,10 +82,22 @@ public class SVNConflictReason {
         myName = name;
     }
 
+    /**
+     * Retunrns a string representation of this object.
+     * 
+     * @return conflict reason name
+     * @since  1.3
+     */
     public String getName() {
         return myName;
     }
 
+    /**
+     * Retunrns a string representation of this object.
+     * 
+     * @return conflict reason name
+     * @since  1.3
+     */
     public String toString() {
         return getName();
     }

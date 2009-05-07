@@ -17,7 +17,11 @@ import org.tmatesoft.svn.core.SVNException;
 
 
 /**
+ * <code>ISVNFileFilter</code> is used by {@link SVNCommitClient} during an import operation 
+ * to filter out undesired paths, so that those paths do not get to a repository. 
+ *
  * @version 1.3
+ * @since   1.3
  * @author  TMate Software Ltd.
  */
 public interface ISVNFileFilter {
@@ -25,8 +29,9 @@ public interface ISVNFileFilter {
     /**
      * This method is called to add extra filtering of files.
      * 
-     * @param file file to accept or not
-     * @return     <span class="javakeyword">true</span> if the file should be accepted
+     * @param  file           file to accept or not
+     * @return                <span class="javakeyword">true</span> if the file should be accepted
+     * @throws SVNException
      */
     public boolean accept(File file) throws SVNException;
 }

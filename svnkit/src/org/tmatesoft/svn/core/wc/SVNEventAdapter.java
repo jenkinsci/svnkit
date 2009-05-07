@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNEventAdapter implements ISVNEventHandler {
 

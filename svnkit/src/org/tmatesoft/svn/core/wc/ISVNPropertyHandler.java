@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.SVNURL;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     SVNPropertyData
  * @see     SVNWCClient
  */

@@ -68,6 +68,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     ISVNInfoHandler
  * @see     SVNWCClient
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -309,6 +310,14 @@ public class SVNInfo {
         return myConflictWrkFile;
     }
     
+    /**
+     * Returns a tree conflict description on the item represented by 
+     * this object.
+     * 
+     * @return a tree conflict description object or <code>null</code>
+     *         if no tree conflict exists on this item
+     * @since  1.3
+     */
     public SVNTreeConflictDescription getTreeConflict() {
     	return myTreeConflict;
     }

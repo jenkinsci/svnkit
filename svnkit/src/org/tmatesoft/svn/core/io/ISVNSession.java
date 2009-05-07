@@ -50,6 +50,7 @@ package org.tmatesoft.svn.core.io;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     SVNRepository
  * @see     SVNRepositoryFactory
  */

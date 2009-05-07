@@ -61,6 +61,7 @@ import org.tmatesoft.svn.core.SVNException;
  * finishes.
  * 
  * @version 1.3
+ * @since   1.2
  * @author  TMate Software Ltd.
  * @see     SVNEvent
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

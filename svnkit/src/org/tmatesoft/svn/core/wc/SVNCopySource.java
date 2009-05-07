@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNCopySource {
     

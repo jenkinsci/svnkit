@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  *
  * @author TMate Software Ltd.
  * @version 1.3
+ * @since   1.2
  * @see SVNWCClient
  */
 public interface ISVNPropertyValueProvider {

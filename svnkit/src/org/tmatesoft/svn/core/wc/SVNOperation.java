@@ -12,15 +12,45 @@
 package org.tmatesoft.svn.core.wc;
 
 /**
+ * <b>SVNOperation</b> represents the user operation that exposed a conflict.
+ * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.3
  */
 public class SVNOperation {
+    /**
+     * Update operation.
+     * @since 1.3
+     */
     public static final SVNOperation UPDATE = new SVNOperation("update");
+    
+    /**
+     * Switch operation.
+     * @since 1.3
+     */
     public static final SVNOperation SWITCH = new SVNOperation("switch");
+    
+    /**
+     * Merge operation.
+     * @since 1.3
+     */
     public static final SVNOperation MERGE = new SVNOperation("merge");
+    
+    /**
+     * None.
+     * @since 1.3
+     */
     public static final SVNOperation NONE = new SVNOperation("none");
-
+    
+    /**
+     * Converts a string operation name to an <code>SVNOperation</code> object.
+     *  
+     * @param operation
+     * @return <code>SVNOperation</code> constant or <code>null</code>, if no
+     *         <code>SVNOperation</code> constant matches the given name  
+     * @since   1.3
+     */
     public static SVNOperation fromString(String operation) {
         if (UPDATE.getName().equals(operation)) {
             return UPDATE;
@@ -43,10 +73,20 @@ public class SVNOperation {
         myName = name;
     }
 
+    /**
+     * Returns the string representation of this object.
+     * @return string representation
+     * @since  1.3
+     */
     public String getName() {
         return myName;
     }
 
+    /**
+     * Returns the string representation of this object.
+     * @return string representation
+     * @since  1.3
+     */
     public String toString() {
         return getName();
     }
