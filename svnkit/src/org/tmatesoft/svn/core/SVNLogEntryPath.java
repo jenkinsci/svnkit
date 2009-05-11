@@ -27,6 +27,7 @@ import java.io.Serializable;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see 	SVNLogEntry
  */
 public class SVNLogEntryPath implements Serializable {

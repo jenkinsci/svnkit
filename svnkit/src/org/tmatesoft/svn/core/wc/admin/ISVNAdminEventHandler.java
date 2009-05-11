@@ -29,7 +29,7 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.1.1
+ * @since   1.2
  */
 public interface ISVNAdminEventHandler extends ISVNEventHandler {
     /**

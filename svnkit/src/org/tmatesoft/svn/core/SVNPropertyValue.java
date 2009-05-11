@@ -25,7 +25,7 @@ import java.util.Arrays;
  * 
  * @author  TMate Software Ltd.
  * @version 1.3
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNPropertyValue implements Serializable {
 

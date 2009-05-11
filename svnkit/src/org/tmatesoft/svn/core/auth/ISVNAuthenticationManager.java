@@ -60,6 +60,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  *
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     org.tmatesoft.svn.core.io.SVNRepository
  */
 public interface ISVNAuthenticationManager {

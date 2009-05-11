@@ -36,7 +36,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
  * 
  * @author  TMate Software Ltd.
  * @version 1.3
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNProperties implements Cloneable, Serializable {
 

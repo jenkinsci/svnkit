@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class SVNRevisionProperty {
     

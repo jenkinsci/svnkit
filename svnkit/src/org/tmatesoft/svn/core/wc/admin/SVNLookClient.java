@@ -121,7 +121,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.1.1
+ * @since   1.2
  */
 public class SVNLookClient extends SVNBasicClient {
     private ISVNGNUDiffGenerator myDiffGenerator;

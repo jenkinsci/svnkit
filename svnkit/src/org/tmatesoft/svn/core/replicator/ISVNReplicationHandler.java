@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNLogEntry;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.1.0
+ * @since   1.2
  */
 public interface ISVNReplicationHandler {
 

@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class SVNDeltaProcessor {
     
@@ -104,6 +105,33 @@ public class SVNDeltaProcessor {
         applyTextDelta(base, SVNFileUtil.openFileForWriting(targetFile), computeCheksum);
     }
 
+    /**
+     * Starts processing deltas given a base file and a one 
+     * to write resultant target bytes to.
+     * 
+     * <p>
+     * If a target full text is a newly added file (text deltas would be vs. empty), 
+     * then source bytes are not needed and <code>baseIS</code> may be passed as 
+     * <span class="javakeyword">null</span>.
+     * 
+     * <p>
+     * If a file represented by <code>targetFile</code> does not exist 
+     * yet, first tries to create an empty file.
+     * 
+     * <p>
+     * If <code>computeTargetChecksum</code> is <span class="javakeyword">true</span>, then 
+     * an MD5 checksum will be calculated for target bytes. The calculated checksum is 
+     * returned by {@link #textDeltaEnd()}. 
+     * 
+     * @param  baseIS                an input stream to take base file contents 
+     *                               from 
+     * @param  targetFile            a destination file where resultant 
+     *                               target bytes will be written
+     * @param  computeTargetCheksum  <span class="javakeyword">true</span> to calculate
+     *                               checksum of the target text
+     * @throws SVNException
+     * @since  1.3
+     */
     public void applyTextDelta(InputStream baseIS, File targetFile, boolean computeTargetCheksum) throws SVNException {
         if (!targetFile.exists()) {
             SVNFileUtil.createEmptyFile(targetFile);

@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.1.1
+ * @since   1.2
  */
 public interface ISVNGNUDiffGenerator extends ISVNDiffGenerator {
     

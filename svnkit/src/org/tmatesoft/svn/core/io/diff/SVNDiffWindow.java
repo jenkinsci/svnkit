@@ -39,6 +39,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     SVNDiffInstruction
  */
 public class SVNDiffWindow {

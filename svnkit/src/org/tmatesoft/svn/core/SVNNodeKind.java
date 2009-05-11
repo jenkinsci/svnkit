@@ -25,6 +25,7 @@ package org.tmatesoft.svn.core;
  *  
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see 	SVNDirEntry
  */
 public final class SVNNodeKind implements Comparable {
