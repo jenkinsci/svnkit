@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNLock;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     SVNRepository#lock(java.util.Map, String, boolean, ISVNLockHandler)
  * @see     SVNRepository#unlock(java.util.Map, boolean, ISVNLockHandler)
  */

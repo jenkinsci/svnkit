@@ -93,6 +93,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  *   
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNCommitClient extends SVNBasicClient {

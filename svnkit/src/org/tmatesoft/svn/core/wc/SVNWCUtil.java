@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * 
  * @version 1.3
  * @author TMate Software Ltd., Peter Skoog
+ * @since  1.2
  * @see ISVNOptions
  * @see <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */

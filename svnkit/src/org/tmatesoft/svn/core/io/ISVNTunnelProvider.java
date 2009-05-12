@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public interface ISVNTunnelProvider {
     

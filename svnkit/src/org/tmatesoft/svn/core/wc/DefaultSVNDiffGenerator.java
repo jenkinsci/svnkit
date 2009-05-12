@@ -56,6 +56,7 @@ import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
  * diff driver use {@link SVNDiffClient#setDiffGenerator(ISVNDiffGenerator) setDiffGenerator()}.
  * 
  * @version 1.3
+ * @since   1.2
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
@@ -648,6 +649,13 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return getOptions().getNativeCharset();
     }
 
+    /**
+     * Says whether this generator is using any special (non-native) 
+     * charset for outputting diffs.
+     * 
+     * @return <span class="javakeyword">true</span> if yes;
+     *         otherwise <span class="javakeyword">false</span> 
+     */
     public boolean hasEncoding() {
         return myEncoding != null;
     }

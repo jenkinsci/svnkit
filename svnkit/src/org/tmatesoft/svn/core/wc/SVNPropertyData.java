@@ -24,6 +24,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     ISVNPropertyHandler
  * @see     SVNWCClient
  */

@@ -89,6 +89,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
  *  
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     ISVNStatusHandler
  * @see     SVNStatusType
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -154,6 +155,7 @@ public class SVNStatus {
      * @param isLocked                 if the item is locked by the driver (not a user lock)
      * @param isCopied                 if the item is added with history 
      * @param isSwitched               if the item is switched to a different URL
+     * @param isFileExternal           tells if the item is an external file
      * @param conflictNewFile          temp file with latest changes from the repository
      * @param conflictOldFile          temp file just as the conflicting one was at the BASE revision
      * @param conflictWrkFile          temp file with all user's current local modifications 
@@ -165,6 +167,8 @@ public class SVNStatus {
      * @param entryProperties          item's SVN specific '&lt;entry' properties
      * @param changelistName           changelist name which the item belongs to
      * @param wcFormatVersion          working copy format number         
+     * @param treeConflict             tree conflict description
+     * @since 1.3
      */
     public SVNStatus(SVNURL url, File file, SVNNodeKind kind,
             SVNRevision revision, SVNRevision committedRevision,
@@ -374,6 +378,13 @@ public class SVNStatus {
         return myIsSwitched;
     }
     
+    /**
+     * Tells if this is an externals file or not.
+     * 
+     * @return <span class="javakeyword">true</span> if is a file external, 
+     *         otherwise <span class="javakeyword">false</span>
+     * @since  1.3
+     */
     public boolean isFileExternal() {
         return myIsFileExternal;
     }
@@ -654,6 +665,13 @@ public class SVNStatus {
         return myChangelistName;
     }
 
+    /**
+     * Returns a tree conflict description.
+     * 
+     * @return tree conflict description; <code>null</code> if 
+     *         no conflict description exists on this item
+     * @since  1.3
+     */
     public SVNTreeConflictDescription getTreeConflict() {
         return myTreeConflict;
     }

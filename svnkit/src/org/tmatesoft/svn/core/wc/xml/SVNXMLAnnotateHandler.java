@@ -34,6 +34,7 @@ import org.xml.sax.SAXException;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class SVNXMLAnnotateHandler extends AbstractXMLHandler implements ISVNAnnotateHandler {
 

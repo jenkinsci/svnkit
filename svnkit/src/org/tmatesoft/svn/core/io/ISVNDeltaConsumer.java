@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public interface ISVNDeltaConsumer {
     /**

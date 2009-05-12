@@ -20,6 +20,7 @@ package org.tmatesoft.svn.core;
  *
  * @author TMate Software Ltd.
  * @version 1.3
+ * @since   1.2
  */
 public class SVNProperty {
     /**

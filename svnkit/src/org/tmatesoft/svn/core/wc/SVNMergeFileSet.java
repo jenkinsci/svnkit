@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNMergeFileSet {
     
@@ -347,6 +347,13 @@ public class SVNMergeFileSet {
         return myCopyFromFile;
     }
 
+    /**
+     * Returns the copy source path.
+     * 
+     * @return   path of the copy source file; 
+     *           it's relevant to the {@link #getAdminArea() admin area} location
+     * @since    1.3
+     */
     public String getCopyFromPath() {
         String root = myAdminArea.getRoot().getAbsolutePath().replace(File.separatorChar, '/');
         String copyFrom = getCopyFromFile().getAbsolutePath().replace(File.separatorChar, '/');

@@ -74,6 +74,7 @@ import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     SVNWCUtil
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */

@@ -22,7 +22,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public abstract class SVNConflictDescription {
     private SVNMergeFileSet myMergeFiles;
@@ -50,17 +50,39 @@ public abstract class SVNConflictDescription {
         myConflictReason = conflictReason;
     }
 
+    /**
+     * Says whether this object represents a text conflict.
+     * 
+     * @return <span class="javakeyword">true</span> if it's a text conflict;
+     *         otherwise <span class="javakeyword">false</span>
+     * @since  1.3
+     */
     public abstract boolean isTextConflict();
 
     /**
      * Tells whether it's a property merge conflict or not.
+     * 
      * @return <span class="javakeyword">true</span> if the conflict occurred while modifying a property;
      *         otherwise <span class="javakeyword">false</span>
+     * @since  1.3 
      */
     public abstract boolean isPropertyConflict();
 
+    /**
+     * Says whether this object represents a tree conflict.
+     * 
+     * @return <span class="javakeyword">true</span> if it's a tree conflict;
+     *         otherwise <span class="javakeyword">false</span>
+     * @since  1.3
+     */
     public abstract boolean isTreeConflict();
 
+    /**
+     * Returns the working copy path which resulted in a conflict.
+     * 
+     * @return   working copy path
+     * @since    1.3
+     */
     public File getPath() {
         return getMergeFiles().getWCFile();
     }

@@ -43,6 +43,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class SVNDeltaGenerator {
     

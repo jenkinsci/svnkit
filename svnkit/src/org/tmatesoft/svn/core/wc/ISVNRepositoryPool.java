@@ -32,6 +32,7 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     DefaultSVNRepositoryPool
  */
 public interface ISVNRepositoryPool {

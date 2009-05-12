@@ -101,6 +101,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNUpdateClient extends SVNBasicClient {
@@ -1239,10 +1240,23 @@ public class SVNUpdateClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Sets whether keywords must be expanded during an export operation.
+     * 
+     * @param expand <span class="javakeyword">true</span> to expand;
+     *               otherwise <span class="javakeyword">false</span>
+     * @since 1.3
+     */
     public void setExportExpandsKeywords(boolean expand) {
         myIsExportExpandsKeywords = expand;
     }
 
+    /**
+     * Says whether keywords expansion during export operations is turned on or not.
+     * @return <span class="javakeyword">true</span> if expanding keywords;
+     *         <span class="javakeyword">false</span> otherwise
+     * @sinec  1.3
+     */
     public boolean isExportExpandsKeywords() {
         return myIsExportExpandsKeywords;
     }

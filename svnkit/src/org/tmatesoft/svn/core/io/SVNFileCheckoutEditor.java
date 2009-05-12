@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 class SVNFileCheckoutEditor implements ISVNEditor {
     

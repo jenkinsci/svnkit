@@ -52,7 +52,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.io.SVNRepository
- * @since   1.1.0
+ * @since   1.2
  */
 public class SVNReplicationEditor implements ISVNEditor {
 

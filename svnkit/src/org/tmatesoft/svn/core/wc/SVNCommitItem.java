@@ -32,7 +32,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * a file/directory right from a repository). 
  * 
  * <p>
- * When you call <b>SVNCommitClient</b>'s {@link SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, boolean) doCollectCommitItems()}
+ * When you call <b>SVNCommitClient</b>'s {@link SVNCommitClient#doCollectCommitItems(File[], boolean, boolean, org.tmatesoft.svn.core.SVNDepth, boolean, String[]) doCollectCommitItems()}
  * this methods processes the specified paths and collects information
  * on items to be committed in <b>SVNCommitItem</b> objects which are
  * packed into a single <b>SVNCommitPacket</b> object. This object is 
@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     SVNCommitPacket
  */
 public class SVNCommitItem {

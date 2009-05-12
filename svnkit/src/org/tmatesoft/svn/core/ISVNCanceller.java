@@ -22,6 +22,7 @@ package org.tmatesoft.svn.core;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public interface ISVNCanceller {
    

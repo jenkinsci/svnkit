@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNLock;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.1.1
+ * @since   1.2
  */
 public class SVNAdminEvent {
     private String myTxnName;
@@ -71,6 +71,14 @@ public class SVNAdminEvent {
         myMessage = message;
     }
 
+    /**
+     * Creates a new event to notify about a next shard being packed.
+     * 
+     * @param action  pack start\end action
+     * @param shard   number of the shard being packed
+     * @since 1.3
+     * @see   SVNAdminClient#doPack(File)
+     */
     public SVNAdminEvent(SVNAdminEventAction action, long shard) {
         myAction = action;
         myShard = shard;
@@ -298,6 +306,12 @@ public class SVNAdminEvent {
         myDroppedNodesCount = droppedNodesCount;
     }
     
+    /**
+     * Returns the number of the shard packed.
+     * 
+     * @return shard number
+     * @since  1.3
+     */
     public long getShard() {
         return myShard;
     }

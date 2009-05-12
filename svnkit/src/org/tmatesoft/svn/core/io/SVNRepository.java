@@ -139,6 +139,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * @version     1.3
  * @author      TMate Software Ltd.
+ * @since       1.2
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
  * @see         <a href="http://svnkit.com/kb/examples/">Examples</a>
@@ -2724,6 +2725,25 @@ public abstract class SVNRepository {
         myConnectionListeners.remove(listener);
     }
     
+    /**
+     * Returns the revision where the path was first deleted within the inclusive revision range 
+     * defined by <code>pegRevision</code> and <code>endRevision</code>.
+     * 
+     * <p/>
+     * If <code>path</code> does not exist at <code>pegRevision</code> or was not deleted within
+     * the specified range, then returns an invalid revision (<code>&lt;0</code>).
+     * 
+     * 
+     * @param    path           relative or absolute repository path                 
+     * @param    pegRevision    peg revision to start the search from    
+     * @param    endRevision    end revision to end the search at
+     * @return                  revision where <code>path</code> is first deleted
+     * @throws   SVNException   if <code>pegRevision</code> or <code>endRevision</code> are invalid or 
+     *                          if <code>pegRevision</code> is greater than <code>endRevision</code>, then    
+     *                          the exception is set {@link SVNErrorCode#CLIENT_BAD_REVISION} error code;
+     *                          if <code>path</code> is the repository root (<code>"/"</code>).
+     * @since    1.3
+     */
     public long getDeletedRevision(String path, long pegRevision, long endRevision) throws SVNException {
         path = getRepositoryPath(path);
         if ("/".equals(path)) {

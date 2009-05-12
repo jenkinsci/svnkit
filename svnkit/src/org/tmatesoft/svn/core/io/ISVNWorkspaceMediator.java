@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see		SVNRepository#getCommitEditor(String, java.util.Map, boolean, org.tmatesoft.svn.core.SVNProperties, ISVNWorkspaceMediator)
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  * 

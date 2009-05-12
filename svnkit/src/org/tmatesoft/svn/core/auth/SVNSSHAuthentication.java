@@ -25,6 +25,7 @@ import java.io.File;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     ISVNAuthenticationManager  
  */
 public class SVNSSHAuthentication extends SVNAuthentication {

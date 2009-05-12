@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see 	SVNLogEntryPath
  * @see     ISVNLogEntryHandler
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>

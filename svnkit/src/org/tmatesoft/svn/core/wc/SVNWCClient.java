@@ -151,7 +151,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </table>
  *
  * @version 1.3
- * @author TMate Software Ltd.
+ * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNWCClient extends SVNBasicClient {
@@ -1551,6 +1552,59 @@ public class SVNWCClient extends SVNBasicClient {
         doAdd(path, force, mkdir, climbUnversionedParents, depth, true, includeIgnored, makeParents);
     }
 
+    /**
+     * Schedules working copy <code>paths</code> for addition to the repository.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, adds just <code>paths</code> and nothing
+     * below it. If {@link SVNDepth#FILES}, adds <code>paths</code> and any file
+     * children of <code>paths</code>. If {@link SVNDepth#IMMEDIATES}, adds <code>paths</code>, any
+     * file children, and any immediate subdirectories (but nothing
+     * underneath those subdirectories). If {@link SVNDepth#INFINITY}, adds
+     * <code>paths</code> and everything under it fully recursively.
+     *
+     * <p/>
+     * <code>paths</code>' parent must be under revision control already (unless
+     * <code>makeParents</code> is <span class="javakeyword">true</span>), but <code>paths</code> are not.  
+     * 
+     * <p/>
+     * If <code>force</code> is set, path is a directory, <code>depth</code> is 
+     * {@link SVNDepth#INFINITY}, then schedules for addition unversioned files and directories
+     * scattered deep within a versioned tree.
+     *
+     * <p/>
+     * If <code>includeIgnored</code> is <span class="javakeyword">false</span>, doesn't add files or 
+     * directories that match ignore patterns.
+     *
+     * <p/>
+     * If <code>makeParents</code> is <span class="javakeyword">true</span>, recurse up path's 
+     * directory and look for a versioned directory. If found, add all intermediate paths between it
+     * and the path. 
+     *
+     * <p/>
+     * Important: this is a *scheduling* operation. No changes will happen to the repository until a commit 
+     * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
+     * 
+     * @param paths                     working copy paths to add  
+     * @param force                     if <span class="javakeyword">true</span> 
+     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
+     * @param depth                     tree depth
+     * @param depthIsSticky             if depth should be recorded to the working copy
+     * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
+     *                                  to paths being added
+     * @param makeParents               if <span class="javakeyword">true</span>, climb upper and schedule also
+     *                                  all unversioned paths in the way
+     * @throws SVNException             <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -  
+     *                                  if <code>force</code> is not set and a path is already 
+     *                                  under version
+     *                                  <li/>exception with {@link SVNErrorCode#CLIENT_NO_VERSIONED_PARENT} 
+     *                                  error code - if <code>makeParents</code> is 
+     *                                  <span class="javakeyword">true</span> but no unversioned paths stepping 
+     *                                  upper from a path are found 
+     * @since 1.3
+     */
     public void doAdd(File[] paths, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
         setEventPathPrefix("");
@@ -1565,6 +1619,59 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
     
+    /**
+     * Schedules a working copy <code>path</code> for addition to the repository.
+     *
+     * <p/>
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, adds just <code>path</code> and nothing
+     * below it. If {@link SVNDepth#FILES}, adds <code>path</code> and any file
+     * children of <code>path</code>. If {@link SVNDepth#IMMEDIATES}, adds <code>path</code>, any
+     * file children, and any immediate subdirectories (but nothing
+     * underneath those subdirectories). If {@link SVNDepth#INFINITY}, adds
+     * <code>path</code> and everything under it fully recursively.
+     *
+     * <p/>
+     * <code>path</code>'s parent must be under revision control already (unless
+     * <code>makeParents</code> is <span class="javakeyword">true</span>), but <code>path</code> is not.  
+     * 
+     * <p/>
+     * If <code>force</code> is set, <code>path</code> is a directory, <code>depth</code> is 
+     * {@link SVNDepth#INFINITY}, then schedules for addition unversioned files and directories
+     * scattered deep within a versioned tree.
+     *
+     * <p/>
+     * If <code>includeIgnored</code> is <span class="javakeyword">false</span>, doesn't add files or 
+     * directories that match ignore patterns.
+     *
+     * <p/>
+     * If <code>makeParents</code> is <span class="javakeyword">true</span>, recurse up <code>path</code>'s 
+     * directory and look for a versioned directory. If found, add all intermediate paths between it
+     * and <code>path</code>. 
+     *
+     * <p/>
+     * Important: this is a *scheduling* operation.  No changes will happen to the repository until a commit 
+     * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
+     * 
+     * @param path                      working copy path
+     * @param force                     if <span class="javakeyword">true</span> 
+     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
+     * @param depth                     tree depth
+     * @param depthIsSticky             if depth should be recorded to the working copy
+     * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
+     *                                  to paths being added
+     * @param makeParents               if <span class="javakeyword">true</span>, climb upper and schedule also
+     *                                  all unversioned paths in the way
+     * @throws SVNException             <ul>
+     *                                  <li/>exception with {@link SVNErrorCode#ENTRY_EXISTS} error code -  
+     *                                  if <code>force</code> is not set and <code>path</code> is already 
+     *                                  under version
+     *                                  <li/>exception with {@link SVNErrorCode#CLIENT_NO_VERSIONED_PARENT} 
+     *                                  error code - if <code>makeParents</code> is 
+     *                                  <span class="javakeyword">true</span> but no unversioned paths stepping 
+     *                                  upper from <code>path</code> are found 
+     * @since 1.3
+     */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             SVNDepth depth, boolean depthIsSticky, boolean includeIgnored, boolean makeParents) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
@@ -1881,7 +1988,44 @@ public class SVNWCClient extends SVNBasicClient {
             SVNConflictChoice conflictChoice) throws SVNException {
         doResolve(path, depth, resolveContents, resolveProperties, true, conflictChoice);
     }
-    
+
+    /**
+     * Performs automatic conflict resolution on a working copy <code>path</code>.
+     * 
+     * <p/> 
+     * If <code>depth</code> is {@link SVNDepth#EMPTY}, acts only on <code>path</code>; if
+     * {@link SVNDepth#FILES}, resolves <code>path</code> and its conflicted file
+     * children (if any); if {@link SVNDepth#IMMEDIATES}, resolves <code>path</code> and
+     * all its immediate conflicted children (both files and directories,
+     * if any); if {@link SVNDepth#INFINITY}, resolves <code>path</code> and every
+     * conflicted file or directory anywhere beneath it.
+     * 
+     * <p/>
+     * If <code>conflictChoice</code> is {@link SVNConflictChoice#BASE}, resolves the
+     * conflict with the old file contents; if {@link SVNConflictChoice#MINE_FULL}, uses the original 
+     * working contents; if {@link SVNConflictChoice#THEIRS_FULL}, the new contents; and if
+     * {@link SVNConflictChoice#MERGED}, doesn't change the contents at all, just removes the conflict status, 
+     * which is the pre-1.2 (pre-SVN 1.5) behavior.
+     *
+     * <p/>
+     * {@link SVNConflictChoice#THEIRS_CONFLICT} and {@link SVNConflictChoice#MINE_CONFLICT} are not legal for 
+     * binary files or properties.
+     *
+     * <p/>
+     * If <code>path</code> is not in a state of conflict to begin with, does nothing. If 
+     * <code>path</code>'s conflict state is removed and caller's {@link ISVNEntryHandler} is not 
+     * <span class="javakeyword">null</span>, then an {@link SVNEventAction#RESOLVED} event is 
+     * dispatched to the handler.
+     * 
+     * @param path               working copy path
+     * @param depth              tree depth
+     * @param resolveContents    resolve content conflict
+     * @param resolveProperties  resolve property conflict
+     * @param resolveTree n      resolve any tree conlicts
+     * @param conflictChoice     choice object for making decision while resolving
+     * @throws SVNException  
+     * @since 1.3, SVN 1.6
+     */
     public void doResolve(File path, SVNDepth depth, final boolean resolveContents, final boolean resolveProperties, 
             final boolean resolveTree, SVNConflictChoice conflictChoice) throws SVNException {
         final SVNConflictChoice choice = conflictChoice == null ? SVNConflictChoice.MERGED : conflictChoice;

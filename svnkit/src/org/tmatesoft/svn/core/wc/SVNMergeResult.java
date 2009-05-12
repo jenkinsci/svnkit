@@ -20,7 +20,7 @@ package org.tmatesoft.svn.core.wc;
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNMergeResult {
     

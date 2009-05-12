@@ -15,40 +15,64 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 
 
 /**
+ * <b>SVNTextConflictDescription</b> brings information about conflict on a file.
+ * 
  * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.3
  */
 public class SVNTextConflictDescription extends SVNConflictDescription {
 
     /**
-     * Creates a new <code>SVNConflictDescription</code> object.
-     *
-     * <p/>
-     * <code>propertyName</code> is relevant only for property conflicts (i.e. in case
-     * <code>isPropertyConflict</code> is <span class="javakeyword">true</span>).
+     * Creates a new <code>SVNTextConflictDescription</code> object.
      *
      * @param mergeFiles            files involved in the merge
      * @param nodeKind              node kind of the item which the conflict occurred on
      *                              conflict; otherwise <span class="javakeyword">false</span>
      * @param conflictAction        action which lead to the conflict
      * @param conflictReason        why the conflict ever occurred
+     * @since 1.3
      */
     public SVNTextConflictDescription(SVNMergeFileSet mergeFiles, SVNNodeKind nodeKind, SVNConflictAction conflictAction, SVNConflictReason conflictReason) {
         super(mergeFiles, nodeKind, conflictAction, conflictReason);
     }
 
+    /**
+     * Returns <code>true</code>.
+     * 
+     * @returns <code>true</code>
+     * @since 1.3
+     */
     public boolean isTextConflict() {
         return true;
     }
 
+    /**
+     * Returns <code>false</code>.
+     * 
+     * @returns <code>false</code>
+     * @since 1.3
+     */
     public boolean isPropertyConflict() {
         return false;
     }
 
+    /**
+     * Returns <code>false</code>.
+     * 
+     * @returns <code>false</code>
+     * @since 1.3
+     */
     public boolean isTreeConflict() {
         return false;
     }
     
+    /**
+     * Returns <code>null</code>.
+     * 
+     * @returns <code>null</code>
+     * @since 1.3
+     */
     public String getPropertyName() {
         return null;
     }
