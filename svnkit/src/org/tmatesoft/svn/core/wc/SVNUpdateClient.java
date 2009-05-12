@@ -477,8 +477,9 @@ public class SVNUpdateClient extends SVNBasicClient {
 
             long targetRevision = editor.getTargetRevision();
             if (targetRevision >= 0 && !isIgnoreExternals() && depth.isRecursive()) {
+                url = target == null ? url : url.removePathTail();
                 handleExternals(wcAccess, info.getAnchor().getRoot(), info.getOldExternals(), info.getNewExternals(), 
-                        info.getDepths(), url, sourceRoot, depth, false, false);
+                        info.getDepths(), url, sourceRoot, depth, false, true);
             }
             
             dispatchEvent(SVNEventFactory.createSVNEvent(info.getTarget().getRoot(), SVNNodeKind.NONE, null, 
@@ -1659,7 +1660,12 @@ public class SVNUpdateClient extends SVNBasicClient {
                 externalDiff.oldExternal = (SVNExternal) oldParsedExternals.get(path);
                 externalDiff.newExternal = (SVNExternal) newParsedExternals.get(path);
                 externalDiff.owner = new File(root, diffPath);
-                externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
+                if (!isExport) {
+                    externalDiff.ownerURL = getOwnerURL(externalDiff.owner);
+                } 
+                if (externalDiff.ownerURL == null) {
+                    externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
+                }                    
                 handleExternalItemChange(wcAccess, externalDiff.oldExternal.getPath(), externalDiff);
             }
             for (Iterator paths = newParsedExternals.keySet().iterator(); paths.hasNext();) {
@@ -1668,12 +1674,41 @@ public class SVNUpdateClient extends SVNBasicClient {
                     externalDiff.oldExternal = null;
                     externalDiff.newExternal = (SVNExternal) newParsedExternals.get(path);
                     externalDiff.owner = new File(root, diffPath);
-                    externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
+                    if (!isExport) {
+                        externalDiff.ownerURL = getOwnerURL(externalDiff.owner);
+                    } 
+                    if (externalDiff.ownerURL == null) {
+                        externalDiff.ownerURL = fromURL.appendPath(diffPath, false);
+                    }                    
                     handleExternalItemChange(wcAccess, externalDiff.newExternal.getPath(), externalDiff);
                 }
             }
         }
     }
+    
+    private SVNURL getOwnerURL(File root) {
+        if (root != null && SVNFileType.getType(root) == SVNFileType.DIRECTORY) {
+            SVNWCAccess access = createWCAccess();
+            try {
+                access.open(root, false, 0);
+                SVNEntry entry = access.getVersionedEntry(root, false);
+                if (entry != null) {
+                    return entry.getSVNURL();
+                }
+            } catch (SVNException e) {
+                e.printStackTrace();
+            } finally {
+                if (access != null) {
+                    try {
+                        access.close();
+                    } catch (SVNException e) {
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
     
     private void handleExternalItemChange(SVNWCAccess access, String targetDir, ExternalDiff externalDiff) throws SVNException {
         try {
