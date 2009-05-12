@@ -2936,7 +2936,7 @@ public class SVNWCClient extends SVNBasicClient {
     private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth, boolean setDepth) throws SVNException {
         checkCancelled();
         try {
-            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, setDepth ? depth : null);
+            SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, setDepth ? SVNDepth.INFINITY : null);
         } catch (SVNException e) {
             if (!(force && e.getErrorMessage().getErrorCode() == SVNErrorCode.ENTRY_EXISTS)) {
                 throw e;
