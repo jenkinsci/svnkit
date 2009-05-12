@@ -280,7 +280,8 @@ public class SVNReporter implements ISVNReporterBaton {
                            thisEntry.getDepth() == SVNDepth.EMPTY ||
                            thisEntry.getDepth() == SVNDepth.FILES ||
                            (thisEntry.getDepth() == SVNDepth.IMMEDIATES && 
-                            childEntry.getDepth() != SVNDepth.EMPTY)) {
+                            childEntry.getDepth() != SVNDepth.EMPTY) ||
+                            (SVNDepth.INFINITY.compareTo(childEntry.getDepth()) > 0 && depth == SVNDepth.INFINITY)) {
                     reporter.setPath(path, childEntry.getLockToken(), childEntry.getRevision(), 
                             childEntry.getDepth(), startEmpty);
                     myReportedFilesCount++;
