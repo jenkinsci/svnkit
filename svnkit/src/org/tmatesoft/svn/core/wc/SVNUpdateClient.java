@@ -479,7 +479,7 @@ public class SVNUpdateClient extends SVNBasicClient {
             if (targetRevision >= 0 && !isIgnoreExternals() && depth.isRecursive()) {
                 url = target == null ? url : url.removePathTail();
                 handleExternals(wcAccess, info.getAnchor().getRoot(), info.getOldExternals(), info.getNewExternals(), 
-                        info.getDepths(), sourceURL, sourceRoot, depth, false, true);
+                        info.getDepths(), url, sourceRoot, depth, false, true);
             }
             
             dispatchEvent(SVNEventFactory.createSVNEvent(info.getTarget().getRoot(), SVNNodeKind.NONE, null, 
