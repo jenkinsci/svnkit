@@ -124,9 +124,9 @@ public class FSWriteLock {
             childError = ioe;
         }
         if (errorOccured) {
-            String msg = childError == null ? "file already locked" : childError.getLocalizedMessage();
+            String msg = childError == null ? "file already locked" : childError.getMessage();
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR,
-                    "Can't get exclusive lock on file ''{0}'': {1}", new Object[]{myLockFile, msg});
+                    "Can''t get exclusive lock on file ''{0}'': {1}", new Object[]{ myLockFile, msg });
             SVNErrorManager.error(err, childError, SVNLogType.FSFS);
         }
     }
