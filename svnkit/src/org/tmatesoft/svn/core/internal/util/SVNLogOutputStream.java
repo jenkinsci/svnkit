@@ -14,9 +14,6 @@ package org.tmatesoft.svn.core.internal.util;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.ISVNDebugLog;
-
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
@@ -26,12 +23,9 @@ public class SVNLogOutputStream extends OutputStream {
     private OutputStream myOut;
     private OutputStream myLog;
 
-    public SVNLogOutputStream(OutputStream out, ISVNDebugLog log) {
+    public SVNLogOutputStream(OutputStream out, OutputStream log) {
         myOut = out;
-        myLog = log.createOutputLogStream();
-        if (myLog == null) {
-            myLog = SVNFileUtil.DUMMY_OUT;
-        }
+        myLog = log;
     }
 
     public void close() throws IOException {
@@ -41,7 +35,9 @@ public class SVNLogOutputStream extends OutputStream {
             throw e;
         } finally {
             try {
-                myLog.close();
+                if (myLog != null) {
+                    myLog.close();
+                }
             } catch (IOException e) {
             }
         }
@@ -54,7 +50,9 @@ public class SVNLogOutputStream extends OutputStream {
             throw e;
         } finally {
             try {
-                myLog.flush();
+                if (myLog != null) {
+                    myLog.flush();
+                }
             } catch (IOException e) {
             }
         }
@@ -67,7 +65,9 @@ public class SVNLogOutputStream extends OutputStream {
             throw e;
         } finally {
             try {
-                myLog.write(b, off, len);
+                if (myLog != null) {
+                    myLog.write(b, off, len);
+                }
             } catch (IOException e) {
             }
         }
@@ -80,7 +80,9 @@ public class SVNLogOutputStream extends OutputStream {
             throw e;
         } finally {
             try {
-                myLog.write(b);
+                if (myLog != null) {
+                    myLog.write(b);
+                }
             } catch (IOException e) {
             }
         }
@@ -88,7 +90,9 @@ public class SVNLogOutputStream extends OutputStream {
     
     public void flushBuffer() {
         try {
-            myLog.flush();
+            if (myLog != null) {
+                myLog.flush();
+            }
         } catch (IOException e) {
         }
     }

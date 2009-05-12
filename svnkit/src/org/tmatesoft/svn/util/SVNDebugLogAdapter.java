@@ -76,11 +76,11 @@ public abstract class SVNDebugLogAdapter implements ISVNDebugLog {
     }
 
     public InputStream createLogStream(SVNLogType logType, InputStream is) {
-        return new SVNLogInputStream(is, this);
+        return new SVNLogInputStream(is, createInputLogStream());
     }
 
     public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
-        return new SVNLogOutputStream(os, this);
+        return new SVNLogOutputStream(os, createOutputLogStream());
     }
 
     public OutputStream createInputLogStream() {
