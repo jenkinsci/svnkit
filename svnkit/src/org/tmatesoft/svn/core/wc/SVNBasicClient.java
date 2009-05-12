@@ -177,6 +177,7 @@ public class SVNBasicClient implements ISVNEventHandler {
      * @see          SVNUpdateClient
      * @see          SVNDiffClient
      * @see          ISVNEventHandler
+     * @deprecated   this method should not be used anymore
      */
     public void setLeaveConflictsUnresolved(boolean leave) {
         myIsLeaveConflictsUnresolved = leave;
@@ -187,10 +188,11 @@ public class SVNBasicClient implements ISVNEventHandler {
      * preventing from merging their contents during update and merge 
      * operations.
      *  
-     * @return  <span class="javakeyword">true</span> if conflicted files
-     *          are set to be prevented from merging, <span class="javakeyword">false</span>
-     *          if there's no such restriction
-     * @see     #setLeaveConflictsUnresolved(boolean) 
+     * @return     <span class="javakeyword">true</span> if conflicted files
+     *             are set to be prevented from merging, <span class="javakeyword">false</span>
+     *             if there's no such restriction
+     * @see        #setLeaveConflictsUnresolved(boolean)
+     * @deprecated this method should not be used anymore
      */
     public boolean isLeaveConflictsUnresolved() {
         return myIsLeaveConflictsUnresolved;
