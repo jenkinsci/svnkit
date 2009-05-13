@@ -685,9 +685,6 @@ public class JavaHLObjectFactory {
             path = path.replace(File.separatorChar, '/');
         }
         int depth = info.getDepth() != null ? info.getDepth().getId() : Depth.unknown;
-        if (info.getKind() == SVNNodeKind.FILE) {
-        	depth = 0;
-        }
         return new Info2(
                 path,
                 info.getURL() != null ? info.getURL().toString() : null,
