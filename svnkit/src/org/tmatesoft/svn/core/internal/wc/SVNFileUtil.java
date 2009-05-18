@@ -290,7 +290,7 @@ public class SVNFileUtil {
             } else {
                 err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new file ''{0}''", file);
             }
-            SVNErrorManager.error(err, new Exception(), Level.FINE, SVNLogType.WC);
+            SVNErrorManager.error(err, ioError != null ? ioError : new Exception(), Level.FINE, SVNLogType.WC);
         }
     }
 
