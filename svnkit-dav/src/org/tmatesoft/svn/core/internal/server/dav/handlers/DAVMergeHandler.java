@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSPathChange;
 import org.tmatesoft.svn.core.internal.io.fs.FSPathChangeKind;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
+import org.tmatesoft.svn.core.internal.io.fs.FSTransactionRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
@@ -157,7 +158,15 @@ public class DAVMergeHandler extends ServletDAVHandler {
         FSFS fsfs = sourceResource.getFSFS();
         String txnName = sourceResource.getTxnName();
         FSTransactionInfo txn = DAVServletUtil.openTxn(fsfs, txnName);
-        FSCommitter committer = getCommitter(sourceResource.getFSFS(), sourceResource.getRoot(), txn, 
+        FSTransactionRoot txnRoot = null;
+        try {
+            txnRoot = fsfs.createTransactionRoot(txn);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Could not open a (transaction) root in the repository", null);
+        }
+        
+        FSCommitter committer = getCommitter(sourceResource.getFSFS(), txnRoot, txn, 
                 sourceResource.getLockTokens(), sourceResource.getUserName());
         
         StringBuffer buffer = new StringBuffer();
