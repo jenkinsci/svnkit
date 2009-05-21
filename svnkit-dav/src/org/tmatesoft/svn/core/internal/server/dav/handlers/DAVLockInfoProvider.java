@@ -307,7 +307,9 @@ public class DAVLockInfoProvider {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                         "Failed to check path for a lock.", null);
             }
-            token = lock.getID();
+            if (lock != null) {
+                token = lock.getID();
+            }
         } else {
             token = lockToken;
         }

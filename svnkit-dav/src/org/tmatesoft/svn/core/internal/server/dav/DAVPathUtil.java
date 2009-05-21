@@ -133,7 +133,7 @@ public class DAVPathUtil {
         resultURI.append(context);
         resultURI.append(SLASH);
         if (davResourceKind == DAVResourceKind.PUBLIC) {
-            resultURI.append(path);
+            resultURI.append(dropLeadingSlash(path));
         } else {
             resultURI.append(DAVResourceURI.SPECIAL_URI).append(SLASH);
             if (davResourceKind == DAVResourceKind.ACT_COLLECTION) {
