@@ -25,10 +25,10 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.server.dav.DAVDepth;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
-import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceType;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.IDAVResourceWalkHandler.CallType;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 
 /**
@@ -103,16 +103,24 @@ public class DAVResourceWalker {
             String uriPath = myResource.getResourceURI().getURI();
             String reposPath = myResource.getResourceURI().getPath();
             
-            myResource.getResourceURI().setURI(DAVPathUtil.append(uriPath, childName));
-            myResource.getResourceURI().setPath(DAVPathUtil.append(reposPath, childName));
+            myResource.getResourceURI().setURI(SVNPathUtil.append(uriPath, childName));
+            myResource.getResourceURI().setPath(SVNPathUtil.append(reposPath, childName));
             
             if (childEntry.getType() == SVNNodeKind.FILE) {
                 response = handler.handleResource(response, myResource, myLockInfoProvider, myIfHeaders, myFlags, myLockScope, CallType.MEMBER);
             } else {
                 myResource.setCollection(true);
-                response = doWalk(handler, response, depth);
+                try {
+                    response = doWalk(handler, response, DAVDepth.decreaseDepth(depth));
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "could not decrease depth", null);
+                }
                 myResource.setCollection(false);
             }
+            
+            myResource.getResourceURI().setURI(uriPath);
+            myResource.getResourceURI().setPath(reposPath);
         }
         return response;
     }

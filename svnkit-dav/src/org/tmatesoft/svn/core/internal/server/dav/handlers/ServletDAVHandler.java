@@ -244,6 +244,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         OUR_LIVE_PROPS.put(DAVElement.SOURCE, new LivePropertySpecification(DAVElement.SOURCE, true, true));
         
         //TODO: the following three props are supported by DAV itself, should we do that as well? 
+        OUR_CORE_LIVE_PROPS.put(DAVElement.GET_CONTENT_TYPE, new LivePropertySpecification(DAVElement.GET_CONTENT_TYPE, false, false));
         OUR_CORE_LIVE_PROPS.put(DAVElement.GET_CONTENT_LANGUAGE, new LivePropertySpecification(DAVElement.GET_CONTENT_LANGUAGE, false, false));
         OUR_CORE_LIVE_PROPS.put(DAVElement.LOCK_DISCOVERY, new LivePropertySpecification(DAVElement.LOCK_DISCOVERY, false, false));
         OUR_CORE_LIVE_PROPS.put(DAVElement.SUPPORTED_LOCK, new LivePropertySpecification(DAVElement.SUPPORTED_LOCK, false, false));
