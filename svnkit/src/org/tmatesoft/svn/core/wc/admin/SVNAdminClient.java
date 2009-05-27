@@ -58,6 +58,8 @@ import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpStreamParser;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNCapability;
@@ -394,12 +396,15 @@ public class SVNAdminClient extends SVNBasicClient {
                         String.valueOf(endRevision));
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
-            
+
+            int normalizedRevPropsCount = 0;
             long step = startRevision > endRevision ? -1 : 1;
             for (long i = startRevision; i != endRevision + step; i += step) {
                 checkCancelled();
-                copyRevisionProperties(info.myRepository, toRepos, i, false);
+                SVNProperties normalizedProps = copyRevisionProperties(info.myRepository, toRepos, i, false);
+                normalizedRevPropsCount += normalizedProps.size();
             }
+            handleNormalizedProperties(normalizedRevPropsCount, 0);
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -491,7 +496,8 @@ public class SVNAdminClient extends SVNBasicClient {
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID, SVNPropertyValue.create(uuid));
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, 
                     SVNPropertyValue.create("0"));
-            copyRevisionProperties(fromRepos, toRepos, 0, false);
+            SVNProperties normalizedProps = copyRevisionProperties(fromRepos, toRepos, 0, false);
+            handleNormalizedProperties(normalizedProps.size(), 0);
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -638,6 +644,7 @@ public class SVNAdminClient extends SVNBasicClient {
             SVNPropertyValue currentlyCopying = toRepos.getRevisionPropertyValue(0, 
                     SVNRevisionProperty.CURRENTLY_COPYING);
             long toLatestRevision = toRepos.getLatestRevision();
+            int normalizedRevPropsCount = 0;
 
             if (currentlyCopying != null) {
                 long copyingRev = -1;
@@ -655,7 +662,8 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 } else if (copyingRev == toLatestRevision) {
                     if (copyingRev > lastMergedRevision) {
-                        copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
+                        SVNProperties normalizedProps = copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
+                        normalizedRevPropsCount += normalizedProps.size();
                         lastMergedRevision = copyingRev;
                     }
                     toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNPropertyValue.create(SVNProperty.toString(lastMergedRevision)));
@@ -685,6 +693,8 @@ public class SVNAdminClient extends SVNBasicClient {
                     mySyncHandler, getDebugLog(), this, this);
             
             fromRepos.replayRange(startRevision, endRevision, 0, true, replayHandler);
+            handleNormalizedProperties(normalizedRevPropsCount + replayHandler.getNormalizedRevPropsCount(), 
+                    replayHandler.getNormalizedNodePropsCount());
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -1272,6 +1282,15 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
+    protected void handleNormalizedProperties(int normalizedRevPropsCount, int normalizedNodePropsCount) throws SVNException {
+        if (myEventHandler != null && (normalizedRevPropsCount > 0 || normalizedNodePropsCount > 0)) {
+            String message = MessageFormat.format("NOTE: Normalized {0}* properties to LF line endings ({1} rev-props, {2} node-props).", 
+                    new Object[] { SVNProperty.SVN_PREFIX, String.valueOf(normalizedRevPropsCount), String.valueOf(normalizedNodePropsCount) });
+            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NORMALIZED_PROPERTIES, message);
+            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        }
+    }
+    
     private FSHotCopier getHotCopier() {
         if (myHotCopier == null) {
             myHotCopier = new FSHotCopier();
@@ -1442,7 +1461,7 @@ public class SVNAdminClient extends SVNBasicClient {
         return myDumpStreamParser;
     }
 
-    private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, 
+    private SVNProperties copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, 
             long revision, boolean sync) throws SVNException {
         int filteredCount = 0;
         
@@ -1452,12 +1471,14 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         SVNProperties revProps = fromRepository.getRevisionProperties(revision, null);
+        SVNProperties normalizedProps = normalizeRevisionProperties(revProps);
         filteredCount += SVNAdminHelper.writeRevisionProperties(toRepository, revision, revProps);
         
         if (sync) {
             SVNAdminHelper.removePropertiesNotInSource(toRepository, revision, revProps, existingRevProps);
         }
         handlePropertesCopied(filteredCount > 0, revision);
+        return normalizedProps;
     }
 
     private SessionInfo openSourceRepository(SVNRepository targetRepos) throws SVNException {
@@ -1548,4 +1569,28 @@ public class SVNAdminClient extends SVNBasicClient {
             myLastMergedRevision = lastMergedRev;
         }
     }
+    
+    public static SVNProperties normalizeRevisionProperties(SVNProperties revProps) throws SVNException {
+        SVNProperties normalizedProps = new SVNProperties();
+        for (Iterator propNamesIter = revProps.nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            if (SVNPropertiesManager.propNeedsTranslation(propName)) {
+                SVNPropertyValue value = revProps.getSVNPropertyValue(propName); 
+                String normalizedValue = normalizeString(SVNPropertyValue.getPropertyAsString(value));
+                if (normalizedValue != null) {
+                    normalizedProps.put(propName, SVNPropertyValue.create(normalizedValue));
+                }
+            }
+        }
+        revProps.putAll(normalizedProps);
+        return normalizedProps;
+    }
+
+    public static String normalizeString(String string) throws SVNException {
+        if (string.indexOf(SVNProperty.EOL_CR_BYTES[0]) != -1) {
+            return SVNTranslator.transalteString(string, SVNProperty.EOL_LF_BYTES, null, true, false);
+        }
+        return null;
+    }
+
 }

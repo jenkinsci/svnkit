@@ -125,7 +125,8 @@ public class SVNSyncCopyRevPropsCommand extends SVNSyncCommand implements ISVNAd
     }
 
     public void handleAdminEvent(SVNAdminEvent event, double progress) throws SVNException {
-        if (event.getAction() == SVNAdminEventAction.REVISION_PROPERTIES_COPIED) {
+        if (event.getAction() == SVNAdminEventAction.REVISION_PROPERTIES_COPIED ||
+                event.getAction() == SVNAdminEventAction.NORMALIZED_PROPERTIES) {
             if (!getSVNSyncEnvironment().isQuiet()) {
                 getSVNSyncEnvironment().getOut().println(event.getMessage());
             }
