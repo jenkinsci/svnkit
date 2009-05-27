@@ -55,7 +55,7 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                 }
@@ -65,7 +65,7 @@ public class SVNLinuxUtil {
                     }
                     return SVNFileType.NONE;
                 }
-                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD ?
+                int mode = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ?
                         ourSharedMemory.getShort(getFileModeOffset()) : ourSharedMemory.getInt(getFileModeOffset());
                 int type = mode & 0170000;
                 if (type == 0120000) {
@@ -104,7 +104,7 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                 }
@@ -183,7 +183,7 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                 }
@@ -234,7 +234,7 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
                 }
@@ -285,7 +285,7 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD ? 
+                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.stat(path, ourSharedMemory) : 
                             cLibrary.__xstat64(0, path, ourSharedMemory);
                 }
