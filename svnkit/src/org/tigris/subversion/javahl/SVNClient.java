@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.javahl.SVNClientImpl;
 
 /**
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNClient implements SVNClientInterface {
@@ -570,6 +570,15 @@ public class SVNClient implements SVNClientInterface {
 
     public Mergeinfo getMergeinfo(String path, Revision pegRevision) throws SubversionException {
         return myDelegate.getMergeinfo(path, pegRevision);
+    }
+
+    public void logMessages(String path, Revision pegRevision, RevisionRange[] ranges, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, String[] revProps, long limit,
+            LogMessageCallback callback) throws ClientException {
+        myDelegate.logMessages(path, pegRevision, ranges, stopOnCopy, discoverPath, includeMergedRevisions, revProps, limit, callback);
+    }
+
+    public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
+        myDelegate.setRevProperty(path, name, rev, value, originalValue, force);
     }
 
 }

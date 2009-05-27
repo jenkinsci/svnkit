@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync
+END
+SVNSyncCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncCommand.java
+END
+SVNSync.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSync.java
+END
+SVNSyncInitializeCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 113
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncInitializeCommand.java
+END
+options.properties
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/options.properties
+END
+SVNSyncCommandEnvironment.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncCommandEnvironment.java
+END
+SVNSyncHelpCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncHelpCommand.java
+END
+SVNSyncOption.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncOption.java
+END
+commands.properties
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/commands.properties
+END
+SVNSyncCopyRevPropsCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 115
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncCopyRevPropsCommand.java
+END
+SVNSyncInfoCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 107
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncInfoCommand.java
+END
+SVNSyncSynchronizeCommand.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync/SVNSyncSynchronizeCommand.java
+END

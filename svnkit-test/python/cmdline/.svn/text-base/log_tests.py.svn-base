@@ -26,7 +26,6 @@ from svntest import wc
 from svntest.main import server_has_mergeinfo
 from svntest.main import SVN_PROP_MERGEINFO
 from merge_tests import set_up_branch
-from merge_tests import shorten_path_kludge
 
 ######################################################################
 #
@@ -203,8 +202,7 @@ def guarantee_repos_and_wc(sbox):
 
 def merge_history_repos(sbox):
   """Make a repos with varied and interesting merge history, similar
-to the repos found at:
-http://merge-tracking.open.collab.net/servlets/ProjectProcess?documentContainer=c2__Sample%20repository"""
+  to the repos found at: log_tests_data/merge_history_dump.png"""
 
   upsilon_path = os.path.join('A', 'upsilon')
   omicron_path = os.path.join('blocked', 'omicron')
@@ -264,6 +262,7 @@ http://merge-tracking.open.collab.net/servlets/ProjectProcess?documentContainer=
                        '--username', svntest.main.wc_author2)
 
   # Do some mergeing - r6
+  # From branch_a to trunk: add 'upsilon' and modify 'iota' and 'mu'.
   #
   # Mergeinfo changes on /trunk:
   #    Merged /trunk:r2
@@ -275,7 +274,7 @@ http://merge-tracking.open.collab.net/servlets/ProjectProcess?documentContainer=
                        '--username', svntest.main.wc_author2)
   os.chdir('..')
 
-  # Add omicron to branches/a - r7
+  # Add 'blocked/omicron' to branches/a - r7
   svntest.main.run_svn(None, 'mkdir', os.path.join(branch_a, 'blocked'))
   svntest.main.file_write(os.path.join(branch_a, omicron_path),
                           "This is the file 'omicron'.\n")
@@ -390,7 +389,10 @@ http://merge-tracking.open.collab.net/servlets/ProjectProcess?documentContainer=
                           "Don't forget to look at 'upsilon', as well.\n" +
                           "This is yet more content in 'mu'.",
                           "wb")
-  svntest.main.run_svn(None, 'resolved', os.path.join('A', 'mu'))
+  # Resolve conflicts, and commit
+  svntest.actions.run_and_verify_resolved([os.path.join('A', 'mu'),
+                                           os.path.join('A', 'xi'),
+                                           os.path.join('A', 'upsilon')])
   svntest.main.run_svn(None, 'ci', '-m',
                        "Merge branches/c to trunk, " +
                        "resolving a conflict in 'mu'.",
@@ -528,8 +530,8 @@ def parse_log_output(log_lines):
         this_item['msg'] = msg
         chain.append(this_item)
     else:  # if didn't see separator now, then something's wrong
-      print this_line
-      raise SVNLogParseError, "trailing garbage after log message"
+      print(this_line)
+      raise SVNLogParseError("trailing garbage after log message")
 
   return chain
 
@@ -613,7 +615,7 @@ def check_log_chain(chain, revlist, path_counts=[]):
       raise SVNUnexpectedLogs('Malformed log line counts', chain, 'lines')
 
     # Check that the log message looks right:
-    pattern = 'Log message for revision ' + `saw_rev`
+    pattern = 'Log message for revision ' + repr(saw_rev)
     msg_re = re.compile(pattern)
     if not msg_re.search(msg):
       raise SVNUnexpectedLogs("Malformed log message, expected '%s'" % msg,
@@ -646,10 +648,11 @@ def plain_log(sbox):
 
   os.chdir(sbox.wc_dir)
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log')
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log')
 
   log_chain = parse_log_output(output)
-  check_log_chain(log_chain, range(max_revision, 1 - 1, -1))
+  check_log_chain(log_chain, list(range(max_revision, 1 - 1, -1)))
 
 
 #----------------------------------------------------------------------
@@ -709,7 +712,7 @@ def log_with_path_args(sbox):
 
   os.chdir(sbox.wc_dir)
 
-  output, err = svntest.actions.run_and_verify_svn(
+  exit_code, output, err = svntest.actions.run_and_verify_svn(
     None, None, [],
     'log', sbox.repo_url, 'A/D/G', 'A/D/H')
 
@@ -739,8 +742,8 @@ def log_wc_with_peg_revision(sbox):
   "'svn log wc_target@N'"
   guarantee_repos_and_wc(sbox)
   my_path = os.path.join(sbox.wc_dir, "A", "B", "E", "beta") + "@8"
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', my_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', my_path)
   check_log_chain(parse_log_output(output), [1])
 
 #----------------------------------------------------------------------
@@ -751,8 +754,8 @@ def url_missing_in_head(sbox):
 
   my_url = sbox.repo_url + "/A/B/E/alpha" + "@8"
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', my_url)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', my_url)
   check_log_chain(parse_log_output(output), [3, 1])
 
 #----------------------------------------------------------------------
@@ -808,40 +811,40 @@ def log_through_copyfrom_history(sbox):
                                      'up', wc_dir)
 
   # The full log for mu2 is relatively unsurprising
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', mu2_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', mu2_path)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [6, 5, 2, 1])
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', mu2_URL)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', mu2_URL)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [6, 5, 2, 1])
 
   # First "oddity", the full log for mu2 doesn't include r3, but the -r3
   # log works!
   peg_mu2_path = mu2_path + "@3"
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-r', '3',
-                                                   peg_mu2_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-r', '3',
+                                                              peg_mu2_path)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [3])
 
   peg_mu2_URL = mu2_URL + "@3"
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-r', '3',
-                                                   peg_mu2_URL)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-r', '3',
+                                                              peg_mu2_URL)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [3])
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-r', '2',
-                                                   mu2_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-r', '2',
+                                                              mu2_path)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [2])
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-r', '2',
-                                                   mu2_URL)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-r', '2',
+                                                              mu2_URL)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [2])
 
@@ -891,8 +894,8 @@ PROPS-END
   URL = sbox.repo_url
 
   # run log
-  output, errput = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                      URL)
+  exit_code, output, errput = svntest.actions.run_and_verify_svn(
+    None, None, [], 'log', URL)
 
   # Verify the output contains either the expected fuzzy escape
   # sequence, or the literal control char.
@@ -921,9 +924,9 @@ def log_xml_empty_date(sbox):
   date_re = re.compile('<date');
 
   # Ensure that we get a date before we delete the property.
-  output, errput = svntest.actions.run_and_verify_svn(None, None, [],
-                                                      'log', '--xml', '-r1',
-                                                      sbox.wc_dir)
+  exit_code, output, errput = svntest.actions.run_and_verify_svn(
+    None, None, [], 'log', '--xml', '-r1', sbox.wc_dir)
+
   matched = 0
   for line in output:
     if date_re.search(line):
@@ -936,9 +939,9 @@ def log_xml_empty_date(sbox):
                                      'pdel', '--revprop', '-r1', 'svn:date',
                                      sbox.wc_dir)
 
-  output, errput = svntest.actions.run_and_verify_svn(None, None, [],
-                                                      'log', '--xml', '-r1',
-                                                      sbox.wc_dir)
+  exit_code, output, errput = svntest.actions.run_and_verify_svn(
+    None, None, [], 'log', '--xml', '-r1', sbox.wc_dir)
+
   for line in output:
     if date_re.search(line):
       raise svntest.Failure("log contains date element when svn:date is empty")
@@ -948,33 +951,33 @@ def log_limit(sbox):
   "svn log --limit"
   guarantee_repos_and_wc(sbox)
 
-  out, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                'log', '--limit', '2',
-                                                sbox.repo_url)
+  exit_code, out, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                           'log',
+                                                           '--limit', '2',
+                                                           sbox.repo_url)
   log_chain = parse_log_output(out)
   check_log_chain(log_chain, [9, 8])
 
-  out, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                'log', '--limit', '2',
-                                                sbox.repo_url,
-                                                'A/B')
+  exit_code, out, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                           'log',
+                                                           '--limit', '2',
+                                                           sbox.repo_url,
+                                                           'A/B')
   log_chain = parse_log_output(out)
   check_log_chain(log_chain, [9, 6])
 
-  out, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                'log', '--limit', '2',
-                                                '--revision', '2:HEAD',
-                                                sbox.repo_url,
-                                                'A/B')
+  exit_code, out, err = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'log', '--limit', '2', '--revision', '2:HEAD', sbox.repo_url, 'A/B')
+
   log_chain = parse_log_output(out)
   check_log_chain(log_chain, [3, 6])
 
   # Use -l instead of --limit to test both option forms.
-  out, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                'log', '-l', '2',
-                                                '--revision', '1',
-                                                sbox.repo_url,
-                                                'A/B')
+  exit_code, out, err = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'log', '-l', '2', '--revision', '1', sbox.repo_url, 'A/B')
+
   log_chain = parse_log_output(out)
   check_log_chain(log_chain, [1])
 
@@ -995,8 +998,8 @@ def log_base_peg(sbox):
 
   target = os.path.join(sbox.wc_dir, 'A', 'B', 'E', 'beta') + '@BASE'
 
-  out, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                'log', target)
+  exit_code, out, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                           'log', target)
 
   log_chain = parse_log_output(out)
   check_log_chain(log_chain, [9, 1])
@@ -1004,8 +1007,8 @@ def log_base_peg(sbox):
   svntest.actions.run_and_verify_svn(None, None, [], 'update', '-r', '1',
                                      sbox.wc_dir)
 
-  out, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                'log', target)
+  exit_code, out, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                           'log', target)
 
   log_chain = parse_log_output(out)
   check_log_chain(log_chain, [1])
@@ -1015,13 +1018,13 @@ def log_verbose(sbox):
   "run log with verbose output"
   guarantee_repos_and_wc(sbox)
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-v',
-                                                   sbox.wc_dir)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-v',
+                                                              sbox.wc_dir)
 
   log_chain = parse_log_output(output)
   path_counts = [2, 2, 1, 2, 2, 2, 4, 1, 20]
-  check_log_chain(log_chain, range(max_revision, 1 - 1, -1), path_counts)
+  check_log_chain(log_chain, list(range(max_revision, 1 - 1, -1)), path_counts)
 
 
 def log_parser(sbox):
@@ -1147,15 +1150,18 @@ def merge_sensitive_log_single_revision(sbox):
     }
   os.chdir(TRUNK_path)
   # First try a single rev using -rN
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-g', '-r14')
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              '-r14')
+
 
   log_chain = parse_log_output(output)
   check_merge_results(log_chain, expected_merges)
   # Then try a single rev using --limit 1
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-g', '--limit', '1',
-                                                   '-r14:1')
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              '--limit', '1',
+                                                              '-r14:1')
 
 
   log_chain = parse_log_output(output)
@@ -1167,14 +1173,17 @@ def merge_sensitive_log_single_revision(sbox):
       11 : [12],
     }
   # First try a single rev using -rN
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-g', '-r12',
-                                                    BRANCH_B_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              '-r12',
+                                                              BRANCH_B_path)
   log_chain = parse_log_output(output)
   check_merge_results(log_chain, expected_merges)
-  output, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                   'log', '-g', '--limit', '1',
-                                                   '-r12:1', BRANCH_B_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              '--limit', '1',
+                                                              '-r12:1',
+                                                              BRANCH_B_path)
   log_chain = parse_log_output(output)
   check_merge_results(log_chain, expected_merges)
 
@@ -1189,8 +1198,10 @@ def merge_sensitive_log_branching_revision(sbox):
   BRANCH_B_path = os.path.join(wc_dir, "branches", "b")
 
   # Run log on a copying revision
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-g', '-r10', BRANCH_B_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              '-r10',
+                                                              BRANCH_B_path)
 
   # Parse and check output.  There should be no extra revisions.
   log_chain = parse_log_output(output)
@@ -1208,8 +1219,10 @@ def merge_sensitive_log_non_branching_revision(sbox):
   TRUNK_path = os.path.join(sbox.wc_dir, "trunk")
 
   # Run log on a non-copying revision that adds mergeinfo
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-g', '-r6', TRUNK_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              '-r6',
+                                                              TRUNK_path)
 
   # Parse and check output.  There should be one extra revision.
   log_chain = parse_log_output(output)
@@ -1229,8 +1242,9 @@ def merge_sensitive_log_added_path(sbox):
   XI_path = os.path.join(sbox.wc_dir, "trunk", "A", "xi")
 
   # Run log on a non-copying revision that adds mergeinfo
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-g', XI_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-g',
+                                                              XI_path)
 
   # Parse and check output.  There should be one extra revision.
   log_chain = parse_log_output(output)
@@ -1258,8 +1272,9 @@ def log_single_change(sbox):
   guarantee_repos_and_wc(sbox)
   repo_url = sbox.repo_url
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-c', 4, repo_url)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-c',
+                                                              4, repo_url)
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [4])
 
@@ -1269,8 +1284,9 @@ def log_changes_range(sbox):
   guarantee_repos_and_wc(sbox)
   repo_url = sbox.repo_url
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-c', '2:5', repo_url)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-c',
+                                                              '2:5', repo_url)
 
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [2, 3, 4, 5])
@@ -1281,8 +1297,10 @@ def log_changes_list(sbox):
   guarantee_repos_and_wc(sbox)
   repo_url = sbox.repo_url
 
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log',
-                                                   '-c', '2,5,7', repo_url)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'log', '-c',
+                                                              '2,5,7',
+                                                              repo_url)
 
   log_chain = parse_log_output(output)
   check_log_chain(log_chain, [2, 5, 7])
@@ -1415,8 +1433,9 @@ def merge_sensitive_log_target_with_bogus_mergeinfo(sbox):
   svntest.main.run_svn(None, 'ps', SVN_PROP_MERGEINFO, '/A/B:0', D_path)
   #commit at r2
   svntest.main.run_svn(None, 'ci', '-m', 'setting bogus mergeinfo', D_path)
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'log', 
-                                                   '-g', D_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None,
+                                                              [], 'log',
+                                                              '-g', D_path)
   if len(err):
     raise svntest.Failure("svn log -g target_with_bogus_mergeinfo fails")
 
@@ -1438,16 +1457,12 @@ def merge_sensitive_log_added_mergeinfo_replaces_inherited(sbox):
   H_COPY_path = os.path.join(wc_dir, "A_COPY", "D", "H")
 
   # Merge all available changes from 'A/D' to 'A_COPY/D' and commit as r7.
-  #
-  # Search for the comment entitled "The Merge Kluge" in merge_tests.py to
-  # understand why we shorten and chdir() below.
-  short_D_COPY_path = shorten_path_kludge(D_COPY_path)
-  expected_output = wc.State(short_D_COPY_path, {
+  expected_output = wc.State(D_COPY_path, {
     'H/psi'   : Item(status='U '),
     'G/rho'   : Item(status='U '),
     'H/omega' : Item(status='U '),
     })
-  expected_status = wc.State(short_D_COPY_path, {
+  expected_status = wc.State(D_COPY_path, {
     ''        : Item(status=' M', wc_rev=2),
     'G'       : Item(status='  ', wc_rev=2),
     'G/pi'    : Item(status='  ', wc_rev=2),
@@ -1471,10 +1486,8 @@ def merge_sensitive_log_added_mergeinfo_replaces_inherited(sbox):
     'H/omega' : Item("New content"),
     'gamma'   : Item("This is the file 'gamma'.\n")
     })
-  expected_skip = wc.State(short_D_COPY_path, { })
-  saved_cwd = os.getcwd()
-  os.chdir(svntest.main.work_dir)
-  svntest.actions.run_and_verify_merge(short_D_COPY_path, None, None,
+  expected_skip = wc.State(D_COPY_path, { })
+  svntest.actions.run_and_verify_merge(D_COPY_path, None, None,
                                        sbox.repo_url + '/A/D',
                                        expected_output,
                                        expected_disk,
@@ -1482,7 +1495,6 @@ def merge_sensitive_log_added_mergeinfo_replaces_inherited(sbox):
                                        expected_skip,
                                        None, None, None, None,
                                        None, 1)
-  os.chdir(saved_cwd)
 
   # Commit the merge.
   expected_output = svntest.wc.State(wc_dir, {
@@ -1509,11 +1521,10 @@ def merge_sensitive_log_added_mergeinfo_replaces_inherited(sbox):
   svntest.actions.run_and_verify_svn(None, ["At revision 7.\n"], [],
                                      'up', wc_dir)
   wc_status.tweak(wc_rev=7)
-  short_H_COPY_path = shorten_path_kludge(H_COPY_path)
-  expected_output = wc.State(short_H_COPY_path, {
+  expected_output = wc.State(H_COPY_path, {
     'psi' : Item(status='U ')
     })
-  expected_status = wc.State(short_H_COPY_path, {
+  expected_status = wc.State(H_COPY_path, {
     ''      : Item(status=' M', wc_rev=7),
     'psi'   : Item(status='M ', wc_rev=7),
     'omega' : Item(status='  ', wc_rev=7),
@@ -1525,14 +1536,12 @@ def merge_sensitive_log_added_mergeinfo_replaces_inherited(sbox):
     'omega' : Item("New content"),
     'chi'   : Item("This is the file 'chi'.\n"),
     })
-  expected_skip = wc.State(short_H_COPY_path, { })
-  os.chdir(svntest.main.work_dir)
-  svntest.actions.run_and_verify_merge(short_H_COPY_path, '3', '2',
+  expected_skip = wc.State(H_COPY_path, { })
+  svntest.actions.run_and_verify_merge(H_COPY_path, '3', '2',
                                        sbox.repo_url + '/A/D/H',
                                        expected_output, expected_disk,
                                        expected_status, expected_skip,
                                        None, None, None, None, None, 1)
-  os.chdir(saved_cwd)
 
   # Commit the merge.
   expected_output = svntest.wc.State(wc_dir, {
@@ -1563,11 +1572,11 @@ def merge_sensitive_log_added_mergeinfo_replaces_inherited(sbox):
     expected_merges = {
       8 : [],
       3 : [8]}
-    output, err = svntest.actions.run_and_verify_svn(None, None,
-                                                     [],
-                                                     'log', '-g',
-                                                     '-r8',
-                                                     log_target)
+    exit_code, output, err = svntest.actions.run_and_verify_svn(None, None,
+                                                                [],
+                                                                'log', '-g',
+                                                                '-r8',
+                                                                log_target)
     log_chain = parse_log_output(output)
     check_merge_results(log_chain, expected_merges)
 
@@ -1603,7 +1612,7 @@ def merge_sensitive_log_propmod_merge_inheriting_path(sbox):
   svntest.main.run_svn(None, 'ci', '-m',
                        'Set property "foo" to "bar" on A_COPY/D/H/psi', wc_dir)
   svntest.main.run_svn(None, 'up', wc_dir)
-  
+
   # Check that log -g -r7 on wc_dir/A_COPY and parents show merges of r3-r6.
   def run_log_g_r7(log_target):
     expected_merges = {
@@ -1613,7 +1622,7 @@ def merge_sensitive_log_propmod_merge_inheriting_path(sbox):
       4 : [7],
       3 : [7],
       }
-    output, err = svntest.actions.run_and_verify_svn(
+    exit_code, output, err = svntest.actions.run_and_verify_svn(
       None, None, [], 'log', '-g', '-r7', log_target)
     log_chain = parse_log_output(output)
     check_merge_results(log_chain, expected_merges)
@@ -1623,7 +1632,7 @@ def merge_sensitive_log_propmod_merge_inheriting_path(sbox):
   # Check that log -g -r8 on wc_dir/A_COPY/D/H/psi and parents show no merges.
   def run_log_g_r8(log_target):
     expected_merges = { 8 : [] }
-    output, err = svntest.actions.run_and_verify_svn(
+    exit_code, output, err = svntest.actions.run_and_verify_svn(
       None, None, [], 'log', '-g', '-r8', log_target)
     log_chain = parse_log_output(output)
     check_merge_results(log_chain, expected_merges)
@@ -1662,7 +1671,7 @@ test_list = [ None,
                          server_has_mergeinfo),
               log_single_change,
               XFail(log_changes_range),
-              XFail(log_changes_list),
+              log_changes_list,
               only_one_wc_path,
               retrieve_revprops,
               log_xml_with_bad_data,

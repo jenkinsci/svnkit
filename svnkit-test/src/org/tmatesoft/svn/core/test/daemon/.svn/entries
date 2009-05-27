@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/core/test/daemon
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/daemon
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2009-04-21T14:43:00.959095Z
+5772
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-aa651c91b0f4a631b0f02f63e9234b31
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2009-05-27T05:49:17.000000Z
+9a880016640b1c4f5297980aef704b4d
+2009-04-21T14:43:00.959095Z
+5772
+alex
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-7740
+8078
 
 SVNCommandDaemonEnvironment.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
-a96a99ef43c310bee1028eb2de7715f4
-2008-06-19T16:54:23.052618Z
-4368
+2009-05-27T05:49:17.000000Z
+b22b6f241458b07e5cabd195cfffb6f7
+2009-04-21T13:49:59.984092Z
+5771
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-7222
+7386
 
 SVNCommandExitException.java
 file
@@ -100,10 +100,10 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
-673a0591fed5d70015ea6456c6ea5ea9
-2008-03-07T00:33:38.836328Z
-3935
+2009-05-27T05:49:17.000000Z
+b87be43bf75618d2de10f3a8d3902f52
+2009-04-21T13:49:59.984092Z
+5771
 alex
 has-props
 
@@ -126,5 +126,5 @@ has-props
 
 
 
-790
+853
 

@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/util
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/util
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-01-08T16:28:00.472597Z
-5405
+2009-05-13T11:28:20.938259Z
+5847
 sa
 has-props
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-0ce493af32c7f5335d6f98c832e3cf28
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:55.000000Z
+2df5c1c07b4127414699c2921efe07ed
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-1324
+1322
 
 SVNDebugLogAdapter.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-0bbb9ed65d0fe417929ad821be83268e
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:55.000000Z
+2dfb7a8df7a788fbc7511542090889d3
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-2932
+2929
 
 Version.java
 file
@@ -100,10 +100,10 @@ file
 
 
 
-2009-01-14T22:09:49.000000Z
-b9781031df036f2b55dcbce7c436ccdb
-2009-01-08T16:28:00.472597Z
-5405
+2009-05-27T05:49:55.000000Z
+91bcc0059d6437d0f38f5824578ce5b3
+2009-05-13T11:28:20.938259Z
+5847
 sa
 has-props
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-4223
+4221
 
 ISVNDebugLog.java
 file
@@ -134,10 +134,10 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-7dcae738146652732e9062b5a0ee13f9
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:55.000000Z
+4b77fb8b877d8e0f5819b34b6601eb93
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-1904
+1902
 
 SVNLogType.java
 file
@@ -168,10 +168,10 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-02e3b60e3b409a64a89b4e71dc1525a4
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:55.000000Z
+410055124db98eeaa5a5ca5b89315be1
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -194,5 +194,5 @@ has-props
 
 
 
-1383
+1381
 

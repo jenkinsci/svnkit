@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,7 +21,7 @@ import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminAreaInfo {
@@ -52,13 +52,33 @@ public class SVNAdminAreaInfo {
     public SVNAdminArea getTarget() {
         return myTarget;
     }
-    
+
+    /**
+     * This method has been added to give an ability to replace 
+     * read-only areas with write enabled ones. 
+     */
+    public void setTarget(SVNAdminArea target) {
+        myTarget = target;
+    }
+
+    /**
+     * This method has been added to give an ability to replace 
+     * read-only areas with write enabled ones. 
+     */
+    public void setAnchor(SVNAdminArea anchor) {
+        myAnchor = anchor;
+    }
+
     public String getTargetName() {
         return myTargetName;
     }
 
     public SVNWCAccess getWCAccess() {
         return myAccess;
+    }
+
+    public void setWCAccess(SVNWCAccess wcAccess) {
+        myAccess = wcAccess;
     }
     
     public void addOldExternal(String path, String oldValue) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,8 +28,9 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
  * the native SVN options - read more on <b>servers</b> options in the  
  * <a href="http://svnbook.red-bean.com/nightly/en/svn.advanced.html#svn.advanced.confarea.opts.servers">Subversion online book</a>. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     ISVNAuthenticationManager
  */
 public interface ISVNProxyManager {

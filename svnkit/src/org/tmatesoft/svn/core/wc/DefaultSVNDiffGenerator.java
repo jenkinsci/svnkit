@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -55,7 +55,8 @@ import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
  * interface, SVNKit uses this default implementation. To set a custom
  * diff driver use {@link SVNDiffClient#setDiffGenerator(ISVNDiffGenerator) setDiffGenerator()}.
  * 
- * @version 1.2.0
+ * @version 1.3
+ * @since   1.2
  * @author  TMate Software Ltd.
  */
 public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
@@ -504,6 +505,16 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 args.add("-L");
                 args.add(label2);
             }
+            boolean tmpFile1 = false;
+            boolean tmpFile2 = false;
+            if (file1 == null) {
+                file1 = SVNFileUtil.createTempFile("svn.", ".tmp");
+                tmpFile1 = true;
+            }
+            if (file2 == null) {
+                file2 = SVNFileUtil.createTempFile("svn.", ".tmp");
+                tmpFile2 = true;
+            }
                 
             String currentDir = new File("").getAbsolutePath().replace(File.separatorChar, '/');
             String file1Path = file1.getAbsolutePath().replace(File.separatorChar, '/');
@@ -554,7 +565,18 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getMessage());
                 SVNErrorManager.error(err, ioe, SVNLogType.DEFAULT);
-            } 
+            } finally {
+                try {
+                    if (tmpFile1) {
+                        SVNFileUtil.deleteFile(file1);                    
+                    }
+                    if (tmpFile2) {
+                        SVNFileUtil.deleteFile(file2);                    
+                    }
+                } catch (SVNException e) {
+                    // skip
+                }
+            }
             return;
         }
 
@@ -627,6 +649,13 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         return getOptions().getNativeCharset();
     }
 
+    /**
+     * Says whether this generator is using any special (non-native) 
+     * charset for outputting diffs.
+     * 
+     * @return <span class="javakeyword">true</span> if yes;
+     *         otherwise <span class="javakeyword">false</span> 
+     */
     public boolean hasEncoding() {
         return myEncoding != null;
     }

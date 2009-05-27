@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/patch
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/patch
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-12-09T15:38:41.483467Z
-5345
-alex
+2009-03-23T14:57:51.095143Z
+5613
+sa
 
 
 svn:special svn:externals svn:needs-lock

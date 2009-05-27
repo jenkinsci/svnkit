@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,7 +34,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAdminAreaFactory implements Comparable {
@@ -42,6 +42,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static final int WC_FORMAT_13 = 4;
     public static final int WC_FORMAT_14 = 8;
     public static final int WC_FORMAT_15 = 9;
+    public static final int WC_FORMAT_16 = 10;
 
     private static final Collection ourFactories = new TreeSet();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
@@ -49,6 +50,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     private static ISVNAdminAreaFactorySelector ourDefaultSelector = new DefaultSelector();
 
     static {
+        SVNAdminAreaFactory.registerFactory(new SVNAdminArea16Factory());
         SVNAdminAreaFactory.registerFactory(new SVNAdminArea15Factory());
         SVNAdminAreaFactory.registerFactory(new SVNAdminArea14Factory());
         SVNAdminAreaFactory.registerFactory(new SVNXMLAdminAreaFactory());
@@ -186,6 +188,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         }
         if (wcFormat == SVNAdminArea15Factory.WC_FORMAT) {
             return new SVNAdminArea15Factory();
+        }
+        if (wcFormat == SVNAdminArea16Factory.WC_FORMAT) {
+            return new SVNAdminArea16Factory();
         }
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT), SVNLogType.DEFAULT);
         return null;

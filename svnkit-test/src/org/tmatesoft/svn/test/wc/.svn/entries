@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/test/wc
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/wc
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-29T12:46:31.361619Z
-5306
-semen
+2009-04-21T14:43:00.959095Z
+5772
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,249 +32,11 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-7f596d1893ea2e34ce3a66c82edb5a6b
-2008-11-28T21:07:21.269306Z
-5301
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3344
-
-ISVNWorkingCopyWalker.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-a29303a06ad7006f9f8aa81a737e4f73
-2008-11-28T21:07:21.269306Z
-5301
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-788
-
-SVNTestWorkingCopy.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-bce4b8699874f16273fd2ea7e770d891
-2008-11-28T21:07:21.269306Z
-5301
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3954
-
-SVNWCStateConflict.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-fe9187f211b96e0e64405a1611d699f8
-2008-11-28T21:07:21.269306Z
-5301
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5798
-
-SVNTestFileDescriptor.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-cabf21db7bbda160c5ecd8839435ace5
-2008-11-28T21:07:21.269306Z
-5301
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1448
-
-SVNTestFile.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-f66a744ca7bfa48916372922117b77b8
-2008-11-29T12:46:31.361619Z
-5306
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6455
-
-SVNWorkingCopyValidator.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-b396a8352a8a5006acb9693f34f5a31c
-2008-11-28T21:07:21.269306Z
-5301
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3782
-
-AbstractSVNTestFile.java
-file
-
-
-
-
-2009-01-14T22:06:35.000000Z
-60d59228f3acd60c2afa39c4f0adfbf1
-2008-11-29T12:46:31.361619Z
-5306
-semen
+2009-05-27T05:49:17.000000Z
+2f121708935ca4b6e561dc3b6117b928
+2009-04-21T14:43:00.959095Z
+5772
+alex
 has-props
 
 
@@ -296,7 +58,245 @@ has-props
 
 
 
-8281
+3342
+
+ISVNWorkingCopyWalker.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+eb87731951d75638be1937773bb06c04
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+786
+
+SVNTestWorkingCopy.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+15411d1377f7d74cfded1a3c282279c3
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3952
+
+SVNWCStateConflict.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+e2af11fbfc7405e4e8d95ef04f1c8430
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5796
+
+SVNTestFileDescriptor.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+c05bf57a7b55f99cad1d9179e074fbd3
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1446
+
+SVNTestFile.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+1fb617ef930ec44a7fbcb17076b927c0
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6453
+
+SVNWorkingCopyValidator.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+cfcd47f39781d3598d8640ca3a53bc26
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3780
+
+AbstractSVNTestFile.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+7ef807e29fda72b95276cc4670ab082f
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8279
 
 SVNTestFileAttribute.java
 file
@@ -304,11 +304,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-0bd8dc4af560f23e6473de9408ad0fce
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+03d8045dc27e46f2254061078d9f74ed
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -329,8 +330,7 @@ semen
 
 
 
-
-4850
+4848
 
 ISVNWorkingCopy.java
 file
@@ -338,11 +338,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-3704725e23c0cad0423a84901d7701ec
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+d4a4a2ae64b4f31c7cea8e56139cd9c5
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -363,6 +364,5 @@ semen
 
 
 
-
-990
+988
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -37,7 +37,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminDeltifier {
@@ -150,7 +150,7 @@ public class SVNAdminDeltifier {
             myEditor.addFile(editPath, null, -1);
             deltifyFiles(srcRoot, tgtRoot, null, tgtPath, editPath);
             FSRevisionNode tgtNode = tgtRoot.getRevisionNode(tgtPath);
-            myEditor.closeFile(editPath, tgtNode.getFileChecksum());
+            myEditor.closeFile(editPath, tgtNode.getFileMD5Checksum());
         }
     }
 
@@ -222,7 +222,7 @@ public class SVNAdminDeltifier {
             myEditor.openFile(editPath, baseRevision);
             deltifyFiles(srcRoot, tgtRoot, srcPath, tgtPath, editPath);
             FSRevisionNode tgtNode = tgtRoot.getRevisionNode(tgtPath);
-            myEditor.closeFile(editPath, tgtNode.getFileChecksum());
+            myEditor.closeFile(editPath, tgtNode.getFileMD5Checksum());
         }
     }
     
@@ -244,7 +244,7 @@ public class SVNAdminDeltifier {
             String srcHexDigest = null;
             if (srcPath != null) {
                 FSRevisionNode srcNode = srcRoot.getRevisionNode(srcPath);
-                srcHexDigest = srcNode.getFileChecksum();
+                srcHexDigest = srcNode.getFileMD5Checksum();
             }
             
             FSRepositoryUtil.sendTextDelta(myEditor, editPath, srcPath, srcHexDigest, srcRoot, 

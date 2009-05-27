@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/log_tests_data
+END
+xml-invalid-chars.dump
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/log_tests_data/xml-invalid-chars.dump
+END
+merge_history_repo.png
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/log_tests_data/merge_history_repo.png
+END

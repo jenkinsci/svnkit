@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVReplayHandler extends DAVEditorHandler {
 
@@ -229,8 +229,9 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myPropertyName != null) {
-                byte[] buffer = allocateBuffer(cdata.length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
+                StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
                 SVNPropertyValue property = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
                 if (element == CHANGE_FILE_PROPERTY) {
                     myEditor.changeFileProperty(myPath, myPropertyName, property);

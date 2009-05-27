@@ -5,8 +5,10 @@ pre-1.4-compatible=use\ format\ compatible\ with\ Subversion\ versions\n\
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ earlier\ than\ 1.4
 pre-1.5-compatible=use\ format\ compatible\ with\ Subversion\ versions\n\
 \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ earlier\ than\ 1.5
+pre-1.6-compatible=use\ format\ compatible\ with\ Subversion\ versions\n\
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ earlier\ than\ 1.6
 revision=specify\ revision\ number\ ARG\ (or\ X:Y\ range)
-fs-type=only\ 'fsfs'\ is\ supported\ by\ jsvnadmin
+fs-type=only\ 'fsfs'\ repository\ format\ is\ supported\ by\ jsvnadmin
 incremental=dump\ incrementally
 deltas=use\ deltas\ in\ dump\ output
 quiet=no\ progress\ (only\ errors)\ to\ stderr

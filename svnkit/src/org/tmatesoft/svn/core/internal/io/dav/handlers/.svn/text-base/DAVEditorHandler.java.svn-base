@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -54,7 +54,7 @@ import org.xml.sax.SAXException;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVEditorHandler extends BasicDAVDeltaHandler {
 
@@ -70,7 +70,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         Map attrs = new SVNHashMap();
         attrs.put("send-all", Boolean.toString(sendAll));
         SVNXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "update-report", 
-                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, attrs, xmlBuffer);
+                SVN_NAMESPACES_LIST, SVNXMLUtil.PREFIX_MAP, attrs, xmlBuffer, true);
         
         SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "src-path", url, xmlBuffer);
         if (targetRevision >= 0) {
@@ -195,23 +195,24 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
     protected String myPath;
     protected String myPropertyName;
     protected boolean myIsDirectory;
+    protected Stack myDirs; 
+    protected Map myLockTokens;
+    protected DAVRepository myOwner;
+    protected boolean myIsFetchContent;
+
     private String myChecksum;
     private String myEncoding;
     private ISVNDeltaConsumer myDeltaConsumer;
     private boolean myIsReceiveAll;
-    private Stack myDirs; 
     private DAVConnection myConnection;
     private IHTTPConnectionFactory myConnectionFactory;
-    private DAVRepository myOwner;
     private String myHref;
     private String myCurrentWCPath;
     private boolean myIsInResource;
-    private boolean myIsFetchContent;
     private boolean myIsFetchProps;
     private boolean myHasTarget;
     private Map myVersionURLs;
-    private Map myLockTokens;
-    
+
     public DAVEditorHandler(IHTTPConnectionFactory connectionFactory, DAVRepository owner, ISVNEditor editor, 
             Map lockTokens, boolean fetchContent, boolean hasTarget) {
         myConnectionFactory = connectionFactory;
@@ -531,8 +532,9 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myEncoding == null || "".equals(myEncoding)) {
                 value = SVNPropertyValue.create(cdata.toString());
             } else if ("base64".equals(myEncoding)) {
-                byte[] buffer = allocateBuffer(cdata.length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
+                StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
                 value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);                
             } else {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING, 

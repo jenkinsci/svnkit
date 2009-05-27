@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,7 +34,6 @@ import org.tmatesoft.svn.core.internal.delta.SVNDeltaReader;
 import org.tmatesoft.svn.core.internal.io.fs.FSCommitter;
 import org.tmatesoft.svn.core.internal.io.fs.FSDeltaConsumer;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.io.fs.FSHooks;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTransactionInfo;
@@ -54,7 +53,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class DefaultLoadHandler implements ISVNLoadHandler {
@@ -97,22 +96,9 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             }
             
             long oldRevision = baton.myRevision;
-            if (myIsUsePreCommitHook) {
-                try {
-                    FSHooks.runPreCommitHook(myFSFS.getRepositoryRoot(), baton.myTxn.getTxnId());
-                } catch (SVNException svne) {
-                    try {
-                        FSCommitter.abortTransaction(myFSFS, baton.myTxn.getTxnId());
-                    } catch (SVNException svne2) {
-                        //
-                    }
-                    throw svne;
-                }
-            }
-            
             long newRevision = -1;
             try {
-                newRevision = baton.getCommitter().commitTxn();
+                newRevision = baton.getCommitter().commitTxn(myIsUsePreCommitHook, myIsUsePostCommitHook, null, null);
             } catch (SVNException svne) {
                 try {
                     FSCommitter.abortTransaction(myFSFS, baton.myTxn.getTxnId());
@@ -121,6 +107,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
                 throw svne;
             }
+            
             if (baton.myDatestamp == null) {
                 myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
             }
@@ -134,16 +121,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 }
             }
 
-            
-            if (myIsUsePostCommitHook) {
-                try {
-                    FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
-                } catch (SVNException svne) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, "Commit succeeded, but post-commit hook failed");
-                    SVNErrorManager.error(err, svne, SVNLogType.FSFS);
-                }
-            }
-            
             myRevisionsMap.put(new Long(oldRevision), new Long(newRevision));
             if (baton.myDatestamp != null) {
                 myFSFS.setRevisionProperty(newRevision, SVNRevisionProperty.DATE, baton.myDatestamp);
@@ -419,7 +396,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         FSRevisionRoot copyRoot = myFSFS.createRevisionRoot(srcRevision);
         if (nodeBaton.myCopySourceChecksum != null) {
             FSRevisionNode revNode = copyRoot.getRevisionNode(nodeBaton.myCopyFromPath);
-            String hexDigest = revNode.getFileChecksum();
+            String hexDigest = revNode.getFileMD5Checksum();
             if (hexDigest != null && !hexDigest.equals(nodeBaton.myCopySourceChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, 
                         "Copy source checksum mismatch on copy from ''{0}''@{1}\n" +
@@ -487,16 +464,16 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             baton.myCopyFromPath = SVNPathUtil.getAbsolutePath(baton.myCopyFromPath);
         }
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM)) {
-            baton.myResultChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_CHECKSUM);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_MD5)) {
+            baton.myResultChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_MD5);
         }        
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM)) {
-            baton.myBaseChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_CHECKSUM);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_MD5)) {
+            baton.myBaseChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_MD5);
         }
         
-        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM)) {
-            baton.myCopySourceChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_CHECKSUM);
+        if (headers.containsKey(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_MD5)) {
+            baton.myCopySourceChecksum = (String) headers.get(SVNAdminHelper.DUMPFILE_TEXT_COPY_SOURCE_MD5);
         }
         return baton;
     }

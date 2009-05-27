@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -38,13 +38,15 @@ import com.trilead.ssh2.Session;
 import com.trilead.ssh2.StreamGobbler;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSSHConnector implements ISVNConnector {
 
     private static final String SVNSERVE_COMMAND = "svnserve -t";
     private static final String SVNSERVE_COMMAND_WITH_USER_NAME = "svnserve -t --tunnel-user ";
+    
+    private static final boolean ourIsUseSessionPing = Boolean.getBoolean("svnkit.ssh2.ping");
     
     private Session mySession;
     private InputStream myInputStream;
@@ -212,6 +214,9 @@ public class SVNSSHConnector implements ISVNConnector {
         }
         if (myConnection == null || myConnection.isDisposed()) {
             return true;
+        }
+        if (!ourIsUseSessionPing) {
+            return false;
         }
         if (!myIsUseSessionPing) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "SKIPPING CHANNEL PING, IT HAS BEEN DISABLED");

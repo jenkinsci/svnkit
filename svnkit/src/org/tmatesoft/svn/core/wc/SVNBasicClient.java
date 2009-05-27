@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -66,8 +66,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that allow you to set your {@link ISVNEventHandler event handler}, 
  * obtain run-time configuration options, and others. 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class SVNBasicClient implements ISVNEventHandler {
 
@@ -176,6 +177,7 @@ public class SVNBasicClient implements ISVNEventHandler {
      * @see          SVNUpdateClient
      * @see          SVNDiffClient
      * @see          ISVNEventHandler
+     * @deprecated   this method should not be used anymore
      */
     public void setLeaveConflictsUnresolved(boolean leave) {
         myIsLeaveConflictsUnresolved = leave;
@@ -186,10 +188,11 @@ public class SVNBasicClient implements ISVNEventHandler {
      * preventing from merging their contents during update and merge 
      * operations.
      *  
-     * @return  <span class="javakeyword">true</span> if conflicted files
-     *          are set to be prevented from merging, <span class="javakeyword">false</span>
-     *          if there's no such restriction
-     * @see     #setLeaveConflictsUnresolved(boolean) 
+     * @return     <span class="javakeyword">true</span> if conflicted files
+     *             are set to be prevented from merging, <span class="javakeyword">false</span>
+     *             if there's no such restriction
+     * @see        #setLeaveConflictsUnresolved(boolean)
+     * @deprecated this method should not be used anymore
      */
     public boolean isLeaveConflictsUnresolved() {
         return myIsLeaveConflictsUnresolved;

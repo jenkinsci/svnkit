@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -50,7 +50,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNNodeEditor implements ISVNEditor {
@@ -338,7 +338,7 @@ public class SVNNodeEditor implements ISVNEditor {
             try {
                 contents = root.getFileStreamForPath(new SVNDeltaCombiner(), path);
                 tmpOS = SVNFileUtil.openFileForWriting(tmpFile);
-                FSRepositoryUtil.copy(contents, tmpOS);
+                FSRepositoryUtil.copy(contents, tmpOS, myCancelHandler);
             } finally {
                 SVNFileUtil.closeFile(contents);
                 SVNFileUtil.closeFile(tmpOS);

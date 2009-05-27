@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/internal/delta
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/internal/delta
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
+2009-04-21T14:43:00.959095Z
+5772
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-2b3cf994e5d8a6627088809587a09fc8
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:48.000000Z
+0087b98195702dad4c2ad416b7f30dbb
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-23885
+23883
 
 SVNXDeltaAlgorithm.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-64b3df1be4a01cc74787086dfb62daad
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:48.000000Z
+b895e5d770da24d3610200bb1f3c54b5
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-6500
+6498
 
 SVNDeltaReader.java
 file
@@ -100,10 +100,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-330ce0e058d28b8103d62a77dc1cff20
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:48.000000Z
+d181e735017e8898e420c7fa50eed36e
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-8702
+8700
 
 SVNRangeTree.java
 file
@@ -134,10 +134,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-ee7c796a605fdd60cd2f057c11def6e9
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:48.000000Z
+ff854f7c32bb949455b85b00af1c2ddc
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-12586
+12584
 
 SVNDeltaAlgorithm.java
 file
@@ -168,10 +168,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-3936166b07c16e3ff24e88e082f404be
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:48.000000Z
+5b12949bc891b75f019fb965810b20ee
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-3503
+3501
 
 SVNVDeltaAlgorithm.java
 file
@@ -202,10 +202,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-3caf3e30a4204dad91174c0c53544b3b
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:48.000000Z
+f66b7823819a0021d0a3682c2dba8866
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -228,5 +228,5 @@ has-props
 
 
 
-6394
+6392
 

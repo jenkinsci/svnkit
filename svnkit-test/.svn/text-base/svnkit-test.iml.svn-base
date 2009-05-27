@@ -2,6 +2,7 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/bin" />
+    <output-test url="file://$MODULE_DIR$/bin" />
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
@@ -14,6 +15,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="sequence" />
     <orderEntry type="module" module-name="svnkit" />
+    <orderEntry type="module" module-name="javahl" />
+    <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -23,10 +26,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="javahl" />
-    <orderEntry type="library" name="template" level="project" />
-    <orderEntry type="module" module-name="svnkit-cli" />
-    <orderEntryProperties />
   </component>
 </module>
 

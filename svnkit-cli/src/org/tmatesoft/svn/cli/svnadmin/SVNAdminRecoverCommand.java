@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.wc.admin.SVNAdminEventAction;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminRecoverCommand extends SVNAdminCommand implements ISVNAdminEventHandler {
@@ -42,12 +42,13 @@ public class SVNAdminRecoverCommand extends SVNAdminCommand implements ISVNAdmin
 
     public void run() throws SVNException {
         SVNAdminClient client = getEnvironment().getClientManager().getAdminClient();
+        client.setEventHandler(this);
         client.doRecover(getLocalRepository());
         getEnvironment().getOut().println();
         getEnvironment().getOut().println("Recovery completed.");
         long youngestRevision = client.getYoungestRevision(getLocalRepository());
         String message = "The latest repos revision is {0}.";
-        message = MessageFormat.format(message, new Object[] { new Long(youngestRevision) });
+        message = MessageFormat.format(message, new Object[] { String.valueOf(youngestRevision) });
         getEnvironment().getOut().println(message);
     }
 

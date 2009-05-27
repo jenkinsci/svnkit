@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -46,7 +46,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNTranslator {
 
@@ -136,7 +136,7 @@ public class SVNTranslator {
             if (SVNFileType.getType(dst) != SVNFileType.NONE) {
                 dst.delete();
             }
-            if (SVNFileUtil.isWindows) {
+            if (!SVNFileUtil.symlinksSupported()) {
                 SVNFileUtil.copyFile(src, dst, true);
             } else if (expand) {
                 // create symlink to target, and create it at dst
@@ -174,7 +174,7 @@ public class SVNTranslator {
         boolean special = adminArea.getProperties(name).getPropertyValue(SVNProperty.SPECIAL) != null;
         File src = adminArea.getFile(name);
         if (special) {
-            if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
+            if (!SVNFileUtil.symlinksSupported()) {
                 return SVNFileUtil.openFileForReading(src, SVNLogType.WC);
             }
             if (SVNFileType.getType(src) != SVNFileType.SYMLINK) {
@@ -327,7 +327,7 @@ public class SVNTranslator {
 
     private static void copyAndTranslate(File source, File destination, String charset, byte[] eol, Map keywords, boolean special, boolean expand, boolean repair) throws SVNException {
         boolean isSpecialPath = false;
-        if (!SVNFileUtil.isWindows) {
+        if (SVNFileUtil.symlinksSupported()) {
             SVNFileType type = SVNFileType.getType(source);
             isSpecialPath = type == SVNFileType.SYMLINK;
         }
@@ -336,7 +336,7 @@ public class SVNTranslator {
             if (destination.exists()) {
                 destination.delete();
             }
-            if (SVNFileUtil.isWindows) {
+            if (!SVNFileUtil.symlinksSupported()) {
                 SVNFileUtil.copyFile(source, destination, true);
             } else if (expand) {
                 // create symlink to target, and create it at dst
@@ -467,6 +467,7 @@ public class SVNTranslator {
         byte[] author = null;
         byte[] name = null;
         byte[] id = null;
+        byte[] header = null;
 
         Date jDate = d == null ? null : SVNDate.parseDate(d);
 
@@ -493,7 +494,7 @@ public class SVNTranslator {
                     map.put("HeadURL", url);
                     map.put("URL", url);
                 } else if ("Id".equalsIgnoreCase(token)) {
-                    if (expand && id == null) {
+                    if (expand && header == null) {
                         rev = rev == null ? r.getBytes("UTF-8") : rev;
                         idDate = idDate == null ? SVNDate.formatShortDate(jDate).getBytes("UTF-8") : idDate;
                         name = name == null ? SVNEncodingUtil.uriDecode(SVNPathUtil.tail(u)).getBytes("UTF-8") : name;
@@ -510,6 +511,24 @@ public class SVNTranslator {
                         id = bos.toByteArray();
                     }
                     map.put("Id", expand ? id : null);
+                } else if ("Header".equalsIgnoreCase(token)) {
+                    if (expand && header == null) {
+                        rev = rev == null ? r.getBytes("UTF-8") : rev;
+                        url = expand && url == null ? SVNEncodingUtil.uriDecode(u).getBytes("UTF-8") : url;
+                        idDate = idDate == null ? SVNDate.formatShortDate(jDate).getBytes("UTF-8") : idDate;
+                        author = author == null ? (a == null ? new byte[0] : a.getBytes("UTF-8")) : author;
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        bos.write(url);
+                        bos.write(' ');
+                        bos.write(rev);
+                        bos.write(' ');
+                        bos.write(idDate);
+                        bos.write(' ');
+                        bos.write(author);
+                        bos.close();
+                        header = bos.toByteArray();
+                    }
+                    map.put("Header", expand ? header : null);
                 }
             }
         } catch (IOException e) {

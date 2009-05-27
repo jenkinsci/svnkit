@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,6 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.SequenceInputStream;
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
@@ -32,7 +33,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNConnection {
@@ -90,7 +91,7 @@ public class SVNConnection {
         return myIsCommitRevprops;
     }
     
-    private InputStream skipLeadingGrabage() throws SVNException {
+    private InputStream skipLeadingGrabage(int attempt) throws SVNException {
         byte[] bytes = myHandshakeBuffer;
         int r = 0;
         try {
@@ -102,9 +103,12 @@ public class SVNConnection {
         if (r >= 0) {
             for (int i = 0; i < r; i++) {
                 if (bytes[i] == '(' && bytes[i + 1] == ' ') {
-                    return new ByteArrayInputStream(bytes, i, r - i);
+                    return new SequenceInputStream(new ByteArrayInputStream(bytes, i, r - i), getInputStream());
                 }
             }
+        }
+        if (r >= 0 && attempt == 0) {
+            return skipLeadingGrabage(attempt + 1);
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
         SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -113,7 +117,7 @@ public class SVNConnection {
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
         checkConnection();
-        InputStream is = skipLeadingGrabage();
+        InputStream is = skipLeadingGrabage(0);
         List items = null;
         try {
             items = SVNReader.parse(is, "nnll", null);

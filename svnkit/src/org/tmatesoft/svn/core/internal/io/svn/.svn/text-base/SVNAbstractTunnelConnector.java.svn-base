@@ -16,7 +16,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 import com.trilead.ssh2.StreamGobbler;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAbstractTunnelConnector implements ISVNConnector {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 abstract class HTTPAuthentication {
@@ -206,7 +206,11 @@ abstract class HTTPAuthentication {
                 if (HTTPNegotiateAuthentication.isSupported()) {
                     HTTPNegotiateAuthentication negoAuth = null;
                     if (source.length() == 0) {
-                        negoAuth = new HTTPNegotiateAuthentication();
+                        if (prevResponse instanceof HTTPNegotiateAuthentication) {
+                            negoAuth = new HTTPNegotiateAuthentication((HTTPNegotiateAuthentication)prevResponse);
+                        } else {
+                            negoAuth = new HTTPNegotiateAuthentication();
+                        }
                         negoAuth.respondTo(null);
                     } else {
                         negoAuth = (HTTPNegotiateAuthentication)prevResponse;

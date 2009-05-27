@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -39,7 +39,8 @@ public class SVNWinSecurity {
         return JNALibraryLoader.getSecurityLibrary() != null;
     }
     
-    public static SVNNTSecurityParameters getSecurityParams(String userName, String password, String ntDomain) {
+    public static SVNNTSecurityParameters getSecurityParams(String userName, String password, 
+            String ntDomain) {
         SecHandle crdHandle = getCredentialsHandle(userName, password, ntDomain);
         if (crdHandle == null) {
             return null;
@@ -59,7 +60,8 @@ public class SVNWinSecurity {
         if (token != null) {
             StringBuffer tokenBuffer = new StringBuffer(token);
             byte[] tmp = new byte[tokenBuffer.length()];
-            int resultLength = SVNBase64.base64ToByteArray(tokenBuffer, tmp);
+            StringBuffer sb = SVNBase64.normalizeBase64(tokenBuffer);
+            int resultLength = SVNBase64.base64ToByteArray(sb, tmp);
             input = new byte[resultLength];
             System.arraycopy(tmp, 0, input, 0, resultLength);
         }

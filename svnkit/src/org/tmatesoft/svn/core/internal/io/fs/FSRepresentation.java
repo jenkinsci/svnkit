@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,7 +14,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSRepresentation {
@@ -27,23 +27,19 @@ public class FSRepresentation {
     private long myOffset;
     private long mySize;
     private long myExpandedSize;
-    private String myHexDigest;
+    private String myMD5HexDigest;
+    private String mySHA1HexDigest;
     private String myTxnId;
-
-    public FSRepresentation(long revision, long offset, long size, long expandedSize, String hexDigest) {
-        myRevision = revision;
-        myOffset = offset;
-        mySize = size;
-        myExpandedSize = expandedSize;
-        myHexDigest = hexDigest;
-    }
-
+    private String myUniquifier;
+    
     public FSRepresentation(FSRepresentation representation) {
-        myRevision = representation.getRevision();
-        myOffset = representation.getOffset();
-        mySize = representation.getSize();
-        myExpandedSize = representation.getExpandedSize();
-        myHexDigest = representation.getHexDigest();
+        myRevision = representation.myRevision;
+        myOffset = representation.myOffset;
+        mySize = representation.mySize;
+        myExpandedSize = representation.myExpandedSize;
+        myMD5HexDigest = representation.myMD5HexDigest;
+        mySHA1HexDigest = representation.mySHA1HexDigest;
+        myUniquifier = representation.myUniquifier;
         myTxnId = representation.myTxnId;
     }
 
@@ -52,7 +48,6 @@ public class FSRepresentation {
         myOffset = -1;
         mySize = -1;
         myExpandedSize = -1;
-        myHexDigest = null;
     }
 
     public void setRevision(long rev) {
@@ -71,8 +66,25 @@ public class FSRepresentation {
         myExpandedSize = expandedSize;
     }
 
-    public void setHexDigest(String hexDigest) {
-        myHexDigest = hexDigest;
+    public void setMD5HexDigest(String hexDigest) {
+        myMD5HexDigest = hexDigest;
+    }
+
+    public String getSHA1HexDigest() {
+        return mySHA1HexDigest;
+    }
+    
+    public void setSHA1HexDigest(String hexDigest) {
+        mySHA1HexDigest = hexDigest;
+    }
+
+    public String getUniquifier() {
+        return myUniquifier;
+    }
+
+    
+    public void setUniquifier(String uniquifier) {
+        myUniquifier = uniquifier;
     }
 
     public long getRevision() {
@@ -91,8 +103,8 @@ public class FSRepresentation {
         return myExpandedSize;
     }
 
-    public String getHexDigest() {
-        return myHexDigest;
+    public String getMD5HexDigest() {
+        return myMD5HexDigest;
     }
 
     public static boolean compareRepresentations(FSRepresentation r1, FSRepresentation r2) {
@@ -109,13 +121,28 @@ public class FSRepresentation {
             return false;
         }
         FSRepresentation rep = (FSRepresentation) obj;
-        return myRevision == rep.getRevision() && myOffset == rep.getOffset();
+        if (myRevision != rep.myRevision) {
+            return false;
+        }
+        if (myOffset != rep.myOffset) {
+            return false;
+        }
+        if (myUniquifier == null && rep.myUniquifier != null) {
+            return false;
+        } else if (myUniquifier != null) {
+            return myUniquifier.equals(rep.myUniquifier);
+        }
+        return true;
     }
 
-    public String toString() {
-        return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myHexDigest;
+    public String getStringRepresentation(int dbFormat) {
+        if (dbFormat < FSFS.MIN_REP_SHARING_FORMAT || mySHA1HexDigest == null || myUniquifier == null) {
+            return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myMD5HexDigest;
+        }
+        return myRevision + " " + myOffset + " " + mySize + " " + myExpandedSize + " " + myMD5HexDigest + " " + 
+               mySHA1HexDigest + " " + myUniquifier;
     }
-
+    
     public String getTxnId() {
         return myTxnId;
     }

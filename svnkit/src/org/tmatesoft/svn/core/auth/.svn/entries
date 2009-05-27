@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/auth
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/auth
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-12T11:28:48.076298Z
+5838
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-a246b05838c7f80dd101e9e53f80bbae
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+1c312c3dedf5d111deceea807f44cc18
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-6252
+6266
 
 SVNAuthentication.java
 file
@@ -66,11 +66,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-5aecd17d74197532f1a46ef25ea526a3
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+f33e19468d215ca390492912b426492a
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-2716
+2730
 
 SVNUserNameAuthentication.java
 file
@@ -100,11 +100,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-7d9a5acdb02462cdaf95b8072c059b7f
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+73e9a25a1c9cc1783c9b5698d7129861
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-1441
+1455
 
 SVNSSLAuthentication.java
 file
@@ -134,11 +134,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-b2afc8e6b4f139a86068d7193a1add0f
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+180d543558f27a0744a1ba1e7fc5d375
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-1845
+1859
 
 SVNPasswordAuthentication.java
 file
@@ -168,11 +168,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-45c48e245d272825281d7b58afff50ba
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+f286a3257f03cbe30402176b26847d1e
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-2163
+2177
 
 ISVNAuthenticationManager.java
 file
@@ -202,11 +202,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-1b24fe7bf768b280c24b903c4c03f99b
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+94b0f6f0088bae89d8f2edb005c5b5ef
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -228,7 +228,7 @@ has-props
 
 
 
-12581
+12595
 
 ISVNAuthenticationProvider.java
 file
@@ -236,11 +236,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-dd15458435379e3e66affcdad8129df9
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+e442ecc6887d3247230261878ff36388
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -262,7 +262,7 @@ has-props
 
 
 
-4778
+4792
 
 BasicAuthenticationManager.java
 file
@@ -270,11 +270,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-ca9d722899d2ad92bee7352e27233984
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+2f6e6497e66e2af0bdb860e0c112c789
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -296,7 +296,7 @@ has-props
 
 
 
-14885
+14899
 
 ISVNProxyManager.java
 file
@@ -304,11 +304,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-b0b963eb95819af13df556f50fcbc0aa
-2008-08-15T15:28:48.918752Z
-4717
-alex
+2009-05-27T05:49:42.000000Z
+219d3f3b88f5c17cc2370f264ca2db0b
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -330,7 +330,7 @@ has-props
 
 
 
-2817
+2831
 
 package.html
 file
@@ -338,10 +338,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-05-27T05:49:42.000000Z
 9b89bfad0babd929d0cdda171fef55df
-2008-07-30T16:53:59.266781Z
-4613
+2008-07-29T19:33:42.126931Z
+4610
 semen
 has-props
 

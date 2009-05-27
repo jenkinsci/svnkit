@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,11 +27,12 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNExternal {
@@ -187,8 +188,8 @@ public class SVNExternal {
                 continue;
             }
             List tokens = new ArrayList();
-            for(StringTokenizer tokenizer = new StringTokenizer(line, " \t"); tokenizer.hasMoreTokens();) {
-                tokens.add(tokenizer.nextToken());
+            for(Iterator tokenizer = new ExternalTokenizer(line); tokenizer.hasNext();) {
+                tokens.add(tokenizer.next());
             }
             if (tokens.size() < 2 || tokens.size() > 4) {
                 reportParsingError(owner, line);
@@ -266,7 +267,7 @@ public class SVNExternal {
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
     }
-
+    
     private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
         for (int i = 0; i < tokens.size() && i < 2; i++) {
             String token = (String) tokens.get(i);
@@ -278,7 +279,7 @@ public class SVNExternal {
                     // remove separate '-r' token.
                     tokens.remove(i);
                 } else if (tokens.size() == 3) {
-                    revisionStr = ((String) tokens.get(i)).substring(2); 
+                    revisionStr = token.substring(2); 
                 }
                 if (revisionStr == null || "".equals(revisionStr)) {
                     reportParsingError(owner, line);
@@ -287,14 +288,12 @@ public class SVNExternal {
                 try {
                     revNumber = Long.parseLong(revisionStr);
                     if (revNumber < 0) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
-                                "Negative revision number found parsing ''{0}''", revisionStr);
-                        SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Negative revision number found parsing '" + revisionStr + "'");
+                        reportParsingError(owner, line);
                     }
                 } catch (NumberFormatException nfe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REVISION_NUMBER_PARSE_ERROR, 
-                            "Invalid revision number found parsing ''{0}''", revisionStr);
-                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Invalid revision number found parsing '" + revisionStr + "'");
+                    reportParsingError(owner, line);
                 }
                 external.myRevision = SVNRevision.create(revNumber);
                 external.myIsRevisionExplicit = true;
@@ -313,6 +312,92 @@ public class SVNExternal {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
         SVNErrorManager.error(err, SVNLogType.DEFAULT);
+    }
+
+    private static class ExternalTokenizer implements Iterator {
+        
+        private String myNextToken;
+        private String myLine;
+
+        public ExternalTokenizer(String line) {
+            myLine = line;
+            myNextToken = advance();
+        }
+        public boolean hasNext() {
+            return myNextToken != null;
+        }
+        public Object next() {
+            String next = myNextToken;
+            myNextToken = advance();
+            return next;
+        }
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+        private String advance() {
+            while(myLine.length() > 0 && Character.isWhitespace(myLine.charAt(0))) {
+                myLine = myLine.substring(1);
+            }
+            if (myLine.length() == 0) {
+                return null;
+            }
+            char ch = myLine.charAt(0);
+            int quouteType = ch == '\'' ? 1 : (ch == '\"' ? 2 : 0);
+            if (quouteType != 0) {
+                myLine = myLine.substring(1);
+            }
+            int index = 0;
+            while(index < myLine.length()) {
+                ch = myLine.charAt(index);
+                if (ch == '\\') {
+                    // skip escaped character.
+                    index++;
+                    index++;
+                    continue;
+                }
+                if (quouteType == 0) {
+                    if (Character.isWhitespace(ch)) {
+                        break;
+                    }
+                } else if (quouteType == 1) {
+                    if (ch == '\'') {
+                        break;
+                    }
+                } else if (quouteType == 2) {
+                    if (ch == '\"') {
+                        break;
+                    }
+                }
+                index++;
+            }
+            String token = myLine.substring(0, index);
+            StringBuffer result = new StringBuffer();
+            index = 0;
+            while(index < token.length()) {
+                ch = token.charAt(index);
+                if (ch != '\\') {
+                    result.append(ch);
+                } else {
+                    if (index + 1 < token.length()) {
+                        char escaped = token.charAt(index + 1);
+                        if (escaped == 't') {
+                            result.append("\t");
+                        } else {
+                            result.append(escaped);
+                        }
+                    }
+                    index++;
+                }
+                index++;
+            }
+            if (index + 1 < myLine.length()) {
+                myLine = myLine.substring(index + 1);
+            } else {
+                myLine = "";
+            }
+            return result.toString();
+        }
     }
 
 }

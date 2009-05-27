@@ -1,7 +1,7 @@
 /**
  * @copyright
  * ====================================================================
- * Copyright (c) 2003-2008 CollabNet.  All rights reserved.
+ * Copyright (c) 2003-2009 CollabNet.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -310,10 +310,36 @@ public interface SVNClientInterface
      *                      limit)
      * @param callback      the object to receive the log messages
      * @since 1.5
+     * @deprecated Use {@link #logMessages(String, Revision, RevisionRange[],
+     *                                     boolean, boolean, boolean, String[],
+     *                                     long, LogMessageCallback)} instead.
      */
     void logMessages(String path, Revision pegRevision,
                      Revision revisionStart,
                      Revision revisionEnd, boolean stopOnCopy,
+                     boolean discoverPath, boolean includeMergedRevisions,
+                     String[] revProps, long limit,
+                     LogMessageCallback callback)
+            throws ClientException;
+
+    /**
+     * Retrieve the log messages for an item.
+     * @param path          path or url to get the log message for.
+     * @param pegRevision   revision to interpret path
+     * @param revisionRanges an array of revision ranges to show
+     * @param stopOnCopy    do not continue on copy operations
+     * @param discoverPath  returns the paths of the changed items in the
+     *                      returned objects
+     * @param includeMergedRevisions include log messages for revisions which
+     *                               were merged.
+     * @param revProps      the revprops to retrieve
+     * @param limit         limit the number of log messages (if 0 or less no
+     *                      limit)
+     * @param callback      the object to receive the log messages
+     * @since 1.6
+     */
+    void logMessages(String path, Revision pegRevision,
+                     RevisionRange[] ranges, boolean stopOnCopy,
                      boolean discoverPath, boolean includeMergedRevisions,
                      String[] revProps, long limit,
                      LogMessageCallback callback)
@@ -1495,6 +1521,21 @@ public interface SVNClientInterface
             throws ClientException;
 
     /**
+     * set one revsision property of one item
+     * @param path      path of the item
+     * @param name      name of the property
+     * @param rev       revision to retrieve
+     * @param value     value of the property
+     * @param originalValue the original value of the property.
+     * @param force     use force to set
+     * @throws ClientException
+     * @since 1.6
+     */
+    void setRevProperty(String path, String name, Revision rev, String value,
+                        String originalValue, boolean force)
+            throws ClientException;
+
+    /**
      * Retrieve one property of one item
      * @param path      path of the item
      * @param name      name of property
@@ -1775,7 +1816,7 @@ public interface SVNClientInterface
      * @param pegRevision   the revision to interpret pathOrUrl
      * @param depth         the depth to recurse
      * @param changelists   if non-null, filter paths using changelists
-     * @param callback      a callback to receive the infos retreived
+     * @param callback      a callback to receive the infos retrieved
      * @since 1.5
      */
     void info2(String pathOrUrl, Revision revision, Revision pegRevision,

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -12,7 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Iterator;
 import java.util.Map;
@@ -32,7 +31,7 @@ import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVPropertiesHandler extends BasicDAVHandler {
 
@@ -167,19 +166,10 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             if (myEncoding == null) {
                 value = SVNPropertyValue.create(cdata.toString());
             } else if ("base64".equals(myEncoding)) {
-                byte[] buffer = allocateBuffer(cdata.length());
-                int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), buffer);
-                if (name != null && DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(name.getNamespace())) {
-                    value = SVNPropertyValue.create(null, buffer, 0, length);
-                } else {
-                    String str = null;
-                    try {
-                        str = new String(buffer, 0, length, "UTF-8");
-                    } catch (UnsupportedEncodingException e) {
-                        str = new String(buffer, 0, length);
-                    }
-                    value = SVNPropertyValue.create(str);
-                }
+                StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                byte[] buffer = allocateBuffer(sb.length());
+                int length = SVNBase64.base64ToByteArray(sb, buffer);
+                value = SVNPropertyValue.create(null, buffer, 0, length);
             } else {
                 invalidXML();
             }

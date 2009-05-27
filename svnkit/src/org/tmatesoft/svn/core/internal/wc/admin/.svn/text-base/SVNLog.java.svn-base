@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,7 +31,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class SVNLog {
@@ -71,7 +71,11 @@ public abstract class SVNLog {
 
     public static final String UPGRADE_FORMAT = "upgrade-format";
 
+    public static final String ADD_TREE_CONFLICT = "add-tree-conflict";    
+
     public static final String NAME_ATTR = "name";
+
+    public static final String DATA_ATTR = "data";
 
     public static final String PROPERTY_NAME_ATTR = "propname";
 

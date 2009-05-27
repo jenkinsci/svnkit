@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/test/environments
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/environments
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-04-21T14:43:00.959095Z
+5772
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-383048f6e99f82f3f74e7bf18cf6c277
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+f321c429f4995703329c55e62868564d
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -57,8 +58,7 @@ semen
 
 
 
-
-8353
+8351
 
 JavaHLTestEnvironment.java
 file
@@ -66,11 +66,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-de582cfeb67d7bd2b876c1df52620e3c
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+4f65039589da6839d886e397c67b0e80
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -91,8 +92,7 @@ semen
 
 
 
-
-4018
+4016
 
 SVNTestEnvironment.java
 file
@@ -100,11 +100,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-2b775b83304ab9ada3f92ec3af3b1a25
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+ba972d2b448063e13e81108839c1c088
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -125,6 +126,5 @@ semen
 
 
 
-
-7498
+7496
 

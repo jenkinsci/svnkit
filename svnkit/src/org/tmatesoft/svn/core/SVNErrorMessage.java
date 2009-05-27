@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -36,8 +36,9 @@ import java.text.MessageFormat;
  * Error messages may be supplied within exceptions of the main exception type - 
  * {@link SVNException}.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class SVNErrorMessage implements Serializable {
     
@@ -347,6 +348,16 @@ public class SVNErrorMessage implements Serializable {
      * @param childMessage a child error message
      */
     public void setChildErrorMessage(SVNErrorMessage childMessage) {
+        SVNErrorMessage parent = this;
+        SVNErrorMessage child = childMessage;
+        while (child != null) {
+            if (this == child) {
+                parent.setChildErrorMessage(null);
+                break;
+            }
+            parent = child;
+            child = child.getChildErrorMessage();
+        }
         myChildErrorMessage = childMessage;
     }
     

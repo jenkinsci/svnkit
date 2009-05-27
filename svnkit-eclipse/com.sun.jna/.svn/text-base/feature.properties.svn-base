@@ -12,5 +12,5 @@ Lesser General Public License for more details.
 description=JNA provides Java programs easy access to native shared libraries \
 (DLLs on Windows) without writing anything but Java code - no JNI \
 or native code is required. This functionality is comparable \
-to Windows' Platform/Invoke and Python's ctypes. \
+to Windows&apos; Platform/Invoke and Python&apos;s ctypes. \
 Access is dynamic at runtime without code generation.
