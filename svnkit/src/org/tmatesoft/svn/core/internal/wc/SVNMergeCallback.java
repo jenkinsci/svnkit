@@ -411,7 +411,11 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 String copyFromURL = null;
                 long copyFromRevision = SVNRepository.INVALID_REVISION;
                 if (myMergeDriver.myIsSameRepository) {
-                    copyFromURL = myURL.appendPath(path, false).toString();
+                    String targePath = myMergeDriver.myTarget.getAbsolutePath();
+                    String minePath = mergedFile.getAbsolutePath();
+                    String relativePath = SVNPathUtil.getRelativePath(targePath, minePath);
+
+                    copyFromURL = myURL.appendPath(relativePath, false).toString();    
                     copyFromRevision = revision2;
                 }
                 // TODO compare protocols with dir one.
