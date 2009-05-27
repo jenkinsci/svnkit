@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNPathUtil {
 
@@ -54,7 +54,7 @@ public class SVNPathUtil {
     public static boolean isCanonical(String path) {
         return (path != null && path.equals(canonicalizePath(path)));
     }
-
+    
     public static void checkPathIsValid(String path) throws SVNException {
         for (int i = 0; i < path.length(); i++) {
             char ch = path.charAt(i);

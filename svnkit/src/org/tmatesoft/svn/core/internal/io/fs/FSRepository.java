@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -64,7 +64,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSRepository extends SVNRepository implements ISVNReporter {
@@ -219,15 +219,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 InputStream fileStream = null;
                 try {
                     fileStream = root.getFileStreamForPath(new SVNDeltaCombiner(), repositoryPath);
-                    FSRepositoryUtil.copy(fileStream, contents);
+                    FSRepositoryUtil.copy(fileStream, contents, getCanceller());
                 } finally {
                     SVNFileUtil.closeFile(fileStream);
                 }
             }
             if (properties != null) {
                 FSRevisionNode revNode = root.getRevisionNode(repositoryPath);
-                if (revNode.getFileChecksum() != null) {
-                    properties.put(SVNProperty.CHECKSUM, revNode.getFileChecksum());
+                if (revNode.getFileMD5Checksum() != null) {
+                    properties.put(SVNProperty.CHECKSUM, revNode.getFileMD5Checksum());
                 }
                 if (revision >= 0) {
                     properties.put(SVNProperty.REVISION, Long.toString(revision));
@@ -485,6 +485,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
     }
 
     public void lock(Map pathsToRevisions, String comment, boolean force, ISVNLockHandler handler) throws SVNException {
+        lock(pathsToRevisions, comment, force, false, handler);
+    }
+
+    public void lock(Map pathsToRevisions, String comment, boolean force, boolean isDAVComment, ISVNLockHandler handler) throws SVNException {
         try {
             openRepository();
             for (Iterator paths = pathsToRevisions.keySet().iterator(); paths.hasNext();) {
@@ -495,7 +499,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                 SVNLock lock = null;
                 SVNErrorMessage error = null;
                 try {
-                    lock = myFSFS.lockPath(reposPath, null, getUserName(), comment, null, curRevision, force);
+                    lock = myFSFS.lockPath(reposPath, null, getUserName(), comment, null, curRevision, force, isDAVComment);
                 } catch (SVNException svne) {
                     error = svne.getErrorMessage();
                     if (!FSErrors.isLockError(error)) {
@@ -721,6 +725,15 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         SVNErrorManager.error(err, SVNLogType.FSFS);
     }
 
+    protected long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException {
+        try {
+            openRepository();
+            return myFSFS.getDeletedRevision(path, pegRevision, endRevision);
+        } finally {
+            closeRepository();
+        }
+    }
+
     private void openRepository() throws SVNException {
         try {
             openRepositoryRoot();
@@ -749,9 +762,11 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_LOCAL_REPOS_OPEN_FAILED, "Unable to open repository ''{0}''", getLocation().toDecodedString());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+        
+        String dirPath = rootPath.replaceFirst("\\|", "\\:");
 
-        myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, rootPath).getAbsoluteFile() :
-                                             new File(rootPath).getAbsoluteFile();
+        myReposRootDir = hasCustomHostName ? new File("\\\\" + hostName, dirPath).getAbsoluteFile() :
+                                             new File(dirPath).getAbsoluteFile();
         myFSFS = new FSFS(myReposRootDir);
         myFSFS.open();
         setRepositoryCredentials(myFSFS.getUUID(), getLocation().setPath(rootPath, false));
@@ -881,7 +896,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         } else {
             myReporterContext.reset(this, myFSFS, targetRevision, SVNFileUtil.createTempFile("report", ".tmp"),
                                     target, fullTargetPath, switchURL == null ? false : true, depth,
-                                    ignoreAncestry, textDeltas, editor);
+                                    ignoreAncestry, textDeltas, sendCopyFromArgs, editor);
         }
     }
 
@@ -952,4 +967,5 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
         }
         return myLogDriver;
     }
+
 }

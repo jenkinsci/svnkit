@@ -6,7 +6,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2008 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -449,11 +449,11 @@ def revert_file_merge_replace_with_history(sbox):
   svntest.tree.compare_trees("disk", actual_disk, expected_disk.old_tree())
 
   # Make sure the revert removed the copy from information.
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'info',
-                                                   rho_path)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'info', rho_path)
   for line in output:
     if line.find("Copied") != -1:
-      print "Error: Revert didn't get rid of copy from information"
+      print("Error: Revert didn't get rid of copy from information")
       raise svntest.Failure
 
 def revert_wc_to_wc_replace_with_props(sbox):
@@ -639,8 +639,8 @@ def revert_replaced_with_history_file_1(sbox):
   mu_path = os.path.join(wc_dir, 'A', 'mu')
 
   # Remember the original text of 'mu'
-  text_r1, err = svntest.actions.run_and_verify_svn(None, None, [],
-                                                    'cat', mu_path)
+  exit_code, text_r1, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                               'cat', mu_path)
   # delete mu and replace it with a copy of iota
   svntest.main.run_svn(None, 'rm', mu_path)
   svntest.main.run_svn(None, 'mv', iota_path, mu_path)
@@ -659,7 +659,7 @@ def revert_replaced_with_history_file_1(sbox):
 
   # update the working copy
   svntest.main.run_svn(None, 'up', wc_dir)
-  
+
   # now revert back to the state in r1
   expected_output = svntest.wc.State(wc_dir, {
     'A/mu': Item(status='R '),
@@ -717,16 +717,16 @@ def status_of_missing_dir_after_revert(sbox):
                                      A_D_G_path)
 
   expected_output = svntest.verify.UnorderedOutput(
-    ["D      " + os.path.join(A_D_G_path, "pi") + "\n",
-     "D      " + os.path.join(A_D_G_path, "rho") + "\n",
-     "D      " + os.path.join(A_D_G_path, "tau") + "\n"])
+    ["D       " + os.path.join(A_D_G_path, "pi") + "\n",
+     "D       " + os.path.join(A_D_G_path, "rho") + "\n",
+     "D       " + os.path.join(A_D_G_path, "tau") + "\n"])
   svntest.actions.run_and_verify_svn(None, expected_output, [],
                                      "status", wc_dir)
 
   svntest.main.safe_rmtree(A_D_G_path)
 
   expected_output = svntest.verify.UnorderedOutput(
-    ["!      " + A_D_G_path + "\n"])
+    ["!       " + A_D_G_path + "\n"])
   svntest.actions.run_and_verify_svn(None, expected_output, [], "status",
                                      wc_dir)
 
@@ -812,16 +812,16 @@ def status_of_missing_dir_after_revert_replaced_with_history_dir(sbox):
                                      G_path)
 
   expected_output = svntest.verify.UnorderedOutput(
-    ["?      " + os.path.join(G_path, "pi") + "\n",
-     "?      " + os.path.join(G_path, "rho") + "\n",
-     "?      " + os.path.join(G_path, "tau") + "\n"])
+    ["?       " + os.path.join(G_path, "pi") + "\n",
+     "?       " + os.path.join(G_path, "rho") + "\n",
+     "?       " + os.path.join(G_path, "tau") + "\n"])
   svntest.actions.run_and_verify_svn(None, expected_output, [],
                                      "status", wc_dir)
 
   svntest.main.safe_rmtree(G_path)
 
   expected_output = svntest.verify.UnorderedOutput(
-    ["!      " + G_path + "\n"])
+    ["!       " + G_path + "\n"])
   svntest.actions.run_and_verify_svn(None, expected_output, [], "status",
                                      wc_dir)
 
@@ -854,6 +854,69 @@ def revert_replaced_with_history_file_2(sbox):
                                         expected_status,
                                         None, wc_dir)
 
+#----------------------------------------------------------------------
+
+def revert_tree_conflicts_in_updated_files(sbox):
+  "revert tree conflicts in updated files"
+
+  # See use cases 1-3 in notes/tree-conflicts/use-cases.txt for background.
+
+  svntest.actions.build_greek_tree_conflicts(sbox)
+  wc_dir = sbox.wc_dir
+  G = os.path.join(wc_dir, 'A', 'D', 'G')
+  G_pi  = os.path.join(G, 'pi');
+  G_rho = os.path.join(G, 'rho');
+  G_tau = os.path.join(G, 'tau');
+
+  # Duplicate wc for tests
+  wc_dir_2 =  sbox.add_wc_path('2')
+  svntest.actions.duplicate_dir(wc_dir, wc_dir_2)
+  G2 = os.path.join(wc_dir_2, 'A', 'D', 'G')
+  G2_pi  = os.path.join(G2, 'pi');
+  G2_rho = os.path.join(G2, 'rho');
+  G2_tau = os.path.join(G2, 'tau');
+
+  # Expectations
+  expected_output = svntest.verify.UnorderedOutput(
+   ["Reverted '%s'\n" % G_pi,
+    "Reverted '%s'\n" % G_rho,
+    "Reverted '%s'\n" % G_tau,
+    ])
+
+  expected_status = svntest.actions.get_virginal_state(wc_dir, 2)
+  expected_status.tweak('A/D/G/pi',  status='  ')
+  expected_status.remove('A/D/G/rho')
+  expected_status.remove('A/D/G/tau')
+
+  expected_disk = svntest.main.greek_state.copy()
+  expected_disk.tweak('A/D/G/rho',
+                      contents="This is the file 'rho'.\nLocal edit.\n")
+  expected_disk.tweak('A/D/G/pi',
+                      contents="This is the file 'pi'.\nIncoming edit.\n")
+  expected_disk.remove('A/D/G/tau')
+
+  # Revert individually in wc
+  svntest.actions.run_and_verify_svn(None, expected_output, [],
+                                     'revert', G_pi, G_rho, G_tau)
+  svntest.actions.run_and_verify_status(wc_dir, expected_status)
+  svntest.actions.verify_disk(wc_dir, expected_disk)
+
+  # Expectations
+  expected_output = svntest.verify.UnorderedOutput(
+   ["Reverted '%s'\n" % G2_pi,
+    "Reverted '%s'\n" % G2_rho,
+    "Reverted '%s'\n" % G2_tau,
+    ])
+
+  expected_status.wc_dir = wc_dir_2
+
+  # Revert recursively in wc 2
+  svntest.actions.run_and_verify_svn(None, expected_output, [],
+                                     'revert', '-R', G2)
+  svntest.actions.run_and_verify_status(wc_dir_2, expected_status)
+  svntest.actions.verify_disk(wc_dir_2, expected_disk)
+
+
 ########################################################################
 # Run the tests
 
@@ -878,6 +941,7 @@ test_list = [ None,
               status_of_missing_dir_after_revert,
               status_of_missing_dir_after_revert_replaced_with_history_dir,
               revert_replaced_with_history_file_2,
+              revert_tree_conflicts_in_updated_files,
              ]
 
 if __name__ == '__main__':

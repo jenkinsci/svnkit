@@ -7,7 +7,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2006, 2008 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -38,6 +38,10 @@ def test_stderr(re_string, stderr):
   for line in stderr:
     if exp_err_re.search(line):
       return
+  if svntest.main.verbose_mode:
+    for x in stderr:
+      sys.stdout.write(x)
+    print("Expected stderr reg-ex: '" + re_string + "'")
   raise svntest.Failure("Checkout failed but not in the expected way")
 
 #----------------------------------------------------------------------
@@ -161,11 +165,9 @@ def forced_checkout_of_file_with_dir_obstructions(sbox):
 
   # Checkout the standard greek repos into a directory that has a dir named
   # "iota" obstructing the file "iota" in the repos.  This should fail.
-  sout, serr = svntest.actions.run_and_verify_svn("Expected error during co",
-                                                  None,
-                                                  svntest.verify.AnyOutput,
-                                                  "co", "--force",
-                                                  sbox.repo_url, other_wc)
+  exit_code, sout, serr = svntest.actions.run_and_verify_svn(
+    "Expected error during co", None, svntest.verify.AnyOutput,
+    "co", "--force", sbox.repo_url, other_wc)
 
   test_stderr(".*Failed to add file.*a non-file object of the same name " \
               "already exists", serr)
@@ -184,11 +186,9 @@ def forced_checkout_of_dir_with_file_obstructions(sbox):
 
   # Checkout the standard greek repos into a directory that has a file named
   # "A" obstructing the dir "A" in the repos.  This should fail.
-  sout, serr = svntest.actions.run_and_verify_svn("Expected error during co",
-                                                  None,
-                                                  svntest.verify.AnyOutput,
-                                                  "co", "--force",
-                                                  sbox.repo_url, other_wc)
+  exit_code, sout, serr = svntest.actions.run_and_verify_svn(
+    "Expected error during co", None, svntest.verify.AnyOutput,
+    "co", "--force", sbox.repo_url, other_wc)
 
   test_stderr(".*Failed to add directory.*a non-directory object of the " \
               "same name already exists", serr)
@@ -269,25 +269,62 @@ def forced_checkout_with_versioned_obstruction(sbox):
   other_repo_dir, other_repo_url = sbox.add_repo_path("other")
   svntest.main.copy_repos(repo_dir, other_repo_dir, 1, 1)
 
+  fresh_wc_dir = sbox.add_wc_path('fresh')
+  fresh_wc_dir_A = os.path.join(fresh_wc_dir, 'A')
+  os.mkdir(fresh_wc_dir)
+
   other_wc_dir = sbox.add_wc_path("other")
+  other_wc_dir_A = os.path.join(other_wc_dir, "A")
   os.mkdir(other_wc_dir)
 
-  # Checkout "A/" from the other repos.
+  # Checkout "A" from the first repos to a fresh dir.
+  svntest.actions.run_and_verify_svn("Unexpected error during co",
+                                     svntest.verify.AnyOutput, [],
+                                     "co", repo_url + "/A",
+                                     fresh_wc_dir_A)
+
+  # Checkout "A" from the second repos to the other dir.
   svntest.actions.run_and_verify_svn("Unexpected error during co",
                                      svntest.verify.AnyOutput, [],
                                      "co", other_repo_url + "/A",
-                                     os.path.join(other_wc_dir, "A"))
+                                     other_wc_dir_A)
 
-  # Checkout the first repos into "other/A".  This should fail since the
-  # obstructing versioned directory points to a different URL.
-  sout, serr = svntest.actions.run_and_verify_svn("Expected error during co",
-                                                  None,
-                                                  svntest.verify.AnyOutput,
-                                                  "co", "--force",
-                                                  sbox.repo_url, other_wc_dir)
+  # Checkout the entire first repos into the fresh dir.  This should
+  # fail because A is already checked out.  (Ideally, we'd silently
+  # incorporate A's working copy into its parent working copy.)
+  exit_code, sout, serr = svntest.actions.run_and_verify_svn(
+    "Expected error during co", None, svntest.verify.AnyOutput,
+    "co", "--force", repo_url, fresh_wc_dir)
 
-  test_stderr("svn: Failed to add directory '.*A': a versioned directory " \
-              "of the same name already exists", serr)
+  test_stderr("Failed to add directory '.*A'.*already exists", serr)
+
+  # Checkout the entire first repos into the other dir.  This should
+  # fail because it's a different repository.
+  exit_code, sout, serr = svntest.actions.run_and_verify_svn(
+    "Expected error during co", None, svntest.verify.AnyOutput,
+    "co", "--force", repo_url, other_wc_dir)
+
+  test_stderr("UUID mismatch: existing directory '.*A'", serr)
+
+  #ensure that other_wc_dir_A is not affected by this forced checkout.
+  svntest.actions.run_and_verify_svn("empty status output", None,
+                                     [], "st", other_wc_dir_A)
+  exit_code, sout, serr = svntest.actions.run_and_verify_svn(
+    "it should still point to other_repo_url/A", None, [], "info",
+    other_wc_dir_A)
+
+  #TODO rename test_stderr to test_regex or something.
+  test_stderr("URL: " + other_repo_url + '/A$', sout)
+
+  #ensure that other_wc_dir is in a consistent state though it may be
+  #missing few items.
+  exit_code, sout, serr = svntest.actions.run_and_verify_svn(
+    "it should still point to other_repo_url", None, [], "info",
+    other_wc_dir)
+  #TODO rename test_stderr to test_regex or something.
+  test_stderr("URL: " + sbox.repo_url + '$', sout)
+
+
 
 #----------------------------------------------------------------------
 # Ensure that an import followed by a checkout in place works correctly.
@@ -433,9 +470,8 @@ def checkout_peg_rev_date(sbox):
   # note the current time to use it as peg revision date.
   current_time = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-  # sleep till the next minute.
-  current_sec = time.localtime().tm_sec
-  time.sleep(62-current_sec)
+  # sleep till the next second.
+  time.sleep(1.1)
 
   # create a new revision
   mu_path = os.path.join(wc_dir, 'A', 'mu')
@@ -474,7 +510,7 @@ def co_with_obstructing_local_adds(sbox):
   svntest.actions.duplicate_dir(wc_dir, wc_backup)
 
   # Add files and dirs to the repos via the first WC.  Each of these
-  # will be added to the backup WC via an update:
+  # will be added to the backup WC via a checkout:
   #
   #  A/B/upsilon:   Identical to the file scheduled for addition in
   #                 the backup WC.
@@ -570,7 +606,7 @@ def co_with_obstructing_local_adds(sbox):
                        kappa_backup_path,
                        I_backup_path)
 
-  # Create expected output tree for an update of the wc_backup.
+  # Create expected output tree for a checkout of the wc_backup.
   expected_output = wc.State(wc_backup, {
     'A/B/upsilon'   : Item(status='E '),
     'A/C/nu'        : Item(status='A '),
@@ -583,7 +619,7 @@ def co_with_obstructing_local_adds(sbox):
     'A/D/kappa'     : Item(status='C '),
     })
 
-  # Create expected disk for update of wc_backup.
+  # Create expected disk for checkout of wc_backup.
   expected_disk = svntest.main.greek_state.copy()
   expected_disk.add({
     'A/B/upsilon'   : Item("This is the file 'upsilon'\n"),
@@ -607,7 +643,7 @@ def co_with_obstructing_local_adds(sbox):
                                       ""])),
     })
 
-  # Create expected status tree for the update.  Since the obstructing
+  # Create expected status tree for the checkout.  Since the obstructing
   # kappa and upsilon differ from the repos, they should show as modified.
   expected_status = svntest.actions.get_virginal_state(wc_backup, 2)
   expected_status.add({
@@ -626,7 +662,7 @@ def co_with_obstructing_local_adds(sbox):
   extra_files = ['eta\.r0', 'eta\.r2', 'eta\.mine',
                  'kappa\.r0', 'kappa\.r2', 'kappa\.mine']
 
-  # Perform forced update and check the results in three ways.
+  # Perform the checkout and check the results in three ways.
   # We use --force here because run_and_verify_checkout() will delete
   # wc_backup before performing the checkout otherwise.
   svntest.actions.run_and_verify_checkout(sbox.repo_url, wc_backup,
@@ -640,7 +676,7 @@ def co_with_obstructing_local_adds(sbox):
   # Some obstructions are still not permitted:
   #
   # Test that file and dir obstructions scheduled for addition *with*
-  # history fail when update tries to add the same path.
+  # history fail when checkout tries to add the same path.
 
   # URL to URL copy of A/D/G to A/D/M.
   G_URL = sbox.repo_url + '/A/D/G'
@@ -670,50 +706,114 @@ def co_with_obstructing_local_adds(sbox):
   F_path = os.path.join(wc_dir, 'A', 'B', 'F')
   omicron_path = os.path.join(wc_dir, 'A', 'B', 'F', 'omicron')
   chi_path = os.path.join(wc_dir, 'A', 'D', 'H', 'chi')
-  
+
   svntest.actions.run_and_verify_svn("Copy error:", None, [],
                                      'cp', chi_path,
                                      omicron_path)
 
   # Try to co M's Parent.
-  sout, serr = svntest.actions.run_and_verify_svn("Checkout XPASS",
-                                                  [], svntest.verify.AnyOutput,
-                                                  'checkout',
-                                                  sbox.repo_url + '/A/D',
-                                                  D_path)
+  expected_status = svntest.actions.get_virginal_state(wc_dir, 1)
+  expected_status.add({
+    'A/B/F/omicron' : Item(status='A ', copied='+', wc_rev='-'),
+    'A/B/upsilon'   : Item(status='  ', wc_rev=2),
+    'A/C/nu'        : Item(status='  ', wc_rev=2),
+    'A/D/kappa'     : Item(status='  ', wc_rev=2),
+    'A/D/H/I'       : Item(status='  ', wc_rev=2),
+    'A/D/H/I/J'     : Item(status='  ', wc_rev=2),
+    'A/D/H/I/K'     : Item(status='  ', wc_rev=2),
+    'A/D/H/I/K/xi'  : Item(status='  ', wc_rev=2),
+    'A/D/H/I/K/eta' : Item(status='  ', wc_rev=2),
+    'A/D/H/I/L'     : Item(status='  ', wc_rev=2),
+    'A/D/M'         : Item(status='A ', copied='+', wc_rev='-'),
+    'A/D/M/psi'     : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/chi'     : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/omega'   : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/I'       : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/I/J'     : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/I/K'     : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/I/K/xi'  : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/I/K/eta' : Item(status='  ', copied='+', wc_rev='-'),
+    'A/D/M/I/L'     : Item(status='  ', copied='+', wc_rev='-'),
+    })
+  svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
-  test_stderr("svn: Failed to add directory '.*M': a versioned " \
-              "directory of the same name already exists\n", serr)
+  expected_output = wc.State(wc_dir, {
+    'A/D/M'         : Item(status='  ', treeconflict='C'),
+    })
+  expected_disk = wc.State('', {
+    'gamma'     : Item("This is the file 'gamma'.\n"),
+    'G/pi'      : Item("This is the file 'pi'.\n"),
+    'G/rho'     : Item("This is the file 'rho'.\n"),
+    'G/tau'     : Item("This is the file 'tau'.\n"),
+    'H/I'       : Item(),
+    'H/I/J'     : Item(),
+    'H/I/K'     : Item(),
+    'H/I/K/xi'  : Item("This is file 'xi'\n"),
+    'H/I/K/eta' : Item("This is REPOS file 'eta'\n"),
+    'H/I/L'     : Item(),
+    'H/chi'     : Item("This is the file 'chi'.\n"),
+    'H/psi'     : Item("This is the file 'psi'.\n"),
+    'H/omega'   : Item("This is the file 'omega'.\n"),
+    'M/I'       : Item(),
+    'M/I/J'     : Item(),
+    'M/I/K'     : Item(),
+    'M/I/K/xi'  : Item("This is file 'xi'\n"),
+    'M/I/K/eta' : Item("This is REPOS file 'eta'\n"),
+    'M/I/L'     : Item(),
+    'M/chi'     : Item("This is the file 'chi'.\n"),
+    'M/psi'     : Item("This is the file 'psi'.\n"),
+    'M/omega'   : Item("This is the file 'omega'.\n"),
+    'kappa'     : Item("This is REPOS file 'kappa'\n"),
+    })
+  svntest.actions.run_and_verify_checkout(sbox.repo_url + '/A/D',
+                                          D_path,
+                                          expected_output,
+                                          expected_disk,
+                                          None, None, None, None,
+                                          '--force')
 
-  # --force shouldn't help either.
-  sout, serr = svntest.actions.run_and_verify_svn("Checkout XPASS",
-                                                  [], svntest.verify.AnyOutput,
-                                                  'checkout',
-                                                  sbox.repo_url + '/A/D',
-                                                  D_path, '--force')
-
-  test_stderr("svn: Failed to add directory '.*M': a versioned " \
-              "directory of the same name already exists\n", serr)
+  expected_status.tweak('A/D/M', treeconflict='C')
+  expected_status.tweak(
+    'A/D',
+    'A/D/G',
+    'A/D/G/pi',
+    'A/D/G/rho',
+    'A/D/G/tau',
+    'A/D/gamma',
+    'A/D/kappa',
+    'A/D/H',
+    'A/D/H/I',
+    'A/D/H/I/J',
+    'A/D/H/I/K',
+    'A/D/H/I/K/xi',
+    'A/D/H/I/K/eta',
+    'A/D/H/I/L', wc_rev=4)
+  expected_status.add({
+    'A/D/H/chi'      : Item(status='  ', wc_rev=4),
+    'A/D/H/psi'      : Item(status='  ', wc_rev=4),
+    'A/D/H/omega'    : Item(status='  ', wc_rev=4),
+    })
+  svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
   # Try to co omicron's parent.
-  sout, serr = svntest.actions.run_and_verify_svn("Checkout XPASS",
-                                                  [], svntest.verify.AnyOutput,
-                                                  'checkout',
-                                                  sbox.repo_url + '/A/B/F',
-                                                  F_path)
+  expected_output = wc.State(wc_dir, {
+    'A/B/F/omicron'  : Item(status='  ', treeconflict='C'),
+    })
+  expected_disk = wc.State('', {
+    'omicron'        : Item("This is the file 'chi'.\n"),
+    })
+  svntest.actions.run_and_verify_checkout(sbox.repo_url + '/A/B/F',
+                                          F_path,
+                                          expected_output,
+                                          expected_disk,
+                                          None, None, None, None,
+                                          '--force')
 
-  test_stderr("svn: Failed to add file '.*omicron': a file of the same " \
-              "name is already scheduled for addition with history\n", serr)
-
-  # Again, --force shouldn't matter.
-  sout, serr = svntest.actions.run_and_verify_svn("Checkout XPASS",
-                                                  [], svntest.verify.AnyOutput,
-                                                  'checkout',
-                                                  sbox.repo_url + '/A/B/F',
-                                                  F_path, '--force')
-
-  test_stderr("svn: Failed to add file '.*omicron': a file of the same " \
-              "name is already scheduled for addition with history\n", serr)
+  expected_status.tweak('A/B/F/omicron', treeconflict='C')
+  expected_status.add({
+    'A/B/F'         : Item(status='  ', wc_rev=4),
+    })
+  svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
 #----------------------------------------------------------------------
 

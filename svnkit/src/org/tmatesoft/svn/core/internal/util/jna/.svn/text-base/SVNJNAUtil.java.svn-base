@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,12 +15,10 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNJNAUtil {
@@ -43,10 +41,6 @@ public class SVNJNAUtil {
         }
         String jnaEnabledProperty = System.getProperty("svnkit.useJNA", "true");
         ourIsJNAEnabled = Boolean.valueOf(jnaEnabledProperty).booleanValue();
-
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA available: " + ourIsJNAPresent);
-        SVNDebugLog.getDefaultLog().logFinest(SVNLogType.WC, "JNA enabled: " + ourIsJNAEnabled);
-
     }
     
     public static void setJNAEnabled(boolean enabled) {

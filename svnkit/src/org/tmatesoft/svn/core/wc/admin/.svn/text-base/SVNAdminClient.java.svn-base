@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSHotCopier;
+import org.tmatesoft.svn.core.internal.io.fs.FSPacker;
 import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
@@ -96,6 +97,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td>doSynchronize()</td><td>'svnsync synchronize'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doInfo()</td><td>'svnsync info'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
  * <td>doCopyRevisionProperties()</td><td>'svnsync copy-revprops'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
@@ -113,11 +117,14 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <tr bgcolor="#EAEAEA" align="left">
  * <td>doVerify()</td><td>'svnadmin verify'</td>
  * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doPack()</td><td>'svnadmin pack'</td>
+ * </tr>
  * </table>
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.1.0
+ * @since   1.2
  */
 public class SVNAdminClient extends SVNBasicClient {
     private ISVNLogEntryHandler mySyncHandler;
@@ -260,7 +267,52 @@ public class SVNAdminClient extends SVNBasicClient {
      * 
      * <p>
      * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
-     * to be compatible with pre-1.4 servers.
+     * to be compatible with pre-1.4 servers, <code>pre15Compatible</code> - with pre-1.5 servers and 
+     * <code>pre16Compatible</code> - with pre-1.6 servers. 
+     * 
+     * <p>
+     * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code> or <code>pre16Compatible</code>) 
+     * set to <span class="javakeyword">true</span> at a time.
+     * 
+     * @param  path                        a repository root dir path
+     * @param  uuid                        a repository uuid
+     * @param  enableRevisionProperties    enables/disables changes to revision properties
+     * @param  force                       forces operation to run
+     * @param  pre14Compatible             <span class="javakeyword">true</span> to 
+     *                                     create a repository with pre-1.4 format
+     * @param  pre15Compatible             <span class="javakeyword">true</span> to
+     *                                     create a repository with pre-1.5 format
+     * @param  pre16Compatible             <span class="javakeyword">true</span> to
+     *                                     create a repository with pre-1.6 format
+     * @return                             a local URL (file:///) of a newly created repository
+     * @throws SVNException
+     * @since                              1.3, SVN 1.5.0 
+     */
+    public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
+            boolean pre14Compatible, boolean pre15Compatible, boolean pre16Compatible) throws SVNException {
+        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, pre16Compatible);
+    }
+
+    /**
+     * Creates an FSFS-type repository.
+     * 
+     * This implementation uses {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory#createLocalRepository(File, String, boolean, boolean)}}.
+     * <p>
+     * If <code>uuid</code> is <span class="javakeyword">null</span> a new uuid will be generated, otherwise 
+     * the specified will be used.
+     * 
+     * <p>
+     * If <code>enableRevisionProperties</code> is <span class="javakeyword">true</span>, an empty 
+     * pre-revprop-change hook will be placed into the repository /hooks subdir. This enables changes to 
+     * revision properties of the newly created repository. 
+     * 
+     * <p>
+     * If <code>force</code> is <span class="javakeyword">true</span> and <code>path</code> already 
+     * exists, deletes that path and creates a repository in its place.
+     * 
+     * <p>
+     * Set <code>pre14Compatible</code> to <span class="javakeyword">true</span> if you want a new repository 
+     * to be compatible with pre-1.4 servers, <code>pre15Compatible</code> - with pre-1.5 servers.
      * 
      * <p>
      * There must be only one option (either <code>pre14Compatible</code> or <code>pre15Compatible</code>) 
@@ -276,12 +328,13 @@ public class SVNAdminClient extends SVNBasicClient {
      *                                     create a repository with pre-1.5 format
      * @return                             a local URL (file:///) of a newly created repository
      * @throws SVNException
-     * @since                              1.2.0, SVN 1.5.0 
+     * @since                              1.2, SVN 1.5.0 
      */
     public SVNURL doCreateRepository(File path, String uuid, boolean enableRevisionProperties, boolean force, 
             boolean pre14Compatible, boolean pre15Compatible) throws SVNException {
-        return SVNRepositoryFactory.createLocalRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible);
+        return doCreateRepository(path, uuid, enableRevisionProperties, force, pre14Compatible, pre15Compatible, false);
     }
+
     
     /**
      * Copies revision properties from the source repository starting at <code>startRevision</code> and up to 
@@ -462,6 +515,54 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
 
+    /**
+     * Returns information about the synchronization repository located at <code>toURL</code>.
+     * 
+     * @param  toURL          destination repository url
+     * @return                synchronization information
+     * @throws SVNException
+     * @since  1.3, SVN 1.6
+     */
+    public SVNSyncInfo doInfo(SVNURL toURL) throws SVNException {
+        SVNRepository toRepos = null;
+        try {
+            toRepos = createRepository(toURL, null, true);
+            checkIfRepositoryIsAtRoot(toRepos, toURL);
+            SVNPropertyValue fromURL = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_URL);
+            if (fromURL == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Repository ''{0}'' is not initialized for synchronization", 
+                        toURL);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            
+            SVNPropertyValue fromUUID = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID);
+            SVNPropertyValue lastMergedRevProp = toRepos.getRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION);
+            long lastMergedRev = lastMergedRevProp != null ? Long.parseLong(lastMergedRevProp.getString()) : SVNRepository.INVALID_REVISION;
+            return new SVNSyncInfo(fromURL.getString(), fromUUID != null ? fromUUID.getString() : null, lastMergedRev);
+        } finally {
+            if (toRepos != null) {
+                toRepos.closeSession();
+            }
+        }
+    }
+    
+    /**
+     * Compacts a repository into a more efficient storage model.  
+     * 
+     * <p/>
+     * Compacting does not occur if there are no full shards. Also compacting does not work 
+     * on pre-1.6 repositories.
+     * 
+     * @param  repositoryRoot  root of the repository to pack
+     * @throws SVNException
+     * @since  1.3, SVN 1.6
+     */
+    public void doPack(File repositoryRoot) throws SVNException {
+        FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
+        FSPacker packer = new FSPacker(myEventHandler);
+        packer.pack(fsfs);
+    }
+    
     /**
      * Completely synchronizes two repositories.
      * 

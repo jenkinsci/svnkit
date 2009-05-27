@@ -6,7 +6,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2005-2006 CollabNet.  All rights reserved.
+# Copyright (c) 2005-2006, 2008 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -247,11 +247,11 @@ def steal_lock(sbox):
 
   # attempt (and fail) to lock file
 
-  # This should give a "iota' is already locked... error.
-  svntest.actions.run_and_verify_svn(None, None,
-                                     ".*already locked",
-                                     'lock',
-                                     '-m', 'trying to break', file_path_b)
+  # This should give a "iota' is already locked... error, but exits 0.
+  svntest.actions.run_and_verify_svn2(None, None,
+                                      ".*already locked", 0,
+                                      'lock',
+                                      '-m', 'trying to break', file_path_b)
 
   svntest.actions.run_and_verify_svn(None, ".*locked by user", [],
                                      'lock', '--force',
@@ -356,8 +356,8 @@ def enforce_lock(sbox):
     if ((os.stat(iota_path)[0] & mode)
         or (os.stat(lambda_path)[0] & mode)
         or (os.stat(mu_path)[0] & mode)):
-      print "Setting 'svn:needs-lock' property on a file failed to set"
-      print "file mode to read-only."
+      print("Setting 'svn:needs-lock' property on a file failed to set")
+      print("file mode to read-only.")
       raise svntest.Failure
 
     # obtain a lock on one of these files...
@@ -366,7 +366,7 @@ def enforce_lock(sbox):
 
     # ...and verify that the write bit gets set...
     if not (os.stat(iota_path)[0] & mode):
-      print "Locking a file with 'svn:needs-lock' failed to set write bit."
+      print("Locking a file with 'svn:needs-lock' failed to set write bit.")
       raise svntest.Failure
 
     # ...and unlock it...
@@ -375,13 +375,13 @@ def enforce_lock(sbox):
 
     # ...and verify that the write bit gets unset
     if (os.stat(iota_path)[0] & mode):
-      print "Unlocking a file with 'svn:needs-lock' failed to unset write bit."
+      print("Unlocking a file with 'svn:needs-lock' failed to unset write bit.")
       raise svntest.Failure
 
     # Verify that removing the property restores the file to read-write
     svntest.main.run_svn(None, 'propdel', 'svn:needs-lock', iota_path)
     if not (os.stat(iota_path)[0] & mode):
-      print "Deleting 'svn:needs-lock' failed to set write bit."
+      print("Deleting 'svn:needs-lock' failed to set write bit.")
       raise svntest.Failure
 
 #----------------------------------------------------------------------
@@ -458,8 +458,8 @@ def defunct_lock(sbox):
 
   # make sure that iota got set to read-only
   if (os.stat(iota_path_b)[0] & mode):
-    print "Upon removal of a defunct lock, a file with 'svn:needs-lock'"
-    print "was not set back to read-only"
+    print("Upon removal of a defunct lock, a file with 'svn:needs-lock'")
+    print("was not set back to read-only")
     raise svntest.Failure
 
 
@@ -671,15 +671,15 @@ def lock_non_existent_file(sbox):
   fname = 'A/foo'
   file_path = os.path.join(sbox.wc_dir, fname)
 
-  output, error = svntest.main.run_svn(1, 'lock',
-                                       '-m', '', file_path)
+  exit_code, output, error = svntest.main.run_svn(1, 'lock',
+                                                  '-m', '', file_path)
 
   error_msg = "foo' is not under version control"
   for line in error:
     if line.find(error_msg) != -1:
       break
   else:
-    print "Error:", error_msg, ": not found in:", error
+    print("Error: %s : not found in: %s" % (error_msg, error))
     raise svntest.Failure
 
 #----------------------------------------------------------------------
@@ -704,11 +704,11 @@ def out_of_date(sbox):
                        '-m', '', file_path)
 
   # --- Meanwhile, in our other working copy... ---
-  svntest.actions.run_and_verify_svn(None, None,
-                                     ".*newer version of '/iota' exists",
-                                     'lock',
-                                     '--username', svntest.main.wc_author2,
-                                     '-m', '', file_path_b)
+  svntest.actions.run_and_verify_svn2(None, None,
+                                      ".*newer version of '/iota' exists", 0,
+                                      'lock',
+                                      '--username', svntest.main.wc_author2,
+                                      '-m', '', file_path_b)
 
 #----------------------------------------------------------------------
 # Tests reverting a svn:needs-lock file
@@ -732,8 +732,8 @@ def revert_lock(sbox):
 
   # make sure that iota got set to read-only
   if (os.stat(iota_path)[0] & mode):
-    print "Committing a file with 'svn:needs-lock'"
-    print "did not set the file to read-only"
+    print("Committing a file with 'svn:needs-lock'")
+    print("did not set the file to read-only")
     raise svntest.Failure
 
   # verify status is as we expect
@@ -747,8 +747,8 @@ def revert_lock(sbox):
 
   # make sure that iota got read-only-ness removed
   if (os.stat(iota_path)[0] & mode == 0):
-    print "Deleting the 'svn:needs-lock' property "
-    print "did not remove read-only-ness"
+    print("Deleting the 'svn:needs-lock' property ")
+    print("did not remove read-only-ness")
     raise svntest.Failure
 
   # revert the change
@@ -756,8 +756,8 @@ def revert_lock(sbox):
 
   # make sure that iota got set back to read-only
   if (os.stat(iota_path)[0] & mode):
-    print "Reverting a file with 'svn:needs-lock'"
-    print "did not set the file back to read-only"
+    print("Reverting a file with 'svn:needs-lock'")
+    print("did not set the file back to read-only")
     raise svntest.Failure
 
   # try propdel and revert from a different directory so
@@ -781,8 +781,8 @@ def revert_lock(sbox):
 
   # make sure it is still writable since we have the lock
   if (os.stat(iota_path)[0] & mode == 0):
-    print "Reverting a 'svn:needs-lock' file (with lock in wc) "
-    print "did not leave the file writable"
+    print("Reverting a 'svn:needs-lock' file (with lock in wc) ")
+    print("did not leave the file writable")
     raise svntest.Failure
 
 
@@ -940,12 +940,12 @@ def lock_and_exebit1(sbox):
   gamma_path = os.path.join(wc_dir, 'A', 'D', 'gamma')
 
   expected_err = ".*svn: warning: To turn off the svn:needs-lock property,.*"
-  svntest.actions.run_and_verify_svn(None, None, expected_err, 'ps',
-                                     'svn:needs-lock', ' ', gamma_path)
+  svntest.actions.run_and_verify_svn2(None, None, expected_err, 0,
+                                      'ps', 'svn:needs-lock', ' ', gamma_path)
 
   expected_err = ".*svn: warning: To turn off the svn:executable property,.*"
-  svntest.actions.run_and_verify_svn(None, None, expected_err, 'ps',
-                                     'svn:executable', ' ', gamma_path)
+  svntest.actions.run_and_verify_svn2(None, None, expected_err, 0,
+                                      'ps', 'svn:executable', ' ', gamma_path)
 
   # commit
   svntest.actions.run_and_verify_svn(None, None, [], 'commit',
@@ -955,8 +955,8 @@ def lock_and_exebit1(sbox):
   if (not gamma_stat & mode_r
       or gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Committing a file with 'svn:needs-lock, svn:executable'"
-    print "did not set the file to read-only, executable"
+    print("Committing a file with 'svn:needs-lock, svn:executable'")
+    print("did not set the file to read-only, executable")
     raise svntest.Failure
 
   # lock
@@ -967,8 +967,8 @@ def lock_and_exebit1(sbox):
   if (not gamma_stat & mode_r
       or not gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Locking a file with 'svn:needs-lock, svn:executable'"
-    print "did not set the file to read-write, executable"
+    print("Locking a file with 'svn:needs-lock, svn:executable'")
+    print("did not set the file to read-write, executable")
     raise svntest.Failure
 
   # modify
@@ -983,8 +983,8 @@ def lock_and_exebit1(sbox):
   if (not gamma_stat & mode_r
       or gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Unlocking a file with 'svn:needs-lock, svn:executable'"
-    print "did not set the file to read-only, executable"
+    print("Unlocking a file with 'svn:needs-lock, svn:executable'")
+    print("did not set the file to read-only, executable")
     raise svntest.Failure
 
   # ci
@@ -996,8 +996,8 @@ def lock_and_exebit1(sbox):
   if (not gamma_stat & mode_r
       or gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Commiting a file with 'svn:needs-lock, svn:executable'"
-    print "after unlocking modified file's permissions"
+    print("Commiting a file with 'svn:needs-lock, svn:executable'")
+    print("after unlocking modified file's permissions")
     raise svntest.Failure
 
 
@@ -1016,12 +1016,12 @@ def lock_and_exebit2(sbox):
   gamma_path = os.path.join(wc_dir, 'A', 'D', 'gamma')
 
   expected_err = ".*svn: warning: To turn off the svn:needs-lock property,.*"
-  svntest.actions.run_and_verify_svn(None, None, expected_err, 'ps',
-                                     'svn:needs-lock', ' ', gamma_path)
+  svntest.actions.run_and_verify_svn2(None, None, expected_err, 0,
+                                      'ps', 'svn:needs-lock', ' ', gamma_path)
 
   expected_err = ".*svn: warning: To turn off the svn:executable property,.*"
-  svntest.actions.run_and_verify_svn(None, None, expected_err, 'ps',
-                                     'svn:executable', ' ', gamma_path)
+  svntest.actions.run_and_verify_svn2(None, None, expected_err, 0,
+                                     'ps', 'svn:executable', ' ', gamma_path)
 
   # commit
   svntest.actions.run_and_verify_svn(None, None, [], 'commit',
@@ -1031,8 +1031,8 @@ def lock_and_exebit2(sbox):
   if (not gamma_stat & mode_r
       or gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Committing a file with 'svn:needs-lock, svn:executable'"
-    print "did not set the file to read-only, executable"
+    print("Committing a file with 'svn:needs-lock, svn:executable'")
+    print("did not set the file to read-only, executable")
     raise svntest.Failure
 
   # lock
@@ -1043,8 +1043,8 @@ def lock_and_exebit2(sbox):
   if (not gamma_stat & mode_r
       or not gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Locking a file with 'svn:needs-lock, svn:executable'"
-    print "did not set the file to read-write, executable"
+    print("Locking a file with 'svn:needs-lock, svn:executable'")
+    print("did not set the file to read-write, executable")
     raise svntest.Failure
 
   # modify
@@ -1059,8 +1059,8 @@ def lock_and_exebit2(sbox):
   if (not gamma_stat & mode_r
       or gamma_stat & mode_w
       or not gamma_stat & mode_x):
-    print "Commiting a file with 'svn:needs-lock, svn:executable'"
-    print "did not set the file to read-only, executable"
+    print("Commiting a file with 'svn:needs-lock, svn:executable'")
+    print("did not set the file to read-only, executable")
     raise svntest.Failure
 
 def commit_xml_unsafe_file_unlock(sbox):
@@ -1120,45 +1120,47 @@ def repos_lock_with_info(sbox):
   svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
   # Get repository lock token
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'info',
-                                                   file_url)
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'info', file_url)
   for line in output:
     if line.find("Lock Token:") != -1:
       repos_lock_token = line[12:]
       break
   else:
-    print "Error: Lock token not found"
+    print("Error: Lock token not found")
     raise svntest.Failure
 
   # info with revision option
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'info',
-                                                   file_path, '-r1')
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'info',
+                                                              file_path, '-r1')
 
   for line in output:
     if line.find("Lock Token:") != -1:
       lock_token = line[12:]
       break
   else:
-    print "Error: Lock token not found"
+    print("Error: Lock token not found")
     raise svntest.Failure
 
   if (repos_lock_token != lock_token):
-    print "Error: expected repository lock information not found."
+    print("Error: expected repository lock information not found.")
     raise svntest.Failure
 
   # info with peg revision
-  output, err = svntest.actions.run_and_verify_svn(None, None, [], 'info',
-                                                   file_path + '@1')
+  exit_code, output, err = svntest.actions.run_and_verify_svn(None, None, [],
+                                                              'info',
+                                                              file_path + '@1')
   for line in output:
     if line.find("Lock Token:") != -1:
       lock_token = line[12:]
       break
   else:
-    print "Error: Lock token not found"
+    print("Error: Lock token not found")
     raise svntest.Failure
 
   if (repos_lock_token != lock_token):
-    print "Error: expected repository lock information not found."
+    print("Error: expected repository lock information not found.")
     raise svntest.Failure
 
 #----------------------------------------------------------------------
@@ -1185,10 +1187,10 @@ def unlock_already_unlocked_files(sbox):
 
   error_msg = ".*Path '/A/B/E/alpha' is already locked by user '" + \
               svntest.main.wc_author2 + "'.*"
-  svntest.actions.run_and_verify_svn(None, None, error_msg,
-                                     'lock',
-                                     '--username', svntest.main.wc_author2,
-                                     alpha_path, gamma_path)
+  svntest.actions.run_and_verify_svn2(None, None, error_msg, 0,
+                                      'lock',
+                                      '--username', svntest.main.wc_author2,
+                                      alpha_path, gamma_path)
   expected_status.tweak('A/D/gamma', writelocked='K')
   svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
@@ -1201,11 +1203,11 @@ def unlock_already_unlocked_files(sbox):
 
   error_msg = "(.*No lock on path '/A/B/lambda'.*)" + \
               "|(.*'A/B/lambda' is not locked.*)"
-  svntest.actions.run_and_verify_svn(None, None, error_msg,
-                                     'unlock',
-                                     '--username', svntest.main.wc_author2,
-                                     '--force',
-                                     iota_path, lambda_path, alpha_path)
+  svntest.actions.run_and_verify_svn2(None, None, error_msg, 0,
+                                      'unlock',
+                                      '--username', svntest.main.wc_author2,
+                                      '--force',
+                                      iota_path, lambda_path, alpha_path)
 
 
   expected_status.tweak('iota', 'A/B/E/alpha', writelocked=None)
@@ -1261,9 +1263,9 @@ def info_moved_path(sbox):
   svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
   # Get info for old iota at r1. This shouldn't give us any lock info.
-  output, errput = svntest.actions.run_and_verify_svn(None, None, [],
-                                                      'info',
-                                                      fname2, '-r1')
+  exit_code, output, errput = svntest.actions.run_and_verify_svn(
+    None, None, [], 'info', fname2, '-r1')
+
   # Since we want to make sure that there is *no* lock info, to make this
   # more robust, we also check that the info command actually output some info.
   got_url = 0
@@ -1271,10 +1273,10 @@ def info_moved_path(sbox):
     if line.find("URL:") >= 0:
       got_url = 1
     if line.find("Lock Token:") >= 0:
-      print fname2 + " was reported as locked."
+      print(fname2 + " was reported as locked.")
       raise svntest.Failure
   if not got_url:
-    print "Info didn't output an URL."
+    print("Info didn't output an URL.")
     raise svntest.Failure
 
 #----------------------------------------------------------------------
@@ -1342,10 +1344,9 @@ def unlock_wrong_token(sbox):
   # Then, unlocking the WC path should fail.
   # ### The error message returned is actually this, but let's worry about that
   # ### another day...
-  svntest.actions.run_and_verify_svn(None, None,
-                                     ".*((No lock on path)|(400 Bad Request))",
-                                     'unlock',
-                                     file_path)
+  svntest.actions.run_and_verify_svn2(
+    None, None, ".*((No lock on path)|(400 Bad Request))", 0,
+    'unlock', file_path)
 
 #----------------------------------------------------------------------
 # Verify that info shows lock info for locked files with URI-unsafe names
@@ -1397,15 +1398,16 @@ def unlocked_lock_of_other_user(sbox):
 
   svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
-  # now try to unlock with user jconstant, should fail.
+  # now try to unlock with user jconstant, should fail but exit 0.
   if sbox.repo_url.startswith("http"):
     expected_err = ".*403 Forbidden.*"
   else:
     expected_err = "svn: warning: User '%s' is trying to use a lock owned by "\
                    "'%s'.*" % (svntest.main.wc_author2, svntest.main.wc_author)
-  svntest.actions.run_and_verify_svn(None, [], expected_err, 'unlock',
-                                     '--username', svntest.main.wc_author2,
-                                     pi_path)
+  svntest.actions.run_and_verify_svn2(None, [], expected_err, 0,
+                                      'unlock',
+                                      '--username', svntest.main.wc_author2,
+                                      pi_path)
   svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
 
@@ -1445,9 +1447,10 @@ test_list = [ None,
               unlock_already_unlocked_files,
               info_moved_path,
               ls_url_encoded,
-              unlock_wrong_token,
+              XFail(unlock_wrong_token, svntest.main.is_ra_type_dav),
               examine_lock_encoded_recurse,
-              unlocked_lock_of_other_user,
+              XFail(unlocked_lock_of_other_user,
+                    svntest.main.is_ra_type_dav)
             ]
 
 if __name__ == '__main__':

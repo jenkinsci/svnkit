@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSRecoverer {
@@ -36,7 +36,7 @@ public class FSRecoverer {
     
     public FSRecoverer(FSFS owner, ISVNCanceller canceller) {
         myOwner = owner;
-        myCanceller = canceller;
+        myCanceller = canceller == null ? ISVNCanceller.NULL : canceller;
     }
     
     public void runRecovery() throws SVNException {
@@ -56,18 +56,24 @@ public class FSRecoverer {
         String nextNodeID = null;
         String nextCopyID = null;
         long maxRev = getLargestRevision();
+        long youngestRev = myOwner.getYoungestRevision();
+        
+        if (youngestRev > maxRev) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Expected current rev to be <= {0} but found {1}", 
+                    new Object[] { String.valueOf(maxRev), String.valueOf(youngestRev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
         if (myOwner.getDBFormat() < FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
             long[] rootOffset = { -1 };
             String[] maxNodeID = { "0" };
             String[] maxCopyID = { "0" };
             for (long rev = 0; rev <= maxRev; rev++) {
-                if (myCanceller != null) {
-                    myCanceller.checkCancelled();
-                }
+                myCanceller.checkCancelled();
                 FSFile revFile = null;
                 try {
-                    revFile = myOwner.getRevisionFSFile(rev);
-                    FSRepositoryUtil.loadRootChangesOffset(revFile, rootOffset, null);
+                    revFile = myOwner.getPackOrRevisionFSFile(rev);
+                    FSRepositoryUtil.loadRootChangesOffset(myOwner, rev, revFile, rootOffset, null);
                     findMaxIDs(rev, revFile, rootOffset[0], maxNodeID, maxCopyID);
                 } finally {
                     if (revFile != null) {
@@ -78,6 +84,25 @@ public class FSRecoverer {
             nextNodeID = FSRepositoryUtil.generateNextKey(maxNodeID[0]);
             nextCopyID = FSRepositoryUtil.generateNextKey(maxCopyID[0]);
         }
+        
+        File revpropFile = null;
+        try {
+            revpropFile = myOwner.getRevisionPropertiesFile(maxRev);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Revision {0} has a revs file but no revprops file", 
+                        String.valueOf(maxRev));
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            throw svne;
+        }
+        
+        if (!revpropFile.isFile()) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Revision {0} has a non-file where its revprops file should be", 
+                    String.valueOf(maxRev));
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
         try {
             myOwner.writeCurrentFile(maxRev, nextNodeID, nextCopyID);
         } catch (IOException ioe) {
@@ -166,12 +191,16 @@ public class FSRecoverer {
         }
     }
     
-    private long getLargestRevision() {
+    private long getLargestRevision() throws SVNException {
         long right = 1;
         while (true) {
-            File revFile = myOwner.getRevisionFile(right);
-            if (!revFile.exists()) {
-                break;
+            try {
+                myOwner.getPackOrRevisionFSFile(right); 
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                    break;
+                } 
+                throw svne;
             }
             right <<= 1;
         }
@@ -180,11 +209,15 @@ public class FSRecoverer {
         
         while (left + 1 < right) {
             long probe = left + (right - left)/2;
-            File revFile = myOwner.getRevisionFile(probe);
-            if (!revFile.exists()) {
-                right = probe;
-            } else {
+            try {
+                myOwner.getPackOrRevisionFSFile(probe); 
                 left = probe;
+            } catch (SVNException svne) {
+                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_REVISION) {
+                    right = probe;
+                } else {
+                    throw svne;
+                }
             }
         }
         return left;

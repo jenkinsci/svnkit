@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -133,7 +133,7 @@ import org.tmatesoft.svn.util.Version;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNClientImpl implements SVNClientInterface {
 
@@ -167,7 +167,7 @@ public class SVNClientImpl implements SVNClientInterface {
 
     /**
      * @author TMate Software Ltd.
-     * @version 1.2.0
+     * @version 1.3
      */
     public static final class LogLevel implements SVNClientLogLevel {
     }
@@ -746,14 +746,12 @@ public class SVNClientImpl implements SVNClientInterface {
         SVNCopySource[] sources = new SVNCopySource[srcs.length];
         try {
             for (int i = 0; i < srcs.length; i++) {
-                // TODO revision is used both as peg and revision
-                // to be compatible with JavaHL bug.
-                SVNRevision revision = JavaHLObjectFactory.getSVNRevision(srcs[i].getRevision());
-                SVNRevision pegRevision = JavaHLObjectFactory.getSVNRevision(srcs[i].getRevision());
                 if (isURL(srcs[i].getPath())) {
-                    sources[i] = new SVNCopySource(pegRevision, revision, SVNURL.parseURIEncoded(srcs[i].getPath()));
+                    sources[i] = new SVNCopySource(JavaHLObjectFactory.getSVNRevision(srcs[i].getPegRevision()),
+                            JavaHLObjectFactory.getSVNRevision(srcs[i].getRevision()), SVNURL.parseURIEncoded(srcs[i].getPath()));
                 } else {
-                    sources[i] = new SVNCopySource(pegRevision, revision, new File(srcs[i].getPath()).getAbsoluteFile());
+                    sources[i] = new SVNCopySource(JavaHLObjectFactory.getSVNRevision(srcs[i].getPegRevision()),
+                            JavaHLObjectFactory.getSVNRevision(srcs[i].getRevision()), new File(srcs[i].getPath()).getAbsoluteFile());
                 }
             }
         } catch (SVNException e) {
@@ -1842,7 +1840,7 @@ public class SVNClientImpl implements SVNClientInterface {
                 }
                 public SVNProperties getRevisionProperties(String message, SVNCommitItem[] commitables, SVNProperties revisionProperties) throws SVNException {
                     return revisionProperties == null ? new SVNProperties() : revisionProperties;
-                }                    
+                }
             };
         }
         return null;
@@ -2216,5 +2214,14 @@ public class SVNClientImpl implements SVNClientInterface {
                     JavaHLObjectFactory.getSVNRevision(revision),
                     JavaHLObjectFactory.getSVNDepth(depth), changeListsCollection, handler);
         }
+    }
+
+    public void logMessages(String path, Revision pegRevision, RevisionRange[] ranges, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, String[] revProps, long limit,
+            LogMessageCallback callback) throws ClientException {
+        // TODO
+    }
+
+    public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
+        // TODO
     }
 }

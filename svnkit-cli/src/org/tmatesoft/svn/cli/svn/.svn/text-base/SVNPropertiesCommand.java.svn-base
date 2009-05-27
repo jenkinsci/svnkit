@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,11 +14,13 @@ package org.tmatesoft.svn.cli.svn;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -34,7 +36,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVNPropertyHandler {
 
@@ -124,11 +126,36 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
         return myRevisionProperties;
     }
 
-    protected void printProperty(SVNPropertyValue value) {
+    protected void printProplist(List props) {
+        for (Iterator plist = props.iterator(); plist.hasNext();) {
+            SVNPropertyData property = (SVNPropertyData) plist.next();
+            getSVNEnvironment().getOut().println("  " + property.getName());
+            if (getSVNEnvironment().isVerbose()) {
+                printProperty(property.getValue(), true);
+                getSVNEnvironment().getOut().println();
+            }
+        }
+    }
+    
+    protected void printProperty(SVNPropertyValue value, boolean isPropListLike) {
         if (value.isString()) {
-            getSVNEnvironment().getOut().print(value.getString());
+            String stringValue = value.getString();
+            if (isPropListLike) {
+                String[] lines = SVNCommandUtil.breakToLines(stringValue);
+                for (int i = 0; lines != null && i < lines.length; i++) {
+                    String line = lines[i];
+                    getSVNEnvironment().getOut().print("    ");
+                    getSVNEnvironment().getOut().print(line);
+                }
+            } else {
+                getSVNEnvironment().getOut().print(stringValue);
+            }
         } else {
             try {
+                if (isPropListLike) {
+                    //indent here
+                    getSVNEnvironment().getOut().print("    ");
+                }
                 getSVNEnvironment().getOut().write(value.getBytes());
             } catch (IOException e) {
 

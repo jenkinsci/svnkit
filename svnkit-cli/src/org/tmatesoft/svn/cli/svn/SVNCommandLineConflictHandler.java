@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @since   1.2.0
  */
@@ -45,6 +45,10 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
     }
     
     public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
+        if (conflictDescription.isTreeConflict()) {
+// TODO: SVNKit 1.3           
+            return null;
+        }
         SVNMergeFileSet files = conflictDescription.getMergeFiles();
         if (myAccept == SVNConflictAcceptPolicy.POSTPONE) {
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);

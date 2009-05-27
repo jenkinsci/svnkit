@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,7 +23,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNEncodingUtil {
@@ -155,6 +155,10 @@ public class SVNEncodingUtil {
     }
 
     public static String xmlEncodeCDATA(String src) {
+        return xmlEncodeCDATA(src, false);
+    }
+
+    public static String xmlEncodeCDATA(String src, boolean escapeQuotes) {
         StringBuffer sb = null;
         for(int i = 0; i < src.length(); i++) {
             char ch = src.charAt(i);
@@ -183,6 +187,14 @@ public class SVNEncodingUtil {
                     }
                     sb.append("&#13;");
                     break;
+                case '\"':
+                    if (escapeQuotes) {
+                        if (sb == null) {
+                            sb = createStringBuffer(src, i);
+                        }
+                        sb.append("&quot;");
+                        break;
+                    }
                 default:
                     if (sb != null) {
                         sb.append(ch);

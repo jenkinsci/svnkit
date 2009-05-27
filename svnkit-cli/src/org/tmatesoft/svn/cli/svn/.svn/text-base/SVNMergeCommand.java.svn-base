@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,7 +32,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNMergeCommand extends SVNCommand {
@@ -43,7 +43,6 @@ public class SVNMergeCommand extends SVNCommand {
 
     protected Collection createSupportedOptions() {
         Collection options = new LinkedList();
-
         options.add(SVNOption.REVISION);
         options.add(SVNOption.CHANGE);
         options.add(SVNOption.NON_RECURSIVE);
@@ -51,6 +50,7 @@ public class SVNMergeCommand extends SVNCommand {
         options.add(SVNOption.QUIET);
         options.add(SVNOption.FORCE);
         options.add(SVNOption.DRY_RUN);
+        options.add(SVNOption.DIFF3_CMD);
         options.add(SVNOption.RECORD_ONLY);
         options.add(SVNOption.EXTENSIONS);
         options.add(SVNOption.IGNORE_ANCESTRY);

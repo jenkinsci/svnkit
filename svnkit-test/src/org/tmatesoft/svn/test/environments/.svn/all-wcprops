@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/environments
+END
+AbstractSVNTestEnvironment.java
+K 25
+svn:wc:ra_dav:version-url
+V 122
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/environments/AbstractSVNTestEnvironment.java
+END
+JavaHLTestEnvironment.java
+K 25
+svn:wc:ra_dav:version-url
+V 117
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/environments/JavaHLTestEnvironment.java
+END
+SVNTestEnvironment.java
+K 25
+svn:wc:ra_dav:version-url
+V 114
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/environments/SVNTestEnvironment.java
+END

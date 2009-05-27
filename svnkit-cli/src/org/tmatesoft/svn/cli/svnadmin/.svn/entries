@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnadmin
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
+2009-04-21T17:23:01.449526Z
+5776
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-cb1964bd83407249823b893955f46aa2
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+bc9a4a3343bd249eb98148a3670b35f3
+2009-04-21T17:23:01.449526Z
+5776
 alex
 has-props
 
@@ -58,75 +58,7 @@ has-props
 
 
 
-1668
-
-SVNAdminVerifyCommand.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-18432eb26a2c87c3fd05b4318856f6b5
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3547
-
-SVNAdminCommandEnvironment.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-8ffad43e6e078856170036ca402bcbc6
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-9736
+1784
 
 SVNAdminListTransactionsCommand.java
 file
@@ -134,10 +66,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-b9b8849e83af4641f7cc11ea20842224
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+23393fbc54026966487ab25d6607f029
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -160,18 +92,18 @@ has-props
 
 
 
-2056
+2054
 
-SVNAdminDumpCommand.java
+SVNAdminCommandEnvironment.java
 file
 
 
 
 
-2008-11-04T17:25:59.000000Z
-2e9d56dd1824626e4340595cd6fa46cb
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+21181a16488c9e8cbd3f7138da759412
+2009-04-21T17:23:01.449526Z
+5776
 alex
 has-props
 
@@ -194,7 +126,41 @@ has-props
 
 
 
-3898
+9964
+
+SVNAdminVerifyCommand.java
+file
+
+
+
+
+2009-05-27T05:49:11.000000Z
+595b996f566d97125d8d6d9506e4abf8
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3545
 
 SVNAdminRecoverCommand.java
 file
@@ -202,10 +168,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-bc1c4502195aa99f892e087051dca74e
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+cdb499a69df2db996835c44530608d93
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -228,19 +194,19 @@ has-props
 
 
 
-2593
+2635
 
-options.properties
+SVNAdminDumpCommand.java
 file
 
 
 
 
-2008-11-04T17:25:59.000000Z
-77bf9433a718aa232ced14bad3d5ad67
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2009-05-27T05:49:11.000000Z
+347d7db4dd598351223564de21717fbf
+2009-04-21T14:43:00.959095Z
+5772
+alex
 has-props
 
 
@@ -262,7 +228,7 @@ has-props
 
 
 
-1356
+3896
 
 SVNAdminListLocksCommand.java
 file
@@ -270,10 +236,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-c036dee6a153cf7501d116208a5b5f0d
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+ad1b518cfd28c5120350a2896ba2ec99
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -296,86 +262,18 @@ has-props
 
 
 
-2897
+2895
 
-SVNAdminOption.java
+options.properties
 file
 
 
 
 
-2008-11-04T17:25:59.000000Z
-df387a719417a1695c7ee0f1e5cf922b
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3277
-
-SVNAdminSetRevPropCommand.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-7a5cf4c7bf90d10036d897b7503cc531
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3631
-
-commands.properties
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-b52c22b79b9b00c601f29427564be829
-2008-07-30T16:53:59.266781Z
-4613
+2009-05-27T05:49:11.000000Z
+8729109cacb1a0875e0f1c396e057947
+2009-04-21T17:10:53.759579Z
+5775
 semen
 has-props
 
@@ -398,18 +296,52 @@ has-props
 
 
 
-4508
+1527
 
-SVNAdminCommand.java
+SVNAdminOption.java
 file
 
 
 
 
-2008-11-04T17:25:59.000000Z
-b539fbc15905cab3cd273c5be5d915d8
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+3f79b7f917ce69517861092e1247e57d
+2009-04-21T17:10:53.759579Z
+5775
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3376
+
+SVNAdminSetRevPropCommand.java
+file
+
+
+
+
+2009-05-27T05:49:11.000000Z
+57f5de89b81d36c1dbc731d6f754502e
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -432,7 +364,75 @@ has-props
 
 
 
-3498
+3629
+
+commands.properties
+file
+
+
+
+
+2009-05-27T05:49:11.000000Z
+9ae294839d5ba258d533761d9b56d42c
+2009-04-21T17:10:53.759579Z
+5775
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4923
+
+SVNAdminPackCommand.java
+file
+
+
+
+
+2009-05-27T05:49:11.000000Z
+7e9a55edf77360f488ed7a18e6e185c7
+2009-04-15T14:46:49.848615Z
+5733
+sa
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2092
 
 SVNAdminLoadCommand.java
 file
@@ -440,10 +440,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-bedbc5cc1e42255ee760f887569a187c
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+44830fa5e1a96f9df4987ed86b578e72
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -466,7 +466,41 @@ has-props
 
 
 
-3438
+3436
+
+SVNAdminCommand.java
+file
+
+
+
+
+2009-05-27T05:49:11.000000Z
+8ae5498f01d1b66d468683e29230c5b7
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3496
 
 SVNAdmin.java
 file
@@ -474,10 +508,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-6cddc82ed157551b0ef0f23ea6a6df04
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+d05f3a4923b2a772ef8c2c34cc3db800
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -500,7 +534,7 @@ has-props
 
 
 
-4144
+4213
 
 SVNAdminSetUUIDCommand.java
 file
@@ -508,10 +542,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-ad8e2a4c09353668019e9050666c263f
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+9c4522360caae2829e8b7c9ce7f4c12f
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -534,7 +568,7 @@ has-props
 
 
 
-1745
+1743
 
 SVNAdminHotCopyCommand.java
 file
@@ -542,10 +576,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-bf193880c01738612c130160de50fe02
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+67815b8908ed114491887cd389f864a7
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -568,7 +602,7 @@ has-props
 
 
 
-1316
+1314
 
 SVNAdminRemoveTransactionsCommand.java
 file
@@ -576,10 +610,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-137458430217fe66519fdb3affb71797
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+65289dbd452b0699b5690b015681e8aa
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -602,7 +636,7 @@ has-props
 
 
 
-2655
+2653
 
 SVNAdminUpgradeCommand.java
 file
@@ -610,10 +644,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-1545f96b6567996a4f082d009b731e38
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+564ca3367501398c1f42d112f8657eb1
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -636,7 +670,7 @@ has-props
 
 
 
-2148
+2146
 
 SVNAdminHelpCommand.java
 file
@@ -644,10 +678,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-fd96007e4427ccf87afdfeda76ecb42f
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+16861f736807edea3ea7a71b0aa2b1de
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -670,7 +704,7 @@ has-props
 
 
 
-3293
+3291
 
 SVNAdminRemoveLocksCommand.java
 file
@@ -678,10 +712,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-1641d4f2c517d66cf6c0c96458eec6a1
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+5de902f67500f620f8ac5eb42310343d
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -704,7 +738,7 @@ has-props
 
 
 
-3095
+3093
 
 SVNAdminSetLogCommand.java
 file
@@ -712,10 +746,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-051728138b474d8d4eeaf3dc57cfb84f
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:11.000000Z
+a16870179c7ef0090e7bda0e89b3b01e
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -738,5 +772,5 @@ has-props
 
 
 
-3419
+3417
 

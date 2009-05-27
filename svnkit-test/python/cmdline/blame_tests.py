@@ -6,7 +6,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2008 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -66,15 +66,15 @@ def parse_and_verify_blame(output, expected_blame, with_merged=0):
 
   # Verify the results
   if len(results) != len(expected_blame):
-    raise svntest.Failure, "expected and actual results not the same length"
+    raise svntest.Failure("expected and actual results not the same length")
 
-  pairs = zip(results, expected_blame)
-  for num in xrange(len(pairs)):
+  pairs = list(zip(results, expected_blame))
+  for num in range(len(pairs)):
     (item, expected_item) = pairs[num]
     for key in keys:
       if item[key] != expected_item[key]:
-        raise svntest.Failure, 'on line %d, expecting %s "%s", found "%s"' % \
-          (num+1, key, str(expected_item[key]), str(item[key]))
+        raise svntest.Failure('on line %d, expecting %s "%s", found "%s"' % \
+          (num+1, key, str(expected_item[key]), str(item[key])))
 
 
 ######################################################################
@@ -123,12 +123,12 @@ def blame_binary(sbox):
   svntest.main.run_svn(None, 'ci',
                        '-m', '', iota)
 
-  output, errput = svntest.main.run_svn(2, 'blame', iota)
+  exit_code, output, errput = svntest.main.run_svn(2, 'blame', iota)
   if (len(errput) != 1) or (errput[0].find('Skipping') == -1):
     raise svntest.Failure
 
   # But with --force, it should work.
-  output, errput = svntest.main.run_svn(2, 'blame', '--force', iota)
+  exit_code, output, errput = svntest.main.run_svn(2, 'blame', '--force', iota)
   if (len(errput) != 0 or len(output) != 4):
     raise svntest.Failure
 
@@ -155,7 +155,7 @@ def blame_directory(sbox):
   # probably include a leading slash on the path, but we'll tolerate
   # it either way, since either way it would still be a clean error.
   expected_error  = ".*'[/]{0,1}A' is not a file"
-  outlines, errlines = svntest.main.run_svn(1, 'blame', dir)
+  exit_code, outlines, errlines = svntest.main.run_svn(1, 'blame', dir)
 
   # Verify expected error message is output
   for line in errlines:
@@ -185,9 +185,10 @@ def blame_in_xml(sbox):
                                         None, None, wc_dir)
 
   # Retrieve last changed date from svn info
-  output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                     'log', file_path,
-                                                     '--xml', '-r1:2')
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'log', file_path, '--xml', '-r1:2')
+
   date1 = None
   date2 = None
   for line in output:
@@ -224,9 +225,10 @@ def blame_in_xml(sbox):
               '</target>\n',
               '</blame>\n']
 
-  output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                     'blame', file_path,
-                                                     '--xml')
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'blame', file_path, '--xml')
+
   for i in range(0, len(output)):
     if output[i] != template[i]:
       raise svntest.Failure
@@ -253,17 +255,16 @@ def blame_on_unknown_revision(sbox):
     svntest.actions.run_and_verify_commit(wc_dir, expected_output,
                                           None, None, wc_dir)
 
-  output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                     'blame', file_path,
-                                                     '-rHEAD:HEAD')
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'blame', file_path, '-rHEAD:HEAD')
 
   if output[0].find(" - This is the file 'iota'.") == -1:
     raise svntest.Failure
 
-  output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                     'blame', file_path,
-                                                     '--verbose',
-                                                     '-rHEAD:HEAD')
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'blame', file_path, '--verbose', '-rHEAD:HEAD')
 
   if output[0].find(" - This is the file 'iota'.") == -1:
     raise svntest.Failure
@@ -330,9 +331,9 @@ def blame_eol_styles(sbox):
     svntest.actions.run_and_verify_commit(wc_dir, expected_output,
                                           None, None, wc_dir)
 
-    output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                       'blame', file_path,
-                                                       '-r1:HEAD')
+    exit_code, output, error = svntest.actions.run_and_verify_svn(
+      None, None, [],
+      'blame', file_path, '-r1:HEAD')
 
     # output is a list of lines, there should be 3 lines
     if len(output) != 3:
@@ -378,8 +379,9 @@ def blame_ignore_whitespace(sbox):
     "     2    jrandom     C    c    \n",
     ]
 
-  output, error = svntest.actions.run_and_verify_svn(None, expected_output, [],
-                                     'blame', '-x', '-w', file_path)
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, expected_output, [],
+    'blame', '-x', '-w', file_path)
 
   # commit some changes
   svntest.main.file_write(file_path,
@@ -439,8 +441,9 @@ def blame_ignore_eolstyle(sbox):
     "     3    jrandom Cc\n",
     ]
 
-  output, error = svntest.actions.run_and_verify_svn(None, expected_output, [],
-                                     'blame', '-x', '--ignore-eol-style', file_path)
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, expected_output, [],
+    'blame', '-x', '--ignore-eol-style', file_path)
 
 
 def blame_merge_info(sbox):
@@ -452,8 +455,10 @@ def blame_merge_info(sbox):
   wc_dir = sbox.wc_dir
   iota_path = os.path.join(wc_dir, 'trunk', 'iota')
 
-  output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                     'blame', '-g', iota_path)
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'blame', '-g', iota_path)
+
   expected_blame = [
       { 'revision' : 2,
         'author' : 'jrandom',
@@ -478,9 +483,10 @@ def blame_merge_out_of_range(sbox):
   wc_dir = sbox.wc_dir
   upsilon_path = os.path.join(wc_dir, 'trunk', 'A', 'upsilon')
 
-  output, error = svntest.actions.run_and_verify_svn(None, None, [],
-                                                     'blame', '-g',
-                                                     upsilon_path)
+  exit_code, output, error = svntest.actions.run_and_verify_svn(
+    None, None, [],
+    'blame', '-g', upsilon_path)
+
   expected_blame = [
       { 'revision' : 4,
         'author' : 'jrandom',

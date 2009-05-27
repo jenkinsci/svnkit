@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import org.tmatesoft.svn.cli.AbstractSVNOption;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSyncOption extends AbstractSVNOption {
@@ -33,7 +33,7 @@ public class SVNSyncOption extends AbstractSVNOption {
     public static final SVNSyncOption NO_AUTH_CACHE = new SVNSyncOption("no-auth-cache", null, true);
     public static final SVNSyncOption NON_INTERACTIVE = new SVNSyncOption("non-interactive", null, true);
     public static final SVNSyncOption QUIET = new SVNSyncOption("quiet", "q", true);
-    
+    public static final SVNSyncOption TRUST_SERVER_CERT = new SVNSyncOption("trust-server-cert", null, true);
 
     private SVNSyncOption(String name, String alias, boolean unary) {
         super(name, alias, unary);

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -46,7 +47,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNCommitter implements ISVNCommitPathHandler {
@@ -113,7 +114,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         }
         long cfRev = item.getCopyFromRevision().getNumber();//item.getCopyFromURL() != null ? rev : -1;
         if (item.isDeleted()) {
-            commitEditor.deleteEntry(commitPath, rev);
+            try {
+                commitEditor.deleteEntry(commitPath, rev);
+            } catch (SVNException e) {
+                fixError(commitPath, e, SVNNodeKind.FILE);
+            }
         }
         
         boolean fileOpen = false;
@@ -145,20 +150,32 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         if (item.isPropertiesModified()) {
             if (item.getKind() == SVNNodeKind.FILE) {
                 if (!fileOpen) {
-                    commitEditor.openFile(commitPath, rev);
+                    try {
+                        commitEditor.openFile(commitPath, rev);
+                    } catch (SVNException e) {
+                        fixError(commitPath, e, SVNNodeKind.FILE);
+                    }
                 }
                 fileOpen = true;
             } else if (!item.isAdded()) {
                 // do not open dir twice.
-                if ("".equals(commitPath)) {
-                    commitEditor.openRoot(rev);
-                } else {
-                    commitEditor.openDir(commitPath, rev);
+                try {
+                    if ("".equals(commitPath)) {
+                        commitEditor.openRoot(rev);
+                    } else {
+                        commitEditor.openDir(commitPath, rev);
+                    }
+                } catch (SVNException svne) {
+                    fixError(commitPath, svne, SVNNodeKind.DIR);
                 }
                 closeDir = true;
             }
 
-            sendPropertiesDelta(commitPath, item, commitEditor);
+            try {
+                sendPropertiesDelta(commitPath, item, commitEditor);
+            } catch (SVNException e) {
+                fixError(commitPath, e, item.getKind());
+            }
             
             if (outgoingProperties != null) {
                 for (Iterator propsIter = outgoingProperties.keySet().iterator(); propsIter.hasNext();) {
@@ -175,7 +192,11 @@ public class SVNCommitter implements ISVNCommitPathHandler {
         
         if (item.isContentsModified() && item.getKind() == SVNNodeKind.FILE) {
             if (!fileOpen) {
-                commitEditor.openFile(commitPath, rev);
+                try {
+                    commitEditor.openFile(commitPath, rev);
+                } catch (SVNException e) {
+                    fixError(commitPath, e, SVNNodeKind.FILE);
+                }
             }
             myModifiedFiles.put(commitPath, item);
         } else if (fileOpen) {
@@ -201,39 +222,69 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             File tmpFile = dir.getBaseFile(name, true);
             myTmpFiles.add(tmpFile);
 
+            String expectedChecksum = null;
             String checksum = null;
-            if (!item.isAdded()) {
-                checksum = SVNFileUtil.computeChecksum(dir.getBaseFile(name, false));
-                String realChecksum = entry.getChecksum();
-                if (realChecksum != null && !realChecksum.equals(checksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
-                            new Object[] {dir.getFile(name), realChecksum, checksum}); 
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-            }
-            editor.applyTextDelta(path, checksum);
-            if (myDeltaGenerator == null) {
-                myDeltaGenerator = new SVNDeltaGenerator();
-            }
+            String newChecksum = null;
+
+            SVNChecksumInputStream baseChecksummedIS = null;
             InputStream sourceIS = null;
             InputStream targetIS = null;
             OutputStream tmpBaseStream = null;
             File baseFile = dir.getBaseFile(name, false);
-            String newChecksum = null;
+            SVNErrorMessage error = null;
+            boolean useChecksummedStream = false;
+            boolean openSrcStream = false;
+            if (!item.isAdded()) {
+                openSrcStream = true;
+                expectedChecksum = entry.getChecksum();
+                if (expectedChecksum != null) {
+                    useChecksummedStream = true;
+                } else {
+                    expectedChecksum = SVNFileUtil.computeChecksum(baseFile);
+                }
+            } else {
+                sourceIS = SVNFileUtil.DUMMY_IN;
+            }
+  
+            editor.applyTextDelta(path, expectedChecksum);
+            if (myDeltaGenerator == null) {
+                myDeltaGenerator = new SVNDeltaGenerator();
+            }
+
             try {
-                sourceIS = !item.isAdded() && baseFile.exists() ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : SVNFileUtil.DUMMY_IN;
+                sourceIS = openSrcStream ? SVNFileUtil.openFileForReading(baseFile, SVNLogType.WC) : sourceIS;
+                if (useChecksummedStream) {
+                    baseChecksummedIS = new SVNChecksumInputStream(sourceIS, SVNChecksumInputStream.MD5_ALGORITHM, true, true);
+                    sourceIS = baseChecksummedIS;
+                }
+                    
                 targetIS = SVNTranslator.getTranslatedStream(dir, name, true, false);
                 tmpBaseStream = SVNFileUtil.openFileForWriting(tmpFile);
                 CopyingStream localStream = new CopyingStream(tmpBaseStream, targetIS);
                 newChecksum = myDeltaGenerator.sendDelta(path, sourceIS, 0, localStream, editor, true);
             } catch (SVNException svne) {
-                SVNErrorMessage err = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
-                SVNErrorManager.error(err, SVNLogType.WC);
+                error = svne.getErrorMessage().wrap("While preparing ''{0}'' for commit", dir.getFile(name));
             } finally {
                 SVNFileUtil.closeFile(sourceIS);
                 SVNFileUtil.closeFile(targetIS);
                 SVNFileUtil.closeFile(tmpBaseStream);
             }
+
+            if (baseChecksummedIS != null) {
+                checksum = baseChecksummedIS.getDigest();
+            }
+            
+            if (expectedChecksum != null && checksum != null && !expectedChecksum.equals(checksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                        "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
+                        new Object[] { dir.getFile(name), expectedChecksum, checksum }); 
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            if (error != null) {
+                SVNErrorManager.error(error, SVNLogType.WC);
+            }
+            
             editor.closeFile(path, newChecksum);
         }
     }
@@ -296,6 +347,16 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             return "/";
         }
         return path.substring(myRepositoryRoot.length());
+    }
+    
+    private void fixError(String path, SVNException e, SVNNodeKind kind) throws SVNException {
+        SVNErrorMessage err = e.getErrorMessage();
+        if (err.getErrorCode() == SVNErrorCode.FS_NOT_FOUND || err.getErrorCode() == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+            err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_UP_TO_DATE, kind == SVNNodeKind.DIR ? 
+                    "Directory ''{0}'' is out of date" : "File ''{0}'' is out of date", path);
+            throw new SVNException(err);
+        }
+        throw e;
     }
 
     public static SVNCommitInfo commit(Collection tmpFiles, Map commitItems, String repositoryRoot, ISVNEditor commitEditor) throws SVNException {

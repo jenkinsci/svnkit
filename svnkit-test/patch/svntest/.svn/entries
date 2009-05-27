@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/patch/svntest
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/patch/svntest
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-12-09T15:38:41.483467Z
-5345
-alex
+2009-03-23T14:57:51.095143Z
+5613
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-50f5168662769f8409fe1b87739813b2
-2008-08-30T13:49:06.418217Z
-4802
-alex
+2009-05-27T05:49:16.000000Z
+cc4a7cbbbdd83eedaa0ddada2ef70350
+2009-03-23T14:57:51.095143Z
+5613
+sa
 has-props
 
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-47182
+53395
 

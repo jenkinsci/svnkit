@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/contrib/javahl
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/contrib/javahl
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-01-08T16:28:00.472597Z
-5405
+2009-05-13T11:28:20.938259Z
+5847
 sa
 has-props
 
@@ -32,7 +32,7 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
+2009-05-27T05:49:20.000000Z
 ac35b7b8d4076ccf4bc49d4df769db30
 2005-01-31T19:24:28.057953Z
 193
@@ -66,10 +66,10 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
-67427007c8cb0b5342c399e7e116cd3e
-2008-04-14T13:19:58.057202Z
-4160
+2009-05-27T05:49:20.000000Z
+284ec7a46374ae121c1e02a093520c94
+2009-04-07T09:51:50.340608Z
+5667
 semen
 has-props
 
@@ -92,5 +92,5 @@ has-props
 
 
 
-753
+967
 

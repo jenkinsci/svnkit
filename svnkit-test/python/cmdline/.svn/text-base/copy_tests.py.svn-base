@@ -6,7 +6,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2008 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -18,6 +18,7 @@
 
 # General modules
 import stat, os, re, shutil
+from string import lower, upper
 
 # Our testing module
 import svntest
@@ -149,7 +150,7 @@ def copy_replace_with_props(sbox, wc_copy):
     props = { 'phony-prop' : '*'}
   else:
     props = { 'phony-prop' : '*'}
-    
+
   expected_disk.tweak('A/D/G/rho',
                       contents="This is the file 'pi'.\n",
                       props=props)
@@ -787,7 +788,7 @@ def copy_preserve_executable_bit(sbox):
   mode2 = os.stat(newpath1)[stat.ST_MODE]
 
   if mode1 == mode2:
-    print "setting svn:executable did not change file's permissions"
+    print("setting svn:executable did not change file's permissions")
     raise svntest.Failure
 
   # Commit the file
@@ -802,7 +803,7 @@ def copy_preserve_executable_bit(sbox):
 
   # The mode on the original and copied file should be identical
   if mode2 != mode3:
-    print "permissions on the copied file are not identical to original file"
+    print("permissions on the copied file are not identical to original file")
     raise svntest.Failure
 
 #----------------------------------------------------------------------
@@ -914,15 +915,15 @@ def repos_to_wc(sbox):
   svntest.actions.run_and_verify_status(wc_dir, expected_output)
 
   # Modification will only show up if timestamps differ
-  out,err = svntest.main.run_svn(None, 'diff', pi_path)
+  exit_code, out, err = svntest.main.run_svn(None, 'diff', pi_path)
   if err or not out:
-    print "diff failed"
+    print("diff failed")
     raise svntest.Failure
   for line in out:
     if line == '+zig\n': # Crude check for diff-like output
       break
   else:
-    print "diff output incorrect", out
+    print("diff output incorrect %s" % out)
     raise svntest.Failure
 
   # Revert everything and verify.
@@ -1333,12 +1334,12 @@ def revision_kinds_local_source(sbox):
     expected_disk.add({ dst: Item(contents=text) })
 
     # Check that the copied-from revision == from_rev.
-    output, errput = svntest.main.run_svn(None, "info", dst_path)
+    exit_code, output, errput = svntest.main.run_svn(None, "info", dst_path)
     for line in output:
       if line.rstrip() == "Copied From Rev: " + str(from_rev):
         break
     else:
-      print dst, "should have been copied from revision", from_rev
+      print("%s should have been copied from revision %s" % (dst, from_rev))
       raise svntest.Failure
 
   # Check that the new files have the right contents
@@ -1471,9 +1472,9 @@ def wc_to_wc_copy_between_different_repos(sbox):
   wc2_dir = sbox2.wc_dir
 
   # Attempt a copy between different repositories.
-  out, err = svntest.main.run_svn(1, 'cp',
-                                  os.path.join(wc2_dir, 'A'),
-                                  os.path.join(wc_dir, 'A', 'B'))
+  exit_code, out, err = svntest.main.run_svn(1, 'cp',
+                                             os.path.join(wc2_dir, 'A'),
+                                             os.path.join(wc_dir, 'A', 'B'))
   for line in err:
     if line.find("it is not from repository") != -1:
       break
@@ -1502,9 +1503,9 @@ def wc_to_wc_copy_deleted(sbox):
   svntest.actions.run_and_verify_status(wc_dir, expected_status)
 
   # Copy to schedule=delete fails
-  out, err = svntest.main.run_svn(1, 'cp',
-                                  os.path.join(B_path, 'E'),
-                                  os.path.join(B_path, 'F'))
+  exit_code, out, err = svntest.main.run_svn(1, 'cp',
+                                             os.path.join(B_path, 'E'),
+                                             os.path.join(B_path, 'F'))
   for line in err:
     if line.find("is scheduled for deletion") != -1:
       break
@@ -1541,14 +1542,15 @@ def wc_to_wc_copy_deleted(sbox):
   # Attempts to revert the schedule=delete will fail, but should not
   # break the wc.  It's very important that the directory revert fails
   # since it's a placeholder rather than a full hierarchy
-  out, err = svntest.main.run_svn(1, 'revert', '--recursive',
-                                  os.path.join(B2_path, 'F'))
+  exit_code, out, err = svntest.main.run_svn(1, 'revert', '--recursive',
+                                             os.path.join(B2_path, 'F'))
   for line in err:
     if line.find("Error restoring text") != -1:
       break
   else:
     raise svntest.Failure
-  out, err = svntest.main.run_svn(1, 'revert', os.path.join(B2_path, 'lambda'))
+  exit_code, out, err = svntest.main.run_svn(1, 'revert',
+                                             os.path.join(B2_path, 'lambda'))
   for line in err:
     if line.find("Error restoring text") != -1:
       break
@@ -1602,14 +1604,13 @@ def url_to_non_existent_url_path(sbox):
 
   # Expect failure on 'svn cp SRC DST' where one or more ancestor
   # directories of DST do not exist
-  out, err = svntest.main.run_svn(1,
-                                  'cp', dirURL1, dirURL2,
-                                  '-m', 'fooogle')
+  exit_code, out, err = svntest.main.run_svn(1, 'cp', dirURL1, dirURL2,
+                                             '-m', 'fooogle')
   for err_line in err:
     if re.match (msg, err_line):
       break
   else:
-    print "message \"" + msg + "\" not found in error output: ", err
+    print("message \"%s\" not found in error output: %s" % (msg, err))
     raise svntest.Failure
 
 
@@ -2383,10 +2384,9 @@ def move_dir_back_and_forth(sbox):
 
   # Move the moved dir: D_moved back to its starting
   # location at A/D.
-  out, err = svntest.actions.run_and_verify_svn(None, None,
-                                                svntest.verify.AnyOutput,
-                                                'mv', D_move_path,
-                                                D_path)
+  exit_code, out, err = svntest.actions.run_and_verify_svn(
+    None, None, svntest.verify.AnyOutput,
+    'mv', D_move_path, D_path)
 
   for line in err:
     if re.match('.*Cannot copy to .*as it is scheduled for deletion',
@@ -2574,7 +2574,7 @@ def copy_added_paths_with_props(sbox):
   svntest.tree.compare_trees("disk", actual_disk_tree,
                              expected_disk.old_tree())
 
-  # Copy added dir K to dir A/C
+  # Copy added dir I to dir A/C
   I_copy_path = os.path.join(wc_dir, 'A', 'C', 'I')
   svntest.actions.run_and_verify_svn(None, None, [], 'cp',
                                      I_path, I_copy_path)
@@ -3766,7 +3766,7 @@ def replaced_local_source_for_incoming_copy(sbox):
   # Make the duplicate working copy.
   svntest.main.safe_rmtree(other_wc_dir)
   shutil.copytree(wc_dir, other_wc_dir)
-  
+
   try:
     ## Test properties. ##
 
@@ -3787,8 +3787,8 @@ def replaced_local_source_for_incoming_copy(sbox):
                                        chi_url, other_psi_path);
     svntest.actions.run_and_verify_svn(None, None, [], 'up',
                                        other_wc_dir)
-    output, errput = svntest.main.run_svn(None, 'proplist',
-                                          '-v', other_omega_path)
+    exit_code, output, errput = svntest.main.run_svn(None, 'proplist',
+                                                     '-v', other_omega_path)
     if len(errput):
       raise svntest.Failure("unexpected error output: %s" % errput)
     if len(output):
@@ -3817,6 +3817,99 @@ def replaced_local_source_for_incoming_copy(sbox):
 
   finally:
     svntest.main.safe_rmtree(other_wc_dir)
+
+
+def unneeded_parents(sbox):
+  "svn cp --parents FILE_URL DIR_URL"
+
+  # In this message...
+  #
+  #    http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=138738
+  #    From: Alexander Kitaev <Alexander.Kitaev@svnkit.com>
+  #    To: dev@subversion.tigris.org
+  #    Subject: 1.5.x segmentation fault on Repos to Repos copy
+  #    Message-ID: <4830332A.6060301@svnkit.com>
+  #    Date: Sun, 18 May 2008 15:46:18 +0200
+  #
+  # ...Alexander Kitaev describes the bug:
+  #
+  #    svn cp --parents SRC_FILE_URL DST_DIR_URL -m "message"
+  #
+  #    SRC_FILE_URL - existing file
+  #    DST_DIR_URL - existing directory
+  #
+  #    Omitting "--parents" option makes above copy operation work as
+  #    expected.
+  #
+  #    Bug is in libsvn_client/copy.c:801, where "dir" should be
+  #    checked for null before using it in svn_ra_check_path call.
+  #
+  # At first we couldn't reproduce it, but later he added this:
+  #
+  #   Looks like there is one more condition to reproduce the problem -
+  #   dst URL should has no more segments count than source one.
+  #
+  # In other words, if we had "/A/B" below instead of "/A" (adjusting
+  # expected_* accordingly, of course), the bug wouldn't reproduce.
+
+  sbox.build()
+  wc_dir = sbox.wc_dir
+
+  iota_url = sbox.repo_url + '/iota'
+  A_url = sbox.repo_url + '/A'
+
+  # The --parents is unnecessary, but should still work (not segfault).
+  svntest.actions.run_and_verify_svn(None, None, [], 'cp', '--parents',
+                                     '-m', 'log msg', iota_url, A_url)
+
+  # Verify that it worked.
+  expected_output = svntest.wc.State(wc_dir, {
+    'A/iota' : Item(status='A '),
+    })
+  expected_disk = svntest.main.greek_state.copy()
+  expected_disk.add({
+    'A/iota'  : Item(contents="This is the file 'iota'.\n"),
+    })
+  expected_status = svntest.actions.get_virginal_state(wc_dir, 2)
+  expected_status.add({
+    'A/iota'  : Item(status='  ', wc_rev=2),
+    })
+  svntest.actions.run_and_verify_update(
+    wc_dir, expected_output, expected_disk, expected_status)
+
+
+def double_parents_with_url(sbox):
+  "svn cp --parents URL/src_dir URL/dst_dir"
+
+  sbox.build()
+  wc_dir = sbox.wc_dir
+
+  E_url = sbox.repo_url + '/A/B/E'
+  Z_url = sbox.repo_url + '/A/B/Z'
+
+  # --parents shouldn't result in a double commit of the same directory.
+  svntest.actions.run_and_verify_svn(None, None, [], 'cp', '--parents',
+                                     '-m', 'log msg', E_url, Z_url)
+
+  # Verify that it worked.
+  expected_output = svntest.wc.State(wc_dir, {
+    'A/B/Z/alpha' : Item(status='A '),
+    'A/B/Z/beta'  : Item(status='A '),
+    'A/B/Z'       : Item(status='A '),
+    })
+  expected_disk = svntest.main.greek_state.copy()
+  expected_disk.add({
+    'A/B/Z/alpha' : Item(contents="This is the file 'alpha'.\n"),
+    'A/B/Z/beta'  : Item(contents="This is the file 'beta'.\n"),
+    })
+  expected_status = svntest.actions.get_virginal_state(wc_dir, 2)
+  expected_status.add({
+    'A/B/Z/alpha' : Item(status='  ', wc_rev=2),
+    'A/B/Z/beta'  : Item(status='  ', wc_rev=2),
+    'A/B/Z'       : Item(status='  ', wc_rev=2),
+    })
+  svntest.actions.run_and_verify_update(
+    wc_dir, expected_output, expected_disk, expected_status)
 
 
 # Used to cause corruption not fixable by 'svn cleanup'.
@@ -3850,12 +3943,12 @@ def find_copyfrom_information_upstairs(sbox):
   "renaming inside a copied subtree shouldn't hang"
 
   # The final command in this series would cause the client to hang...
-  # 
+  #
   #    ${SVN} cp A A2
   #    cd A2/B
   #    ${SVN} mkdir blah
   #    ${SVN} mv lambda blah
-  # 
+  #
   # ...because it wouldn't walk up past "" to find copyfrom information
   # (which would be in A2/.svn/entries, not on A2/B/.svn/entries).
   # Instead, it would keep thinking the parent of "" is "", and so
@@ -3891,63 +3984,112 @@ def find_copyfrom_information_upstairs(sbox):
   finally:
     os.chdir(saved_cwd)
 
-def unneeded_parents(sbox):
-  "svn cp --parents FILE_URL DIR_URL"
+#----------------------------------------------------------------------
 
-  # In this message...
-  #
-  #    http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=138738
-  #    From: Alexander Kitaev <Alexander.Kitaev@svnkit.com>
-  #    To: dev@subversion.tigris.org
-  #    Subject: 1.5.x segmentation fault on Repos to Repos copy
-  #    Message-ID: <4830332A.6060301@svnkit.com>
-  #    Date: Sun, 18 May 2008 15:46:18 +0200
-  #
-  # ...Alexander Kitaev describes the bug:
-  #
-  #    svn cp --parents SRC_FILE_URL DST_DIR_URL -m "message"
-  #
-  #    SRC_FILE_URL - existing file
-  #    DST_DIR_URL - existing directory
-  # 
-  #    Omitting "--parents" option makes above copy operation work as
-  #    expected.
-  # 
-  #    Bug is in libsvn_client/copy.c:801, where "dir" should be
-  #    checked for null before using it in svn_ra_check_path call.
-  #
-  # At first we couldn't reproduce it, but later he added this:
-  #
-  #   Looks like there is one more condition to reproduce the problem -
-  #   dst URL should has no more segments count than source one.
-  #
-  # In other words, if we had "/A/B" below instead of "/A" (adjusting
-  # expected_* accordingly, of course), the bug wouldn't reproduce.
-  
+def change_case_of_hostname(input):
+  "Change the case of the hostname, try uppercase first"
+
+  m = re.match(r"^(.*://)([^/]*)(.*)", input)
+  if m:
+    scheme = m.group(1)
+    host = upper(m.group(2))
+    if host == m.group(2):
+      host = lower(m.group(2))
+
+    path = m.group(3)
+
+  return scheme + host + path
+
+# regression test for issue #2475 - move file and folder
+def path_move_and_copy_between_wcs_2475(sbox):
+  "issue #2475 - move and copy between working copies"
   sbox.build()
-  wc_dir = sbox.wc_dir
 
-  iota_url = sbox.repo_url + '/iota'
-  A_url = sbox.repo_url + '/A'
+  # checkout a second working copy, use repository url with different case
+  wc2_dir = sbox.add_wc_path('2')
+  repo_url2 = change_case_of_hostname(sbox.repo_url)
 
-  # The --parents is unnecessary, but should still work (not segfault).
-  svntest.actions.run_and_verify_svn(None, None, [], 'cp', '--parents',
-                                     '-m', 'log msg', iota_url, A_url)
+  expected_output = svntest.main.greek_state.copy()
+  expected_output.wc_dir = wc2_dir
+  expected_output.tweak(status='A ', contents=None)
 
-  # Verify that it worked.
-  expected_output = svntest.wc.State(wc_dir, {
-    'A/iota' : Item(status='A '),
+  expected_wc = svntest.main.greek_state
+
+  # Do a checkout, and verify the resulting output and disk contents.
+  svntest.actions.run_and_verify_checkout(repo_url2,
+                          wc2_dir,
+                          expected_output,
+                          expected_wc)
+
+  # Copy a file from wc to wc2
+  mu_path = os.path.join(sbox.wc_dir, 'A', 'mu')
+  E_path = os.path.join(wc2_dir, 'A', 'B', 'E')
+
+  svntest.main.run_svn(None, 'cp', mu_path, E_path)
+
+  # Copy a folder from wc to wc2
+  C_path = os.path.join(sbox.wc_dir, 'A', 'C')
+  B_path = os.path.join(wc2_dir, 'A', 'B')
+
+  svntest.main.run_svn(None, 'cp', C_path, B_path)
+
+  # Move a file from wc to wc2
+  mu_path = os.path.join(sbox.wc_dir, 'A', 'mu')
+  B_path = os.path.join(wc2_dir, 'A', 'B')
+
+  svntest.main.run_svn(None, 'mv', mu_path, B_path)
+
+  # Move a folder from wc to wc2
+  C_path = os.path.join(sbox.wc_dir, 'A', 'C')
+  D_path = os.path.join(wc2_dir, 'A', 'D')
+
+  svntest.main.run_svn(None, 'mv', C_path, D_path)
+
+  # Verify modified status
+  expected_status = svntest.actions.get_virginal_state(sbox.wc_dir, 1)
+  expected_status.tweak('A/mu', 'A/C', status='D ')
+  svntest.actions.run_and_verify_status(sbox.wc_dir, expected_status)
+  expected_status2 = svntest.actions.get_virginal_state(wc2_dir, 1)
+  expected_status2.add({ 'A/B/mu' :
+                        Item(status='A ', copied='+', wc_rev='-') })
+  expected_status2.add({ 'A/B/C' :
+                        Item(status='A ', copied='+', wc_rev='-') })
+  expected_status2.add({ 'A/B/E/mu' :
+                        Item(status='A ', copied='+', wc_rev='-') })
+  expected_status2.add({ 'A/D/C' :
+                        Item(status='A ', copied='+', wc_rev='-') })
+  svntest.actions.run_and_verify_status(wc2_dir, expected_status2)
+
+
+# regression test for issue #2475 - direct copy in the repository
+# this test handles the 'direct move' case too, that uses the same code.
+def path_copy_in_repo_2475(sbox):
+  "issue #2475 - direct copy in the repository"
+  sbox.build()
+
+  repo_url2 = change_case_of_hostname(sbox.repo_url)
+
+  # Copy a file from repo to repo2
+  mu_url = sbox.repo_url + '/A/mu'
+  E_url = repo_url2 + '/A/B/E'
+
+  svntest.main.run_svn(None, 'cp', mu_url, E_url, '-m', 'copy mu to /A/B/E')
+
+  # For completeness' sake, update to HEAD, and verify we have a full
+  # greek tree again, all at revision 2.
+  expected_output = svntest.wc.State(sbox.wc_dir, {
+    'A/B/E/mu'  : Item(status='A '),
     })
+
   expected_disk = svntest.main.greek_state.copy()
-  expected_disk.add({
-    'A/iota'  : Item(contents="This is the file 'iota'.\n"),
-    })
-  expected_status = svntest.actions.get_virginal_state(wc_dir, 2)
-  expected_status.add({
-    'A/iota'  : Item(status='  ', wc_rev=2),
-    })
-  svntest.actions.run_and_verify_update(
-    wc_dir, expected_output, expected_disk, expected_status)
+  expected_disk.add({'A/B/E/mu' : Item("This is the file 'mu'.\n") })
+
+  expected_status = svntest.actions.get_virginal_state(sbox.wc_dir, 2)
+  expected_status.add({'A/B/E/mu' : Item(status='  ', wc_rev=2) })
+  svntest.actions.run_and_verify_update(sbox.wc_dir,
+                                        expected_output,
+                                        expected_disk,
+                                        expected_status)
 
 
 ########################################################################
@@ -4003,7 +4145,7 @@ test_list = [ None,
               move_file_back_and_forth,
               move_dir_back_and_forth,
               copy_move_added_paths,
-              XFail(copy_added_paths_with_props),
+              copy_added_paths_with_props,
               copy_added_paths_to_URL,
               move_to_relative_paths,
               move_from_relative_paths,
@@ -4027,10 +4169,11 @@ test_list = [ None,
               allow_unversioned_parent_for_copy_src,
               replaced_local_source_for_incoming_copy,
               unneeded_parents,
+              double_parents_with_url,
               copy_into_absent_dir,
-              # svn_path_is_ancestor() is broken; see r33211.
-              XFail(find_copyfrom_information_upstairs,
-                    svntest.main.is_os_windows)
+              find_copyfrom_information_upstairs,
+              path_move_and_copy_between_wcs_2475,
+              path_copy_in_repo_2475,
              ]
 
 if __name__ == '__main__':

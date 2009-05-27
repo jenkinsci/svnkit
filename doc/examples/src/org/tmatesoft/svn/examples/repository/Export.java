@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -358,7 +358,7 @@ public class Export {
          * like to store the result of delta application. 
          */
         public void applyTextDelta(String path, String baseChecksum) throws SVNException {
-            myDeltaProcessor.applyTextDelta(null, new File(myRootDirectory, path), false);
+            myDeltaProcessor.applyTextDelta((File) null, new File(myRootDirectory, path), false);
         }
 
         /*

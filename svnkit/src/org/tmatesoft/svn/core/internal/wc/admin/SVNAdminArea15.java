@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,14 +16,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea15 extends SVNAdminArea14 {
@@ -32,8 +34,21 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
 
     protected static final String ATTRIBUTE_KEEP_LOCAL = "keep-local";
 
+    private static final Set INAPPLICABLE_PROPERTIES = new SVNHashSet();
+
+    static {
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_PATH);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_REVISION);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        INAPPLICABLE_PROPERTIES.add(SVNProperty.TREE_CONFLICT_DATA);
+    }
+
     public SVNAdminArea15(File dir) {
         super(dir);
+    }
+
+    public int getFormatVersion() {
+        return WC_FORMAT;
     }
 
     protected boolean readExtraOptions(BufferedReader reader, Map entryAttrs) throws SVNException, IOException {
@@ -77,7 +92,9 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         return false;
     }
 
-    protected void writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+    protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
+        emptyFields = super.writeExtraOptions(writer, entryName, entryAttrs, emptyFields);
+        
         String changelist = (String) entryAttrs.get(SVNProperty.CHANGELIST); 
         if (writeString(writer, changelist, emptyFields)) {
             emptyFields = 0;
@@ -94,6 +111,7 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         }
 
         String workingSize = (String) entryAttrs.get(SVNProperty.WORKING_SIZE);
+        workingSize = "-1".equals(workingSize) ? null : workingSize;
         if (writeString(writer, workingSize, emptyFields)) {
             emptyFields = 0;
         } else {
@@ -102,17 +120,19 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
         
         boolean isThisDir = getThisDirName().equals(entryName);
         boolean isSubDir = !isThisDir && SVNProperty.KIND_DIR.equals(entryAttrs.get(SVNProperty.KIND)); 
-        String depth = (String) entryAttrs.get(SVNProperty.DEPTH);
-        if (!isSubDir && SVNDepth.fromString(depth) != SVNDepth.INFINITY) {
-            writeValue(writer, depth, emptyFields);
-            emptyFields = 0;
+        String depthStr = (String) entryAttrs.get(SVNProperty.DEPTH);
+        SVNDepth depth = SVNDepth.fromString(depthStr);
+        if ((isSubDir && depth != SVNDepth.EXCLUDE) || depth == SVNDepth.INFINITY) {
+            emptyFields++;
         } else {
-            ++emptyFields;
+            if (writeValue(writer, depthStr, emptyFields)) {
+                emptyFields = 0;    
+            } else {
+                ++emptyFields;
+            }
         }
-    }
 
-    protected int getFormatVersion() {
-        return WC_FORMAT;
+        return emptyFields;
     }
 
     protected SVNAdminArea createAdminAreaForDir(File dir) {
@@ -120,6 +140,6 @@ public class SVNAdminArea15 extends SVNAdminArea14 {
     }
 
     protected boolean isEntryPropertyApplicable(String propName) {
-        return propName != null;
+        return propName != null && !INAPPLICABLE_PROPERTIES.contains(propName);
     }
 }

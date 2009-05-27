@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,7 +31,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNPlainConnector implements ISVNConnector {
@@ -50,7 +50,7 @@ public class SVNPlainConnector implements ISVNConnector {
         try {
             int connectTimeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getConnectTimeout(repository) : DEFAULT_SVN_TIMEOUT;
             int readTimeout = repository.getAuthenticationManager() != null ? repository.getAuthenticationManager().getReadTimeout(repository) : DEFAULT_SVN_TIMEOUT;
-            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout);
+            mySocket = SVNSocketFactory.createPlainSocket(location.getHost(), location.getPort(), connectTimeout, readTimeout, repository.getCanceller());
         } catch (SocketTimeoutException e) {
 	        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_IO_ERROR, "timed out waiting for server", null, SVNErrorMessage.TYPE_ERROR, e);
             SVNErrorManager.error(err, e, SVNLogType.NETWORK);

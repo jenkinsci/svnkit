@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -41,9 +41,17 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
     
     private static final int MAX_PROMPT_COUNT = 3;
     private Map myRequestsCount = new HashMap();
-    
+    private boolean myIsTrustServerCertificate;
 
+    public SVNConsoleAuthenticationProvider(boolean trustServerCertificate) {
+        myIsTrustServerCertificate = trustServerCertificate;
+    }
+    
     public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
+        if (myIsTrustServerCertificate) {
+            return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+        }
+        
         if (!(certificate instanceof X509Certificate)) {
             return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
         }

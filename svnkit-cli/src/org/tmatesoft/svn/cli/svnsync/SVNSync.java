@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,7 +18,7 @@ import org.tmatesoft.svn.cli.SVNCommandLine;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSync extends AbstractSVNLauncher {
@@ -48,6 +48,7 @@ public class SVNSync extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNSyncCopyRevPropsCommand());
         AbstractSVNCommand.registerCommand(new SVNSyncSynchronizeCommand());
         AbstractSVNCommand.registerCommand(new SVNSyncHelpCommand());
+        AbstractSVNCommand.registerCommand(new SVNSyncInfoCommand());
     }
 
     protected void registerOptions() {
@@ -64,5 +65,6 @@ public class SVNSync extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNSyncOption.NO_AUTH_CACHE);
         SVNCommandLine.registerOption(SVNSyncOption.NON_INTERACTIVE);
         SVNCommandLine.registerOption(SVNSyncOption.QUIET);
+        SVNCommandLine.registerOption(SVNSyncOption.TRUST_SERVER_CERT);
     }
 }

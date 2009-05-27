@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -21,16 +21,13 @@ import org.tmatesoft.svn.cli.SVNCommandUtil;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNLookHelpCommand extends SVNLookCommand {
 
     private static final String GENERIC_HELP_HEADER = 
         "general usage: {0} SUBCOMMAND REPOS_PATH [ARGS & OPTIONS ...]\n" +
-        "Note: any subcommand which takes the ''--revision'' and ''--transaction''\n" +
-        "      options will, if invoked without one of those options, act on\n" +
-        "      the repository''s youngest revision.\n" +
         "Note: any subcommand which takes the ''--revision'' and ''--transaction''\n" +
         "      options will, if invoked without one of those options, act on\n" +
         "      the repository''s youngest revision.\n" +

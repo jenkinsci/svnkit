@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/core/io/benchmark
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/io/benchmark
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
+2009-04-21T14:43:00.959095Z
+5772
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-544f63edd523adef5461ba8b9474fcff
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:17.000000Z
+d377914b4e9332f3f708ea93da6b2afd
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-3285
+3283
 
 SVNBenchmark.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-d9d00a919da7553b573ec48fcc192e49
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:17.000000Z
+529cee2931afdc80d8641bb63cde6358
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-2732
+2730
 
 SVNLogPath.java
 file
@@ -100,10 +100,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-e4608c0154ef9a1b191ef82a81d372b7
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:17.000000Z
+7080797174badb4d979b5f07514008ac
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-1597
+1595
 
 SVNMeasurable.java
 file
@@ -134,10 +134,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-8a54f065497972d0e20fc058cdd3c025
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:17.000000Z
+a5443ca629c6f0aba4cbdfb3ed2843dc
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-3232
+3230
 
 SVNLogRoot.java
 file
@@ -168,10 +168,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-1213afecfb3d1f3fc0b3813e624caf8b
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:17.000000Z
+0ed9574af0adc65f7cce7452bb5b696f
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -194,5 +194,5 @@ has-props
 
 
 
-1265
+1263
 

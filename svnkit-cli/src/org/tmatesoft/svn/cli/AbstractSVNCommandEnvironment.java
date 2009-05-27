@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -46,12 +46,13 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
@@ -120,7 +121,6 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
     protected void setArguments(List newArguments) {
         myArguments = newArguments;
     }
-
 
     public void init(SVNCommandLine commandLine) throws SVNException {
         initCommand(commandLine);
@@ -221,37 +221,83 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         if (targets != null) {
             result.addAll(targets);
         }
+
+        boolean hasRelativeURLs = false;
+        SVNURL rootURL = null;
+        for (Iterator resultIter = result.iterator(); resultIter.hasNext();) {
+            String target = (String) resultIter.next();
+            if (isReposRelative(target)) {
+                hasRelativeURLs = true;
+            }
+        }
+        
         List canonical = new ArrayList(result.size());
+        targets = new ArrayList(result.size());
         for (Iterator iterator = result.iterator(); iterator.hasNext();) {
             String path = (String) iterator.next();
-            if (SVNCommandUtil.isURL(path)) {
-                path = SVNEncodingUtil.autoURIEncode(path);
-                try {
-                    SVNEncodingUtil.assertURISafe(path);
-                } catch (SVNException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' is not properly URI-encoded");
-                    SVNErrorManager.error(err, SVNLogType.CLIENT);
-                }
-                if (path.indexOf("/../") >= 0 || path.endsWith("/..")) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' contains '..' element");
-                    SVNErrorManager.error(err, SVNLogType.CLIENT);
-                }
-                path = SVNPathUtil.canonicalizePath(path);
+            if (isReposRelative(path)) {
+                targets.add(path);
             } else {
-                path = path.replace(File.separatorChar, '/');
-                path = SVNPathUtil.canonicalizePath(path);
-                String name = SVNPathUtil.tail(path);
-                if (SVNFileUtil.getAdminDirectoryName().equals(name) || ".svn".equals(name) || "_svn".equals(name)) {
-                    if (warnReserved) {
-                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RESERVED_FILENAME_SPECIFIED, 
-                                "Skipping argument: ''{0}'' ends in a reserved name", path);
-                        error.setType(SVNErrorMessage.TYPE_WARNING);
-                        handleError(error);
+                if (SVNCommandUtil.isURL(path)) {
+                    path = SVNEncodingUtil.autoURIEncode(path);
+                    try {
+                        SVNEncodingUtil.assertURISafe(path);
+                    } catch (SVNException e) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' is not properly URI-encoded");
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
                     }
-                    continue;
+                    if (path.indexOf("/../") >= 0 || path.endsWith("/..")) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "URL '" + path + "' contains '..' element");
+                        SVNErrorManager.error(err, SVNLogType.CLIENT);
+                    }
+                    path = SVNPathUtil.canonicalizePath(path);
+                } else {
+                    path = path.replace(File.separatorChar, '/');
+                    path = SVNPathUtil.canonicalizePath(path);
+                    String name = SVNPathUtil.tail(path);
+                    if (SVNFileUtil.getAdminDirectoryName().equals(name) || ".svn".equals(name) || "_svn".equals(name)) {
+                        if (warnReserved) {
+                            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.RESERVED_FILENAME_SPECIFIED, 
+                                    "Skipping argument: ''{0}'' ends in a reserved name", path);
+                            error.setType(SVNErrorMessage.TYPE_WARNING);
+                            handleError(error);
+                        }
+                        continue;
+                    }
                 }
+                
+                if (hasRelativeURLs) {
+                    rootURL = checkRootURLOfTarget(rootURL, path);
+                }
+                targets.add(path);
             }
-            canonical.add(path);
+        }
+        
+        if (hasRelativeURLs) {
+            if (rootURL == null) {
+                SVNWCClient wcClient = getClientManager().getWCClient();
+                rootURL = wcClient.getReposRoot(new File("").getAbsoluteFile(), null, SVNRevision.BASE, null, null);
+            }
+            for (Iterator targetsIter = targets.iterator(); targetsIter.hasNext();) {
+                String target = (String) targetsIter.next();
+                if (isReposRelative(target)) {
+                    String pegRevisionString = null;
+                    int ind = target.indexOf('@');
+                    if (ind != -1) {
+                        target = target.substring(0, ind);
+                        pegRevisionString = target.substring(ind);
+                    }
+                    SVNURL targetURL = resolveRepositoryRelativeURL(rootURL, target);
+                    target = targetURL.toString();
+                    if (pegRevisionString != null) {
+                        target += pegRevisionString;
+                    }
+                } 
+                
+                canonical.add(target);
+            }
+        } else {
+            canonical.addAll(targets);
         }
         return canonical;
     }
@@ -290,7 +336,6 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         return bos != null ? bos.toByteArray() : null;
     }
 
-    
     public void handleError(SVNErrorMessage err) {
         Collection codes = new SVNHashSet();
         int count = 0;
@@ -352,7 +397,6 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         throw new SVNException(err);
     }
     
-    
     public String getRelativePath(File file) {
         String inPath = file.getAbsolutePath().replace(File.separatorChar, '/');
         String basePath = new File("").getAbsolutePath().replace(File.separatorChar, '/');
@@ -366,7 +410,6 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         }
         return inPath;
     }
-
 
     public SVNURL getURLFromTarget(String target) throws SVNException {
         if (SVNCommandUtil.isURL(target)) {
@@ -412,6 +455,48 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         }
     }
     
+    private SVNURL resolveRepositoryRelativeURL(SVNURL rootURL, String relativeURL) throws SVNException {
+        if (!isReposRelative(relativeURL)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Improper relative URL ''{0}''", relativeURL);
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+        
+        relativeURL = relativeURL.substring(2);
+        SVNURL url = rootURL.appendPath(relativeURL, true);
+        return url;
+    }
+    
+    private SVNURL checkRootURLOfTarget(SVNURL rootURL, String target) throws SVNException {
+        SVNPath svnPath = new SVNPath(target, true);
+        SVNWCClient client = getClientManager().getWCClient();
+        File path = svnPath.isFile() ? svnPath.getFile() : null;
+        SVNURL url = svnPath.isURL() ? svnPath.getURL() : null;
+        SVNURL tmpRootURL = null;
+        try {
+            tmpRootURL = client.getReposRoot(path, url, svnPath.getPegRevision(), null, null); 
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage();
+            if (err.getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND || err.getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
+                return rootURL;
+            }
+            throw svne;
+        }
+        
+        if (rootURL != null) {
+            if (!rootURL.equals(tmpRootURL)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "All non-relative targets must have the same root URL");
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
+            return rootURL;
+        }
+        
+        return tmpRootURL;
+    }
+    
+    private static boolean isReposRelative(String path) {
+        return path != null && path.startsWith("^/");
+    }
+     
     private static boolean startsWith(String p1, String p2) {
         if (SVNFileUtil.isWindows || SVNFileUtil.isOpenVMS) {
             return p1.toLowerCase().startsWith(p2.toLowerCase());
@@ -454,6 +539,5 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             ourIsCancelled = true;
         }
     }
-
 
 }

@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes
+END
+FSSandboxFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 109
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/FSSandboxFactory.java
+END
+AbstractSVNSandboxFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 118
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/AbstractSVNSandboxFactory.java
+END
+DAVSandboxFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/DAVSandboxFactory.java
+END
+SVNSandbox.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/SVNSandbox.java
+END
+FSSandbox.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/FSSandbox.java
+END
+AbstractSVNSandbox.java
+K 25
+svn:wc:ra_dav:version-url
+V 111
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/AbstractSVNSandbox.java
+END
+DAVSandbox.java
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/DAVSandbox.java
+END
+SVNSandboxFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/SVNSandboxFactory.java
+END

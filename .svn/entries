@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-01-08T16:28:00.472597Z
-5405
+2009-05-13T11:28:20.938259Z
+5847
 sa
 has-props
 
@@ -38,11 +38,11 @@ file
 
 
 
-2008-08-27T01:16:44.000000Z
-cbc4344022bd9a871d1e7584072a0d63
-2008-06-19T17:10:29.963757Z
-4369
-alex
+2009-05-27T05:49:00.000000Z
+e01a3a0f6cdd4b09ca7464a22cfcce23
+2009-03-23T14:57:51.095143Z
+5613
+sa
 has-props
 
 
@@ -72,10 +72,10 @@ file
 
 
 
-2008-12-17T22:37:22.000000Z
+2009-05-27T05:49:00.000000Z
 4bede418d57269b6a39a96f42d75b232
-2008-11-26T16:09:37.309105Z
-5257
+2008-11-13T16:33:52.124923Z
+5168
 alex
 has-props
 
@@ -106,10 +106,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-05-27T05:49:00.000000Z
 d59de959d4d9f8c71da5319df9723a02
-2008-09-16T17:47:40.986804Z
-4886
+2008-09-12T19:31:31.691151Z
+4872
 alex
 has-props
 
@@ -140,10 +140,10 @@ dir
 plugin.xml
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/plugin.xml
 
 
-
-2009-01-14T22:06:37.000000Z
+2009-05-27T05:49:00.000000Z
 ecf1bcd2a941b0b06816a9b1c952c82b
 2009-01-08T16:28:00.472597Z
 5405
@@ -174,10 +174,10 @@ has-props
 build.xml
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/build.xml
 
 
-
-
+2009-05-27T05:49:00.000000Z
 219ef93c96a3f13fb31fdaf1a831dafb
 2008-12-24T21:12:15.849559Z
 5389
@@ -214,10 +214,10 @@ dir
 .classpath
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/.classpath
 
 
-
-2008-12-17T22:35:44.000000Z
+2009-05-27T05:49:01.000000Z
 93687c56b2a8cbe14646b3eb95af82f4
 2008-07-05T21:46:55.347509Z
 4500
@@ -251,10 +251,10 @@ dir
 changelog.txt
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/changelog.txt
 
 
-
-2009-01-14T22:06:37.000000Z
+2009-05-27T05:49:01.000000Z
 57b5564fa46c9798c9ebb3063eaecb5f
 2009-01-08T16:28:00.472597Z
 5405
@@ -285,10 +285,10 @@ has-props
 svnkit.build.properties
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit.build.properties
 
 
-
-2009-01-14T22:06:37.000000Z
+2009-05-27T05:49:01.000000Z
 765517d043d00ef721a8d8d2c378e206
 2009-01-08T16:28:00.472597Z
 5405
@@ -319,10 +319,10 @@ has-props
 svnkit.ipr
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit.ipr
 
 
-
-2009-01-14T22:06:37.000000Z
+2009-05-27T05:49:01.000000Z
 0ecb084e22698c37502a7692f58d14e0
 2008-11-28T21:07:21.269306Z
 5301
@@ -353,10 +353,10 @@ has-props
 COPYING
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/COPYING
 
 
-
-2008-08-27T01:16:44.000000Z
+2009-05-27T05:49:02.000000Z
 07330f335dedabe21d5afdcd4319a06c
 2008-06-19T20:15:15.874886Z
 4377
@@ -387,10 +387,10 @@ has-props
 .options
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/.options
 
 
-
-2008-08-27T01:16:44.000000Z
+2009-05-27T05:49:02.000000Z
 39ef4b47dc79995a746c7af44e227faa
 2006-11-09T19:22:11.058725Z
 2773
@@ -421,10 +421,10 @@ has-props
 README.txt
 file
 
+http://svn.svnkit.com/repos/svnkit/tags/1.2.2/README.txt
 
 
-
-2009-01-14T22:06:37.000000Z
+2009-05-27T05:49:02.000000Z
 5be41ca79b11007eb9476bcc50e39927
 2009-01-08T16:28:00.472597Z
 5405

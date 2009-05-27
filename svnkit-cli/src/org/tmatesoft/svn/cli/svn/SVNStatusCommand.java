@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler {
@@ -170,8 +170,14 @@ public class SVNStatusCommand extends SVNXMLCommand implements ISVNStatusHandler
         if (status.isSwitched()) {
             xmlMap.put("switched", "true");
         }
+        if (status.isFileExternal()) {
+            xmlMap.put("file-external", "true");
+        }
         if (status.getEntry() != null && !status.isCopied()) {
             xmlMap.put("revision", status.getRevision().toString());
+        }
+        if (status.getTreeConflict() != null) {
+            xmlMap.put("tree-conflicted", "true");
         }
         xmlBuffer = openXMLTag("wc-status", SVNXMLUtil.XML_STYLE_NORMAL, xmlMap, xmlBuffer);
         if (status.getEntry() != null && status.getCommittedRevision().isValid()) {

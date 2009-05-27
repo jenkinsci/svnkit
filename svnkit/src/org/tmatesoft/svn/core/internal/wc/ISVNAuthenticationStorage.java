@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -28,7 +28,7 @@ package org.tmatesoft.svn.core.internal.wc;
  * caches credentials only in the memory (not in the filesystem) during runtime. This feature is handy especially when 
  * on-disk caching is disabled in the standard <i>config</i> file (option <span class="javastring">"store-auth-creds"</span> is <span class="javastring">"no"</span>).
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  * @see     org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
  */

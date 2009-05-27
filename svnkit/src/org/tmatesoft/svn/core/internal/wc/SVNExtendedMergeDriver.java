@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -48,7 +48,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2
+ * @version 1.3
  * @since 1.2
  */
 public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
@@ -208,7 +208,6 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         if (rangeList == null) {
             return false;
         }
-        rangeList = rangeList.compactMergeRanges();
         SVNMergeRange currentRange = new SVNMergeRange(Math.min(myRevision1, myRevision2), Math.max(myRevision1, myRevision2), false);
         SVNMergeRange[] ranges = rangeList.getRanges();
         for (int i = 0; i < ranges.length; i++) {

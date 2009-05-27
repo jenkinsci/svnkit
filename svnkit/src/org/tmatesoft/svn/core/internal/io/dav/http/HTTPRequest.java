@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,12 +23,13 @@ import java.util.Iterator;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.util.Version;
 import org.xml.sax.helpers.DefaultHandler;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 class HTTPRequest {
@@ -183,7 +184,8 @@ class HTTPRequest {
                 myStatus.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED ||
                 myStatus.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
             // these errors are always processed by the caller, to allow retry.
-            myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), myStatus, context.getMessageTemplate(), context.getRelatedObjects());
+            myErrorMessage = createDefaultErrorMessage(myConnection.getHost(), path, myStatus, 
+                    context.getMessageTemplate(), context.getRelatedObjects());
             myConnection.skipData(this);
             return;
         } 
@@ -281,7 +283,8 @@ class HTTPRequest {
             contextMessage = "''{0}'' path not found";
             contextObjects = new Object[] {path};
         } 
-        SVNErrorMessage error = createDefaultErrorMessage(myConnection.getHost(), myStatus, contextMessage, contextObjects);
+        SVNErrorMessage error = createDefaultErrorMessage(myConnection.getHost(), path, myStatus, contextMessage, 
+                contextObjects);
         SVNErrorMessage davError = myConnection.readError(this, request, path);
         if (davError != null) {
             if (error != null) {
@@ -365,6 +368,16 @@ class HTTPRequest {
             sb.append("Content-Type: text/xml; charset=\"utf-8\"");
             sb.append(HTTPRequest.CRLF);
         }
+        // append capabilities
+        sb.append(HTTPHeader.DAV_HEADER + ": ");
+        sb.append(DAVElement.DEPTH_OPTION);
+        sb.append(HTTPRequest.CRLF);
+        sb.append(HTTPHeader.DAV_HEADER + ": ");
+        sb.append(DAVElement.MERGE_INFO_OPTION);
+        sb.append(HTTPRequest.CRLF);
+        sb.append(HTTPHeader.DAV_HEADER + ": ");
+        sb.append(DAVElement.LOG_REVPROPS_OPTION);
+        sb.append(HTTPRequest.CRLF);
         if (header != null) {
             sb.append(header.toString());
         }
@@ -392,7 +405,8 @@ class HTTPRequest {
 
     }
     
-    public static SVNErrorMessage createDefaultErrorMessage(SVNURL host, HTTPStatus status, String context, Object[] contextObjects) {
+    public static SVNErrorMessage createDefaultErrorMessage(SVNURL host, String path, HTTPStatus status, String context, 
+            Object[] contextObjects) {
         SVNErrorCode errorCode = SVNErrorCode.RA_DAV_REQUEST_FAILED;
         String message = status != null ? status.getCode() + " " + status.getReason() : "";
         if (status != null && status.getCode() == HttpURLConnection.HTTP_FORBIDDEN || status.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -400,6 +414,11 @@ class HTTPRequest {
             message = status.getCode() + " " + status.getReason();
         } else if (status != null && status.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
             errorCode = SVNErrorCode.FS_NOT_FOUND;
+        } else if (status != null && (status.getCode() == HttpURLConnection.HTTP_MOVED_PERM || 
+                status.getCode() == HttpURLConnection.HTTP_MOVED_TEMP)) {
+            message = status.getCode() == HttpURLConnection.HTTP_MOVED_PERM ? "Repository moved permanently to ''{0}''; please relocate" : 
+                "Repository moved temporarily to ''{0}''; please relocate";
+            return SVNErrorMessage.create(SVNErrorCode.RA_DAV_RELOCATED, message, path);
         }
         // extend context object to include host:port (empty location).
         Object[] messageObjects = contextObjects == null ? new Object[1] : new Object[contextObjects.length + 1];

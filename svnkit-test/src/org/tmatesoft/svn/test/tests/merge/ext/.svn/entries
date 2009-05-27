@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/tests/merge/ext
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-12-10T00:36:19.349906Z
-5357
-semen
+2009-04-21T14:43:00.959095Z
+5772
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-eecf173fd3387f3a960d43be9c65f776
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+a6f3cd716662d0b478f3617cf774d003
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -57,8 +58,7 @@ semen
 
 
 
-
-5298
+5164
 
 AbstractExtMergeTest.java
 file
@@ -66,11 +66,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-d61bd4120e6d8638ef81fde73d57baa3
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+793296841c856f24e10dc090d9c38b8a
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -91,8 +92,7 @@ semen
 
 
 
-
-5768
+5766
 
 MergeAlreadyMergedFileTest2.java
 file
@@ -100,11 +100,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-0370da6a47e581661703c042f225be29
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+8dc65be5c0cdfa546c20700449149942
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -125,8 +126,7 @@ semen
 
 
 
-
-7301
+7134
 
 MergeAlreadyMergedFileTest3.java
 file
@@ -134,11 +134,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-6755fc4eab84ea059431cd4fadb7f488
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+fe1aafae0fe2453426f02b29e50e5684
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -159,8 +160,7 @@ semen
 
 
 
-
-7230
+7063
 
 ChangeMergeTargetCopyFromPathTest.java
 file
@@ -168,11 +168,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-3983a73673420d70de3d26b10dd328d4
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+97fcd436fee2cdd9f74c83a0518f0421
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -193,8 +194,7 @@ semen
 
 
 
-
-7184
+6826
 
 MergeAddFileFromRenamedSourceTest.java
 file
@@ -202,11 +202,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-c5dabece64051499b4e34aa8c311ea83
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+48f148354751e5441bc1c525d01d01de
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -227,8 +228,7 @@ semen
 
 
 
-
-5725
+5723
 
 ElideFileMergedMergeinfoTargetTest.java
 file
@@ -236,11 +236,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-fddd772490ede5f98caf3d223b79c856
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+2f91312e63c408a99468200f1e27d9b6
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -261,8 +262,7 @@ semen
 
 
 
-
-3690
+3688
 
 MergeRenamedDirSourceTest.java
 file
@@ -270,11 +270,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-8e12408fd633c510e1defc6dd0f1e730
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+912a05ee1930988b6c0427193435d6c5
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -295,8 +296,7 @@ semen
 
 
 
-
-6541
+2792
 
 MergeRenamedSourceTest.java
 file
@@ -304,11 +304,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-ae3ae9d80ba8c57142a4c2b68cc28753
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+eacc6e375e47e734f550cbc29b70602c
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -329,8 +330,7 @@ semen
 
 
 
-
-5083
+4954
 
 MergeCopiedTargetsTest.java
 file
@@ -338,11 +338,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-e0b943bdd92ae68658d5f930406b52ac
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+3876bdabe7d5b297d1ef473d4fa90516
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -363,8 +364,7 @@ semen
 
 
 
-
-5520
+5386
 
 MergeWithDepthSupportTest.java
 file
@@ -372,11 +372,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-67be5d78d6374bed93508d7c0aa574d5
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+04aa77c1e9dabced3aedc4c9034413d9
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -397,8 +398,7 @@ semen
 
 
 
-
-3480
+3478
 
 MergeReplacedSourceTest.java
 file
@@ -406,11 +406,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-d7a32ac32733dcc661f646df5416c024
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+7ab114d44fa9748939ecae5992eb0b03
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -431,8 +432,7 @@ semen
 
 
 
-
-6023
+5879
 
 MergeSwitchedEntriesFailTest.java
 file
@@ -440,11 +440,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-754c18cf4ca09f281d1b33a0ec1e4b13
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+a6e226639b0f15b6cbc92adeccb570d3
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -465,8 +466,7 @@ semen
 
 
 
-
-4142
+4140
 
 MergeRemovedFileFromRenamedSourceTest.java
 file
@@ -474,11 +474,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-0e3ca2e6899b1fc62de52fb06c344393
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+cb16572a118092b842e49b6128dca273
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -499,8 +500,7 @@ semen
 
 
 
-
-4430
+4428
 
 ElideFileMergedMergeinfoSourceTest.java
 file
@@ -508,11 +508,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-df107fef51cc9ad4507ab6e590531d84
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+462f0ad149a5d9b95c4b12d8ad92caca
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -533,8 +534,7 @@ semen
 
 
 
-
-3694
+3692
 
 MergeAlreadyMergedFileTest.java
 file
@@ -542,11 +542,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-1f66df589a4a2e4910e87054215ded0a
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+b3eab141b12684b210f8a19712e36224
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -567,8 +568,7 @@ semen
 
 
 
-
-9472
+9250
 
 MergeReplacedWithoutHistorySourceTest.java
 file
@@ -576,11 +576,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-48df73f0710818805fdcd90d24a627e4
-2008-12-10T00:36:19.349906Z
-5357
-semen
+2009-05-27T05:49:17.000000Z
+cde531c8d6f8222c8a5eca2e8bda1036
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -601,8 +602,7 @@ semen
 
 
 
-
-5886
+5740
 
 MergeRenameOperationWithModsTest.java
 file
@@ -610,11 +610,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-385d5a39b3f0f82e8b56970f237da647
-2008-12-09T16:07:34.880547Z
-5346
-semen
+2009-05-27T05:49:17.000000Z
+ea0d654db0a859cd6fcb4a73404ff5e6
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -635,8 +636,41 @@ semen
 
 
 
+4977
+
+ChangeMergeTargetCopyFromPathTest2.java
+file
 
-5105
+
+
+
+2009-05-27T05:49:17.000000Z
+fc76ff21582e60efb6e96284dfc13ea0
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7145
 
 MergeRenamedFileSourceMultipleTimesTest.java
 file
@@ -644,11 +678,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-bb01a2a85ff8386ff75c28d543657a42
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+00722d73a4958afb75c6a862c9888718
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -669,8 +704,75 @@ semen
 
 
 
+5495
+
+ChangeMergeTargetCopyFromPathTest3.java
+file
 
-5497
+
+
+
+2009-05-27T05:49:17.000000Z
+7e0c22a950f8580e40263f77f812e3bc
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7176
+
+MergeRenamedDirSourceTest1.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+07253df6321ef2b78db05d35807b7ffe
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4831
 
 ISVNTestExtendedMergeCallback.java
 file
@@ -678,12 +780,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
+2009-05-27T05:49:17.000000Z
 388183d84c945710732191966e6a2749
-2008-11-28T21:07:21.269306Z
-5301
+2008-12-09T16:32:38.267984Z
+5349
 semen
-
+has-props
 
 
 
@@ -705,4 +807,38 @@ semen
 
 
 583
+
+MergeRenamedDirSourceTest2.java
+file
+
+
+
+
+2009-05-27T05:49:17.000000Z
+bdf502b1a70c1c97972bdb56ec32d5f2
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4831
 

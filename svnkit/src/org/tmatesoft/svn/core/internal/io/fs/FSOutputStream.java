@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -34,7 +34,7 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
@@ -43,14 +43,15 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     public static final int WRITE_BUFFER_SIZE = 2*SVN_DELTA_WINDOW_SIZE;
 
     private boolean isHeaderWritten;
-    private CountingStream myTargetFile;
+    private CountingOutputStream myTargetFile;
     private long myDeltaStart;
     private long myRepSize;
     private long myRepOffset;
     private InputStream mySourceStream;
     private SVNDeltaGenerator myDeltaGenerator;
     private FSRevisionNode myRevNode;
-    private MessageDigest myDigest;
+    private MessageDigest myMD5Digest;
+    private MessageDigest mySHA1Digest;
     private FSTransactionRoot myTxnRoot;
     private long mySourceOffset;
     private ByteArrayOutputStream myTextBuffer;
@@ -58,7 +59,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private boolean myIsCompress;
     private FSWriteLock myTxnLock;
 
-    private FSOutputStream(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, 
+    private FSOutputStream(FSRevisionNode revNode, CountingOutputStream file, InputStream source, long deltaStart, 
             long repSize, long repOffset, FSTransactionRoot txnRoot, boolean compress, FSWriteLock txnLock) throws SVNException {
         myTxnRoot = txnRoot;
         myTargetFile = file;
@@ -75,15 +76,22 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myTextBuffer = new ByteArrayOutputStream();
 
         try {
-            myDigest = MessageDigest.getInstance("MD5");
+            myMD5Digest = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException nsae) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "MD5 implementation not found: {0}", nsae.getLocalizedMessage());
             SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
         }
+        try {
+            mySHA1Digest = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException nsae) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "SHA1 implementation not found: {0}", nsae.getLocalizedMessage());
+            SVNErrorManager.error(err, nsae, SVNLogType.FSFS);
+        }
+
         myIsCompress = compress;
     }
 
-    private void reset(FSRevisionNode revNode, CountingStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
+    private void reset(FSRevisionNode revNode, CountingOutputStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
         myTxnRoot = txnRoot;
         myTargetFile = file;
         mySourceStream = source;
@@ -94,7 +102,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myRevNode = revNode;
         mySourceOffset = 0;
         myIsClosed = false;
-        myDigest.reset();
+        myMD5Digest.reset();
+        mySHA1Digest.reset();
         myTextBuffer.reset();
         myTxnLock = txnLock;
     }
@@ -122,7 +131,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             File targetFile = txnRoot.getTransactionProtoRevFile();
             offset = targetFile.length();
             targetOS = SVNFileUtil.openFileForWriting(targetFile, true);
-            CountingStream revWriter = new CountingStream(targetOS, offset);
+            CountingOutputStream revWriter = new CountingOutputStream(targetOS, offset);
 
             FSRepresentation baseRep = revNode.chooseDeltaBase(txnRoot.getOwner());
             sourceStream = FSInputStream.createDeltaStream(new SVNDeltaCombiner(), baseRep, txnRoot.getOwner());
@@ -176,7 +185,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        myDigest.update(b, off, len);
+        myMD5Digest.update(b, off, len);
+        mySHA1Digest.update(b, off, len);
         myRepSize += len;
         int toWrite = 0;
         while (len > 0) {
@@ -214,10 +224,14 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setSize(offset - myDeltaStart);
             rep.setExpandedSize(myRepSize);
             rep.setTxnId(myRevNode.getId().getTxnID());
+            String uniqueSuffix = myTxnRoot.getNewTxnNodeId();
+            String uniquifier = rep.getTxnId() + '/' + uniqueSuffix;
+            rep.setUniquifier(uniquifier);
             rep.setRevision(SVNRepository.INVALID_REVISION);
 
-            rep.setHexDigest(SVNFileUtil.toHexDigest(myDigest));
-
+            rep.setMD5HexDigest(SVNFileUtil.toHexDigest(myMD5Digest));
+            rep.setSHA1HexDigest(SVNFileUtil.toHexDigest(mySHA1Digest));
+            
             myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
             myRevNode.setTextRepresentation(rep);
             myRevNode.setIsFreshTxnRoot(false);

@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/wc/admin
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/wc/admin
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-26T16:49:37.585065Z
-5265
-alex
+2009-05-12T11:28:48.076298Z
+5838
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-800c9dc57b6f3d1b6dfc114f280e6b4b
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+086bfb7d37fdc6172587f0b721246e28
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-1049
+1045
 
 ISVNChangeEntryHandler.java
 file
@@ -66,11 +66,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-6dc295e227c0fb0122fcb24f02d86e1b
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+4e3158da2540948193b12f9803a232eb
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -92,7 +92,41 @@ has-props
 
 
 
-1147
+1143
+
+SVNAdminClient.java
+file
+
+
+
+
+2009-05-27T05:49:55.000000Z
+b36895ede377e9c838aa65bfc0f01b84
+2009-05-12T11:28:48.076298Z
+5838
+sa
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+75579
 
 package.html
 file
@@ -100,7 +134,7 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
+2009-05-27T05:49:55.000000Z
 2707967e3bdc0098a32f48cc5ccc448c
 2007-01-11T18:57:40.332319Z
 2899
@@ -128,17 +162,17 @@ has-props
 
 387
 
-SVNAdminClient.java
+SVNSyncInfo.java
 file
 
 
 
 
-2008-12-17T22:37:22.000000Z
-97df2f9c0610e66a926cd9ccf9002a1a
-2008-11-26T16:49:37.585065Z
-5265
-alex
+2009-05-27T05:49:55.000000Z
+72c790efeaef5ae3ccecfff414a09b43
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -160,7 +194,7 @@ has-props
 
 
 
-70444
+2113
 
 SVNAdminEventAction.java
 file
@@ -168,11 +202,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-4f1d075d7908dcc2bd4abf2bd994cdb8
-2008-08-27T13:16:35.698961Z
-4780
-alex
+2009-05-27T05:49:55.000000Z
+fd9562f5ca36de8e8fb5fd40b7eb6006
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -194,7 +228,7 @@ has-props
 
 
 
-6094
+6414
 
 SVNReplayHandler.java
 file
@@ -202,11 +236,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-bc7eca57cba6abe752809bdb8f0adea6
-2008-08-27T13:16:35.698961Z
-4780
-alex
+2009-05-27T05:49:55.000000Z
+d692ebfba1891ab40ecc91057e7f4c53
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -228,7 +262,7 @@ has-props
 
 
 
-6523
+6519
 
 SVNAdminEvent.java
 file
@@ -236,11 +270,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-516ccfebf049ea25744dfa0066749e87
-2008-08-27T13:16:35.698961Z
-4780
-alex
+2009-05-27T05:49:55.000000Z
+4a0e006d5ec8c8364b6633226701bba3
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -262,7 +296,7 @@ has-props
 
 
 
-8519
+9107
 
 SVNAdminEventAdapter.java
 file
@@ -270,11 +304,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-2b1a926271ebc4b886c8d00bdb0ac36f
-2008-08-27T13:16:35.698961Z
-4780
-alex
+2009-05-27T05:49:55.000000Z
+053524652fe07dfd6dc27918ffc52564
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -296,7 +330,7 @@ has-props
 
 
 
-2004
+2000
 
 ISVNChangedDirectoriesHandler.java
 file
@@ -304,11 +338,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-6e22e38a40f15dec245a4886c344a8d4
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+dc31806c6be2d920b6c15df70e2683ab
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -330,7 +364,7 @@ has-props
 
 
 
-1073
+1069
 
 ISVNAdminEventHandler.java
 file
@@ -338,11 +372,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-193bab89ab05f97fb0609356061856d1
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+53506ee6cd518ec49dd142767a6df37e
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -364,7 +398,7 @@ has-props
 
 
 
-1900
+1896
 
 ISVNGNUDiffGenerator.java
 file
@@ -372,11 +406,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-8eaa4c203c601e7afa7167faa4295763
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+83daef2b8d3b2dc02a03fa92549775f8
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -398,7 +432,7 @@ has-props
 
 
 
-2553
+2549
 
 SVNLookClient.java
 file
@@ -406,11 +440,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-3b837b07d745614a607f940294cce9a6
-2008-09-23T16:58:29.147992Z
-4922
-alex
+2009-05-27T05:49:55.000000Z
+3b15102e3ec1142217222c7ced515af5
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -432,7 +466,7 @@ has-props
 
 
 
-54310
+54306
 
 SVNUUIDAction.java
 file
@@ -440,11 +474,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-c618789c5faab7d6c7942187ec8a7a71
-2008-08-27T13:16:35.698961Z
-4780
-alex
+2009-05-27T05:49:55.000000Z
+256e97de647b50445de5178cfbf2bdd8
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -466,7 +500,7 @@ has-props
 
 
 
-1375
+1389
 
 SVNAdminPath.java
 file
@@ -474,11 +508,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-7f7c148a99108f8a45b63eaaaae3cfbf
-2008-08-27T13:16:35.698961Z
-4780
-alex
+2009-05-27T05:49:55.000000Z
+a62715a711071d4d0baaf5fc915999f3
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -500,7 +534,7 @@ has-props
 
 
 
-3709
+3705
 
 ISVNTreeHandler.java
 file
@@ -508,11 +542,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-ccb129ce9d61034b560cdfa47ab3580b
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+1800badada4d258d029c0a60642a3989
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -534,7 +568,7 @@ has-props
 
 
 
-1040
+1036
 
 SVNChangeEntry.java
 file
@@ -542,11 +576,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-201d965fe573a17b58dbd122a2de7885
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:55.000000Z
+615041ca530cceba05dd8f62d52e380d
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -568,5 +602,5 @@ has-props
 
 
 
-4505
+4501
 

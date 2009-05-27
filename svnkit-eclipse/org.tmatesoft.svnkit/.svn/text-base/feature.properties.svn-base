@@ -6,7 +6,7 @@ are not externally-maintained libraries (e.g. Trilead SSH library).\n\
 All the source code and compiled classes in package org.tigris.subversion.javahl\n\
 except SvnClient class are covered by the license in JAVAHL-LICENSE file\n\
 \n\
-Copyright (c) 2004-2008 TMate Software. All rights reserved.\n\
+Copyright (c) 2004-2009 TMate Software. All rights reserved.\n\
 \n\
 Redistribution and use in source and binary forms, with or without modification,\n\
 are permitted provided that the following conditions are met:\n\

@@ -58,7 +58,8 @@ def general_symlink(sbox):
     })
 
   # Run a diff and verify that we get the correct output
-  stdout_lines, stderr_lines = svntest.main.run_svn(1, 'diff', wc_dir)
+  exit_code, stdout_lines, stderr_lines = svntest.main.run_svn(1, 'diff',
+                                                               wc_dir)
 
   regex = '^\+link linktarget'
   for line in stdout_lines:
@@ -103,7 +104,7 @@ def general_symlink(sbox):
 
   was_cwd = os.getcwd()
   os.chdir(wc_dir)
-  svntest.actions.run_and_verify_svn(None, [ "M      newfile\n" ], [], 'st')
+  svntest.actions.run_and_verify_svn(None, [ "M       newfile\n" ], [], 'st')
 
   os.chdir(was_cwd)
 
@@ -136,12 +137,13 @@ def replace_file_with_symlink(sbox):
   # Does status show the obstruction?
   was_cwd = os.getcwd()
   os.chdir(wc_dir)
-  svntest.actions.run_and_verify_svn(None, [ "~      iota\n" ], [], 'st')
+  svntest.actions.run_and_verify_svn(None, [ "~       iota\n" ], [], 'st')
 
   # And does a commit fail?
   os.chdir(was_cwd)
-  stdout_lines, stderr_lines = svntest.main.run_svn(1, 'ci', '-m',
-                                                    'log msg', wc_dir)
+  exit_code, stdout_lines, stderr_lines = svntest.main.run_svn(1, 'ci', '-m',
+                                                               'log msg',
+                                                               wc_dir)
 
   regex = 'svn: Commit failed'
   for line in stderr_lines:
@@ -164,7 +166,7 @@ def import_export_symlink(sbox):
 
   # import this symlink into the repository
   url = sbox.repo_url + "/dirA/dirB/new_link"
-  output, errput = svntest.actions.run_and_verify_svn(
+  exit_code, output, errput = svntest.actions.run_and_verify_svn(
     'Import a symlink', None, [], 'import',
     '-m', 'log msg', new_path, url)
 
@@ -287,12 +289,13 @@ def replace_symlink_with_file(sbox):
   # Does status show the obstruction?
   was_cwd = os.getcwd()
   os.chdir(wc_dir)
-  svntest.actions.run_and_verify_svn(None, [ "~      newfile\n" ], [], 'st')
+  svntest.actions.run_and_verify_svn(None, [ "~       newfile\n" ], [], 'st')
 
   # And does a commit fail?
   os.chdir(was_cwd)
-  stdout_lines, stderr_lines = svntest.main.run_svn(1, 'ci', '-m',
-                                                    'log msg', wc_dir)
+  exit_code, stdout_lines, stderr_lines = svntest.main.run_svn(1, 'ci', '-m',
+                                                               'log msg',
+                                                               wc_dir)
 
   regex = 'svn: Commit failed'
   for line in stderr_lines:
@@ -498,11 +501,11 @@ def diff_symlink_to_dir(sbox):
   "diff a symlink to a directory"
 
   sbox.build(read_only = True)
-  wc_dir = sbox.wc_dir
+  os.chdir(sbox.wc_dir)
 
   # Create a symlink to A/D/.
   d_path = os.path.join('A', 'D')
-  link_path = os.path.join(wc_dir, 'link')
+  link_path = 'link'
   os.symlink(d_path, link_path)
 
   # Add the symlink.
@@ -510,21 +513,21 @@ def diff_symlink_to_dir(sbox):
 
   # Now diff the wc itself and check the results.
   expected_output = [
-    "Index: svn-test-work/working_copies/special_tests-10/link\n",
+    "Index: link\n",
     "===================================================================\n",
-    "--- svn-test-work/working_copies/special_tests-10/link\t(revision 0)\n",
-    "+++ svn-test-work/working_copies/special_tests-10/link\t(revision 0)\n",
+    "--- link\t(revision 0)\n",
+    "+++ link\t(revision 0)\n",
     "@@ -0,0 +1 @@\n",
     "+link " + d_path + "\n",
     "\ No newline at end of file\n",
     "\n",
-    "Property changes on: svn-test-work/working_copies/special_tests-10/link\n",
+    "Property changes on: link\n",
     "___________________________________________________________________\n",
     "Added: svn:special\n",
     "   + *\n",
     "\n" ]
   svntest.actions.run_and_verify_svn(None, expected_output, [], 'diff',
-                                     wc_dir)
+                                     '.')
   # We should get the same output if we the diff the symlink itself.
   svntest.actions.run_and_verify_svn(None, expected_output, [], 'diff',
                                      link_path)
@@ -567,14 +570,15 @@ def replace_symlink_with_dir(sbox):
   # Does status show the obstruction?
   was_cwd = os.getcwd()
   os.chdir(wc_dir)
-  svntest.actions.run_and_verify_svn(None, [ "~      from\n" ], [], 'st')
+  svntest.actions.run_and_verify_svn(None, [ "~       from\n" ], [], 'st')
 
   # The commit shouldn't do anything.
   # I'd expect a failed commit here, but replacing a file locally with a
   # directory seems to make svn think the file is unchanged.
   os.chdir(was_cwd)
-  stdout_lines, stderr_lines = svntest.main.run_svn(1, 'ci', '-m',
-                                                    'log msg', wc_dir)
+  exit_code, stdout_lines, stderr_lines = svntest.main.run_svn(1, 'ci', '-m',
+                                                               'log msg',
+                                                               wc_dir)
   if not (stdout_lines == [] or stderr_lines == []):
     raise svntest.Failure
 
@@ -610,18 +614,18 @@ def warn_on_reserved_name(sbox):
   sbox.build()
   wc_dir = sbox.wc_dir
   if os.path.exists(os.path.join(wc_dir, ".svn")):
-    reserved_path = os.path.join(wc_dir, "_svn")
-  elif os.path.exists(os.path.join(wc_dir, "_svn")):
     reserved_path = os.path.join(wc_dir, ".svn")
+  elif os.path.exists(os.path.join(wc_dir, "_svn")):
+    reserved_path = os.path.join(wc_dir, "_svn")
   else:
     # We don't know how to test this, but have no reason to believe
     # it would fail.  (TODO: any way to return 'Skip', though?)
     return
-  svntest.main.file_append(reserved_path, 'expecting rejection')
   svntest.actions.run_and_verify_svn(
-    "Adding a file with a reserved name failed to result in an error",
-    None, ".*Skipping argument: '.+' ends in a reserved name.*",
-    'add', reserved_path)
+    "Locking a file with a reserved name failed to result in an error",
+    None,
+    ".*Skipping argument: '.+' ends in a reserved name.*",
+    'lock', reserved_path)
 
 
 ########################################################################

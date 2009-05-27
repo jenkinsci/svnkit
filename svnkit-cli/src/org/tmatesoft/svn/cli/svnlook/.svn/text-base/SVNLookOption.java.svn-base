@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import org.tmatesoft.svn.cli.AbstractSVNOption;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNLookOption extends AbstractSVNOption {
@@ -35,6 +35,7 @@ public class SVNLookOption extends AbstractSVNOption {
     public static final SVNLookOption SHOW_IDS = new SVNLookOption("show-ids", null, true);
     public static final SVNLookOption TRANSACTION = new SVNLookOption("transaction", "t", false);
     public static final SVNLookOption VERBOSE = new SVNLookOption("verbose", "v", true);
+    public static final SVNLookOption XML = new SVNLookOption("xml", null, true);
     public static final SVNLookOption EXTENSIONS = new SVNLookOption("extensions", "x", false);
 
     private SVNLookOption(String name, String alias, boolean unary) {

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,12 +15,13 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntryPath;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSPathChange extends SVNLogEntryPath {
@@ -36,8 +37,9 @@ public class FSPathChange extends SVNLogEntryPath {
     boolean isTextModified;
     boolean arePropertiesModified;
     
-    public FSPathChange(String path, FSID id, FSPathChangeKind kind, boolean textModified, boolean propsModified, String copyfromPath, long copyfromRevision) {
-        super(path, FSPathChangeKind.getType(kind), copyfromPath, copyfromRevision);
+    public FSPathChange(String path, FSID id, FSPathChangeKind kind, boolean textModified, boolean propsModified, String copyfromPath, long copyfromRevision,
+            SVNNodeKind pathKind) {
+        super(path, FSPathChangeKind.getType(kind), copyfromPath, copyfromRevision, pathKind);
         myPath = path;
         myRevNodeId = id;
         myChangeKind = kind;
@@ -109,7 +111,20 @@ public class FSPathChange extends SVNLogEntryPath {
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         String changesKindStr = changeLine.substring(0, delimiterInd);
-
+        int dashIndex = changesKindStr.indexOf("-");
+        SVNNodeKind nodeKind = SVNNodeKind.UNKNOWN;
+        if (dashIndex >=0) {
+            String nodeKindStr = changesKindStr.substring(dashIndex + 1);
+            changesKindStr = changesKindStr.substring(0, dashIndex);
+            if (SVNNodeKind.FILE.toString().equals(nodeKindStr)) {
+                nodeKind = SVNNodeKind.FILE;
+            } else if (SVNNodeKind.DIR.toString().equals(nodeKindStr)) {
+                nodeKind = SVNNodeKind.DIR;
+            } else {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid changes line in rev-file");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+        }
         FSPathChangeKind changesKind = FSPathChangeKind.fromString(changesKindStr);
         if (changesKind == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Invalid change kind in rev file");
@@ -172,7 +187,7 @@ public class FSPathChange extends SVNLogEntryPath {
             copyfromPath = copyfromLine.substring(delimiterInd + 1);
         }
 
-        return new FSPathChange(pathStr, nodeRevID, changesKind, textModeBool, propModeBool, copyfromPath, copyfromRevision);
+        return new FSPathChange(pathStr, nodeRevID, changesKind, textModeBool, propModeBool, copyfromPath, copyfromRevision, nodeKind);
     }
 
 }

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -137,8 +137,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * To authenticate a user over network <b>SVNRepository</b> drivers use
  * <b>ISVNAuthenticationManager</b> auth drivers.
  * 
- * @version     1.2.0
+ * @version     1.3
  * @author      TMate Software Ltd.
+ * @since       1.2
  * @see         SVNRepositoryFactory
  * @see         org.tmatesoft.svn.core.auth.ISVNAuthenticationManager
  * @see         <a href="http://svnkit.com/kb/examples/">Examples</a>
@@ -2724,6 +2725,60 @@ public abstract class SVNRepository {
         myConnectionListeners.remove(listener);
     }
     
+    /**
+     * Returns the revision where the path was first deleted within the inclusive revision range 
+     * defined by <code>pegRevision</code> and <code>endRevision</code>.
+     * 
+     * <p/>
+     * If <code>path</code> does not exist at <code>pegRevision</code> or was not deleted within
+     * the specified range, then returns an invalid revision (<code>&lt;0</code>).
+     * 
+     * 
+     * @param    path           relative or absolute repository path                 
+     * @param    pegRevision    peg revision to start the search from    
+     * @param    endRevision    end revision to end the search at
+     * @return                  revision where <code>path</code> is first deleted
+     * @throws   SVNException   if <code>pegRevision</code> or <code>endRevision</code> are invalid or 
+     *                          if <code>pegRevision</code> is greater than <code>endRevision</code>, then    
+     *                          the exception is set {@link SVNErrorCode#CLIENT_BAD_REVISION} error code;
+     *                          if <code>path</code> is the repository root (<code>"/"</code>).
+     * @since    1.3
+     */
+    public long getDeletedRevision(String path, long pegRevision, long endRevision) throws SVNException {
+        path = getRepositoryPath(path);
+        if ("/".equals(path)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "root path could not be deleted");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        
+        if (isInvalidRevision(pegRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Invalid peg revision {0}", String.valueOf(pegRevision));
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+
+        if (isInvalidRevision(endRevision)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Invalid end revision {0}", String.valueOf(endRevision));
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        
+        if (endRevision <= pegRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Peg revision must precede end revision");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        
+        try {
+            return getDeletedRevisionImpl(path, pegRevision, endRevision);
+        } catch (SVNException svne) {
+            SVNErrorCode errCode = svne.getErrorMessage().getErrorCode();
+            if (errCode == SVNErrorCode.UNSUPPORTED_FEATURE || errCode == SVNErrorCode.RA_NOT_IMPLEMENTED) {
+                return getDeletedRevisionFromLog(path, pegRevision, endRevision);
+            }
+            throw svne;
+        }
+    }
+    
+    protected abstract long getDeletedRevisionImpl(String path, long pegRevision, long endRevision) throws SVNException;
+    
     protected abstract long getLocationSegmentsImpl(String path, long pegRevision, long startRevision, long endRevision, 
             ISVNLocationSegmentHandler handler) throws SVNException;
     
@@ -2914,6 +2969,12 @@ public abstract class SVNRepository {
             return SVNDebugLog.getDefaultLog();
         }
         return myDebugLog;
+    }
+    
+    private long getDeletedRevisionFromLog(String path, long pegRevision, long endRevision) throws SVNException {
+        DeletedRevisionLogHandler handler = new DeletedRevisionLogHandler(path);
+        log(new String[] { path }, pegRevision, endRevision, true, true, 0, false, null, handler);
+        return handler.getDeletedRevision();
     }
     
     private long getLocationSegmentsFromLog(String path, long pegRevision, long startRevision, long endRevision, 
@@ -3151,6 +3212,34 @@ public abstract class SVNRepository {
         }
        
         return previousPath;
+    }
+    
+    private static class DeletedRevisionLogHandler implements ISVNLogEntryHandler {
+        private String myPath;
+        private long myDeletedRevision;
+        
+        public DeletedRevisionLogHandler(String path) {
+            myPath = path;
+            myDeletedRevision = INVALID_REVISION;
+        }
+
+        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
+            Map changedPaths = logEntry.getChangedPaths();
+            for (Iterator changedPathsIter = changedPaths.keySet().iterator(); changedPathsIter.hasNext();) {
+                String path = (String) changedPathsIter.next();
+                SVNLogEntryPath change = (SVNLogEntryPath) changedPaths.get(path);
+                if (myPath.equals(path) && (change.getType() == SVNLogEntryPath.TYPE_DELETED || 
+                        change.getType() == SVNLogEntryPath.TYPE_REPLACED)) {
+                    
+                    myDeletedRevision = logEntry.getRevision();
+                }
+            }
+        }
+
+        public long getDeletedRevision() {
+            return myDeletedRevision;
+        }
+
     }
     
     private static class FileRevisionsLogHandler implements ISVNLogEntryHandler {

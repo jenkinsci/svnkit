@@ -1,11 +1,53 @@
 K 25
 svn:wc:ra_dav:version-url
-V 73
-/repos/svn/!svn/ver/35048/branches/1.5.x/subversion/tests/cmdline/svntest
+V 69
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest
+END
+wc.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/wc.py
+END
+testcase.py
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/testcase.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/__init__.py
+END
+tree.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/tree.py
 END
 actions.py
 K 25
 svn:wc:ra_dav:version-url
-V 84
-/repos/svn/!svn/ver/35048/branches/1.5.x/subversion/tests/cmdline/svntest/actions.py
+V 80
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/actions.py
+END
+entry.py
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/entry.py
+END
+main.py
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/main.py
+END
+verify.py
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svntest/verify.py
 END

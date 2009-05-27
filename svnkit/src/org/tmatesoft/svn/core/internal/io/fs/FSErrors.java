@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,7 +18,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNNodeKind;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSErrors {
@@ -117,7 +117,11 @@ public class FSErrors {
         return err;
     }
 
-    public static SVNErrorMessage errorConflict(String path) {
+    public static SVNErrorMessage errorConflict(String path, StringBuffer conflictPath) {
+        if (conflictPath != null) {
+            conflictPath.delete(0, conflictPath.length());
+            conflictPath.append(path);
+        }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CONFLICT, "Conflict at ''{0}''", path);
         return err;
     }

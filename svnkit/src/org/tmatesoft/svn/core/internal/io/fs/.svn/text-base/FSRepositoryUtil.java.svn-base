@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -47,7 +48,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSRepositoryUtil {
@@ -99,9 +100,12 @@ public class FSRepositoryUtil {
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
     }
     
-    public synchronized static void copy(InputStream src, OutputStream dst) throws SVNException {
+    public synchronized static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
         try {
             while (true) {
+                if (canceller != null) {
+                    canceller.checkCancelled();
+                }
                 int length = src.read(ourCopyBuffer);
                 if (length > 0) {
                     dst.write(ourCopyBuffer, 0, length);
@@ -190,7 +194,7 @@ public class FSRepositoryUtil {
             return true;
         }
 
-        if (!revNode1.getFileChecksum().equals(revNode2.getFileChecksum())) {
+        if (!revNode1.getFileMD5Checksum().equals(revNode2.getFileMD5Checksum())) {
             return true;
         }
 
@@ -249,19 +253,36 @@ public class FSRepositoryUtil {
         }
     }
     
-    public static void loadRootChangesOffset(FSFile file, long[] rootOffset, long[] changesOffset) throws SVNException {
+    public static void loadRootChangesOffset(FSFS fsfs, long revision, FSFile file, long[] rootOffset, long[] changesOffset) throws SVNException {
         ByteBuffer buffer = ByteBuffer.allocate(64);
-        file.seek(file.size() - 64);
+        long offset = 0; 
+
+        if (fsfs.isPackedRevision(revision) && ((revision + 1) % fsfs.getMaxFilesPerDirectory()) != 0) {
+            offset = fsfs.getPackedOffset(revision + 1);
+        } else {
+            offset = file.size();
+        }
+        
+        long revOffset = 0;
+        if (fsfs.isPackedRevision(revision)) {
+            revOffset = fsfs.getPackedOffset(revision);
+        }
+
+        file.seek(offset - 64);
         try {
             file.read(buffer);
         } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err, e, SVNLogType.FSFS);
         }
+        
         buffer.flip();
         if (buffer.get(buffer.limit() - 1) != '\n') {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
                     "Revision file lacks trailing newline");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+        
         int spaceIndex = -1;
         int eolIndex = -1;
         for (int i = buffer.limit() - 2; i >= 0; i--) {
@@ -289,14 +310,14 @@ public class FSRepositoryUtil {
             buffer.position(spaceIndex + 1);
             String line = decoder.decode(buffer).toString();
             if (changesOffset != null && changesOffset.length > 0) {
-                changesOffset[0] = Long.parseLong(line);
+                changesOffset[0] = revOffset + Long.parseLong(line);
             }
 
             buffer.limit(spaceIndex);
             buffer.position(eolIndex + 1);
             line = decoder.decode(buffer).toString();
             if (rootOffset != null && rootOffset.length > 0) {
-                rootOffset[0] = Long.parseLong(line); 
+                rootOffset[0] = revOffset + Long.parseLong(line); 
             }
         } catch (NumberFormatException nfe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, 
@@ -349,7 +370,7 @@ public class FSRepositoryUtil {
         return new String(nextKey, 0, nextKeyLength);
     }
    
-    public static void checkReposDBForma(int format) throws SVNException {
+    public static void checkReposDBFormat(int format) throws SVNException {
         if (format < FSFS.DB_FORMAT_LOW || format > FSFS.DB_FORMAT) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_UNSUPPORTED_FORMAT, 
                     "Expected FS format between ''{0}'' and ''{1}''; found format ''{2}''", 
