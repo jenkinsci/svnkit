@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,6 +31,9 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.tmatesoft.svn.core.ISVNCanceller;
+import org.tmatesoft.svn.core.SVNCancelException;
+
 /**
  * <code>SVNSocketFactory</code> is a utility class that represents a custom
  * socket factory which provides creating either a plain socket or a secure one
@@ -40,17 +43,18 @@ import javax.net.ssl.X509TrustManager;
  * The created socket then used by the inner engine of <b><i>SVNKit</i></b>
  * library to communicate with a Subversion repository.
  *
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
 
-    public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout) throws IOException {
+    public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket socket = new Socket();
-        socket.connect(new InetSocketAddress(address, port), connectTimeout);
+        InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+        connect(socket, socketAddress, connectTimeout, cancel);
         socket.setReuseAddress(true);
         socket.setTcpNoDelay(true);
         socket.setKeepAlive(true);
@@ -59,10 +63,11 @@ public class SVNSocketFactory {
         return socket;
     }
 
-    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout) throws IOException {
+    public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
-        sslSocket.connect(new InetSocketAddress(address, port), connectTimeout);
+        InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+        connect(sslSocket, socketAddress, connectTimeout, cancel);
         sslSocket.setReuseAddress(true);
         sslSocket.setTcpNoDelay(true);
         sslSocket.setKeepAlive(true);
@@ -81,6 +86,25 @@ public class SVNSocketFactory {
         sslSocket.setSoTimeout(readTimeout);
         ((SSLSocket) sslSocket).setEnabledProtocols(new String[] {"SSLv3"});
         return sslSocket;
+    }
+
+    private static void connect(Socket socket, InetSocketAddress address, int timeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
+        if (cancel == null) {
+            socket.connect(address, timeout);
+            return;
+        }
+
+        SVNSocketConnection socketConnection = new SVNSocketConnection(socket, address, timeout);
+        Thread connectionThread = new Thread(socketConnection);
+        connectionThread.start();
+
+        while (!socketConnection.isSocketConnected()) {
+            cancel.checkCancelled();
+        }
+        
+        if (socketConnection.getError() != null) {
+            throw socketConnection.getError();           
+        }
     }
 
     private static InetAddress createAddres(String hostName) throws UnknownHostException {

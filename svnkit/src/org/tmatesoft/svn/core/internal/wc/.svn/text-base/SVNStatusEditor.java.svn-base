@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -37,10 +37,11 @@ import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNStatusEditor {
@@ -135,6 +136,7 @@ public class SVNStatusEditor {
                 myExternalsMap.put(SVNPathUtil.append(path, external.getPath()), external);
             }
         }
+        
         if (entryName != null) {
             File file = (File) childrenFiles.get(entryName);
             SVNEntry entry = dir.getEntry(entryName, false);
@@ -148,7 +150,18 @@ public class SVNStatusEditor {
                 if (ignorePatterns == null) {
                     ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
                 }
-                sendUnversionedStatus(file, entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, handler);
+                SVNFileType fileType = SVNFileType.getType(file);
+                boolean special = fileType == SVNFileType.SYMLINK;
+                SVNNodeKind fileKind = SVNFileType.getNodeKind(fileType);
+                sendUnversionedStatus(file, entryName, fileKind, special, dir, ignorePatterns, noIgnore, handler);
+            } else {
+                SVNTreeConflictDescription treeConflict = myWCAccess.getTreeConflict(dir.getFile(entryName));
+                if (treeConflict != null) {
+                    if (ignorePatterns == null) {
+                        ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
+                    }
+                    sendUnversionedStatus(dir.getFile(entryName), entryName, SVNNodeKind.NONE, false, dir, ignorePatterns, true, handler);
+                }
             }
             return;
         }
@@ -183,6 +196,22 @@ public class SVNStatusEditor {
             sendUnversionedStatus(file, fileName, SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, 
                     handler);
         }
+        
+        Map treeConflicts = SVNTreeConflictUtil.readTreeConflicts(dir.getRoot(), dirEntry.getTreeConflictData());
+        for (Iterator treeConflictsIter = treeConflicts.keySet().iterator(); treeConflictsIter.hasNext();) {
+            File conflictPath = (File) treeConflictsIter.next();
+            if (childrenFiles.containsKey(conflictPath.getName()) || dir.getEntry(conflictPath.getName(), false) != null) {
+                continue;
+            }
+            
+            if (ignorePatterns == null) {
+                ignorePatterns = getIgnorePatterns(dir, myGlobalIgnores);
+            }
+            
+            sendUnversionedStatus(conflictPath, conflictPath.getName(), SVNNodeKind.NONE, false, dir, ignorePatterns, noIgnore, 
+                    handler);
+        }
+       
         for(Iterator entries = dir.entries(false); entries.hasNext();) {
             SVNEntry entry = (SVNEntry) entries.next();
             if (dir.getThisDirName().equals(entry.getName())) {

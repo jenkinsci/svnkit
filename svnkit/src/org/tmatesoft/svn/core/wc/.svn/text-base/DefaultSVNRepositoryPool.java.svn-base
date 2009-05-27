@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -56,8 +56,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * that use a single socket connection (i.e. don't close a connection after every repository
  * access operation but reuse a single one). 
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  */
 public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession, ISVNConnectionListener {
     
@@ -95,6 +96,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
     private ISVNAuthenticationManager myAuthManager;
     private ISVNTunnelProvider myTunnelProvider;
     private ISVNDebugLog myDebugLog;
+    private ISVNCanceller myCanceller;
     private Map myPool;
     private long myTimeout;
     private Map myInactiveRepositories = new SVNHashMap();
@@ -209,6 +211,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
             repos.setAuthenticationManager(myAuthManager);
             repos.setTunnelProvider(myTunnelProvider);
             repos.setDebugLog(myDebugLog);
+            repos.setCanceller(myCanceller);
             return repos;
         }
         
@@ -226,6 +229,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
         repos.setAuthenticationManager(myAuthManager);
         repos.setTunnelProvider(myTunnelProvider);
         repos.setDebugLog(myDebugLog);
+        repos.setCanceller(myCanceller);
         return repos;
     }
     
@@ -407,6 +411,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
      * @since 1.1.4
      */
     public void setCanceller(ISVNCanceller canceller) {
+        myCanceller = canceller;
         Map pool = getPool();
         for (Iterator protocols = pool.keySet().iterator(); protocols.hasNext();) {
             String key = (String) protocols.next();

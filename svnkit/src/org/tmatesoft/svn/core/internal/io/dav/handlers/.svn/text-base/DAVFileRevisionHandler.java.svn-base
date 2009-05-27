@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -31,7 +31,7 @@ import org.xml.sax.Attributes;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 
@@ -167,9 +167,10 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
             }
             if (myPropertyName != null) {
                 if ("base64".equals(myPropertyEncoding)) {
-                    byte[] bytes = allocateBuffer(cdata.length());
-                    int length = SVNBase64.base64ToByteArray(new StringBuffer(cdata.toString().trim()), bytes);
-                    SVNPropertyValue value = SVNPropertyValue.create(myPropertyName, bytes, 0, length);
+                    StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+                    byte[] buffer = allocateBuffer(sb.length());
+                    int length = SVNBase64.base64ToByteArray(sb, buffer);
+                    SVNPropertyValue value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
                     myPropertiesDelta.put(myPropertyName, value);
                 } else {
                     myPropertiesDelta.put(myPropertyName, cdata.toString());

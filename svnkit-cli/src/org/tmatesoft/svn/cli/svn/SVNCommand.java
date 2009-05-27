@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -18,7 +18,7 @@ import org.tmatesoft.svn.cli.AbstractSVNCommand;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class SVNCommand extends AbstractSVNCommand {
@@ -60,7 +60,9 @@ public abstract class SVNCommand extends AbstractSVNCommand {
             myGlobalOptions.add(SVNOption.PASSWORD);
             myGlobalOptions.add(SVNOption.NO_AUTH_CACHE);
             myGlobalOptions.add(SVNOption.NON_INTERACTIVE);
-            myGlobalOptions.add(SVNOption.CONFIG_DIR);
+            myGlobalOptions.add(SVNOption.TRUST_SERVER_CERT);
+            myGlobalOptions.add(SVNOption.CONFIG_DIR);            
+            myGlobalOptions.add(SVNOption.CONFIG_OPTION);            
         }
         return myGlobalOptions;
     }

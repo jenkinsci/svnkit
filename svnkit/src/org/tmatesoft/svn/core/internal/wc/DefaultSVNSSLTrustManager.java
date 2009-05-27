@@ -27,7 +27,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class DefaultSVNSSLTrustManager implements X509TrustManager {
 
@@ -185,6 +185,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 		}
 		catch (SVNException e) {
 			props.delete();
+            throw e;
 		}
 	}
 

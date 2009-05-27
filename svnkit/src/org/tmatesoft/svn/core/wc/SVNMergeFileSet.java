@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -32,9 +32,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
  * file mimeType; labels to append to the file name to produce conflict files in case a merge fails with a 
  * conflict, and so on.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
- * @since   1.2.0
+ * @since   1.2
  */
 public class SVNMergeFileSet {
     
@@ -345,5 +345,47 @@ public class SVNMergeFileSet {
      */
     public File getCopyFromFile() {
         return myCopyFromFile;
+    }
+
+    /**
+     * Returns the copy source path.
+     * 
+     * @return   path of the copy source file; 
+     *           it's relevant to the {@link #getAdminArea() admin area} location
+     * @since    1.3
+     */
+    public String getCopyFromPath() {
+        String root = myAdminArea.getRoot().getAbsolutePath().replace(File.separatorChar, '/');
+        String copyFrom = getCopyFromFile().getAbsolutePath().replace(File.separatorChar, '/');
+        String copyFromPath = copyFrom.substring(root.length());
+        copyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring("/".length()) : copyFromPath;
+        return copyFromPath;
+    }
+
+    public String toString() {
+        final StringBuffer buffer = new StringBuffer();
+        buffer.append("{Merge File Set: ");
+        buffer.append("admin area = ");
+        buffer.append(myAdminArea);
+        buffer.append("; local file path = ");
+        buffer.append(myLocalFilePath);
+        buffer.append("; base file path =");
+        buffer.append(myBaseFilePath);
+        buffer.append("; repository file path = ");
+        buffer.append(myRepositoryFilePath);
+        buffer.append("; WC file path = ");
+        buffer.append(myWCFilePath);
+        buffer.append("; merge result path = ");
+        buffer.append(myMergeResultFilePath);
+        buffer.append("; local file = ");
+        buffer.append(myLocalFile);
+        buffer.append("; base file = ");
+        buffer.append(myBaseFile);
+        buffer.append("; repository file = ");
+        buffer.append(myRepositoryFile);
+        buffer.append("; merge result file = ");
+        buffer.append(myMergeResultFile);
+        buffer.append('}');
+        return buffer.toString();
     }
 }

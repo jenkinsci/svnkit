@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/test/sandboxes
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-04-21T14:43:00.959095Z
+5772
+alex
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-886cde179d6f6e6d909a3aac80779107
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+9f1444b4136e7ebd2f51ed15eb52217c
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -57,8 +58,7 @@ semen
 
 
 
-
-1462
+1460
 
 apache
 dir
@@ -69,11 +69,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-923ace62ce1a176b5d52a4fa679083d3
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+122a273ebb1e233781d13916b3e92175
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -94,8 +95,7 @@ semen
 
 
 
-
-3253
+3251
 
 DAVSandboxFactory.java
 file
@@ -103,11 +103,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-a7ab1919a08587a52fe570fc3598c0bc
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+5239f535909438406901442d44948db7
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -128,8 +129,7 @@ semen
 
 
 
-
-2268
+2266
 
 SVNSandbox.java
 file
@@ -137,11 +137,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-9fdbcea79fdae343ae06ee2c186dc6e0
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+f7be1e7d0804fffdb9f5b9e82979b686
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -162,42 +163,7 @@ semen
 
 
 
-
-4905
-
-SVNSandboxFile.java
-file
-
-
-
-
-2009-01-14T22:06:34.000000Z
-8d35cbf7e33ec221b75c71445a1eebbe
-2008-11-10T19:23:40.653481Z
-5140
-semen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1941
+4903
 
 FSSandbox.java
 file
@@ -205,11 +171,12 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
-8b53dbbbd765765e373d4a60e01ed06d
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+5e625986b9cac2f997bbeaf796823f8a
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -230,8 +197,7 @@ semen
 
 
 
-
-1262
+1260
 
 AbstractSVNSandbox.java
 file
@@ -239,11 +205,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-a5b67318096f392a598e6e3a1d3a6177
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+eb4bff71f42fbf1d59d84d63c2a7f710
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -264,8 +231,7 @@ semen
 
 
 
-
-5706
+5704
 
 DAVSandbox.java
 file
@@ -273,11 +239,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-70b24f7ddd9ed19dc7a0e45121c3696e
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+1dba36fb2aae777b527d6aa2184cec21
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -298,8 +265,7 @@ semen
 
 
 
-
-5509
+5507
 
 SVNSandboxFactory.java
 file
@@ -307,11 +273,12 @@ file
 
 
 
-2009-01-14T22:06:35.000000Z
-d72d59f999ecb3d51fa2860579573fc8
-2008-11-28T21:07:21.269306Z
-5301
-semen
+2009-05-27T05:49:17.000000Z
+02afcaebf86f519c3a84b76f968ca1b4
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
 
 
 
@@ -332,6 +299,5 @@ semen
 
 
 
-
-1881
+1879
 

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -38,7 +38,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
 
@@ -54,7 +54,8 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
     private boolean myIsVersion;
     private boolean myIsQuiet;
     private boolean myIsHelp;
-
+    private boolean myIsTrustServerCertificate;
+    
     public boolean isNonInteractive() {
         return myIsNonInteractive;
     }
@@ -112,7 +113,7 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
         ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, 
                 myPassword, !myIsNoAuthCache);
         if (!myIsNonInteractive) {
-            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider());
+            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate));
         }
         return authManager;
     }
@@ -145,6 +146,8 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
             myIsVersion = true;            
         } else if (option == SVNSyncOption.QUIET) {
             myIsQuiet = true;            
+        } else if (option == SVNSyncOption.TRUST_SERVER_CERT) {
+            myIsTrustServerCertificate = true;
         } else if (option == SVNSyncOption.HELP || option == SVNSyncOption.QUESTION) {
             myIsHelp = true;            
         }
@@ -167,6 +170,11 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
             mySourcePassword = myPassword;
             mySyncPassword = myPassword;
         }        
+        
+        if (myIsTrustServerCertificate && !myIsNonInteractive) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "--trust-server-cert requires --non-interactive");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
     }
 
     protected String refineCommandName(String commandName, SVNCommandLine commandLine) throws SVNException {

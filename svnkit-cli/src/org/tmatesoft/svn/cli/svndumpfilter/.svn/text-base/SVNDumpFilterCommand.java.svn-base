@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,7 +19,7 @@ import org.tmatesoft.svn.cli.AbstractSVNCommand;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {
@@ -40,6 +40,7 @@ public abstract class SVNDumpFilterCommand extends AbstractSVNCommand {
         options.add(SVNDumpFilterOption.DROP_EMPTY_REVISIONS);
         options.add(SVNDumpFilterOption.RENUMBER_REVISIONS);
         options.add(SVNDumpFilterOption.SKIP_MISSING_MERGE_SOURCES);        
+        options.add(SVNDumpFilterOption.TARGETS);
         options.add(SVNDumpFilterOption.PRESERVE_REVISION_PROPERTIES);        
         options.add(SVNDumpFilterOption.QUIET);
         return options;

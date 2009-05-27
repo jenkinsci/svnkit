@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnversion
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
+2009-04-21T14:43:00.959095Z
+5772
 alex
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-2cc898cd7878b307dcb3ef1598c5ee47
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:14.000000Z
+618f0edbd5d3c44bd585540cf9eb17fd
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-4465
+4463
 
 SVNVersionHelpCommand.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-1a64f776fec516131689763d33197c2c
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:14.000000Z
+05503de6687508c29060267ce3a4c4df
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-2209
+2207
 
 SVNVersionOption.java
 file
@@ -100,10 +100,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-4d2965b9d793e2b7fc258decd187e3ef
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:14.000000Z
+64dc7a693fbe6e21630666a980e497af
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-1359
+1357
 
 options.properties
 file
@@ -134,10 +134,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-05-27T05:49:14.000000Z
 9b272b0b837ec0163da3519c88916919
-2008-07-30T16:53:59.266781Z
-4613
+2008-07-29T19:33:42.126931Z
+4610
 semen
 has-props
 
@@ -168,10 +168,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-e29c31f952b4c4097cb1509eb393b72b
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:14.000000Z
+347535f83bc45a64ffdd6335cac8af94
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-2612
+2610
 
 SVNVersion.java
 file
@@ -202,10 +202,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-c4d1634289a26a8d7deb5423fae57957
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:14.000000Z
+85ad5e76bb99835718b4aea00a954dad
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -228,7 +228,7 @@ has-props
 
 
 
-1868
+1866
 
 commands.properties
 file
@@ -236,10 +236,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-05-27T05:49:14.000000Z
 0ffac470bb2a41181ea753301929545e
-2008-07-30T16:53:59.266781Z
-4613
+2008-07-29T19:33:42.126931Z
+4610
 semen
 has-props
 

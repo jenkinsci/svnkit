@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,8 +25,9 @@ import java.io.Serializable;
  * they are representations of all the changed paths in the revision represented
  * by that <b>SVNLogEntry</b> object.
  * 
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see 	SVNLogEntry
  */
 public class SVNLogEntryPath implements Serializable {
@@ -57,6 +58,7 @@ public class SVNLogEntryPath implements Serializable {
     private char myType;
     private String myCopyPath;
     private long myCopyRevision;
+    private SVNNodeKind myNodeKind;
     
     /**
      * Constructs an <b>SVNLogEntryPath</b> object. 
@@ -76,12 +78,36 @@ public class SVNLogEntryPath implements Serializable {
      * @param copyRevision		the ancestor's revision if the <code>path</code> is a branch,
      * 							or -1 if not
      */
-    public SVNLogEntryPath(String path, char type, String copyPath,
-            long copyRevision) {
+    public SVNLogEntryPath(String path, char type, String copyPath, long copyRevision) {
+        this(path, type, copyPath, copyRevision, SVNNodeKind.UNKNOWN);
+    }
+
+    /**
+     * Constructs an <b>SVNLogEntryPath</b> object. 
+     * 
+     * <p>
+     * Use char constants of this class as a change <code>type</code> to 
+     * pass to this constructor. 
+     * @param  path            a path that was changed in a revision
+     * @param  type            a type of the path change; it can be one of the following: 
+     *                         <span class="javastring">'M'</span> - Modified, <span class="javastring">'A'</span> - Added, 
+     *                         <span class="javastring">'D'</span> - Deleted, <span class="javastring">'R'</span> - Replaced
+     * @param  copyPath        the path of the ancestor of the item represented 
+     *                         by <code>path</code> (in that case if <code>path</code> 
+     *                         was copied), or <span class="javakeyword">null</span> if
+     *                         <code>path</code>
+     * @param  copyRevision    the ancestor's revision if the <code>path</code> is a branch,
+     *                         or -1 if not
+     * @param  kind            node kind of the changed path 
+     * @since  1.3
+     */
+    public SVNLogEntryPath(String path, char type, String copyPath, long copyRevision, SVNNodeKind kind) {
         myPath = path;
         myType = type;
         myCopyPath = copyPath;
         myCopyRevision = copyRevision;
+        myNodeKind = kind;
+        
     }
     
     /**
@@ -131,6 +157,17 @@ public class SVNLogEntryPath implements Serializable {
      */
     public char getType() {
         return myType;
+    }
+    
+    /**
+     * Returns the node kind of the changed path, represented by 
+     * this object. 
+     * 
+     * @return node kind of the changed path
+     * @since  1.3
+     */
+    public SVNNodeKind getKind() {
+        return myNodeKind;
     }
     
     /**

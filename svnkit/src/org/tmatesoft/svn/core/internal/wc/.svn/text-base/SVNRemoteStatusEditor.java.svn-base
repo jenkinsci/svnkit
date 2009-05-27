@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -44,7 +44,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor, ISVNStatusHandler {
@@ -371,8 +371,12 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
         if (status.getPropertiesStatus() != SVNStatusType.STATUS_NONE && status.getPropertiesStatus() != SVNStatusType.STATUS_NORMAL) {
             return true;
         }
+        if (status.getTreeConflict() != null) {
+            return true;
+        }
         return status.isLocked() || status.isSwitched() || 
-        status.getLocalLock() != null || status.getChangelistName() != null;
+        status.getLocalLock() != null || status.getChangelistName() != null || 
+        status.isFileExternal();
     }
     
     private SVNStatus createStatus(File path) throws SVNException {
@@ -440,13 +444,15 @@ public class SVNRemoteStatusEditor extends SVNStatusEditor implements ISVNEditor
                          myDepth == SVNDepth.FILES || 
                          myDepth == SVNDepth.IMMEDIATES || 
                          myDepth == SVNDepth.INFINITY)) {
-                    SVNAdminArea dir = getWCAccess().retrieve(myPath);
-                    getDirStatus(null, dir, null, SVNDepth.IMMEDIATES, true, true, null, true, this);
-                    SVNStatus thisDirStatus = (SVNStatus)myChildrenStatuses.get(myPath);
-                    if (thisDirStatus != null && thisDirStatus.getEntry() != null && (
-                            myDepth == SVNDepth.UNKNOWN || 
-                            myDepth.compareTo(parentStatus.getEntry().getDepth()) > 0)) {
-                        myDepth = thisDirStatus.getEntry().getDepth();
+                    SVNAdminArea dir = getWCAccess().getAdminArea(myPath);
+                    if (dir != null) {
+                        getDirStatus(null, dir, null, SVNDepth.IMMEDIATES, true, true, null, true, this);
+                        SVNStatus thisDirStatus = (SVNStatus)myChildrenStatuses.get(myPath);
+                        if (thisDirStatus != null && thisDirStatus.getEntry() != null && (
+                                myDepth == SVNDepth.UNKNOWN || 
+                                myDepth.compareTo(parentStatus.getEntry().getDepth()) > 0)) {
+                            myDepth = thisDirStatus.getEntry().getDepth();
+                        }
                     }
                 }
             }       

@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -91,8 +91,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * </table>
  *   
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNCommitClient extends SVNBasicClient {
@@ -1136,7 +1137,8 @@ public class SVNCommitClient extends SVNBasicClient {
      *                          instead
      */
     public SVNCommitPacket doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, boolean recursive) throws SVNException {
-        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), null);
+        SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+        return doCollectCommitItems(paths, keepLocks, force, depth, null);
     }
 
     /**
@@ -1261,7 +1263,8 @@ public class SVNCommitClient extends SVNBasicClient {
      */
     public SVNCommitPacket[] doCollectCommitItems(File[] paths, boolean keepLocks, boolean force, 
             boolean recursive, boolean combinePackets) throws SVNException {
-        return doCollectCommitItems(paths, keepLocks, force, SVNDepth.fromRecurse(recursive), combinePackets, null);
+        SVNDepth depth = recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY;
+        return doCollectCommitItems(paths, keepLocks, force, depth, combinePackets, null);
     }
     
     /**
@@ -1411,7 +1414,7 @@ public class SVNCommitClient extends SVNBasicClient {
                     }
                 }
                 // also use protocol, host and port as a key, not only uuid.
-                uuid += url.getProtocol() + ":" + url.getHost() + ":" + url.getPort();
+                uuid += url.getProtocol() + ":" + url.getHost() + ":" + url.getPort() + ":" + url.getUserInfo();
                 if (!repoUUIDs.containsKey(uuid)) {
                     repoUUIDs.put(uuid, new ArrayList());
                     locktokensMap.put(uuid, new SVNHashMap());
@@ -1466,6 +1469,7 @@ public class SVNCommitClient extends SVNBasicClient {
         checkCancelled();
         File[] children = SVNFileListUtil.listFiles(dir);
         boolean changed = false;
+        ISVNFileFilter filter = getCommitHandler() instanceof ISVNFileFilter ? (ISVNFileFilter) getCommitHandler() : null;
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
@@ -1474,6 +1478,9 @@ public class SVNCommitClient extends SVNBasicClient {
                 continue;
             }
             if (useGlobalIgnores && DefaultSVNOptions.isIgnored(getOptions(), file.getName())) {
+                continue;
+            }
+            if (filter != null && !filter.accept(file)) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
@@ -1573,7 +1580,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return true;
     }
 
-    private static boolean hasProcessedParents(Collection paths, String path) {
+    private static boolean hasProcessedParents(Collection paths, String path) throws SVNException {
         path = SVNPathUtil.removeTail(path);
         if (paths.contains(path)) {
             return true;

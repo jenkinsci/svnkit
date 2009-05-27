@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/io/diff
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/io/diff
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-12T11:28:48.076298Z
+5838
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-c29acb15b92b3bd1f907d1ba21b62920
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:53.000000Z
+44821b85d7318bc5a6979c702f5d51eb
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-5410
+6949
 
 SVNDiffInstruction.java
 file
@@ -66,11 +66,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-4665a244c3a22f32ed861f5b775a59a1
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:53.000000Z
+34fe3e9b5e701f2b6c3d1cfe86b996b1
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-6039
+6053
 
 SVNDiffWindowApplyBaton.java
 file
@@ -100,11 +100,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-508de79eec24f1f99b546f9771607974
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:53.000000Z
+41f72ce8faff8b9670a257fe6b4a1c07
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-4367
+4381
 
 SVNDeltaGenerator.java
 file
@@ -134,11 +134,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-bdeb0287bf18059ae1b37dc713de1d25
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:53.000000Z
+81e196c3a175f9c951cdbadd33fe7546
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-14201
+14215
 
 SVNDiffWindow.java
 file
@@ -168,11 +168,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-d3837e88dc40df7990bdae07f454086a
-2008-08-26T22:48:25.933321Z
-4775
-alex
+2009-05-27T05:49:53.000000Z
+e6fde761bcaa644f9d57c6eacb59a04d
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-28329
+28343
 
 package.html
 file
@@ -202,10 +202,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
+2009-05-27T05:49:53.000000Z
 f881722251e9b59a1d49c039c418ac3e
-2008-07-30T16:53:59.266781Z
-4613
+2008-07-29T19:33:42.126931Z
+4610
 semen
 has-props
 

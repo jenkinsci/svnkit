@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,7 +13,7 @@
 package org.tmatesoft.svn.core.internal.util;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNBase64 {
@@ -89,6 +89,17 @@ public class SVNBase64 {
      */
     public static int base64ToByteArray(StringBuffer s, byte[] buffer) {
         return base64ToByteArray(s, buffer, false);
+    }
+    
+    public static StringBuffer normalizeBase64(StringBuffer in) {
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < in.length(); i++) {
+            if (Character.isWhitespace(in.charAt(i))) {
+                continue;
+            }
+            result.append(in.charAt(i));
+        }
+        return result;
     }
 
     private static int base64ToByteArray(StringBuffer s, byte[] result, boolean alternate) {

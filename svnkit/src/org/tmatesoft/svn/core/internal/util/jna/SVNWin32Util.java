@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -22,7 +22,7 @@ import com.sun.jna.WString;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 class SVNWin32Util {
@@ -96,7 +96,7 @@ class SVNWin32Util {
         }
         final char[] commonAppDataPath = new char[1024];
         int type = common ? ISVNWin32Library.CSIDL_COMMON_APPDATA : ISVNWin32Library.CSIDL_APPDATA;
-        HRESULT result = library.SHGetFolderPathW(Pointer.NULL, type, Pointer.NULL, ISVNWin32Library.SHGFP_TYPE_DEFAULT, commonAppDataPath);
+        HRESULT result = library.SHGetFolderPathW(Pointer.NULL, type, Pointer.NULL, ISVNWin32Library.SHGFP_TYPE_CURRENT, commonAppDataPath);
         if (result == null || result.longValue() != 0) {
             return null;
         }

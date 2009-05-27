@@ -1,0 +1,59 @@
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test
+END
+SpecialTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/SpecialTest.java
+END
+XMLLogger.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/XMLLogger.java
+END
+ConsoleLogger.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/ConsoleLogger.java
+END
+UnitTests.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/UnitTests.java
+END
+AbstractTestLogger.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/AbstractTestLogger.java
+END
+PythonTests.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/PythonTests.java
+END
+Benchmark.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/Benchmark.java
+END
+FSMergerBySequenceTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/FSMergerBySequenceTest.java
+END
+TestResult.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/repos/svnkit/!svn/ver/5847/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/test/TestResult.java
+END

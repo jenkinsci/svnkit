@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import org.tmatesoft.svn.cli.AbstractSVNOption;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNAdminOption extends AbstractSVNOption {
@@ -44,6 +44,7 @@ public class SVNAdminOption extends AbstractSVNOption {
     public static final SVNAdminOption WAIT = new SVNAdminOption("wait");
     public static final SVNAdminOption PRE_14_COMPATIBLE = new SVNAdminOption("pre-1.4-compatible");
     public static final SVNAdminOption PRE_15_COMPATIBLE = new SVNAdminOption("pre-1.5-compatible");
+    public static final SVNAdminOption PRE_16_COMPATIBLE = new SVNAdminOption("pre-1.6-compatible");
 
     private SVNAdminOption(String name) {
         this(name, null, true);

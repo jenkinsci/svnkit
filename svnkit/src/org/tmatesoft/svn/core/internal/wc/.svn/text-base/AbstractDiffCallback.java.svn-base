@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractDiffCallback {
@@ -48,21 +48,26 @@ public abstract class AbstractDiffCallback {
     
     public abstract File createTempDirectory() throws SVNException;
 
-    public abstract SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff) throws SVNException;
+    public abstract SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff, 
+            boolean[] isTreeConflicted) throws SVNException;
 
-    public abstract SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
+    public abstract SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException;
     
-    public abstract SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, String mimeType2, 
-            SVNProperties originalProperties, SVNProperties diff) throws SVNException;
+    public abstract SVNStatusType[] fileAdded(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+            String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException;
     
     public abstract SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, 
-            SVNProperties originalProperties) throws SVNException;
+            SVNProperties originalProperties, boolean[] isTreeConflicted) throws SVNException;
     
-    public abstract SVNStatusType directoryAdded(String path, long revision) throws SVNException;
+    public abstract SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflicted) throws SVNException;
 
-    public abstract SVNStatusType directoryDeleted(String path) throws SVNException;
+    public abstract SVNStatusType directoryDeleted(String path, boolean[] isTreeConflicted) throws SVNException;
     
+    public abstract void directoryOpened(String path, long revision, boolean[] isTreeConflicted) throws SVNException;
+    
+    public abstract SVNStatusType[] directoryClosed(String path, boolean[] isTreeConflicted) throws SVNException;
+
     protected String getDisplayPath(String path) {
         if (myAdminArea == null) {
             if (myBasePath != null) {

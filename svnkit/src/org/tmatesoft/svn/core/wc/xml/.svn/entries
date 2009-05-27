@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit/src/org/tmatesoft/svn/core/wc/xml
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/wc/xml
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-12T11:28:48.076298Z
+5838
+sa
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-30f6f37dbff9460d3320c75932daaede
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:55.000000Z
+28abfedc7cc42cb39b5fe60defcef0c4
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-7807
+7821
 
 schema
 dir
@@ -69,11 +69,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-8fecb7a850021026d502d672d3e2225f
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:55.000000Z
+47c38ac61ba421838e5b8bb7b0a43234
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -95,7 +95,7 @@ has-props
 
 
 
-10590
+10604
 
 SVNXMLSerializer.java
 file
@@ -103,11 +103,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-72fda121b9a3c07f10aad97422f49e98
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:55.000000Z
+69d2fc2cc4fc7e67cbda40945ac8a0e3
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -129,7 +129,7 @@ has-props
 
 
 
-6051
+6065
 
 AbstractXMLHandler.java
 file
@@ -137,11 +137,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-7a158555366c7db3907d088d505143ab
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:55.000000Z
+d0721c36390bbfcbf7d101365a33829b
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -163,7 +163,7 @@ has-props
 
 
 
-3748
+3762
 
 SVNXMLDirEntryHandler.java
 file
@@ -171,11 +171,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-4b2d94d180aee808956e8141dd64ff32
-2008-08-28T19:17:31.515206Z
-4790
-alex
+2009-05-27T05:49:55.000000Z
+e1e5b4b2c298ffba2f0192004c9ed68c
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -197,7 +197,7 @@ has-props
 
 
 
-7247
+7261
 
 SVNXMLLogHandler.java
 file
@@ -205,11 +205,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-3397365be3564c63b2bb7eeb4958ab48
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:55.000000Z
+a9808655db55cb7c1134f6fc140e5e3d
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -231,7 +231,7 @@ has-props
 
 
 
-6995
+7009
 
 SVNXMLStatusHandler.java
 file
@@ -239,11 +239,11 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
-588d5a0f706911254c7c4780c5d07d85
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:55.000000Z
+f6f7f631efd261ab6256bdcc95ade620
+2009-05-12T11:28:48.076298Z
+5838
+sa
 has-props
 
 
@@ -265,7 +265,7 @@ has-props
 
 
 
-10380
+10394
 
 dtd
 dir
@@ -276,10 +276,10 @@ file
 
 
 
-2008-11-04T17:26:00.000000Z
+2009-05-27T05:49:55.000000Z
 7540917bd40bac379e5b7566ff426fe4
-2008-07-30T16:53:59.266781Z
-4613
+2008-07-29T19:33:42.126931Z
+4610
 semen
 has-props
 

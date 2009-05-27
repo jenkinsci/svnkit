@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -19,6 +19,7 @@ import java.util.Collections;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -31,7 +32,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSDeltaConsumer implements ISVNDeltaConsumer {
@@ -66,7 +67,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
         myCommitter.makePathMutable(parentPath, fullPath);
         FSRevisionNode node = parentPath.getRevNode();
         if (baseChecksum != null) {
-            String md5HexChecksum = node.getFileChecksum();
+            String md5HexChecksum = node.getFileMD5Checksum();
             if (md5HexChecksum != null && !md5HexChecksum.equals(baseChecksum)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Base checksum mismatch on ''{0}'':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
                         path, baseChecksum, md5HexChecksum
@@ -94,7 +95,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
             myTargetStream = (FSOutputStream) targetStream;
         }
 
-        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null);
+        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null, SVNNodeKind.FILE);
     }
 
     public void applyText(String path) throws SVNException {
@@ -126,7 +127,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
             myTargetStream = (FSOutputStream) targetStream;
         }
 
-        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null);
+        myCommitter.addChange(fullPath, node.getId(), FSPathChangeKind.FS_PATH_CHANGE_MODIFY, true, false, SVNRepository.INVALID_REVISION, null, SVNNodeKind.FILE);
     }
     
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {

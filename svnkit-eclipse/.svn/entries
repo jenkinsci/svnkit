@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-eclipse
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-eclipse
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-12-24T21:39:18.094790Z
-5393
-alex
+2009-04-29T11:22:02.082013Z
+5823
+sa
 has-props
 
 svn:special svn:externals svn:needs-lock
@@ -32,11 +32,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-5cb865dc0758485df4f995a42cc96714
-2008-09-16T17:47:40.986804Z
-4886
-alex
+2009-05-27T05:49:32.000000Z
+be682cda0dde025960bcf708b61fafa2
+2009-04-15T14:40:53.715214Z
+5732
+sa
 has-props
 
 
@@ -60,9 +60,9 @@ has-props
 
 1121
 
-org.tmatesoft.svnkit
+com.sun.jna
 dir
 
-com.sun.jna
+org.tmatesoft.svnkit
 dir
 

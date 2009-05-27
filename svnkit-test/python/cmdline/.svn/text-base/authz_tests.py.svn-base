@@ -117,10 +117,10 @@ def broken_authz_file(sbox):
 
   write_restrictive_svnserve_conf(sbox.repo_dir)
 
-  out, err = svntest.main.run_svn(1,
-                                  "delete",
-                                  sbox.repo_url + "/A",
-                                  "-m", "a log message");
+  exit_code, out, err = svntest.main.run_svn(1,
+                                             "delete",
+                                             sbox.repo_url + "/A",
+                                             "-m", "a log message");
   if out:
     raise svntest.verify.SVNUnexpectedStdout(out)
   if not err:
@@ -638,6 +638,8 @@ def authz_validate(sbox):
 
   if sbox.repo_url.startswith("http"):
     expected_err = ".*403 Forbidden.*"
+  elif sbox.repo_url.startswith("svn"):
+    expected_err = ".*Invalid authz configuration"
   else:
     expected_err = ".*@undefined_group.*"
 
@@ -656,6 +658,8 @@ devs = @devs1, dev3, dev4""" })
 
   if sbox.repo_url.startswith("http"):
     expected_err = ".*403 Forbidden.*"
+  elif sbox.repo_url.startswith("svn"):
+    expected_err = ".*Invalid authz configuration"
   else:
     expected_err = ".*Circular dependency.*"
 

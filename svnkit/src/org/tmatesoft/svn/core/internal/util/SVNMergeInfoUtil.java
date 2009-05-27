@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.util;
 
 import java.io.File;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +44,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoUtil {
@@ -273,12 +274,19 @@ public class SVNMergeInfoUtil {
         }
 
         try {
-            while (mergeInfo.length() > 0) { 
-                int ind = mergeInfo.indexOf(":");
+            while (mergeInfo.length() > 0) {
+                int eolInd = mergeInfo.indexOf("\n");
+                eolInd = eolInd < 0 ? mergeInfo.length() - 1 : eolInd;
+                int ind = mergeInfo.lastIndexOf(":", eolInd);
                 if (ind == -1) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
                             "Pathname not terminated by ':'");
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                }
+                if (ind == 0) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                    "No path preceeding ':'");
+                    SVNErrorManager.error(err, SVNLogType.DEFAULT);                    
                 }
                 String path = mergeInfo.substring(0, ind);
                 mergeInfo = mergeInfo.delete(0, ind + 1);
@@ -291,7 +299,37 @@ public class SVNMergeInfoUtil {
                 if (mergeInfo.length() > 0) {
                     mergeInfo = mergeInfo.deleteCharAt(0);
                 }
-                Arrays.sort(ranges);
+                if (ranges.length > 1) {
+                    Arrays.sort(ranges);
+                    SVNMergeRange lastRange = ranges[0];
+                    Collection newRanges = new ArrayList();
+                    newRanges.add(lastRange);                    
+                    for (int i = 1; i < ranges.length; i++) {
+                        SVNMergeRange range = ranges[i];
+                        if (lastRange.getStartRevision() <= range.getEndRevision() &&
+                                range.getStartRevision() <= lastRange.getEndRevision()) {
+                            
+                            if (range.getStartRevision() < lastRange.getEndRevision() &&
+                                    range.isInheritable() != lastRange.isInheritable()) {
+                                // error.
+                                String r1 = lastRange.toString();
+                                String r2 = range.toString();
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
+                                        "Unable to parse overlapping revision ranges ''{0}'' and ''{1}'' with different inheritance types", 
+                                        new Object[] {r1, r2});
+                                SVNErrorManager.error(err, SVNLogType.WC);
+                            } 
+                            
+                            if (lastRange.isInheritable() == range.isInheritable()) {
+                                lastRange.setEndRevision(Math.max(range.getEndRevision(), lastRange.getEndRevision()));
+                                continue;
+                            }
+                        }
+                        newRanges.add(ranges[i]);
+                        lastRange = ranges[i];
+                    }
+                    ranges = (SVNMergeRange[]) newRanges.toArray(new SVNMergeRange[newRanges.size()]); 
+                }
                 srcPathsToRangeLists.put(path, new SVNMergeRangeList(ranges));
             }
         } catch (SVNException svne) {
@@ -471,7 +509,6 @@ public class SVNMergeInfoUtil {
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         
-        SVNMergeRange lastRange = null;
         while (mergeInfo.length() > 0 && mergeInfo.charAt(0) != '\n') {
             long startRev = parseRevision(mergeInfo);
             if (mergeInfo.length() > 0 && mergeInfo.charAt(0) != '\n' && 
@@ -502,17 +539,16 @@ public class SVNMergeInfoUtil {
             }
             
             if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == '\n') {
-                lastRange = combineWithAdjacentLastRange(ranges, lastRange, range, false);
+                ranges.add(range);
                 return (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
             } else if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == ',') {
-                lastRange = combineWithAdjacentLastRange(ranges, lastRange, range, false);
+                ranges.add(range);
                 mergeInfo = mergeInfo.deleteCharAt(0);
             } else if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == '*') {
                 range.setInheritable(false);
                 mergeInfo = mergeInfo.deleteCharAt(0);
-                if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == ',' || 
-                        mergeInfo.charAt(0) == '\n') {
-                    lastRange = combineWithAdjacentLastRange(ranges, lastRange, range, false);
+                if (mergeInfo.length() == 0 || mergeInfo.charAt(0) == ',' || mergeInfo.charAt(0) == '\n') {
+                    ranges.add(range);
                     if (mergeInfo.length() > 0 && mergeInfo.charAt(0) == ',') {
                         mergeInfo = mergeInfo.deleteCharAt(0);
                     } else {
@@ -540,6 +576,16 @@ public class SVNMergeInfoUtil {
         return (SVNMergeRange[]) ranges.toArray(new SVNMergeRange[ranges.size()]);
     }
 
+    /**
+     * @return [deletedList, addedList]
+     */
+    public static SVNMergeRangeList[] diffMergeRangeLists(SVNMergeRangeList fromRangeList, SVNMergeRangeList toRangeList, 
+            boolean considerInheritance) {
+        SVNMergeRangeList deletedRangeList = fromRangeList.diff(toRangeList, considerInheritance);
+        SVNMergeRangeList addedRangeList = toRangeList.diff(fromRangeList, considerInheritance);
+        return new SVNMergeRangeList[] { deletedRangeList, addedRangeList };
+    }
+    
     private static long parseRevision(StringBuffer mergeInfo) throws SVNException {
         int ind = 0;
         while (ind < mergeInfo.length() && Character.isDigit(mergeInfo.charAt(ind))) {
@@ -582,10 +628,10 @@ public class SVNMergeInfoUtil {
             SVNMergeRangeList fromRangeList = (SVNMergeRangeList) from.get(path);
             SVNMergeRangeList toRangeList = (SVNMergeRangeList) to.get(path);
             if (toRangeList != null) {
-                SVNMergeRangeList deletedRangeList = fromRangeList.diff(toRangeList, 
-                                                                        considerInheritance);
-                SVNMergeRangeList addedRangeList = toRangeList.diff(fromRangeList, 
-                                                                    considerInheritance);
+                SVNMergeRangeList[] rangeListDiff = diffMergeRangeLists(fromRangeList, toRangeList, considerInheritance);
+                
+                SVNMergeRangeList deletedRangeList = rangeListDiff[0];
+                SVNMergeRangeList addedRangeList = rangeListDiff[1];
                 if (deleted != null && deletedRangeList.getSize() > 0) {
                     deleted.put(path, deletedRangeList);
                 }
@@ -608,38 +654,6 @@ public class SVNMergeInfoUtil {
                 added.put(path, toRangeList.dup());
             }
         }        
-    }
-    
-    private static SVNMergeRange combineWithAdjacentLastRange(Collection result, SVNMergeRange lastRange, 
-            SVNMergeRange mRange, boolean dupMRange) throws SVNException {
-        SVNMergeRange pushedMRange = mRange;
-        if (lastRange != null) {
-            if (lastRange.getStartRevision() <= mRange.getEndRevision() && 
-                    mRange.getStartRevision() <= lastRange.getEndRevision()) {
-                
-                if (mRange.getStartRevision() < lastRange.getEndRevision()) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                            "Parsing of overlapping revision ranges ''{0}'' and ''{1}'' is not supported",
-                            new Object[] { lastRange.toString(), mRange.toString() });
-                    SVNErrorManager.error(err, SVNLogType.DEFAULT);
-                } else if (lastRange.isInheritable() == mRange.isInheritable()) {
-                    lastRange.setEndRevision(mRange.getEndRevision());
-                    return lastRange;
-                }
-            } else if (lastRange.getStartRevision() > mRange.getStartRevision()) {
-                  SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, 
-                          "Unable to parse unordered revision ranges ''{0}'' and ''{1}''", 
-                          new Object[] { lastRange.toString(), mRange.toString() });
-                  SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
-        }
-        
-        if (dupMRange) {
-            pushedMRange = mRange.dup();
-        }
-        result.add(pushedMRange);
-        lastRange = pushedMRange;
-        return lastRange;
     }
 
 	private static class ElideMergeInfoCatalogHandler implements ISVNCommitPathHandler {

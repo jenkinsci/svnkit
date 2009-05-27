@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -14,6 +14,9 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.wc.ISVNMerger;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
@@ -22,7 +25,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public abstract class AbstractSVNMerger implements ISVNMerger {
@@ -61,8 +64,12 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
             if (files.getCopyFromFile() != null) {
                 status = SVNStatusType.MERGED;
             } else {
+                SVNAdminArea adminArea = files.getAdminArea();
+                SVNVersionedProperties props = adminArea.getProperties(files.getWCPath());
+                boolean isSpecial = props.getPropertyValue(SVNProperty.SPECIAL) != null;
                  // compare merge result with 'wcFile' (in case of text and no conflict).
-                boolean isSameContents = SVNFileUtil.compareFiles(files.getWCFile(), files.getResultFile(), null);
+                boolean isSameContents = SVNFileUtil.compareFiles(isSpecial ? files.getLocalFile() : 
+                    files.getWCFile(), files.getResultFile(), null);
                 status = isSameContents ? SVNStatusType.UNCHANGED : status;
             }
         }

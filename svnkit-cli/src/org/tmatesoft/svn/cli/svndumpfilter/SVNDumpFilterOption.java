@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -15,7 +15,7 @@ import org.tmatesoft.svn.cli.AbstractSVNOption;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNDumpFilterOption extends AbstractSVNOption {
@@ -28,6 +28,7 @@ public class SVNDumpFilterOption extends AbstractSVNOption {
     public static final SVNDumpFilterOption RENUMBER_REVISIONS = new SVNDumpFilterOption("renumber-revs", null, true);
     public static final SVNDumpFilterOption SKIP_MISSING_MERGE_SOURCES = new SVNDumpFilterOption("skip-missing-merge-sources", null, true);
     public static final SVNDumpFilterOption PRESERVE_REVISION_PROPERTIES = new SVNDumpFilterOption("preserve-revprops", null, true);
+    public static final SVNDumpFilterOption TARGETS = new SVNDumpFilterOption("targets", null, false);
     
     private SVNDumpFilterOption(String name, String alias, boolean unary) {
         super(name, alias, unary);

@@ -1,15 +1,15 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-cli/src/org/tmatesoft/svn/cli/svnsync
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-04-21T18:01:46.160366Z
+5779
+semen
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,10 +32,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-b65333029cc722d1ba353f9137038199
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:12.000000Z
+80d3589ecbcb91b9a2048769101190d5
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-1411
+1409
 
 SVNSync.java
 file
@@ -66,10 +66,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-d012a4403759c806bcdd8f4871ba2575
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:12.000000Z
+e683b8a0333d85ac71603c2e0d7267e3
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-2595
+2735
 
 SVNSyncInitializeCommand.java
 file
@@ -100,11 +100,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-b7d13e7fd5b99bc2cbb88fa27e2cb8db
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:12.000000Z
+27dc40ba1bffd0a2f70263e6af35e1fb
+2009-04-21T18:01:46.160366Z
+5779
+semen
 has-props
 
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-4023
+4075
 
 options.properties
 file
@@ -134,11 +134,11 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
-f124685d00620b4677c72860eda596a9
-2008-07-30T16:53:59.266781Z
-4613
-semen
+2009-05-27T05:49:12.000000Z
+0713db7e3a151e4701ec21fd2b8f481a
+2009-03-16T20:32:15.048528Z
+5592
+sa
 has-props
 
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-862
+1043
 
 SVNSyncCommandEnvironment.java
 file
@@ -168,10 +168,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-cd7dffaae5be2c4d2afbb3627339ec08
-2008-08-28T19:30:55.179841Z
-4792
+2009-05-27T05:49:12.000000Z
+eb7ab84d3a8091a3e82629b2252c3f41
+2009-04-21T14:43:00.959095Z
+5772
 alex
 has-props
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-8132
+8605
 
 SVNSyncHelpCommand.java
 file
@@ -202,78 +202,10 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-58b1d82b818e95639c8a26307f17dd21
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-4629
-
-SVNSyncOption.java
-file
-
-
-
-
-2008-11-04T17:25:59.000000Z
-64414ddd2cab228a546458c529b37f91
-2008-08-28T19:30:55.179841Z
-4792
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2220
-
-commands.properties
-file
-
-
-
-
-2008-08-27T01:16:45.000000Z
-6e0803afa371a9080919eb04926d5af3
-2008-07-30T16:53:59.266781Z
-4613
+2009-05-27T05:49:12.000000Z
+67f75af62227978a51e6eff8ac187a34
+2009-04-21T18:01:46.160366Z
+5779
 semen
 has-props
 
@@ -296,7 +228,75 @@ has-props
 
 
 
-1719
+4627
+
+SVNSyncOption.java
+file
+
+
+
+
+2009-05-27T05:49:12.000000Z
+a76a28d8d2df333c1e67a2c4180accc5
+2009-04-21T13:49:59.984092Z
+5771
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2323
+
+commands.properties
+file
+
+
+
+
+2009-05-27T05:49:12.000000Z
+016eef57684bcce17a9a22a9b7753d83
+2009-04-21T18:01:46.160366Z
+5779
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2021
 
 SVNSyncCopyRevPropsCommand.java
 file
@@ -304,11 +304,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-82316aa42ae199b8b29f5c97bac13e80
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:12.000000Z
+bb8b5cabb7cf7402e334d937855c7ffe
+2009-04-21T18:01:46.160366Z
+5779
+semen
 has-props
 
 
@@ -330,7 +330,41 @@ has-props
 
 
 
-6007
+6059
+
+SVNSyncInfoCommand.java
+file
+
+
+
+
+2009-05-27T05:49:12.000000Z
+ee29fb5ebd0feafb742d0c9a5719aa0e
+2009-04-21T18:01:46.160366Z
+5779
+semen
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3371
 
 SVNSyncSynchronizeCommand.java
 file
@@ -338,11 +372,11 @@ file
 
 
 
-2008-11-04T17:25:59.000000Z
-9f9fd002c2099a287d708e151f1c4d8f
-2008-08-28T19:30:55.179841Z
-4792
-alex
+2009-05-27T05:49:12.000000Z
+a65e53ba7c008241f53459e4ea8a1755
+2009-04-21T18:01:46.160366Z
+5779
+semen
 has-props
 
 
@@ -364,5 +398,5 @@ has-props
 
 
 
-4028
+4080
 

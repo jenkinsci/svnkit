@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -42,7 +42,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSFile {
@@ -100,12 +100,23 @@ public class FSFile {
     public int readInt() throws SVNException, NumberFormatException {
         String line = readLine(80);
         if (line == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "First line of ''{0}'' contains non-digit", myFile);
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                    "First line of ''{0}'' contains non-digit", myFile);
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
         return Integer.parseInt(line);
     }
-    
+
+    public long readLong() throws SVNException, NumberFormatException {
+        String line = readLine(80);
+        if (line == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, 
+                    "First line of ''{0}'' contains non-digit", myFile);
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        return Long.parseLong(line);
+    }
+
     public String readLine(int limit) throws SVNException {
         allocateReadBuffer(limit);
         try {

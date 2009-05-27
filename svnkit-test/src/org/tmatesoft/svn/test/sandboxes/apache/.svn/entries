@@ -1,14 +1,14 @@
 9
 
 dir
-5413
-http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/apache
+5861
+http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/test/sandboxes/apache
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2008-11-28T21:07:21.269306Z
-5301
+2008-11-21T00:14:02.131178Z
+5216
 semen
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
+2009-05-27T05:49:17.000000Z
 f49ee7dec4d6f7dfcfb9cf6aa1ba7ddb
-2008-11-28T21:07:21.269306Z
-5301
+2008-11-21T00:14:02.131178Z
+5216
 semen
 has-props
 
@@ -66,10 +66,10 @@ file
 
 
 
-2009-01-14T22:06:34.000000Z
+2009-05-27T05:49:17.000000Z
 a809d6803fa8cfa2390626465f65ea38
-2008-11-28T21:07:21.269306Z
-5301
+2008-11-21T00:14:02.131178Z
+5216
 semen
 has-props
 

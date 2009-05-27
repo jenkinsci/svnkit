@@ -1,15 +1,15 @@
 9
 
 dir
-35256
-http://svn.collab.net/repos/svn/branches/1.5.x/subversion/tests/cmdline/log_tests_data
+37842
+http://svn.collab.net/repos/svn/tags/1.6.2/subversion/tests/cmdline/log_tests_data
 http://svn.collab.net/repos/svn
 
 
 
-2007-10-03T23:21:06.707076Z
-26918
-kfogel
+2008-10-14T09:20:20.876437Z
+33630
+danielsh
 
 
 svn:special svn:externals svn:needs-lock
@@ -32,7 +32,7 @@ file
 
 
 
-2008-08-27T01:16:45.000000Z
+2009-05-27T05:50:02.000000Z
 bdd8e477b5b7976c8c8b487d4bbed144
 2007-10-03T23:21:06.707076Z
 26918
@@ -59,4 +59,38 @@ kfogel
 
 
 291
+
+merge_history_repo.png
+file
+
+
+
+
+2009-05-27T05:50:02.000000Z
+b19d245d1008fc0e8627387b6345378c
+2008-10-14T09:20:20.876437Z
+33630
+danielsh
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9511
 

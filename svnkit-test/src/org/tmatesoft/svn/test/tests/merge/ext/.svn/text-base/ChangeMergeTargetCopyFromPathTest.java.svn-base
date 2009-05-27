@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -27,7 +27,7 @@ import org.tmatesoft.svn.test.wc.SVNWCDescriptor;
 
 /**
  * @author TMate Software Ltd.
- * @version 1.2.0
+ * @version 1.3
  */
 public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
 
@@ -126,16 +126,15 @@ public class ChangeMergeTargetCopyFromPathTest extends AbstractExtMergeTest {
         }
 
         public SVNCopyTask getTargetCopySource(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision) throws SVNException {
-            if (targetUrl.getPath().endsWith("trunk/A/file")) {
-                SVNCopySource copySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.create(getStartRevision()), getBranch().appendPath("A/file2", false));
-                return SVNCopyTask.create(copySource, true);
-            }
             return null;
         }
 
         public SVNURL[] getTrueMergeTargets(SVNURL sourceUrl, long sourceRevision, long sourceMergeFromRevision, long sourceMergeToRevision, SVNURL targetUrl, long targetRevision, SVNEditorAction action) throws SVNException {
             if (sourceUrl.getPath().endsWith("branch/A/file2")) {
                 return new SVNURL[]{getTrunk().appendPath("A/file", false)};
+            }
+            if (sourceUrl.getPath().endsWith("branch/A/file")) {
+                return new SVNURL[0];
             }
             return null;
         }

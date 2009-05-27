@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -69,8 +69,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * methods are called non-recursively and allow to get status info on a single 
  * item. 
  * 
- * @version 1.2
+ * @version 1.3
  * @author  TMate Software Ltd.
+ * @since   1.2
  * @see		ISVNStatusHandler
  * @see		SVNStatus
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
@@ -358,7 +359,7 @@ public class SVNStatusClient extends SVNBasicClient {
                     SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
                     checkCancelled();
                     boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, true, 
+                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, true, true, 
                             getDebugLog());
                     SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
                     String target = "".equals(info.getTargetName()) ? null : info.getTargetName();

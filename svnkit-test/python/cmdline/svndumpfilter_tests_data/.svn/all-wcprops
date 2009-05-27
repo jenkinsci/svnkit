@@ -1,0 +1,17 @@
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svndumpfilter_tests_data
+END
+greek_tree.dump
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svndumpfilter_tests_data/greek_tree.dump
+END
+with_merges.dump
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svndumpfilter_tests_data/with_merges.dump
+END

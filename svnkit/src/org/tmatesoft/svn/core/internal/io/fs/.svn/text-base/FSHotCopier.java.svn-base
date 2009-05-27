@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -24,7 +24,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class FSHotCopier {
@@ -130,16 +130,35 @@ public class FSHotCopier {
 
     private void hotCopy(FSFS srcOwner, FSFS dstOwner) throws SVNException {
         int format = srcOwner.readDBFormat();
-        FSRepositoryUtil.checkReposDBForma(format);
+        FSRepositoryUtil.checkReposDBFormat(format);
         SVNFileUtil.copyFile(srcOwner.getCurrentFile(), dstOwner.getCurrentFile(), true);
         SVNFileUtil.copyFile(srcOwner.getUUIDFile(), dstOwner.getUUIDFile(), true);
+        
+        long minUnpackedRevision = 0;
+        if (format >= FSFS.MIN_PACKED_FORMAT) {
+            SVNFileUtil.copyFile(srcOwner.getMinUnpackedRevFile(), dstOwner.getMinUnpackedRevFile(), true);
+            minUnpackedRevision = srcOwner.getMinUnpackedRev();
+        }
         long youngestRev = dstOwner.getYoungestRevision();
         
         File dstRevsDir = dstOwner.getDBRevsDir();
         dstRevsDir.mkdirs();
         
         long maxFilesPerDirectory = srcOwner.getMaxFilesPerDirectory();
-        for (long rev = 0; rev <= youngestRev; rev++) {
+        long rev = 0;
+        for (; rev < minUnpackedRevision; rev += srcOwner.getMaxFilesPerDirectory()) {
+            long packedShard = rev / maxFilesPerDirectory;
+            SVNFileUtil.copyDirectory(srcOwner.getPackDir(packedShard), dstOwner.getPackDir(packedShard), false, null);
+        }
+        
+        if (rev != minUnpackedRevision) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                    "Assertion failed: expected minimal unpacked revision {0}, but real revision is {1}", 
+                    new Object[] { String.valueOf(minUnpackedRevision), String.valueOf(rev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+            
+        for (; rev <= youngestRev; rev++) {
             File dstDir = dstRevsDir;
             if (maxFilesPerDirectory > 0) {
                 String shard = String.valueOf(rev / maxFilesPerDirectory);
@@ -149,7 +168,7 @@ public class FSHotCopier {
         }
 
         File dstRevPropsDir = dstOwner.getRevisionPropertiesRoot();
-        for (long rev = 0; rev <= youngestRev; rev++) {
+        for (rev = 0; rev <= youngestRev; rev++) {
             File dstDir = dstRevPropsDir;
             if (maxFilesPerDirectory > 0) {
                 String shard = String.valueOf(rev / maxFilesPerDirectory);

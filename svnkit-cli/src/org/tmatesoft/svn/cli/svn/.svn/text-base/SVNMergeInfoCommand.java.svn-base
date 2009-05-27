@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2008 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -29,7 +29,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
- * @version 1.2.0
+ * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandler {
@@ -124,7 +124,7 @@ public class SVNMergeInfoCommand extends SVNCommand implements ISVNLogEntryHandl
     }
     
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-        String message = MessageFormat.format("r{0}", new Object[] { new Long(logEntry.getRevision()) });
+        String message = MessageFormat.format("r{0}", new Object[] { String.valueOf(logEntry.getRevision()) });
         getSVNEnvironment().getOut().println(message);
     }
     

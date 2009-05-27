@@ -5,7 +5,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2004, 2008 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -38,12 +38,12 @@ class svn_entry:
     self.atts = attributes
 
   def prettyprint(self):
-    print " Entryname:", self.atts['name']
-    print "      Kind:", self.atts['kind']
-    print "  Revision:", self.atts['revision']
-    print "  Ancestor:", self.atts['ancestor']
-    print "  all atts:", self.atts
-    print
+    print(" Entryname: %s" % self.atts['name'])
+    print("      Kind: %s" % self.atts['kind'])
+    print("  Revision: %s" % self.atts['revision'])
+    print("  Ancestor: %s" % self.atts['ancestor'])
+    print("  all atts: %s" % self.atts)
+    print("")
 
 class svn_entryparser:
   "A class to parse an 'entries' file."
@@ -56,18 +56,18 @@ class svn_entryparser:
   def handle_start_tag(self, name, attrs):
     "Expat callback that receives a new open-tag."
 
-    if attrs.has_key('name'):
+    if 'name' in attrs:
       entry = svn_entry(attrs) # create new entry object
 
       # Derive missing values
-      if not entry.atts.has_key('kind'):
+      if 'kind' not in entry.atts:
         entry.atts['kind'] = 'file' # default kind if none mentioned
-      if not entry.atts.has_key('revision'):
-        if self.entry_dict.has_key(""):
+      if 'revision' not in entry.atts:
+        if "" in self.entry_dict:
           parent = self.entry_dict[""]
           entry.atts['revision'] = parent.atts['revision']
-      if not entry.atts.has_key('ancestor'):
-        if self.entry_dict.has_key(""):
+      if 'ancestor' not in entry.atts:
+        if "" in self.entry_dict:
           parent = self.entry_dict[""]
           entry.atts['ancestor'] = parent.atts['ancestor'] + '/' \
                                    + entry.atts['name']
