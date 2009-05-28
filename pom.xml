@@ -24,7 +24,7 @@
     <dependency>
       <groupId>org.jvnet.hudson</groupId>
       <artifactId>trilead-ssh2</artifactId>
-      <version>build212-hudson-1</version>
+      <version>build212-hudson-2</version>
       <optional>true</optional>
     </dependency>
   </dependencies>
