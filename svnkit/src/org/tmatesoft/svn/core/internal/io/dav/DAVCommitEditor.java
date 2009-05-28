@@ -94,7 +94,7 @@ class DAVCommitEditor implements ISVNEditor {
     public void openRoot(long revision) throws SVNException {
         // make activity
         myActivity = createActivity();
-        DAVResource root = new DAVResource(myCommitMediator, myConnection, "", -1);
+        DAVResource root = new DAVResource(myCommitMediator, myConnection, "", revision);
         root.fetchVersionURL(null, false);
         myDirsStack.push(root);
         myPathsMap.put(root.getURL(), root.getPath());
