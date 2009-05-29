@@ -844,6 +844,7 @@ public class SVNWCClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, true, revisionProperties, null);
         try {
             commitEditor.openRoot(revNumber);

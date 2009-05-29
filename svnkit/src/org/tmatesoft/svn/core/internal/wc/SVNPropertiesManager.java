@@ -67,8 +67,15 @@ public class SVNPropertiesManager {
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.MIME_TYPE);
     }
 
-    public static boolean setWCProperty(SVNWCAccess access, File path, String propName, SVNPropertyValue propValue,
-                                        boolean write) throws SVNException {
+    public static void validateRevisionProperties(SVNProperties revisionProperties) throws SVNException {
+        if (hasSVNProperties(revisionProperties)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Standard properties can't be set explicitly as revision properties");
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
+        }
+    }
+    
+    public static boolean setWCProperty(SVNWCAccess access, File path, String propName, SVNPropertyValue propValue, boolean write) throws SVNException {
         SVNEntry entry = access.getVersionedEntry(path, false);
         SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
         SVNVersionedProperties wcProps = dir.getWCProperties(entry.getName());
@@ -455,6 +462,19 @@ public class SVNPropertiesManager {
             SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
         }
         return value;
+    }
+
+    private static boolean hasSVNProperties(SVNProperties props) {
+        if (props == null) {
+            return false;
+        }
+        for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
+            String propName = (String) names.next();
+            if (SVNProperty.isSVNProperty(propName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void validatePropertyName(String path, String name, SVNNodeKind kind) throws SVNException {

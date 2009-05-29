@@ -311,6 +311,7 @@ public class SVNCopyDriver extends SVNBasicClient {
         }
 
         // now do real commit.
+        SVNPropertiesManager.validateRevisionProperties(revprops);
         ISVNEditor commitEditor = topRepos.getCommitEditor(message, null, true, revprops, null);
         ISVNCommitPathHandler committer = new CopyCommitPathHandler(pathsMap, isMove);
 
@@ -792,6 +793,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             message = SVNCommitUtil.validateCommitMessage(message);
 
             SVNURL rootURL = repos.getRepositoryRoot(true);
+            SVNPropertiesManager.validateRevisionProperties(revprops);
             commitEditor = repos.getCommitEditor(message, null, true, revprops, mediator);
             info = SVNCommitter.commit(tmpFiles, allCommitables, rootURL.getPath(), commitEditor);
             commitEditor = null;

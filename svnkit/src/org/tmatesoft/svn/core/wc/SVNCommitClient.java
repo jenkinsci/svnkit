@@ -326,6 +326,7 @@ public class SVNCommitClient extends SVNBasicClient {
             }
         }
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         ISVNCommitPathHandler deleter = new ISVNCommitPathHandler() {
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -464,6 +465,7 @@ public class SVNCommitClient extends SVNBasicClient {
         paths = decodedPaths;
         SVNRepository repos = createRepository(rootURL, null, null, true);
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, null);
         ISVNCommitPathHandler creater = new ISVNCommitPathHandler() {
             public boolean handleCommitPath(String commitPath, ISVNEditor commitEditor) throws SVNException {
@@ -668,6 +670,7 @@ public class SVNCommitClient extends SVNBasicClient {
             return SVNCommitInfo.NULL;
         }
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        SVNPropertiesManager.validateRevisionProperties(revisionProperties);
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, false, revisionProperties, 
                 new SVNImportMediator());
         String filePath = "";
@@ -995,6 +998,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 
                 tmpFiles = mediator.getTmpFiles();
                 String repositoryRoot = repository.getRepositoryRoot(true).getPath();
+                SVNPropertiesManager.validateRevisionProperties(revisionProperties);
                 commitEditor = repository.getCommitEditor(commitMessage, lockTokens, keepLocks, revisionProperties, mediator);
                 // commit.
                 // set event handler for each wc access.
