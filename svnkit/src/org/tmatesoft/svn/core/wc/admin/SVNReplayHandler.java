@@ -137,7 +137,7 @@ public class SVNReplayHandler implements ISVNReplayHandler {
     }
 
     public int getNormalizedNodePropsCount() {
-        return mySyncEditor.getNormalizedNodePropsCounter();
+        return mySyncEditor == null ? 0 : mySyncEditor.getNormalizedNodePropsCounter();
     }
 
     private int filterProperties(SVNProperties revProps, SVNProperties filteredProps, boolean isStart) {
