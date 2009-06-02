@@ -1700,7 +1700,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 long wkTimestamp = workingFile.lastModified(); 
                 if (tmpTimestamp != wkTimestamp) {
                     // check if wc file is not modified
-                    File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", false);
+                    File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", true);
                     try {
                         String tmpFile2Path = SVNFileUtil.getBasePath(tmpFile2);
                         SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false);
