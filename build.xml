@@ -794,7 +794,7 @@
         <chmod file="${python.test.home}/tomcat/bin/version.sh" perm="ugo+rx" />
 
     	<copy file="svnkit-test/tomcat/logging.properties" overwrite="true" tofile="${python.test.home}/tomcat/conf/logging.properties" failonerror="false" />
-    	<replace token="%python.test.home%" file="${python.test.home}/tomcat/conf/logging.properties" value="${python.test.home}" />
+    	<replace token="%build.test.home%" file="${python.test.home}/tomcat/conf/logging.properties" value="${basedir}/build" />
     	
     	<unwar src="build/lib/svnkit.war" dest="${python.test.home}/tomcat/webapps/svnkit" />
     	<replace token="%python.test.home%" file="${python.test.home}/tomcat/webapps/svnkit/WEB-INF/web.xml" value="${python.test.home}" />
