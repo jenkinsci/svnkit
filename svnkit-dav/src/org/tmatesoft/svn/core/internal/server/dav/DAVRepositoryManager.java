@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.server.dav.handlers.DAVHandlerFactory;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -165,7 +166,7 @@ public class DAVRepositoryManager {
     }
 
     public SVNURL convertHttpToFile(SVNURL url) throws SVNException {
-        String uri = DAVPathUtil.addLeadingSlash(url.getPath());
+        String uri = DAVPathUtil.addLeadingSlash(url.getURIEncodedPath());
         if (!uri.startsWith(getResourceContext())) {
             SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Invalid URL ''{0}'' requested", url.toString()), SVNLogType.NETWORK);
         }
@@ -179,7 +180,7 @@ public class DAVRepositoryManager {
     }
 
     public String getURI(SVNURL url) throws SVNException {
-        String uri = DAVPathUtil.addLeadingSlash(url.getPath());
+        String uri = DAVPathUtil.addLeadingSlash(url.getURIEncodedPath());
         if (uri.startsWith(getResourceContext())) {
             uri = uri.substring(getResourceContext().length());
         } else {
@@ -192,8 +193,7 @@ public class DAVRepositoryManager {
     public DAVResource getRequestedDAVResource(boolean isSVNClient, String deltaBase, String pathInfo, long version, String clientOptions,
             String baseChecksum, String resultChecksum, String label, boolean useCheckedIn, List lockTokens, Map capabilities) throws SVNException {
         pathInfo = pathInfo == null ? getResourcePathInfo() : pathInfo;
-        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo, label, 
-                useCheckedIn);
+        DAVResourceURI resourceURI = new DAVResourceURI(getResourceContext(), pathInfo, label, useCheckedIn);
         DAVConfig config = getDAVConfig();
         String fsParentPath = config.getRepositoryParentPath();
         String xsltURI = config.getXSLTIndex();
@@ -290,9 +290,9 @@ public class DAVRepositoryManager {
                 if (servletPath.startsWith("/")) {
                     servletPath = servletPath.substring(1);
                 }
-                return SVNPathUtil.append(requestContext, servletPath);
+                requestContext = SVNPathUtil.append(requestContext, servletPath);
             }
-            return requestContext;
+            return SVNEncodingUtil.uriEncode(requestContext);
         }
         
         String reposName = DAVPathUtil.head(pathInfo);
@@ -301,8 +301,10 @@ public class DAVRepositoryManager {
                 servletPath = servletPath.substring(1);
             }
             String pathToRepos = SVNPathUtil.append(requestContext, servletPath);
-            return SVNPathUtil.append(pathToRepos, reposName);
+            requestContext = SVNPathUtil.append(pathToRepos, reposName);
+            return SVNEncodingUtil.uriEncode(requestContext);
         }
-        return DAVPathUtil.append(requestContext, reposName);
+        requestContext = DAVPathUtil.append(requestContext, reposName);
+        return SVNEncodingUtil.uriEncode(requestContext);
     }
 }
