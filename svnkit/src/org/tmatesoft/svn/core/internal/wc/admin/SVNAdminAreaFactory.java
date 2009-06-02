@@ -81,7 +81,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         if (useSelector) {
             enabledFactories = getSelector().getEnabledFactories(path, enabledFactories, false);
         }
-        SVNException error = null;
+        SVNErrorMessage error = null;
         int version = -1;
         for(Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
             SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
@@ -103,12 +103,20 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     SVNErrorManager.error(err, SVNLogType.WC);
                 } 
             } catch (SVNException e) {
-                error = e;
+                if (error != null) {
+                    error.setChildErrorMessage(e.getErrorMessage());
+                } else {
+                    error = e.getErrorMessage();
+                }
                 continue;
             }
             return version;
         }
-        throw error;
+        if (error == null) {
+            error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        }
+        SVNErrorManager.error(error, logLevel, SVNLogType.WC);
+        return 0;
     }
     
     public static SVNAdminArea open(File path, Level logLevel) throws SVNException {
@@ -122,19 +130,23 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
                 try {
                     wcFormatVersion = factory.getVersion(path);
-                    if (wcFormatVersion > factory.getSupportedVersion()) {
+                    if (wcFormatVersion > factory.getSupportedVersion()) {                        
                         error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
                                 path);
                         SVNErrorManager.error(error, SVNLogType.WC);
-                    } else if (wcFormatVersion < factory.getSupportedVersion()) {
+                    } else if (wcFormatVersion < factory.getSupportedVersion()) {                        
                         error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "Working copy format of {0} is too old ({1}); please check out your working copy again",
                                 new Object[]{path, new Integer(wcFormatVersion)});
                         SVNErrorManager.error(error, SVNLogType.WC);
                     }
                 } catch (SVNException e) {
-                    error = e.getErrorMessage();
+                    if (error != null) {
+                        error.setChildErrorMessage(e.getErrorMessage());
+                    } else {
+                        error = e.getErrorMessage();
+                    }
                     continue;
                 }
                 
