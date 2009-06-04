@@ -81,10 +81,13 @@ public class SVNCommitUtil {
         if (paths == null || paths.isEmpty() || handler == null || editor == null) {
             return;
         }
+        
         String[] pathsArray = (String[]) paths.toArray(new String[paths.size()]);
         Arrays.sort(pathsArray, SVNPathUtil.PATH_COMPARATOR);
         int index = 0;
+        int depth = 0;
         String lastPath = null;
+        
         if ("".equals(pathsArray[index])) {
             handler.handleCommitPath("", editor);
             lastPath = pathsArray[index];
@@ -92,6 +95,9 @@ public class SVNCommitUtil {
         } else {
             editor.openRoot(revision);
         }
+        
+        depth++;
+        
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
             if (!SVNPathUtil.isCanonical(commitPath)) {
@@ -103,8 +109,10 @@ public class SVNCommitUtil {
             
             String commonAncestor = lastPath == null || "".equals(lastPath) ? "" : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
+                
                 while (!lastPath.equals(commonAncestor)) {
                     editor.closeDir();
+                    depth--;
                     if (lastPath.lastIndexOf('/') >= 0) {
                         lastPath = lastPath.substring(0, lastPath.lastIndexOf('/'));
                     } else {
@@ -123,6 +131,7 @@ public class SVNCommitUtil {
                 commonAncestor = "".equals(commonAncestor) ? token : commonAncestor + "/" + token;
                 if (!commonAncestor.equals(commitPath)) {
                     editor.openDir(commonAncestor, revision);
+                    depth++;
                 } else {
                     break;
                 }
@@ -130,6 +139,7 @@ public class SVNCommitUtil {
             boolean closeDir = handler.handleCommitPath(commitPath, editor);
             if (closeDir) {
                 lastPath = commitPath;
+                depth++;
             } else {
                 if (index + 1 < pathsArray.length) {
                     lastPath = SVNPathUtil.removeTail(commitPath);
@@ -138,10 +148,12 @@ public class SVNCommitUtil {
                 }
             }
         }
-        while (lastPath != null && !"".equals(lastPath)) {
+        
+        while (depth > 0) {
             editor.closeDir();
-            lastPath = lastPath.lastIndexOf('/') >= 0 ? lastPath.substring(0, lastPath.lastIndexOf('/')) : "";
+            depth--;
         }
+        
     }
 
     public static SVNWCAccess createCommitWCAccess(File[] paths, SVNDepth depth, boolean force, 
