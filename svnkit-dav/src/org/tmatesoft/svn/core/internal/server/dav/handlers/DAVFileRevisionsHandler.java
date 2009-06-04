@@ -27,6 +27,8 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -63,7 +65,8 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         writeXMLHeader();
 
         String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getFileRevsionsRequest().getPath());
-        getDAVResource().getRepository().getFileRevisions(path, getFileRevsionsRequest().getStartRevision(), getFileRevsionsRequest().getEndRevision(), this);
+        getDAVResource().getRepository().getFileRevisions(path, getFileRevsionsRequest().getStartRevision(), 
+                getFileRevsionsRequest().getEndRevision(), this);
 
         writeXMLFooter();
     }
@@ -72,12 +75,15 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         Map attrs = new SVNHashMap();
         attrs.put(PATH_ATTR, fileRevision.getPath());
         attrs.put(REVISION_ATTR, String.valueOf(fileRevision.getRevision()));
-        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, SVNXMLUtil.XML_STYLE_NORMAL, attrs, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, SVNXMLUtil.XML_STYLE_NORMAL, 
+                attrs, null);
         write(xmlBuffer);
+        
         for (Iterator iterator = fileRevision.getRevisionProperties().nameSet().iterator(); iterator.hasNext();) {
             String propertyName = (String) iterator.next();
             writePropertyTag(REVISION_PROPERTY_ATTR, propertyName, fileRevision.getRevisionProperties().getSVNPropertyValue(propertyName));
         }
+        
         for (Iterator iterator = fileRevision.getPropertiesDelta().nameSet().iterator(); iterator.hasNext();) {
             String propertyName = (String) iterator.next();
             SVNPropertyValue propertyValue = fileRevision.getPropertiesDelta().getSVNPropertyValue(propertyName);

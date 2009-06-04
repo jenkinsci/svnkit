@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -154,7 +155,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
         } catch (DAVException dave) {
             error = dave;
         }
-        
+
         if (error != null) {
             throw new DAVException("Provider encountered an error while streaming", error.getResponseCode(), error, 0);
         }
@@ -533,7 +534,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 return DAVInsertPropAction.NOT_DEF;
             }
             
-            value = SVNEncodingUtil.xmlEncodeCDATA(value, true);
+            value = SVNEncodingUtil.xmlEncodeCDATA(lastAuthor, true);
         } else if (livePropElement == DAVElement.GET_CONTENT_LANGUAGE) {
             return DAVInsertPropAction.NOT_SUPP;
         } else if (livePropElement == DAVElement.GET_CONTENT_LENGTH) {
