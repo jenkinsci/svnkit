@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.admin.SVNAdminClient;
 
 
 /**
@@ -36,12 +37,14 @@ public class SVNSynchronizeEditor implements ISVNEditor {
     private SVNCommitInfo myCommitInfo;
     private ISVNLogEntryHandler myHandler;
     private SVNRepository myTargetRepository;
+    private int myNormalizedNodePropsCounter;
     
     public SVNSynchronizeEditor(SVNRepository toRepository, ISVNLogEntryHandler handler, long baseRevision) {
         myTargetRepository = toRepository;
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
         myHandler = handler;
+        myNormalizedNodePropsCounter = 0;
     }
     
     public void reset(long baseRevision) {
@@ -49,6 +52,7 @@ public class SVNSynchronizeEditor implements ISVNEditor {
         myCommitInfo = null;
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
+        myNormalizedNodePropsCounter = 0;
     }
     
     public void abortEdit() throws SVNException {
@@ -80,12 +84,27 @@ public class SVNSynchronizeEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
+            if (SVNPropertiesManager.propNeedsTranslation(name)) {
+                String normalizedValue = SVNAdminClient.normalizeString(SVNPropertyValue.getPropertyAsString(value));
+                if (normalizedValue != null) {
+                    value = SVNPropertyValue.create(normalizedValue);
+                    myNormalizedNodePropsCounter++;
+                }
+            }
             getWrappedEditor().changeDirProperty(name, value);
         }
     }
 
     public void changeFileProperty(String path, String name, SVNPropertyValue value) throws SVNException {
         if (SVNProperty.isRegularProperty(name)) {
+            if (SVNPropertiesManager.propNeedsTranslation(name)) {
+                String normalizedVal = SVNAdminClient.normalizeString(SVNPropertyValue.getPropertyAsString(value));
+                if (normalizedVal != null) {
+                    value = SVNPropertyValue.create(normalizedVal);
+                    myNormalizedNodePropsCounter++;
+                }
+               
+            }
             getWrappedEditor().changeFileProperty(path, name, value);
         }
     }
@@ -147,5 +166,9 @@ public class SVNSynchronizeEditor implements ISVNEditor {
 
     public SVNCommitInfo getCommitInfo() {
         return myCommitInfo;
+    }
+    
+    public int getNormalizedNodePropsCounter() {
+        return myNormalizedNodePropsCounter;
     }
 }

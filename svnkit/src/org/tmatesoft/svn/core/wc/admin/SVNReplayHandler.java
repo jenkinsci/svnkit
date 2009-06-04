@@ -49,7 +49,8 @@ public class SVNReplayHandler implements ISVNReplayHandler {
     private ISVNEventHandler myCanceller;
     private SVNSynchronizeEditor mySyncEditor;
     private SVNAdminClient myAdminClient;
-   
+    private int myNormalizedRevPropsCount;
+    
     /**
      * Creates a new replay handler.
      * 
@@ -69,6 +70,7 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         myDebugLog = debugLog;
         myCanceller = canceller;
         myAdminClient = adminClient;
+        myNormalizedRevPropsCount = 0;
     }
 
     /**
@@ -85,6 +87,9 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         if (!filtered.containsName(SVNRevisionProperty.LOG)) {
             filtered.put(SVNRevisionProperty.LOG, "");
         }
+        
+        SVNProperties normalizedProps = SVNAdminClient.normalizeRevisionProperties(filtered);
+        myNormalizedRevPropsCount += normalizedProps.size();
         
         if (mySyncEditor == null) {
             mySyncEditor = new SVNSynchronizeEditor(myTargetRepository, myLogEntryHandler, revision - 1);
@@ -114,6 +119,8 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         SVNProperties existingProperties = myTargetRepository.getRevisionProperties(revision, null);
         SVNProperties filtered = new SVNProperties();
         filterProperties(revisionProperties, filtered, false);
+        SVNProperties normalizedProps = SVNAdminClient.normalizeRevisionProperties(filtered);
+        myNormalizedRevPropsCount += normalizedProps.size();
         int filteredCount = SVNAdminHelper.writeRevisionProperties(myTargetRepository, revision, filtered);
         SVNAdminHelper.removePropertiesNotInSource(myTargetRepository, revision, revisionProperties, 
                 existingProperties);
@@ -123,7 +130,15 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         myTargetRepository.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, null);
         myAdminClient.handlePropertesCopied(filteredCount > 0, revision);
     }
-    
+
+    public int getNormalizedRevPropsCount() {
+        return myNormalizedRevPropsCount;
+    }
+
+    public int getNormalizedNodePropsCount() {
+        return mySyncEditor.getNormalizedNodePropsCounter();
+    }
+
     private int filterProperties(SVNProperties revProps, SVNProperties filteredProps, boolean isStart) {
         int filteredCount = 0;
         for (Iterator propNamesIter = revProps.nameSet().iterator(); propNamesIter.hasNext();) {
