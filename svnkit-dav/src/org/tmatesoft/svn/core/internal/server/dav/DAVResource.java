@@ -378,7 +378,7 @@ public class DAVResource {
         
         eTag.append(createdRevision);
         eTag.append("/");
-        eTag.append(SVNEncodingUtil.uriEncode(getResourceURI().getPath()));
+        eTag.append(SVNEncodingUtil.xmlEncodeCDATA(getResourceURI().getPath(), true));
         eTag.append("\"");
         return eTag.toString();
     }

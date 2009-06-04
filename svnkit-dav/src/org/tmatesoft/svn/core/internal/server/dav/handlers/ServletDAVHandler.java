@@ -1160,9 +1160,13 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         }
         
-        Map locks = parseLocks(getDAVRequest().getRootElement(), uri.getPath());
-        if (!locks.isEmpty()) {
-            resource.setLockTokens(locks.values());
+        //MERGE requests send can provide locks in a request body,
+        //COPY, MOVE requests do not, so check for the valid xml exists
+        if (getDAVRequest() != null) {
+            Map locks = parseLocks(getDAVRequest().getRootElement(), uri.getPath());
+            if (!locks.isEmpty()) {
+                resource.setLockTokens(locks.values());
+            }
         }
         
         FSCommitter committer = getCommitter(resource.getFSFS(), resource.getRoot(), resource.getTxnInfo(), resource.getLockTokens(), 

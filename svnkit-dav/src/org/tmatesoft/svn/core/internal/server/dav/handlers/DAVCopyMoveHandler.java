@@ -205,7 +205,8 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
             }
         }
         
-        if (srcAVInfo.getParentResource() != null && dstAVInfo.getParentResource() != null) {
+        if (srcAVInfo != null && srcAVInfo.getParentResource() != null && dstAVInfo != null && 
+                dstAVInfo.getParentResource() != null) {
             DAVResource srcParentResource = srcAVInfo.getParentResource();
             DAVResource dstParentResource = dstAVInfo.getParentResource();
             if (srcParentResource.equals(dstParentResource)) {
