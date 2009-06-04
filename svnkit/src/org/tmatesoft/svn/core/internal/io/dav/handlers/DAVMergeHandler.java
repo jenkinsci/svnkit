@@ -152,8 +152,10 @@ public class DAVMergeHandler extends BasicDAVHandler {
             if (parent == RESPONSE) {
                 myRepositoryPath = cdata.toString();
                 myRepositoryPath = SVNEncodingUtil.uriDecode(myRepositoryPath);
+                myRepositoryPath = SVNPathUtil.canonicalizePath(myRepositoryPath);
             } else if (parent == DAVElement.CHECKED_IN) {
                 myVersionPath = cdata.toString();
+                myVersionPath = SVNPathUtil.canonicalizePath(myVersionPath);
             }
         } else if (parent == DAVElement.RESOURCE_TYPE && element == DAVElement.BASELINE) {
             myResourceType = element;
