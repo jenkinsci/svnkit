@@ -90,7 +90,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
 
     private static final long DEFAULT_IDLE_TIMEOUT = 60*1000;
 
-    private static Timer ourTimer;
+    private static volatile Timer ourTimer;
     private static volatile int ourInstanceCount;
     
     private ISVNAuthenticationManager myAuthManager;
