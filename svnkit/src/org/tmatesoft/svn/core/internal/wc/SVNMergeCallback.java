@@ -522,12 +522,6 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         }
     }
 
-    protected void setIsConflicted(boolean[] isConflictedResult, boolean isConflicted) {
-        if (isConflictedResult != null && isConflictedResult.length > 0) {
-            isConflictedResult[0] = isConflicted;
-        }
-    }
-
     protected boolean areFilesTheSame(File older, SVNProperties originalProps, File mine, SVNAdminArea adminArea) throws SVNException {
         SVNProperties workingProps = adminArea.getProperties(mine.getName()).asMap();
         if (arePropsTheSame(originalProps, workingProps)) {
