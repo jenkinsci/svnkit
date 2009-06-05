@@ -64,7 +64,7 @@ public class DAVPropPatchHandler extends ServletDAVHandler {
         
         DAVPropertiesProvider propsProvider = null;
         try {
-            propsProvider = DAVPropertiesProvider.createPropertiesProvider(resource, null);
+            propsProvider = DAVPropertiesProvider.createPropertiesProvider(resource, this);
         } catch (DAVException dave) {
             autoCheckIn(resource, true, false, avInfo);
             throw new DAVException("Could not open the property database for {0}.", new Object[] { SVNEncodingUtil.xmlEncodeCDATA(getURI()) }, 
