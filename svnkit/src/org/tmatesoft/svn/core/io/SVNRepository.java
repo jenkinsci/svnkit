@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.SVNMergeInfoInheritance;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
@@ -2461,12 +2460,6 @@ public abstract class SVNRepository {
      */
     public ISVNEditor getCommitEditor(String logMessage, Map locks, boolean keepLocks, 
             SVNProperties revisionProperties, final ISVNWorkspaceMediator mediator) throws SVNException {
-        if (hasSVNProperties(revisionProperties)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
-                    "Standard properties can't be set explicitly as revision properties");
-            SVNErrorManager.error(err, SVNLogType.NETWORK);
-        }
-        
         revisionProperties = revisionProperties == null ? new SVNProperties() : new SVNProperties(revisionProperties);
         if (logMessage != null) {
             revisionProperties.put(SVNRevisionProperty.LOG, logMessage);
@@ -2868,19 +2861,6 @@ public abstract class SVNRepository {
         }
     }
     
-    protected static boolean hasSVNProperties(SVNProperties props) {
-        if (props == null) {
-            return false;
-        }
-        for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
-            String propName = (String) names.next();
-            if (SVNProperty.isSVNProperty(propName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     // all paths are uri-decoded.
     //
     // get repository path (path starting with /, relative to repository root).

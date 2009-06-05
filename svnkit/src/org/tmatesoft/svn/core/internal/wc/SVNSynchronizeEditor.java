@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.io.ISVNEditor;
@@ -38,21 +39,24 @@ public class SVNSynchronizeEditor implements ISVNEditor {
     private ISVNLogEntryHandler myHandler;
     private SVNRepository myTargetRepository;
     private int myNormalizedNodePropsCounter;
+    private SVNProperties myRevisionProperties;
     
-    public SVNSynchronizeEditor(SVNRepository toRepository, ISVNLogEntryHandler handler, long baseRevision) {
+    public SVNSynchronizeEditor(SVNRepository toRepository, ISVNLogEntryHandler handler, long baseRevision, SVNProperties revProps) {
         myTargetRepository = toRepository;
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
         myHandler = handler;
         myNormalizedNodePropsCounter = 0;
+        myRevisionProperties = revProps;
     }
     
-    public void reset(long baseRevision) {
+    public void reset(long baseRevision, SVNProperties revProps) {
         myWrappedEditor = null;
         myCommitInfo = null;
         myIsRootOpened = false;
         myBaseRevision = baseRevision;
         myNormalizedNodePropsCounter = 0;
+        myRevisionProperties = revProps;
     }
     
     public void abortEdit() throws SVNException {
@@ -61,7 +65,7 @@ public class SVNSynchronizeEditor implements ISVNEditor {
 
     private ISVNEditor getWrappedEditor() throws SVNException {
         if (myWrappedEditor == null) {
-            myWrappedEditor = myTargetRepository.getCommitEditor("", null, false, null);
+            myWrappedEditor = myTargetRepository.getCommitEditor(null, null, false, myRevisionProperties, null);
         }
         return myWrappedEditor;
     }

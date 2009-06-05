@@ -83,6 +83,7 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         myTargetRepository.setRevisionPropertyValue(0, SVNRevisionProperty.CURRENTLY_COPYING, 
                 SVNPropertyValue.create(SVNProperty.toString(revision)));
         SVNProperties filtered = new SVNProperties();
+        
         filterProperties(revisionProperties, filtered, true);
         if (!filtered.containsName(SVNRevisionProperty.LOG)) {
             filtered.put(SVNRevisionProperty.LOG, "");
@@ -92,9 +93,9 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         myNormalizedRevPropsCount += normalizedProps.size();
         
         if (mySyncEditor == null) {
-            mySyncEditor = new SVNSynchronizeEditor(myTargetRepository, myLogEntryHandler, revision - 1);
+            mySyncEditor = new SVNSynchronizeEditor(myTargetRepository, myLogEntryHandler, revision - 1, filtered);
         } else {
-            mySyncEditor.reset(revision - 1);
+            mySyncEditor.reset(revision - 1, filtered);
         }
         
         ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(mySyncEditor, myCanceller, myDebugLog);
@@ -136,7 +137,7 @@ public class SVNReplayHandler implements ISVNReplayHandler {
     }
 
     public int getNormalizedNodePropsCount() {
-        return mySyncEditor.getNormalizedNodePropsCounter();
+        return mySyncEditor == null ? 0 : mySyncEditor.getNormalizedNodePropsCounter();
     }
 
     private int filterProperties(SVNProperties revProps, SVNProperties filteredProps, boolean isStart) {
@@ -144,24 +145,45 @@ public class SVNReplayHandler implements ISVNReplayHandler {
         for (Iterator propNamesIter = revProps.nameSet().iterator(); propNamesIter.hasNext();) {
             String propName = (String) propNamesIter.next();
             SVNPropertyValue propValue = revProps.getSVNPropertyValue(propName);
-            boolean filter = false;
-            if (myHasCommitRevPropsCapability) {
-                filter = SVNRevisionProperty.AUTHOR.equals(propName) || 
-                SVNRevisionProperty.DATE.equals(propName) || propName.startsWith(SVNProperty.SVN_SYNC_PREFIX);
-            } else {
-                filter = !SVNRevisionProperty.LOG.equals(propName);
-            }
-            if (!isStart) {
-                filter = !filter;
-            }
 
-            if (filter) {
-                filteredCount += 1;
+            boolean filter = false;
+            if (isStart) {
+                if (myHasCommitRevPropsCapability) {
+                    filter = filterExcludeDateAuthorSync(propName); 
+                } else {
+                    filter = filterIncludeLog(propName);
+                }
             } else {
+                if (myHasCommitRevPropsCapability) {
+                    filter = filterIncludeDateAuthorSync(propName);
+                } else {
+                    filter = filterExcludeLog(propName);
+                }
+            }
+            
+            if (!filter) {
                 filteredProps.put(propName, propValue);
+            } else {
+                filteredCount += 1;
             }
         }
         return filteredCount;
     }
 
+    private boolean filterIncludeDateAuthorSync(String propName) {
+        return !filterExcludeDateAuthorSync(propName);
+    }
+    
+    private boolean filterExcludeDateAuthorSync(String propName) {
+        return SVNRevisionProperty.AUTHOR.equals(propName) || SVNRevisionProperty.DATE.equals(propName) || 
+               propName.startsWith(SVNProperty.SVN_SYNC_PREFIX);
+    }
+    
+    private boolean filterIncludeLog(String propName) {
+        return !filterExcludeLog(propName);
+    }
+    
+    private boolean filterExcludeLog(String propName) {
+        return SVNRevisionProperty.LOG.equals(propName);
+    }
 }
