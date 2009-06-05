@@ -185,13 +185,15 @@ public class DAVCopyMoveHandler extends ServletDAVHandler {
         
         boolean replaceDestination = false;
         DAVResourceState resNewState = getResourceState(newResource);
-        if (myIsMove || !newResource.isVersioned()) {
-            replaceDestination = true;
-        } else if (resource.getType() != newResource.getType()) {
-            replaceDestination = true;
-        } else if (resource.isCollection() != newResource.isCollection()) {
-            replaceDestination = true;
-        } 
+        if (newResource.exists()) {
+            if (myIsMove || !newResource.isVersioned()) {
+                replaceDestination = true;
+            } else if (resource.getType() != newResource.getType()) {
+                replaceDestination = true;
+            } else if (resource.isCollection() != newResource.isCollection()) {
+                replaceDestination = true;
+            } 
+        }
         
         DAVAutoVersionInfo dstAVInfo = null;
         if (!newResource.exists() || replaceDestination) {
