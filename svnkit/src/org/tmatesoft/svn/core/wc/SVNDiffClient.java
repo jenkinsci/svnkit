@@ -3013,7 +3013,7 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
         
         Map srcHistory = getHistoryAsMergeInfo(realMergeSrcURL, null, realSrcPegRevision, SVNRepository.INVALID_REVISION, 
                 SVNRepository.INVALID_REVISION, null, null);
-        Map mergeInfo = SVNMergeInfoUtil.intersectMergeInfo(targetMergeInfo, srcHistory);
+        Map mergeInfo = SVNMergeInfoUtil.intersectMergeInfo(targetMergeInfo, srcHistory, false);
         SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
         long youngestRev = SVNRepository.INVALID_REVISION;
         String logTarget = null;
@@ -3066,7 +3066,7 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
             repos.closeSession();
         }
         
-        Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
+        Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory, false);
         SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
         long youngestRev = SVNRepository.INVALID_REVISION;
         String logTarget = null;
