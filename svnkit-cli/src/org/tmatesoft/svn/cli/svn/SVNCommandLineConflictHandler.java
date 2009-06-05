@@ -52,7 +52,6 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
     
     public SVNConflictResult handleConflict(SVNConflictDescription conflictDescription) throws SVNException {
         if (conflictDescription.isTreeConflict()) {
-// TODO: SVNKit 1.3           
             return null;
         }
         SVNMergeFileSet files = conflictDescription.getMergeFiles();
@@ -85,8 +84,14 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                                 svne.getErrorMessage().getMessage() : "No editor found, leaving all conflicts.");
                         myIsExternalFailed = true;
                     } else if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.EXTERNAL_PROGRAM) {
-                        mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
-                                svne.getErrorMessage().getMessage() : "Error running editor, leaving all conflicts.");
+                        String message = svne.getErrorMessage().getMessageTemplate() != null ? svne.getErrorMessage().getMessage() : 
+                            "Error running editor, leaving all conflicts.";
+                        if (message.startsWith("svn: ")) {
+                            //hack: use the original message template without any prefixes (like 'svn:', 'svn:warning') 
+                            //added to make update test 42 pass
+                            message = message.substring("svn: ".length());
+                        }
+                        mySVNEnvironment.getErr().println(message);
                         myIsExternalFailed = true;
                     } else {
                         throw svne;
@@ -100,12 +105,12 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                 if (myIsExternalFailed) {
                     return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
                 }
-                
+
+                boolean[] remainsInConflict = { false };
                 try {
                     SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBaseFile().getAbsolutePath(), 
-                            files.getRepositoryFile().getAbsolutePath(), 
-                            files.getLocalFile().getAbsolutePath(), 
-                            files.getResultFile().getAbsolutePath());
+                            files.getRepositoryFile().getAbsolutePath(), files.getLocalFile().getAbsolutePath(), 
+                            files.getResultFile().getAbsolutePath(), files.getWCPath(), remainsInConflict);
                 } catch (SVNException svne) {
                     if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL) {
                         mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
@@ -115,10 +120,14 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         mySVNEnvironment.getErr().println(svne.getErrorMessage().getMessage() != null ? 
                                 svne.getErrorMessage().getMessage() : "Error running merge tool.");
                         myIsExternalFailed = true;
-                    } else {
-                        throw svne;
                     }
+                    throw svne;
                 }
+
+                if (remainsInConflict[0]) {
+                    return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
+                }
+                 
                 return new SVNConflictResult(SVNConflictChoice.MERGED, null);
             }
         }
@@ -322,7 +331,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                             files.getResultFile() != null) {
                         try {
                             SVNCommandUtil.mergeFileExternally(mySVNEnvironment, files.getBasePath(), files.getRepositoryPath(), 
-                                    files.getLocalPath(), files.getResultPath());
+                                    files.getLocalPath(), files.getResultPath(), files.getWCPath(), null);
                             performedEdit = true;
                         } catch (SVNException svne) {
                             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.CL_NO_EXTERNAL_MERGE_TOOL) {

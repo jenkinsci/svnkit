@@ -1461,6 +1461,9 @@ public class SVNFileUtil {
             }
             if (waitAfterRead) {
                 int rc = process.waitFor();
+                if (callback != null) {
+                    callback.handleReturnValue(rc);
+                }
                 if (rc != 0) {
                     return null;
                 }

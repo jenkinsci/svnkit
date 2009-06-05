@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -54,7 +55,7 @@ public class SVNCommandUtil {
     }
     
     public static void mergeFileExternally(AbstractSVNCommandEnvironment env, String basePath, String repositoryPath, 
-            String localPath, String mergeResultPath) throws SVNException {
+            String localPath, String mergeResultPath, String wcPath, final boolean[] remainsInConflict) throws SVNException {
         String[] testEnvironment = SVNFileUtil.getTestEnvironment();
         String mergeToolCommand = testEnvironment[1];
         if (testEnvironment[1] == null) {
@@ -86,14 +87,28 @@ public class SVNCommandUtil {
             merger = mergeToolCommand.toLowerCase();
         }
 
-        String result = runEditor(merger, new String[] {basePath, repositoryPath, 
-                localPath, mergeResultPath}, testEnvironment);
-        if (result == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
-                    mergeToolCommand + " " + basePath + " " + repositoryPath + " " + localPath + " " + 
-                    mergeResultPath +  "' failed.");
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
+        ISVNReturnValueCallback runCallback = new ISVNReturnValueCallback() {
+            public void handleChar(char ch) throws SVNException {
+            }
+
+            public void handleReturnValue(int returnValue) throws SVNException {
+                if (returnValue != 0 && returnValue != 1) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, 
+                            "The external merge tool exited with exit code {0}", String.valueOf(returnValue));
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
+                }
+                if (remainsInConflict != null && remainsInConflict.length > 0) {
+                    remainsInConflict[0] = returnValue == 1; 
+                }
+            }
+
+            public boolean isHandleProgramOutput() {
+                return false;
+            }
+        };
+        
+        runEditor(merger, new String[] { basePath, repositoryPath, localPath, mergeResultPath, wcPath }, testEnvironment, runCallback);
+        
     }
 
     public static void editFileExternally(AbstractSVNCommandEnvironment env, String editorCommand, String path) throws SVNException {
@@ -117,10 +132,28 @@ public class SVNCommandUtil {
             }
         }
         
-        String result = runEditor(editorCommand, new String[] {path}, testEnv);
+        final int[] exitCode = { -1 };
+        ISVNReturnValueCallback procCallback = new ISVNReturnValueCallback() {
+
+            public void handleChar(char ch) throws SVNException {
+            }
+
+            public void handleReturnValue(int returnValue) throws SVNException {
+                exitCode[0] = returnValue;
+            }
+
+            public boolean isHandleProgramOutput() {
+                return false;
+            }
+            
+        };
+        
+        String result = runEditor(editorCommand, new String[] {path}, testEnv, procCallback);
         if (result == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
-                    editorCommand + " " + path + "' failed.");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "system(''{0}'') returned {1}", 
+                    new Object[] { editorCommand + " " + path, String.valueOf(exitCode[0]) });
+            //SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.EXTERNAL_PROGRAM, "Editor command '" + 
+            //        editorCommand + " " + path + "' failed.");
             SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
     }
@@ -148,7 +181,7 @@ public class SVNCommandUtil {
             testEnv = null;
         }
         try {
-            String result = runEditor(editorCommand, new String[] {tmpFile.getAbsolutePath()}, testEnv);
+            String result = runEditor(editorCommand, new String[] {tmpFile.getAbsolutePath()}, testEnv, null);
             if (result == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Editor command '" + editorCommand + " " + tmpFile.getAbsolutePath() + "' failed.");
                 SVNErrorManager.error(err, SVNLogType.CLIENT);
@@ -181,7 +214,7 @@ public class SVNCommandUtil {
         }
     }
 
-    private static String runEditor(String editorCommand, String[] args, String[] env) throws SVNException {
+    private static String runEditor(String editorCommand, String[] args, String[] env, ISVNReturnValueCallback callback) throws SVNException {
         String result = null;
         if (SVNFileUtil.isWindows || SVNFileUtil.isOS2) {
             String editor = editorCommand.trim().toLowerCase();
@@ -193,14 +226,14 @@ public class SVNCommandUtil {
                 for (int i = 0; i < args.length; i++) {
                     command[3 + i] = args[i];
                 }
-                result = SVNFileUtil.execCommand(command, env, false, null);
+                result = SVNFileUtil.execCommand(command, env, false, callback);
             } else {
                 String[] command = new String[1 + args.length];
                 command[0] = editorCommand;
                 for (int i = 0; i < args.length; i++) {
                     command[1 + i] = args[i];
                 }
-                result = SVNFileUtil.execCommand(command, env, false, null);
+                result = SVNFileUtil.execCommand(command, env, false, callback);
             }
         } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX){
             if (env == null) {
@@ -216,7 +249,7 @@ public class SVNCommandUtil {
                     command[2] += " " + args[i];
                 }
                 command[2] += " < /dev/tty > /dev/tty";
-                result = SVNFileUtil.execCommand(command, env, false, null);
+                result = SVNFileUtil.execCommand(command, env, false, callback);
             } else {
                 // test mode, do not use bash and redirection.
                 String[] command = new String[1 + args.length];
@@ -224,7 +257,7 @@ public class SVNCommandUtil {
                 for (int i = 0; i < args.length; i++) {
                     command[1 + i] = args[i];
                 }
-                result = SVNFileUtil.execCommand(command, env, false, null);
+                result = SVNFileUtil.execCommand(command, env, false, callback);
             }
         } else if (SVNFileUtil.isOpenVMS) {
             String[] command = new String[1 + args.length];
@@ -232,7 +265,7 @@ public class SVNCommandUtil {
             for (int i = 0; i < args.length; i++) {
                 command[1 + i] = args[i];
             }
-            result = SVNFileUtil.execCommand(command, env, false, null);
+            result = SVNFileUtil.execCommand(command, env, false, callback);
         } 
         return result;
     }
