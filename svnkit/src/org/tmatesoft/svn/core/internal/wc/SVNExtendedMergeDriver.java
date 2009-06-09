@@ -165,7 +165,7 @@ public abstract class SVNExtendedMergeDriver extends SVNMergeDriver {
         return getRevisionNumber(copySource.getRevision(), getRepository(copySource.getURL()), copySource.getFile());
     }
 
-    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
         if (skipExtendedMerge()) {
             return super.getMergeReportEditor(defaultStart, revision, adminArea, depth, mergeCallback, editor);
         }
