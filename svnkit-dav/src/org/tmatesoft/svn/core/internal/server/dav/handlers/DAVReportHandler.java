@@ -19,6 +19,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
@@ -72,6 +74,7 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     private DAVReportHandler myReportHandler;
     private DAVResource myDAVResource;
+    private OutputStream myDiffWindowWriter;
 
     private boolean myWriteTextDeltaHeader = true;
     private boolean mySVNDiffVersion = false;
@@ -87,6 +90,10 @@ public class DAVReportHandler extends ServletDAVHandler {
         myResponse = response;
     }
 
+    protected List getNamespaces() {
+        return super.getNamespaces();
+    }
+    
     protected DAVRequest getDAVRequest() {
         return getReportHandler().getDAVRequest();
     }
@@ -143,7 +150,10 @@ public class DAVReportHandler extends ServletDAVHandler {
     }
 
     public void execute() throws SVNException {
-        readInput(false);
+        long read = readInput(false);
+        if (read == 0) {
+            throw new DAVException("The request body must specify a report.", HttpServletResponse.SC_BAD_REQUEST, SVNLogType.NETWORK);
+        }
 
         setDefaultResponseHeaders();
         setResponseContentType(DEFAULT_XML_CONTENT_TYPE);
@@ -156,7 +166,7 @@ public class DAVReportHandler extends ServletDAVHandler {
         if (rootElement == DATED_REVISIONS_REPORT) {
             setReportHandler(new DAVDatedRevisionHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == FILE_REVISIONS_REPORT) {
-            setReportHandler(new DAVFileRevisionsHandler(myRepositoryManager, myRequest, myResponse));
+            setReportHandler(new DAVFileRevisionsHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == GET_LOCATIONS) {
             setReportHandler(new DAVGetLocationsHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == LOG_REPORT) {
@@ -207,8 +217,6 @@ public class DAVReportHandler extends ServletDAVHandler {
         DAVElementProperty rootElement = getDAVRequest().getRootElement();
         SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), xmlBuffer);
     }
-
-    private OutputStream myDiffWindowWriter;
 
     protected void writeTextDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {
         if (myDiffWindowWriter == null) {

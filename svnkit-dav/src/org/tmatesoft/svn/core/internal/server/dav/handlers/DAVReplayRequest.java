@@ -69,7 +69,7 @@ public class DAVReplayRequest extends DAVRequest {
         for (Iterator iterator = children.iterator(); iterator.hasNext();) {
             DAVElementProperty property = (DAVElementProperty) iterator.next();
             DAVElement element = property.getName();
-            if (element == REVISION) {
+            if (element == DAVElement.REVISION) {
                 assertNullCData(element, property);
                 try {
                     setRevision(Long.parseLong(property.getFirstValue(true)));

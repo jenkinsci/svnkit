@@ -145,14 +145,14 @@ public class DAVLogRequest extends DAVRequest {
                 setIncludeMergedRevisions(true);
             } else if (element == OMIT_LOG_TEXT) {
                 setOmitLogText(true);
-            } else if (element == START_REVISION) {
+            } else if (element == DAVElement.START_REVISION) {
                 String revisionString = property.getFirstValue(true);
                 try {
                     setStartRevision(Long.parseLong(revisionString));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
-            } else if (element == END_REVISION) {
+            } else if (element == DAVElement.END_REVISION) {
                 String revisionString = property.getFirstValue(true);
                 try {
                     setEndRevision(Long.parseLong(revisionString));
@@ -162,7 +162,7 @@ public class DAVLogRequest extends DAVRequest {
             } else if (element == LIMIT) {
                 String limitString = property.getFirstValue(true);
                 setLimit(Integer.parseInt(limitString));
-            } else if (element == PATH) {
+            } else if (element == DAVElement.PATH) {
                 Collection paths = property.getValues();
                 String[] targetPaths = new String[paths.size()];
                 targetPaths = (String[]) paths.toArray(targetPaths);

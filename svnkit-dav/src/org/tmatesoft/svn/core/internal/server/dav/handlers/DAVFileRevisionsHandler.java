@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,13 +21,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -34,17 +39,21 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
  */
 public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFileRevisionHandler {
     
-    private static final String FILE_REVISION_ATTR = "file-rev";
-    private static final String REVISION_PROPERTY_ATTR = "rev-prop";
-    private static final String SET_PROPERTY_ATTR = "set-prop";
-    private static final String REMOVE_PROPERTY_ATTR = "remove-prop";
-
+    private static final String FILE_REVISION_TAG = "file-rev";
+    private static final String REVISION_PROPERTY_TAG = "rev-prop";
+    private static final String SET_PROPERTY_TAG = "set-prop";
+    private static final String REMOVE_PROPERTY_TAG = "remove-prop";
+    private static final String MERGED_REVISION_TAG = "merged-revision";
+    
     private DAVFileRevisionsRequest myDAVRequest;
-
-    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    private boolean myWriteHeader;
+    private DAVReportHandler myCommonReportHandler;
+    
+    public DAVFileRevisionsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
+        myCommonReportHandler = commonReportHandler;
     }
-
 
     protected DAVRequest getDAVRequest() {
         return getFileRevsionsRequest();
@@ -59,43 +68,71 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
 
     public void execute() throws SVNException {
         setDAVResource(getRequestedDAVResource(false, false));
-
-        writeXMLHeader();
-
+        List namespaces = myCommonReportHandler.getNamespaces();
+        if (!namespaces.contains(DAVElement.SVN_NAMESPACE)) {
+            throw new DAVException("The request does not contain the 'svn:' namespace, so it is not going to have certain required elements.", 
+                    HttpServletResponse.SC_BAD_REQUEST, SVNLogType.NETWORK, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE);
+        }
+        
+        myWriteHeader = true;
         String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getFileRevsionsRequest().getPath());
-        getDAVResource().getRepository().getFileRevisions(path, getFileRevsionsRequest().getStartRevision(), 
-                getFileRevsionsRequest().getEndRevision(), this);
-
-        writeXMLFooter();
+        try {
+            getDAVResource().getRepository().getFileRevisions(path, getFileRevsionsRequest().getStartRevision(), 
+                    getFileRevsionsRequest().getEndRevision(), getFileRevsionsRequest().isIncludeMergedRevisions(), this);
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    svne.getErrorMessage().getMessage(), null);
+        }
+        
+        try {
+            maybeSendHeader();
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Error beginning REPORT reponse", null);
+        }
+        
+        try {
+            writeXMLFooter();
+        } catch (SVNException svne) {
+            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    "Error ending REPORT reponse", null);
+        }
     }
 
     public void openRevision(SVNFileRevision fileRevision) throws SVNException {
+        maybeSendHeader();
+        
         Map attrs = new SVNHashMap();
         attrs.put(PATH_ATTR, fileRevision.getPath());
         attrs.put(REVISION_ATTR, String.valueOf(fileRevision.getRevision()));
-        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, SVNXMLUtil.XML_STYLE_NORMAL, 
+        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_TAG, SVNXMLUtil.XML_STYLE_NORMAL, 
                 attrs, null);
         write(xmlBuffer);
         
         for (Iterator iterator = fileRevision.getRevisionProperties().nameSet().iterator(); iterator.hasNext();) {
             String propertyName = (String) iterator.next();
-            writePropertyTag(REVISION_PROPERTY_ATTR, propertyName, fileRevision.getRevisionProperties().getSVNPropertyValue(propertyName));
+            writePropertyTag(REVISION_PROPERTY_TAG, propertyName, fileRevision.getRevisionProperties().getSVNPropertyValue(propertyName));
         }
         
         for (Iterator iterator = fileRevision.getPropertiesDelta().nameSet().iterator(); iterator.hasNext();) {
             String propertyName = (String) iterator.next();
             SVNPropertyValue propertyValue = fileRevision.getPropertiesDelta().getSVNPropertyValue(propertyName);
             if (propertyValue != null) {
-                writePropertyTag(SET_PROPERTY_ATTR, propertyName, propertyValue);
+                writePropertyTag(SET_PROPERTY_TAG, propertyName, propertyValue);
             } else {
-                xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, REMOVE_PROPERTY_ATTR, SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);
+                xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, REMOVE_PROPERTY_TAG, SVNXMLUtil.XML_STYLE_SELF_CLOSING, "name", propertyName, null);
                 write(xmlBuffer);
             }
+        }
+        
+        if (fileRevision.isResultOfMerge()) {
+            xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, MERGED_REVISION_TAG, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, 
+                    xmlBuffer);
         }
     }
 
     public void closeRevision(String token) throws SVNException {
-        StringBuffer xmlBuffer = SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_ATTR, null);
+        StringBuffer xmlBuffer = SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, FILE_REVISION_TAG, null);
         write(xmlBuffer);
     }
 
@@ -114,5 +151,12 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         setWriteTextDeltaHeader(true);
         StringBuffer xmlBuffer = SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, TXDELTA_ATTR, null);
         write(xmlBuffer);
+    }
+    
+    private void maybeSendHeader() throws SVNException {
+        if (myWriteHeader) {
+            writeXMLHeader();
+            myWriteHeader = false;
+        }
     }
 }

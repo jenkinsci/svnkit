@@ -113,6 +113,13 @@ public class DAVElement {
     public static final DAVElement SVN_LOCK_OWNER = getElement(SVN_NAMESPACE, "owner");
     public static final DAVElement SVN_LOCK_CREATION_DATE = getElement(SVN_NAMESPACE, "creationdate");
     public static final DAVElement SVN_LOCK_EXPIRATION_DATE = getElement(SVN_NAMESPACE, "expirationdate");
+
+    //servlet defined svn namespace properties
+    public static final DAVElement PATH = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "path");
+    public static final DAVElement REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revision");
+    public static final DAVElement START_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "start-revision");
+    public static final DAVElement END_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "end-revision");
+    public static final DAVElement INCLUDE_MERGED_REVISIONS = getElement(SVN_NAMESPACE, "include-merged-revisions");
     
     public static final DAVElement BASELINE_RELATIVE_PATH = getElement(SVN_DAV_PROPERTY_NAMESPACE, "baseline-relative-path");
     public static final DAVElement REPOSITORY_UUID = getElement(SVN_DAV_PROPERTY_NAMESPACE, "repository-uuid");

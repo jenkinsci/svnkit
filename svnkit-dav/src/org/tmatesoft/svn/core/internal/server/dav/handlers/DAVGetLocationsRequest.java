@@ -69,7 +69,7 @@ public class DAVGetLocationsRequest extends DAVRequest {
         for (Iterator iterator = children.iterator(); iterator.hasNext();) {
             DAVElementProperty property = (DAVElementProperty) iterator.next();
             DAVElement element = property.getName();
-            if (element == PATH) {
+            if (element == DAVElement.PATH) {
                 String path = property.getFirstValue(false);
                 DAVPathUtil.testCanonical(path);
                 setPath(path);

@@ -29,32 +29,25 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class DAVFileRevisionsRequest extends DAVRequest {
 
-    String myPath = null;
-    long myStartRevision = DAVResource.INVALID_REVISION;
-    long myEndRevision = DAVResource.INVALID_REVISION;
-
+    private String myPath;
+    private long myStartRevision = DAVResource.INVALID_REVISION;
+    private long myEndRevision = DAVResource.INVALID_REVISION;
+    private boolean myIsIncludeMergedRevisions;
+    
     public String getPath() {
         return myPath;
-    }
-
-    private void setPath(String path) {
-        myPath = path;
     }
 
     public long getStartRevision() {
         return myStartRevision;
     }
 
-    private void setStartRevision(long startRevision) {
-        myStartRevision = startRevision;
-    }
-
     public long getEndRevision() {
         return myEndRevision;
     }
-
-    private void setEndRevision(long endRevision) {
-        myEndRevision = endRevision;
+    
+    public boolean isIncludeMergedRevisions() {
+        return myIsIncludeMergedRevisions;
     }
 
     protected void init() throws SVNException {
@@ -63,22 +56,27 @@ public class DAVFileRevisionsRequest extends DAVRequest {
         for (Iterator iterator = children.iterator(); iterator.hasNext();) {
             DAVElementProperty childElement = (DAVElementProperty) iterator.next();
             DAVElement childElementName = childElement.getName();
-            if (childElementName == PATH) {
+            if (!DAVElement.SVN_NAMESPACE.equals(childElementName.getNamespace())) {
+                continue;
+            }
+            if (childElementName == DAVElement.PATH) {
                 String path = childElement.getFirstValue(false);
                 DAVPathUtil.testCanonical(path);
-                setPath(path);
-            } else if (childElementName == START_REVISION) {
+                myPath = path;
+            } else if (childElementName == DAVElement.START_REVISION) {
                 try {
-                    setStartRevision(Long.parseLong(childElement.getFirstValue(true)));
+                    myStartRevision = Long.parseLong(childElement.getFirstValue(true));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
-            } else if (childElementName == END_REVISION) {
+            } else if (childElementName == DAVElement.END_REVISION) {
                 try {
-                    setEndRevision(Long.parseLong(childElement.getFirstValue(true)));
+                    myEndRevision = Long.parseLong(childElement.getFirstValue(true));
                 } catch (NumberFormatException nfe) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
+            } else if (childElementName == DAVElement.INCLUDE_MERGED_REVISIONS) {
+                myIsIncludeMergedRevisions = true;
             }
         }
     }

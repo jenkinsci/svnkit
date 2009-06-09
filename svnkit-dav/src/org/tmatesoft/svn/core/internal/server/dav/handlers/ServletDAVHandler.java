@@ -1749,17 +1749,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
                     reader.parse(new InputSource(stream));
                 }
             } catch (ParserConfigurationException e) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e.getMessage());
                 if (stream == null || stream.getBytesRead() > 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }
             } catch (SAXException e) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e.getMessage());
                 if (stream == null || stream.getBytesRead() > 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }
             } catch (IOException e) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, e.getMessage());
                 if (stream == null || stream.getBytesRead() > 0) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, e), e, SVNLogType.NETWORK);
                 }

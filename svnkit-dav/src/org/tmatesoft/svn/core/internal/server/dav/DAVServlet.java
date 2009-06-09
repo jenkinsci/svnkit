@@ -211,6 +211,7 @@ public class DAVServlet extends HttpServlet {
             
             if (stackErr != null && stackErr.getTagName() != null) {
                 servletResponse.setContentType(XML_CONTENT_TYPE);
+                servletResponse.setStatus(stackErr.getResponseCode());
 
                 StringBuffer errorMessageBuffer = new StringBuffer();
                 SVNXMLUtil.addXMLHeader(errorMessageBuffer);
@@ -242,7 +243,8 @@ public class DAVServlet extends HttpServlet {
                     errorMessageBuffer.append("</m:human-readable>\n");
                 }
                 errorMessageBuffer.append("</D:error>\n");
-                servletResponse.sendError(stackErr.getResponseCode(), errorMessageBuffer.toString());
+                
+                servletResponse.getWriter().print(errorMessageBuffer.toString());
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, errorMessageBuffer.toString());
                 return;
             }

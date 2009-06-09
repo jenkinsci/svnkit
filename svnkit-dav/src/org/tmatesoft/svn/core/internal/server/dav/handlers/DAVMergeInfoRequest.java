@@ -65,7 +65,7 @@ public class DAVMergeInfoRequest extends DAVRequest {
         for (Iterator iterator = children.iterator(); iterator.hasNext();) {
             DAVElementProperty property = (DAVElementProperty) iterator.next();
             DAVElement element = property.getName();
-            if (element == REVISION) {
+            if (element == DAVElement.REVISION) {
                 try {
                     setRevision(Long.parseLong(property.getFirstValue(true)));
                 } catch (NumberFormatException nfe) {
@@ -76,7 +76,7 @@ public class DAVMergeInfoRequest extends DAVRequest {
                 if (getInherit() == null) {
                     invalidXML();
                 }
-            } else if (element == PATH) {
+            } else if (element == DAVElement.PATH) {
                 Collection paths = property.getValues();
                 String[] targetPaths = new String[paths.size()];
                 targetPaths = (String[]) paths.toArray(targetPaths);
