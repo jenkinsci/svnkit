@@ -97,6 +97,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     protected boolean myIsIgnoreAncestry;
     protected boolean myIsSingleFileMerge;
     protected boolean myIsMergeInfoCapable;
+    protected boolean myIsReIntegrateMerge;
     protected boolean myIsAddNecessitatedMerge;
     protected int myOperativeNotificationsNumber;
     protected int myNotificationsNumber;
@@ -565,7 +566,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             }
             
             doMerge(mergeSources, targetWCPath, targetEntry, adminArea, true, true, 
-            		wcReposRoot.equals(sourceReposRoot), ignoreAncestry, force, dryRun, recordOnly, depth);
+            		wcReposRoot.equals(sourceReposRoot), ignoreAncestry, force, dryRun, recordOnly, false, depth);
             
         } finally {
             myWCAccess.close();
@@ -657,7 +658,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     		repository2.closeSession();
             
     		doMerge(mergeSources, targetWCPath, entry, adminArea, ancestral, related, sameRepos, 
-    				ignoreAncestry, force, dryRun, recordOnly, depth);
+    				ignoreAncestry, force, dryRun, recordOnly, false, depth);
         } finally {
         	if (repository1 != null) {
         		repository1.closeSession();
@@ -764,7 +765,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
     protected void doMerge(List mergeSources, File target, SVNEntry targetEntry, SVNAdminArea adminArea, 
             boolean sourcesAncestral, boolean sourcesRelated, boolean sameRepository, boolean ignoreAncestry, 
-            boolean force, boolean dryRun, boolean recordOnly, SVNDepth depth) throws SVNException {
+            boolean force, boolean dryRun, boolean recordOnly, boolean reintegrateMerge, SVNDepth depth) throws SVNException {
         
         if (recordOnly) {
             if (!sourcesAncestral) {
@@ -805,6 +806,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         myChildrenWithMergeInfo = null;
         myPathsWithNewMergeInfo = null;
         myHasExistingMergeInfo = false;
+        myIsReIntegrateMerge = reintegrateMerge;
         
         boolean checkedMergeInfoCapability = false;
         for (int i = 0; i < mergeSources.size(); i++) {
@@ -1271,7 +1273,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 
     protected SVNProperties filterSelfReferentialMergeInfo(SVNProperties props, File path) throws SVNException {
         boolean honorMergeInfo = isHonorMergeInfo();
-        if (!honorMergeInfo && myIsSameRepository) {
+        if (!honorMergeInfo && myIsSameRepository && !myIsReIntegrateMerge) {
             return null;
         }
         SVNEntry targetEntry = myWCAccess.getVersionedEntry(path, false);
@@ -1777,7 +1779,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 			fauxSources.add(fauxSource);
 			doMerge(fauxSources, targetWCPath, entry, adminArea, false, true, 
 					sourceReposRoot.equals(wcReposRoot), ignoreAncestry, force, dryRun, 
-					false, depth);
+					false, true, depth);
 		} else if (!sameRepos) {
 		    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, 
 		            "Merge from foreign repository is not compatible with mergeinfo modification");
@@ -1786,9 +1788,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
 		
 		if (sameRepos) {
 		    doMerge(addSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
-	                ignoreAncestry, force, dryRun, true, depth);
+	                ignoreAncestry, force, dryRun, true, true, depth);
 	        doMerge(removeSources, targetWCPath, entry, adminArea, true, true, sameRepos, 
-	                ignoreAncestry, force, dryRun, true, depth);
+	                ignoreAncestry, force, dryRun, true, true, depth);
 		}
     }
 
