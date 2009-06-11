@@ -498,11 +498,35 @@ public class SVNErrorCode implements Serializable {
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode UNKNOWN_CHANGELIST = new SVNErrorCode(MISC_CATEGORY, 24, "Unknown changelist");
-    
+    /**
+     * @since  1.3, SVN 1.6
+     */
     public static final SVNErrorCode RESERVED_FILENAME_SPECIFIED = new SVNErrorCode(MISC_CATEGORY, 25, "Reserved directory name in command line arguments");
-
+    /**
+     * @since  1.3, SVN 1.6
+     */
     public static final SVNErrorCode UNKNOWN_CAPABILITY = new SVNErrorCode(MISC_CATEGORY, 26, "Inquiry about unknown capability");
-
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode TEST_SKIPPED = new SVNErrorCode(MISC_CATEGORY, 27, "Test skipped");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode ATOMIC_INIT_FAILURE = new SVNErrorCode(MISC_CATEGORY, 29, "Couldn't perform atomic initialization");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode SQLITE_ERROR = new SVNErrorCode(MISC_CATEGORY, 30, "SQLite error");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode SQLITE_READONLY = new SVNErrorCode(MISC_CATEGORY, 31, "Attempted to write to readonly SQLite db");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode UNSUPPORTED_SCHEMA = new SVNErrorCode(MISC_CATEGORY, 32, "Unsupported schema found in SQLite db");
+    
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
     public static final SVNErrorCode CL_INSUFFICIENT_ARGS = new SVNErrorCode(CL_CATEGORY, 1, "Not enough args provided");
     public static final SVNErrorCode CL_MUTUALLY_EXCLUSIVE_ARGS = new SVNErrorCode(CL_CATEGORY, 2, "Mutually exclusive arguments specified");

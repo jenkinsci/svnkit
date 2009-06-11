@@ -75,6 +75,7 @@ public class FSFS {
     public static final String TRANSACTION_PROTOS_DIR = "txn-protorevs";
     public static final String NODE_ORIGINS_DIR = "node-origins";
     
+    public static final String REP_CACHE_DB = "rep-cache.db";
     public static final String PACK_EXT = ".pack";
     public static final String PACK_KIND_PACK = "pack";
     public static final String PACK_KIND_MANIFEST = "manifest";
@@ -140,6 +141,7 @@ public class FSFS {
     private File myUUIDFile;
     private File myFSTypeFile;
     private File myMinUnpackedRevFile;
+    private File myRepositoryCacheFile;
     private long myMaxFilesPerDirectory;
     private long myYoungestRevisionCache;
     private long myMinUnpackedRevision;
@@ -165,6 +167,10 @@ public class FSFS {
     public void open() throws SVNException {
         openRoot();
         openDB();
+    }
+    
+    public void close() throws SVNException {
+        
     }
     
     public void openForRecovery() throws SVNException {
@@ -235,6 +241,7 @@ public class FSFS {
         
         if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {
             //TODO: open rep cache
+            
         }
         
         File dbCurrentFile = getCurrentFile();
@@ -391,6 +398,13 @@ public class FSFS {
         return myCurrentFile;
     }
 
+    public File getRepositoryCacheFile() {
+        if (myRepositoryCacheFile == null) {
+            myRepositoryCacheFile = new File(getDBRoot(), REP_CACHE_DB);
+        }
+        return myRepositoryCacheFile;
+    }
+    
     public File getDBLogsLockFile() throws SVNException {
         File lockFile = new File(getDBRoot(), LOCKS_DIR + "/" + DB_LOGS_LOCK_FILE);
         if (!lockFile.exists()) {
