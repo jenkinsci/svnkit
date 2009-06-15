@@ -146,6 +146,7 @@ public class FSFS {
     private long myYoungestRevisionCache;
     private long myMinUnpackedRevision;
     private SVNConfigFile myConfig;
+    private FSRepositoryCacheManager myReposCacheManager;
     
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -170,7 +171,10 @@ public class FSFS {
     }
     
     public void close() throws SVNException {
-        
+        if (myReposCacheManager != null) {
+            myReposCacheManager.close();
+            myReposCacheManager = null;
+        }
     }
     
     public void openForRecovery() throws SVNException {
@@ -240,8 +244,7 @@ public class FSFS {
         }
         
         if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {
-            //TODO: open rep cache
-            
+            myReposCacheManager = FSRepositoryCacheManager.openRepositoryCache(this);
         }
         
         File dbCurrentFile = getCurrentFile();
@@ -1514,6 +1517,10 @@ public class FSFS {
                     new Object[] {formatFile.getFile(), line});
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+    }
+
+    public FSRepositoryCacheManager getRepositoryCacheManager() {
+        return myReposCacheManager;
     }
 
     public static File findRepositoryRoot(File path) {

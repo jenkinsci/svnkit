@@ -197,6 +197,26 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode BAD_UUID = new SVNErrorCode(BAD_CATEGORY, 8, "Bogus UUID");
     
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_CONFIG_VALUE = new SVNErrorCode(BAD_CATEGORY, 9, "Invalid configuration value");
+    
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_SERVER_SPECIFICATION = new SVNErrorCode(BAD_CATEGORY, 10, "Bogus server specification");
+
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_CHECKSUM_KIND = new SVNErrorCode(BAD_CATEGORY, 11, "Unsupported checksum type");
+
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_CHECKSUM_PARSE = new SVNErrorCode(BAD_CATEGORY, 12, "Invalid character in hex checksum");
+
     public static final SVNErrorCode XML_ATTRIB_NOT_FOUND = new SVNErrorCode(XML_CATEGORY, 0, "No such XML tag attribute");
     public static final SVNErrorCode XML_MISSING_ANCESTRY = new SVNErrorCode(XML_CATEGORY, 1, "<delta-pkg> is missing ancestry");
     public static final SVNErrorCode XML_UNKNOWN_ENCODING = new SVNErrorCode(XML_CATEGORY, 2, "Unrecognized binary data encoding; can't decode");
