@@ -13,10 +13,7 @@ package org.tmatesoft.svn.core.internal.io.fs;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
-import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
-import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -49,7 +46,7 @@ public class FSRepositoryCacheManager {
 
     public static FSRepositoryCacheManager openRepositoryCache(FSFS fsfs) throws SVNException {
         final FSRepositoryCacheManager cacheObj = new FSRepositoryCacheManager();
-        SqlJetDb repCacheDB;
+        SqlJetDb repCacheDB = null;
         try {
             repCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
             repCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
@@ -61,13 +58,12 @@ public class FSRepositoryCacheManager {
             });
 
         } catch (SqlJetException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
-            SVNErrorManager.error(err, SVNLogType.FSFS);
+            SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
         }
         return cacheObj;
     }
     
-    public boolean insert(final FSRepresentation representation, boolean rejectDup) throws SVNException {
+    public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException {
         if (representation.getSHA1HexDigest() == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_CHECKSUM_KIND, 
                     "Only SHA1 checksums can be used as keys in the rep_cache table.\n");
@@ -87,27 +83,34 @@ public class FSRepositoryCacheManager {
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
             
-            return false;
+            return;
         }
         
-/*        Boolean result = (Boolean) myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
+        try {
+            myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
 
-            public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                final ISqlJetCursor lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), repCache.getHash());
-                if (!lookup.eof())
-                    return false;
-                db.beginTransaction();
-                try {
-                    table.insert(repCache.getHash(), repCache.getRevision(),
-                            repCache.getOffset(), repCache.getSize(), repCache.getExpandedSize());
-                    db.commit();
-                } catch (SqlJetException e) {
-                    db.rollback();
+                public Object runWithLock(SqlJetDb db) throws SqlJetException {
+                    final ISqlJetCursor lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { representation.getSHA1HexDigest() });
+                    if (!lookup.eof()) {
+                        return null;
+                    }
+                    
+                    db.beginTransaction();
+                    try {
+                        myTable.insert(new Object[] { representation.getSHA1HexDigest(), Long.valueOf(representation.getRevision()),
+                                Long.valueOf(representation.getOffset()), Long.valueOf(representation.getSize()), 
+                                Long.valueOf(representation.getExpandedSize()) });
+                        db.commit();
+                    } catch (SqlJetException e) {
+                        db.rollback();
+                        throw e;
+                    }
+                    return null;
                 }
-                return true;
-            }
-        });*/
-        return false;
+            });
+        } catch (SqlJetException e) {
+            SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+        }
     }
 
     public void close() throws SVNException {

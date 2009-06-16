@@ -3,6 +3,7 @@
 /COPYING eol=lf
 /changelog.txt eol=lf
 contrib/antlr/antlr-runtime-3.1.3.jar -text
+contrib/asm/asm-3.1.jar -text
 contrib/javahl/JAVAHL-LICENSE eol=lf
 contrib/jna/JNA-LICENSE eol=lf
 contrib/jna/jna-src.zip -text
@@ -82,6 +83,7 @@ svnkit-eclipse/site.xml eol=lf
 svnkit-test/apache/python.template.conf eol=lf
 svnkit-test/apache/users eol=lf
 svnkit-test/daemon/template eol=lf
+svnkit-test/fsfs.conf -text
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf

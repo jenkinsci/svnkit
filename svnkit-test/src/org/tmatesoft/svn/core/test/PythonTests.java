@@ -238,6 +238,7 @@ public class PythonTests {
 		String pythonLauncher = properties.getProperty("python.launcher");
 		String testSuite = properties.getProperty("python.tests.suite", defaultTestSuite);
 		String options = properties.getProperty("python.tests.options", "");
+		String fsfsConfig = properties.getProperty("fsfs.config");
 		for (StringTokenizer tests = new StringTokenizer(testSuite, ","); tests.hasMoreTokens();) {
 			final String testFileString = tests.nextToken();
 			List tokens = tokenizeTestFileString(testFileString);
@@ -258,12 +259,12 @@ public class PythonTests {
 			try {
     			if (tokens.isEmpty() || (tokens.size() == 1 && "ALL".equals(tokens.get(0)))) {
                     System.out.println("PROCESSING " + testFile + " [ALL]");
-                    processTestCase(pythonLauncher, testFile, options, null, url, libPath);
+                    processTestCase(pythonLauncher, testFile, options, null, url, libPath, fsfsConfig);
     			} else {
     	            final List availabledTestCases = getAvailableTestCases(pythonLauncher, testFile);
     	            final List testCases = !tokens.isEmpty() ? combineTestCases(tokens, availabledTestCases) : availabledTestCases;
     	            System.out.println("PROCESSING " + testFile + " " + testCases);
-    	            processTestCase(pythonLauncher, testFile, options, testCases, url, libPath);
+    	            processTestCase(pythonLauncher, testFile, options, testCases, url, libPath, fsfsConfig);
     			}
 			} finally {
 			    logHandler.close();
@@ -276,7 +277,7 @@ public class PythonTests {
 	}
 
 	private static void processTestCase(String pythonLauncher, String testFile, String options, List testCases, 
-	        String url, String libPath) {
+	        String url, String libPath, String fsfsConfigPath) {
 	    Collection commandsList = new ArrayList();
         commandsList.add(pythonLauncher);
         commandsList.add(testFile);
@@ -285,6 +286,10 @@ public class PythonTests {
         commandsList.add("--use-jsvn");        
         commandsList.add("--bin=" + libPath);        
         commandsList.add("--url=" + url);
+        if (fsfsConfigPath != null) {
+            commandsList.add("--config-file=" + new File(fsfsConfigPath).getAbsolutePath());
+        }
+        
         if (options != null && !"".equals(options.trim())) {
             commandsList.add(options);
         }
