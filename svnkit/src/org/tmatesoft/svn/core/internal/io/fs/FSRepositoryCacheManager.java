@@ -46,17 +46,15 @@ public class FSRepositoryCacheManager {
 
     public static FSRepositoryCacheManager openRepositoryCache(FSFS fsfs) throws SVNException {
         final FSRepositoryCacheManager cacheObj = new FSRepositoryCacheManager();
-        SqlJetDb repCacheDB = null;
         try {
-            repCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
-            repCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
+            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
+            cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     cacheObj.myTable = db.getTable(REP_CACHE_TABLE);
                     cacheObj.myCursor = cacheObj.myTable.open();
                     return null;
                 }
             });
-
         } catch (SqlJetException e) {
             SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
         }

@@ -35,7 +35,12 @@
         <path id="library.classpath">
             <pathelement location="contrib/trilead/trilead.jar" />
             <pathelement location="contrib/jna/jna.jar" />            
-            <pathelement path="contrib/javahl/bin" />
+            <pathelement location="contrib/retroweaver/retroweaver-rt-2.0.7.jar" />            
+            <pathelement location="contrib/asm/asm-3.1.jar" />            
+            <pathelement location="contrib/antlr/antlr-runtime-3.1.3.jar" />            
+            <pathelement location="contrib/sqljet/sqljet.jar" />            
+
+        	<pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="svnkit/bin" />
         </path>
@@ -218,6 +223,11 @@
         </jar>
         <copy file="contrib/trilead/trilead.jar" todir="build/lib" />
         <copy file="contrib/jna/jna.jar" todir="build/lib" />
+        <copy file="contrib/sqljet/sqljet.jar" todir="build/lib" />
+        <copy file="contrib/antlr/antlr-runtime-3.1.3.jar" todir="build/lib" />
+        <copy file="contrib/retroweaver/retroweaver-rt-2.0.7.jar" todir="build/lib" />
+        <copy file="contrib/asm/asm-3.1.jar" todir="build/lib" />
+
     	<!-- copy licences and changelog -->
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">
@@ -762,7 +772,11 @@
             <pathelement path="build/lib/trilead.jar" />
             <pathelement path="build/lib/jna.jar" />
             <pathelement path="contrib/junit/junit.jar" />
-            <pathelement path="svnkit-test/bin" />
+            <pathelement path="contrib/sqljet/sqljet.jar" />
+            <pathelement path="contrib/retroweaver/retroweaver-rt-2.0.7.jar" />
+            <pathelement path="contrib/antlr/antlr-runtime-3.1.3.jar" />
+            <pathelement path="contrib/asm/asm-3.1.jar" />
+    		<pathelement path="svnkit-test/bin" />
         </path>
 
         <copy file="svnkit-test/logging.cli.properties" 

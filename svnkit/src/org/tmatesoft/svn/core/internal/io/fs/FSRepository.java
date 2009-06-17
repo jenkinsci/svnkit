@@ -683,7 +683,9 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 	}
 
     void closeRepository() throws SVNException {
-        myFSFS.close();
+        if (myFSFS != null) {
+            myFSFS.close();
+        }
         unlock();
     }
 

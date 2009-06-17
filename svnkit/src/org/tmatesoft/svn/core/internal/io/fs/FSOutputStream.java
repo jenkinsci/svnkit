@@ -241,6 +241,9 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             FSRepositoryCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
             if (reposCacheManager != null) {
                 oldRepresentation = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
+            }
+            
+            if (oldRepresentation != null) {
                 oldRepresentation.setUniquifier(rep.getUniquifier());
                 oldRepresentation.setMD5HexDigest(rep.getMD5HexDigest());
                 truncateToSize = myRepOffset;
@@ -249,7 +252,6 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
                 myTargetFileOS.write("ENDREP\n".getBytes("UTF-8"));
                 myRevNode.setTextRepresentation(rep);
             }
-
             myRevNode.setIsFreshTxnRoot(false);
             fsfs.putTxnRevisionNode(myRevNode.getId(), myRevNode);
         } catch (SVNException svne) {
