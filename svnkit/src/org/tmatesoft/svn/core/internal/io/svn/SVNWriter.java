@@ -76,7 +76,7 @@ public class SVNWriter {
                         int read = is.read(buffer);
                         if (read > 0) {
                             os.write(buffer, 0, read);
-                        } else {
+                        } else if (read < 0) {
                             break;
                         }
                     }

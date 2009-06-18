@@ -102,6 +102,9 @@ public class DAVPutHandler extends ServletDAVHandler {
                 byte[] buffer = new byte[2048];
                 int readCount = -1;
                 while ((readCount = inputStream.read(buffer)) != -1) {
+                    if (readCount == 0) {
+                        continue;
+                    }
                     if (deltaReader != null) {
                         deltaReader.nextWindow(buffer, 0, readCount, path, deltaConsumer);
                     } else {

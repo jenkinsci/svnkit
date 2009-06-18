@@ -197,7 +197,7 @@ public class SVNCommandUtil {
                 is = SVNFileUtil.openFileForReading(tmpFile);
                 while(true) {
                     int read = is.read(buffer);
-                    if (read <= 0) {
+                    if (read < 0) {
                         break;
                     }
                     bos.write(buffer, 0, read);

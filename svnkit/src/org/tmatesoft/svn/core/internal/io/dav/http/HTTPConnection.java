@@ -234,10 +234,10 @@ class HTTPConnection implements IHTTPConnection {
             byte[] buffer = getBuffer(); 
             while(length > 0) {
                 int read = source.read(buffer, 0, (int) Math.min(buffer.length, length));
-                length -= read;
                 if (read > 0) {
+                    length -= read;
                     getOutputStream().write(buffer, 0, read);
-                } else {
+                } else if (read < 0) {
                     break;
                 }
             }

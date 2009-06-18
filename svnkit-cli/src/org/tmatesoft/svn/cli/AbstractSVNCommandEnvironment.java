@@ -322,7 +322,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
             byte[] buffer = new byte[2048];
             while(true) {
                 int read = is.read(buffer);
-                if (read <= 0) {
+                if (read < 0) {
                     break;
                 }
                 bos.write(buffer, 0, read);

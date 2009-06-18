@@ -437,7 +437,8 @@ public class SVNWCProperties {
                 int l = 0;
                 while ((l = readLength(is, 'K')) > 0) {
                     byte[] nameBytes = new byte[l];
-                    is.read(nameBytes);
+                
+                    SVNFileUtil.readIntoBuffer(is, nameBytes, 0, nameBytes.length);
                     is.read();
                     if (name.equals(new String(nameBytes, "UTF-8"))) {
                         // skip property, will be appended.
@@ -475,7 +476,9 @@ public class SVNWCProperties {
         }
         if (os != null) {
             byte[] value = new byte[length];
-            int r = is.read(value);
+            
+            int r = SVNFileUtil.readIntoBuffer(is, value, 0, value.length);
+            
             if (r >= 0) {
                 os.write(value, 0, r);
             } else {
@@ -514,7 +517,7 @@ public class SVNWCProperties {
 
     private static int readLength(InputStream is, char type) throws IOException {
         byte[] buffer = new byte[255];
-        int r = is.read(buffer, 0, 4);
+        int r = SVNFileUtil.readIntoBuffer(is, buffer, 0, 4);
         if (r != 4) {
             throw new IOException("invalid properties file format");
         }

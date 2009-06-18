@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -91,11 +92,11 @@ public class SVNConnection {
         return myIsCommitRevprops;
     }
     
-    private InputStream skipLeadingGrabage(int attempt) throws SVNException {
+    private InputStream skipLeadingGarbage(int attempt) throws SVNException {
         byte[] bytes = myHandshakeBuffer;
         int r = 0;
         try {
-            r = getInputStream().read(bytes);
+            r = SVNFileUtil.readIntoBuffer(getInputStream(), bytes, 0, bytes.length);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed: ''{0}''", e.getMessage());
             SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -108,7 +109,7 @@ public class SVNConnection {
             }
         }
         if (r >= 0 && attempt == 0) {
-            return skipLeadingGrabage(attempt + 1);
+            return skipLeadingGarbage(attempt + 1);
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA, "Handshake failed, received: ''{0}''", new String(bytes));
         SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -117,7 +118,7 @@ public class SVNConnection {
 
     protected void handshake(SVNRepositoryImpl repository) throws SVNException {
         checkConnection();
-        InputStream is = skipLeadingGrabage(0);
+        InputStream is = skipLeadingGarbage(0);
         List items = null;
         try {
             items = SVNReader.parse(is, "nnll", null);
@@ -292,9 +293,9 @@ public class SVNConnection {
 
     private void handleIOError(SVNException e, boolean readMalformedData) throws SVNException {
         if (readMalformedData && e.getErrorMessage().getErrorCode() == SVNErrorCode.RA_SVN_MALFORMED_DATA) {
-            byte[] malfored = new byte[1024];
+            byte[] malformed = new byte[1024];
             try {
-                getInputStream().read(malfored);
+                SVNFileUtil.readIntoBuffer(getInputStream(), malformed, 0, malformed.length);
             } catch (IOException e1) {
                 //
             }
