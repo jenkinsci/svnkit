@@ -255,6 +255,9 @@ public class SVNFileUtil {
         while (len > 0) {
             int r = is.read(buff, off + read, len);
             if (r < 0) {
+                if (read == 0) {
+                    read = -1;
+                }
                 break;
             }
             
