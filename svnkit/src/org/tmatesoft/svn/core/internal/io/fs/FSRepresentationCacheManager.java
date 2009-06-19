@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.File;
+
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
@@ -30,10 +32,10 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class FSRepositoryCacheManager {
+public class FSRepresentationCacheManager {
     
     public static final String REP_CACHE_TABLE = "rep_cache";
-    public static final String REP_CACHE_DB_SQL =   "create table rep_cache (hash text not null primary key, " +
+    private static final String REP_CACHE_DB_SQL =   "create table rep_cache (hash text not null primary key, " +
                                                     "                        revision integer not null, " + 
                                                     "                        offset integer not null, " + 
                                                     "                        size integer not null, " +
@@ -44,8 +46,8 @@ public class FSRepositoryCacheManager {
     private ISqlJetCursor myCursor;
     private FSFS myFSFS;
 
-    public static FSRepositoryCacheManager openRepositoryCache(FSFS fsfs) throws SVNException {
-        final FSRepositoryCacheManager cacheObj = new FSRepositoryCacheManager();
+    public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
+        final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
             cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
@@ -64,6 +66,33 @@ public class FSRepositoryCacheManager {
             SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
         }
         return cacheObj;
+    }
+    
+    public static void createRepresentationCache(File path) throws SVNException {
+        SqlJetDb db = null;
+        try {
+            db = SqlJetDb.open(path, true);
+            db.runWithLock(new ISqlJetRunnableWithLock() {
+                public Object runWithLock(SqlJetDb db) throws SqlJetException {
+                    ISqlJetSchema schema = db.getSchema(); 
+                    ISqlJetTableDef tableDef = schema.getTable(FSRepresentationCacheManager.REP_CACHE_TABLE);
+                    if (tableDef == null) {
+                        schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                    }
+                    return null;
+                }
+            });
+        } catch (SqlJetException e) {
+            SVNErrorManager.error(FSRepresentationCacheManager.convertError(e), SVNLogType.FSFS);
+        } finally {
+            if (db != null) {
+                try {
+                    db.close();
+                } catch (SqlJetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
     
     public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException {
@@ -137,7 +166,7 @@ public class FSRepositoryCacheManager {
     }
     
     public FSRepresentation getRepresentationByHash(String hash) throws SVNException {
-        FSRepositoryCache cache = getByHash(hash);
+        FSRepresentationCacheRecord cache = getByHash(hash);
         if (cache != null) {
             FSRepresentation representation = new FSRepresentation();
             representation.setExpandedSize(cache.getExpandedSize());
@@ -149,16 +178,16 @@ public class FSRepositoryCacheManager {
         return null;
     }
 
-    private FSRepositoryCache getByHash(final String hash) throws SVNException {
+    private FSRepresentationCacheRecord getByHash(final String hash) throws SVNException {
         try {
-            return (FSRepositoryCache) myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
+            return (FSRepresentationCacheRecord) myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
 
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     ISqlJetCursor lookup = null;
                     try {
                         lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { hash });
                         if (!lookup.eof()) {
-                            return new FSRepositoryCache(lookup);
+                            return new FSRepresentationCacheRecord(lookup);
                         }
                     } finally {
                         if (lookup != null) {
@@ -174,7 +203,7 @@ public class FSRepositoryCacheManager {
         return null;
     }
 
-    public static SVNErrorMessage convertError(SqlJetException e) {
+    private static SVNErrorMessage convertError(SqlJetException e) {
         SVNErrorMessage err = SVNErrorMessage.create(convertErrorCode(e), e.getMessage());
         return err;
     }

@@ -146,7 +146,7 @@ public class FSFS {
     private long myYoungestRevisionCache;
     private long myMinUnpackedRevision;
     private SVNConfigFile myConfig;
-    private FSRepositoryCacheManager myReposCacheManager;
+    private FSRepresentationCacheManager myReposCacheManager;
     
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -244,7 +244,7 @@ public class FSFS {
         }
         
         if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {
-            myReposCacheManager = FSRepositoryCacheManager.openRepositoryCache(this);
+            myReposCacheManager = FSRepresentationCacheManager.openRepresentationCache(this);
         }
         
         File dbCurrentFile = getCurrentFile();
@@ -1529,7 +1529,7 @@ public class FSFS {
         }
     }
 
-    public FSRepositoryCacheManager getRepositoryCacheManager() {
+    public FSRepresentationCacheManager getRepositoryCacheManager() {
         return myReposCacheManager;
     }
 

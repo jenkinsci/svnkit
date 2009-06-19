@@ -19,7 +19,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class FSRepositoryCache {
+public class FSRepresentationCacheRecord {
     public static int HASH_FIELD = 0;
     public static int REVISION_FIELD = 1;
     public static int OFFSET_FIELD = 2;
@@ -32,7 +32,7 @@ public class FSRepositoryCache {
     private long mySize = 0L;
     private long myExpandedSize = 0L;
 
-    public FSRepositoryCache(String hash, long revision, long offset, long size, long expandedSize) {
+    public FSRepresentationCacheRecord(String hash, long revision, long offset, long size, long expandedSize) {
         myHash = hash;
         myRevision = revision;
         myOffset = offset;
@@ -40,7 +40,7 @@ public class FSRepositoryCache {
         myExpandedSize = expandedSize;
     }
 
-    FSRepositoryCache(ISqlJetCursor cursor) throws SqlJetException {
+    FSRepresentationCacheRecord(ISqlJetCursor cursor) throws SqlJetException {
         final int fieldsCount = cursor.getFieldsCount();
         if (fieldsCount == 0) {
             return;

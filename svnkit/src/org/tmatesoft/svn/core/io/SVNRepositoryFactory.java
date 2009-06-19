@@ -25,18 +25,13 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
-import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
-import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
-import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
-import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryCacheManager;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepresentationCacheManager;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -661,30 +656,7 @@ public abstract class SVNRepositoryFactory {
             
             if (fsFormat >= FSFS.MIN_REP_SHARING_FORMAT) {
                 File repCacheFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REP_CACHE_DB);
-                SqlJetDb db = null;
-                try {
-                    db = SqlJetDb.open(repCacheFile, true);
-                    db.runWithLock(new ISqlJetRunnableWithLock() {
-                        public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                            ISqlJetSchema schema = db.getSchema(); 
-                            ISqlJetTableDef tableDef = schema.getTable(FSRepositoryCacheManager.REP_CACHE_TABLE);
-                            if (tableDef == null) {
-                                schema.createTable(FSRepositoryCacheManager.REP_CACHE_DB_SQL);
-                            }
-                            return null;
-                        }
-                    });
-                } catch (SqlJetException e) {
-                    SVNErrorManager.error(FSRepositoryCacheManager.convertError(e), SVNLogType.FSFS);
-                } finally {
-                    if (db != null) {
-                        try {
-                            db.close();
-                        } catch (SqlJetException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+                FSRepresentationCacheManager.createRepresentationCache(repCacheFile);
             }
             
         } finally {

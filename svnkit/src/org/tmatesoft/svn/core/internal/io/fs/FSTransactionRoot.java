@@ -602,7 +602,7 @@ public class FSTransactionRoot extends FSRoot {
         newId = FSID.createRevId(myNodeId, myCopyId, revision, myOffset);
         revNode.setId(newId);
         getOwner().writeTxnNodeRevision(protoFile, revNode);
-        FSRepositoryCacheManager reposCacheManager = getOwner().getRepositoryCacheManager();
+        FSRepresentationCacheManager reposCacheManager = getOwner().getRepositoryCacheManager();
         if (reposCacheManager != null && revNode.getTextRepresentation() != null && revNode.getType() == SVNNodeKind.FILE && 
                 revNode.getTextRepresentation().getRevision() == revision) {
             reposCacheManager.insert(revNode.getTextRepresentation(), false);
