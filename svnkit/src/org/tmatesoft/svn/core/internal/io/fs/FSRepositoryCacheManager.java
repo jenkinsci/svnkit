@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.internal.io.fs;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
+import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
+import org.tmatesoft.sqljet.core.schema.ISqlJetTableDef;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -31,9 +33,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class FSRepositoryCacheManager {
     
     public static final String REP_CACHE_TABLE = "rep_cache";
-
-    private static final String REP_CACHE_DB_SQL =  "pragma auto_vacuum = 1; " +
-                                                    "create table rep_cache (hash text not null primary key, " +
+    public static final String REP_CACHE_DB_SQL =   "create table rep_cache (hash text not null primary key, " +
                                                     "                        revision integer not null, " + 
                                                     "                        offset integer not null, " + 
                                                     "                        size integer not null, " +
@@ -50,6 +50,11 @@ public class FSRepositoryCacheManager {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
             cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
+                    ISqlJetSchema schema = db.getSchema(); 
+                    ISqlJetTableDef tableDef = schema.getTable(REP_CACHE_TABLE);
+                    if (tableDef == null) {
+                        schema.createTable(REP_CACHE_DB_SQL);
+                    }
                     cacheObj.myTable = db.getTable(REP_CACHE_TABLE);
                     cacheObj.myCursor = cacheObj.myTable.open();
                     return null;
@@ -169,7 +174,7 @@ public class FSRepositoryCacheManager {
         return null;
     }
 
-    private static SVNErrorMessage convertError(SqlJetException e) {
+    public static SVNErrorMessage convertError(SqlJetException e) {
         SVNErrorMessage err = SVNErrorMessage.create(convertErrorCode(e), e.getMessage());
         return err;
     }

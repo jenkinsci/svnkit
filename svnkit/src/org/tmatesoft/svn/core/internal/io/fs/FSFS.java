@@ -515,11 +515,16 @@ public class FSFS {
                 if (myDBFormat < MIN_PACKED_FORMAT) {
                     SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
                 }
-                writeDBFormat(DB_FORMAT, myMaxFilesPerDirectory, true);
+                if (myDBFormat < MIN_REP_SHARING_FORMAT ) {
+                    SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
+                }
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
             }
+            // force reopen to create db.
+            close();
+            open();
         }
     }
     
