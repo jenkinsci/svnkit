@@ -249,6 +249,11 @@ public class FSFS {
         
         File dbCurrentFile = getCurrentFile();
         if (!(dbCurrentFile.exists() && dbCurrentFile.canRead())) {
+            if (myReposCacheManager != null) {
+                myReposCacheManager.close();
+                myReposCacheManager = null;
+            }
+
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Can''t open file ''{0}''", dbCurrentFile);
             SVNErrorManager.error(err, SVNLogType.FSFS);

@@ -88,11 +88,17 @@ public class FSRepositoryCacheManager {
             myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
 
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    final ISqlJetCursor lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { representation.getSHA1HexDigest() });
-                    if (!lookup.eof()) {
-                        return null;
+                    ISqlJetCursor lookup = null;
+                    try {
+                        lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { representation.getSHA1HexDigest() });
+                        if (!lookup.eof()) {
+                            return null;
+                        }
+                    } finally {
+                        if (lookup != null) {
+                            lookup.close();
+                        }
                     }
-                    
                     db.beginTransaction();
                     try {
                         myTable.insert(new Object[] { representation.getSHA1HexDigest(), new Long(representation.getRevision()),
@@ -143,11 +149,17 @@ public class FSRepositoryCacheManager {
             return (FSRepositoryCache) myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
 
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    final ISqlJetCursor lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { hash });
-                    if (!lookup.eof()) {
-                        return new FSRepositoryCache(lookup);
+                    ISqlJetCursor lookup = null;
+                    try {
+                        lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { hash });
+                        if (!lookup.eof()) {
+                            return new FSRepositoryCache(lookup);
+                        }
+                    } finally {
+                        if (lookup != null) {
+                            lookup.close();
+                        }
                     }
-
                     return null;
                 }
             });
