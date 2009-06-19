@@ -84,7 +84,7 @@ public class FSRepositoryCache {
     }
 
     public String toString() {
-        final StringBuilder b = new StringBuilder();
+        final StringBuffer b = new StringBuffer();
         b.append("rep_cache( ");
         b.append("hash: ").append(myHash);
         b.append(", revision: ").append(myRevision);

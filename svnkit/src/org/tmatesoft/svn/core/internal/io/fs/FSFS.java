@@ -240,7 +240,7 @@ public class FSFS {
         boolean isRepSharingAllowed = false;
         SVNConfigFile config = loadConfig();
         if (config != null) {
-            isRepSharingAllowed = Boolean.parseBoolean(config.getPropertyValue(REP_SHARING_SECTION, ENABLE_REP_SHARING_OPTION));
+            isRepSharingAllowed = Boolean.valueOf(config.getPropertyValue(REP_SHARING_SECTION, ENABLE_REP_SHARING_OPTION)).booleanValue();
         }
         
         if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {

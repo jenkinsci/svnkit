@@ -95,9 +95,9 @@ public class FSRepositoryCacheManager {
                     
                     db.beginTransaction();
                     try {
-                        myTable.insert(new Object[] { representation.getSHA1HexDigest(), Long.valueOf(representation.getRevision()),
-                                Long.valueOf(representation.getOffset()), Long.valueOf(representation.getSize()), 
-                                Long.valueOf(representation.getExpandedSize()) });
+                        myTable.insert(new Object[] { representation.getSHA1HexDigest(), new Long(representation.getRevision()),
+                                new Long(representation.getOffset()), new Long(representation.getSize()), 
+                                new Long(representation.getExpandedSize()) });
                         db.commit();
                     } catch (SqlJetException e) {
                         db.rollback();
