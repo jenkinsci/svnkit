@@ -167,7 +167,11 @@ public class SVNDeltaReader {
             InputStream in = new InflaterInputStream(new ByteArrayInputStream(compressed, offset, compressedLength));
             int read = 0;
             while(read < uncompressedLength) {
-                read += in.read(uncompressedData, read, uncompressedLength - read);
+                int r = in.read(uncompressedData, read, uncompressedLength - read);
+                if (r < 0) {
+                    break;
+                }
+                read += r;
             }
             out.write(uncompressedData);
         }

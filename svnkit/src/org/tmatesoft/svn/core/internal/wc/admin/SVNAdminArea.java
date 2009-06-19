@@ -1397,8 +1397,8 @@ public abstract class SVNAdminArea {
                 byte[] buffer2 = new byte[8192];
                 try {
                     while(true) {
-                        int r1 = baseStream.read(buffer1);
-                        int r2 = textStream.read(buffer2);
+                        int r1 = SVNFileUtil.readIntoBuffer(baseStream, buffer1, 0, buffer1.length);
+                        int r2 = SVNFileUtil.readIntoBuffer(textStream, buffer2, 0, buffer2.length);
                         r1 = r1 == -1 ? 0 : r1;
                         r2 = r2 == -1 ? 0 : r2;
                         if (r1 != r2) {

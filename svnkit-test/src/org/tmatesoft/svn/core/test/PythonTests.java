@@ -597,7 +597,7 @@ public class PythonTests {
         File template = new File(props.getProperty("apache.conf", "apache/httpd.template.conf"));
         byte[] contents = new byte[(int) template.length()];
         InputStream is = new FileInputStream(template);
-        is.read(contents);
+        SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
         is.close();
         
         File passwdFile = new File("apache/passwd");
@@ -656,7 +656,7 @@ public class PythonTests {
         File template = new File(props.getProperty("server.xml", "tomcat/conf/server.xml"));
         byte[] contents = new byte[(int) template.length()];
         InputStream is = new FileInputStream(template);
-        is.read(contents);
+        SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
         is.close();
         
         if (serverPort < 0) {
@@ -690,7 +690,7 @@ public class PythonTests {
     private static void generateClientScript(File src, File destination, String name, int port) throws IOException {
         byte[] contents = new byte[(int) src.length()];
         InputStream is = new FileInputStream(src);
-        is.read(contents);
+        SVNFileUtil.readIntoBuffer(is, contents, 0, contents.length);
         is.close();
 
         String script = new String(contents);

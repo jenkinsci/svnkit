@@ -280,7 +280,7 @@ public class SVNDeltaGenerator {
     }
     
     private int readToBuffer(InputStream is, byte[] buffer) throws IOException {
-        int read = is.read(buffer, 0, buffer.length);
+        int read = SVNFileUtil.readIntoBuffer(is, buffer, 0, buffer.length);
         if (read <= 0) {
             return read;
         }
@@ -293,7 +293,8 @@ public class SVNDeltaGenerator {
                 mySourceBuffer = expanded;
             }
             buffer = expanded;
-            int anotherRead = is.read(buffer, read, buffer.length - read);
+            
+            int anotherRead = SVNFileUtil.readIntoBuffer(is, buffer, read, buffer.length - read);
             if (anotherRead <= 0) {
                 return read;
             }

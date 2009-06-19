@@ -673,8 +673,10 @@ public abstract class SVNRepositoryFactory {
             os = SVNFileUtil.openFileForWriting(dstFile);
             while(true) {
                 int r = is.read(buffer);
-                if (r <= 0) {
+                if (r < 0) {
                     break;
+                } else if (r == 0) {
+                    continue;
                 }
                 os.write(buffer, 0, r);
             }
@@ -714,8 +716,10 @@ public abstract class SVNRepositoryFactory {
                         fos = SVNFileUtil.openFileForWriting(entryFile);
                         while(true) {
                             int r = fis.read(buffer);
-                            if (r <= 0) {
+                            if (r < 0) {
                                 break;
+                            } else if (r == 0) {
+                                continue;
                             }
                             fos.write(buffer, 0, r);
                         }

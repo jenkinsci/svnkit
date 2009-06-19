@@ -242,9 +242,29 @@ public class SVNFileUtil {
         StringBuffer result = new StringBuffer();
         int r = -1;
         while ((r = input.read(buf)) != -1) {
+            if (r == 0) {
+                continue;
+            }
             result.append(new String(buf, 0, r, "UTF-8"));
         }
         return result.toString();
+    }
+    
+    public static int readIntoBuffer(InputStream is, byte[] buff, int off, int len) throws IOException {
+        int read = 0;
+        while (len > 0) {
+            int r = is.read(buff, off + read, len);
+            if (r < 0) {
+                if (read == 0) {
+                    read = -1;
+                }
+                break;
+            }
+            
+            read += r;
+            len -= r;
+        }
+        return read;
     }
     
     public static String getBasePath(File file) {
@@ -823,8 +843,10 @@ public class SVNFileUtil {
         try {
             while (true) {
                 int l = is.read(buffer);
-                if (l <= 0) {
+                if (l < 0) {
                     break;
+                } else if (l == 0) {
+                    continue;
                 }
                 digest.update(buffer, 0, l);
             }
@@ -1068,8 +1090,9 @@ public class SVNFileUtil {
 
     public static String detectMimeType(InputStream is) throws IOException {
         byte[] buffer = new byte[1024];
-        int read = 0;
-        read = is.read(buffer);
+        
+        int read = readIntoBuffer(is, buffer, 0, buffer.length);
+        
         int binaryCount = 0;
         for (int i = 0; i < read; i++) {
             byte b = buffer[i];
