@@ -244,7 +244,7 @@ public class FSFS {
         }
         
         if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {
-            myReposCacheManager = FSRepresentationCacheManager.openRepresentationCache(this);
+            myReposCacheManager = FSRepresentationCacheUtil.open(this);
         }
         
         File dbCurrentFile = getCurrentFile();
