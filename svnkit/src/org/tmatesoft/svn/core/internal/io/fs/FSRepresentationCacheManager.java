@@ -25,6 +25,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -53,9 +54,17 @@ public class FSRepresentationCacheManager {
             cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     ISqlJetSchema schema = db.getSchema(); 
-                    ISqlJetTableDef tableDef = schema.getTable(REP_CACHE_TABLE);
+                    ISqlJetTableDef tableDef = schema.getTable(FSRepresentationCacheManager.REP_CACHE_TABLE);
                     if (tableDef == null) {
-                        schema.createTable(REP_CACHE_DB_SQL);
+                        db.beginTransaction();
+                        try {
+                            schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                            db.commit();
+                            return null;
+                        } catch (SqlJetException e) {
+                            db.rollback();
+                            throw e;
+                        }
                     }
                     cacheObj.myTable = db.getTable(REP_CACHE_TABLE);
                     cacheObj.myCursor = cacheObj.myTable.open();
@@ -77,7 +86,15 @@ public class FSRepresentationCacheManager {
                     ISqlJetSchema schema = db.getSchema(); 
                     ISqlJetTableDef tableDef = schema.getTable(FSRepresentationCacheManager.REP_CACHE_TABLE);
                     if (tableDef == null) {
-                        schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                        db.beginTransaction();
+                        try {
+                            schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                            db.commit();
+                            return null;
+                        } catch (SqlJetException e) {
+                            db.rollback();
+                            throw e;
+                        }
                     }
                     return null;
                 }
@@ -89,7 +106,7 @@ public class FSRepresentationCacheManager {
                 try {
                     db.close();
                 } catch (SqlJetException e) {
-                    e.printStackTrace();
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e);
                 }
             }
         }
