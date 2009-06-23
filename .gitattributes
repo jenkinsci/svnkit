@@ -11,9 +11,8 @@ contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/servlet-api/servlet-api-2.3src.zip -text
 contrib/servlet-api/servlet-api.jar -text
 contrib/sqljet/antlr-runtime-3.1.3.jar -text
-contrib/sqljet/asm-3.1.jar -text
-contrib/sqljet/retroweaver-rt-2.0.7.jar -text
-contrib/sqljet/sqljet.jar -text
+contrib/sqljet/sqljet.b309.jar -text
+contrib/sqljet/sqljet.b309.src.zip -text
 contrib/trilead/trilead.jar -text
 contrib/trilead/trileadsrc.zip -text
 doc/JSPWikiDocs/Authentication/AuthManager_Architecture.png -text

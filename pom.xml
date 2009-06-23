@@ -28,5 +28,11 @@
       <version>%trilead.ssh2.version%</version>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.tmatesoft.sqljet</groupId>
+      <artifactId>sqljet</artifactId>
+      <version>%sqljet.version%</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 </project>
