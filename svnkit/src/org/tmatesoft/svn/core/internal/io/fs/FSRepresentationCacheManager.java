@@ -36,6 +36,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class FSRepresentationCacheManager {
     
     public static final String REP_CACHE_TABLE = "rep_cache";
+    private static final int REP_CACHE_DB_FORMAT =  1;
     private static final String REP_CACHE_DB_SQL =   "create table rep_cache (hash text not null primary key, " +
                                                     "                        revision integer not null, " + 
                                                     "                        offset integer not null, " + 
@@ -44,7 +45,6 @@ public class FSRepresentationCacheManager {
 
     private SqlJetDb myRepCacheDB;
     private SqlJetTable myTable;
-    private ISqlJetCursor myCursor;
     private FSFS myFSFS;
 
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
@@ -53,21 +53,8 @@ public class FSRepresentationCacheManager {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
             cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    ISqlJetSchema schema = db.getSchema(); 
-                    ISqlJetTableDef tableDef = schema.getTable(FSRepresentationCacheManager.REP_CACHE_TABLE);
-                    if (tableDef == null) {
-                        db.beginTransaction();
-                        try {
-                            schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
-                            db.commit();
-                            return null;
-                        } catch (SqlJetException e) {
-                            db.rollback();
-                            throw e;
-                        }
-                    }
+                    checkFormat(db);
                     cacheObj.myTable = db.getTable(REP_CACHE_TABLE);
-                    cacheObj.myCursor = cacheObj.myTable.open();
                     return null;
                 }
             });
@@ -77,25 +64,33 @@ public class FSRepresentationCacheManager {
         return cacheObj;
     }
     
+    private static void checkFormat(SqlJetDb db) throws SqlJetException {
+        ISqlJetSchema schema = db.getSchema();
+        int version = schema.getMeta().getUserCookie();
+        if (version < REP_CACHE_DB_FORMAT) {
+            db.beginTransaction();
+            try {
+                schema.getMeta().setUserCookie(REP_CACHE_DB_FORMAT);
+                schema.getMeta().setAutovacuum(true);
+                schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                db.commit();
+            } catch (SqlJetException e) {
+                db.rollback();
+                throw e;
+            }
+        } else if (version > REP_CACHE_DB_FORMAT) {
+            throw new SqlJetException("Schema format " + version + " not recognized");   
+        }
+        
+    }
+    
     public static void createRepresentationCache(File path) throws SVNException {
         SqlJetDb db = null;
         try {
             db = SqlJetDb.open(path, true);
             db.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    ISqlJetSchema schema = db.getSchema(); 
-                    ISqlJetTableDef tableDef = schema.getTable(FSRepresentationCacheManager.REP_CACHE_TABLE);
-                    if (tableDef == null) {
-                        db.beginTransaction();
-                        try {
-                            schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
-                            db.commit();
-                            return null;
-                        } catch (SqlJetException e) {
-                            db.rollback();
-                            throw e;
-                        }
-                    }
+                    checkFormat(db);
                     return null;
                 }
             });
@@ -172,7 +167,6 @@ public class FSRepresentationCacheManager {
         try {
             myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    myCursor.close();
                     myRepCacheDB.close();
                     return null;
                 }
