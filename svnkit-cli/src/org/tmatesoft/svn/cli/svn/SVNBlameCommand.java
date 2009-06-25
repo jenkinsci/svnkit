@@ -172,14 +172,14 @@ public class SVNBlameCommand extends SVNXMLCommand implements ISVNAnnotateHandle
         } else {
             String mergedStr = "";
             if (getSVNEnvironment().isUseMergeHistory()) {
-                if (revision != mergedRevision) {
+                if (revision > mergedRevision) {
                     mergedStr = "G ";
+                    date = mergedDate;
+                    revision = mergedRevision;
+                    author = mergedAuthor;
                 } else {
                     mergedStr = "  ";
                 }
-                date = mergedDate;
-                revision = mergedRevision;
-                author = mergedAuthor;
             } 
            
             String revStr = revision >= 0 ? SVNFormatUtil.formatString(Long.toString(revision), 6, false) : "     -";
