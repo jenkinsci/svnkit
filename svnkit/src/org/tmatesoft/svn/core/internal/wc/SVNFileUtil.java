@@ -124,7 +124,7 @@ public class SVNFileUtil {
         isOSX = osName != null && (osNameLC.indexOf("mac") >= 0 || osNameLC.indexOf("darwin") >= 0);
         isLinux = osName != null && (osNameLC.indexOf("linux") >= 0 || osNameLC.indexOf("hp-ux") >= 0);
         isBSD = !isLinux && osName != null && osNameLC.indexOf("bsd") >= 0;
-        isSolaris = !isLinux && !isBSD && osName != null && osNameLC.indexOf("solaris") >= 0;
+        isSolaris = !isLinux && !isBSD && osName != null && (osNameLC.indexOf("solaris") >= 0 || osNameLC.indexOf("sunos") >= 0);
         isOpenVMS = !isOSX && osName != null && osNameLC.indexOf("openvms") >= 0;
 
         if (!isWindows && !isOSX && !isLinux && !isBSD && !isSolaris && !isOpenVMS && !isOS2) {
@@ -504,7 +504,7 @@ public class SVNFileUtil {
             if (SVNJNAUtil.setWritable(file)) {
                 return true;
             }
-        } else if (isLinux || isOSX || isBSD) {
+        } else if (isLinux || isOSX || isBSD || SVNFileUtil.isSolaris) {
             if (SVNJNAUtil.setWritable(file)) {
                 return true;
             }
