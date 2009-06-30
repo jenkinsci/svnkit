@@ -69,6 +69,11 @@ public class FSFile {
         myDecoder = myDecoder.onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
     }
     
+    public void truncate(long size) throws IOException {
+        getChannel().truncate(size);
+        seek(size);
+    }
+    
     public void seek(long position) {
         myPosition = position;
     }

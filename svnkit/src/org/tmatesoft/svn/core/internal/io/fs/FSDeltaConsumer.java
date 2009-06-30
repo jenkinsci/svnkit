@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -138,13 +139,18 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
         myDeltaProcessor.textDeltaEnd();
     }
     
-    public void close() {
+    public void close() throws SVNException {
         abort();
     }
 
-    public void abort() {
+    public void abort() throws SVNException {
         if (myTargetStream != null) {
-            myTargetStream.closeStreams();
+            try {
+                myTargetStream.closeStreams(-1);
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
         }
     }
     

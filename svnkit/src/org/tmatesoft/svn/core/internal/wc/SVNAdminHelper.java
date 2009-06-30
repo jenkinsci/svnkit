@@ -82,6 +82,17 @@ public class SVNAdminHelper {
         return fsfs;
     }
 
+    public static void closeRepository(FSFS fsfs) {
+        if (fsfs != null) {
+            try {
+                fsfs.close();
+            } catch (SVNException e) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, e.getMessage());
+            }
+        }
+    }
+
     public static FSFS openRepositoryForRecovery(File reposRootPath) throws SVNException {
         FSFS fsfs = new FSFS(reposRootPath);
         fsfs.openForRecovery();

@@ -752,7 +752,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return SVNWCUtil.getDefaultConfigurationDirectory();
     }
 
-    private static boolean getBooleanValue(String value, boolean defaultValue) {
+    public static boolean getBooleanValue(String value, boolean defaultValue) {
         if (value == null) {
             return defaultValue;
         }

@@ -23,6 +23,7 @@ $ CP = "/svnkit_home/svnkit.jar"
 $ CP = CP + ":/svnkit_home/svnkit-cli.jar"
 $ CP = CP + ":/svnkit_home/trilead.jar"
 $ CP = CP + ":/svnkit_home/jna.jar"
+$ CP = CP + ":/svnkit_home/sqljet.jar"
 $ OPT = ""
 $! OPT = "-Djava.util.logging.config.file=/svnkit_home/logging.properties"
 $!
