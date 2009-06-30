@@ -905,6 +905,18 @@ public class SVNFileUtil {
         return equals;
     }
 
+    public static void truncate(File file, long truncateToSize) throws IOException {
+        RandomAccessFile raf = null;
+        try {
+            raf = openRAFileForReading(file);
+            raf.setLength(truncateToSize);
+        } catch (SVNException e) {
+            throw new IOException(e.getMessage(), e);
+        } finally {
+            closeFile(raf);
+        }
+    }
+
     public static void setHidden(File file, boolean hidden) {
         if (isWindows && SVNJNAUtil.setHidden(file)) {
             return;

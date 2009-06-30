@@ -271,12 +271,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         SVNFileUtil.closeFile(myTargetFileOS);
         SVNFileUtil.closeFile(mySourceStream);
         if (truncateToSize >= 0) {
-            FSFile fsFile = new FSFile(myTargetFile);
-            try {
-                fsFile.truncate(truncateToSize); 
-            } finally {
-                fsFile.close();
-            }
+            SVNFileUtil.truncate(myTargetFile, truncateToSize);
         }
     }
 
