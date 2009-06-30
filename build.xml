@@ -237,7 +237,8 @@
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/trilead/TRILEAD-LICENSE" />
-                <include name="contrib/sqljet/SQLJet.README.txt" />
+                <include name="contrib/sqljet/SQLJET-LICENSE" />
+                <include name="contrib/sqljet/SQLJET-README.txt" />
             </fileset>
         </copy>
     </target>

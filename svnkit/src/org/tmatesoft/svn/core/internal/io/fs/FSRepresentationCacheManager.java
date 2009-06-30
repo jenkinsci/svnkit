@@ -65,12 +65,12 @@ public class FSRepresentationCacheManager {
     
     private static void checkFormat(SqlJetDb db) throws SqlJetException {
         ISqlJetSchema schema = db.getSchema();
-        int version = schema.getMeta().getUserCookie();
+        int version = db.getOptions().getUserVersion();
         if (version < REP_CACHE_DB_FORMAT) {
             db.beginTransaction();
             try {
-                schema.getMeta().setUserCookie(REP_CACHE_DB_FORMAT);
-                schema.getMeta().setAutovacuum(true);
+                db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
+                db.getOptions().setAutovacuum(true);
                 schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
                 db.commit();
             } catch (SqlJetException e) {
@@ -135,7 +135,7 @@ public class FSRepresentationCacheManager {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     ISqlJetCursor lookup = null;
                     try {
-                        lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { representation.getSHA1HexDigest() });
+                        lookup = myTable.lookup(myTable.getPrimaryKeyIndexName(), new Object[] { representation.getSHA1HexDigest() });
                         if (!lookup.eof()) {
                             return null;
                         }
@@ -195,7 +195,7 @@ public class FSRepresentationCacheManager {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     ISqlJetCursor lookup = null;
                     try {
-                        lookup = myTable.lookup(myTable.getPrimaryKeyIndex(), new Object[] { hash });
+                        lookup = myTable.lookup(myTable.getPrimaryKeyIndexName(), new Object[] { hash });
                         if (!lookup.eof()) {
                             return new FSRepresentationCacheRecord(lookup);
                         }
