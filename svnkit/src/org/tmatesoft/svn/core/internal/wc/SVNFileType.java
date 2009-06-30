@@ -79,7 +79,7 @@ public class SVNFileType {
         if (file == null) {
             return SVNFileType.UNKNOWN;
         }
-        if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX) {
+        if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX || SVNFileUtil.isSolaris) {
             if (detectSymlinks) {
                 SVNFileType ft = SVNJNAUtil.getFileType(file);
                 if (ft != null) {
