@@ -147,7 +147,7 @@ public class FSFS {
     private long myYoungestRevisionCache;
     private long myMinUnpackedRevision;
     private SVNConfigFile myConfig;
-    private FSRepresentationCacheManager myReposCacheManager;
+    private IFSRepresentationCacheManager myReposCacheManager;
     
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -1531,7 +1531,7 @@ public class FSFS {
         }
     }
 
-    public FSRepresentationCacheManager getRepositoryCacheManager() {
+    public IFSRepresentationCacheManager getRepositoryCacheManager() {
         return myReposCacheManager;
     }
 

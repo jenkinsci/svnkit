@@ -9,7 +9,7 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.io.fs;
+package org.tmatesoft.svn.core.internal.io.fs.repcache;
 
 import java.io.File;
 
@@ -23,6 +23,9 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepresentation;
+import org.tmatesoft.svn.core.internal.io.fs.IFSRepresentationCacheManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -32,7 +35,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class FSRepresentationCacheManager {
+public class FSRepresentationCacheManager implements IFSRepresentationCacheManager {
     
     public static final String REP_CACHE_TABLE = "rep_cache";
     private static final int REP_CACHE_DB_FORMAT =  1;
@@ -44,7 +47,7 @@ public class FSRepresentationCacheManager {
 
     private SqlJetDb myRepCacheDB;
     private SqlJetTable myTable;
-    private FSFS myFSFS;
+    private FSFS myFSFS;    
 
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
@@ -61,26 +64,6 @@ public class FSRepresentationCacheManager {
             SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
         }
         return cacheObj;
-    }
-    
-    private static void checkFormat(SqlJetDb db) throws SqlJetException {
-        ISqlJetSchema schema = db.getSchema();
-        int version = db.getOptions().getUserVersion();
-        if (version < REP_CACHE_DB_FORMAT) {
-            db.beginTransaction();
-            try {
-                db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
-                db.getOptions().setAutovacuum(true);
-                schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
-                db.commit();
-            } catch (SqlJetException e) {
-                db.rollback();
-                throw e;
-            }
-        } else if (version > REP_CACHE_DB_FORMAT) {
-            throw new SqlJetException("Schema format " + version + " not recognized");   
-        }
-        
     }
     
     public static void createRepresentationCache(File path) throws SVNException {
@@ -104,6 +87,26 @@ public class FSRepresentationCacheManager {
                 }
             }
         }
+    }
+
+    private static void checkFormat(SqlJetDb db) throws SqlJetException {
+        ISqlJetSchema schema = db.getSchema();
+        int version = db.getOptions().getUserVersion();
+        if (version < REP_CACHE_DB_FORMAT) {
+            db.beginTransaction();
+            try {
+                db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
+                db.getOptions().setAutovacuum(true);
+                schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                db.commit();
+            } catch (SqlJetException e) {
+                db.rollback();
+                throw e;
+            }
+        } else if (version > REP_CACHE_DB_FORMAT) {
+            throw new SqlJetException("Schema format " + version + " not recognized");   
+        }
+        
     }
     
     public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException {

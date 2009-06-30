@@ -238,7 +238,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             
             FSRepresentation oldRepresentation = null;
             FSFS fsfs = myTxnRoot.getOwner();
-            FSRepresentationCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
+            IFSRepresentationCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
             if (reposCacheManager != null) {
                 oldRepresentation = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
             }

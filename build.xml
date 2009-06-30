@@ -53,6 +53,7 @@
             <exclude name="org/tmatesoft/svn/util/SVNTest.java"/>
             <exclude name="org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceTest.java"/>
             <exclude name="org/tmatesoft/svn/core/internal/io/svn/sasl/**"/>
+            <exclude name="org/tmatesoft/svn/core/internal/io/fs/repcache/**"/>
         </javac>
         <javac debug="true"
                destdir="svnkit-cli/bin"
@@ -186,6 +187,7 @@
             </fileset>        	
             <fileset dir="svnkit/src">
                 <include name="org/tmatesoft/svn/core/internal/io/svn/sasl/*.class" />
+                <include name="org/tmatesoft/svn/core/internal/io/fs/repcache/*.class" />
             </fileset>
             <fileset dir="${basedir}" >
                 <include name="COPYING" />
