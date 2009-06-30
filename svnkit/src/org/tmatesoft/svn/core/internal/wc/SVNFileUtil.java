@@ -908,10 +908,10 @@ public class SVNFileUtil {
     public static void truncate(File file, long truncateToSize) throws IOException {
         RandomAccessFile raf = null;
         try {
-            raf = openRAFileForReading(file);
+            raf = openRAFileForWriting(file, false);
             raf.setLength(truncateToSize);
         } catch (SVNException e) {
-            throw new IOException(e.getMessage(), e);
+            throw (IOException) new IOException(e.getMessage()).initCause(e);
         } finally {
             closeFile(raf);
         }
