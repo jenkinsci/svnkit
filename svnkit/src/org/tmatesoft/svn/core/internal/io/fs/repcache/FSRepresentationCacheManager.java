@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepresentation;
 import org.tmatesoft.svn.core.internal.io.fs.IFSRepresentationCacheManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -48,12 +49,14 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
 
     private SqlJetDb myRepCacheDB;
     private SqlJetTable myTable;
-    private FSFS myFSFS;    
-
+    private FSFS myFSFS;
+    
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
-            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true, SqlJetAutoVacuumMode.FULL);
+            // only use autovacuum when there is no DB.
+            boolean autovacuum = SVNFileType.getType(fsfs.getRepositoryCacheFile()) == SVNFileType.NONE;
+            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true, autovacuum ? SqlJetAutoVacuumMode.FULL : null);
             cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     checkFormat(db);
@@ -70,7 +73,8 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     public static void createRepresentationCache(File path) throws SVNException {
         SqlJetDb db = null;
         try {
-            db = SqlJetDb.open(path, true, SqlJetAutoVacuumMode.FULL);
+            boolean autovacuum = SVNFileType.getType(path) == SVNFileType.NONE;
+            db = SqlJetDb.open(path, true, autovacuum ? SqlJetAutoVacuumMode.FULL : null);
             db.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     checkFormat(db);
