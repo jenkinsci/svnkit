@@ -280,7 +280,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        mySourceOffset += diffWindow.getInstructionsLength();
+        mySourceOffset += diffWindow.getSourceViewLength();
         try {
             diffWindow.writeTo(myTargetFileOS, !isHeaderWritten, myIsCompress);
             isHeaderWritten = true;
