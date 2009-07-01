@@ -1086,12 +1086,15 @@ public class FSFS {
         revNodeFile.write("\n".getBytes("UTF-8"));
     }
     
-    public SVNLock getLock(String repositoryPath, boolean haveWriteLock) throws SVNException {
+    public SVNLock getLock(String repositoryPath, boolean haveWriteLock, boolean throwError) throws SVNException {
         repositoryPath = SVNPathUtil.canonicalizeAbsolutePath(repositoryPath);
         
         SVNLock lock = fetchLockFromDigestFile(null, repositoryPath, null);
         
         if (lock == null) {
+            if (!throwError) {
+                return null;
+            }
             SVNErrorManager.error(FSErrors.errorNoSuchLock(repositoryPath, this), SVNLogType.FSFS);
         }
         
@@ -1100,6 +1103,9 @@ public class FSFS {
         if (lock.getExpirationDate() != null && current.compareTo(lock.getExpirationDate()) > 0) {
             if (haveWriteLock) {
                 deleteLock(lock);
+            }
+            if (!throwError) {
+                return null;
             }
             SVNErrorManager.error(FSErrors.errorLockExpired(lock.getID(), this), SVNLogType.FSFS);
         }
@@ -1166,7 +1172,7 @@ public class FSFS {
     public SVNLock getLockHelper(String repositoryPath, boolean haveWriteLock) throws SVNException {
         SVNLock lock = null;
         try {
-            lock = getLock(repositoryPath, haveWriteLock);
+            lock = getLock(repositoryPath, haveWriteLock, false);
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_LOCK || svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_LOCK_EXPIRED) {
                 return null;
@@ -1812,7 +1818,7 @@ public class FSFS {
     }
     
     private void unlock(String path, String token, String username, boolean breakLock) throws SVNException {
-        SVNLock lock = getLock(path, true);
+        SVNLock lock = getLock(path, true, true);
         if (!breakLock) {
             if (token == null || !token.equals(lock.getID())) {
                 SVNErrorManager.error(FSErrors.errorNoSuchLock(lock.getPath(), this), SVNLogType.FSFS);
