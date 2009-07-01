@@ -19,7 +19,7 @@ import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -54,16 +54,10 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
-            // only use autovacuum when there is no DB.
             boolean autovacuum = SVNFileType.getType(fsfs.getRepositoryCacheFile()) == SVNFileType.NONE;
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true, autovacuum ? SqlJetAutoVacuumMode.FULL : null);
-            cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
-                public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    checkFormat(db);
-                    cacheObj.myTable = db.getTable(REP_CACHE_TABLE);
-                    return null;
-                }
-            });
+            checkFormat(cacheObj.myRepCacheDB);
+            cacheObj.myTable = cacheObj.myRepCacheDB.getTable(REP_CACHE_TABLE);
         } catch (SqlJetException e) {
             SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
         }
@@ -75,12 +69,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         try {
             boolean autovacuum = SVNFileType.getType(path) == SVNFileType.NONE;
             db = SqlJetDb.open(path, true, autovacuum ? SqlJetAutoVacuumMode.FULL : null);
-            db.runWithLock(new ISqlJetRunnableWithLock() {
-                public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    checkFormat(db);
-                    return null;
-                }
-            });
+            checkFormat(db);
         } catch (SqlJetException e) {
             SVNErrorManager.error(FSRepresentationCacheManager.convertError(e), SVNLogType.FSFS);
         } finally {
@@ -94,23 +83,27 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         }
     }
 
-    private static void checkFormat(SqlJetDb db) throws SqlJetException {
-        ISqlJetSchema schema = db.getSchema();
-        int version = db.getOptions().getUserVersion();
-        if (version < REP_CACHE_DB_FORMAT) {
-            db.beginTransaction();
-            try {
-                db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
-                schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
-                db.commit();
-            } catch (SqlJetException e) {
-                db.rollback();
-                throw e;
+    private static void checkFormat(final SqlJetDb db) throws SqlJetException {
+        db.runWriteTransaction(new ISqlJetTransaction() {
+            public Object run(SqlJetDb db) throws SqlJetException {
+                ISqlJetSchema schema = db.getSchema();
+                int version = db.getOptions().getUserVersion();
+                if (version < REP_CACHE_DB_FORMAT) {
+                    db.beginTransaction();
+                    try {
+                        db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
+                        schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                        db.commit();
+                    } catch (SqlJetException e) {
+                        db.rollback();
+                        throw e;
+                    }
+                } else if (version > REP_CACHE_DB_FORMAT) {
+                    throw new SqlJetException("Schema format " + version + " not recognized");   
+                }
+                return null;
             }
-        } else if (version > REP_CACHE_DB_FORMAT) {
-            throw new SqlJetException("Schema format " + version + " not recognized");   
-        }
-        
+        });
     }
     
     public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException {
@@ -131,36 +124,16 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
                         String.valueOf(representation.getRevision()), String.valueOf(representation.getOffset()), 
                         String.valueOf(representation.getSize()), String.valueOf(representation.getExpandedSize()) });
                 SVNErrorManager.error(err, SVNLogType.FSFS);
-            }
-            
+            }            
             return;
         }
         
         try {
-            myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
-
-                public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    ISqlJetCursor lookup = null;
-                    try {
-                        lookup = myTable.lookup(myTable.getPrimaryKeyIndexName(), new Object[] { representation.getSHA1HexDigest() });
-                        if (!lookup.eof()) {
-                            return null;
-                        }
-                    } finally {
-                        if (lookup != null) {
-                            lookup.close();
-                        }
-                    }
-                    db.beginTransaction();
-                    try {
-                        myTable.insert(new Object[] { representation.getSHA1HexDigest(), new Long(representation.getRevision()),
-                                new Long(representation.getOffset()), new Long(representation.getSize()), 
-                                new Long(representation.getExpandedSize()) });
-                        db.commit();
-                    } catch (SqlJetException e) {
-                        db.rollback();
-                        throw e;
-                    }
+            myRepCacheDB.runWriteTransaction(new ISqlJetTransaction() {
+                public Object run(SqlJetDb db) throws SqlJetException {
+                    myTable.insert(new Object[] { representation.getSHA1HexDigest(), new Long(representation.getRevision()),
+                            new Long(representation.getOffset()), new Long(representation.getSize()), 
+                            new Long(representation.getExpandedSize()) });
                     return null;
                 }
             });
@@ -170,15 +143,16 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     }
 
     public void close() throws SVNException {
-        try {
-            myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
-                public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    myRepCacheDB.close();
-                    return null;
-                }
-            });
-        } catch (SqlJetException e) {
-            SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+        if (myRepCacheDB != null) {
+            try {
+                myRepCacheDB.close();
+            } catch (SqlJetException e) {
+                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+            } finally {
+                myTable = null;
+                myRepCacheDB = null;
+                myFSFS = null;
+            }
         }
     }
     
@@ -196,26 +170,22 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     }
 
     private FSRepresentationCacheRecord getByHash(final String hash) throws SVNException {
+        ISqlJetCursor lookup = null;
         try {
-            return (FSRepresentationCacheRecord) myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
-
-                public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                    ISqlJetCursor lookup = null;
-                    try {
-                        lookup = myTable.lookup(myTable.getPrimaryKeyIndexName(), new Object[] { hash });
-                        if (!lookup.eof()) {
-                            return new FSRepresentationCacheRecord(lookup);
-                        }
-                    } finally {
-                        if (lookup != null) {
-                            lookup.close();
-                        }
-                    }
-                    return null;
-                }
-            });
+            lookup = myTable.lookup(myTable.getPrimaryKeyIndexName(), new Object[] { hash });
+            if (!lookup.eof()) {
+                return new FSRepresentationCacheRecord(lookup);
+            }
         } catch (SqlJetException e) {
             SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+        } finally {
+            if (lookup != null) {
+                try {
+                    lookup.close();
+                } catch (SqlJetException e) {
+                    SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+                }
+            }
         }
         return null;
     }
@@ -232,5 +202,4 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         } 
         return SVNErrorCode.SQLITE_ERROR;
     }
-    
 }

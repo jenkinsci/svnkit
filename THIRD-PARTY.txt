@@ -21,7 +21,7 @@ We expect next version of Trilead library (build 214) to be compatible with SVNK
 
 3) SQLJet
 
-SQLJet library, build 343 beta
+SQLJet library, build 360 beta
 License: GNU GPL with double licensing option (contact support@svnkit.com).
 Note: SQLJet is an optional component for enabling representation cache feature when working with local 1.6 Subversion repositories. 
-Remove sqljet.b343.jar from the classpath if you would not like to use it. 
+Remove sqljet.b360.jar from the classpath if you would not like to use it. 
