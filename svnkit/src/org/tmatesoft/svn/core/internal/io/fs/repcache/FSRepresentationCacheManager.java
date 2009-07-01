@@ -15,6 +15,7 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
@@ -52,7 +53,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
-            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
+            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true, SqlJetAutoVacuumMode.FULL);
             cacheObj.myRepCacheDB.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     checkFormat(db);
@@ -69,7 +70,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     public static void createRepresentationCache(File path) throws SVNException {
         SqlJetDb db = null;
         try {
-            db = SqlJetDb.open(path, true);
+            db = SqlJetDb.open(path, true, SqlJetAutoVacuumMode.FULL);
             db.runWithLock(new ISqlJetRunnableWithLock() {
                 public Object runWithLock(SqlJetDb db) throws SqlJetException {
                     checkFormat(db);
@@ -96,7 +97,6 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
             db.beginTransaction();
             try {
                 db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
-                db.getOptions().setAutovacuum(true);
                 schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
                 db.commit();
             } catch (SqlJetException e) {
