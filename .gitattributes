@@ -92,7 +92,6 @@ svnkit-test/tomcat/logging.properties -text
 svnkit-test/tomcat/tomcat.jar -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/IFSRepresentationCacheManager.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$1.class -text
-svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$2.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager.java svneol=native#text/plain
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheRecord.class -text

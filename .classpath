@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="org/tmatesoft/svn/core/internal/io/fs/repcache/**|org/tmatesoft/svn/core/internal/io/svn/sasl/**" kind="src" output="svnkit/bin" path="svnkit/src"/>
+	<classpathentry excluding="org/tmatesoft/svn/core/internal/io/svn/sasl/**" kind="src" output="svnkit/bin" path="svnkit/src"/>
 	<classpathentry kind="src" output="contrib/javahl/bin" path="contrib/javahl/tests"/>
 	<classpathentry kind="src" output="svnkit-cli/bin" path="svnkit-cli/src"/>
 	<classpathentry kind="src" output="svnkit-dav/bin" path="svnkit-dav/src"/>
@@ -17,6 +17,6 @@
 	<classpathentry kind="lib" path="contrib/jna/jna.jar" sourcepath="contrib/jna/jna-src.zip"/>
 	<classpathentry kind="lib" path="contrib/trilead/trilead.jar" sourcepath="contrib/trilead/trileadsrc.zip"/>
 	<classpathentry kind="lib" path="contrib/sqljet/antlr-runtime-3.1.3.jar"/>
-	<classpathentry kind="lib" path="contrib/sqljet/sqljet.b343.jar" sourcepath="contrib/sqljet/sqljet.b343.src.zip"/>
+	<classpathentry kind="lib" path="contrib/sqljet/sqljet.b360.jar" sourcepath="contrib/sqljet/sqljet.b360.src.zip"/>
 	<classpathentry kind="output" path="svnkit/bin"/>
 </classpath>

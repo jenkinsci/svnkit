@@ -465,10 +465,14 @@ public class FSCommitter {
         FSTransactionRoot txnRoot = getTxnRoot();
         FSWriteLock txnWriteLock = FSWriteLock.getWriteLockForTxn(myTxn.getTxnId(), myFSFS);
         synchronized (txnWriteLock) {
+            boolean transactionCommitted = false;
             try {
                 txnWriteLock.lock();
                 File revisionPrototypeFile = txnRoot.getTransactionProtoRevFile();
                 long offset = revisionPrototypeFile.length();
+                if (myFSFS.getRepositoryCacheManager() != null) {
+                    myFSFS.getRepositoryCacheManager().beginTransaction();
+                }
                 try {
                     protoFileOS = SVNFileUtil.openFileForWriting(revisionPrototypeFile, true);
                     FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
@@ -498,9 +502,15 @@ public class FSCommitter {
                 }
                 
                 File dstRevFile = myFSFS.getNewRevisionFile(newRevision);
+                if (myFSFS.getRepositoryCacheManager() != null) {
+                    myFSFS.getRepositoryCacheManager().commitTransaction();
+                    transactionCommitted = true;
+                }
                 SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
-                
             } finally {
+                if (myFSFS.getRepositoryCacheManager() != null && !transactionCommitted) {
+                    myFSFS.getRepositoryCacheManager().rollbackTransaction();
+                }
                txnWriteLock.unlock();
                FSWriteLock.release(txnWriteLock);
             }

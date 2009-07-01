@@ -41,7 +41,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     
     public static final String REP_CACHE_TABLE = "rep_cache";
     private static final int REP_CACHE_DB_FORMAT =  1;
-    private static final String REP_CACHE_DB_SQL =   "create table rep_cache (hash text not null primary key, " +
+    private static final String REP_CACHE_DB_SQL =  "create table rep_cache (hash text not null primary key, " +
                                                     "                        revision integer not null, " + 
                                                     "                        offset integer not null, " + 
                                                     "                        size integer not null, " +
@@ -89,15 +89,8 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
                 ISqlJetSchema schema = db.getSchema();
                 int version = db.getOptions().getUserVersion();
                 if (version < REP_CACHE_DB_FORMAT) {
-                    db.beginTransaction();
-                    try {
-                        db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
-                        schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
-                        db.commit();
-                    } catch (SqlJetException e) {
-                        db.rollback();
-                        throw e;
-                    }
+                    db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
+                    schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
                 } else if (version > REP_CACHE_DB_FORMAT) {
                     throw new SqlJetException("Schema format " + version + " not recognized");   
                 }
@@ -112,7 +105,6 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
                     "Only SHA1 checksums can be used as keys in the rep_cache table.\n");
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
-        
         FSRepresentation oldRep = getRepresentationByHash(representation.getSHA1HexDigest());
         if (oldRep != null) {
             if (rejectDup && (oldRep.getRevision() != representation.getRevision() || oldRep.getOffset() != representation.getOffset() ||
@@ -124,19 +116,14 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
                         String.valueOf(representation.getRevision()), String.valueOf(representation.getOffset()), 
                         String.valueOf(representation.getSize()), String.valueOf(representation.getExpandedSize()) });
                 SVNErrorManager.error(err, SVNLogType.FSFS);
-            }            
+            }
             return;
         }
         
         try {
-            myRepCacheDB.runWriteTransaction(new ISqlJetTransaction() {
-                public Object run(SqlJetDb db) throws SqlJetException {
-                    myTable.insert(new Object[] { representation.getSHA1HexDigest(), new Long(representation.getRevision()),
-                            new Long(representation.getOffset()), new Long(representation.getSize()), 
-                            new Long(representation.getExpandedSize()) });
-                    return null;
-                }
-            });
+            myTable.insert(new Object[] { representation.getSHA1HexDigest(), new Long(representation.getRevision()),
+                    new Long(representation.getOffset()), new Long(representation.getSize()), 
+                    new Long(representation.getExpandedSize()) });
         } catch (SqlJetException e) {
             SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
         }
@@ -201,5 +188,35 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
             return SVNErrorCode.SQLITE_READONLY;
         } 
         return SVNErrorCode.SQLITE_ERROR;
+    }
+
+    public void beginTransaction() throws SVNException {
+        if (myRepCacheDB != null) {
+            try {
+                myRepCacheDB.beginTransaction();
+            } catch (SqlJetException e) {
+                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+            }
+        }
+    }
+
+    public void commitTransaction() throws SVNException {
+        if (myRepCacheDB != null) {
+            try {
+                myRepCacheDB.commit();
+            } catch (SqlJetException e) {
+                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+            }
+        }
+    }
+
+    public void rollbackTransaction() throws SVNException {
+        if (myRepCacheDB != null) {
+            try {
+                myRepCacheDB.rollback();
+            } catch (SqlJetException e) {
+                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+            }
+        }
     }
 }

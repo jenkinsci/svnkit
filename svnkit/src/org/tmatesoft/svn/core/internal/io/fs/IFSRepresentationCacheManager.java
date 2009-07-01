@@ -20,7 +20,13 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface IFSRepresentationCacheManager {
     
+    public void beginTransaction() throws SVNException;
+    
     public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException;
+
+    public void commitTransaction() throws SVNException;
+
+    public void rollbackTransaction() throws SVNException;
     
     public FSRepresentation getRepresentationByHash(String hash) throws SVNException;
     
