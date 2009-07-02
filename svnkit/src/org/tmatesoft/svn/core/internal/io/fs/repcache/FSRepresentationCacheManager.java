@@ -151,6 +151,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
             representation.setOffset(cache.getOffset());
             representation.setRevision(cache.getRevision());
             representation.setSize(cache.getSize());
+            representation.setSHA1HexDigest(cache.getHash());
             return representation;
         }
         return null;
