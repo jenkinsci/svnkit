@@ -111,7 +111,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
             if (baton.myDatestamp == null) {
                 myFSFS.setRevisionProperty(baton.myRevision, SVNRevisionProperty.DATE, null);
             }
-            File revProps = myFSFS.getRevisionPropertiesFile(baton.myRevision);
+            File revProps = myFSFS.getRevisionPropertiesFile(baton.myRevision, true);
             if (!revProps.exists()) {
                 OutputStream os = SVNFileUtil.openFileForWriting(revProps);
                 try {
