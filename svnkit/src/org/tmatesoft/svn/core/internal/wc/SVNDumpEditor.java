@@ -170,6 +170,7 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     private void dumpNode(String path, SVNNodeKind kind, int nodeAction, boolean isCopy, String cmpPath, long cmpRev) throws SVNException {
+        File tmpFile = null;
         try {
             writeDumpData(SVNAdminHelper.DUMPFILE_NODE_PATH + ": " + (path.startsWith("/") ? path.substring(1) : path) + "\n");
             
@@ -275,7 +276,7 @@ public class SVNDumpEditor implements ISVNEditor {
                 SVNProperties props = node.getProperties(myFSFS);
                 SVNProperties oldProps = null;
                 if (myUseDeltas && compareRoot != null) {
-                    FSRevisionNode cmpNode = myRoot.getRevisionNode(comparePath);
+                    FSRevisionNode cmpNode = compareRoot.getRevisionNode(comparePath);
                     oldProps = cmpNode.getProperties(myFSFS);
                     writeDumpData(SVNAdminHelper.DUMPFILE_PROP_DELTA + ": true\n");
                 }
@@ -286,15 +287,12 @@ public class SVNDumpEditor implements ISVNEditor {
                 contentLength += propContents.length();
                 writeDumpData(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
             }
-            
-            File tmpFile = null;
             if (mustDumpText && kind == SVNNodeKind.FILE) {
                 long txtLength = 0; 
                 FSRevisionNode node = myRoot.getRevisionNode(canonicalPath);
 
                 if (myUseDeltas) {
                     tmpFile = SVNFileUtil.createTempFile("dump", ".tmp");
-                    tmpFile.deleteOnExit();
                     
                     InputStream sourceStream = null;
                     InputStream targetStream = null;
@@ -396,11 +394,12 @@ public class SVNDumpEditor implements ISVNEditor {
                     SVNFileUtil.closeFile(source);
                 }
             }
-            
             writeDumpData("\n\n");
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
+        } finally {
+            SVNFileUtil.deleteFile(tmpFile);
         }
     }
     
