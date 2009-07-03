@@ -12,7 +12,9 @@
 
 package org.tmatesoft.svn.core.internal.io.svn;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +57,7 @@ public class SVNEditModeReader {
         COMMANDS_MAP.put("finish-replay", "()");
         COMMANDS_MAP.put("absent-dir", "ss");
         COMMANDS_MAP.put("absent-file", "ss");
+        COMMANDS_MAP.put("failure", "l");
     }
 
     private SVNConnection myConnection;
@@ -181,6 +184,19 @@ public class SVNEditModeReader {
             myDone = true;
             myAborted = true;
             myConnection.write("(w())", new Object[]{"success"});
+        } else if ("failure".equals(commandName)) {
+            myEditor.abortEdit();
+            myDone = true;
+            myAborted = true;
+            List items = new ArrayList();
+            for (Iterator lists = params.iterator(); lists.hasNext();) {
+                List list = (List) lists.next();
+                SVNItem item = new SVNItem();
+                item.setKind(SVNItem.LIST);
+                item.setItems(list);
+                items.add(item);
+            }
+            SVNReader.handleFailureStatus(items);
         } else if ("absent-dir".equals(commandName)) {
             lookupToken(SVNReader.getString(params, 1), false);
             myEditor.absentDir(SVNReader.getString(params, 0));
@@ -209,13 +225,14 @@ public class SVNEditModeReader {
                 error = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CMD_ERR);
                 error.setChildErrorMessage(child);
             }
-            List parameters = SVNReader.parseTuple(template, (Collection) items.get(1), null);
-            try {
-                processCommand(commandName, parameters);
-            } catch (SVNException e) {
-                error = e.getErrorMessage();
+            if (template != null && items.get(1) instanceof Collection) {
+                List parameters = SVNReader.parseTuple(template, (Collection) items.get(1), null);
+                try {
+                    processCommand(commandName, parameters);
+                } catch (SVNException e) {
+                    error = e.getErrorMessage();
+                }
             }
-
             if (error != null) {
                 if (error.getErrorCode() == SVNErrorCode.RA_SVN_CMD_ERR) {
                     myAborted = true;
