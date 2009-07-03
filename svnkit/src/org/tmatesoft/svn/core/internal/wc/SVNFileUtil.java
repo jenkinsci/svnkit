@@ -94,6 +94,7 @@ public class SVNFileUtil {
 
     private static boolean ourUseUnsafeCopyOnly = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.no.safe.copy", System.getProperty("javasvn.no.safe.copy", "false")));
     private static boolean ourCopyOnSetWritable = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.fast.setWritable", "true"));
+    private static boolean ourUseNIOCopying = Boolean.TRUE.toString().equalsIgnoreCase(System.getProperty("svnkit.nio.copy", "true"));
 
     private static String nativeEOLMarker;
     private static String ourGroupID;
@@ -179,6 +180,14 @@ public class SVNFileUtil {
 
     public static synchronized void setUseCopyOnSetWritable(boolean useCopyOnSetWritable) {
         ourCopyOnSetWritable = useCopyOnSetWritable;
+    }
+
+    public static synchronized boolean useNIOCopying() {
+        return ourUseNIOCopying;
+    }
+
+    public static synchronized void setUseNIOCopying(boolean useNIOCopy) {
+        ourUseNIOCopying = useNIOCopy;
     }
 
     public static String getIdCommand() {
@@ -648,46 +657,50 @@ public class SVNFileUtil {
         }
         boolean executable = isExecutable(src);
         dst.getParentFile().mkdirs();
-        
-        FileChannel srcChannel = null;
-        FileChannel dstChannel = null;
-        FileInputStream is = null;
-        FileOutputStream os = null;
-        
+
         SVNErrorMessage error = null;
-        try {
-            is = createFileInputStream(src);
-            srcChannel = is.getChannel();
-            os = createFileOutputStream(tmpDst, false);
-            dstChannel = os.getChannel();
-            long totalSize = srcChannel.size();
-            long toCopy = totalSize;
-            while (toCopy > 0) {
-                toCopy -= dstChannel.transferFrom(srcChannel, totalSize - toCopy, toCopy);
-            }
-        } catch (IOException e) {
-            error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[] {
-                    src, dst, e.getLocalizedMessage()
-            });
-        } finally {
-            if (srcChannel != null) {
-                try {
-                    srcChannel.close();
-                } catch (IOException e) {
-                    //
+        final boolean useNIO = useNIOCopying();
+        if (useNIO) {
+            FileChannel srcChannel = null;
+            FileChannel dstChannel = null;
+            FileInputStream is = null;
+            FileOutputStream os = null;
+
+            try {
+                is = createFileInputStream(src);
+                srcChannel = is.getChannel();
+                os = createFileOutputStream(tmpDst, false);
+                dstChannel = os.getChannel();
+                long totalSize = srcChannel.size();
+                long toCopy = totalSize;
+                while (toCopy > 0) {
+                    toCopy -= dstChannel.transferFrom(srcChannel, totalSize - toCopy, toCopy);
                 }
-            }
-            if (dstChannel != null) {
-                try {
-                    dstChannel.close();
-                } catch (IOException e) {
-                    //
+            } catch (IOException e) {
+                error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot copy file ''{0}'' to ''{1}'': {2}", new Object[]{
+                        src, dst, e.getLocalizedMessage()
+                });
+            } finally {
+                if (srcChannel != null) {
+                    try {
+                        srcChannel.close();
+                    } catch (IOException e) {
+                        //
+                    }
                 }
+                if (dstChannel != null) {
+                    try {
+                        dstChannel.close();
+                    } catch (IOException e) {
+                        //
+                    }
+                }
+                SVNFileUtil.closeFile(is);
+                SVNFileUtil.closeFile(os);
             }
-            SVNFileUtil.closeFile(is);
-            SVNFileUtil.closeFile(os);
         }
-        if (error != null) {
+        
+        if (!useNIO || error != null) {
             error = null;
             InputStream sis = null;
             OutputStream dos = null;
