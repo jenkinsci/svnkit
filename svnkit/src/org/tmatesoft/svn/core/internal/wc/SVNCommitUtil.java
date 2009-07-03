@@ -946,9 +946,11 @@ public class SVNCommitUtil {
                                 currentEntry.scheduleForDeletion();
                                 entries.saveEntries(false);
                                 continue;
-                            } else if (action != ISVNCommitParameters.SKIP) {
+                            } else if (action == ISVNCommitParameters.ERROR) {
                                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_LOCKED, "Working copy ''{0}'' is missing or not locked", currentFile);
                                 SVNErrorManager.error(err, SVNLogType.WC);
+                            } else {
+                                continue;
                             }
                         }
                     }
