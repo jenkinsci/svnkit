@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.util;
 import java.rmi.server.UID;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -93,13 +92,28 @@ public class SVNUUIDGenerator {
             System.arraycopy(uuid, 0, tmpBuf, 0, uuid.length);
             uuid = tmpBuf;
         }
-        String[] hexNumbers = new String[16];
-        for (int i = 0; i < 16; i++) {
-            hexNumbers[i] = SVNFormatUtil.getHexNumberFromByte(uuid[i]);
-        }
-        String formatString = "{0}{1}{2}{3}-{4}{5}-{6}{7}-{8}{9}-{10}{11}{12}{13}{14}{15}";
-        Object args = hexNumbers;
-        return MessageFormat.format(formatString, (Object[]) args);
+        StringBuffer sb = new StringBuffer();
+        SVNFormatUtil.appendHexNumber(sb, uuid[0]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[1]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[2]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[3]);
+        sb.append('-');
+        SVNFormatUtil.appendHexNumber(sb, uuid[4]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[5]);
+        sb.append('-');
+        SVNFormatUtil.appendHexNumber(sb, uuid[6]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[7]);
+        sb.append('-');
+        SVNFormatUtil.appendHexNumber(sb, uuid[8]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[9]);
+        sb.append('-');
+        SVNFormatUtil.appendHexNumber(sb, uuid[10]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[11]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[12]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[13]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[14]);
+        SVNFormatUtil.appendHexNumber(sb, uuid[15]);
+        return sb.toString();
     }
 
     private static void initState() throws SVNException {
