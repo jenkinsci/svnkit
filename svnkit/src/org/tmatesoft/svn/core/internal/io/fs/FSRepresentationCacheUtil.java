@@ -35,15 +35,20 @@ public class FSRepresentationCacheUtil {
     private static Method ourCreateMethod = null;
     
     static {
-        try {
-            Class clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(SQLJET_DB_CLASS_NAME);
-            ourIsAvailable = clazz != null;
-            clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(REPCACHE_MANAGER_CLASS_NAME);
-            if (clazz != null) {
-                ourOpenMethod = clazz.getMethod("openRepresentationCache", new Class[] {FSFS.class});
-                ourCreateMethod = clazz.getMethod("createRepresentationCache", new Class[] {File.class});
+        Boolean option = Boolean.valueOf(System.getProperty("svnkit.fsfs.repcache", "true"));
+        if (option.booleanValue()) {
+            try {
+                Class clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(SQLJET_DB_CLASS_NAME);
+                ourIsAvailable = clazz != null;
+                clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(REPCACHE_MANAGER_CLASS_NAME);
+                if (clazz != null) {
+                    ourOpenMethod = clazz.getMethod("openRepresentationCache", new Class[] {FSFS.class});
+                    ourCreateMethod = clazz.getMethod("createRepresentationCache", new Class[] {File.class});
+                }
+            } catch (Throwable e) {
+                ourIsAvailable = false;
             }
-        } catch (Throwable e) {
+        } else {
             ourIsAvailable = false;
         }
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "SQLJET enabled: " + ourIsAvailable);
