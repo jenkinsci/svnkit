@@ -2953,7 +2953,7 @@ public abstract class SVNRepository {
     
     private long getDeletedRevisionFromLog(String path, long pegRevision, long endRevision) throws SVNException {
         DeletedRevisionLogHandler handler = new DeletedRevisionLogHandler(path);
-        log(new String[] { path }, pegRevision, endRevision, true, true, 0, false, null, handler);
+        log(null, pegRevision, endRevision, true, true, 0, false, null, handler);
         return handler.getDeletedRevision();
     }
     
