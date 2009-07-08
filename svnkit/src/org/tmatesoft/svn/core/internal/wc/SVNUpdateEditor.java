@@ -232,7 +232,15 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         }
 
         SVNLog log = parent == null ? parentArea.getLog() : parent.getLog();
-        SVNTreeConflictDescription treeConflict = checkTreeConflict(fullPath, entry, parentArea, log, SVNConflictAction.DELETE, SVNNodeKind.NONE, theirURL);
+        
+        SVNTreeConflictDescription treeConflict;
+        if (kind == SVNNodeKind.DIR && myWCAccess.isMissing(fullPath)
+                && (entry.isScheduledForDeletion() || entry.isScheduledForReplacement())) {            
+            treeConflict = null;
+        } else {
+            treeConflict = checkTreeConflict(fullPath, entry, parentArea, log, SVNConflictAction.DELETE, SVNNodeKind.NONE, theirURL);
+        }
+        
         if (treeConflict != null) {
             addSkippedTree(fullPath);
             
