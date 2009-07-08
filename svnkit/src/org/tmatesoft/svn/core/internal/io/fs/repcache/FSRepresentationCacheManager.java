@@ -15,11 +15,10 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.SqlJetAutoVacuumMode;
 import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
 import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
+import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -28,7 +27,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepresentation;
 import org.tmatesoft.svn.core.internal.io.fs.IFSRepresentationCacheManager;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -54,8 +52,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
-            boolean autovacuum = SVNFileType.getType(fsfs.getRepositoryCacheFile()) == SVNFileType.NONE;
-            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true, autovacuum ? SqlJetAutoVacuumMode.FULL : null);
+            cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
             checkFormat(cacheObj.myRepCacheDB);
             cacheObj.myTable = cacheObj.myRepCacheDB.getTable(REP_CACHE_TABLE);
         } catch (SqlJetException e) {
@@ -67,8 +64,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     public static void createRepresentationCache(File path) throws SVNException {
         SqlJetDb db = null;
         try {
-            boolean autovacuum = SVNFileType.getType(path) == SVNFileType.NONE;
-            db = SqlJetDb.open(path, true, autovacuum ? SqlJetAutoVacuumMode.FULL : null);
+            db = SqlJetDb.open(path, true);
             checkFormat(db);
         } catch (SqlJetException e) {
             SVNErrorManager.error(FSRepresentationCacheManager.convertError(e), SVNLogType.FSFS);
@@ -84,13 +80,24 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     }
 
     private static void checkFormat(final SqlJetDb db) throws SqlJetException {
-        db.runWriteTransaction(new ISqlJetTransaction() {
-            public Object run(SqlJetDb db) throws SqlJetException {
+        db.runWithLock(new ISqlJetRunnableWithLock() {
+            public Object runWithLock(SqlJetDb db) throws SqlJetException {
                 ISqlJetSchema schema = db.getSchema();
                 int version = db.getOptions().getUserVersion();
                 if (version < REP_CACHE_DB_FORMAT) {
+                    db.getOptions().setAutovacuum(true);
+                    db.beginTransaction();
                     db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
-                    schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                    boolean commited = false;
+                    try {
+                        schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                        db.commit();
+                        commited = true;
+                    } finally {
+                        if (!commited) {
+                            db.rollback();
+                        }
+                    }
                 } else if (version > REP_CACHE_DB_FORMAT) {
                     throw new SqlJetException("Schema format " + version + " not recognized");   
                 }
