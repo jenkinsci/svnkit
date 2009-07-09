@@ -543,7 +543,7 @@ public class FSFS {
     
     public SVNProperties getRevisionProperties(long revision) throws SVNException {
         ensureRevisionsExists(revision);
-        FSFile file = new FSFile(getRevisionPropertiesFile(revision));
+        FSFile file = new FSFile(getRevisionPropertiesFile(revision, false));
         try {
             return file.readProperties(false, true);
         } finally {
@@ -848,7 +848,7 @@ public class FSFS {
         SVNFileUtil.rename(uniqueFile, getUUIDFile());
     }
     
-    public File getRevisionPropertiesFile(long revision) throws SVNException {
+    public File getRevisionPropertiesFile(long revision, boolean returnMissing) throws SVNException {
         File revPropsFile = null; 
         if (myMaxFilesPerDirectory > 0) {
             File shardDir = new File(getRevisionPropertiesRoot(), String.valueOf(revision/myMaxFilesPerDirectory));
@@ -857,7 +857,7 @@ public class FSFS {
             revPropsFile = new File(getRevisionPropertiesRoot(), String.valueOf(revision));
         }
         
-        if (!revPropsFile.exists()) {
+        if (!revPropsFile.exists() && !returnMissing) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
@@ -909,7 +909,7 @@ public class FSFS {
         synchronized (writeLock) {
             try {
                 writeLock.lock();
-                SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision), null);
+                SVNWCProperties revProps = new SVNWCProperties(getRevisionPropertiesFile(revision, false), null);
                 revProps.setPropertyValue(propertyName, propertyValue);
             } finally {
                 writeLock.unlock();
