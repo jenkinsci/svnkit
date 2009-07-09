@@ -1006,11 +1006,11 @@ public class SVNFileUtil {
             return null;
         }
         byte[] result = digest.digest();
-        String hexDigest = "";
+        StringBuffer hexDigest = new StringBuffer();
         for (int i = 0; i < result.length; i++) {
-            hexDigest += SVNFormatUtil.getHexNumberFromByte(result[i]);
+            SVNFormatUtil.appendHexNumber(hexDigest, result[i]);
         }
-        return hexDigest;
+        return hexDigest.toString();
     }
 
     public static String toHexDigest(byte[] digest) {
@@ -1018,13 +1018,13 @@ public class SVNFileUtil {
             return null;
         }
 
-        String hexDigest = "";
+        StringBuffer hexDigest = new StringBuffer();
         for (int i = 0; i < digest.length; i++) {
-            hexDigest += SVNFormatUtil.getHexNumberFromByte(digest[i]);
+            SVNFormatUtil.appendHexNumber(hexDigest, digest[i]);
         }
-        return hexDigest;
+        return hexDigest.toString();
     }
-
+    
     public static byte[] fromHexDigest(String hexDigest) {
         if (hexDigest == null || hexDigest.length() == 0) {
             return null;
