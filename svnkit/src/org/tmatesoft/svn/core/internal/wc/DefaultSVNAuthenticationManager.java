@@ -495,12 +495,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		        String host = url.getHost();
 		        Map properties = getHostProperties(host);
 		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
-		        if (sslClientCert == null) {
-		            return null;
+		        if (sslClientCert != null && !"".equals(sslClientCert)) {
+	                String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
+	                File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
+	                return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
 		        }
-		        String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
-		        File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
-		        return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
+                //try looking in svn.ssl.client-passphrase directory cache 
 	        }
 
             File dir = new File(myDirectory, kind);
@@ -523,12 +523,16 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (storedRealm == null || !storedRealm.equals(realm)) {
                         return null;
                     }
+
                     String userName = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("username"));
-                    if (userName == null || "".equals(userName.trim())) {
-                        return null;
-                    }
-                    if (specifiedUserName != null && !specifiedUserName.equals(userName)) {
-                        return null;
+                    
+                    if (!ISVNAuthenticationManager.SSL.equals(kind)) {
+                        if (userName == null || "".equals(userName.trim())) {
+                            return null;
+                        }
+                        if (specifiedUserName != null && !specifiedUserName.equals(userName)) {
+                            return null;
+                        }
                     }
                     
                     String password = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("password"));
@@ -556,6 +560,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         }                    
                     } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
                         return new SVNUserNameAuthentication(userName, authMayBeStored);
+                    } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+                        return new SVNSSLAuthentication(new File(path), passphrase, authMayBeStored);
                     }
                 } catch (SVNException e) {
                     //
@@ -573,9 +579,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", dir.getAbsolutePath());
                 SVNErrorManager.error(error, SVNLogType.DEFAULT);
             }
-            if ("".equals(auth.getUserName()) || auth.getUserName() == null) {
+            if (!ISVNAuthenticationManager.SSL.equals(kind) && ("".equals(auth.getUserName()) || auth.getUserName() == null)) {
                 return;
             }
+            
             Map values = new SVNHashMap();
             values.put("svn:realmstring", realm);
             values.put("username", auth.getUserName());
@@ -609,6 +616,15 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (storePasswords) {
                         values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
                     }
+                    values.put("key", path);
+                }
+            } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+                SVNSSLAuthentication sslAuth = (SVNSSLAuthentication) auth;
+                if (storePasswords) {
+                    values.put("passphrase", cipher.encrypt(sslAuth.getPassword()));
+                }
+                if (sslAuth.getCertificateFile() != null) {
+                    String path = sslAuth.getCertificateFile().getAbsolutePath();
                     values.put("key", path);
                 }
             }
