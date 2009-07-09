@@ -2117,12 +2117,13 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                     segment.getEndRevision(), true);
             pathRanges.add(range);
         }
-        for (Iterator mergeInfoIter = mergeInfo.entrySet().iterator(); mergeInfoIter.hasNext();) {
-            Map.Entry mergeInfoEntry = (Map.Entry) mergeInfoIter.next();
-            Collection pathRanges = (Collection) mergeInfoEntry.getValue();
-            mergeInfoEntry.setValue(SVNMergeRangeList.fromCollection(pathRanges));
+        Map result = new TreeMap();
+        for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
+            String path = (String) paths.next();
+            Collection pathRanges = (Collection) mergeInfo.get(path);
+            result.put(path, SVNMergeRangeList.fromCollection(pathRanges));
         }
-        return mergeInfo;
+        return result;
     }
     
     private void recordMergeInfoOnMergedChildren(SVNDepth depth) throws SVNException {
