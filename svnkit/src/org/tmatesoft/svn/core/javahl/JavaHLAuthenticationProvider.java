@@ -65,9 +65,9 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 }
                 boolean save = prompt4.userAllowedSave();
                 if (keyPath != null && !"".equals(keyPath)) {
-                    return new SVNSSHAuthentication(userName, new File(keyPath), passphrase, port, save);
+                    return new SVNSSHAuthentication(userName, new File(keyPath), passphrase, port, save, url);
                 } else if (password != null){
-                    return new SVNSSHAuthentication(userName, password, port, save);
+                    return new SVNSSHAuthentication(userName, password, port, save, url);
                 }
             }
             return null;                        
@@ -81,7 +81,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                         password = null;
                     }
                     boolean save = prompt4.userAllowedSave();
-                    return new SVNSSLAuthentication(new File(cert), password, save);
+                    return new SVNSSLAuthentication(new File(cert), password, save, url);
                 }
             }
             return null;                        
@@ -96,7 +96,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             }
             if (keyPath != null && previousAuth == null) {
                 // use port number from configuration file?
-                return new SVNSSHAuthentication(userName, new File(keyPath), passPhrase, -1, true);
+                return new SVNSSHAuthentication(userName, new File(keyPath), passPhrase, -1, true, url);
             }
             // try to get password for ssh from the user.
         } else if(ISVNAuthenticationManager.USERNAME.equals(kind)) {
@@ -104,18 +104,18 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
             if (myPrompt instanceof PromptUserPasswordUser) {
                 PromptUserPasswordUser prompt3 = (PromptUserPasswordUser) myPrompt;
                 if (prompt3.promptUser(realm, userName, authMayBeStored))  {
-                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave(), url);
                 }
                 return getDefaultUserNameCredentials(userName);
             } else if (myPrompt instanceof PromptUserPassword3) {
                 PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
                 if (prompt3.prompt(realm, userName, authMayBeStored))  {
-                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave(), url);
                 }
                 return getDefaultUserNameCredentials(userName);
             } 
             if (myPrompt.prompt(realm, userName)) {
-                return new SVNUserNameAuthentication(myPrompt.getUsername(), false);
+                return new SVNUserNameAuthentication(myPrompt.getUsername(), false, url);
             }
             return getDefaultUserNameCredentials(userName);
         } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
@@ -128,16 +128,16 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
                     // use default port number from configuration file (should be in previous auth).
                     int portNumber = (previousAuth instanceof SVNSSHAuthentication) ? ((SVNSSHAuthentication) previousAuth).getPortNumber() : -1;
-                    return new SVNSSHAuthentication(prompt3.getUsername(), prompt3.getPassword(), portNumber, prompt3.userAllowedSave());
+                    return new SVNSSHAuthentication(prompt3.getUsername(), prompt3.getPassword(), portNumber, prompt3.userAllowedSave(), url);
                 } 
-                return new SVNPasswordAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave());
+                return new SVNPasswordAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave(), url);
             }
         }else{
             if(myPrompt.prompt(realm, userName)){
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                    return new SVNSSHAuthentication(userName, myPrompt.getPassword(), -1, true);
+                    return new SVNSSHAuthentication(userName, myPrompt.getPassword(), -1, true, url);
                 } 
-                return new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true);
+                return new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true, url);
             }
         }
         return null;
@@ -146,7 +146,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     private SVNAuthentication getDefaultUserNameCredentials(String userName) {
         if (ADAPTER_DEFAULT_PROMPT_CLASS.equals(myPrompt.getClass().getName())) {
             // return default username, despite prompt was 'cancelled'.
-            return new SVNUserNameAuthentication(userName, false);
+            return new SVNUserNameAuthentication(userName, false, null);
         }
         return null;
     }

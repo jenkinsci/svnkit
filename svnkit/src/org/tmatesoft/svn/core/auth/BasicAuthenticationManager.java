@@ -73,9 +73,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      */
     public BasicAuthenticationManager(String userName, String password) {
         setAuthentications(new SVNAuthentication[] {
-                new SVNPasswordAuthentication(userName, password, false),
-                new SVNSSHAuthentication(userName, password, -1, false),
-                new SVNUserNameAuthentication(userName, false),
+                new SVNPasswordAuthentication(userName, password, false, null),
+                new SVNSSHAuthentication(userName, password, -1, false, null),
+                new SVNUserNameAuthentication(userName, false, null),
         });        
     }
     
@@ -90,8 +90,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      */
     public BasicAuthenticationManager(String userName, File keyFile, String passphrase, int portNumber) {
         setAuthentications(new SVNAuthentication[] {
-                new SVNSSHAuthentication(userName, keyFile, passphrase, portNumber, false),
-                new SVNUserNameAuthentication(userName, false),
+                new SVNSSHAuthentication(userName, keyFile, passphrase, portNumber, false, null),
+                new SVNUserNameAuthentication(userName, false, null),
         });        
     }
     
@@ -175,10 +175,10 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         }
         if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
-                return new SVNUserNameAuthentication(url.getUserInfo(), false);
+                return new SVNUserNameAuthentication(url.getUserInfo(), false, url);
             }
             // client will use default.
-            return new SVNUserNameAuthentication(null, false);
+            return new SVNUserNameAuthentication(null, false, url);
         }
         SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
         return null;

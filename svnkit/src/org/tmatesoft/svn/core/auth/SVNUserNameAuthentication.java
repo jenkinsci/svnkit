@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNURL;
+
 
 /**
  * The <b>SVNUserNameAuthentication</b> class represents a simple 
@@ -32,6 +34,21 @@ public class SVNUserNameAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNUserNameAuthentication(String userName, boolean storageAllowed) {
-        super(ISVNAuthenticationManager.USERNAME, userName, storageAllowed);
+        this(userName, storageAllowed, null);
     }
+
+    /**
+     * Creates a username authentication credential.
+     * 
+     * @param userName         a user name
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     * @param url              url these credentials are applied to
+     * @since 1.3.1
+     */
+    public SVNUserNameAuthentication(String userName, boolean storageAllowed, SVNURL url) {
+        super(ISVNAuthenticationManager.USERNAME, userName, storageAllowed, url);
+    }
+
 }

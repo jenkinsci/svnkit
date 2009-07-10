@@ -99,8 +99,8 @@ abstract class HTTPAuthentication {
         myPassword = password;
     }
     
-    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, 
-            HTTPAuthentication prevResponse, String charset) throws SVNException {
+    public static HTTPAuthentication parseAuthParameters(Collection authHeaderValues, HTTPAuthentication prevResponse, String charset, 
+            Collection authTypes) throws SVNException {
         if (authHeaderValues == null) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
                     "Missing HTTP authorization method"); 
@@ -110,7 +110,7 @@ abstract class HTTPAuthentication {
         HTTPAuthentication auth = null;
         String authHeader = null;
         // sort auth headers accordingly to priorities.
-        authHeaderValues = sortSchemes(authHeaderValues);
+        authHeaderValues = sortSchemes(authHeaderValues, authTypes);
         
         for (Iterator authSchemes = authHeaderValues.iterator(); authSchemes.hasNext();) {
             authHeader = (String)authSchemes.next();
@@ -258,18 +258,22 @@ abstract class HTTPAuthentication {
         return false;
     }
     
-    private static Collection sortSchemes(Collection authHeaders) {
+    private static Collection sortSchemes(Collection authHeaders, Collection authTypes) {
         String priorities = System.getProperty(AUTH_METHODS_PROPERTY, System.getProperty(OLD_AUTH_METHODS_PROPERTY));
-        if (priorities == null) {
-            return authHeaders;
-        }
         final List schemes = new ArrayList();
-        for(StringTokenizer tokens = new StringTokenizer(priorities, " ,"); tokens.hasMoreTokens();) {
-            String scheme = tokens.nextToken();
-            if (!schemes.contains(scheme)) {
-                schemes.add(scheme);
+        if (authTypes != null && !authTypes.isEmpty()) {
+            schemes.addAll(authTypes);
+        } else if (priorities != null && !"".equals(priorities.trim())) {
+            for(StringTokenizer tokens = new StringTokenizer(priorities, " ,"); tokens.hasMoreTokens();) {
+                String scheme = tokens.nextToken();
+                if (!schemes.contains(scheme)) {
+                    schemes.add(scheme);
+                }
             }
+        } else {
+            return authHeaders;    
         }
+        
         List ordered = new ArrayList(authHeaders);
         Collections.sort(ordered, new Comparator() {
             public int compare(Object o1, Object o2) {

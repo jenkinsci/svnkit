@@ -132,7 +132,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 			// check dates for 1 and 2
 			// check host name for 4
 			if (authProvider != null) {
-				boolean store = myAuthManager.isAuthStorageEnabled();
+				boolean store = myAuthManager.isAuthStorageEnabled(myURL);
 				int result = authProvider.acceptServerAuthentication(myURL, myRealm, certs[0], store);
 				if (result == ISVNAuthenticationProvider.ACCEPTED && store) {
 					try {

@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNURL;
+
 /**
  * The <b>SVNPasswordAuthentication</b> class represents a simple 
  * user credential pair - a username and password.
@@ -39,10 +41,25 @@ public class SVNPasswordAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNPasswordAuthentication(String userName, String password, boolean storageAllowed) {
-        super(ISVNAuthenticationManager.PASSWORD, userName, storageAllowed);
+        this(ISVNAuthenticationManager.PASSWORD, userName, storageAllowed, null);
+    }
+
+    /**
+     * Creates a password user credential object given a username and password. 
+     * 
+     * @param userName         the name of a user to authenticate 
+     * @param password         the user's password
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     * @param url              url these credentials are applied to
+     * @since 1.3.1
+     */
+    public SVNPasswordAuthentication(String userName, String password, boolean storageAllowed, SVNURL url) {
+        super(ISVNAuthenticationManager.PASSWORD, userName, storageAllowed, url);
         myPassword = password == null ? "" : password;
     }
-    
+
     /**
      * Returns this user credential's password. 
      * 
