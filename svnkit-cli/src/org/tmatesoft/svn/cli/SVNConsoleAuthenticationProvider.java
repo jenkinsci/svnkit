@@ -53,8 +53,8 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                                                              "possible.  See the documentation for details.\n" + 
                                                              "\n" + 
                                                              "You can avoid future appearances of this warning by setting the value\n" +
-                                                             "of the 'store-ssl-client-cert-pp-plaintext' option to either 'yes' or\n" +
-                                                             "'no' in '{1}'.\n" +
+                                                             "of the ''store-ssl-client-cert-pp-plaintext'' option to either ''yes'' or\n" +
+                                                             "''no'' in ''{1}''.\n" +
                                                              "-----------------------------------------------------------------------\n";        
     private static final String OUR_PASSWORD_PROMPT_TEXT =   "-----------------------------------------------------------------------\n" +
                                                              "ATTENTION!  Your password for authentication realm:\n" +
@@ -66,8 +66,8 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                                                              "possible.  See the documentation for details.\n" +
                                                              "\n" + 
                                                              "You can avoid future appearances of this warning by setting the value\n" +
-                                                             "of the 'store-plaintext-passwords' option to either 'yes' or 'no' in\n" +
-                                                             "'{1}'.\n" +
+                                                             "of the ''store-plaintext-passwords'' option to either ''yes'' or ''no'' in\n" +
+                                                             "''{1}''.\n" +
                                                              "-----------------------------------------------------------------------\n";
     
     private static final String OUR_PASSWORD_PROMPT_STRING = "Store password unencrypted (yes/no)? ";
@@ -75,6 +75,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
     private static final int MAX_PROMPT_COUNT = 3;
     private Map myRequestsCount = new HashMap();
     private boolean myIsTrustServerCertificate;
+    
     public SVNConsoleAuthenticationProvider(boolean trustServerCertificate) {
         myIsTrustServerCertificate = trustServerCertificate;
     }
