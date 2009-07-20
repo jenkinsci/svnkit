@@ -84,7 +84,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public abstract class SVNMergeDriver extends SVNBasicClient {
+public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMergeStrategy {
 
     protected boolean myAreSourcesAncestral;
     protected boolean myIsSameRepository;
@@ -888,7 +888,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return repository; 
     }
 
-    protected Object[] calculateRemainingRangeList(File targetFile, SVNEntry entry, SVNURL sourceRoot, boolean[] indirect,
+    public Object[] calculateRemainingRangeList(File targetFile, SVNEntry entry, SVNURL sourceRoot, boolean[] indirect,
                                  SVNURL url1, long revision1, SVNURL url2, long revision2,
                                  SVNMergeRange range) throws SVNException {
         SVNMergeRangeList remainingRangeList = null;
@@ -918,7 +918,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return new Object[]{remainingRangeList, targetMergeInfo, implicitMergeInfo};
     }
 
-    protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2, 
+    protected void doFileMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
             File targetWCPath, SVNAdminArea adminArea, boolean sourcesRelated) throws SVNException {
         boolean isRollBack = revision1 > revision2;
         SVNURL primaryURL = isRollBack ? url1 : url2;
@@ -1050,8 +1050,15 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         }
     }
 
+    public void preDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
+    		SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) {
+// This implementation does nothing       
+    }
+
     protected void doDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
     		SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException {
+        preDirectoryMerge(url1, revision1, url2, revision2, parentEntry, adminArea, depth);
+        
         File targetWCPath = adminArea.getRoot();
     	boolean isRollBack = revision1 > revision2;
     	SVNURL primaryURL = isRollBack ? url1 : url2;
@@ -1802,7 +1809,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsIgnoreAncestry;
     }
 
-    protected boolean isRecordMergeInfo() {
+    public boolean isRecordMergeInfo() {
     	return myIsMergeInfoCapable && myAreSourcesAncestral && myIsSameRepository && !myIsIgnoreAncestry && !myIsDryRun;
     }
     
@@ -2034,7 +2041,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return result;
     }
 
-    protected Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end) throws SVNException {
+    public Map calculateImplicitMergeInfo(SVNRepository repos, SVNURL url, long[] targetRev, long start, long end) throws SVNException {
         Map implicitMergeInfo = null;
         boolean closeSession = false;
         SVNURL sessionURL = null;
@@ -2408,7 +2415,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     	}
     }
     
-    protected SVNRemoteDiffEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, 
+    public SVNRemoteDiffEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, 
     		SVNURL url2, final long revision2, final List childrenWithMergeInfo, final boolean isRollBack, 
     		SVNDepth depth, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, 
             SVNRemoteDiffEditor editor) throws SVNException {
@@ -2525,7 +2532,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return editor;
     }
 
-    protected SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
+    public SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
             AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
         if (editor == null) {
             editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
@@ -2640,7 +2647,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
         return childrenWithMergeInfo;
     }
 
-    protected ISVNEntryHandler getMergeInfoEntryHandler(String mergeSrcPath, SVNURL sourceRootURL, long revision1, long revision2, SVNRepository repository, SVNDepth depth, List childrenWithMergeInfo) {
+    public ISVNEntryHandler getMergeInfoEntryHandler(String mergeSrcPath, SVNURL sourceRootURL, long revision1, long revision2, SVNRepository repository, SVNDepth depth, List childrenWithMergeInfo) {
         return new MergeInfoFetcher(mergeSrcPath, sourceRootURL, revision1, revision2, repository, depth, childrenWithMergeInfo);
     }
 
@@ -3028,16 +3035,16 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
     }
     
     protected class MergePath implements Comparable {
-        File myPath;
-        boolean myHasMissingChildren;
-        boolean myIsSwitched;
-        boolean myHasNonInheritableMergeInfo;
-        boolean myIsAbsent;
-        boolean myIsIndirectMergeInfo;
-        boolean myIsScheduledForDeletion;
-        SVNMergeRangeList myRemainingRanges;
-        Map myPreMergeMergeInfo;
-        Map myImplicitMergeInfo;
+        protected File myPath;
+        protected boolean myHasMissingChildren;
+        protected boolean myIsSwitched;
+        protected boolean myHasNonInheritableMergeInfo;
+        protected boolean myIsAbsent;
+        protected boolean myIsIndirectMergeInfo;
+        protected boolean myIsScheduledForDeletion;
+        public SVNMergeRangeList myRemainingRanges;
+        protected Map myPreMergeMergeInfo;
+        protected Map myImplicitMergeInfo;
         
         public MergePath() {
         }

@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNExtendedMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -89,7 +90,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since   1.2
  * @author  TMate Software Ltd.
  */
-public class SVNDiffClient extends SVNExtendedMergeDriver {
+public class SVNDiffClient extends SVNMergeDriver {
 
     private ISVNDiffGenerator myDiffGenerator;
     private SVNDiffOptions myDiffOptions;
