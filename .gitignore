@@ -13,7 +13,6 @@ svnkit-eclipse/bin
 svnkit-test/bin
 svnkit-test/python-tests-log.xml
 svnkit-test/python.log.html
-svnkit-test/src/org/tmatesoft/svn/test/util/test.properties
 svnkit-test/test.properties
 svnkit/bin
 svnkit/src/org/tmatesoft/svn/examples
