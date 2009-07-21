@@ -105,7 +105,7 @@ public class SVNSSHConnector implements ISVNConnector {
                 }
                 if (authentication == null) {
                     SVNErrorManager.cancel("authentication cancelled", SVNLogType.NETWORK);
-                } else if (connection == null) {
+                } else if (connection == null || connection.isDisposed()) {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Can not establish connection to ''{0}''", realm), SVNLogType.NETWORK);
                 }
                 try {
