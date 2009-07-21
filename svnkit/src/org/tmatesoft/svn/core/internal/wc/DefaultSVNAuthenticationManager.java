@@ -180,13 +180,16 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             if (myProviders[i] == null) {
                 continue;
             }
-            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, null, null, myIsStoreAuth);
+            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, null, myPreviousAuthentication, myIsStoreAuth);
             if (auth != null) {
                 if (i == 2) {
                     myLastLoadedAuth = auth;
                 }
                 myPreviousAuthentication = auth;
                 myLastProviderIndex = i;
+                if (!ISVNAuthenticationManager.USERNAME.equals(kind) && auth instanceof SVNUserNameAuthentication) {
+                    continue;
+                }
                 return auth;
             }
             if (i == 3) {
@@ -517,6 +520,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     return new SVNSSHAuthentication(myUserName, myPassword, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore, url);
                 } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                     if (myUserName == null || "".equals(myUserName.trim())) {
+                        String defaultUserName = getUserName(url);
+                        if (defaultUserName != null) {
+                            return new SVNUserNameAuthentication(defaultUserName, false);
+                        }
                         return null;
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore, url);
