@@ -41,7 +41,7 @@ public class SVNPasswordAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNPasswordAuthentication(String userName, String password, boolean storageAllowed) {
-        this(ISVNAuthenticationManager.PASSWORD, userName, storageAllowed, null);
+        this(userName, password, storageAllowed, null);
     }
 
     /**
