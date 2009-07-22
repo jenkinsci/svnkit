@@ -77,7 +77,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myProviders = new ISVNAuthenticationProvider[4];
         myProviders[0] = createDefaultAuthenticationProvider(userName, password, privateKey, passphrase, myIsStoreAuth);
         myProviders[1] = createRuntimeAuthenticationProvider();
-        myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"));
+        myProviders[2] = createCacheAuthenticationProvider(new File(myConfigDirectory, "auth"), userName);
     }
     
     public void setAuthStoreHandler(ISVNAuthStoreHandler authStoreHandler) {
@@ -397,6 +397,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     protected String getUserName(SVNURL url) {
         String host = url != null ? url.getHost() : null;
+//        if (url != null && url.getUserInfo() != null) {
+//            return url.getUserInfo(); 
+//        }
         Map properties = getHostProperties(host);
         String userName = (String) properties.get("username");
         return userName; 
@@ -470,8 +473,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     protected ISVNAuthenticationProvider createRuntimeAuthenticationProvider() {
         return new CacheAuthenticationProvider();
     }
-    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
-        return new PersistentAuthenticationProvider(authDir);
+    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
+        return new PersistentAuthenticationProvider(authDir, userName);
     }
     
     private static String getOptionValue(String commandLine, String optionName) {
@@ -521,9 +524,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
                     if (myUserName == null || "".equals(myUserName.trim())) {
                         String defaultUserName = getUserName(url);
+                        defaultUserName = defaultUserName == null ? System.getProperty("user.name") : defaultUserName; 
                         if (defaultUserName != null) {
                             return new SVNUserNameAuthentication(defaultUserName, false);
-                        }
+                        } 
                         return null;
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore, url);
@@ -589,9 +593,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
         
         private File myDirectory;
-
-        public PersistentAuthenticationProvider(File directory) {
+        private String myUserName;
+        
+        public PersistentAuthenticationProvider(File directory, String userName) {
             myDirectory = directory;
+            myUserName = userName;
         }
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, 
@@ -614,7 +620,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             String fileName = SVNFileUtil.computeChecksum(realm);
             File authFile = new File(dir, fileName);
-            String specifiedUserName = previousAuth != null ? previousAuth.getUserName() : null; 
             if (authFile.exists()) {
                 SVNWCProperties props = new SVNWCProperties(authFile, "");
                 try {
@@ -629,17 +634,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         return null;
                     }
 
-                    String userName = getUserName(url);
-                    if (userName == null || "".equals(userName.trim())) {
-                        userName = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("username"));
-                    }
+                    String userName = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("username"));
                     
                     if (!ISVNAuthenticationManager.SSL.equals(kind)) {
                         if (userName == null || "".equals(userName.trim())) {
-                            
                             return null;
                         }
-                        if (specifiedUserName != null && !specifiedUserName.equals(userName)) {
+                        if (myUserName != null && !myUserName.equals(userName)) {
                             return null;
                         }
                     }
@@ -653,6 +654,9 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     String port = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("port"));
                     port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+                        if (password == null) {
+                            return new SVNUserNameAuthentication(userName, authMayBeStored);
+                        }
                         return new SVNPasswordAuthentication(userName, password, authMayBeStored, url);
                     } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                         // get port from config file or system property?

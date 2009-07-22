@@ -48,7 +48,7 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
         super(configDirectory, storeAuth, userName, password, keyFile, passphrase);
     }
 
-    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
+    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
         return new KeyringAuthenticationProvider();
     }
 

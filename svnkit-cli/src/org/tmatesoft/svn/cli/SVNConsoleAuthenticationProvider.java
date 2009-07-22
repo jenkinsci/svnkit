@@ -130,8 +130,25 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         
         if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
             String name = null;
+            String defaultUserName = null;
+            if (previousAuth != null) {
+                if (previousAuth instanceof SVNUserNameAuthentication) {
+                    name = previousAuth.getUserName();
+                } else if (previousAuth instanceof SVNPasswordAuthentication) {
+                    defaultUserName = previousAuth.getUserName();
+                }
+                
+            }
+
             printRealm(realm);
-            name = prompt("Username");
+
+            if (name == null) {
+                String promptString = defaultUserName == null  ? "Username" : "Username [" + defaultUserName + "]";
+                name = prompt(promptString);
+                if ("".equals(name) && defaultUserName != null) {
+                    name = defaultUserName;
+                }
+            }
             if (name == null) {
                 return null;
             }
