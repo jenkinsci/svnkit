@@ -66,7 +66,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password, File privateKey, String passphrase) {
-        password = password == null ? "" : password;
+        //password = password == null ? "" : password;
 
         myIsStoreAuth = storeAuth;
         myConfigDirectory = configDirectory;
@@ -508,6 +508,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPassphrase = passphrase;
             myIsStore = store;
         }
+        
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, 
                 SVNAuthentication previousAuth, boolean authMayBeStored) {
             if (previousAuth == null) {
@@ -529,6 +530,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                             return new SVNUserNameAuthentication(defaultUserName, false);
                         } 
                         return null;
+                    }
+                    
+                    if (myPassword == null) {
+                        return new SVNUserNameAuthentication(myUserName, false);
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore, url);
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
@@ -705,6 +710,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 saveSSHCredential(values, auth, realm);
             } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
                 saveSSLCredential(values, auth, realm);
+            } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                saveUserNameCredential(values, auth);
             }
             // get file name for auth and store password.
             String fileName = SVNFileUtil.computeChecksum(realm);
@@ -735,6 +742,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return ACCEPTED;
         }
 
+        private void saveUserNameCredential(Map values, SVNAuthentication auth) {
+            values.put("username", auth.getUserName());
+        }
+        
         private void savePasswordCredential(Map values, SVNAuthentication auth, String realm) throws SVNException {
             values.put("username", auth.getUserName());
             
