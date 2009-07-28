@@ -159,43 +159,123 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             return new SVNPasswordAuthentication(name, password, authMayBeStored, url);
         } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
             String name = null;
+            String defaultUserName = null;
+            String defaultPassword = null;
+            String defaultPassphrase = null;
+            File defaultPrivateKeyFile = null;
+            int defaultPort = -1;
+
+            if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
+                defaultUserName = url.getUserInfo();
+            }
+            
+            if (previousAuth != null && previousAuth instanceof SVNSSHAuthentication) {
+                SVNSSHAuthentication sshPreviousAuth = (SVNSSHAuthentication) previousAuth;
+                defaultUserName = defaultUserName == null ? sshPreviousAuth.getUserName() : defaultUserName;
+
+                defaultPassword = sshPreviousAuth.getPassword();
+                defaultPassphrase = sshPreviousAuth.getPassphrase();
+                defaultPrivateKeyFile = sshPreviousAuth.getPrivateKeyFile();
+                defaultPort = sshPreviousAuth.getPortNumber();
+            }
+            
             printRealm(realm);
-            name = prompt("Username");
+
+            name = prompt(defaultUserName == null ? "Username" : "Username [" + defaultUserName + "]");
+            if ("".equals(name) && defaultUserName != null) {
+                name = defaultUserName;
+            }
+            
             if (name == null) {
                 return null;
             }
-            String password = promptPassword("Password for '" + url.getHost() + "' (leave blank if you are going to use private key)");
+
+            String passwordPrompt = null;
+            if (defaultPassword != null) {
+                passwordPrompt = "Password for '" + url.getHost() + "' (leave blank if you are going to use private key) [";
+                for (int i = 0; i < defaultPassword.length(); i++) {
+                    passwordPrompt += "*";
+                }
+                passwordPrompt += "]";
+            } else {
+                passwordPrompt = "Password for '" + url.getHost() + "' (leave blank if you are going to use private key)";
+            }
+            
+            String password = promptPassword(passwordPrompt);
             if (password == null) {
                 return null;
             } else if ("".equals(password)) {
-                password = null;
+                if (defaultPassword != null) {
+                    password = defaultPassword;
+                } else {
+                    password = null;
+                }
             }
-            String keyFile = null;
+
+            String keyFilePath = null;
+            File keyFile = null;
             String passphrase = null;
             if (password == null) {
-                while(keyFile == null) {
-                    keyFile = prompt("Private key for '" + url.getHost() + "' (OpenSSH format)");
-                    if ("".equals(keyFile)) {
+                while(keyFilePath == null) {
+                    String privateKeyFilePrompt = null;
+                    if (defaultPrivateKeyFile != null) {
+                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format) [" + defaultPrivateKeyFile.getAbsolutePath() + "]";
+                    } else {
+                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format)"; 
+                    }
+
+                    keyFilePath = prompt(privateKeyFilePrompt);
+                    if ("".equals(keyFilePath)) {
+                        if (defaultPrivateKeyFile != null) {
+                            if (!defaultPrivateKeyFile.isFile() || !defaultPrivateKeyFile.canRead()) {
+                                defaultPrivateKeyFile = null;
+                                keyFilePath = null;
+                                keyFile = null;
+                                continue;
+                            }
+                            keyFile = defaultPrivateKeyFile;
+                            keyFilePath = keyFile.getAbsolutePath();
+                        }
                         continue;
                     }
-                    if (keyFile == null) {
+
+                    if (keyFilePath == null) {
                         return null;
                     }
-                    File file = new File(keyFile);
-                    if (!file.isFile() || !file.canRead()) {
+                    
+                    keyFile = new File(keyFilePath);
+                    if (!keyFile.isFile() || !keyFile.canRead()) {
+                        keyFilePath = null;
                         keyFile = null;
                         continue;
                     }
                 }
-                passphrase = promptPassword("Private key passphrase [none]");
+                
+                String passphrasePrompt = null;
+                if (defaultPassphrase != null) {
+                    passphrasePrompt = "Private key passphrase [";
+                    for (int i = 0; i < defaultPassphrase.length(); i++) {
+                        passphrasePrompt += "*";
+                    }
+                    passphrasePrompt += "]";
+                } else {
+                    passphrasePrompt = "Private key passphrase [none]";
+                }
+                
+                passphrase = promptPassword(passphrasePrompt);
                 if ("".equals(passphrase)) {
-                    passphrase = null;
+                    if (defaultPassphrase != null) {
+                        passphrase = defaultPassphrase;
+                    } else {
+                        passphrase = null;
+                    }
                 } else if (passphrase == null) {
                     return null;
                 }
             }
-            int port = 22;
-            String portValue = prompt("Port number for '" + url.getHost() + "' [22]");
+
+            int port = defaultPort > 0 ? defaultPort : 22;
+            String portValue = prompt("Port number for '" + url.getHost() + "' [" + port + "]");
             if (portValue == null) {
                 return null;
             }
@@ -207,7 +287,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             if (password != null) {
                 return new SVNSSHAuthentication(name, password, port, authMayBeStored, url);
             } else if (keyFile != null) {
-                return new SVNSSHAuthentication(name, new File(keyFile), passphrase, port, authMayBeStored, url);
+                return new SVNSSHAuthentication(name, keyFile, passphrase, port, authMayBeStored, url);
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             String name = System.getProperty("user.name");
