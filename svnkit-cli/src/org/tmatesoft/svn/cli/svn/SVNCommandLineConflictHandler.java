@@ -160,13 +160,13 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
                         message = MessageFormat.format("They want to delete the property, you want to change the value to ''{0}''.", 
                                 new Object[] { myVal });
                         mySVNEnvironment.getErr().println(message);
+                    } else {
+                        String reposVal = SVNFileUtil.readFile(files.getRepositoryFile());
+                        message = MessageFormat.format("They want to change the property value to ''{0}'', you want to delete the property.", 
+                                new Object[] { reposVal });
+                        mySVNEnvironment.getErr().println(message);
                     }
-                } else {
-                    String reposVal = SVNFileUtil.readFile(files.getRepositoryFile());
-                    message = MessageFormat.format("They want to change the property value to ''{0}'', you want to delete the property.", 
-                            new Object[] { reposVal });
-                    mySVNEnvironment.getErr().println(message);
-                }
+                } 
             } else {
                 String message = "Conflict discovered in ''{0}''.";
                 message = MessageFormat.format(message, new Object[] { path });
