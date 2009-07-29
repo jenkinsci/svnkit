@@ -843,8 +843,11 @@ public class SVNWCClient extends SVNBasicClient {
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
         SVNPropertiesManager.validateRevisionProperties(revisionProperties);
+        
+        SVNCommitInfo commitInfo = null;
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, true, revisionProperties, null);
         try {
             commitEditor.openRoot(revNumber);
@@ -856,13 +859,15 @@ public class SVNWCClient extends SVNBasicClient {
                 commitEditor.changeDirProperty(propName, propValue);
             }
             commitEditor.closeDir();
+            commitInfo = commitEditor.closeEdit();
         } catch (SVNException svne) {
             commitEditor.abortEdit();
+            throw svne;
         }
         if (handler != null) {
             handler.handleProperty(url, new SVNPropertyData(propName, propValue, getOptions()));
         }
-        return commitEditor.closeEdit();
+        return commitInfo;
     }
 
     /**
