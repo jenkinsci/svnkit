@@ -185,11 +185,13 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 if (i == 2) {
                     myLastLoadedAuth = auth;
                 }
+
                 myPreviousAuthentication = auth;
+                myLastProviderIndex = i;
+
                 if (auth.isPartial()) {
                     continue;
                 }
-                myLastProviderIndex = i;
                 return auth;
             }
             if (i == 3) {
@@ -222,12 +224,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 }
                 
                 myPreviousAuthentication = auth;
+                myLastProviderIndex = i;
 
                 if (auth.isPartial()) {
                     continue;
                 }
 
-                myLastProviderIndex = i;
                 return auth;
             }
             if (i == 3) {
