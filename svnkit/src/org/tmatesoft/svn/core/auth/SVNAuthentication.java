@@ -38,6 +38,7 @@ public class SVNAuthentication {
     private boolean myIsStorageAllowed;
     private String myKind;
     private SVNURL myURL;
+    private boolean myIsPartial;
     
     /**
      * Creates a username user credential object given a username. 
@@ -49,7 +50,7 @@ public class SVNAuthentication {
      *                          global auth cache, otherwise not
      */
     public SVNAuthentication(String kind, String userName, boolean storageAllowed) {
-        this(kind, userName, storageAllowed, null);
+        this(kind, userName, storageAllowed, null, false);
     }
 
     /**
@@ -63,11 +64,12 @@ public class SVNAuthentication {
      * @param url               url these credentials are applied to
      * @since 1.3.1
      */
-    public SVNAuthentication(String kind, String userName, boolean storageAllowed, SVNURL url) {
+    public SVNAuthentication(String kind, String userName, boolean storageAllowed, SVNURL url, boolean isPartial) {
         myUserName = userName;
         myIsStorageAllowed = storageAllowed;
         myKind = kind;
         myURL = url;
+        myIsPartial = isPartial;
     }
 
     /**
@@ -87,6 +89,19 @@ public class SVNAuthentication {
      */
     public boolean isStorageAllowed() {
         return myIsStorageAllowed;
+    }
+
+    /**
+     * Says if these credentials are partial. 
+     * Partial credentials could miss password\passhprase 
+     * and could be used to complement missing information.  
+     * 
+     * @return <span class="javakeyword">true</span> if parital;
+     *         otherwise <span class="javakeyword">false</span>
+     * @since 1.3
+     */
+    public boolean isPartial() {
+        return myIsPartial;
     }
     
     /**

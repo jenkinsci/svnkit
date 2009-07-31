@@ -34,7 +34,7 @@ public class SVNUserNameAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNUserNameAuthentication(String userName, boolean storageAllowed) {
-        this(userName, storageAllowed, null);
+        this(userName, storageAllowed, null, false);
     }
 
     /**
@@ -47,8 +47,8 @@ public class SVNUserNameAuthentication extends SVNAuthentication {
      * @param url              url these credentials are applied to
      * @since 1.3.1
      */
-    public SVNUserNameAuthentication(String userName, boolean storageAllowed, SVNURL url) {
-        super(ISVNAuthenticationManager.USERNAME, userName, storageAllowed, url);
+    public SVNUserNameAuthentication(String userName, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        super(ISVNAuthenticationManager.USERNAME, userName, storageAllowed, url, isPartial);
     }
 
 }

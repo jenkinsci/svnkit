@@ -124,7 +124,7 @@ public class SVNSSHConnector implements ISVNConnector {
                     } else {
                         repository.setExternalUserName(author.getUserName()); 
                     }
-                    author = new SVNUserNameAuthentication(userName, author.isStorageAllowed(), repository.getLocation());
+                    author = new SVNUserNameAuthentication(userName, author.isStorageAllowed(), repository.getLocation(), false);
                     authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, author);
     
                     if ("".equals(repository.getExternalUserName())) {

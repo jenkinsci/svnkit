@@ -51,7 +51,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed) {
-        this(userName, password, portNumber, storageAllowed, null);
+        this(userName, password, portNumber, storageAllowed, null, false);
     }
 
     /**
@@ -68,8 +68,8 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * @param url              url these credentials are applied to
      * @since 1.3.1
      */
-    public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed, SVNURL url) {
-        this(userName, portNumber, storageAllowed, url);
+    public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, storageAllowed, url, isPartial);
         myPassword = password;
     }
 
@@ -87,7 +87,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed) {
-        this(userName, keyFile, passphrase, portNumber, storageAllowed, null);
+        this(userName, keyFile, passphrase, portNumber, storageAllowed, null, false);
     }
 
     /**
@@ -105,8 +105,8 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * @param url              url these credentials are applied to
      * @since 1.3.1
      */
-    public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed, SVNURL url) {
-        this(userName, portNumber, storageAllowed, url);
+    public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, storageAllowed, url, isPartial);
         myPrivateKeyFile = keyFile;
         myPassphrase = passphrase;
     }
@@ -125,7 +125,7 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, char[] privateKey, String passphrase, int portNumber, boolean storageAllowed) {
-        this(userName, privateKey, passphrase, portNumber, storageAllowed, null);
+        this(userName, privateKey, passphrase, portNumber, storageAllowed, null, false);
     }
 
     /**
@@ -143,14 +143,14 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      * @param url              url these credentials are applied to
      * @since 1.3.1
      */
-    public SVNSSHAuthentication(String userName, char[] privateKey, String passphrase, int portNumber, boolean storageAllowed, SVNURL url) {
-        this(userName, portNumber, storageAllowed, url);
+    public SVNSSHAuthentication(String userName, char[] privateKey, String passphrase, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, storageAllowed, url, isPartial);
         myPrivateKeyValue = privateKey;
         myPassphrase = passphrase;
     }
 
-    private SVNSSHAuthentication(String userName, int portNumber, boolean storageAllowed, SVNURL url) {
-        super(ISVNAuthenticationManager.SSH, userName, storageAllowed, url);
+    private SVNSSHAuthentication(String userName, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        super(ISVNAuthenticationManager.SSH, userName, storageAllowed, url, isPartial);
         myPortNumber = portNumber;
     }
     

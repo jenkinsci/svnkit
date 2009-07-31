@@ -71,11 +71,11 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                 String path = (String) info.get("cert");
                 String password = (String) info.get("password");
                 if (path != null) {
-                    return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url);
+                    return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
                 }
             } else if (info != null && !info.isEmpty() && info.get("username") != null) {
                 if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-                    return new SVNPasswordAuthentication((String) info.get("username"), (String) info.get("password"), authMayBeStored, url);
+                    return new SVNPasswordAuthentication((String) info.get("username"), (String) info.get("password"), authMayBeStored, url, false);
                 } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                     int port = url.hasPort() ? url.getPort() : -1;
                     if (port < 0 && info.get("port") != null) {
@@ -87,12 +87,12 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                     }
                     if (info.get("key") != null) {
                         File keyPath = new File((String) info.get("key"));
-                        return new SVNSSHAuthentication((String) info.get("username"), keyPath, (String) info.get("passphrase"), port, authMayBeStored, url);
+                        return new SVNSSHAuthentication((String) info.get("username"), keyPath, (String) info.get("passphrase"), port, authMayBeStored, url, false);
                     } else if (info.get("password") != null) {
-                        return new SVNSSHAuthentication((String) info.get("username"), (String) info.get("password"), port, authMayBeStored, url);
+                        return new SVNSSHAuthentication((String) info.get("username"), (String) info.get("password"), port, authMayBeStored, url, false);
                     }
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-                    return new SVNUserNameAuthentication((String) info.get("username"), authMayBeStored, url);
+                    return new SVNUserNameAuthentication((String) info.get("username"), authMayBeStored, url, false);
                 }
             }
             return null;

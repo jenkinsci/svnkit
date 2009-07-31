@@ -218,7 +218,7 @@ public class DAVRepositoryManager {
         }
         
         String userName = myUserPrincipal != null ? myUserPrincipal.getName() : null;
-        SVNAuthentication auth = new SVNUserNameAuthentication(userName, false, null);
+        SVNAuthentication auth = new SVNUserNameAuthentication(userName, false, null, false);
         BasicAuthenticationManager authManager = new BasicAuthenticationManager(new SVNAuthentication[] { auth });
         SVNRepository resourceRepository = SVNRepositoryFactory.create(SVNURL.parseURIEncoded(getResourceRepositoryRoot()));
         resourceRepository.setAuthenticationManager(authManager);

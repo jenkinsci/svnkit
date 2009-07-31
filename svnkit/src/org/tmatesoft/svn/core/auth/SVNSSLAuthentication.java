@@ -38,7 +38,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      *                         credentials cache    
      */
     public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) {
-        this(certFile, password, storageAllowed, null);
+        this(certFile, password, storageAllowed, null, false);
     }
 
     /**
@@ -51,8 +51,8 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      * @param url              url these credentials are applied to
      * @since 1.3.1
      */
-    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed, SVNURL url) {
-        super(ISVNAuthenticationManager.SSL, null, storageAllowed, url);
+    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        super(ISVNAuthenticationManager.SSL, null, storageAllowed, url, isPartial);
         myCertificate = certFile;
         myPassword = password;
     }

@@ -132,12 +132,11 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             String name = null;
             String defaultUserName = null;
             if (previousAuth != null) {
-                if (previousAuth instanceof SVNUserNameAuthentication) {
+                if (previousAuth.isPartial()) {
                     name = previousAuth.getUserName();
-                } else if (previousAuth instanceof SVNPasswordAuthentication) {
+                } else if (previousAuth.getUserName() != null) {
                     defaultUserName = previousAuth.getUserName();
                 }
-                
             }
 
             printRealm(realm);
@@ -156,7 +155,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             if (password == null) {
                 return null;
             }
-            return new SVNPasswordAuthentication(name, password, authMayBeStored, url);
+            return new SVNPasswordAuthentication(name, password, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
             String name = null;
             String defaultUserName = null;
@@ -285,9 +284,9 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 } catch (NumberFormatException e) {}
             }
             if (password != null) {
-                return new SVNSSHAuthentication(name, password, port, authMayBeStored, url);
+                return new SVNSSHAuthentication(name, password, port, authMayBeStored, url, false);
             } else if (keyFile != null) {
-                return new SVNSSHAuthentication(name, keyFile, passphrase, port, authMayBeStored, url);
+                return new SVNSSHAuthentication(name, keyFile, passphrase, port, authMayBeStored, url, false);
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             String name = System.getProperty("user.name");
@@ -295,7 +294,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 name = null;
             }
             if (name != null) {
-                return new SVNUserNameAuthentication(name, authMayBeStored, url);
+                return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
             }
             printRealm(realm);
             name = prompt(!"file".equals(url.getProtocol()) ? 
@@ -307,7 +306,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             if ("".equals(name.trim())) {
                 name = System.getProperty("user.name");
             }            
-            return new SVNUserNameAuthentication(name, authMayBeStored, url);
+            return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
             printRealm(realm);
             String path = null;
@@ -331,7 +330,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             } else if ("".equals(password)) {
                 password = null;
             }
-            return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url);
+            return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
         }
         return null;
     }
