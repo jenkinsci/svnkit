@@ -15,10 +15,10 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
-import org.tmatesoft.sqljet.core.schema.ISqlJetSchema;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -46,7 +46,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
                                                     "                        expanded_size integer not null); ";
 
     private SqlJetDb myRepCacheDB;
-    private SqlJetTable myTable;
+    private ISqlJetTable myTable;
     private FSFS myFSFS;
     
     public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
@@ -82,22 +82,16 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     private static void checkFormat(final SqlJetDb db) throws SqlJetException {
         db.runWithLock(new ISqlJetRunnableWithLock() {
             public Object runWithLock(SqlJetDb db) throws SqlJetException {
-                ISqlJetSchema schema = db.getSchema();
                 int version = db.getOptions().getUserVersion();
                 if (version < REP_CACHE_DB_FORMAT) {
                     db.getOptions().setAutovacuum(true);
-                    db.beginTransaction();
-                    db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
-                    boolean commited = false;
-                    try {
-                        schema.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
-                        db.commit();
-                        commited = true;
-                    } finally {
-                        if (!commited) {
-                            db.rollback();
+                    db.runWriteTransaction(new ISqlJetTransaction() {
+                        public Object run(SqlJetDb db) throws SqlJetException {
+                            db.getOptions().setUserVersion(REP_CACHE_DB_FORMAT);
+                            db.createTable(FSRepresentationCacheManager.REP_CACHE_DB_SQL);
+                            return null;
                         }
-                    }
+                    });
                 } else if (version > REP_CACHE_DB_FORMAT) {
                     throw new SqlJetException("Schema format " + version + " not recognized");   
                 }
@@ -198,33 +192,14 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         return SVNErrorCode.SQLITE_ERROR;
     }
 
-    public void beginTransaction() throws SVNException {
+    public void runWriteTransaction(ISqlJetTransaction transaction) throws SVNException {
         if (myRepCacheDB != null) {
             try {
-                myRepCacheDB.beginTransaction();
+                myRepCacheDB.runWriteTransaction(transaction);
             } catch (SqlJetException e) {
                 SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
             }
         }
     }
 
-    public void commitTransaction() throws SVNException {
-        if (myRepCacheDB != null) {
-            try {
-                myRepCacheDB.commit();
-            } catch (SqlJetException e) {
-                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
-            }
-        }
-    }
-
-    public void rollbackTransaction() throws SVNException {
-        if (myRepCacheDB != null) {
-            try {
-                myRepCacheDB.rollback();
-            } catch (SqlJetException e) {
-                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
-            }
-        }
-    }
 }

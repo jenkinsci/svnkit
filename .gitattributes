@@ -13,8 +13,8 @@ contrib/servlet-api/servlet-api.jar -text
 contrib/sqljet/SQLJET-LICENSE -text
 contrib/sqljet/SQLJET-README.txt -text
 contrib/sqljet/antlr-runtime-3.1.3.jar -text
-contrib/sqljet/sqljet.b364.jar -text
-contrib/sqljet/sqljet.b364.src.zip -text
+contrib/sqljet/sqljet.b470.jar -text
+contrib/sqljet/sqljet.b470.src.zip -text
 contrib/trilead/trilead.jar -text
 contrib/trilead/trileadsrc.zip -text
 doc/JSPWikiDocs/Authentication/AuthManager_Architecture.png -text
@@ -92,6 +92,7 @@ svnkit-test/tomcat/logging.properties -text
 svnkit-test/tomcat/tomcat.jar -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/IFSRepresentationCacheManager.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$1.class -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$2.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager.java svneol=native#text/plain
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheRecord.class -text

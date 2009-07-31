@@ -41,7 +41,7 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../contrib/sqljet/sqljet.b364.src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/../contrib/sqljet/sqljet.b470.src.zip!/src" />
         </SOURCES>
         <jarDirectory url="file://$MODULE_DIR$/../contrib/sqljet" recursive="false" />
       </library>

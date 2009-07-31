@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.svn.core.SVNException;
 
 
@@ -20,13 +21,9 @@ import org.tmatesoft.svn.core.SVNException;
  */
 public interface IFSRepresentationCacheManager {
     
-    public void beginTransaction() throws SVNException;
-    
     public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException;
 
-    public void commitTransaction() throws SVNException;
-
-    public void rollbackTransaction() throws SVNException;
+    public void runWriteTransaction(ISqlJetTransaction transaction) throws SVNException;
     
     public FSRepresentation getRepresentationByHash(String hash) throws SVNException;
     
