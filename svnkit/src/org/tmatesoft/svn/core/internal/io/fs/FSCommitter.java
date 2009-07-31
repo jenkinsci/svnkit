@@ -22,9 +22,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
-import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -478,14 +475,9 @@ public class FSCommitter {
                 final File revisionPrototypeFile = txnRoot.getTransactionProtoRevFile();
                 final long offset = revisionPrototypeFile.length();
                 if (myFSFS.getRepositoryCacheManager() != null) {
-                    myFSFS.getRepositoryCacheManager().runWriteTransaction(new ISqlJetTransaction() {
-                        public Object run(SqlJetDb db) throws SqlJetException {
-                            try {
-                                commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, txnRoot, revisionPrototypeFile, offset);
-                            } catch (SVNException e) {
-                                throw new SqlJetException(e);
-                            }
-                            return null;
+                    myFSFS.getRepositoryCacheManager().runWriteTransaction(new IFSSqlJetTransaction() {
+                        public void run() throws SVNException {
+                            commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, txnRoot, revisionPrototypeFile, offset);
                         }
                     });
                 } else {

@@ -26,6 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepresentation;
 import org.tmatesoft.svn.core.internal.io.fs.IFSRepresentationCacheManager;
+import org.tmatesoft.svn.core.internal.io.fs.IFSSqlJetTransaction;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -192,14 +193,22 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
         return SVNErrorCode.SQLITE_ERROR;
     }
 
-    public void runWriteTransaction(ISqlJetTransaction transaction) throws SVNException {
+    public void runWriteTransaction(final IFSSqlJetTransaction transaction) throws SVNException {
         if (myRepCacheDB != null) {
             try {
-                myRepCacheDB.runWriteTransaction(transaction);
+                myRepCacheDB.runWriteTransaction(new ISqlJetTransaction() {
+                    public Object run(SqlJetDb db) throws SqlJetException {
+                        try {
+                            transaction.run();
+                        } catch (SVNException e) {
+                            throw new SqlJetException(e);
+                        }
+                        return null;
+                    }
+                });
             } catch (SqlJetException e) {
                 SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
             }
         }
     }
-
 }
