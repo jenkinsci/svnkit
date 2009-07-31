@@ -543,7 +543,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     }
                     
                     if (myPassword == null) {
-                        return new SVNUserNameAuthentication(myUserName, false);
+                        return new SVNPasswordAuthentication(myUserName, null, false, null, true);
                     }
                     return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore, url, false);
                 } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
