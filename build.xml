@@ -310,6 +310,10 @@
     	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvndumpfilter.bat"/>
     	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvndumpfilter.bat"/>
 
+    	<!-- and open vms -->
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnsetup.openvms"/>
+    	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnsetup.openvms"/>
+
         <chmod file="build/lib/jsvn" perm="ugo+rx" />
         <chmod file="build/lib/jsvnadmin" perm="ugo+rx" />
         <chmod file="build/lib/jsvnversion" perm="ugo+rx" />
