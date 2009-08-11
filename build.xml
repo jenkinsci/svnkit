@@ -35,7 +35,10 @@
         <path id="library.classpath">
             <pathelement location="contrib/trilead/trilead.jar" />
             <pathelement location="contrib/jna/jna.jar" />            
-            <pathelement path="contrib/javahl/bin" />
+            <pathelement location="contrib/sqljet/antlr-runtime-${antlr.version}.jar" />            
+            <pathelement location="contrib/sqljet/sqljet.jar" />            
+
+        	<pathelement path="contrib/javahl/bin" />
             <pathelement path="contrib/sequence/bin" />
             <pathelement path="svnkit/bin" />
         </path>
@@ -50,6 +53,7 @@
             <exclude name="org/tmatesoft/svn/util/SVNTest.java"/>
             <exclude name="org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceTest.java"/>
             <exclude name="org/tmatesoft/svn/core/internal/io/svn/sasl/**"/>
+            <exclude name="org/tmatesoft/svn/core/internal/io/fs/repcache/**"/>
         </javac>
         <javac debug="true"
                destdir="svnkit-cli/bin"
@@ -170,6 +174,7 @@
             </fileset>        	
             <fileset dir="svnkit/src">
                 <include name="org/tmatesoft/svn/core/internal/io/svn/sasl/*.class" />
+                <include name="org/tmatesoft/svn/core/internal/io/fs/repcache/*.class" />
             </fileset>
             <fileset dir="${basedir}" >
                 <include name="COPYING" />
@@ -205,6 +210,9 @@
         </jar>
         <copy file="contrib/trilead/trilead.jar" todir="build/lib" />
         <copy file="contrib/jna/jna.jar" todir="build/lib" />
+    	<copy file="contrib/sqljet/sqljet.jar" tofile="build/lib/sqljet.${sqljet.version}.jar" />
+    	<copy file="contrib/sqljet/antlr-runtime-${antlr.version}.jar" tofile="build/lib/antlr-runtime-${antlr.version}.jar" />
+
     	<!-- copy licences and changelog -->
         <copy todir="build/lib" flatten="true">
             <fileset dir=".">
@@ -215,6 +223,8 @@
                 <include name="contrib/javahl/JAVAHL-LICENSE" />
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/trilead/TRILEAD-LICENSE" />
+                <include name="contrib/sqljet/SQLJET-LICENSE" />
+                <include name="contrib/sqljet/SQLJET-README.txt" />
             </fileset>
         </copy>
     </target>
@@ -236,12 +246,56 @@
                 <include name="**" />
             </fileset>
         </copy>
+
+    	<!-- replace sqljet.version and antlr.version tokens with their current versions -->
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvn"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvn"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnadmin"/>
+    	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnadmin"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnversion"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnversion"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnsync"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnsync"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnlook"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnlook"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvndumpfilter"/>
+    	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvndumpfilter"/>
+
+    	<!-- do the same replacements for .bat files -->
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvn.bat"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvn.bat"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnadmin.bat"/>
+    	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnadmin.bat"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnversion.bat"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnversion.bat"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnsync.bat"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnsync.bat"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnlook.bat"/>
+       	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnlook.bat"/>
+
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvndumpfilter.bat"/>
+    	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvndumpfilter.bat"/>
+
+    	<!-- and open vms -->
+    	<replace token="%sqljet.version%" value="${sqljet.version}" file="build/lib/jsvnsetup.openvms"/>
+    	<replace token="%antlr.version%" value="${antlr.version}" file="build/lib/jsvnsetup.openvms"/>
+
         <chmod file="build/lib/jsvn" perm="ugo+rx" />
         <chmod file="build/lib/jsvnadmin" perm="ugo+rx" />
         <chmod file="build/lib/jsvnversion" perm="ugo+rx" />
         <chmod file="build/lib/jsvnsync" perm="ugo+rx" />
     	<chmod file="build/lib/jsvnlook" perm="ugo+rx" />
 		<chmod file="build/lib/jsvndumpfilter" perm="ugo+rx" />
+
     </target>
 
     <target name="build-src">
@@ -349,6 +403,8 @@
         <!-- update versions -->
         <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%svnkit.version%" value="${build.number}"/>
         <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%jna.version%" value="${jna.version}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%sqljet.version%" value="${sqljet.version}"/>
+        <replace dir="build/eclipse" includes="**/site.xml,**/plugin.xml,**/feature.xml,**/MANIFEST.MF" token="%antlr.version%" value="${antlr.version}"/>
         
         <!-- build jars for update site -->
         <jar destfile="build/eclipse/site/${svnkit.plugin.name}.jar" manifest="build/eclipse/${svnkit.plugin.name}/MANIFEST.MF">
@@ -468,6 +524,7 @@
 		<mkdir dir="build/maven/org.tmatesoft.svnkit-${build.number}"/>
 		<mkdir dir="build/maven/com.trilead.ssh2-${trilead.ssh2.version}"/>
 		<mkdir dir="build/maven/com.sun.jna-${jna.version}"/>
+		<mkdir dir="build/maven/org.tmatesoft.sqljet-${sqljet.version}"/>
 		<mkdir dir="svnkit-eclipse/bin"/>
 		
 		<jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}/svnkit.jar">
@@ -548,13 +605,18 @@
 		<replace token="%svnkit.version%" value="${build.number}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
 		<replace token="%trilead.ssh2.version%" value="${trilead.ssh2.version}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
         <replace token="%jna.version%" value="${jna.version}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
+        <replace token="%sqljet.version%" value="${sqljet.version}" file="build/maven/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
 
 		<copy file="contrib/trilead/pom.xml" tofile="build/maven/com.trilead.ssh2-${trilead.ssh2.version}/pom.xml"/>
 		<replace token="%trilead.ssh2.version%" value="${trilead.ssh2.version}" file="build/maven/com.trilead.ssh2-${trilead.ssh2.version}/pom.xml"/>
 
 		<copy file="contrib/jna/pom.xml" tofile="build/maven/com.sun.jna-${jna.version}/pom.xml"/>
 		<replace token="%jna.version%" value="${jna.version}" file="build/maven/com.sun.jna-${jna.version}/pom.xml"/>
-		
+
+		<copy file="contrib/sqljet/pom.xml" tofile="build/maven/org.tmatesoft.sqljet-${sqljet.version}/pom.xml"/>
+		<replace token="%sqljet.version%" value="${sqljet.version}" file="build/maven/org.tmatesoft.sqljet-${sqljet.version}/pom.xml"/>
+		<replace token="%antlr.version%" value="${antlr.version}" file="build/maven/org.tmatesoft.sqljet-${sqljet.version}/pom.xml"/>
+
         <jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}-bundle.jar">
         	<fileset dir="build/maven/org.tmatesoft.svnkit-${build.number}">
                 <include name="**" />
@@ -576,15 +638,26 @@
                 <include name="**" />
 	        </fileset>
         </jar>
+        <jar destfile="build/maven/org.tmatesoft.sqljet-${sqljet.version}-bundle.jar">
+			<fileset dir="contrib/sqljet">
+            	<exclude name="pom.xml" />
+    	    </fileset>
+            <fileset dir="build/maven/org.tmatesoft.sqljet-${sqljet.version}">
+            	<include name="**" />
+    	    </fileset>
+        </jar>
+
 		<delete dir="build/maven" >
 			<include name="org.tmatesoft.svnkit-${build.number}/**"/>
 			<include name="com.trilead.ssh2-${trilead.ssh2.version}/**"/>
      		<include name="com.sun.jna-${jna.version}/**"/>
+			<include name="org.tmatesoft.sqljet-${sqljet.version}/**"/>
 	    </delete>
 		<delete dir="build/maven/org.tmatesoft.svnkit-${build.number}" />
 		<delete dir="build/maven/com.trilead.ssh2-${trilead.ssh2.version}"/>
  		<delete dir="build/maven/com.sun.jna-${jna.version}"/>
-    </target>
+ 		<delete dir="build/maven/org.tmatesoft.sqljet-${sqljet.version}"/>
+	</target>
 
     <target name="deploy-eclipse"
             depends="init-environment,build-library,build-src,build-doc,build-eclipse"
@@ -708,6 +781,7 @@
     	<copy todir="${python.test.home}">
     		<fileset dir="svnkit-test">
     			<include name="test.properties"/>
+    			<include name="fsfs.conf" />
     			<include name="python-suite.txt"/>
     			<include name="apache/**"/>
     			<include name="daemon/**"/>
@@ -730,7 +804,9 @@
             <pathelement path="build/lib/trilead.jar" />
             <pathelement path="build/lib/jna.jar" />
             <pathelement path="contrib/junit/junit.jar" />
-            <pathelement path="svnkit-test/bin" />
+            <pathelement path="contrib/sqljet/sqljet.jar" />
+            <pathelement path="contrib/sqljet/antlr-runtime-${antlr.version}.jar" />
+    		<pathelement path="svnkit-test/bin" />
         </path>
 
         <copy file="svnkit-test/logging.cli.properties" 

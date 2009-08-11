@@ -34,6 +34,17 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library name="sqljet">
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../contrib/sqljet/sqljet.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../contrib/sqljet/sqljet.src.zip!/src" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
 

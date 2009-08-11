@@ -439,54 +439,39 @@ public class FSCommitter {
         }
 
         verifyLocks();
-        String startNodeId = null;
-        String startCopyId = null;
+
+        final String startNodeId;
+        final String startCopyId;
         if (myFSFS.getDBFormat() < FSFS.MIN_NO_GLOBAL_IDS_FORMAT) {
             String[] ids = myFSFS.getNextRevisionIDs();
             startNodeId = ids[0];
             startCopyId = ids[1];
+        } else {
+            startNodeId = null;
+            startCopyId = null;
         }
 
-        long newRevision = oldRev + 1;
-        OutputStream protoFileOS = null;
-        FSID newRootId = null;
-        FSWriteLock txnWriteLock = FSWriteLock.getWriteLockForTxn(myTxn.getTxnId(), myFSFS);
+        final long newRevision = oldRev + 1;
+        final OutputStream protoFileOS = null;
+        final FSID newRootId = null;
+        final FSWriteLock txnWriteLock = FSWriteLock.getWriteLockForTxn(myTxn.getTxnId(), myFSFS);
         synchronized (txnWriteLock) {
             try {
+                // start transaction.
                 txnWriteLock.lock();
-                File revisionPrototypeFile = myTxnRoot.getTransactionProtoRevFile();
-                long offset = revisionPrototypeFile.length();
-                try {
-                    protoFileOS = SVNFileUtil.openFileForWriting(revisionPrototypeFile, true);
-                    FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
-
-                    CountingOutputStream revWriter = new CountingOutputStream(protoFileOS, offset);
-                    newRootId = myTxnRoot.writeFinalRevision(newRootId, revWriter, newRevision, rootId, 
-                            startNodeId, startCopyId);
-                    long changedPathOffset = myTxnRoot.writeFinalChangedPathInfo(revWriter);
-
-                    String offsetsLine = "\n" + newRootId.getOffset() + " " + changedPathOffset + "\n";
-                    protoFileOS.write(offsetsLine.getBytes("UTF-8"));
-                } catch (IOException ioe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
-                    SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
-                } finally {
-                    SVNFileUtil.closeFile(protoFileOS);
+                final File revisionPrototypeFile = myTxnRoot.getTransactionProtoRevFile();
+                final long offset = revisionPrototypeFile.length();
+                if (myFSFS.getRepositoryCacheManager() != null) {
+                    myFSFS.getRepositoryCacheManager().runWriteTransaction(new IFSSqlJetTransaction() {
+                        public void run() throws SVNException {
+                            commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, myTxnRoot, revisionPrototypeFile, offset);
+                        }
+                    });
+                } else {
+                    commit(startNodeId, startCopyId, newRevision, protoFileOS, newRootId, myTxnRoot, revisionPrototypeFile, offset);
                 }
-
-                SVNProperties txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());
-                if (txnProps != null && !txnProps.isEmpty()) {
-                    if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
-                        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, null);
-                    }
-                    if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
-                        myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, null);
-                    }
-                }
-                
                 File dstRevFile = myFSFS.getNewRevisionFile(newRevision);
                 SVNFileUtil.rename(revisionPrototypeFile, dstRevFile);
-                
             } finally {
                txnWriteLock.unlock();
                FSWriteLock.release(txnWriteLock);
@@ -510,6 +495,37 @@ public class FSCommitter {
         myFSFS.setYoungestRevisionCache(newRevision);
         myFSFS.purgeTxn(myTxn.getTxnId());
         return newRevision;
+    }
+
+    private void commit(String startNodeId, String startCopyId, long newRevision, OutputStream protoFileOS, FSID newRootId, FSTransactionRoot txnRoot, File revisionPrototypeFile, long offset)
+            throws SVNException {
+        try {
+            protoFileOS = SVNFileUtil.openFileForWriting(revisionPrototypeFile, true);
+            FSID rootId = FSID.createTxnId("0", "0", myTxn.getTxnId());
+
+            CountingOutputStream revWriter = new CountingOutputStream(protoFileOS, offset);
+            newRootId = txnRoot.writeFinalRevision(newRootId, revWriter, newRevision, rootId, 
+                    startNodeId, startCopyId);
+            long changedPathOffset = txnRoot.writeFinalChangedPathInfo(revWriter);
+
+            String offsetsLine = "\n" + newRootId.getOffset() + " " + changedPathOffset + "\n";
+            protoFileOS.write(offsetsLine.getBytes("UTF-8"));
+        } catch (IOException ioe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
+            SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
+        } finally {
+            SVNFileUtil.closeFile(protoFileOS);
+        }
+
+        SVNProperties txnProps = myFSFS.getTransactionProperties(myTxn.getTxnId());
+        if (txnProps != null && !txnProps.isEmpty()) {
+            if (txnProps.getStringValue(SVNProperty.TXN_CHECK_OUT_OF_DATENESS) != null) {
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_OUT_OF_DATENESS, null);
+            }
+            if (txnProps.getStringValue(SVNProperty.TXN_CHECK_LOCKS) != null) {
+                myFSFS.setTransactionProperty(myTxn.getTxnId(), SVNProperty.TXN_CHECK_LOCKS, null);
+            }
+        }
     }
 
     private void mergeChanges(FSRevisionNode ancestorNode, FSRevisionNode sourceNode, StringBuffer conflictPath) throws SVNException {

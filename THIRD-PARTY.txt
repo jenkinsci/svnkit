@@ -6,7 +6,7 @@ This file lists all third party libraries used by this version of SVNKit.
 JNA Libary, version 3.1.0 - Dynamically access native libraries from Java without JNI.
 License: LGPL 2.1 or later (http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html)
 URL: https://jna.dev.java.net/
-Note: JNA is optional component, remove jna.jar from the classpath if you would not like to use it.
+Note: JNA is an optional component, remove jna.jar from the classpath if you would not like to use it.
 
 2) TriLead SSH-2
 
@@ -18,3 +18,11 @@ Note: Trilead library is only used for svn+ssh connections. Otherwise you may re
 Note: This version of SVNKit uses patched version of Trilead Library (with additional Connection.getVersionInfo method). 
 Currently SVNKit will not work with the Trilead library downloaded from trilead.com web site. 
 We expect next version of Trilead library (build 214) to be compatible with SVNKit.
+
+3) SQLJet
+
+SQLJet library, version 1.0.0.b524 (beta).
+
+License: GNU GPL with double licensing option (contact support@sqljet.com).
+Note: SQLJet is an optional component for enabling representation cache feature when working with local 1.6 Subversion repositories. 
+Remove sqljet1.0.0.b524.jar from the classpath if you would not like SVNKit to use it. 

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepresentationCacheUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -652,6 +653,12 @@ public abstract class SVNRepositoryFactory {
             props.setPropertyValue(SVNRevisionProperty.DATE, date);
         
             setSGID(new File(path, FSFS.DB_DIR));
+            
+            if (fsFormat >= FSFS.MIN_REP_SHARING_FORMAT) {
+                File repCacheFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REP_CACHE_DB);
+                FSRepresentationCacheUtil.create(repCacheFile);
+            }
+            
         } finally {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);

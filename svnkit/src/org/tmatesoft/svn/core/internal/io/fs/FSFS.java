@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
@@ -75,6 +76,7 @@ public class FSFS {
     public static final String TRANSACTION_PROTOS_DIR = "txn-protorevs";
     public static final String NODE_ORIGINS_DIR = "node-origins";
     
+    public static final String REP_CACHE_DB = "rep-cache.db";
     public static final String PACK_EXT = ".pack";
     public static final String PACK_KIND_PACK = "pack";
     public static final String PACK_KIND_MANIFEST = "manifest";
@@ -140,10 +142,12 @@ public class FSFS {
     private File myUUIDFile;
     private File myFSTypeFile;
     private File myMinUnpackedRevFile;
+    private File myRepositoryCacheFile;
     private long myMaxFilesPerDirectory;
     private long myYoungestRevisionCache;
     private long myMinUnpackedRevision;
     private SVNConfigFile myConfig;
+    private IFSRepresentationCacheManager myReposCacheManager;
     
     public FSFS(File repositoryRoot) {
         myRepositoryRoot = repositoryRoot;
@@ -165,6 +169,13 @@ public class FSFS {
     public void open() throws SVNException {
         openRoot();
         openDB();
+    }
+    
+    public void close() throws SVNException {
+        if (myReposCacheManager != null) {
+            myReposCacheManager.close();
+            myReposCacheManager = null;
+        }
     }
     
     public void openForRecovery() throws SVNException {
@@ -227,18 +238,24 @@ public class FSFS {
             getMinUnpackedRev();
         }
         
-        boolean isRepSharingAllowed = false;
+        boolean isRepSharingAllowed = true;
         SVNConfigFile config = loadConfig();
         if (config != null) {
-            isRepSharingAllowed = Boolean.getBoolean(config.getPropertyValue(REP_SHARING_SECTION, ENABLE_REP_SHARING_OPTION));
+            String optionValue = config.getPropertyValue(REP_SHARING_SECTION, ENABLE_REP_SHARING_OPTION);            
+            isRepSharingAllowed = DefaultSVNOptions.getBooleanValue(optionValue, true);
         }
         
         if (myDBFormat >= MIN_REP_SHARING_FORMAT && isRepSharingAllowed) {
-            //TODO: open rep cache
+            myReposCacheManager = FSRepresentationCacheUtil.open(this);
         }
         
         File dbCurrentFile = getCurrentFile();
-        if(!(dbCurrentFile.exists() && dbCurrentFile.canRead())){
+        if (!(dbCurrentFile.exists() && dbCurrentFile.canRead())) {
+            if (myReposCacheManager != null) {
+                myReposCacheManager.close();
+                myReposCacheManager = null;
+            }
+
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Can''t open file ''{0}''", dbCurrentFile);
             SVNErrorManager.error(err, SVNLogType.FSFS);
@@ -391,6 +408,13 @@ public class FSFS {
         return myCurrentFile;
     }
 
+    public File getRepositoryCacheFile() {
+        if (myRepositoryCacheFile == null) {
+            myRepositoryCacheFile = new File(getDBRoot(), REP_CACHE_DB);
+        }
+        return myRepositoryCacheFile;
+    }
+    
     public File getDBLogsLockFile() throws SVNException {
         File lockFile = new File(getDBRoot(), LOCKS_DIR + "/" + DB_LOGS_LOCK_FILE);
         if (!lockFile.exists()) {
@@ -493,11 +517,16 @@ public class FSFS {
                 if (myDBFormat < MIN_PACKED_FORMAT) {
                     SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
                 }
-                writeDBFormat(DB_FORMAT, myMaxFilesPerDirectory, true);
+                if (myDBFormat < MIN_REP_SHARING_FORMAT ) {
+                    SVNFileUtil.createFile(getMinUnpackedRevFile(), "0\n", "US-ASCII");
+                }
             } finally {
                 writeLock.unlock();
                 FSWriteLock.release(writeLock);
             }
+            // force reopen to create db.
+            close();
+            open();
         }
     }
     
@@ -1506,6 +1535,10 @@ public class FSFS {
                     new Object[] {formatFile.getFile(), line});
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
+    }
+
+    public IFSRepresentationCacheManager getRepositoryCacheManager() {
+        return myReposCacheManager;
     }
 
     public static File findRepositoryRoot(File path) {

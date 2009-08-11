@@ -28,7 +28,7 @@ SVNKIT_HOME=`cd "$SVNKIT_HOME" ; pwd`
 
 cd "$old_wd"
 
-SVNKIT_CP="$SVNKIT_HOME/svnkit.jar":"$SVNKIT_HOME/svnkit-cli.jar":"$SVNKIT_HOME/trilead.jar":"$SVNKIT_HOME/jna.jar"
+SVNKIT_CP="$SVNKIT_HOME/svnkit.jar":"$SVNKIT_HOME/svnkit-cli.jar":"$SVNKIT_HOME/trilead.jar":"$SVNKIT_HOME/jna.jar":"$SVNKIT_HOME/sqljet.%sqljet.version%.jar":"$SVNKIT_HOME/antlr-runtime-%antlr.version%.jar"
 
 if $cygwin ; then
   SVNKIT_CP=`cygpath --windows --path "$SVNKIT_CP"`
