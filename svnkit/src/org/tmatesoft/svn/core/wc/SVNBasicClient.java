@@ -815,7 +815,7 @@ public class SVNBasicClient implements ISVNEventHandler {
             SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
             try {
                 wcAccess.openAnchor(path, false, 0);
-                SVNEntry entry = wcAccess.getEntry(path, false);
+                SVNEntry entry = wcAccess.getVersionedEntry(path, false);
                 if (entry.getCopyFromURL() != null && revision == SVNRevision.WORKING) {
                     url = entry.getCopyFromSVNURL();
                     pegRevisionNumber = entry.getCopyFromRevision();
