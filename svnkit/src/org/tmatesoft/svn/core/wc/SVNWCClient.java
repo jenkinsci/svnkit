@@ -94,6 +94,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * <td>doAdd()</td><td>'svn add'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doGetFileContents()</td><td>'svn cat'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
  * <td>doDelete()</td><td>'svn delete'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
@@ -1535,8 +1538,9 @@ public class SVNWCClient extends SVNBasicClient {
      * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
      * 
      * @param path                      working copy path
-     * @param force                     if <span class="javakeyword">true</span> 
-     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param force                     if <span class="javakeyword">true</span>, this method does not throw exceptions 
+     *                                  on already-versioned items 
+     * @param mkdir                     if <span class="javakeyword">true</span>, create a directory also at <code>path</code>
      * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
@@ -1592,8 +1596,9 @@ public class SVNWCClient extends SVNBasicClient {
      * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
      * 
      * @param paths                     working copy paths to add  
-     * @param force                     if <span class="javakeyword">true</span> 
-     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param force                     if <span class="javakeyword">true</span>, this method does not throw exceptions 
+     *                                  on already-versioned items 
+     * @param mkdir                     if <span class="javakeyword">true</span>, create a directory also at <code>path</code>
      * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param depthIsSticky             if depth should be recorded to the working copy
@@ -1659,8 +1664,8 @@ public class SVNWCClient extends SVNBasicClient {
      * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
      * 
      * @param path                      working copy path
-     * @param force                     if <span class="javakeyword">true</span> 
-     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param force                     if <span class="javakeyword">true</span>, this method does not throw exceptions on already-versioned items 
+     * @param mkdir                     if <span class="javakeyword">true</span>, create a directory also at <code>path</code>
      * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param depthIsSticky             if depth should be recorded to the working copy

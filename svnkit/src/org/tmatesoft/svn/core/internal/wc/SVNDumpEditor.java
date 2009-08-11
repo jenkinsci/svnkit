@@ -82,7 +82,7 @@ public class SVNDumpEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         DirectoryInfo parent = myCurrentDirInfo;
-        myCurrentDirInfo = createDirectoryInfo(path, copyFromPath, copyFromRevision, true, parent);
+        myCurrentDirInfo = createDirectoryInfo(path, copyFromPath, copyFromRevision, parent);
         boolean isDeleted = parent.myDeletedEntries.containsKey(path);
         boolean isCopy = copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision);
         dumpNode(path, SVNNodeKind.DIR, isDeleted ? SVNAdminHelper.NODE_ACTION_REPLACE : SVNAdminHelper.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
@@ -138,7 +138,7 @@ public class SVNDumpEditor implements ISVNEditor {
             cmpPath = SVNPathUtil.append(parent.myComparePath, SVNPathUtil.tail(path));
             cmpRev = parent.myCompareRevision;
         }
-        myCurrentDirInfo = createDirectoryInfo(path, cmpPath, cmpRev, false, parent);
+        myCurrentDirInfo = createDirectoryInfo(path, cmpPath, cmpRev, parent);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -153,7 +153,7 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     public void openRoot(long revision) throws SVNException {
-        myCurrentDirInfo = createDirectoryInfo(null, null, -1, false, null);
+        myCurrentDirInfo = createDirectoryInfo(null, null, -1, null);
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -419,7 +419,7 @@ public class SVNDumpEditor implements ISVNEditor {
         return myDeltaCombiner;
     }
 
-    private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, boolean added, DirectoryInfo parent) {
+    private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, DirectoryInfo parent) {
         String fullPath = null;
         if (parent != null) {
             fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRootPath, path));
@@ -432,7 +432,7 @@ public class SVNDumpEditor implements ISVNEditor {
             cmpPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath; 
         }
         
-        return new DirectoryInfo(fullPath, cmpPath, copyFromRev, added, parent);
+        return new DirectoryInfo(fullPath, cmpPath, copyFromRev, parent);
     }
 
     private void writeDumpData(String data) throws IOException {
@@ -443,15 +443,13 @@ public class SVNDumpEditor implements ISVNEditor {
         String myFullPath;
         String myComparePath;
         long myCompareRevision;
-        boolean myIsAdded;
         boolean myIsWrittenOut;
         Map myDeletedEntries;
         DirectoryInfo myParentInfo;
         
-        public DirectoryInfo(String path, String cmpPath, long cmpRev, boolean added, DirectoryInfo parent) {
+        public DirectoryInfo(String path, String cmpPath, long cmpRev, DirectoryInfo parent) {
             myFullPath = path;
             myParentInfo = parent;
-            myIsAdded = added;
             myComparePath = cmpPath;
             myCompareRevision = cmpRev;
             myDeletedEntries = new SVNHashMap();
