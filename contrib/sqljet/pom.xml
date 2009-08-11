@@ -6,14 +6,14 @@
   <version>%sqljet.version%</version>
   <name>SQLJet</name>
   <description>A pure Java library for managing SQLite databases</description>
-  <url>http://svnkit.com/</url>
+  <url>http://sqljet.com/</url>
   <licenses>
     <license>
-      <url>http://svnkit.com/</url>
+      <url>http://sqljet.com/</url>
     </license>
   </licenses>
   <distributionManagement>
-    <downloadUrl>http://svnkit.com/</downloadUrl>
+    <downloadUrl>http://sqljet.com/</downloadUrl>
   </distributionManagement>
   <dependencies>
     <dependency>
