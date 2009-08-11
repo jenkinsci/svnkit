@@ -29,6 +29,7 @@ public class FSRepresentationCacheUtil {
     private static volatile boolean ourIsAvailable;
     
     private static final String SQLJET_DB_CLASS_NAME = "org.tmatesoft.sqljet.core.table.SqlJetDb";
+    private static final String ANTLR_CLASS_NAME = "org.antlr.runtime.Token";
     private static final String REPCACHE_MANAGER_CLASS_NAME = "org.tmatesoft.svn.core.internal.io.fs.repcache.FSRepresentationCacheManager";
 
     private static Method ourOpenMethod = null;
@@ -38,12 +39,17 @@ public class FSRepresentationCacheUtil {
         Boolean option = Boolean.valueOf(System.getProperty("svnkit.fsfs.repcache", "true"));
         if (option.booleanValue()) {
             try {
-                Class clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(SQLJET_DB_CLASS_NAME);
-                ourIsAvailable = clazz != null;
-                clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(REPCACHE_MANAGER_CLASS_NAME);
-                if (clazz != null) {
-                    ourOpenMethod = clazz.getMethod("openRepresentationCache", new Class[] {FSFS.class});
-                    ourCreateMethod = clazz.getMethod("createRepresentationCache", new Class[] {File.class});
+                Class antlrClazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(ANTLR_CLASS_NAME);
+                if (antlrClazz == null) {
+                    ourIsAvailable = false;
+                } else {
+                    Class clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(SQLJET_DB_CLASS_NAME);
+                    ourIsAvailable = clazz != null;
+                    clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(REPCACHE_MANAGER_CLASS_NAME);
+                    if (clazz != null) {
+                        ourOpenMethod = clazz.getMethod("openRepresentationCache", new Class[] {FSFS.class});
+                        ourCreateMethod = clazz.getMethod("createRepresentationCache", new Class[] {File.class});
+                    }
                 }
             } catch (Throwable e) {
                 ourIsAvailable = false;
