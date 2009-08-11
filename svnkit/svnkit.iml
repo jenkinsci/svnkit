@@ -37,13 +37,12 @@
     <orderEntry type="module-library">
       <library name="sqljet">
         <CLASSES>
-          <root url="file://$MODULE_DIR$/../contrib/sqljet" />
+          <root url="file://$MODULE_DIR$/../contrib/sqljet/sqljet.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../contrib/sqljet/sqljet.b470.src.zip!/src" />
+          <root url="jar://$MODULE_DIR$/../contrib/sqljet/sqljet.src.zip!/src" />
         </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/../contrib/sqljet" recursive="false" />
       </library>
     </orderEntry>
   </component>
