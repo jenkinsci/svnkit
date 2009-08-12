@@ -20,8 +20,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.tmatesoft.svn.cli.svn.SVNCommandEnvironment;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -506,6 +508,46 @@ public class SVNCommandUtil {
         return help.toString();
     }
  
+    public static void parseConfigOption(String optionArg, Map configOptions, Map serversOptions) throws SVNException {
+        if (optionArg != null) {
+            int firstColonInd = optionArg.indexOf(':');
+            if (firstColonInd != -1 && firstColonInd != optionArg.length() - 1) {
+                int secondColonInd = optionArg.indexOf(':', firstColonInd + 1);
+                if (secondColonInd != -1 && secondColonInd != firstColonInd + 1) {
+                    int equalsSignInd = optionArg.indexOf('=', secondColonInd + 1);
+                    if (equalsSignInd != -1 && equalsSignInd != secondColonInd + 1) {
+                        String fileName = optionArg.substring(0, firstColonInd);
+                        String section = optionArg.substring(firstColonInd + 1, secondColonInd);
+                        String option = optionArg.substring(secondColonInd + 1, equalsSignInd);
+                        if (option.indexOf(':') == -1) {
+                            String value = optionArg.substring(equalsSignInd + 1);
+                            
+                            Map options = null;
+                            if ("servers".equals(fileName)) {
+                                options = serversOptions;
+                            } else if ("config".equals(fileName)) {
+                                options = configOptions;
+                            }
+                            
+                            if (options != null) {
+                                Map values = (Map) options.get(section);
+                                if (values == null) {
+                                    values = new HashMap();
+                                    options.put(section, values);
+                                }
+                                values.put(option, value);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Invalid syntax of argument of --config-option");
+        SVNErrorManager.error(err, SVNLogType.CLIENT);
+    }
+    
     private static class InputReader implements Runnable {
         private BufferedReader myReader;
         private String myReadInput;

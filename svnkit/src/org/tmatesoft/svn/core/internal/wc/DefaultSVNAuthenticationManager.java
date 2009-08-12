@@ -60,6 +60,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private boolean myIsAuthenticationForced;
     private SVNAuthentication myLastLoadedAuth;
     private ISVNAuthStoreHandler myAuthStoreHandler;
+    private Map myServersOptions;
+    private Map myConfigOptions;
     
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         this(configDirectory, storeAuth, userName, password, null, null);
@@ -84,6 +86,14 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         myAuthStoreHandler = authStoreHandler;
     }
     
+    public void setInMemoryServersOptions(Map serversOptions) {
+        myServersOptions = serversOptions;
+    }
+
+    public void setInMemoryConfigOptions(Map configOptions) {
+        myConfigOptions = configOptions;
+    }
+
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
         // add provider to list
         myProviders[3] = provider; 
@@ -287,6 +297,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "servers"));
             SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "servers"));
             myServersFile = new SVNCompositeConfigFile(systemConfig, userConfig);
+            myServersFile.setGroupsToOptions(myServersOptions);
         }
         return myServersFile;
     }
@@ -297,6 +308,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
             SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
             myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
+            myConfigFile.setGroupsToOptions(myConfigOptions);
         }
         return myConfigFile;
     }
