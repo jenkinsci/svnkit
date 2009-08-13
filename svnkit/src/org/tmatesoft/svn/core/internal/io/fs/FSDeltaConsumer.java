@@ -47,6 +47,8 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     private String myAuthor;
     private Collection myLockTokens;
     private SVNDeltaCombiner myDeltaCombiner;
+    private boolean myIsComputeChecksum;
+    private String myComputedChecksum;
 
     public FSDeltaConsumer(String basePath, FSTransactionRoot txnRoot, FSFS fsfs, FSCommitter committer, String author, Collection lockTokens) {
         myBasePath = basePath;
@@ -88,7 +90,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
             if (myDeltaProcessor == null) {
                 myDeltaProcessor = new SVNDeltaProcessor();
             }
-            myDeltaProcessor.applyTextDelta(sourceStream, targetStream, false);
+            myDeltaProcessor.applyTextDelta(sourceStream, targetStream, myIsComputeChecksum);
         } catch (SVNException svne) {
             SVNFileUtil.closeFile(sourceStream);
             throw svne;
@@ -136,7 +138,11 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myDeltaProcessor.textDeltaEnd();
+        myComputedChecksum = myDeltaProcessor.textDeltaEnd();
+    }
+    
+    public String getChecksum() {
+        return myComputedChecksum;
     }
     
     public void close() throws SVNException {
@@ -152,6 +158,10 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
         }
+    }
+    
+    public void setComputeChecksum(boolean computeChecksum) {
+        myIsComputeChecksum = computeChecksum;
     }
     
     private SVNDeltaCombiner getCombiner() {
