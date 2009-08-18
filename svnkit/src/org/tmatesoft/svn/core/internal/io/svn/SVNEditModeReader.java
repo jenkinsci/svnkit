@@ -201,6 +201,7 @@ public class SVNEditModeReader {
     public void driveEditor() throws SVNException {
         while (!myDone) {
             SVNErrorMessage error = null;
+            Exception errorCause = null;
             List items = readTuple("wl", false);
             String commandName = SVNReader.getString(items, 0);
             String template = (String) COMMANDS_MAP.get(commandName);
@@ -214,6 +215,7 @@ public class SVNEditModeReader {
                 processCommand(commandName, parameters);
             } catch (SVNException e) {
                 error = e.getErrorMessage();
+                errorCause = e;
             }
 
             if (error != null) {
@@ -228,7 +230,7 @@ public class SVNEditModeReader {
                     myConnection.writeError(error.getChildErrorMessage());
                     break;
                 }
-                SVNErrorManager.error(error, SVNLogType.NETWORK);
+                SVNErrorManager.error(error, errorCause, SVNLogType.NETWORK);
             }
         }
 
