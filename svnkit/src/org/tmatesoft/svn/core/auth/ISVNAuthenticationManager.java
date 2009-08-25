@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.auth;
 
 import javax.net.ssl.TrustManager;
 
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -123,114 +122,10 @@ public interface ISVNAuthenticationManager {
      */
 	public TrustManager getTrustManager(SVNURL url) throws SVNException;		
 
-	/**
-     * Retrieves the first user credential.
-     * 
-     * The scheme of retrieving credentials:
-     * <ul>
-     * <li>For the first try to authenticate a user to a repository (using the 
-     *     specifed realm) an <b>SVNRepository</b> driver calls 
-     *     <b>getFirstAuthentication()</b> and sends the retrieved credential.
-     * <li>If the credential is accepted, it may be stored. If not, the driver 
-     *     calls {@link #getNextAuthentication(String, String, SVNURL) getNextAuthentication()} 
-     *     and sends the next credential.
-     * <li>If the last credential was not accepted, the driver still tries to get the next 
-     *     credential for the same realm.   
-     * </ul>
-     * 
-     * <p>
-     * For each credential <code>kind</code> an implementor should return a kind-specific 
-     * credential. The following table matches kinds to proper credential classes:
-     * 
-     * <table cellpadding="3" cellspacing="1" border="0" width="60%" bgcolor="#999933">
-     * <tr bgcolor="#ADB8D9" align="left">
-     * <td><b>Credential Kind</b></td>
-     * <td><b>Credential Class</b></td>
-     * </tr>   
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #PASSWORD}</td><td>{@link SVNPasswordAuthentication}</td>
-     * </tr>
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #SSH}</td><td>{@link SVNSSHAuthentication}</td>
-     * </tr>
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #SSL}</td><td>{@link SVNSSLAuthentication}</td>
-     * </tr>
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #USERNAME}</td><td>{@link SVNUserNameAuthentication}</td>
-     * </tr>
-     * </table>
-     * 
-     * @param  kind              a credential kind 
-     * @param  realm             a repository authentication realm 
-     * @param  url               a repository location that is to be accessed
-     * @return                   the first try user credential
-     * @throws SVNException
-     */
-    public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException;
-    
     /**
-     * Retrieves the next user credential if the first try failed.
-     * 
-     * The scheme of retrieving credentials:
-     * <ul>
-     * <li>For the first try to authenticate a user to a repository (using the 
-     *     specifed realm) an <b>SVNRepository</b> driver calls 
-     *     {@link #getFirstAuthentication(String, String, SVNURL) getFirstAuthentication()} and 
-     *     sends the retrieved credential.
-     * <li>If the credential is accepted, it may be stored. If not, the driver 
-     *     calls <b>getNextAuthentication()</b> and sends the next credential.
-     * <li>If the last credential was not accepted, the driver still tries to get the next 
-     *     credential for the same realm.   
-     * </ul>
-     * 
-     * <p>
-     * For each credential <code>kind</code> an implementor should return a kind-specific 
-     * credential. The following table matches kinds to proper credential classes:
-     * 
-     * <table cellpadding="3" cellspacing="1" border="0" width="60%" bgcolor="#999933">
-     * <tr bgcolor="#ADB8D9" align="left">
-     * <td><b>Credential Kind</b></td>
-     * <td><b>Credential Class</b></td>
-     * </tr>   
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #PASSWORD}</td><td>{@link SVNPasswordAuthentication}</td>
-     * </tr>
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #SSH}</td><td>{@link SVNSSHAuthentication}</td>
-     * </tr>
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #SSL}</td><td>{@link SVNSSLAuthentication}</td>
-     * </tr>
-     * <tr bgcolor="#EAEAEA" align="left">
-     * <td>{@link #USERNAME}</td><td>{@link SVNUserNameAuthentication}</td>
-     * </tr>
-     * </table>
-     * 
-     * @param  kind              a credential kind 
-     * @param  realm             a repository authentication realm 
-     * @param  url               a repository location that is to be accessed
-     * @return                   the next try user credential
-     * @throws SVNException
+     * Enumerates {@link SVNAuthentication} to be tried on to access the given repository.
      */
-    public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException;
-    
-    /**
-     * Accepts the given authentication if it was successfully accepted by a 
-     * repository server, or not if authentication failed. As a result the 
-     * provided credential may be cached (authentication succeeded) or deleted 
-     * from the cache (authentication failed).
-     * 
-     * @param accepted       <span class="javakeyword">true</span> if 
-     *                       the credential was accepted by the server, 
-     *                       otherwise <span class="javakeyword">false</span>
-     * @param kind           a credential kind ({@link #PASSWORD} or {@link #SSH} or {@link #USERNAME})
-     * @param realm          a repository authentication realm 
-     * @param errorMessage   the reason of the authentication failure 
-     * @param authentication a user credential to accept/drop
-     * @throws SVNException 
-     */
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
+    public Iterable<SVNAuthAttempt> getAuthentications(String kind, String realm, SVNURL url) throws SVNException;
 
     /**
      * Acknowledges the specified trust manager. This method is called only when a secure connection is 

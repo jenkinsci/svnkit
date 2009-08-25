@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.auth.SVNAuthAttempt;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -908,24 +909,20 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
             try {
                 String realm = getRepositoryUUID(true);
                 ISVNAuthenticationManager authManager = getAuthenticationManager();
-                SVNAuthentication auth = authManager.getFirstAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
-
-                while (auth != null) {
-                    String userName = auth.getUserName();
+                for (SVNAuthAttempt aa : authManager.getAuthentications(ISVNAuthenticationManager.USERNAME, realm, getLocation())) {
+                    String userName = aa.auth.getUserName();
                     if (userName == null || "".equals(userName.trim())) {
                         userName = System.getProperty("user.name");
                     }
-                    auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed());
+                    SVNUserNameAuthentication auth = new SVNUserNameAuthentication(userName, aa.auth.isStorageAllowed());
                     if (userName != null && !"".equals(userName.trim())) {
-                        authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth);
+                        aa.onAccepted(ISVNAuthenticationManager.USERNAME, realm);
                         return auth.getUserName();
                     }
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "Empty user name is not allowed");
-                    authManager.acknowledgeAuthentication(false, ISVNAuthenticationManager.USERNAME, realm, err, auth);
-                    auth = authManager.getNextAuthentication(ISVNAuthenticationManager.USERNAME, realm, getLocation());
+                    aa.onRejected(ISVNAuthenticationManager.USERNAME, realm,err);
                 }
-                // auth manager returned null - that is cancellation.
-                SVNErrorManager.cancel("Authentication cancelled", SVNLogType.FSFS);
+                SVNErrorManager.cancel("Authentication failed", SVNLogType.FSFS);
             } catch (SVNCancelException e) {
                 throw e;
             } catch (SVNAuthenticationException e) {

@@ -14,6 +14,8 @@ package org.tmatesoft.svn.core.auth;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 
+import java.util.Iterator;
+
 /**
  * The <b>ISVNAuthenticationProvider</b> interface is implemented by user 
  * credentials providers. Such a provider is set to an authentication manager 
@@ -52,30 +54,20 @@ public interface ISVNAuthenticationProvider {
      * cached on the disk.
      */
     public int ACCEPTED = 2;
-    
+
     /**
-     * Returns a next user credential of the specified kind for the given 
-     * authentication realm.
-     * 
-     * <p>
-     * If this provider has got more than one credentials (say, a list of credentials), 
-     * to get the first one of them <code>previousAuth</code> is set to 
-     * <span class="javakeyword">null</span>.
-     * 
-     * @param kind              a credential kind (for example, like those defined in 
+     * Attempts authentication by returning a sequence.
+     *
+     * @param kind              a credential kind (for example, like those defined in
      *                          {@link ISVNAuthenticationManager})
      * @param  url              a repository location that is to be accessed
-     * @param  realm            a repository authentication realm (host, port, realm string) 
-     * @param  errorMessage     the recent authentication failure error message
-     * @param  previousAuth     the credential that was previously retrieved (to tell if it's 
-     *                          not accepted)  
-     * @param  authMayBeStored  if <span class="javakeyword">true</span> then the returned credential 
+     * @param  realm            a repository authentication realm (host, port, realm string)
+     * @param  authMayBeStored  if <span class="javakeyword">true</span> then the returned credential
      *                          can be cached, otherwise it won't be cached anyway
      * @return                  a next user credential
      */
-    public SVNAuthentication requestClientAuthentication(String kind,
-            SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth,
-            boolean authMayBeStored);
+    Iterator<? extends SVNAuthAttempt> getAuthentications(String kind, String realm, SVNURL url, boolean authMayBeStored);
+
     /**
      * Checks a server authentication certificate and whether accepts it 
      * (if the client trusts it) or not.

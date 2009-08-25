@@ -14,13 +14,13 @@ package org.tmatesoft.svn.core.auth;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 import javax.net.ssl.TrustManager;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
 
@@ -53,11 +53,6 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private List myUserNameAuthentications;
     private List mySSLAuthentications;
     
-    private int mySSHIndex;
-    private int myPasswordIndex;
-    private int myUserNameIndex;
-    private int mySSLIndex;
-
     private String myProxyHost;
     private int myProxyPort;
     private String myProxyUserName;
@@ -114,10 +109,6 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         mySSHAuthentications = new ArrayList();
         myUserNameAuthentications = new ArrayList();
         mySSLAuthentications = new ArrayList();
-        myPasswordIndex = 0;
-        mySSHIndex = 0;
-        mySSLIndex = 0;
-        myUserNameIndex = 0;
         for (int i = 0; authentications != null && i < authentications.length; i++) {
             SVNAuthentication auth = authentications[i];
             if (auth instanceof SVNPasswordAuthentication) {
@@ -147,74 +138,25 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
         myProxyPassword = proxyPassword;
     }
 
-    /**
-     * Returns the first user's authentication credentials.
-     * 
-     * @param  kind          credentials kind; valid kinds are {@link ISVNAuthenticationManager#SSH}, 
-     *                       {@link ISVNAuthenticationManager#PASSWORD}, {@link ISVNAuthenticationManager#USERNAME}, 
-     *                       {@link ISVNAuthenticationManager#SSL}, {@link ISVNAuthenticationManager#USERNAME}  
-     * @param  realm         authentication realm
-     * @param  url           repository url
-     * @return               first user's credentials
-     * @throws SVNException  exception with {@link org.tmatesoft.svn.core.SVNErrorCode#RA_NOT_AUTHORIZED} 
-     *                       error code - in case of invalid <code>kind</code>
-     */
-    public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-        if (ISVNAuthenticationManager.SSH.equals(kind) && mySSHAuthentications.size() > 0) {
-            mySSHIndex = 0; 
-            return (SVNAuthentication) mySSHAuthentications.get(0);
-        } else if (ISVNAuthenticationManager.PASSWORD.equals(kind) && myPasswordAuthentications.size() > 0) {
-            myPasswordIndex = 0; 
-            return (SVNAuthentication) myPasswordAuthentications.get(0);
-        } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameAuthentications.size() > 0) {
-            myUserNameIndex = 0; 
-            return (SVNAuthentication) myUserNameAuthentications.get(0);
-        } else if (ISVNAuthenticationManager.SSL.equals(kind) && mySSLAuthentications.size() > 0) {
-            mySSLIndex = 0; 
-            return (SVNAuthentication) mySSLAuthentications.get(0);
-        }
+    public Iterable<SVNAuthAttempt> getAuthentications(final String kind, final String realm, final SVNURL url) throws SVNException {
+        if (ISVNAuthenticationManager.SSH.equals(kind))
+            return SVNAuthAttempt.wrap(mySSHAuthentications);
+        if (ISVNAuthenticationManager.PASSWORD.equals(kind))
+            return SVNAuthAttempt.wrap(myPasswordAuthentications);
+        if (ISVNAuthenticationManager.USERNAME.equals(kind))
+            return SVNAuthAttempt.wrap(myUserNameAuthentications);
+        if (ISVNAuthenticationManager.SSL.equals(kind))
+            return SVNAuthAttempt.wrap(mySSLAuthentications);
         if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
-                return new SVNUserNameAuthentication(url.getUserInfo(), false);
+                return Collections.singleton(new SVNAuthAttempt(new SVNUserNameAuthentication(url.getUserInfo(), false)));
             }
             // client will use default.
-            return new SVNUserNameAuthentication(null, false);
+            return Collections.singleton(new SVNAuthAttempt(new SVNUserNameAuthentication(null, false)));
         }
-        SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
-        return null;
-    } 
-
-    /**
-     * Returns next user authentication credentials. This method is called whenever the first credentials 
-     * returned by {@link #getFirstAuthentication(String, String, SVNURL)} failed to authenticate the user. 
-     * 
-     * @param  kind          credentials kind; valid kinds are {@link ISVNAuthenticationManager#SSH}, 
-     *                       {@link ISVNAuthenticationManager#PASSWORD}, {@link ISVNAuthenticationManager#USERNAME}, 
-     *                       {@link ISVNAuthenticationManager#SSL}, {@link ISVNAuthenticationManager#USERNAME}  
-     * @param  realm         authentication realm
-     * @param  url           repository url
-     * @return               next user's authentication credentials                
-     * @throws SVNException  exception with {@link org.tmatesoft.svn.core.SVNErrorCode#RA_NOT_AUTHORIZED} 
-     *                       error code - in case of invalid <code>kind</code>
-     */
-    public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-        if (ISVNAuthenticationManager.SSH.equals(kind) && mySSHIndex + 1 < mySSHAuthentications.size()) {
-            mySSHIndex++; 
-            return (SVNAuthentication) mySSHAuthentications.get(mySSHIndex);
-        } else if (ISVNAuthenticationManager.PASSWORD.equals(kind) && myPasswordIndex + 1 < myPasswordAuthentications.size()) {
-            myPasswordIndex++; 
-            return (SVNAuthentication) myPasswordAuthentications.get(myPasswordIndex);
-        } else if (ISVNAuthenticationManager.USERNAME.equals(kind) && myUserNameIndex + 1 < myUserNameAuthentications.size()) {
-            myUserNameIndex++; 
-            return (SVNAuthentication) myUserNameAuthentications.get(myUserNameIndex);
-        } else if (ISVNAuthenticationManager.SSL.equals(kind) && mySSLIndex + 1 < mySSLAuthentications.size()) {
-            mySSLIndex++; 
-            return (SVNAuthentication) mySSLAuthentications.get(mySSLIndex);
-        } 
-        SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
-        return null;
+        return Collections.emptyList();
     }
-    
+
     /**
      * Does nothing.
      *  
@@ -246,18 +188,6 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
 	public TrustManager getTrustManager(SVNURL url) throws SVNException {
 		return null;
 	}
-
-	/**
-     * Does nothing.
-     * 
-     * @param accepted
-     * @param kind
-     * @param realm
-     * @param errorMessage
-     * @param authentication
-     */
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
-    }
 
     /**
      * Does nothing.

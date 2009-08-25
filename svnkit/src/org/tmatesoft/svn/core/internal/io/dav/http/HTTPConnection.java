@@ -290,7 +290,7 @@ class HTTPConnection implements IHTTPConnection {
         SVNAuthentication httpAuth = myLastValidAuth;
         boolean isAuthForced = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
-            httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
+            httpAuth = myRepository.getAuthenticationManager().getAuthentications(ISVNAuthenticationManager.PASSWORD, sslRealm, null).next();
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
         } 
         String realm = null;

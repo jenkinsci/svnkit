@@ -58,4 +58,6 @@ public class SVNSSLAuthentication extends SVNAuthentication {
     public File getCertificateFile() {
         return myCertificate;
     }
+
+    
 }

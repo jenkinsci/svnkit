@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.Arrays;
+import java.util.Collections;
 
 import javax.net.ssl.TrustManager;
 
@@ -34,6 +36,7 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.auth.SVNAuthAttempt;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -50,14 +53,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private ISVNAuthenticationProvider[] myProviders;
     private File myConfigDirectory;
     
-    private SVNAuthentication myPreviousAuthentication;
-    private SVNErrorMessage myPreviousErrorMessage;
     private SVNCompositeConfigFile myServersFile;
     private ISVNAuthenticationStorage myRuntimeAuthStorage;
-    private int myLastProviderIndex;
     private SVNCompositeConfigFile myConfigFile;
     private boolean myIsAuthenticationForced;
-    private SVNAuthentication myLastLoadedAuth;
 
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         this(configDirectory, storeAuth, userName, password, null, null);
@@ -145,83 +144,58 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
         return globalProps;
     }
 
-    public SVNAuthentication getFirstAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-        myPreviousAuthentication = null;
-        myPreviousErrorMessage = null;
-        myLastProviderIndex = 0;
-        myLastLoadedAuth = null;
-        // iterate over providers and ask for auth till it is found.
-        for (int i = 0; i < myProviders.length; i++) {
-            if (myProviders[i] == null) {
-                continue;
-            }
-            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, null, null, myIsStoreAuth);
-            if (auth != null) {
-                if (i == 2) {
-                    myLastLoadedAuth = auth;
-                }
-                myPreviousAuthentication = auth;
-                myLastProviderIndex = i;
-                return auth;
-            }
-            if (i == 3) {
-                SVNErrorManager.cancel("No credential to try. Authentication failed", SVNLogType.WC);
-            }
-        }
-        // end of probe. if we were asked for username for ssh and didn't find anything 
-        // report something default.
-        if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-            // user auth shouldn't be null.
-            return new SVNUserNameAuthentication("", isAuthStorageEnabled());
-        }
-        SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
-        return null;
-    }
+    public Iterable<SVNAuthAttempt> getAuthentications(final String kind, final String realm, final SVNURL url) throws SVNException {
+        return new Iterable<SVNAuthAttempt>() {
+            public Iterator<SVNAuthAttempt> iterator() {
+                Iterator<SVNAuthAttempt> itr = new Iterator<SVNAuthAttempt>() {
+                    private final Iterator<ISVNAuthenticationProvider> providers = Arrays.asList(myProviders).iterator();
+                    private Iterator<? extends SVNAuthAttempt> itr = Collections.<SVNAuthAttempt>emptySet().iterator();
 
-    public SVNAuthentication getNextAuthentication(String kind, String realm, SVNURL url) throws SVNException {
-        int index = Math.min(myLastProviderIndex + 1, 3);
-        for(int i = index; i < myProviders.length; i++) {
-            if (myProviders[i] == null) {
-                continue;
-            }
-            if ((i == 1 || i == 2) && hasExplicitCredentials(kind)) {
-                continue;
-            }
-            SVNAuthentication auth = myProviders[i].requestClientAuthentication(kind, url, realm, myPreviousErrorMessage, myPreviousAuthentication, myIsStoreAuth);
-            if (auth != null) {
-                if (i == 2) {
-                    myLastLoadedAuth = auth;
-                }
-                myPreviousAuthentication = auth;
-                myLastProviderIndex = i;
-                return auth;
-            }
-            if (i == 3) {
-                SVNErrorManager.cancel("authentication cancelled", SVNLogType.WC);
-            }
-        }
-        SVNErrorManager.authenticationFailed("Authentication required for ''{0}''", realm);
-        return null;
-    }
+                    public boolean hasNext() {
+                        while(!itr.hasNext() && providers.hasNext())
+                            itr = providers.next().getAuthentications(kind,realm,url,myIsStoreAuth);
+                        return itr.hasNext();
+                    }
 
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
-        if (!accepted) {
-            myPreviousErrorMessage = errorMessage;
-            myPreviousAuthentication = authentication;
-            myLastLoadedAuth = null;
-            return;
-        }
-        if (myIsStoreAuth && authentication.isStorageAllowed() && myProviders[2] instanceof IPersistentAuthenticationProvider) {
-            // compare this authentication with last loaded from provider[2].
-            if (myLastLoadedAuth == null || myLastLoadedAuth != authentication) {
-                ((IPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(authentication, kind, realm);
+                    public SVNAuthAttempt next() {
+                        hasNext();
+                        final SVNAuthAttempt r = itr.next();
+                        return new SVNAuthAttempt(r.auth) {
+                            @Override
+                            public void onAccepted(String kind, String realm) throws SVNException {
+                                r.onAccepted(kind,realm);
+
+                                if (myIsStoreAuth && auth.isStorageAllowed() && myProviders[2] instanceof IPersistentAuthenticationProvider)
+                                    // persist the authentication
+                                    ((IPersistentAuthenticationProvider) myProviders[2]).saveAuthentication(auth, kind, realm);
+
+                                // successful authentications are cached
+                                if (!hasExplicitCredentials(kind))
+                                    // do not cache explicit credentials in runtime cache?
+                                    ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(auth, realm);
+                            }
+
+                            @Override
+                            public void onRejected(String kind, String realm, SVNErrorMessage errorMessage) throws SVNException {
+                                r.onRejected(kind, realm, errorMessage);
+                            }
+                        };
+                    }
+
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+
+                // If we were asked for username for ssh and didn't find anything
+                // report something default.
+                if (!itr.hasNext() && ISVNAuthenticationManager.USERNAME.equals(kind))
+                    // user auth shouldn't be null.
+                    return Collections.singleton(new SVNAuthAttempt(new SVNUserNameAuthentication("", isAuthStorageEnabled()))).iterator();
+
+                return Collections.<SVNAuthAttempt>emptyList().iterator();
             }
-        }
-        myLastLoadedAuth = null;
-        if (!hasExplicitCredentials(kind)) {
-            // do not cache explicit credentials in runtime cache?
-            ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
-        }
+        };
     }
 
 	public void acknowledgeTrustManager(TrustManager manager) {
@@ -393,7 +367,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     
     
     protected class DumbAuthenticationProvider implements ISVNAuthenticationProvider {
-        
         private String myUserName;
         private String myPassword;
         private boolean myIsStore;
@@ -407,35 +380,42 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myPassphrase = passphrase;
             myIsStore = store;
         }
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-            if (previousAuth == null) {
-                if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                    SVNSSHAuthentication sshAuth = getDefaultSSHAuthentication();
-                    if (myUserName == null || "".equals(myUserName.trim())) {
-                        return sshAuth;
-                    }
-                    if (myPrivateKey != null) {
-                        return new SVNSSHAuthentication(myUserName, myPrivateKey, myPassphrase, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
-                    }
-                    return new SVNSSHAuthentication(myUserName, myPassword, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
-                } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-                    if (myUserName == null || "".equals(myUserName.trim())) {
-                        return null;
-                    }
-                    return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
-                } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-                    if (myUserName == null || "".equals(myUserName)) {
-                        String userName = System.getProperty("svnkit.ssh2.author", System.getProperty("javasvn.ssh2.author"));
-                        if (userName != null) {
-                            return new SVNUserNameAuthentication(userName, myIsStore);
-                        }
-                        return null;
-                    }
-                    return new SVNUserNameAuthentication(myUserName, myIsStore);
+        public SVNAuthentication createAuthentication(String kind) {
+            if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                SVNSSHAuthentication sshAuth = getDefaultSSHAuthentication();
+                if (myUserName == null || "".equals(myUserName.trim())) {
+                    return sshAuth;
                 }
+                if (myPrivateKey != null) {
+                    return new SVNSSHAuthentication(myUserName, myPrivateKey, myPassphrase, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
+                }
+                return new SVNSSHAuthentication(myUserName, myPassword, sshAuth != null ? sshAuth.getPortNumber() : -1, myIsStore);
+            } else if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+                if (myUserName == null || "".equals(myUserName.trim())) {
+                    return null;
+                }
+                return new SVNPasswordAuthentication(myUserName, myPassword, myIsStore);
+            } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
+                if (myUserName == null || "".equals(myUserName)) {
+                    String userName = System.getProperty("svnkit.ssh2.author", System.getProperty("javasvn.ssh2.author"));
+                    if (userName != null) {
+                        return new SVNUserNameAuthentication(userName, myIsStore);
+                    }
+                    return null;
+                }
+                return new SVNUserNameAuthentication(myUserName, myIsStore);
             }
             return null;
         }
+
+        public Iterator<SVNAuthAttempt> getAuthentications(String kind, String realm, SVNURL url, boolean storeAuth) {
+            SVNAuthentication auth = createAuthentication(kind);
+            if (auth!=null)
+                return Collections.singleton(new SVNAuthAttempt(auth)).iterator();
+            else
+                return Collections.<SVNAuthAttempt>emptyList().iterator();
+        }
+
         public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
             return ACCEPTED;
         }
@@ -457,10 +437,18 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     private class CacheAuthenticationProvider implements ISVNAuthenticationProvider {        
 
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-            return (SVNAuthentication) getRuntimeAuthStorage().getData(kind, realm);
+        public Iterator<? extends SVNAuthAttempt> getAuthentications(String kind, String realm, SVNURL url, boolean storeAuth) {
+            SVNAuthentication auth = (SVNAuthentication) getRuntimeAuthStorage().getData(kind, realm);
+            if (auth!=null)
+                return Collections.singleton(new SVNAuthAttempt(auth) {
+                    public void onRejected(String kind, String realm, SVNErrorMessage errorMessage) throws SVNException {
+                        getRuntimeAuthStorage().putData(kind,realm,null);
+                    }
+                }).iterator();
+            else
+                return Collections.<SVNAuthAttempt>emptyList().iterator();
         }
-        
+
         public void saveAuthentication(SVNAuthentication auth, String realm) {
             if (auth == null || realm == null) {
                 return;
@@ -490,23 +478,99 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             myDirectory = directory;
         }
 
-        public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
-	        if (ISVNAuthenticationManager.SSL.equals(kind)) {
-		        String host = url.getHost();
-		        Map properties = getHostProperties(host);
-		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
-		        String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
-		        File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
-		        return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
-	        }
+        private Iterator<? extends SVNAuthAttempt> singleton(SVNAuthentication auth) {
+            return Collections.singleton(new SVNAuthAttempt(auth) {
+                public void onAccepted(String kind, String realm) throws SVNException {
+                    File dir = new File(myDirectory, kind);
+                    if (!dir.exists()) {
+                        dir.mkdirs();
+                    }
+                    if (!dir.isDirectory()) {
+                        SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", dir.getAbsolutePath());
+                        SVNErrorManager.error(error, SVNLogType.DEFAULT);
+                    }
+                    if ("".equals(auth.getUserName()) || auth.getUserName() == null) {
+                        return;
+                    }
+                    Map values = new SVNHashMap();
+                    values.put("svn:realmstring", realm);
+                    values.put("username", auth.getUserName());
+                    boolean storePasswords = isStorePasswords();
+                    SVNPasswordCipher cipher = null;
+
+                    if (storePasswords) {
+                        String cipherType = SVNPasswordCipher.getDefaultCipherType();
+                        cipher = SVNPasswordCipher.getInstance(cipherType);
+
+                        if (cipherType != null) {
+                            values.put("passtype", cipherType);
+                        }
+                    }
+
+                    if (ISVNAuthenticationManager.PASSWORD.equals(kind) && storePasswords) {
+                        SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
+                        values.put("password", cipher.encrypt(passwordAuth.getPassword()));
+                    } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
+                        SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
+                        if (storePasswords) {
+                            values.put("password", cipher.encrypt(sshAuth.getPassword()));
+                        }
+                        int port = sshAuth.getPortNumber();
+                        if (sshAuth.getPortNumber() < 0) {
+                            port = getDefaultSSHPortNumber() ;
+                        }
+                        values.put("port", Integer.toString(port));
+                        if (sshAuth.getPrivateKeyFile() != null) {
+                            String path = sshAuth.getPrivateKeyFile().getAbsolutePath();
+                            if (storePasswords) {
+                                values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
+                            }
+                            values.put("key", path);
+                        }
+                    }
+                    // get file name for auth and store password.
+                    String fileName = SVNFileUtil.computeChecksum(realm);
+                    File authFile = new File(dir, fileName);
+
+                    SVNWCProperties props = new SVNWCProperties(authFile, "");
+                    try {
+                        if (values.equals(props.asMap())) {
+                            return;
+                        }
+                    } catch (SVNException e) {
+                        //
+                    }
+                    props.delete();
+                    try {
+                        for (Iterator names = values.keySet().iterator(); names.hasNext();) {
+                            String name = (String) names.next();
+                            props.setPropertyValue( name, SVNPropertyValue.create((String) values.get(name)));
+                        }
+                        SVNFileUtil.setReadonly(props.getFile(), false);
+                    } catch (SVNException e) {
+                        props.delete();
+                        throw e;
+                    }
+                }
+            }).iterator();
+        }
+
+        public Iterator<? extends SVNAuthAttempt> getAuthentications(final String kind, final String realm, final SVNURL url, final boolean authMayBeStored) {
+            if (ISVNAuthenticationManager.SSL.equals(kind)) {
+                String host = url.getHost();
+                Map properties = getHostProperties(host);
+                String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
+                String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
+                File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
+                return singleton(new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored));
+            }
 
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {
-                return null;
+                return Collections.<SVNAuthAttempt>emptyList().iterator();
             }
             String fileName = SVNFileUtil.computeChecksum(realm);
             File authFile = new File(dir, fileName);
-            String specifiedUserName = previousAuth != null ? previousAuth.getUserName() : null; 
             if (authFile.exists()) {
                 SVNWCProperties props = new SVNWCProperties(authFile, "");
                 try {
@@ -524,10 +588,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     if (userName == null || "".equals(userName.trim())) {
                         return null;
                     }
-                    if (specifiedUserName != null && !specifiedUserName.equals(userName)) {
-                        return null;
-                    }
-                    
+
                     String password = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("password"));
                     password = cipher.decrypt(password);
 
@@ -537,7 +598,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     String port = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("port"));
                     port = port == null ? ("" + getDefaultSSHPortNumber()) : port;
                     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
-                        return new SVNPasswordAuthentication(userName, password, authMayBeStored);
+                        return singleton(new SVNPasswordAuthentication(userName, password, authMayBeStored));
                     } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
                         // get port from config file or system property?
                         int portNumber;
@@ -547,12 +608,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                             portNumber = getDefaultSSHPortNumber();
                         }
                         if (path != null) {
-                            return new SVNSSHAuthentication(userName, new File(path), passphrase, portNumber, authMayBeStored);
+                            return singleton(new SVNSSHAuthentication(userName, new File(path), passphrase, portNumber, authMayBeStored));
                         } else if (password != null) {
-                            return new SVNSSHAuthentication(userName, password, portNumber, authMayBeStored);
-                        }                    
+                            return singleton(new SVNSSHAuthentication(userName, password, portNumber, authMayBeStored));
+                        }
                     } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
-                        return new SVNUserNameAuthentication(userName, authMayBeStored);
+                        return singleton(new SVNUserNameAuthentication(userName, authMayBeStored));
                     }
                 } catch (SVNException e) {
                     //
@@ -560,80 +621,6 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
             return null;
         }
-        
-        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException {
-            File dir = new File(myDirectory, kind);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            if (!dir.isDirectory()) {
-                SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create directory ''{0}''", dir.getAbsolutePath());
-                SVNErrorManager.error(error, SVNLogType.DEFAULT);
-            }
-            if ("".equals(auth.getUserName()) || auth.getUserName() == null) {
-                return;
-            }
-            Map values = new SVNHashMap();
-            values.put("svn:realmstring", realm);
-            values.put("username", auth.getUserName());
-            boolean storePasswords = isStorePasswords();
-            SVNPasswordCipher cipher = null;
-            
-            if (storePasswords) {
-                String cipherType = SVNPasswordCipher.getDefaultCipherType();
-                cipher = SVNPasswordCipher.getInstance(cipherType);
-    
-                if (cipherType != null) {
-                    values.put("passtype", cipherType);
-                }
-            }
-            
-            if (ISVNAuthenticationManager.PASSWORD.equals(kind) && storePasswords) {
-                SVNPasswordAuthentication passwordAuth = (SVNPasswordAuthentication) auth;
-                values.put("password", cipher.encrypt(passwordAuth.getPassword()));
-            } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                SVNSSHAuthentication sshAuth = (SVNSSHAuthentication) auth;
-                if (storePasswords) { 
-                    values.put("password", cipher.encrypt(sshAuth.getPassword()));
-                }
-                int port = sshAuth.getPortNumber();
-                if (sshAuth.getPortNumber() < 0) {
-                    port = getDefaultSSHPortNumber() ;
-                }
-                values.put("port", Integer.toString(port));
-                if (sshAuth.getPrivateKeyFile() != null) { 
-                    String path = sshAuth.getPrivateKeyFile().getAbsolutePath();
-                    if (storePasswords) {
-                        values.put("passphrase", cipher.encrypt(sshAuth.getPassphrase()));
-                    }
-                    values.put("key", path);
-                }
-            }
-            // get file name for auth and store password.
-            String fileName = SVNFileUtil.computeChecksum(realm);
-            File authFile = new File(dir, fileName);
-            
-            SVNWCProperties props = new SVNWCProperties(authFile, "");
-            try {
-                if (values.equals(props.asMap())) {
-                    return;
-                }
-            } catch (SVNException e) {
-                // 
-            }
-            props.delete();
-            try {
-                for (Iterator names = values.keySet().iterator(); names.hasNext();) {
-                    String name = (String) names.next();
-                    props.setPropertyValue( name, SVNPropertyValue.create((String) values.get(name)));
-                } 
-                SVNFileUtil.setReadonly(props.getFile(), false);
-            } catch (SVNException e) {
-                props.delete();
-                throw e;
-            }
-        }
-        
 
         public int acceptServerAuthentication(SVNURL url, String r, Object serverAuth, boolean resultMayBeStored) {
             return ACCEPTED;

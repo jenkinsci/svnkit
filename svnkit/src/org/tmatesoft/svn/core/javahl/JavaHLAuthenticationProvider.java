@@ -13,8 +13,11 @@ package org.tmatesoft.svn.core.javahl;
 
 import java.io.File;
 import java.security.cert.X509Certificate;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -23,6 +26,9 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.auth.SVNAuthAttempt;
+import org.tmatesoft.svn.core.auth.PullIterator;
+import org.tmatesoft.svn.core.auth.SVNAuthAttempt.FlattenIterator;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
 import org.tigris.subversion.javahl.PromptUserPassword;
@@ -43,107 +49,150 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         myPrompt = prompt;
     }
 
-    public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
+    public Iterator<? extends SVNAuthAttempt> getAuthentications(final String kind, final String realm, final SVNURL url, final boolean authMayBeStored) {
         if (ISVNAuthenticationManager.SSH.equals(kind) && myPrompt instanceof PromptUserPasswordSSH) {
-            PromptUserPasswordSSH prompt4 = (PromptUserPasswordSSH) myPrompt;
-            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
-            int port = url != null ? url.getPort() : -1;
-            if (prompt4.promptSSH(realm, userName, port, authMayBeStored)) {
-                String password = prompt4.getPassword();
-                String keyPath = prompt4.getSSHPrivateKeyPath();
-                String passphrase = prompt4.getSSHPrivateKeyPassphrase();
-                userName = getUserName(prompt4.getUsername(), url);
-                if ("".equals(passphrase)) {
-                    passphrase = null;
-                }
-                port = prompt4.getSSHPort();
-                if (port < 0 && url != null) {
-                    port = url.getPort();
-                }
-                if (port < 0) {
-                    port = 22;
-                }
-                boolean save = prompt4.userAllowedSave();
-                if (keyPath != null && !"".equals(keyPath)) {
-                    return new SVNSSHAuthentication(userName, new File(keyPath), passphrase, port, save);
-                } else if (password != null){
-                    return new SVNSSHAuthentication(userName, password, port, save);
-                }
-            }
-            return null;                        
-        } else if (ISVNAuthenticationManager.SSL.equals(kind) && myPrompt instanceof PromptUserPasswordSSL) {
-            PromptUserPasswordSSL prompt4 = (PromptUserPasswordSSL) myPrompt;
-            if (prompt4.promptSSL(realm, authMayBeStored)) {
-                String cert = prompt4.getSSLClientCertPath();
-                String password = prompt4.getSSLClientCertPassword();
-                if (cert != null) {
-                    if ("".equals(password)) {
-                        password = null;
+            final PromptUserPasswordSSH prompt4 = (PromptUserPasswordSSH) myPrompt;
+
+            return SVNAuthAttempt.wrap(new PullIterator<SVNSSHAuthentication>() {
+                SVNSSHAuthentication previousAuth;
+                protected SVNSSHAuthentication fetch() {
+                    String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
+                    int port = url != null ? url.getPort() : -1;
+                    if (prompt4.promptSSH(realm, userName, port, authMayBeStored)) {
+                        String password = prompt4.getPassword();
+                        String keyPath = prompt4.getSSHPrivateKeyPath();
+                        String passphrase = prompt4.getSSHPrivateKeyPassphrase();
+                        userName = getUserName(prompt4.getUsername(), url);
+                        if ("".equals(passphrase)) {
+                            passphrase = null;
+                        }
+                        port = prompt4.getSSHPort();
+                        if (port < 0 && url != null) {
+                            port = url.getPort();
+                        }
+                        if (port < 0) {
+                            port = 22;
+                        }
+                        boolean save = prompt4.userAllowedSave();
+                        if (keyPath != null && !"".equals(keyPath)) {
+                            return previousAuth=new SVNSSHAuthentication(userName, new File(keyPath), passphrase, port, save);
+                        } else if (password != null){
+                            return previousAuth=new SVNSSHAuthentication(userName, password, port, save);
+                        }
                     }
-                    boolean save = prompt4.userAllowedSave();
-                    return new SVNSSLAuthentication(new File(cert), password, save);
+                    return null;
                 }
-            }
-            return null;                        
+            });
         }
-        if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
+        if (ISVNAuthenticationManager.SSH.equals(kind)) {
+            final List<Iterator<SVNAuthAttempt>> candidates = new ArrayList<Iterator<SVNAuthAttempt>>();
+
             // use configuration file here? but it was already used once...
             String keyPath = System.getProperty("svnkit.ssh2.key", System.getProperty("javasvn.ssh2.key"));
             String userName = getUserName(System.getProperty("svnkit.ssh2.username", System.getProperty("javasvn.ssh2.username")), url);
             String passPhrase = System.getProperty("svnkit.ssh2.passphrase", System.getProperty("javasvn.ssh2.passphrase"));
-            if (userName == null) {
-                return null;
-            }
-            if (keyPath != null && previousAuth == null) {
+            if (userName!=null && keyPath != null) {
                 // use port number from configuration file?
-                return new SVNSSHAuthentication(userName, new File(keyPath), passPhrase, -1, true);
+                candidates.add(Collections.singleton(new SVNAuthAttempt(
+                    new SVNSSHAuthentication(userName, new File(keyPath), passPhrase, -1, true))).iterator());
             }
-            // try to get password for ssh from the user.
-        } else if(ISVNAuthenticationManager.USERNAME.equals(kind)) {
-            String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
-            if (myPrompt instanceof PromptUserPasswordUser) {
-                PromptUserPasswordUser prompt3 = (PromptUserPasswordUser) myPrompt;
-                if (prompt3.promptUser(realm, userName, authMayBeStored))  {
-                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+
+            candidates.add(SVNAuthAttempt.wrap(new PullIterator<SVNAuthentication>() {
+                SVNSSHAuthentication previousAuth;
+
+                protected SVNSSHAuthentication fetch() {
+                    String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
+                    if (myPrompt instanceof PromptUserPassword3) {
+                        PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+                        if (prompt3.prompt(realm, userName, authMayBeStored)) {
+                            // use default port number from configuration file (should be in previous auth).
+                            int portNumber = (previousAuth != null) ? previousAuth.getPortNumber() : -1;
+                            return previousAuth = new SVNSSHAuthentication(prompt3.getUsername(), prompt3.getPassword(), portNumber, prompt3.userAllowedSave());
+                        }
+                    } else if (myPrompt.prompt(realm, userName)) {
+                        return previousAuth = new SVNSSHAuthentication(userName, myPrompt.getPassword(), -1, true);
+                    }
+                    return null;
                 }
-                return getDefaultUserNameCredentials(userName);
-            } else if (myPrompt instanceof PromptUserPassword3) {
-                PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
-                if (prompt3.prompt(realm, userName, authMayBeStored))  {
-                    return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+            }));
+
+            // return the union of both
+            return new FlattenIterator<SVNAuthAttempt,Iterator<SVNAuthAttempt>>(candidates) {
+                protected Iterator<SVNAuthAttempt> expand(Iterator<SVNAuthAttempt> item) {
+                    return item;
                 }
-                return getDefaultUserNameCredentials(userName);
-            } 
-            if (myPrompt.prompt(realm, userName)) {
-                return new SVNUserNameAuthentication(myPrompt.getUsername(), false);
-            }
-            return getDefaultUserNameCredentials(userName);
-        } else if(!ISVNAuthenticationManager.PASSWORD.equals(kind)){
-            return null;
+            };
         }
-        String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
-        if (myPrompt instanceof PromptUserPassword3) {
-            PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
-            if(prompt3.prompt(realm, userName, authMayBeStored)){
-                if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                    // use default port number from configuration file (should be in previous auth).
-                    int portNumber = (previousAuth instanceof SVNSSHAuthentication) ? ((SVNSSHAuthentication) previousAuth).getPortNumber() : -1;
-                    return new SVNSSHAuthentication(prompt3.getUsername(), prompt3.getPassword(), portNumber, prompt3.userAllowedSave());
-                } 
-                return new SVNPasswordAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave());
-            }
-        }else{
-            if(myPrompt.prompt(realm, userName)){
-                if (ISVNAuthenticationManager.SSH.equals(kind)) {
-                    return new SVNSSHAuthentication(userName, myPrompt.getPassword(), -1, true);
-                } 
-                return new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true);
-            }
+
+        if (ISVNAuthenticationManager.SSL.equals(kind) && myPrompt instanceof PromptUserPasswordSSL) {
+            final PromptUserPasswordSSL prompt4 = (PromptUserPasswordSSL) myPrompt;
+
+            return SVNAuthAttempt.wrap(new PullIterator<SVNSSLAuthentication>() {
+                protected SVNSSLAuthentication fetch() {
+                    if (prompt4.promptSSL(realm, authMayBeStored)) {
+                        String cert = prompt4.getSSLClientCertPath();
+                        String password = prompt4.getSSLClientCertPassword();
+                        if (cert != null) {
+                            if ("".equals(password)) {
+                                password = null;
+                            }
+                            boolean save = prompt4.userAllowedSave();
+                            return new SVNSSLAuthentication(new File(cert), password, save);
+                        }
+                    }
+                    return null;
+                }
+            });
         }
-        return null;
+
+        if(ISVNAuthenticationManager.USERNAME.equals(kind)) {
+            return SVNAuthAttempt.wrap(new PullIterator<SVNAuthentication>() {
+                SVNUserNameAuthentication previousAuth;
+                protected SVNAuthentication fetch() {
+                    String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
+                    if (myPrompt instanceof PromptUserPasswordUser) {
+                        PromptUserPasswordUser prompt3 = (PromptUserPasswordUser) myPrompt;
+                        if (prompt3.promptUser(realm, userName, authMayBeStored))  {
+                            return previousAuth=new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+                        }
+                        return getDefaultUserNameCredentials(userName);
+                    } else if (myPrompt instanceof PromptUserPassword3) {
+                        PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+                        if (prompt3.prompt(realm, userName, authMayBeStored))  {
+                            return previousAuth=new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave());
+                        }
+                        return getDefaultUserNameCredentials(userName);
+                    }
+                    if (myPrompt.prompt(realm, userName)) {
+                        return previousAuth=new SVNUserNameAuthentication(myPrompt.getUsername(), false);
+                    }
+                    return previousAuth=getDefaultUserNameCredentials(userName);
+                }
+            });
+        }
+
+        if(ISVNAuthenticationManager.PASSWORD.equals(kind)) {
+            return SVNAuthAttempt.wrap(new PullIterator<SVNAuthentication>() {
+                SVNPasswordAuthentication previousAuth;
+                protected SVNPasswordAuthentication fetch() {
+                    String userName = previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : getUserName(null, url);
+                    if (myPrompt instanceof PromptUserPassword3) {
+                        PromptUserPassword3 prompt3 = (PromptUserPassword3) myPrompt;
+                        if(prompt3.prompt(realm, userName, authMayBeStored)){
+                            return previousAuth=new SVNPasswordAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave());
+                        }
+                    }else if(myPrompt.prompt(realm, userName)) {
+                        return previousAuth=new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true);
+                    }
+                    return null;
+                }
+            });
+        }
+
+        return Collections.<SVNAuthAttempt>emptyList().iterator();
     }
 
-    private SVNAuthentication getDefaultUserNameCredentials(String userName) {
+    private SVNUserNameAuthentication getDefaultUserNameCredentials(String userName) {
         if (ADAPTER_DEFAULT_PROMPT_CLASS.equals(myPrompt.getClass().getName())) {
             // return default username, despite prompt was 'cancelled'.
             return new SVNUserNameAuthentication(userName, false);
