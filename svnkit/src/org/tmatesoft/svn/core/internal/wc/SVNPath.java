@@ -42,8 +42,10 @@ public class SVNPath {
         myTarget = target;
         myHasPegRevision = hasPegRevision;
         if (myHasPegRevision) {
-            parsePegRevision();
-        } 
+            parsePegRevision(true);
+        } else {
+            parsePegRevision(false);
+        }
         myTarget = SVNPathUtil.canonicalizePath(myTarget);
         assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
     }
@@ -81,7 +83,7 @@ public class SVNPath {
         return myPegRevision;
     }
 
-    private void parsePegRevision() throws SVNException {
+    private void parsePegRevision(boolean use) throws SVNException {
         int index = myTarget.lastIndexOf('@');
         if (index > 0) {
             String revStr = myTarget.substring(index + 1);
@@ -89,7 +91,9 @@ public class SVNPath {
                 return;
             }
             if (revStr.length() == 0) {
-                myPegRevision = isURL() ? SVNRevision.HEAD : SVNRevision.BASE;
+                if (use) {
+                    myPegRevision = isURL() ? SVNRevision.HEAD : SVNRevision.BASE;
+                }
                 myTarget = myTarget.substring(0, index);
                 return;
             }
@@ -99,11 +103,17 @@ public class SVNPath {
             }
             SVNRevision revision = SVNRevision.parse(revStr);
             if (revision != SVNRevision.UNDEFINED) {
-                myPegRevision = revision;
+                if (use) {
+                    myPegRevision = revision;
+                }
                 myTarget = myTarget.substring(0, index);
                 return;
             }
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "Syntax error parsing revision ''{0}''", myTarget.substring(index + 1));
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        } else if (index == 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_FILENAME, 
+                    "''{0}'' is just a peg revision. May be try ''{0}@'' instead?", myTarget);
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
     }
