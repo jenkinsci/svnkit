@@ -15,6 +15,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.logging.Level;
 
 import javax.net.ssl.X509TrustManager;
 
@@ -24,6 +25,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
  * @author TMate Software Ltd.
@@ -77,12 +79,16 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 						keyStore.load(is, null);
 					}
 					catch (NoSuchAlgorithmException e) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
 					}
 					catch (CertificateException e) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
 					}
 					catch (IOException e) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
 					}
 					catch (SVNException e) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
 					}
 					finally {
 						SVNFileUtil.closeFile(is);
