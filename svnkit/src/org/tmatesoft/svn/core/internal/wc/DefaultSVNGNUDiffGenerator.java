@@ -42,6 +42,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
     private String myOriginalPath;
     private FSRoot myNewRoot;
     private String myNewPath;
+    private boolean myIsDiffWritten;
 
     public void displayHeader(int type, String path, String copyFromPath, long copyFromRevision, OutputStream result) throws SVNException {
         switch (type) {
@@ -93,6 +94,7 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
                 SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
             }
         }
+        setDiffWritten(counitngStream.getPosition() > 0);
     }
 
     public void setHeaderWritten(boolean written) {
@@ -185,6 +187,25 @@ public class DefaultSVNGNUDiffGenerator extends DefaultSVNDiffGenerator implemen
     
     protected boolean useLocalFileSeparatorChar() {
         return false;
+    }
+
+    public void setDiffWritten(boolean b) {
+        myIsDiffWritten = b;
+    }
+    
+    public boolean isDiffWritten() {
+        return myIsDiffWritten;
+    }
+    
+    public void printHeader(OutputStream os) throws SVNException {
+        if (myHeader != null) {
+            try {
+                displayHeader(os, null, false);
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+                SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
+            }
+        }
     }
 
 }
