@@ -220,6 +220,7 @@ public class SVNNodeEditor implements ISVNEditor {
         if (generator instanceof DefaultSVNGNUDiffGenerator) {
             defaultGenerator = (DefaultSVNGNUDiffGenerator) generator;
             defaultGenerator.setHeaderWritten(false);
+            defaultGenerator.setDiffWritten(false);
         }
         
         boolean isCopy = false;
@@ -289,6 +290,15 @@ public class SVNNodeEditor implements ISVNEditor {
                 rev2 = "(txn " + txnRoot.getTxnID() + ")";
             }
             generator.displayFileDiff(path, originalFile.myTmpFile, newFile.myTmpFile, rev1, rev2, originalFile.myMimeType, newFile.myMimeType, os);
+            boolean hasDiff = defaultGenerator != null ? defaultGenerator.isDiffWritten() : true;
+            if (!hasDiff && !node.myHasPropModifications &&
+                    (node.myAction == SVNChangeEntry.TYPE_ADDED && generator.isDiffAdded()  ||
+                     node.myAction == SVNChangeEntry.TYPE_DELETED && generator.isDiffDeleted())) {
+                int kind = node.myAction == SVNChangeEntry.TYPE_ADDED ? ISVNGNUDiffGenerator.ADDED : ISVNGNUDiffGenerator.DELETED;
+                defaultGenerator.setHeaderWritten(false);
+                defaultGenerator.displayHeader(kind, path, null, -1, os);
+                defaultGenerator.printHeader(os);
+            }
         } else if (printedHeader) {
             generator.displayHeader(ISVNGNUDiffGenerator.NO_DIFF, path, null, -1, os);
         }
@@ -489,9 +499,6 @@ public class SVNNodeEditor implements ISVNEditor {
         String myMimeType;
         File myTmpFile;
         
-        public DiffItem() {
-        }
-
         public DiffItem(String mimeType, File tmpFile) {
             myMimeType = mimeType;
             myTmpFile = tmpFile; 
