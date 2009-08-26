@@ -137,6 +137,7 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.REINTEGRATE);
         SVNCommandLine.registerOption(SVNOption.DIFF_CMD);
         SVNCommandLine.registerOption(SVNOption.TRUST_SERVER_CERT);
+        SVNCommandLine.registerOption(SVNOption.CONFIG_OPTION);
     }
 
     protected boolean needArgs() {
