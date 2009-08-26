@@ -221,21 +221,33 @@ class DAVCommitEditor implements ISVNEditor {
 
         if (!parentResource.isAdded() && !myPathsMap.containsKey(newFile.getURL())) {
         	String filePath = SVNPathUtil.append(parentResource.getURL(), SVNPathUtil.tail(path));
-            SVNErrorMessage err = null;
+            SVNErrorMessage err1 = null;
+            SVNErrorMessage err2 = null;
             try {
                 DAVUtil.getResourceProperties(myConnection, filePath, null, DAVElement.STARTING_PROPERTIES);
             } catch (SVNException e) {
                 if (e.getErrorMessage() == null) {
                     throw e;
                 }
-                err = e.getErrorMessage();
+                err1 = e.getErrorMessage();
             }
-            if (err == null) {
-                err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_ALREADY_EXISTS, "File ''{0}'' already exists", filePath);
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
-            } else if (err.getErrorCode() != SVNErrorCode.FS_NOT_FOUND) {
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
-            } 
+            try {
+                DAVUtil.getResourceProperties(myConnection, newFile.getWorkingURL(), null, DAVElement.STARTING_PROPERTIES);
+            } catch (SVNException e) {
+                if (e.getErrorMessage() == null) {
+                    throw e;
+                }
+                err2 = e.getErrorMessage();
+            }
+            if (err1 == null && err2 == null) {
+                err1 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_ALREADY_EXISTS, "File ''{0}'' already exists", filePath);
+                SVNErrorManager.error(err1, SVNLogType.NETWORK);
+            } else if ((err1 != null && err1.getErrorCode() == SVNErrorCode.FS_NOT_FOUND) ||
+                    (err2 != null && err2.getErrorCode() == SVNErrorCode.FS_NOT_FOUND)) {
+                // skip
+            }  else {
+                SVNErrorManager.error(err1, err2, SVNLogType.NETWORK);
+            }
         }
         // put to have working URL to make PUT or PROPPATCH later (in closeFile())
         myPathsMap.put(newFile.getURL(), newFile.getPath());
