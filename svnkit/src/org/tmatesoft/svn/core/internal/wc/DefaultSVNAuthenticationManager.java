@@ -158,9 +158,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		String sslAuthorityFiles = (String) properties.get("ssl-authority-files"); // "pem" files
 		Collection trustStorages = new ArrayList();
 		if (sslAuthorityFiles != null) {
-		    for(StringTokenizer files = new StringTokenizer(sslAuthorityFiles, ","); files.hasMoreTokens();) {
+		    for(StringTokenizer files = new StringTokenizer(sslAuthorityFiles, ";"); files.hasMoreTokens();) {
 		        String fileName = files.nextToken();
-		        if (fileName != null && !"".equals(fileName.trim())) {
+                fileName = fileName == null ? null : fileName.trim();
+		        if (fileName != null && !"".equals(fileName)) {
 		            trustStorages.add(new File(fileName));
 		        }
 		    }
