@@ -2074,6 +2074,11 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNAdminArea parentArea = wcAccess.probeRetrieve(parentDir);
                         SVNTreeConflictDescription tc = parentArea.getTreeConflict(path.getName());
                         if (tc != null) {
+                            if (choice != SVNConflictChoice.MERGED) {
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, 
+                                        "Tree conflicts can only be resolved to ''working'' state; ''{0}'' not resolved", path);
+                                SVNErrorManager.error(err, SVNLogType.WC);
+                            }
                             parentArea.deleteTreeConflict(path.getName());
                             kind = tc.getNodeKind();
                             resolved = true;
