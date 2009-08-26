@@ -256,6 +256,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 setFullText();
             }
             
+            String checksum = null;
             byte[] buffer = null;
             if (contentLength == 0) {
                 getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, SVNFileUtil.DUMMY_IN, fsConsumer, false);
@@ -263,7 +264,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 if (!isDelta) {
                     // 
                     InputStream tgt = new FixedSizeInputStream(dumpStream, contentLength);
-                    getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, tgt, fsConsumer, false);
+                    checksum = getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, tgt, fsConsumer, true);
                 } else {
                     buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                     SVNDeltaReader deltaReader = null;
@@ -291,6 +292,15 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                         deltaReader.reset(myCurrentNodeBaton.myPath, fsConsumer);
                     }
                     fsConsumer.textDeltaEnd(myCurrentNodeBaton.myPath);
+                    checksum = fsConsumer.getChecksum();
+                }
+            }
+            
+            if (checksum != null && myCurrentNodeBaton.myResultChecksum != null) {
+                if (!checksum.equals(myCurrentNodeBaton.myResultChecksum)) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CHECKSUM_MISMATCH, "Checksum mismatch for ''{0}'':\n   expected:  {1}\n     actual:  {2}\n", 
+                            new Object[] { myCurrentNodeBaton.myPath, myCurrentNodeBaton.myResultChecksum, checksum });
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
                 }
             }
         } catch (SVNException svne) {
