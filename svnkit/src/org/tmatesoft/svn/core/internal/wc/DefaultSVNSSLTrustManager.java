@@ -7,6 +7,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.PKIXParameters;
@@ -15,9 +16,13 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -42,6 +47,8 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 	private boolean myIsUseKeyStore;
 	private File[] myServerCertFiles;
 
+    private X509TrustManager[] myDefaultTrustManagers;
+
 	public DefaultSVNSSLTrustManager(File authDir, SVNURL url, File[] serverCertFiles, boolean useKeyStore, DefaultSVNAuthenticationManager authManager) {
 		myURL = url;
 		myAuthDirectory = authDir;
@@ -51,7 +58,40 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 		myServerCertFiles = serverCertFiles;
 	}
 
-	private void init() {
+    private X509TrustManager[] getDefaultTrustManagers() {
+        if (myDefaultTrustManagers == null && myIsUseKeyStore) {
+            myDefaultTrustManagers = initDefaultTrustManagers();
+        }
+        return myDefaultTrustManagers;
+    }
+
+    private X509TrustManager[] initDefaultTrustManagers() {
+        try {
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
+            tmf.init((KeyStore) null);
+            TrustManager[] trustManagers = tmf.getTrustManagers();
+            if (trustManagers == null || trustManagers.length == 0) {
+                return null;
+            }
+            List x509TrustManagers = new ArrayList();
+            for (int i = 0; i < trustManagers.length; i++) {
+                TrustManager trustManager = trustManagers[i];
+                if (trustManager instanceof X509TrustManager) {
+                    x509TrustManagers.add(trustManager);
+                }
+            }
+            return (X509TrustManager[]) x509TrustManagers.toArray(new X509TrustManager[x509TrustManagers.size()]);
+        } catch (NoSuchAlgorithmException e) {
+            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
+        } catch (NoSuchProviderException e) {
+            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
+        } catch (KeyStoreException e) {
+            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
+        }
+        return null;
+    }
+
+    private void init() {
 		if (myTrustedCerts != null) {
 			return;
 		}
@@ -63,54 +103,18 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 				trustedCerts.add(cert);
 			}
 		}
-		// load from 'default' keystore
-		if (myIsUseKeyStore) {
-			try {
-				KeyStore keyStore = KeyStore.getInstance("JKS");
-				if (keyStore != null) {
-					String path = System.getProperty("java.home") + "/lib/security/cacerts";
-					path = path.replace('/', File.separatorChar);
-					File file = new File(path);
-					InputStream is = null;
-					try {
-						if (file.isFile() && file.canRead()) {
-							is = SVNFileUtil.openFileForReading(file, SVNLogType.WC);
-						}
-						keyStore.load(is, null);
-					}
-					catch (NoSuchAlgorithmException e) {
-                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
-					}
-					catch (CertificateException e) {
-                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
-					}
-					catch (IOException e) {
-                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
-					}
-					catch (SVNException e) {
-                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, e, Level.FINEST);
-					}
-					finally {
-						SVNFileUtil.closeFile(is);
-					}
-					PKIXParameters params = new PKIXParameters(keyStore);
-					for (Iterator anchors = params.getTrustAnchors().iterator(); anchors.hasNext();) {
-						TrustAnchor ta = (TrustAnchor)anchors.next();
-						X509Certificate cert = ta.getTrustedCert();
-						if (cert != null) {
-							trustedCerts.add(cert);
-						}
-					}
 
-				}
-			}
-			catch (KeyStoreException e) {
-			}
-			catch (InvalidAlgorithmParameterException e) {
-			}
-		}
-		myTrustedCerts = (X509Certificate[])trustedCerts.toArray(new X509Certificate[trustedCerts.size()]);
-	}
+        X509TrustManager[] trustManagers = getDefaultTrustManagers();
+        for (int i = 0; trustManagers != null && i < trustManagers.length; i++) {
+            X509TrustManager trustManager = trustManagers[i];
+            X509Certificate[] acceptedCerts = trustManager.getAcceptedIssuers();
+            for (int c = 0; acceptedCerts != null && c < acceptedCerts.length; c++) {
+                X509Certificate cert = acceptedCerts[c];
+                trustedCerts.add(cert);
+            }
+        }
+        myTrustedCerts = (X509Certificate[]) trustedCerts.toArray(new X509Certificate[trustedCerts.size()]);
+    }
 
 	public X509Certificate[] getAcceptedIssuers() {
 		init();
@@ -139,7 +143,13 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 			// check host name for 4
 			if (authProvider != null) {
 				boolean store = myAuthManager.isAuthStorageEnabled(myURL);
-				int result = authProvider.acceptServerAuthentication(myURL, myRealm, certs[0], store);
+                boolean trustServer = checkServerTrustedByDefault(certs, algorithm);
+                int result;
+                if (trustServer) {
+                    result = ISVNAuthenticationProvider.ACCEPTED;
+                } else {
+                    result = authProvider.acceptServerAuthentication(myURL, myRealm, certs[0], store);
+                }
 				if (result == ISVNAuthenticationProvider.ACCEPTED && store) {
 					try {
 						storeServerCertificate(myRealm, data, failures);
@@ -154,11 +164,30 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 				throw new SVNSSLUtil.CertificateNotTrustedException("svn: Server SSL ceritificate for '" + myRealm + "' rejected");
 			}
 			// like as tmp. accepted.
-			return;
-		}
+        }
 	}
 
-	private String getStoredServerCertificate(String realm) {
+    private boolean checkServerTrustedByDefault(X509Certificate[] certs, String algorithm) {
+        X509TrustManager[] trustManagers = getDefaultTrustManagers();
+        if (trustManagers == null) {
+            return false;
+        }
+        for (int i = 0; i < trustManagers.length; i++) {
+            X509TrustManager trustManager = trustManagers[i];
+            boolean trusted = true;
+            try {
+                trustManager.checkServerTrusted(certs, algorithm);
+            } catch (CertificateException e) {
+                trusted = false;
+            }
+            if (trusted) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String getStoredServerCertificate(String realm) {
 		File file = new File(myAuthDirectory, SVNFileUtil.computeChecksum(realm));
 		if (!file.isFile()) {
 			return null;
