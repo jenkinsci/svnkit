@@ -176,6 +176,8 @@ public class SVNWCClient extends SVNBasicClient {
     private ISVNAddParameters myAddParameters;
     private ISVNCommitHandler myCommitHandler;
 
+    private boolean myIsRevertMissingDirectories;
+
     /**
      * Constructs and initializes an <b>SVNWCClient</b> object
      * with the specified run-time configuration and authentication
@@ -287,6 +289,14 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         return myAddParameters;
+    }
+    
+    public void setRevertMissingDirectories(boolean revertMissing) {
+        myIsRevertMissingDirectories = revertMissing;
+    }
+
+    public boolean isRevertMissingDirectories() {
+        return myIsRevertMissingDirectories;
     }
 
     /**
@@ -1889,28 +1899,10 @@ public class SVNWCClient extends SVNBasicClient {
                     reverted |= true;
                     SVNErrorCode code = e.getErrorMessage().getErrorCode();
                     if (code == SVNErrorCode.ENTRY_NOT_FOUND || code == SVNErrorCode.UNVERSIONED_RESOURCE) {
-                        System.out.println("no entry");
                         SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.REVERT, null, null);
                         dispatchEvent(event);
                         continue;
-                    } else if (code == SVNErrorCode.WC_NOT_DIRECTORY) {
-                        System.out.println("not a directory");
-                        try {
-                            SVNAdminArea parentDir = wcAccess.open(path.getParentFile(), true, 0);
-                            SVNEntry childEntry = parentDir.getEntry(path.getName(), false);
-                            if (childEntry != null && childEntry.isDirectory()) {
-                                SVNFileType fileType = SVNFileType.getType(path);
-                                if (fileType != SVNFileType.DIRECTORY) {
-                                    // do remove schedule.
-                                    reverted |= revert(parentDir, path.getName(), childEntry, true);
-                                    continue;
-                                }
-                            }
-                        } catch (SVNException inner) {
-                            // skip
-                            inner.printStackTrace();
-                        }                        
-                    }
+                    } 
                     throw e;
                 } finally {
                     wcAccess.close();
@@ -3333,7 +3325,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (entry != null && entry.getKind() == SVNNodeKind.DIR) {
             SVNFileType fileType = SVNFileType.getType(path);
             if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
-                if (entry.getSchedule() != null && !entry.isThisDir()) {
+                if (isRevertMissingDirectories() && entry.getSchedule() != null && !entry.isThisDir()) {
                     // missing directory scheduled for deletion in parent.
                     boolean reverted = revert(parent, entry.getName(), entry, useCommitTimes);
                     if (reverted) {
