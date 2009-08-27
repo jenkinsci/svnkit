@@ -11,8 +11,6 @@ contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/sqljet/SQLJET-LICENSE -text
 contrib/sqljet/SQLJET-README.txt -text
 contrib/sqljet/antlr-runtime-3.1.3.jar -text
-contrib/sqljet/sqljet.b360.jar -text
-contrib/sqljet/sqljet.b360.src.zip -text
 contrib/sqljet/sqljet.jar -text
 contrib/sqljet/sqljet.src.zip -text
 contrib/trilead/trilead.jar -text
