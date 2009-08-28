@@ -749,12 +749,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 // 
             }
             SVNFileUtil.setReadonly(authFile, false);
-            File tmpFile = SVNFileUtil.createTempFile(fileName, ".auth");
+            //File tmpFile = SVNFileUtil.createTempFile(fileName, ".auth");
             SVNFileUtil.deleteFile(authFile);
             try {
-                SVNWCProperties.setProperties(SVNProperties.wrap(values), authFile, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
+                SVNWCProperties.setProperties(SVNProperties.wrap(values), authFile, null, SVNWCProperties.SVN_HASH_TERMINATOR);
             } finally {
-                SVNFileUtil.deleteFile(tmpFile);
+                //SVNFileUtil.deleteFile(tmpFile);
             }
         }
 
