@@ -21,12 +21,12 @@ import java.util.StringTokenizer;
 
 import javax.net.ssl.TrustManager;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
@@ -748,16 +748,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             } catch (SVNException e) {
                 // 
             }
-            props.delete();
+            SVNFileUtil.setReadonly(authFile, false);
+            File tmpFile = SVNFileUtil.createTempFile(fileName, ".auth");
             try {
-                for (Iterator names = values.keySet().iterator(); names.hasNext();) {
-                    String name = (String) names.next();
-                    props.setPropertyValue( name, SVNPropertyValue.create((String) values.get(name)));
-                } 
-                SVNFileUtil.setReadonly(props.getFile(), false);
-            } catch (SVNException e) {
-                props.delete();
-                throw e;
+                SVNWCProperties.setProperties(SVNProperties.wrap(values), authFile, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
+            } finally {
+                SVNFileUtil.deleteFile(tmpFile);
             }
         }
 

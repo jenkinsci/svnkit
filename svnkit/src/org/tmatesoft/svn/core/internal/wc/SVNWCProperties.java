@@ -259,17 +259,6 @@ public class SVNWCProperties {
         return null;
     }
 
-    public void setPropertyValue(String name, String value) throws SVNException {
-        byte[] bytes = null;
-        try {
-            bytes = value == null ? null : value.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            bytes = value.getBytes();
-        }
-        int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
-        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
-    }
-
     public void setPropertyValue(String name, SVNPropertyValue value) throws SVNException {
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
@@ -343,18 +332,6 @@ public class SVNWCProperties {
             }
         });
         return locallyChangedProperties;
-    }
-
-    public void copyTo(SVNWCProperties destination) throws SVNException {
-        if (isEmpty()) {
-            SVNFileUtil.deleteFile(destination.getFile());
-        } else {
-            SVNFileUtil.copyFile(getFile(), destination.getFile(), false);
-        }
-    }
-
-    public void delete() throws SVNException {
-        SVNFileUtil.deleteFile(getFile());
     }
 
     public static void setProperties(SVNProperties namesToValues, File target, File tmpFile, String terminator) throws SVNException {
