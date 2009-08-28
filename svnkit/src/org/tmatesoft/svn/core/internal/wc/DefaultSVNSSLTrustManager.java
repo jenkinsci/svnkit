@@ -210,7 +210,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
         map.put("svn:realmstring", realm);
         map.put("failures", Integer.toString(failures));
         
-		SVNFileUtil.setReadonly(file, false);
+		SVNFileUtil.deleteFile(file);
         File tmpFile = SVNFileUtil.createTempFile(file.getName(), ".auth");
 		try {
 		    SVNWCProperties.setProperties(SVNProperties.wrap(map), file, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
