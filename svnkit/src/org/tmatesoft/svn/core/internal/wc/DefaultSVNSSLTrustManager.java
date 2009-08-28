@@ -211,12 +211,13 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
         map.put("failures", Integer.toString(failures));
         
 		SVNFileUtil.deleteFile(file);
-        File tmpFile = SVNFileUtil.createTempFile(file.getName(), ".auth");
-		try {
-		    SVNWCProperties.setProperties(SVNProperties.wrap(map), file, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
-		} finally {
-		    SVNFileUtil.deleteFile(tmpFile);
-		}
+        
+        File tmpFile = SVNFileUtil.createUniqueFile(myAuthDirectory, file.getName(), ".tmp", true);
+        try {
+            SVNWCProperties.setProperties(SVNProperties.wrap(map), file, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
+        } finally {
+            SVNFileUtil.deleteFile(tmpFile);
+        }
 	}
 
 	public static X509Certificate loadCertificate(File pemFile) {
