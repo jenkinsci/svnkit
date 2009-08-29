@@ -1,36 +1,32 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.PKIXParameters;
-import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Arrays;
 import java.util.logging.Level;
 
-import javax.net.ssl.X509TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
-import org.tmatesoft.svn.util.SVNLogType;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -209,19 +205,19 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 		myAuthDirectory.mkdirs();
 
 		File file = new File(myAuthDirectory, SVNFileUtil.computeChecksum(realm));
-		SVNWCProperties props = new SVNWCProperties(file, "");
-		props.delete();
-		try {
-			props.setPropertyValue("ascii_cert", data);
-			props.setPropertyValue("svn:realmstring", realm);
-			props.setPropertyValue("failures", Integer.toString(failures));
-
-			SVNFileUtil.setReadonly(props.getFile(), false);
-		}
-		catch (SVNException e) {
-			props.delete();
-            throw e;
-		}
+		SVNHashMap map = new SVNHashMap();
+        map.put("ascii_cert", data);
+        map.put("svn:realmstring", realm);
+        map.put("failures", Integer.toString(failures));
+        
+		SVNFileUtil.deleteFile(file);
+        
+        File tmpFile = SVNFileUtil.createUniqueFile(myAuthDirectory, "auth", ".tmp", true);
+        try {
+            SVNWCProperties.setProperties(SVNProperties.wrap(map), file, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
+        } finally {
+            SVNFileUtil.deleteFile(tmpFile);
+        }
 	}
 
 	public static X509Certificate loadCertificate(File pemFile) {
