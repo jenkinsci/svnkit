@@ -749,7 +749,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 // 
             }
             
-            File tmpFile = SVNFileUtil.createUniqueFile(dir, fileName, ".tmp", true);
+            File tmpFile = SVNFileUtil.createUniqueFile(dir, "auth", ".tmp", true);
             try {
                 SVNWCProperties.setProperties(SVNProperties.wrap(values), authFile, null, SVNWCProperties.SVN_HASH_TERMINATOR);
             } finally {

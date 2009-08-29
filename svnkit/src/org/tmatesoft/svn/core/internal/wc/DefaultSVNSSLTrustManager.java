@@ -212,7 +212,7 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
         
 		SVNFileUtil.deleteFile(file);
         
-        File tmpFile = SVNFileUtil.createUniqueFile(myAuthDirectory, file.getName(), ".tmp", true);
+        File tmpFile = SVNFileUtil.createUniqueFile(myAuthDirectory, "auth", ".tmp", true);
         try {
             SVNWCProperties.setProperties(SVNProperties.wrap(map), file, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
         } finally {
