@@ -1050,15 +1050,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         }
     }
 
-    public void preDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
-    		SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) {
-// This implementation does nothing       
-    }
-
     protected void doDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2,
-    		SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException {
-        preDirectoryMerge(url1, revision1, url2, revision2, parentEntry, adminArea, depth);
-        
+    		SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException {        
         File targetWCPath = adminArea.getRoot();
     	boolean isRollBack = revision1 > revision2;
     	SVNURL primaryURL = isRollBack ? url1 : url2;
@@ -1095,7 +1088,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         		inheritable, honorMergeInfo, repository);
         
         SVNMergeRange range = new SVNMergeRange(revision1, revision2, inheritable);
-        SVNRemoteDiffEditor editor = null;
+        ISVNReusableEditor editor = null;
         SVNErrorMessage err = null;
         if (honorMergeInfo && !myIsRecordOnly) {
         	long startRev = getMostInclusiveStartRevision(myChildrenWithMergeInfo, isRollBack);
@@ -2415,10 +2408,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     	}
     }
     
-    public SVNRemoteDiffEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, 
+    public ISVNReusableEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1,
     		SVNURL url2, final long revision2, final List childrenWithMergeInfo, final boolean isRollBack, 
     		SVNDepth depth, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, 
-            SVNRemoteDiffEditor editor) throws SVNException {
+            ISVNReusableEditor editor) throws SVNException {
         final boolean honorMergeInfo = isHonorMergeInfo();
         long defaultStart = revision1;
         long targetStart = revision1;
@@ -2532,8 +2525,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         return editor;
     }
 
-    public SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
-            AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException {
+    public ISVNReusableEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, 
+            AbstractDiffCallback mergeCallback, ISVNReusableEditor editor) throws SVNException {
         if (editor == null) {
             editor = new SVNRemoteDiffEditor(adminArea, adminArea.getRoot(), mergeCallback, myRepository2,
                     defaultStart, revision, myIsDryRun, this, this);

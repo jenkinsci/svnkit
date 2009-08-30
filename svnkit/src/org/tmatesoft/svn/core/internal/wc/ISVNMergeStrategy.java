@@ -13,35 +13,34 @@ package org.tmatesoft.svn.core.internal.wc;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNMergeRange;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.io.File;
 
 /**
  * The <b>ISVNMergeStrategy</b> interface defines a number of methods
  * to be used for directories merging.
- *
+ * <p/>
  * Alternative implementation is extended merge feature, it tracks
  * copied and moved files to apply appropriate deltas to them.
- * 
+ * <p/>
+ * See svnkit-ext package
  *
  * @author TMate Software Ltd.
  * @version 1.3
  */
 public interface ISVNMergeStrategy {
 
-    void preDirectoryMerge(SVNURL url1, long revision1, SVNURL url2, long revision2, SVNEntry parentEntry, SVNAdminArea adminArea, SVNDepth depth) throws SVNException;
+    ISVNReusableEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, AbstractDiffCallback mergeCallback, ISVNReusableEditor editor) throws SVNException;
 
-    SVNRemoteDiffEditor getMergeReportEditor(long defaultStart, long revision, SVNAdminArea adminArea, SVNDepth depth, AbstractDiffCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException;
-
-    SVNRemoteDiffEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, SVNURL url2, long revision2, List childrenWithMergeInfo, boolean isRollBack, SVNDepth depth, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, SVNRemoteDiffEditor editor) throws SVNException;
+    ISVNReusableEditor driveMergeReportEditor(File targetWCPath, SVNURL url1, long revision1, SVNURL url2, long revision2, List childrenWithMergeInfo, boolean isRollBack, SVNDepth depth, SVNAdminArea adminArea, SVNMergeCallback mergeCallback, ISVNReusableEditor editor) throws SVNException;
 
     ISVNEntryHandler getMergeInfoEntryHandler(String mergeSrcPath, SVNURL sourceRootURL, long revision1, long revision2, SVNRepository repository, SVNDepth depth, List childrenWithMergeInfo);
 

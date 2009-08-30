@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -43,7 +42,7 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNRemoteDiffEditor implements ISVNEditor {
+public class SVNRemoteDiffEditor implements ISVNReusableEditor {
 
     protected SVNRepository myRepos;
     protected long myRevision1;
