@@ -738,7 +738,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         if (myCurrentDirectory.isAddExisted) {
             attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
             if (mySwitchURL != null) {
-                attributes.put(SVNProperty.URL, SVNPathUtil.append(mySwitchURL, path));
+                attributes.put(SVNProperty.URL, myCurrentDirectory.URL);
             }
             SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
             adminArea.modifyEntry(adminArea.getThisDirName(), attributes, true, true);
