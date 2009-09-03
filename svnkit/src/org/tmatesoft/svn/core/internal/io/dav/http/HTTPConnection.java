@@ -899,7 +899,7 @@ class HTTPConnection implements IHTTPConnection {
 
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
-            ourSAXParserFactory = SAXParserFactory.newInstance();
+            ourSAXParserFactory = createSAXParserFactory();
             Map supportedFeatures = new SVNHashMap();
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
@@ -923,7 +923,7 @@ class HTTPConnection implements IHTTPConnection {
             } catch (ParserConfigurationException e) {
             }
             if (supportedFeatures.size() < 3) {
-                ourSAXParserFactory = SAXParserFactory.newInstance();
+                ourSAXParserFactory = createSAXParserFactory();
                 for (Iterator names = supportedFeatures.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
                     try {
@@ -938,6 +938,39 @@ class HTTPConnection implements IHTTPConnection {
             ourSAXParserFactory.setValidating(false);
         }
         return ourSAXParserFactory;
+    }
+    
+    public static SAXParserFactory createSAXParserFactory() {
+        String legacy = System.getProperty("svnkit.sax.useDefault");
+        if (legacy == null || !Boolean.valueOf(legacy).booleanValue()) {
+            return SAXParserFactory.newInstance();
+        }
+        // instantiate JVM parser.
+        String[] parsers = {"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl", // 1.5, 1.6
+                            "org.apache.crimson.jaxp.SAXParserFactoryImpl", // 1.4
+                            };
+        for (int i = 0; i < parsers.length; i++) {
+            String className = parsers[i];
+            ClassLoader loader = HTTPConnection.class.getClassLoader();
+            try {
+                Class clazz = null;
+                if (loader != null) {
+                    clazz = loader.loadClass(className);
+                } else {
+                    clazz = Class.forName(className);
+                }
+                if (clazz != null) {
+                    Object factory = clazz.newInstance();
+                    if (factory instanceof SAXParserFactory) {
+                        return (SAXParserFactory) factory;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+            } catch (InstantiationException e) {
+            } catch (IllegalAccessException e) {
+            }
+        }
+        return SAXParserFactory.newInstance();
     }
 
     public void setSpoolResponse(boolean spoolResponse) {
