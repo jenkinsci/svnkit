@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -38,7 +40,7 @@ public class DAVLogRequest extends DAVRequest {
     private static final DAVElement ALL_REVPROPS = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "all-revprops");
     private static final DAVElement REVPROP = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revprop");
 
-    private static final String[] DEFAULT_REVISION_PROPERTIES = new String[]{SVNRevisionProperty.AUTHOR, SVNRevisionProperty.DATE, SVNRevisionProperty.LOG};
+    private static final String[] DEFAULT_REVISION_PROPERTIES = new String[]{ SVNRevisionProperty.AUTHOR, SVNRevisionProperty.DATE, SVNRevisionProperty.LOG };
 
     private boolean myDiscoverChangedPaths = false;
     private boolean myStrictNodeHistory = false;
@@ -48,7 +50,7 @@ public class DAVLogRequest extends DAVRequest {
     private long myEndRevision = DAVResource.INVALID_REVISION;
     private long myLimit = 0;
     private String[] myTargetPaths = null;
-    private String[] myRevisionProperties = null;
+    private Collection myRevisionProperties = null;
     private boolean myCustomPropertyRequested = false;
 
     public boolean isDiscoverChangedPaths() {
@@ -116,11 +118,25 @@ public class DAVLogRequest extends DAVRequest {
     }
 
     public String[] getRevisionProperties() {
-        return myRevisionProperties;
+        String[] revProps = new String[myRevisionProperties.size()];
+        revProps = (String[]) myRevisionProperties.toArray(revProps);
+        return revProps;
+    }
+
+    private void addRevisionProperties(Collection revisionProperties) {
+        if (myRevisionProperties == null) {
+            myRevisionProperties = new LinkedList();
+        }
+        myRevisionProperties.addAll(revisionProperties);
     }
 
     private void setRevisionProperties(String[] revisionProperties) {
-        myRevisionProperties = revisionProperties;
+        if (myRevisionProperties == null) {
+            myRevisionProperties = new LinkedList();
+        }
+        for (int i = 0; i < revisionProperties.length; i++) {
+            myRevisionProperties.add(revisionProperties[i]);
+        }
     }
 
     public boolean isCustomPropertyRequested() {
@@ -172,9 +188,7 @@ public class DAVLogRequest extends DAVRequest {
                 revisionPropertyRequested = true;
             } else if (element == REVPROP) {
                 Collection properties = property.getValues();
-                String[] revProps = new String[properties.size()];
-                revProps = (String[]) properties.toArray(revProps);
-                setRevisionProperties(revProps);
+                addRevisionProperties(properties);
                 setCustomPropertyRequested(containsCustomProperty(properties));
                 revisionPropertyRequested = true;
             }
