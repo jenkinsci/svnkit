@@ -889,6 +889,9 @@ public class SVNCommitUtil {
                 if (currentEntry.getDepth() == SVNDepth.EXCLUDE) {
                     continue;
                 }
+                if (entry.isScheduledForReplacement() && currentEntry.isScheduledForDeletion()) {
+                    continue;
+                }
                 String currentCFURL = cfURL != null ? cfURL : copyFromURL;
                 if (currentCFURL != null) {
                     currentCFURL = SVNPathUtil.append(currentCFURL, SVNEncodingUtil.uriEncode(currentEntry.getName()));
