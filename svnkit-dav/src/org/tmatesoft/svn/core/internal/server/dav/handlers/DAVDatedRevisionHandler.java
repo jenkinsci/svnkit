@@ -61,9 +61,9 @@ public class DAVDatedRevisionHandler extends DAVReportHandler {
     private String generateResponseBody() throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
         long revision = getDatedRevision();
-        addXMLHeader(xmlBuffer);
+        addXMLHeader(xmlBuffer, null);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.VERSION_NAME.getName(), String.valueOf(revision), xmlBuffer);
-        addXMLFooter(xmlBuffer);
+        addXMLFooter(xmlBuffer, null);
         return xmlBuffer.toString();
     }
 

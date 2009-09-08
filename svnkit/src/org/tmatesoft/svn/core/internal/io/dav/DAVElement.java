@@ -119,6 +119,7 @@ public class DAVElement {
     public static final DAVElement REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "revision");
     public static final DAVElement START_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "start-revision");
     public static final DAVElement END_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "end-revision");
+    public static final DAVElement PEG_REVISION = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "peg-revision");
     public static final DAVElement INCLUDE_MERGED_REVISIONS = getElement(SVN_NAMESPACE, "include-merged-revisions");
     
     public static final DAVElement BASELINE_RELATIVE_PATH = getElement(SVN_DAV_PROPERTY_NAMESPACE, "baseline-relative-path");

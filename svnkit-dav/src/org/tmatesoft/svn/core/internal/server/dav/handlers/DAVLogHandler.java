@@ -71,7 +71,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
     public void execute() throws SVNException {
         setDAVResource(getRequestedDAVResource(false, false));
 
-        writeXMLHeader();
+        writeXMLHeader(null);
 
         for (int i = 0; i < getLogRequest().getTargetPaths().length; i++) {
             String currentPath = getLogRequest().getTargetPaths()[i];
@@ -89,7 +89,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
                 getLogRequest().getRevisionProperties(),
                 this);
 
-        writeXMLFooter();
+        writeXMLFooter(null);
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {

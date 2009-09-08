@@ -31,7 +31,8 @@ import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
  * @version 1.2.0
  */
 public class DAVMergeInfoHandler extends DAVReportHandler {
-
+    
+    private static final String MERGEINFO_REPORT = "mergeinfo-report";
     private DAVMergeInfoRequest myDAVRequest;
 
     public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
@@ -64,7 +65,7 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
 
     private String generateResponseBody() throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
-        addXMLHeader(xmlBuffer);
+        addXMLHeader(xmlBuffer, MERGEINFO_REPORT);
 
         for (int i = 0; i < getMergeInfoRequest().getTargetPaths().length; i++) {
             String currentPath = getMergeInfoRequest().getTargetPaths()[i];
@@ -84,7 +85,7 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
             }
         }
 
-        addXMLFooter(xmlBuffer);
+        addXMLFooter(xmlBuffer, MERGEINFO_REPORT);
         return xmlBuffer.toString();
     }
 

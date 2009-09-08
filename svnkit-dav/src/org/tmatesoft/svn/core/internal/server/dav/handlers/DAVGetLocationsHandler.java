@@ -30,6 +30,8 @@ import org.tmatesoft.svn.core.io.SVNLocationEntry;
  */
 public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLocationEntryHandler {
 
+    private static final String GET_LOCATIONS_REPORT = "get-locations-report";
+    
     private DAVGetLocationsRequest myDAVRequest;
 
     public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
@@ -50,12 +52,12 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
     public void execute() throws SVNException {
         setDAVResource(getRequestedDAVResource(false, false));
 
-        writeXMLHeader();
+        writeXMLHeader(GET_LOCATIONS_REPORT);
 
         String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getGetLocationsRequest().getPath());
         getDAVResource().getRepository().getLocations(path, getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);
 
-        writeXMLFooter();
+        writeXMLFooter(GET_LOCATIONS_REPORT);
     }
 
     public void handleLocationEntry(SVNLocationEntry locationEntry) throws SVNException {

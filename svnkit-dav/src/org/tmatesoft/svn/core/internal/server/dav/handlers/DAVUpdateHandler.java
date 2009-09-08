@@ -399,7 +399,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void execute() throws SVNException {
-        writeXMLHeader();
+        writeXMLHeader(null);
 
         try {
             getReporter().finishReport();
@@ -430,10 +430,10 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             xmlBuffer = SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "resource-walk", null);
             write(xmlBuffer);
         }
-        writeXMLFooter();
+        writeXMLFooter(null);
     }
 
-    protected void addXMLHeader(StringBuffer xmlBuffer) {
+    protected void addXMLHeader(StringBuffer xmlBuffer, String tagName) {
         Map attrs = new SVNHashMap();
         attrs.put(DEPTH_ATTR, getDepth().toString());
         if (getUpdateRequest().isSendAll()) {
@@ -442,14 +442,15 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         
         DAVElementProperty rootElement = getDAVRequest().getRootElement();
         SVNXMLUtil.addXMLHeader(xmlBuffer);
-        
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), 
+        tagName = tagName == null ? rootElement.getName().getName() : tagName;
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, 
                 UPDATE_REPORT_NAMESPACES, attrs, xmlBuffer, true, false);
     }
 
     public void targetRevision(long revision) throws SVNException {
         if (!isResourceWalk()) {
-            StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "target-revision", SVNXMLUtil.XML_STYLE_SELF_CLOSING, REVISION_ATTR, String.valueOf(revision), null);
+            StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "target-revision", 
+                    SVNXMLUtil.XML_STYLE_SELF_CLOSING, REVISION_ATTR, String.valueOf(revision), null);
             write(xmlBuffer);
         }
     }

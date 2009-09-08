@@ -92,7 +92,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         }
         
         try {
-            writeXMLFooter();
+            writeXMLFooter(null);
         } catch (SVNException svne) {
             throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
                     "Error ending REPORT reponse", null);
@@ -155,7 +155,7 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     
     private void maybeSendHeader() throws SVNException {
         if (myWriteHeader) {
-            writeXMLHeader();
+            writeXMLHeader(null);
             myWriteHeader = false;
         }
     }

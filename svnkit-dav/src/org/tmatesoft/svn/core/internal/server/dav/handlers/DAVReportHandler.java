@@ -51,7 +51,7 @@ import org.xml.sax.Attributes;
  */
 public class DAVReportHandler extends ServletDAVHandler {
 
-    private static Set REPORT_NAMESPACES = new SVNHashSet();
+    protected static final Set REPORT_NAMESPACES = new SVNHashSet();
 
     protected static final String PATH_ATTR = "path";
     protected static final String REVISION_ATTR = "rev";
@@ -179,6 +179,9 @@ public class DAVReportHandler extends ServletDAVHandler {
             setReportHandler(new DAVReplayHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == UPDATE_REPORT) {
             setReportHandler(new DAVUpdateHandler(myRepositoryManager, myRequest, myResponse));
+        } else if (rootElement == GET_LOCATION_SEGMENTS) {
+            DAVGetLocationSegmentsHandler handler = new DAVGetLocationSegmentsHandler(myRepositoryManager, myRequest, myResponse);
+            setReportHandler(handler);
         }
     }
 
@@ -194,28 +197,30 @@ public class DAVReportHandler extends ServletDAVHandler {
         write(stringBuffer.toString());
     }
 
-    protected void writeXMLHeader() throws SVNException {
+    protected void writeXMLHeader(String tagName) throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
-        addXMLHeader(xmlBuffer);
+        addXMLHeader(xmlBuffer, tagName);
         write(xmlBuffer);
     }
 
-    protected void writeXMLFooter() throws SVNException {
+    protected void writeXMLFooter(String tagName) throws SVNException {
         StringBuffer xmlBuffer = new StringBuffer();
-        addXMLFooter(xmlBuffer);
+        addXMLFooter(xmlBuffer, tagName);
         write(xmlBuffer);
     }
 
-    protected void addXMLHeader(StringBuffer xmlBuffer) {
+    protected void addXMLHeader(StringBuffer xmlBuffer, String tagName) {
         SVNXMLUtil.addXMLHeader(xmlBuffer);
         DAVElementProperty rootElement = getDAVRequest().getRootElement();
-        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), REPORT_NAMESPACES, 
+        tagName = tagName == null ? rootElement.getName().getName() : tagName;
+        DAVXMLUtil.openNamespaceDeclarationTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, REPORT_NAMESPACES, 
                 xmlBuffer, false);
     }
 
-    protected void addXMLFooter(StringBuffer xmlBuffer) {
+    protected void addXMLFooter(StringBuffer xmlBuffer, String tagName) {
         DAVElementProperty rootElement = getDAVRequest().getRootElement();
-        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, rootElement.getName().getName(), xmlBuffer);
+        tagName = tagName == null ? rootElement.getName().getName() : tagName;
+        SVNXMLUtil.closeXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, xmlBuffer);
     }
 
     protected void writeTextDeltaChunk(SVNDiffWindow diffWindow) throws SVNException {

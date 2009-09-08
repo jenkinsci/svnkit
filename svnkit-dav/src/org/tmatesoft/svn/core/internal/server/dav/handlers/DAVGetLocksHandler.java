@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+
 import java.io.UnsupportedEncodingException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,7 +21,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
@@ -70,11 +70,11 @@ public class DAVGetLocksHandler extends DAVReportHandler {
         SVNLock[] locks = getDAVResource().getLocks();
 
         StringBuffer xmlBuffer = new StringBuffer();
-        addXMLHeader(xmlBuffer);
+        addXMLHeader(xmlBuffer, null);
         for (int i = 0; i < locks.length; i++) {
             addLock(locks[i], xmlBuffer);
         }
-        addXMLFooter(xmlBuffer);
+        addXMLFooter(xmlBuffer, null);
         return xmlBuffer.toString();
     }
 
