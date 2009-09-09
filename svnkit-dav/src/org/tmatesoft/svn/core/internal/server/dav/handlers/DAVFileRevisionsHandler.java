@@ -126,8 +126,8 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
         }
         
         if (fileRevision.isResultOfMerge()) {
-            xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, MERGED_REVISION_TAG, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, 
-                    xmlBuffer);
+            xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, MERGED_REVISION_TAG, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, null);
+            write(xmlBuffer);
         }
     }
 
