@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -170,7 +171,7 @@ public class DAVMergeHandler extends ServletDAVHandler {
                 sourceResource.getLockTokens(), sourceResource.getUserName());
         
         StringBuffer buffer = new StringBuffer();
-        SVNErrorMessage[] postCommitHookErr = { null };
+        SVNErrorMessage[] postCommitHookErr = new SVNErrorMessage[1];
         String postCommitErrMessage = null;
         long newRev = -1;
         try {
@@ -192,7 +193,9 @@ public class DAVMergeHandler extends ServletDAVHandler {
                 throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_CONFLICT, 
                         "An error occurred while committing the transaction.", null);
             }
-            
+        }
+        
+        if (postCommitHookErr[0] != null) {
             SVNErrorMessage childErr = postCommitHookErr[0].getChildErrorMessage(); 
             if (childErr != null && childErr.getMessage() != null) {
                 postCommitErrMessage = childErr.getMessage();
