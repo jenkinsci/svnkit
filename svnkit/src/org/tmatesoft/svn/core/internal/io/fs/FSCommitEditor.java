@@ -364,7 +364,13 @@ public class FSCommitEditor implements ISVNEditor {
             String dateProp = revProps.getStringValue(SVNRevisionProperty.DATE);
             Date datestamp = dateProp != null ? SVNDate.parseDateString(dateProp) : null;
             
-            SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, errorMessage[0]);
+            SVNErrorMessage err = errorMessage[0];
+            if (err != null && err.getErrorCode() == SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED) {
+                String message = err.getChildErrorMessage() != null ? err.getChildErrorMessage().getFullMessage() : err.getFullMessage();
+                err = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, message, 
+                        SVNErrorMessage.TYPE_WARNING);
+            }
+            SVNCommitInfo info = new SVNCommitInfo(committedRev, getAuthor(), datestamp, err);
             releaseLocks();
             return info;
         } finally {
