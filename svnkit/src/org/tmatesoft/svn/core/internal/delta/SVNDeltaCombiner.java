@@ -360,7 +360,7 @@ public class SVNDeltaCombiner {
                     int tgt_off = targetOffset;
                     
                     if (patternOverlap >= 0) {
-                        int length = Math.min(instruction.length - fix_offset - fix_limit, patternLength - patternOverlap);
+                        int length = Math.min(instruction.length - fix_off - fix_limit, patternLength - patternOverlap);
                         copySourceInstructions(instruction.offset + patternOverlap, 
                                                instruction.offset + patternOverlap + length, 
                                                tgt_off, window, windowInsructions);
@@ -370,7 +370,7 @@ public class SVNDeltaCombiner {
                     SVNDebugLog.assertCondition(SVNLogType.DEFAULT, fix_off + fix_limit <= instruction.length, 
                             "assert #A");
                     if (patternOverlap > 0 && fix_off + fix_limit < instruction.length) {
-                        int length = Math.min(instruction.length - fix_offset - fix_limit, patternOverlap);
+                        int length = Math.min(instruction.length - fix_off - fix_limit, patternOverlap);
                         copySourceInstructions(instruction.offset, 
                                                instruction.offset + length, 
                                                tgt_off, window, windowInsructions);
