@@ -24,7 +24,7 @@
     </dependency>
     <dependency>
       <groupId>com.trilead</groupId>
-      <artifactId>trilead-ssh2</artifactId>
+      <artifactId>trilead</artifactId>
       <version>%trilead.ssh2.version%</version>
       <optional>true</optional>
     </dependency>

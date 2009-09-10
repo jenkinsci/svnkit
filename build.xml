@@ -550,7 +550,7 @@
 		<mkdir dir="build/maven/org.tmatesoft.sqljet-${sqljet.version}"/>
 		<mkdir dir="svnkit-eclipse/bin"/>
 		
-		<jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}/svnkit.jar">
+		<jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}.jar">
 			<fileset dir="svnkit/bin">
                 <exclude name="org/tmatesoft/svn/cli/**" />
 			</fileset>
@@ -640,30 +640,40 @@
 		<replace token="%sqljet.version%" value="${sqljet.version}" file="build/maven/org.tmatesoft.sqljet-${sqljet.version}/pom.xml"/>
 		<replace token="%antlr.version%" value="${antlr.version}" file="build/maven/org.tmatesoft.sqljet-${sqljet.version}/pom.xml"/>
 
-        <jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}-bundle.jar">
+		<copy file="contrib/trilead/trilead.jar" tofile="build/maven/com.trilead.ssh2-${trilead.ssh2.version}/trilead-${trilead.ssh2.version}.jar" />
+		<copy file="contrib/jna/jna.jar" tofile="build/maven/com.sun.jna-${jna.version}/jna-${jna.version}.jar" />
+		<copy file="contrib/sqljet/sqljet.jar" tofile="build/maven/org.tmatesoft.sqljet-${sqljet.version}/sqljet-${sqljet.version}.jar" />
+
+		<jar destfile="build/maven/org.tmatesoft.svnkit-${build.number}-bundle.jar">
         	<fileset dir="build/maven/org.tmatesoft.svnkit-${build.number}">
                 <include name="**" />
 	        </fileset>
         </jar>
-        <jar destfile="build/maven/com.trilead.ssh2-${trilead.ssh2.version}-bundle.jar">
+
+		<jar destfile="build/maven/com.trilead.ssh2-${trilead.ssh2.version}-bundle.jar">
         	<fileset dir="contrib/trilead">
                 <exclude name="pom.xml" />
+        		<exclude name="trilead.jar" />
 	        </fileset>
         	<fileset dir="build/maven/com.trilead.ssh2-${trilead.ssh2.version}">
                 <include name="**" />
 	        </fileset>
         </jar>
-        <jar destfile="build/maven/com.sun.jna-${jna.version}-bundle.jar">
+
+		<jar destfile="build/maven/com.sun.jna-${jna.version}-bundle.jar">
         	<fileset dir="contrib/jna">
                 <exclude name="pom.xml" />
+        		<exclude name="jna.jar" />
 	        </fileset>
         	<fileset dir="build/maven/com.sun.jna-${jna.version}">
                 <include name="**" />
 	        </fileset>
         </jar>
-        <jar destfile="build/maven/org.tmatesoft.sqljet-${sqljet.version}-bundle.jar">
+		
+		<jar destfile="build/maven/org.tmatesoft.sqljet-${sqljet.version}-bundle.jar">
 			<fileset dir="contrib/sqljet">
             	<exclude name="pom.xml" />
+				<exclude name="sqljet.jar" />
     	    </fileset>
             <fileset dir="build/maven/org.tmatesoft.sqljet-${sqljet.version}">
             	<include name="**" />

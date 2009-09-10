@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><project>
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.trilead</groupId>
-  <artifactId>trilead-ssh2</artifactId>
+  <artifactId>trilead</artifactId>
   <packaging>jar</packaging>
   <version>%trilead.ssh2.version%</version>
   <name>Trilead SSH2</name>
