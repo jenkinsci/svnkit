@@ -1,5 +1,5 @@
-This is a README.txt file for SQLJet - 
-pure Java embedded database management engine with SQLite format support.
+This is a README.txt file for SQLJet v1.0.0
+SQLJet is a pure Java (tm) embedded database management engine with SQLite format support.
 
 1. DESCRIPTION
 
@@ -10,8 +10,6 @@ SQLJet is a pure Java embedded database management engine with SQLite format sup
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; version 2 of the License.
-
-Commercial dual licensing scheme is available at the same time. 
 
 For information on how to redistribute this software under 
 the terms of a license other than GNU General Public License 
@@ -35,6 +33,7 @@ contact TMate Software at support@sqljet.com
 
 SQLJet web site: http://sqljet.com/
 SQLJet source code: http://svn.sqljet.com/repos/sqljet/
+SQLJet API usage tutorial: http://sqljet.com/tutorial.html
 
 SQLite web site: http://sqlite.org/
 
