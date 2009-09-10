@@ -293,8 +293,8 @@ public class SVNDeltaCombiner {
                 }
                 SVNDebugLog.assertCondition(SVNLogType.DEFAULT, tgt_off == targetOffset + instruction.length, 
                         "assert #1");
-                rangeIndexTree.insert(offset, limit, targetOffset);
                 rangeIndexTree.disposeList(listHead);
+                rangeIndexTree.insert(offset, limit, targetOffset);
             }
             targetOffset += instruction.length;
         }
