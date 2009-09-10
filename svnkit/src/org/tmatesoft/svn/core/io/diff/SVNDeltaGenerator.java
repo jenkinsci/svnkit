@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaAlgorithm;
-import org.tmatesoft.svn.core.internal.delta.SVNVDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.delta.SVNXDeltaAlgorithm;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -37,9 +36,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * target if delta is generated against empty contents. 
  * 
  * <p>
- * The generator uses the V-Delta algorithm for generating full contents delta (vs. empty)  
- * and the X-Delta algorithm for generating delta as a difference between target and 
- * non-empty source streams.    
+ * The generator uses X-Delta algorithm for generating all kinds of deltas.
  * 
  * @version 1.3
  * @author  TMate Software Ltd.
@@ -48,7 +45,6 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNDeltaGenerator {
     
     private SVNDeltaAlgorithm myXDelta = new SVNXDeltaAlgorithm();
-    private SVNDeltaAlgorithm myVDelta = new SVNVDeltaAlgorithm();
     
     private byte[] mySourceBuffer;
     private byte[] myTargetBuffer;
@@ -262,8 +258,8 @@ public class SVNDeltaGenerator {
     }
 
     private void sendDelta(String path, long sourceOffset, byte[] source, int sourceLength, byte[] target, int targetLength, ISVNDeltaConsumer consumer) throws SVNException {
-        // use x or v algorithm depending on sourceLength
-        SVNDeltaAlgorithm algorithm = sourceLength == 0 ? myVDelta : myXDelta;
+        // always use x algorithm, v is deprecated now.
+        SVNDeltaAlgorithm algorithm = myXDelta;
         algorithm.computeDelta(source, sourceLength, target, targetLength);
         // send single diff window to the editor.
         if (consumer == null) {
