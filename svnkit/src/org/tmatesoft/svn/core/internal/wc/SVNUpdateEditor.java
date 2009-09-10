@@ -1091,7 +1091,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             myCurrentFile.expectedSrcChecksum = checksum;
             InputStream baseIS = baseSrcFile != null && baseSrcFile.exists() ? SVNFileUtil.openFileForReading(baseSrcFile) : 
                 SVNFileUtil.DUMMY_IN;
-            myCurrentFile.sourceChecksumStream = baseIS != SVNFileUtil.DUMMY_IN ? new SVNChecksumInputStream(baseIS, SVNChecksumInputStream.MD5_ALGORITHM, true, true) :
+            myCurrentFile.sourceChecksumStream = baseIS != SVNFileUtil.DUMMY_IN ? new SVNChecksumInputStream(baseIS, SVNChecksumInputStream.MD5_ALGORITHM) :
                 null;
             myDeltaProcessor.applyTextDelta(myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream : baseIS, 
                     baseTmpFile, true);
