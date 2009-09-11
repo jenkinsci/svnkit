@@ -309,7 +309,10 @@ public class FSCommitter {
             try {
                 FSHooks.runPostCommitHook(myFSFS.getRepositoryRoot(), newRevision);
              } catch (SVNException svne) {
-                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, svne.getErrorMessage().getFullMessage(), SVNErrorMessage.TYPE_WARNING);
+                 SVNErrorMessage errorMessage = SVNErrorMessage.create(SVNErrorCode.REPOS_POST_COMMIT_HOOK_FAILED, 
+                         "Commit succeeded, but post-commit hook failed", SVNErrorMessage.TYPE_WARNING);
+                 errorMessage.setChildErrorMessage(svne.getErrorMessage());
+                 
                  if (postCommitHookError != null && postCommitHookError.length > 0) {
                      postCommitHookError[0] = errorMessage;
                  } else {
