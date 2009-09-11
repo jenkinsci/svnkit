@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -219,27 +220,30 @@ public class DAVPropertiesProvider {
         }
         
         String prefix = null;
-        if (SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX.equals(propName.getNamespace())) {
+        if (DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE.equals(propName.getNamespace())) {
             prefix = "C";
         } else {
             prefix = "S";
         }
         
         String propValueString = SVNPropertyValue.getPropertyAsString(propValue);
-        if (propValueString.length() == 0) {
+        if ("".equals(propValueString)) {
             SVNXMLUtil.openXMLTag(prefix, propName.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
         } else {
             String xmlSafeValue = null;
+            Map attrs = null;
             if (!SVNEncodingUtil.isXMLSafe(propValueString)) {
                 try {
                     xmlSafeValue = SVNBase64.byteArrayToBase64(propValueString.getBytes("UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     xmlSafeValue = SVNBase64.byteArrayToBase64(propValueString.getBytes());
                 }
+                attrs = new HashMap();
+                attrs.put("V:encoding", "base64");
             } else {
                 xmlSafeValue = SVNEncodingUtil.xmlEncodeCDATA(propValueString);
             }
-            SVNXMLUtil.openXMLTag(prefix, propName.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, "V:encoding", "base64", buffer);
+            SVNXMLUtil.openXMLTag(prefix, propName.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, attrs, buffer);
             buffer.append(xmlSafeValue);
             SVNXMLUtil.closeXMLTag(prefix, propName.getName(), buffer);
         }

@@ -230,18 +230,18 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                     } else if (DAVElement.GET_CONTENT_LANGUAGE.getName().equals(propNameElement.getName())) {
                         foundContentLang = true;
                     }
-                    
-                    if (action == DAVInsertPropAction.INSERT_VALUE) {
-                        try {
-                            propsProvider.outputValue(propNameElement, buffer);
-                        } catch (DAVException dave) {
-                            //TODO: probably change this behavior in future
-                            continue;
-                        }
-                    } else {
-                        ind = outputPropName(propNameElement, namespacesToPrefixes, ind, buffer);
-                    }
                 }
+                if (action == DAVInsertPropAction.INSERT_VALUE) {
+                    try {
+                        propsProvider.outputValue(propNameElement, buffer);
+                    } catch (DAVException dave) {
+                        //TODO: probably change this behavior in future
+                        continue;
+                    }
+                } else {
+                    ind = outputPropName(propNameElement, namespacesToPrefixes, ind, buffer);
+                }
+                
             }
             
             generateXMLNSNamespaces(result, namespacesToPrefixes);
@@ -421,7 +421,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
             SVNXMLUtil.openXMLTag((String) namespacesToPrefixes.get(propName.getNamespace()), propName.getName(), 
                     SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
         }
-        return ind++;
+        return ++ind;
     }
     
     private DAVInsertPropAction insertCoreLiveProperty(DAVResource resource, DAVInsertPropAction propAction, 
