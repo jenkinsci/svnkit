@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.CountingOutputStream;
+import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
@@ -58,11 +59,13 @@ public class SVNDumpEditor implements ISVNEditor {
     private String myRootPath;
     private OutputStream myDumpStream;
     private boolean myUseDeltas;
+    private boolean myIsVerify;
     private DirectoryInfo myCurrentDirInfo;
     private SVNDeltaCombiner myDeltaCombiner;
     private SVNDeltaGenerator myDeltaGenerator;
     
-    public SVNDumpEditor(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, boolean useDeltas) {
+    public SVNDumpEditor(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, 
+            boolean useDeltas, boolean isVerify) {
         myRoot = root;
         myFSFS = fsfs;
         myTargetRevision = toRevision;
@@ -70,6 +73,20 @@ public class SVNDumpEditor implements ISVNEditor {
         myRootPath = rootPath;
         myDumpStream = dumpStream;
         myUseDeltas = useDeltas;
+        myIsVerify = isVerify;
+    }
+    
+    public void reset(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, 
+            boolean useDeltas, boolean isVerify) {
+        myRoot = root;
+        myFSFS = fsfs;
+        myTargetRevision = toRevision;
+        myOldestDumpedRevision = oldestDumpedRevision;
+        myRootPath = rootPath;
+        myDumpStream = dumpStream;
+        myUseDeltas = useDeltas;
+        myIsVerify = isVerify;
+        myCurrentDirInfo = null;
     }
     
     public void abortEdit() throws SVNException {
@@ -104,7 +121,8 @@ public class SVNDumpEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!myCurrentDirInfo.myIsWrittenOut) {
-            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
+            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, 
+                    myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
             myCurrentDirInfo.myIsWrittenOut = true;
         }
     }
@@ -113,6 +131,26 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
+        if (myIsVerify) {
+            FSRevisionNode node = myRoot.getRevisionNode(myCurrentDirInfo.myFullPath);
+            Map entries = node.getDirEntries(myFSFS);
+            for (Iterator entriesIter = entries.keySet().iterator(); entriesIter.hasNext();) {
+                String entryName = (String) entriesIter.next();
+                String entryPath = SVNPathUtil.append(myCurrentDirInfo.myFullPath, entryName);
+                SVNNodeKind kind = myRoot.checkNodeKind(entryPath);
+                FSRevisionNode entryNode = myRoot.getRevisionNode(entryPath);
+                if (kind == SVNNodeKind.DIR) {
+                    entryNode.getDirEntries(myFSFS);
+                } else if (kind == SVNNodeKind.FILE) {
+                    entryNode.getFileLength();
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
+                            "Unexpected node kind {0} for ''{1}''", new Object[] { kind, entryPath });
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
+                }
+            }
+        }
+        
         for (Iterator entries = myCurrentDirInfo.myDeletedEntries.keySet().iterator(); entries.hasNext();) {
             String path = (String) entries.next();
             dumpNode(path, SVNNodeKind.UNKNOWN, SVNAdminHelper.NODE_ACTION_DELETE, false, null, -1);
@@ -234,7 +272,7 @@ public class SVNDumpEditor implements ISVNEditor {
                         }
                         mustDumpProps = true;
                     } else {
-                        if (cmpRev < myOldestDumpedRevision) {
+                        if (!myIsVerify && cmpRev < myOldestDumpedRevision) {
                             SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, 
                                     "WARNING: Referencing data in revision " + cmpRev + 
                                     ", which is older than the oldest\nWARNING: dumped revision (" + 

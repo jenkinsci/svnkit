@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSPacker;
 import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -54,6 +55,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultLoadHandler;
 import org.tmatesoft.svn.core.internal.wc.ISVNLoadHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminDeltifier;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpStreamParser;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -135,6 +137,7 @@ public class SVNAdminClient extends SVNBasicClient {
     private ISVNAdminEventHandler myEventHandler;
     private FSHotCopier myHotCopier;
     private SVNDumpStreamParser myDumpStreamParser;
+    private SVNDumpEditor myDumpEditor;
 
     /**
      * Creates a new admin client.
@@ -932,16 +935,16 @@ public class SVNAdminClient extends SVNBasicClient {
     public void doVerify(File repositoryRoot, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
         try {
-            long startRev = startRevision.getNumber();
-            long endRev = endRevision.getNumber();
-            if (startRev < 0) {
-                startRev = 0;
+            long youngestRevision = fsfs.getYoungestRevision();
+            
+            long lowerRev = SVNAdminHelper.getRevisionNumber(startRevision, youngestRevision, fsfs);
+            long upperRev = SVNAdminHelper.getRevisionNumber(endRevision, youngestRevision, fsfs);
+
+            if (!SVNRevision.isValidRevisionNumber(upperRev)) {
+                upperRev = lowerRev;
             }
-            if (endRev < 0) {
-                endRev = fsfs.getYoungestRevision();
-            }
-    
-            dump(fsfs, SVNFileUtil.DUMMY_OUT, startRev, endRev, false, true);
+
+            verify(fsfs, lowerRev, upperRev);
         } finally {
             SVNAdminHelper.closeRepository(fsfs);
         }
@@ -1357,6 +1360,42 @@ public class SVNAdminClient extends SVNBasicClient {
         return myHotCopier;
     }
     
+    private void verify(FSFS fsfs, long startRev, long endRev) throws SVNException {
+        long youngestRev = fsfs.getYoungestRevision();
+        if (!SVNRevision.isValidRevisionNumber(startRev)) {
+            startRev = 0;
+        }
+        if (!SVNRevision.isValidRevisionNumber(endRev)) {
+            endRev = youngestRev;
+        }
+        
+        if (startRev > endRev) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Start revision {0} is greater than end revision {1}", 
+                    new Object[] { String.valueOf(startRev), String.valueOf(endRev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        if (endRev > youngestRev) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, 
+                    "End revision {0} is invalid (youngest revision is {1})", new Object[] { String.valueOf(endRev), 
+                    String.valueOf(youngestRev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        for (long rev = startRev; rev <= endRev; rev++) {
+            FSRevisionRoot toRoot = fsfs.createRevisionRoot(rev);
+            ISVNEditor editor = getDumpEditor(fsfs, toRoot, rev, startRev, "/", SVNFileUtil.DUMMY_OUT, false, true);
+            editor = SVNCancellableEditor.newInstance(editor, getEventDispatcher(), getDebugLog());
+            FSRepositoryUtil.replay(fsfs, toRoot, "", SVNRepository.INVALID_REVISION, false, editor);
+            String message = "* Verified revision " + rev + ".";
+        
+            if (myEventHandler != null) {
+                SVNAdminEvent event = new SVNAdminEvent(rev, SVNAdminEventAction.REVISION_DUMPED, message);
+                myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+            }
+        }        
+    }
+    
     private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException {
         boolean isDumping = dumpStream != null && dumpStream != SVNFileUtil.DUMMY_OUT;
         long youngestRevision = fsfs.getYoungestRevision();
@@ -1431,7 +1470,7 @@ public class SVNAdminClient extends SVNBasicClient {
             writeRevisionRecord(dumpStream, fsfs, toRev);
             boolean useDeltasForRevision = useDeltas && (isIncremental || i != start);
             FSRevisionRoot toRoot = fsfs.createRevisionRoot(toRev);
-            ISVNEditor dumpEditor = new SVNDumpEditor(fsfs, toRoot, toRev, start, "/", dumpStream, useDeltasForRevision);
+            ISVNEditor dumpEditor = getDumpEditor(fsfs, toRoot, toRev, start, "/", dumpStream, useDeltasForRevision, false);
 
             if (i == start && !isIncremental) {
                 FSRevisionRoot fromRoot = fsfs.createRevisionRoot(fromRev);
@@ -1513,6 +1552,16 @@ public class SVNAdminClient extends SVNBasicClient {
             myDumpStreamParser = new SVNDumpStreamParser(this);
         }
         return myDumpStreamParser;
+    }
+    
+    private SVNDumpEditor getDumpEditor(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, 
+            boolean useDeltas, boolean isVerify) {
+        if (myDumpEditor == null) {
+            myDumpEditor = new SVNDumpEditor(fsfs, root, toRevision, oldestDumpedRevision, rootPath, dumpStream, useDeltas, isVerify);
+        } else {
+            myDumpEditor.reset(fsfs, root, toRevision, oldestDumpedRevision, rootPath, dumpStream, useDeltas, isVerify);
+        }
+        return myDumpEditor;
     }
 
     private SVNProperties copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, 
