@@ -35,6 +35,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -346,6 +347,9 @@ public class SVNDumpEditor implements ISVNEditor {
                             }
                             
                             hexDigest = revNode.getFileSHA1Checksum();
+                            if (hexDigest == null) {
+                                hexDigest = computeSHA1Checksum(compareRoot, comparePath);
+                            }
                             if (hexDigest != null && hexDigest.length() > 0) {
                                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_SHA1 + ": " + hexDigest + "\n");
                             }
@@ -369,6 +373,9 @@ public class SVNDumpEditor implements ISVNEditor {
                 }
                 
                 checksum = node.getFileSHA1Checksum();
+                if (checksum == null) {
+                    checksum = computeSHA1Checksum(myRoot, canonicalPath);
+                }
                 if (checksum != null && checksum.length() > 0) {
                     writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_SHA1 + ": " + checksum + "\n");
                 }
@@ -401,6 +408,17 @@ public class SVNDumpEditor implements ISVNEditor {
         } finally {
             SVNFileUtil.deleteFile(tmpFile);
         }
+    }
+    
+    private String computeSHA1Checksum(FSRoot revision, String filePath) throws SVNException {
+        InputStream is = revision.getFileStreamForPath(getDeltaCombiner(), filePath);
+        SVNChecksumInputStream checksum = null;
+        try {
+            checksum = new SVNChecksumInputStream(is, "SHA1");
+        } finally {
+            SVNFileUtil.closeFile(checksum);
+        }        
+        return checksum != null ? checksum.getDigest() : null;
     }
     
     private SVNDeltaGenerator getDeltaGenerator() {

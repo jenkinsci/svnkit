@@ -27,7 +27,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 public class SVNChecksumInputStream extends DigestInputStream {
     
     public static final String MD5_ALGORITHM = "MD5";
-    private static byte[] ourDirtyBuffer = new byte[4096];
+    private static byte[] ourDirtyBuffer = new byte[4096*4];
     
     public SVNChecksumInputStream(InputStream source, String algorithm) {
         super(source, null);
