@@ -941,7 +941,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 endRev = fsfs.getYoungestRevision();
             }
     
-            dump(fsfs, SVNFileUtil.DUMMY_OUT, startRev, endRev, false, false);
+            dump(fsfs, SVNFileUtil.DUMMY_OUT, startRev, endRev, false, true);
         } finally {
             SVNAdminHelper.closeRepository(fsfs);
         }
