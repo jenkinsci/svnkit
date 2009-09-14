@@ -1,3 +1,19 @@
+== version 1.3.1 ==
+
++ Changes made in Subversion since version 1.6.2 implemented, 
+  all Subversion 1.6.5 features are supported:
+   * Added representation cache support based on SQLJet (http://sqljet.com) library.
+   * Added implementations for missing JavaHL methods.
+   * Fixed 'svn: Checksum mismatch while reading representation' exception
+     which occurred on some repositories during read-access operations.
+   * JNA library upgraded to version 3.1.0.
+   * Added 'svn.nio.copy' system property to make SVNKit use NIO 
+     mechanisms in file copy operations.
+   * Added 'svnkit.sax.useDefault' system property to control 
+     whether to force SVNKit use default JVM SAX parser or not.
+   
++ Other bugfixes and performance improvements.
+
 == version 1.3.0
 
 + Changes made in Subversion since version 1.5.6 implemented, 
