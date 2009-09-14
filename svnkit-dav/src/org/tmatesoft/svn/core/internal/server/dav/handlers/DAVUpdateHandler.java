@@ -77,6 +77,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private String myDstPath = null;
     private String myAnchor = null;
     private SVNDepth myDepth = SVNDepth.UNKNOWN;
+    private SVNDepth myRequestedDepth = SVNDepth.UNKNOWN;
     private Map myPathMap = null;
 
     private long myEntryRevision = DAVResource.INVALID_REVISION;
@@ -275,8 +276,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 setRevision(getUpdateRequest().getRevision());
             }
 
-            if (getDepth() == SVNDepth.UNKNOWN) {
-                setDepth(getUpdateRequest().getDepth() == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : getUpdateRequest().getDepth());
+            if (myRequestedDepth == SVNDepth.UNKNOWN) {
+                myRequestedDepth = getUpdateRequest().getDepth() == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : getUpdateRequest().getDepth(); 
             }
 
             String srcPath = getRepositoryManager().getRepositoryRelativePath(getUpdateRequest().getSrcURL());
@@ -300,7 +301,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                     getUpdateRequest().isIgnoreAncestry(),
                     getUpdateRequest().isTextDeltas(),
                     getUpdateRequest().isSendCopyFromArgs(),
-                    getDepth(),
+                    myRequestedDepth,
                     this);
             setReporter(reporter);
             setSourceRepository(repository);
@@ -421,7 +422,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             write(xmlBuffer);
 
             FSFS fsfs = getSourceRepository().getFSFS();
-            SVNAdminDeltifier deltifier = new SVNAdminDeltifier(fsfs, getDepth(), true, false, false, this);
+            SVNAdminDeltifier deltifier = new SVNAdminDeltifier(fsfs, myRequestedDepth, true, false, false, this);
 
             FSRevisionRoot zeroRoot = fsfs.createRevisionRoot(0);
             FSRevisionRoot requestedRoot = fsfs.createRevisionRoot(getRevision());
@@ -435,7 +436,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     protected void addXMLHeader(StringBuffer xmlBuffer, String tagName) {
         Map attrs = new SVNHashMap();
-        attrs.put(DEPTH_ATTR, getDepth().toString());
+        attrs.put(DEPTH_ATTR, myRequestedDepth.toString());
         if (getUpdateRequest().isSendAll()) {
             attrs.put(SEND_ALL_ATTR, Boolean.TRUE.toString());
         }
