@@ -383,6 +383,8 @@
                 <include name="TRILEAD-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
+                <include name="SQLJET-LICENSE" />
+                <include name="SQLJET-README.txt" />
             </fileset>
             <fileset dir="svnkit-eclipse/org.tmatesoft.svnkit">
                 <include name="MANIFEST.MF" />
