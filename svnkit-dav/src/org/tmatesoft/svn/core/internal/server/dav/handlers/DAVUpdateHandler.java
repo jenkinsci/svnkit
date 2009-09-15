@@ -276,8 +276,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 setRevision(getUpdateRequest().getRevision());
             }
 
-            if (myRequestedDepth == SVNDepth.UNKNOWN) {
-                myRequestedDepth = getUpdateRequest().getDepth() == SVNDepth.UNKNOWN ? SVNDepth.INFINITY : getUpdateRequest().getDepth(); 
+            myRequestedDepth = getUpdateRequest().getDepth();
+            if (!getUpdateRequest().isDepthRequested() && !getUpdateRequest().isRecursiveRequested() && myRequestedDepth == SVNDepth.UNKNOWN) {
+                myRequestedDepth = SVNDepth.INFINITY;
             }
 
             String srcPath = getRepositoryManager().getRepositoryRelativePath(getUpdateRequest().getSrcURL());
@@ -436,7 +437,6 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
 
     protected void addXMLHeader(StringBuffer xmlBuffer, String tagName) {
         Map attrs = new SVNHashMap();
-        attrs.put(DEPTH_ATTR, myRequestedDepth.toString());
         if (getUpdateRequest().isSendAll()) {
             attrs.put(SEND_ALL_ATTR, Boolean.TRUE.toString());
         }
@@ -663,7 +663,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "remove-prop", SVNXMLUtil.XML_STYLE_SELF_CLOSING, NAME_ATTR, name, xmlBuffer);
             }
         }
-        if (!getUpdateRequest().isSendAll() && !entry.hasChangedProperties() && !entry.isAdded()) {
+        if (!getUpdateRequest().isSendAll() && entry.hasChangedProperties() && !entry.isAdded()) {
             SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "fetch-props", SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
         SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "prop", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);

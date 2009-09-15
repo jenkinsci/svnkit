@@ -202,7 +202,7 @@ public class DAVUpdateRequest extends DAVRequest {
                 } else if (element == RECURSIVE && !isDepthRequested()) {
                     assertNullCData(element, property);
                     String value = property.getFirstValue(true);
-                    SVNDepth.fromRecurse(!"no".equals(value));
+                    setDepth(SVNDepth.fromRecurse(!"no".equals(value)));
                     setRecursiveRequested(true);
                 } else if (element == IGNORE_ANCESTRY) {
                     assertNullCData(element, property);
@@ -222,7 +222,8 @@ public class DAVUpdateRequest extends DAVRequest {
                 setDepth(SVNDepth.INFINITY);
             }
             if (getSrcURL() == null) {
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "The request did not contain the '<src-path>' element.\nThis may indicate that your client is too old."), SVNLogType.NETWORK);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, 
+                        "The request did not contain the '<src-path>' element.\nThis may indicate that your client is too old."), SVNLogType.NETWORK);
             }
             if (!isSendAll()) {
                 setTextDeltas(false);
