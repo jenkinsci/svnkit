@@ -331,17 +331,6 @@ public class DAVResource {
         }
     }
 
-    public long getCreatedRevision(String path, long revision) throws SVNException {
-        if (path == null) {
-            return INVALID_REVISION;
-        } else if (path.equals(getResourceURI().getPath())) {
-            return getCreatedRevision();
-        } else {
-            SVNDirEntry currentEntry = getRepository().getDir(path, revision, false, null);
-            return currentEntry.getRevision();
-        }
-    }
-
     public long getCreatedRevisionUsingFS(String path) throws SVNException {
         path = path == null ? getResourceURI().getPath() : path;
         FSRevisionNode node = myRoot.getRevisionNode(path);

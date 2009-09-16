@@ -11,7 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -37,8 +39,9 @@ public class DAVGetLocationsRequest extends DAVRequest {
 
     private String myPath = null;
     private long myPegRevision = DAVResource.INVALID_REVISION;
-    private long[] myRevisions = null;
-
+    private Collection myRevisions;
+    private long[] myRevisionsArray;
+    
     public String getPath() {
         return myPath;
     }
@@ -56,13 +59,29 @@ public class DAVGetLocationsRequest extends DAVRequest {
     }
 
     public long[] getRevisions() {
-        return myRevisions;
+        if (myRevisionsArray != null) {
+            return myRevisionsArray;
+        }
+        if (myRevisions != null) {
+            myRevisionsArray = new long[myRevisions.size()];
+            int i = 0;
+            for (Iterator revObjectsIter = myRevisions.iterator(); revObjectsIter.hasNext(); i++) {
+                Long revisionObject = (Long) revObjectsIter.next();
+                myRevisionsArray[i] = revisionObject.longValue();
+            }
+            myRevisions = null;
+            return myRevisionsArray;
+        }
+        return null;
     }
 
-    private void setRevisions(long[] revisions) {
-        myRevisions = revisions;
+    private void addRevision(long revision) {
+        if (myRevisions == null) {
+            myRevisions = new LinkedList();
+        }
+        myRevisions.add(new Long(revision));
     }
-
+    
     protected void init() throws SVNException {
         getRootElement().setElementName(GET_LOCATIONS_REPORT);
         List children = getRootElement().getChildren();
@@ -81,16 +100,13 @@ public class DAVGetLocationsRequest extends DAVRequest {
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                 }
             } else if (element == LOCATION_REVISION) {
-                long[] revisions = new long[property.getValues().size()];
-                int i = 0;
-                for (Iterator revisionsIterator = property.getValues().iterator(); revisionsIterator.hasNext(); i++) {
+                for (Iterator revisionsIterator = property.getValues().iterator(); revisionsIterator.hasNext(); ) {
                     try {
-                        revisions[i] = Long.parseLong((String) revisionsIterator.next());
+                        addRevision(Long.parseLong((String) revisionsIterator.next()));
                     } catch (NumberFormatException nfe) {
                         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, nfe), SVNLogType.NETWORK);
                     }
                 }
-                setRevisions(revisions);
             }
         }
 

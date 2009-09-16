@@ -92,7 +92,7 @@ public class DAVResourceURI {
     }
     
     public String getRequestURI() {
-        return DAVPathUtil.append(getContext(), getURI());
+        return SVNPathUtil.append(getContext(), getURI());
     }
 
     public String getContext() {

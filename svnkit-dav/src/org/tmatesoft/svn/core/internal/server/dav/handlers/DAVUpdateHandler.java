@@ -36,10 +36,12 @@ import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSTranslateReporter;
+import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResourceKind;
+import org.tmatesoft.svn.core.internal.server.dav.DAVServletUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
@@ -71,7 +73,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private boolean myInitialized = false;
     private boolean myResourceWalk = false;
     private FSRepository mySourceRepository;
-
+    private FSRevisionRoot myRevisionRoot;
     private long myRevision = DAVResource.INVALID_REVISION;
     private SVNURL myDstURL = null;
     private String myDstPath = null;
@@ -269,12 +271,18 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             getUpdateRequest().init();
 
             setDAVResource(getRequestedDAVResource(false, false));
-
-            if (!SVNRevision.isValidRevisionNumber(getUpdateRequest().getRevision())) {
-                setRevision(getDAVResource().getLatestRevision());
-            } else {
-                setRevision(getUpdateRequest().getRevision());
-            }
+            
+            long targetRevision = getUpdateRequest().getRevision();
+            if (!SVNRevision.isValidRevisionNumber(targetRevision)) {
+                try {
+                    targetRevision = getDAVResource().getLatestRevision();
+                } catch (SVNException svne) {
+                    throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                            "Could not determine the youngest revision for the update process.", null);
+                }
+            } 
+            
+            setRevision(targetRevision);
 
             myRequestedDepth = getUpdateRequest().getDepth();
             if (!getUpdateRequest().isDepthRequested() && !getUpdateRequest().isRecursiveRequested() && myRequestedDepth == SVNDepth.UNKNOWN) {
@@ -293,6 +301,9 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 addToPathMap(SVNPathUtil.getAbsolutePath(SVNPathUtil.append(srcPath, getUpdateRequest().getTarget())), dstPath);
             }
 
+            FSFS fsfs = getDAVResource().getFSFS();
+            myRevisionRoot = fsfs.createRevisionRoot(targetRevision);
+            
             SVNURL repositoryURL = getRepositoryManager().convertHttpToFile(getUpdateRequest().getSrcURL());
             FSRepository repository = (FSRepository) SVNRepositoryFactory.create(repositoryURL);
 
@@ -610,7 +621,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
             Map attrs = new SVNHashMap();
             attrs.put(NAME_ATTR, SVNPathUtil.tail(path));
             if (isDirectory) {
-                long createdRevision = getDAVResource().getCreatedRevision(realPath, getRevision());
+                long createdRevision = DAVServletUtil.getSafeCreatedRevision(myRevisionRoot, realPath);
                 String bcURL = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.BASELINE_COLL, createdRevision, realPath, false);
                 attrs.put(BC_URL_ATTR, bcURL);
             }
@@ -689,8 +700,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         write(xmlBuffer);
     }
 
-    private StringBuffer addVersionURL(String path, StringBuffer xmlBuffer) throws SVNException {
-        long revision = getDAVResource().getCreatedRevision(path, getRevision());
+    private StringBuffer addVersionURL(String path, StringBuffer xmlBuffer) {
+        long revision = DAVServletUtil.getSafeCreatedRevision(myRevisionRoot, path);
         String url = DAVPathUtil.buildURI(getDAVResource().getResourceURI().getContext(), DAVResourceKind.VERSION, revision, path, false);
         xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "checked-in", SVNXMLUtil.XML_STYLE_NORMAL, null, xmlBuffer);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, "href", url, xmlBuffer);
