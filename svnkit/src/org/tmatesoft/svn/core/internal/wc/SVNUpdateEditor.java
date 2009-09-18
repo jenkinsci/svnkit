@@ -1709,6 +1709,8 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         boolean isLocallyModified = false;
         if (fileInfo.copiedWorkingText != null) {
             isLocallyModified = true;
+        } else if (fileEntry != null && fileEntry.getExternalFilePath() != null && fileEntry.isScheduledForAddition()) {
+            isLocallyModified = false;
         } else if (!fileInfo.isExisted) {
             isLocallyModified = adminArea.hasTextModifications(name, false, false, false);
         } else if (isTextUpdated) {
