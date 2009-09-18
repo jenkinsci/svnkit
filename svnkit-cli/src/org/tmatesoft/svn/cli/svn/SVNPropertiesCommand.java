@@ -138,8 +138,9 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
     
     protected void printProperty(SVNPropertyValue value, boolean isPropListLike) {
         if (value.isString()) {
-            String stringValue = value.getString() + '\n';
+            String stringValue = value.getString();
             if (isPropListLike) {
+                stringValue += '\n';
                 String[] lines = SVNCommandUtil.breakToLines(stringValue);
                 for (int i = 0; lines != null && i < lines.length; i++) {
                     String line = lines[i];
@@ -156,7 +157,9 @@ public abstract class SVNPropertiesCommand extends SVNXMLCommand implements ISVN
                     getSVNEnvironment().getOut().print("    ");
                 }
                 getSVNEnvironment().getOut().write(value.getBytes());
-                getSVNEnvironment().getOut().println();
+                if (isPropListLike) {
+                    getSVNEnvironment().getOut().println();
+                }
             } catch (IOException e) {
             }
         }
