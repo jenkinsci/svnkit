@@ -740,18 +740,19 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             String fileName = SVNFileUtil.computeChecksum(realm);
             File authFile = new File(dir, fileName);
             
-            SVNWCProperties props = new SVNWCProperties(authFile, "");
-            try {
-                if (values.equals(props.asMap())) {
-                    return;
+            if (authFile.isFile()) {
+                SVNWCProperties props = new SVNWCProperties(authFile, "");
+                try {
+                    if (values.equals(props.asMap())) {
+                        return;
+                    }
+                } catch (SVNException e) {
+                    // 
                 }
-            } catch (SVNException e) {
-                // 
-            }
-            
+            }            
             File tmpFile = SVNFileUtil.createUniqueFile(dir, "auth", ".tmp", true);
             try {
-                SVNWCProperties.setProperties(SVNProperties.wrap(values), authFile, null, SVNWCProperties.SVN_HASH_TERMINATOR);
+                SVNWCProperties.setProperties(SVNProperties.wrap(values), authFile, tmpFile, SVNWCProperties.SVN_HASH_TERMINATOR);
             } finally {
                 SVNFileUtil.deleteFile(tmpFile);
             }
