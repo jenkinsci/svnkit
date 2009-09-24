@@ -38,7 +38,6 @@ import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -1875,8 +1874,7 @@ public class FSFS {
 
         SVNLock lock = null;
         if (token == null) {
-            String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
-            token = FSFS.SVN_OPAQUE_LOCK_TOKEN + uuid;
+            token = FSRepositoryUtil.generateLockToken();
             lock = new FSLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
         } else {
             lock = new FSLock(path, token, username, comment, new Date(System.currentTimeMillis()), expirationDate, isDAVComment);
