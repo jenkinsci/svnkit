@@ -430,7 +430,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             }
         } else {
             try {
-                validateHandler.validateResourceState(ifHeaders, resource, lockInfoProvider, null, flags);
+                validateHandler.validateResourceState(ifHeaders, resource, lockInfoProvider, lockScope, flags);
             } catch (DAVException dave) {
                 exception = dave;
             }
@@ -446,7 +446,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             
             if (exception == null) {
                 try {
-                    validateHandler.validateResourceState(ifHeaders, parentResource, lockInfoProvider, null, flags | DAV_VALIDATE_IS_PARENT);
+                    validateHandler.validateResourceState(ifHeaders, parentResource, lockInfoProvider, lockScope, flags | DAV_VALIDATE_IS_PARENT);
                 } catch (DAVException dave) {
                     exception = dave;
                 }
@@ -1260,6 +1260,33 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return result;
     }
 
+    protected Date getTimeout() {
+        String timeoutHeader = getRequestHeader(HTTPHeader.TIMEOUT_HEADER);
+        if (timeoutHeader == null) {
+            return null;
+        }
+        
+        timeoutHeader = timeoutHeader.trim();
+        String[] values = timeoutHeader.split("[\\t\\s]");
+        for (int i = 0; i < values.length; i++) {
+            String value = values[i];
+            if ("Infinite".equalsIgnoreCase(value)) {
+                return null;
+            }
+            
+            if (value.startsWith("Second-")) {
+                value = value.substring(7);
+                long expirationValue = 0;
+                try {
+                    expirationValue = Long.parseLong(value);    
+                } catch (NumberFormatException nfe) {
+                }
+                return new Date(System.currentTimeMillis() + expirationValue); 
+            }
+        }
+        return null;
+    }
+    
     protected void setDefaultResponseHeaders() {
         if (getRequestHeader(LABEL_HEADER) != null && getRequestHeader(LABEL_HEADER).length() > 0) {
             setResponseHeader(VARY_HEADER, LABEL_HEADER);
@@ -1774,6 +1801,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         return 0;
     }
 
+    //TODO: unused?
     protected void handleError(DAVException error, DAVResponse response) {
         if (response == null) {
             DAVException stackErr = error;

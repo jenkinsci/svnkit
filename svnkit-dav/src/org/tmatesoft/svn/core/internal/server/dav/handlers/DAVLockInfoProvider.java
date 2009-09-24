@@ -111,6 +111,55 @@ public class DAVLockInfoProvider {
         return provider;
     }
 
+    public void addLock(DAVLock lock, DAVResource resource) throws DAVException {
+        DAVDepth depth = lock.getDepth();
+        if (!resource.isCollection()) {
+            depth = DAVDepth.DEPTH_ZERO;
+        }
+        
+        appendLock(resource, lock);
+        
+        if (depth != DAVDepth.DEPTH_ZERO) {
+            DAVResourceWalker walker = new DAVResourceWalker();
+            DAVLockWalker lockHandler = new DAVLockWalker(resource, lock);
+            DAVResponse response = walker.walk(this, resource, null, 0, null, DAVResourceWalker.DAV_WALKTYPE_NORMAL | DAVResourceWalker.DAV_WALKTYPE_AUTH, 
+                    lockHandler, DAVDepth.DEPTH_INFINITY);
+
+            if (response != null) {
+                throw new DAVException("Error(s) occurred on resources during the addition of a depth lock.", ServletDAVHandler.SC_MULTISTATUS, 0, response);
+            }
+        }
+    }
+    
+    public DAVLock refreshLock(DAVResource resource, String lockToken, Date newTime) throws DAVException {
+        //TODO: add here authz check
+        FSFS fsfs = resource.getFSFS();
+        String path = resource.getResourceURI().getPath();
+
+        FSLock svnLock = null;
+        try {
+            svnLock = (FSLock) fsfs.getLockHelper(path, false);
+        } catch (SVNException e) {
+            throw DAVException.convertError(e.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Token doesn't point to a lock.", null);
+        }
+        
+        if (svnLock == null || !svnLock.getID().equals(lockToken)) {
+            throw new DAVException("Lock refresh request doesn't match existing lock.", HttpServletResponse.SC_UNAUTHORIZED, DAVErrorCode.LOCK_SAVE_LOCK);
+        }
+        
+        try {
+            svnLock = (FSLock) fsfs.lockPath(svnLock.getPath(), svnLock.getID(), resource.getUserName(), svnLock.getComment(), newTime, 
+                    SVNRepository.INVALID_REVISION, true, svnLock.isDAVComment());
+        } catch (SVNException e) {
+            SVNErrorMessage err = e.getErrorMessage();
+            if (err.getErrorCode() == SVNErrorCode.FS_NO_USER) {
+                throw new DAVException("Anonymous lock refreshing is not allowed.", HttpServletResponse.SC_UNAUTHORIZED, DAVErrorCode.LOCK_SAVE_LOCK);
+            }
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to refresh existing lock.", null);
+        }
+        return convertSVNLockToDAVLock(svnLock, false, resource.exists());
+    }
+    
     public void inheritLocks(DAVResource resource, boolean useParent) throws DAVException {
         DAVResource whichResource = resource;
         if (useParent) {
