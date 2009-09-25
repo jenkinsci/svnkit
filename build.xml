@@ -690,7 +690,7 @@
  		<delete dir="build/maven/org.tmatesoft.sqljet-${sqljet.version}"/>
 	</target>
 
-	<target name="deploy-maven" depends="clean,init-environment,build-library">
+	<target name="deploy-maven" depends="clean,init-environment,build-library,build-doc">
 		<path id="maven-ant-tasks.classpath" path="contrib/maven/maven-ant-tasks-2.0.10.jar" />
 		<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
 		
@@ -771,6 +771,12 @@
             </fileset>
 		</jar>
 		
+		<jar destfile="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}-javadoc.jar">
+			<fileset dir="build/doc/javadoc">
+				<include name="**"/>
+			</fileset>
+		</jar>
+		
 		<copy file="pom.xml" tofile="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
 		<replace token="%svnkit.version%" value="${build.number}" file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
 		<replace token="%trilead.ssh2.version%" value="${trilead.ssh2.version}" file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/pom.xml"/>
@@ -793,6 +799,7 @@
 		<mkdir dir="build/maven-deploy/m2repo" />
 		<artifact:deploy file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}.jar">
 			<attach file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}-sources.jar" classifier="sources" />
+			<attach file="build/maven-deploy/org.tmatesoft.svnkit-${build.number}/svnkit-${build.number}-javadoc.jar" classifier="javadoc" />
 			<remoteRepository url="file://${basedir}/build/maven-deploy/m2repo" />
 			<pom refid="svnkit.pom"/>
 		</artifact:deploy>
