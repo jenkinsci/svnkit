@@ -131,15 +131,15 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 try {
                     wcFormatVersion = factory.getVersion(path);
                     if (wcFormatVersion > factory.getSupportedVersion()) {                        
-                        error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
                                 path);
-                        SVNErrorManager.error(error, SVNLogType.WC);
+                        SVNErrorManager.error(err, SVNLogType.WC);
                     } else if (wcFormatVersion < factory.getSupportedVersion()) {                        
-                        error = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "Working copy format of {0} is too old ({1}); please check out your working copy again",
                                 new Object[]{path, new Integer(wcFormatVersion)});
-                        SVNErrorManager.error(error, SVNLogType.WC);
+                        SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 } catch (SVNException e) {
                     if (error != null) {
