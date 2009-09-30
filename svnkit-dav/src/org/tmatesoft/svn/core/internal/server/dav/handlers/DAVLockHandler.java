@@ -58,7 +58,6 @@ public class DAVLockHandler extends ServletDAVHandler {
             return;
         }
         
-        DAVResponse multiResponse = null;
         DAVLockInfoProvider lockProvider = null;
 
 
@@ -74,7 +73,7 @@ public class DAVLockHandler extends ServletDAVHandler {
         DAVLock lock = null;
 
         if (readLength > 0) {
-            lock = getLockRequest().parseLockInfo(this, resource);
+            lock = getLockRequest().parseLockInfo(this, resource, getNamespaces());
             isNewLockRequest = true;
         }
             
@@ -103,8 +102,8 @@ public class DAVLockHandler extends ServletDAVHandler {
             lock = lockProvider.refreshLock(resource, lockToken, getTimeout());
         } else {
             if (lock.getTimeOutDate() != null) {
-                Date timeoutDate = lock.getTimeOutDate();
                 //TODO: add expiration date renewal
+                //Date timeoutDate = lock.getTimeOutDate();
             }
             
             lockProvider.addLock(lock, resource);

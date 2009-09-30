@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,6 +54,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -502,7 +504,8 @@ public class DAVLockInfoProvider {
                     reader.setDTDHandler(handler);
                     reader.setErrorHandler(handler);
                     reader.setEntityResolver(handler);
-                    reader.parse(new InputSource(davLock.getOwner()));
+                    String owner = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" + davLock.getOwner();
+                    reader.parse(new InputSource(new ByteArrayInputStream(owner.getBytes())));
                     comment = handler.getData();
                 } catch (ParserConfigurationException e) {
                     throw new DAVException(e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, DAVErrorCode.LOCK_SAVE_LOCK);

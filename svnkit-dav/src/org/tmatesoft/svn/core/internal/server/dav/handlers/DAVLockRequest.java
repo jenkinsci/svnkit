@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletResponse;
@@ -28,6 +30,7 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVLockScope;
 import org.tmatesoft.svn.core.internal.server.dav.DAVLockType;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -38,7 +41,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class DAVLockRequest extends DAVRequest {
     private static final DAVElement LOCK_INFO = DAVElement.getElement(DAVElement.DAV_NAMESPACE, "lockinfo");
 
-    public DAVLock parseLockInfo(DAVLockHandler handler, DAVResource resource) throws DAVException {
+    public DAVLock parseLockInfo(DAVLockHandler handler, DAVResource resource, List namespaces) throws DAVException {
         DAVDepth depth = null;
         try {
             depth = handler.getRequestDepth(DAVDepth.DEPTH_INFINITY);
@@ -94,10 +97,57 @@ public class DAVLockRequest extends DAVRequest {
             }
             
             if (childElementName == DAVElement.LOCK_OWNER) {
-                //TODO: maybe this should be more accurate, we must quote all values,  
-                //attributes, child elements and convert them to a string just like Subversion does it   
-                owner = childElement.getFirstValue(false);
-                owner = SVNEncodingUtil.xmlEncodeCDATA(owner, false);
+                //TODO: maybe make this recursive for all possible subelements   
+                StringBuffer buffer = new StringBuffer();
+                String namespace = childElementName.getNamespace();
+                buffer.append("<");
+                if (namespace == null || "".equals(namespace)) {
+                    buffer.append(childElementName.getName());
+                } else {
+                    buffer.append(SVNXMLUtil.PREFIX_MAP.get(namespace));
+                    buffer.append(":");
+                    buffer.append(childElementName.getName());
+                }
+                
+                Map attributes = childElement.getAttributes();
+                if (attributes != null) {
+                    for (Iterator attrsIter = attributes.keySet().iterator(); attrsIter.hasNext();) {
+                        String attrName = (String) attrsIter.next();
+                        String attrValue = (String) attributes.get(attrName);
+                        buffer.append(" ");
+                        buffer.append(attrName);
+                        buffer.append("=\"");
+                        buffer.append(attrValue);
+                        buffer.append("\"");
+                    }
+                }
+                
+                for (Iterator namespacesIter = namespaces.iterator(); namespacesIter.hasNext();) {
+                    String nextNamespace = (String) namespacesIter.next();
+                    buffer.append(" xmlns:");
+                    buffer.append(SVNXMLUtil.PREFIX_MAP.get(nextNamespace));
+                    buffer.append("=\"");
+                    buffer.append(nextNamespace);
+                    buffer.append("\"");
+                }
+                
+                if (childElement.isEmpty()) {
+                    buffer.append(" />");
+                } else {
+                    buffer.append(">");
+                    buffer.append(SVNEncodingUtil.xmlEncodeCDATA(childElement.getFirstValue(false), false));
+                    buffer.append("</");
+                    if (namespace == null || "".equals(namespace)) {
+                        buffer.append(childElementName.getName());
+                    } else {
+                        buffer.append(SVNXMLUtil.PREFIX_MAP.get(namespace));
+                        buffer.append(":");
+                        buffer.append(childElementName.getName());
+                    }
+                    buffer.append(">");
+                }
+                
+                owner = buffer.toString();
                 continue;
             }
             

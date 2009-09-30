@@ -116,6 +116,10 @@ public class DAVElementProperty {
         return myChildren;
     }
 
+    public boolean isEmpty() {
+        return (myChildren == null || myChildren.isEmpty()) && (myValues == null || myValues.isEmpty());
+    }
+    
     protected DAVElementProperty addChild(DAVElement element, Attributes attrs) throws SVNException {
         if (myValues != null) {
             invalidXML();
