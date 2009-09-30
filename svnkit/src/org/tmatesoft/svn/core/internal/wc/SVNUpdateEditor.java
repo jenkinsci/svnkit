@@ -1293,6 +1293,16 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "Failed to add file ''{0}'': a non-file object of the same name already exists", path);
             SVNErrorManager.error(error, SVNLogType.WC);
         }
+        
+        if (entry != null && fileType == SVNFileType.NONE) {
+            if (entry.isDirectory() && entry.isScheduledForAddition()) {
+                // special case of missing not yet versioned directory scheduled for addition.
+                // remove this entry, no chance to restore anything from the directory.
+                adminArea.deleteEntry(entry.getName());
+                adminArea.saveEntries(false);
+                entry = null;
+            }
+        }
 
         if (entry == null && (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK)) {
             if (myIsUnversionedObstructionsAllowed) {
@@ -1310,7 +1320,9 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "UUID mismatch: existing file ''{0}'' was checked out from a different repository", fullPath);
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
-            if (mySwitchURL == null && !info.URL.equals(entry.getURL())) {
+            System.out.println("entry url: " + entry.getURL());
+            if (mySwitchURL == null && entry.getURL() == null && info.URL == null) {
+            } else if (mySwitchURL == null && (info.URL != entry.getURL() || !info.URL.equals(entry.getURL()))) {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "URL ''{0}'' of existing file ''{1}'' does not match expected URL ''{2}''", new Object[]{entry.getURL(), fullPath, info.URL});
                 SVNErrorManager.error(error, SVNLogType.WC);
             }
