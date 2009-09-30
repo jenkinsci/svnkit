@@ -155,41 +155,37 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
             return;
         }
 
-        SVNEventAction expectedAction = SVNEventAction.UPDATE_ADD;
-        SVNEventAction action = expectedAction;
         boolean[] isTreeConflicted = { false };
         SVNStatusType type = getDiffCallback().directoryAdded(path, myRevision2, isTreeConflicted);
         myCurrentDirectory.myIsTreeConflicted = isTreeConflicted[0];
-        if (myCurrentDirectory.myIsTreeConflicted) {
-            action = SVNEventAction.TREE_CONFLICT;
-        } else if (type == SVNStatusType.MISSING || type == SVNStatusType.OBSTRUCTED) {
-            action = SVNEventAction.SKIP;
-        }
 
         if (myEventHandler != null) {
-            boolean isReplace = false;
+            SVNEventAction action = SVNEventAction.UPDATE_ADD;
+            SVNNodeKind kind = SVNNodeKind.DIR;
+            
             KindActionState kas = (KindActionState) myDeletedPaths.get(myCurrentDirectory.myWCFile);
         	if (kas != null) {
-        		SVNEventAction newAction = null;
-        		if (kas.myAction == SVNEventAction.UPDATE_DELETE && action == SVNEventAction.UPDATE_ADD) {
-        			isReplace = true;
-        			newAction = SVNEventAction.UPDATE_REPLACE;
-        		} else {
-        			newAction = kas.myAction;
-        		}
-                SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, kas.myKind, null,
-                		SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE,
-                		newAction, expectedAction, null, null);
-                myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
+        	    kind = kas.myKind;
+        	    type = kas.myStatus;
                 myDeletedPaths.remove(myCurrentDirectory.myWCFile);
 
         	}
-        	if (!isReplace) {
-                // TODO prop type?
-        		SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, SVNNodeKind.DIR,
-                		null, SVNRepository.INVALID_REVISION, type, type, null, action, expectedAction, null, null);
-                myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
-        	}
+        	
+        	if (myCurrentDirectory.myIsTreeConflicted) {
+        	    action = SVNEventAction.TREE_CONFLICT;
+        	} else if (kas != null) {
+        	    if (kas.myAction == SVNEventAction.UPDATE_DELETE) {
+        	        action = SVNEventAction.UPDATE_REPLACE;
+        	    } else {
+        	        action = kas.myAction;
+        	    }
+        	} else if (type == SVNStatusType.MISSING || type == SVNStatusType.OBSTRUCTED) {
+        	    action = SVNEventAction.SKIP;
+        	} 
+
+        	SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile, kind,
+        	        null, SVNRepository.INVALID_REVISION, type, type, null, action, SVNEventAction.UPDATE_ADD, null, null);
+        	myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
 
@@ -234,7 +230,7 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
                 dir = retrieve(myCurrentDirectory.myWCFile, myIsDryRun);
             } catch (SVNException e) {
                 if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
-                    if (myEventHandler != null) {
+                    if (!myCurrentDirectory.myIsAdded && myEventHandler != null) {
                         action = myCurrentDirectory.myIsTreeConflicted ? SVNEventAction.TREE_CONFLICT : SVNEventAction.SKIP;
                         SVNEvent event = SVNEventFactory.createSVNEvent(myCurrentDirectory.myWCFile,
                         		SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING,
@@ -352,23 +348,22 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
     protected void closeFile(String commitPath, boolean added, File wcFile, File file, SVNProperties propertyDiff, SVNProperties baseProperties, 
             File baseFile, boolean[] isTreeConflicted) throws SVNException {
         SVNEventAction expectedAction = added ? SVNEventAction.UPDATE_ADD : SVNEventAction.UPDATE_UPDATE;
-        SVNEventAction action;
         SVNStatusType[] type = {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
         try {
             retrieveParent(wcFile, myIsDryRun);
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
                 if (myEventHandler != null) {
-                    action = SVNEventAction.SKIP;
                     SVNEvent event = SVNEventFactory.createSVNEvent(wcFile,
                             SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNStatusType.MISSING,
-                            SVNStatusType.UNKNOWN, null, action, expectedAction, null, null);
+                            SVNStatusType.UNKNOWN, null, SVNEventAction.SKIP, expectedAction, null, null);
                     myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
                 return;
             }
             throw e;
         }
+        
         if (file != null || !propertyDiff.isEmpty()) {
             String baseMimeType = baseProperties.getStringValue(SVNProperty.MIME_TYPE);
             String mimeType = propertyDiff.getStringValue(SVNProperty.MIME_TYPE);
@@ -385,38 +380,35 @@ public class SVNRemoteDiffEditor implements ISVNReusableEditor {
             }
         }
         
-        if (isTreeConflicted != null && isTreeConflicted.length > 0 && isTreeConflicted[0]) {
-            action = SVNEventAction.TREE_CONFLICT;
-        } else if (type[0] == SVNStatusType.MISSING || type[0] == SVNStatusType.OBSTRUCTED) {
-            action = SVNEventAction.SKIP;
-        } else if (added) {
-            action = SVNEventAction.UPDATE_ADD;
-        } else {
-            action = SVNEventAction.UPDATE_UPDATE;
-        }
-
         if (myEventHandler != null) {
-            boolean isReplace = false;
+            SVNNodeKind kind = SVNNodeKind.FILE;
+            SVNEventAction action;
             KindActionState kas = (KindActionState) myDeletedPaths.get(wcFile);
             if (kas != null) {
-                SVNEventAction newAction = kas.myAction;
-                if (kas.myAction == SVNEventAction.UPDATE_DELETE && action == SVNEventAction.UPDATE_ADD) {
-                    isReplace = true;
-                    newAction = SVNEventAction.UPDATE_REPLACE;
-                }
-                SVNEvent event = SVNEventFactory.createSVNEvent(wcFile, kas.myKind, null,
-                        SVNRepository.INVALID_REVISION, kas.myStatus, kas.myStatus, SVNStatusType.INAPPLICABLE,
-                        newAction, expectedAction, null, null);
-                myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
                 myDeletedPaths.remove(wcFile);
+                kind = kas.myKind;
+                type[0] = type[1] = kas.myStatus;
             }
 
-            if (!isReplace) {
-                SVNEvent event = SVNEventFactory.createSVNEvent(wcFile, SVNNodeKind.FILE,
-                        null, SVNRepository.INVALID_REVISION, type[0], type[1], null, action, expectedAction,
-                        null, null);
-                myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
+            if (isTreeConflicted != null && isTreeConflicted.length > 0 && isTreeConflicted[0]) {
+                action = SVNEventAction.TREE_CONFLICT;
+            } else if (kas != null) {
+                if (kas.myAction == SVNEventAction.UPDATE_DELETE && added) {
+                    action = SVNEventAction.UPDATE_REPLACE;
+                } else {
+                    action = kas.myAction;
+                }
+            } else if (type[0] == SVNStatusType.MISSING || type[0] == SVNStatusType.OBSTRUCTED) {
+                action = SVNEventAction.SKIP;
+            } else if (added) {
+                action = SVNEventAction.UPDATE_ADD;
+            } else {
+                action = SVNEventAction.UPDATE_UPDATE;
             }
+
+            SVNEvent event = SVNEventFactory.createSVNEvent(wcFile, kind, null, SVNRepository.INVALID_REVISION, type[0], type[1], 
+                    null, action, expectedAction, null, null);
+            myEventHandler.handleEvent(event, ISVNEventHandler.UNKNOWN);
         }
     }
 

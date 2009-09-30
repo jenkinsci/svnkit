@@ -37,6 +37,7 @@ import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -199,7 +200,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 return SVNStatusType.CHANGED;
             }
             
-            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.ADD, SVNConflictReason.ADDED);
+            myMergeDriver.recordTreeConflictOnAdd(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.ADD, SVNConflictReason.ADDED);
             setIsConflicted(isTreeConflicted, true);
             
             return SVNStatusType.OBSTRUCTED;
@@ -212,7 +213,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 return SVNStatusType.CHANGED;
             } 
             
-            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
+            myMergeDriver.recordTreeConflictOnAdd(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
             setIsConflicted(isTreeConflicted, true);
             return SVNStatusType.OBSTRUCTED;
         }
@@ -251,7 +252,9 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 try {
                     delete(mergedFile, myIsForce, myIsDryRun, false);
                 } catch (SVNException e) {
-                    return SVNStatusType.OBSTRUCTED;
+                    myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.DELETE, SVNConflictReason.EDITED);
+                    setIsConflicted(isTreeConflicted, true);
+                    return SVNStatusType.CONFLICTED;
                 } finally {
                     getWCAccess().setEventHandler(oldEventHandler);
                 }
@@ -417,17 +420,24 @@ public class SVNMergeCallback extends AbstractDiffCallback {
 
                     copyFromURL = myURL.appendPath(relativePath, false).toString();    
                     copyFromRevision = revision2;
+                    // TODO compare protocols with dir one.
                 }
-                // TODO compare protocols with dir one.
-                SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, newProps, null, 
-                        copyFromURL, copyFromRevision);
+                
+                SVNTreeConflictDescription existingConflict = getWCAccess().getTreeConflict(mergedFile);
+                if (existingConflict != null) {
+                    myMergeDriver.recordTreeConflictOnAdd(mergedFile, getAdminArea(), SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.ADDED);
+                    setIsConflicted(isTreeConflicted, true);
+                } else {
+                    SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, newProps, null, 
+                            copyFromURL, copyFromRevision);
+                }
             }
             result[0] = SVNStatusType.CHANGED;
             if (!newProps.isEmpty()) {
                 result[1] = SVNStatusType.CHANGED;
             }
         } else if (fileType == SVNFileType.DIRECTORY) {
-            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
+            myMergeDriver.recordTreeConflictOnAdd(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
             setIsConflicted(isTreeConflicted, true);
             if (myIsDryRun && isPathDeleted(path)) {
                 result[0] = SVNStatusType.CHANGED;
@@ -438,7 +448,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (myIsDryRun && isPathDeleted(path)) {
                 result[0] = SVNStatusType.CHANGED;
             } else {
-                myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.OBSTRUCTED);
+                myMergeDriver.recordTreeConflictOnAdd(mergedFile, dir, SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.ADDED);
                 setIsConflicted(isTreeConflicted, true);
             }
         }
