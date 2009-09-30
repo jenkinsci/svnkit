@@ -823,7 +823,7 @@ public class SVNWCAccess implements ISVNEventHandler {
 
         public void handleEntry(File path, SVNEntry entry) throws SVNException {
             myDelegate.handleEntry(path, entry);
-            if (!entry.isDirectory() || entry.isHidden()) {
+            if (entry == null || !entry.isDirectory() || entry.isHidden()) {
                 return;
             }
             boolean checkChildren = false;
