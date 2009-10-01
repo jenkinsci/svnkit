@@ -781,14 +781,6 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
                         "Failed to add file ''{0}'': object of the same name already exists", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-        } else if (entry != null) {
-            if (entry.isDirectory() && entry.isScheduledForAddition()) {
-                // special case of missing not yet versioned directory scheduled for addition.
-                // remove this entry, no chance to restore anything from the directory.
-                adminArea.deleteEntry(entry.getName());
-                adminArea.saveEntries(false);
-                entry = null;
-            }
         }
 
         return info;
