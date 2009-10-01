@@ -7,6 +7,7 @@ contrib/jna/JNA-LICENSE eol=lf
 contrib/jna/jna-src.zip -text
 contrib/jna/jna.jar -text
 contrib/junit/junit.jar -text
+contrib/maven/maven-ant-tasks-2.0.10.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/sqljet/SQLJET-LICENSE -text
 contrib/sqljet/SQLJET-README.txt -text

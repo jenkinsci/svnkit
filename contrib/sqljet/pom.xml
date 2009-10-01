@@ -17,7 +17,7 @@
   </distributionManagement>
   <dependencies>
     <dependency>
-      <groupId>org.antlr.runtime</groupId>
+      <groupId>org.antlr</groupId>
       <artifactId>antlr-runtime</artifactId>
       <version>%antlr.version%</version>
       <optional>false</optional>
