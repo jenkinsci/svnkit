@@ -259,7 +259,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                         parentArea.runLogs();
                     }
                 }
-                scheduleExistingEntryForReAdd(entry, fullPath, theirURL);
+                scheduleExistingEntryForReAdd(entry, fullPath, theirURL, true);
                 return;
             } else if (treeConflict.getConflictReason() == SVNConflictReason.DELETED) {
 //          The item does not exist locally (except perhaps as a skeleton
@@ -268,6 +268,19 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
 //          as the only difference from a normal deletion.
 //
 //          Fall through to the normal "delete" code path.
+                if (entry.isScheduledForReplacement()) {
+                    if (parent != null) {
+                        parent.flushLog();
+                        parent.runLogs();
+                    } else {
+                        if (log != null) {
+                            log.save();
+                            parentArea.runLogs();
+                        }
+                    }
+                    scheduleExistingEntryForReAdd(entry, fullPath, theirURL, false);
+                    return;
+                }
             } else {
                 SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Unexpected tree conflict reason");
                 SVNErrorManager.error(error, SVNLogType.WC);
@@ -519,15 +532,17 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         return modified;
     }
 
-    private void scheduleExistingEntryForReAdd(final SVNEntry entry, final File path, SVNURL theirURL) throws SVNException {
+    private void scheduleExistingEntryForReAdd(final SVNEntry entry, final File path, SVNURL theirURL, boolean modifyCopyFrom) throws SVNException {
         final File parentPath = path.getParentFile();
         String entryName = path.getName();
         Map attributes = new SVNHashMap();
         attributes.put(SVNProperty.URL, theirURL.toString());
         attributes.put(SVNProperty.SCHEDULE, SVNProperty.SCHEDULE_ADD);
-        attributes.put(SVNProperty.COPYFROM_URL, entry.getURL());
-        attributes.put(SVNProperty.COPYFROM_REVISION, String.valueOf(entry.getRevision()));
-        attributes.put(SVNProperty.COPIED, Boolean.TRUE.toString());
+        if (modifyCopyFrom) {
+            attributes.put(SVNProperty.COPYFROM_URL, entry.getURL());
+            attributes.put(SVNProperty.COPYFROM_REVISION, String.valueOf(entry.getRevision()));
+            attributes.put(SVNProperty.COPIED, Boolean.TRUE.toString());
+        }
         if (myIsLockOnDemand && entry.isDirectory()) {
             SVNAdminArea area = myWCAccess.getAdminArea(path);
             if (area != null && !area.isLocked()) {
