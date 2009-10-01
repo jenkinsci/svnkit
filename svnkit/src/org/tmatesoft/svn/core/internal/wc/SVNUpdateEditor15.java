@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
@@ -28,12 +29,15 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumOutputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -305,7 +309,7 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
         if (myCurrentDirectory.isAddExisted) {
             attributes.put(SVNProperty.REVISION, Long.toString(myTargetRevision));
             if (mySwitchURL != null) {
-                attributes.put(SVNProperty.URL, SVNPathUtil.append(mySwitchURL, name));
+                attributes.put(SVNProperty.URL, myCurrentDirectory.URL);
             }
             SVNAdminArea adminArea = myCurrentDirectory.getAdminArea();
             adminArea.modifyEntry(adminArea.getThisDirName(), attributes, true, true);
@@ -559,7 +563,7 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
         SVNAdminArea adminArea = myCurrentFile.getAdminArea();
         SVNEntry entry = adminArea.getEntry(myCurrentFile.Name, false);
         boolean replaced = entry != null && entry.isScheduledForReplacement();
-        boolean useRevertBase = replaced && entry.getCopyFromURL() != null;
+        boolean useRevertBase = replaced;
 
         if (useRevertBase) {
             myCurrentFile.baseFile = adminArea.getFile(SVNAdminUtil.getTextRevertPath(myCurrentFile.Name, false));
@@ -569,25 +573,12 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
             myCurrentFile.newBaseFile = adminArea.getBaseFile(myCurrentFile.Name, true);
         }
         
-        if (entry != null && entry.getChecksum() != null) {
-            String realChecksum = SVNFileUtil.computeChecksum(myCurrentFile.baseFile);
-            if (baseChecksum != null) {
-                if (!baseChecksum.equals(realChecksum)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
-                            "Checksum mismatch for ''{0}''; expected: ''{1}'', actual: ''{2}''",
-                            new Object[] {myCurrentFile.baseFile, baseChecksum, realChecksum}); 
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
-            }
-            
-            String realChecksumSafe = realChecksum == null ? "" : realChecksum;
-            String entryChecksumSafe = entry.getChecksum() == null ? "" : entry.getChecksum();
-            if (!replaced && !realChecksumSafe.equals(entryChecksumSafe)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
-                        "Checksum mismatch for ''{0}''; recorded: ''{1}'', actual: ''{2}''",
-                        new Object[] {myCurrentFile.baseFile, entry.getChecksum(), realChecksum}); 
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+        String checksum = entry != null ? entry.getChecksum() : null; 
+        if (!replaced && baseChecksum != null && checksum != null && !baseChecksum.equals(checksum)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE,
+                    "Checksum mismatch for ''{0}''; expected: ''{1}'', recorded: ''{2}''",
+                    new Object[] { myCurrentFile.baseFile, baseChecksum, checksum });
+            SVNErrorManager.error(err, SVNLogType.WC);        
         }
         
         File baseSrcFile = null;
@@ -598,8 +589,24 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
                 baseSrcFile = myCurrentFile.copiedBaseText;
             }
         }
+        
+        if (replaced || checksum == null) {
+            checksum = baseChecksum;
+        }
+
         File baseTmpFile = myCurrentFile.newBaseFile;
-        myDeltaProcessor.applyTextDelta(baseSrcFile, baseTmpFile, true);
+            
+        if (checksum != null) {
+            myCurrentFile.expectedSrcChecksum = checksum;
+            InputStream baseIS = baseSrcFile != null && baseSrcFile.exists() ? SVNFileUtil.openFileForReading(baseSrcFile) : 
+                SVNFileUtil.DUMMY_IN;
+            myCurrentFile.sourceChecksumStream = baseIS != SVNFileUtil.DUMMY_IN ? new SVNChecksumInputStream(baseIS, SVNChecksumInputStream.MD5_ALGORITHM) :
+                null;
+            myDeltaProcessor.applyTextDelta(myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream : baseIS, 
+                    baseTmpFile, true);
+        } else {
+            myDeltaProcessor.applyTextDelta(baseSrcFile, baseTmpFile, true);
+        }
     }
 
     public OutputStream textDeltaChunk(String commitPath, SVNDiffWindow diffWindow) throws SVNException {
@@ -619,6 +626,16 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
     public void textDeltaEnd(String commitPath) throws SVNException {
         if (!myCurrentFile.isSkipped) {
             myCurrentFile.Checksum = myDeltaProcessor.textDeltaEnd();
+        }
+        
+        if (myCurrentFile.expectedSrcChecksum != null) {
+            String actualSourceChecksum = myCurrentFile.sourceChecksumStream != null ? myCurrentFile.sourceChecksumStream.getDigest() : null;
+            if (!myCurrentFile.expectedSrcChecksum.equals(actualSourceChecksum)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                        "Checksum mismatch while updating ''{0}''; expected: ''{1}'', actual: ''{2}''", 
+                        new Object[] { myCurrentFile.baseFile, myCurrentFile.expectedSrcChecksum, actualSourceChecksum });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         }
     }
 
@@ -764,6 +781,14 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
                         "Failed to add file ''{0}'': object of the same name already exists", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
+        } else if (entry != null) {
+            if (entry.isDirectory() && entry.isScheduledForAddition()) {
+                // special case of missing not yet versioned directory scheduled for addition.
+                // remove this entry, no chance to restore anything from the directory.
+                adminArea.deleteEntry(entry.getName());
+                adminArea.saveEntries(false);
+                entry = null;
+            }
         }
 
         return info;
@@ -802,7 +827,20 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
                 workingProperties = srcArea.getProperties(srcEntry.getName()).asMap();
             }
             
-            SVNFileUtil.copyFile(srcArea.getFile(srcTextBasePath), info.copiedBaseText, true);
+            InputStream srcIS = null;
+            OutputStream copiedBaseOS = null;
+            try {
+                srcIS = SVNFileUtil.openFileForReading(srcArea.getFile(srcTextBasePath));
+                copiedBaseOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
+                SVNChecksumOutputStream checksumOS = new SVNChecksumOutputStream(copiedBaseOS, 
+                        SVNChecksumOutputStream.MD5_ALGORITHM, true);
+                copiedBaseOS = checksumOS;
+                FSRepositoryUtil.copy(srcIS, copiedBaseOS, myWCAccess);
+                info.copiedBaseChecksum = checksumOS.getDigest();
+            } finally {
+                SVNFileUtil.closeFile(srcIS);
+                SVNFileUtil.closeFile(copiedBaseOS);
+            }
             
             if (srcArea.hasTextModifications(srcEntry.getName(), false, true, false)) {
                 info.copiedWorkingText = SVNAdminUtil.createTmpFile(adminArea);
@@ -820,6 +858,11 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
             try {
                 baseTextOS = SVNFileUtil.openFileForWriting(info.copiedBaseText);
                 myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, baseProperties);
+                SVNChecksumOutputStream checksumBaseTextOS = new SVNChecksumOutputStream(baseTextOS, 
+                        SVNChecksumOutputStream.MD5_ALGORITHM, true);
+                baseTextOS = checksumBaseTextOS;
+                myFileFetcher.fetchFile(copyFromPath, copyFromRevision, baseTextOS, baseProperties);
+                info.copiedBaseChecksum = checksumBaseTextOS.getDigest();
             } finally {
                 SVNFileUtil.closeFile(baseTextOS);
             }
@@ -1020,7 +1063,7 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
                 fileInfo.newBaseFile = adminArea.getBaseFile(fileInfo.Name, true);
             }
             SVNFileUtil.copyFile(fileInfo.copiedBaseText, fileInfo.newBaseFile, true);
-            fileInfo.Checksum = SVNFileUtil.computeChecksum(fileInfo.newBaseFile);
+            fileInfo.Checksum = fileInfo.copiedBaseChecksum;
         }
         
         // check checksum.
@@ -1097,6 +1140,8 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
         boolean isLocallyModified = false;
         if (fileInfo.copiedWorkingText != null) {
             isLocallyModified = true;
+        } else if (fileEntry != null && fileEntry.getExternalFilePath() != null && fileEntry.isScheduledForAddition()) {
+            isLocallyModified = false;
         } else if (!fileInfo.isExisted) { 
             isLocallyModified = adminArea.hasTextModifications(name, false, false, false);
         } else if (isTextUpdated) {
@@ -1499,6 +1544,8 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
         public String Name;
         public String CommitTime;
         public String Checksum;
+        public String expectedSrcChecksum;
+        public String copiedBaseChecksum;
         public File baseFile;
         public File newBaseFile;
         public boolean addedWithHistory;
@@ -1507,6 +1554,7 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
         private SVNProperties copiedWorkingProperties;
         private File copiedBaseText;
         private File copiedWorkingText;
+        private SVNChecksumInputStream sourceChecksumStream;
         
         public SVNFileInfo(SVNDirectoryInfo parent, String path) {
             super(path);
