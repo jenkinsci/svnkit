@@ -1383,6 +1383,28 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
             return;
         }
         
+        SVNTreeConflictDescription conflict = makeTreeConflict(victim, kind, action, reason);
+        adminArea.addTreeConflict(conflict);
+    }
+
+    protected void recordTreeConflictOnAdd(File victim, SVNAdminArea adminArea, SVNNodeKind kind, SVNConflictAction action, 
+            SVNConflictReason reason) throws SVNException {
+        if (myIsRecordOnly || myIsDryRun) {
+            return;
+        }
+        
+        SVNTreeConflictDescription conflict = makeTreeConflict(victim, kind, action, reason);
+        SVNTreeConflictDescription existingConflict = myWCAccess.getTreeConflict(conflict.getPath());
+        
+        if (existingConflict != null && existingConflict.getConflictAction() == SVNConflictAction.DELETE && conflict.getConflictAction() == SVNConflictAction.ADD) {
+            adminArea.deleteTreeConflict(conflict.getPath().getName());
+            conflict = new SVNTreeConflictDescription(conflict.getPath(), conflict.getNodeKind(), SVNConflictAction.DELETE, existingConflict.getConflictReason(), 
+                    conflict.getOperation(), existingConflict.getSourceLeftVersion(), conflict.getSourceRightVersion());
+        }
+        adminArea.addTreeConflict(conflict);
+    }
+        
+    protected SVNTreeConflictDescription makeTreeConflict(File victim, SVNNodeKind kind, SVNConflictAction action, SVNConflictReason reason) throws SVNException {
         SVNURL srcReposRoot = myRepository1.getRepositoryRoot(true);
         String child = SVNPathUtil.getRelativePath(myTarget.getAbsolutePath(), victim.getAbsolutePath());
         SVNURL leftURL = null;
@@ -1401,9 +1423,10 @@ public abstract class SVNMergeDriver extends SVNBasicClient {
                 myCurrentMergeSource.myRevision2, kind);
         SVNTreeConflictDescription conflictDescription  = new SVNTreeConflictDescription(victim, kind, action, reason, SVNOperation.MERGE, 
                 leftConflictVersion, rightConflictVersion);
-        adminArea.addTreeConflict(conflictDescription);
+        return conflictDescription; 
+        
     }
-
+    
     private SVNMergeCallback getMergeCallback(SVNAdminArea adminArea) {
         return myWCAccess.createMergeCallback(this, adminArea, myURL, getMergeOptions(), myConflictedPaths, myIsForce, myIsDryRun);
     }
