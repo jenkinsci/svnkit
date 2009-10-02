@@ -51,6 +51,9 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
     
     public SVNTreeConflictDescription getTreeConflict(String victimName) throws SVNException {
         SVNEntry dirEntry = getEntry(getThisDirName(), false);
+        if (dirEntry == null) {
+            return null;
+        }
         Map conflicts = dirEntry.getTreeConflicts();
         return (SVNTreeConflictDescription) conflicts.get(getFile(victimName));
     }
