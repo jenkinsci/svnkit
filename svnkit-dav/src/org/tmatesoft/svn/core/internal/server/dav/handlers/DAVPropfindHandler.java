@@ -460,7 +460,7 @@ public class DAVPropfindHandler extends ServletDAVHandler implements IDAVResourc
                 SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.SUPPORTED_LIVE_PROPERTY.getName(), SVNXMLUtil.XML_STYLE_NORMAL, 
                         "D:name", livePropElement.getName(), buffer);
             } else if (propAction == DAVInsertPropAction.INSERT_VALUE && !"".equals(value)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, livePropElement.getName(), value, buffer);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, livePropElement.getName(), value, null, false, false, buffer);
             } else {
                 SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, livePropElement.getName(), SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, buffer);
             }
