@@ -791,7 +791,7 @@ public class SVNWCAccess implements ISVNEventHandler {
             boolean allowUnversionedObstructions, boolean depthIsSticky, SVNDepth depth,
             String[] preservedExtensions, ISVNFileFetcher fileFetcher, boolean lockOnDemand) throws SVNException {
         int maxVersion = getMaxFormatVersion();
-        if (0 < maxVersion && maxVersion < SVNAdminArea16.WC_FORMAT) {
+        if (0 < maxVersion && maxVersion < SVNAdminAreaFactory.WC_FORMAT_16) {
             return SVNUpdateEditor15.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);
         } 
         return SVNUpdateEditor.createUpdateEditor(info, switchURL, allowUnversionedObstructions, depthIsSticky, depth, preservedExtensions, fileFetcher, lockOnDemand);

@@ -52,7 +52,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea16;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -1938,7 +1937,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 }
             }
             
-            if (targetArea.getFormatVersion() < SVNAdminArea16.WC_FORMAT) {
+            if (targetArea.getFormatVersion() < SVNAdminAreaFactory.WC_FORMAT_16) {
                 dispatchEvent(SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, 
                         SVNEventAction.SKIP, SVNEventAction.UPDATE_EXTERNAL, null, null));
                 return;
