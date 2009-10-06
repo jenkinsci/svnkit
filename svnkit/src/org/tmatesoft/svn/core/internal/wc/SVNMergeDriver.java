@@ -3033,6 +3033,14 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         private long myRevision1;
         private SVNURL myURL2;
         private long myRevision2;
+
+        public SVNURL getURL1() {
+            return myURL1;
+        }
+
+        public SVNURL getURL2() {
+            return myURL2;
+        }
         
         public long getRevision1() {
             return myRevision1;
@@ -3041,7 +3049,6 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         public long getRevision2() {
             return myRevision2;
         }
-        
     }
     
     protected static class MergeAction {
