@@ -63,7 +63,7 @@ public abstract class DAVResourceHelper {
     }
     
     public static DAVResource getDirectResource(DAVLockInfoProvider lockProvider, String lockToken, DAVResource resource) throws DAVException {
-        while (resource == null) {
+        while (resource != null) {
             DAVLock lock = lockProvider.findLock(resource, lockToken);
             if (lock == null) {
                 throw new DAVException("The specified locktoken does not correspond to an existing lock on this resource.", 

@@ -1200,11 +1200,13 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             child = rootElement;
         } else {
             List children = rootElement.getChildren();
-            for (Iterator childIter = children.iterator(); childIter.hasNext();) {
-                DAVElementProperty nextChild = (DAVElementProperty) childIter.next();
-                if (nextChild.getName() == DAVElement.SVN_LOCK_TOKEN_LIST) {
-                    child = nextChild;
-                    break;
+            if (children != null) {
+                for (Iterator childIter = children.iterator(); childIter.hasNext();) {
+                    DAVElementProperty nextChild = (DAVElementProperty) childIter.next();
+                    if (nextChild.getName() == DAVElement.SVN_LOCK_TOKEN_LIST) {
+                        child = nextChild;
+                        break;
+                    }
                 }
             }
         }
@@ -1214,36 +1216,38 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
         }
         
         List children = child.getChildren();
-        for (Iterator childIter = children.iterator(); childIter.hasNext();) {
-            DAVElementProperty lockChild = (DAVElementProperty) childIter.next();
-            if (lockChild.getName() != DAVElement.SVN_LOCK) {
-                continue;
-            }
-            
-            String lockPath = null;
-            String lockToken = null;
-            List lockChildren = lockChild.getChildren();
-            for (Iterator lockChildrenIter = lockChildren.iterator(); lockChildrenIter.hasNext();) {
-                DAVElementProperty lockElementChild = (DAVElementProperty) lockChildrenIter.next();
-                if (lockElementChild.getName() == LOCK_PATH_ELEM) {
-                    String cdata = lockElementChild.getFirstValue(false);
-                    DAVPathUtil.testCanonical(cdata);
-                    lockPath = SVNPathUtil.append(pathPrefix, cdata);
-                    if (!lockPath.startsWith("/")) {
-                        lockPath = "/" + lockPath;
-                    }
-                    
-                    if (lockPath != null && lockToken != null) {
-                        pathsToLockTokens.put(lockPath, lockToken);
-                        lockPath = null;
-                        lockToken = null;
-                    }
-                } else if (lockElementChild.getName() == LOCK_TOKEN_ELEM) {
-                    lockToken = lockElementChild.getFirstValue(true);
-                    if (lockPath != null && lockToken != null) {
-                        pathsToLockTokens.put(lockPath, lockToken);
-                        lockPath = null;
-                        lockToken = null;
+        if (children != null) {
+            for (Iterator childIter = children.iterator(); childIter.hasNext();) {
+                DAVElementProperty lockChild = (DAVElementProperty) childIter.next();
+                if (lockChild.getName() != DAVElement.SVN_LOCK) {
+                    continue;
+                }
+                
+                String lockPath = null;
+                String lockToken = null;
+                List lockChildren = lockChild.getChildren();
+                for (Iterator lockChildrenIter = lockChildren.iterator(); lockChildrenIter.hasNext();) {
+                    DAVElementProperty lockElementChild = (DAVElementProperty) lockChildrenIter.next();
+                    if (lockElementChild.getName() == LOCK_PATH_ELEM) {
+                        String cdata = lockElementChild.getFirstValue(false);
+                        DAVPathUtil.testCanonical(cdata);
+                        lockPath = SVNPathUtil.append(pathPrefix, cdata);
+                        if (!lockPath.startsWith("/")) {
+                            lockPath = "/" + lockPath;
+                        }
+                        
+                        if (lockPath != null && lockToken != null) {
+                            pathsToLockTokens.put(lockPath, lockToken);
+                            lockPath = null;
+                            lockToken = null;
+                        }
+                    } else if (lockElementChild.getName() == LOCK_TOKEN_ELEM) {
+                        lockToken = lockElementChild.getFirstValue(true);
+                        if (lockPath != null && lockToken != null) {
+                            pathsToLockTokens.put(lockPath, lockToken);
+                            lockPath = null;
+                            lockToken = null;
+                        }
                     }
                 }
             }
