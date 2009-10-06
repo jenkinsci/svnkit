@@ -79,6 +79,7 @@ svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVGetLocatio
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockHandler.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockRequest.java -text
 svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVLockWalker.java -text
+svnkit-dav/src/org/tmatesoft/svn/core/internal/server/dav/handlers/DAVUnlockHandler.java -text
 svnkit-eclipse/com.sun.jna/MANIFEST.MF eol=lf
 svnkit-eclipse/com.sun.jna/feature.properties eol=lf
 svnkit-eclipse/com.sun.jna/feature.xml eol=lf

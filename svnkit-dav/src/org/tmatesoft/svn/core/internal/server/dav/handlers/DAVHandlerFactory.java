@@ -55,45 +55,34 @@ public class DAVHandlerFactory {
 
         if (METHOD_PROPFIND.equals(methodName)) {
             return new DAVPropfindHandler(manager, request, response);
-        }
-        if (METHOD_OPTIONS.equals(methodName)) {
+        } else if (METHOD_OPTIONS.equals(methodName)) {
             return new DAVOptionsHandler(manager, request, response);
-        }
-        if (METHOD_GET.equals(methodName)) {
+        } else if (METHOD_GET.equals(methodName)) {
             return new DAVGetHandler(manager, request, response);
-        }
-        if (METHOD_REPORT.equals(methodName)) {
+        } else if (METHOD_REPORT.equals(methodName)) {
             return new DAVReportHandler(manager, request, response);
-        }
-        if (METHOD_MKACTIVITY.equals(methodName)) {
+        } else if (METHOD_MKACTIVITY.equals(methodName)) {
             return new DAVMakeActivityHandler(manager, request, response);
-        }
-        if (METHOD_CHECKOUT.equals(methodName)) {
+        } else if (METHOD_CHECKOUT.equals(methodName)) {
             return new DAVCheckOutHandler(manager, request, response);
-        }
-        if (METHOD_PUT.equals(methodName)) {
+        } else if (METHOD_PUT.equals(methodName)) {
             return new DAVPutHandler(manager, request, response);
-        }
-        if (METHOD_DELETE.equals(methodName)) {
+        } else if (METHOD_DELETE.equals(methodName)) {
             return new DAVDeleteHandler(manager, request, response);
-        }
-        if (METHOD_COPY.equals(methodName)) {
+        } else if (METHOD_COPY.equals(methodName)) {
             return new DAVCopyMoveHandler(manager, request, response, false);
-        }
-        if (METHOD_MOVE.equals(methodName)) {
+        } else if (METHOD_MOVE.equals(methodName)) {
             return new DAVCopyMoveHandler(manager, request, response, true);
-        }
-        if (METHOD_MKCOL.equals(methodName)) {
+        } else if (METHOD_MKCOL.equals(methodName)) {
             return new DAVMakeCollectionHandler(manager, request, response);
-        }
-        if (METHOD_PROPPATCH.equals(methodName)) {
+        } else if (METHOD_PROPPATCH.equals(methodName)) {
             return new DAVPropPatchHandler(manager, request, response);
-        }
-        if (METHOD_MERGE.equals(methodName)) {
+        } else if (METHOD_MERGE.equals(methodName)) {
             return new DAVMergeHandler(manager, request, response);
-        }
-        if (METHOD_LOCK.equals(methodName)) {
+        } else if (METHOD_LOCK.equals(methodName)) {
             return new DAVLockHandler(manager, request, response);
+        } else if (METHOD_UNLOCK.equals(methodName)) {
+            return new DAVUnlockHandler(manager, request, response);
         }
         
         SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Unknown request method ''{0}''", request.getMethod()), 
