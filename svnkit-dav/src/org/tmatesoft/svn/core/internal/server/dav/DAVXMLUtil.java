@@ -165,7 +165,6 @@ public class DAVXMLUtil extends SVNXMLUtil {
         }
         
         String href = davResponse.getHref();
-        href = SVNEncodingUtil.xmlEncodeCDATA(href, true);
         SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), href, null, true, true, xmlBuffer);
         
         String propStatsText = propResult.getPropStatsText();

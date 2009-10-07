@@ -125,10 +125,11 @@ public class DAVPathUtil {
 
     public static String buildURI(String context, DAVResourceKind davResourceKind, long revision, String path, boolean addHref) {
         StringBuffer resultURI = new StringBuffer();
-        path = path == null ? "" : path;
+        path = path == null ? "" : SVNEncodingUtil.uriEncode(path);
         context = context == null ? "" : context;
         if (addHref) {
-            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, null, resultURI);
+            SVNXMLUtil.openXMLTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.HREF.getName(), SVNXMLUtil.XML_STYLE_PROTECT_CDATA, 
+                    null, resultURI);
         }
         resultURI.append(context);
         resultURI.append(SLASH);
