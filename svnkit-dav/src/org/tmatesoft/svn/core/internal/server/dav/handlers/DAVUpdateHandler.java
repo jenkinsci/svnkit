@@ -640,6 +640,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     private void changeProperties(EditorEntry entry, String name, SVNPropertyValue value) throws SVNException {
+        //String quotedName = SVNEncodingUtil.xmlEncodeCDATA(name, true);
         if (getUpdateRequest().isSendAll()) {
             if (value != null) {
                 writePropertyTag("set-prop", name, value);
@@ -647,18 +648,23 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
                 writeEntryTag("remove-prop", name);
             }
         } else {
-            if (SVNProperty.COMMITTED_REVISION.equals(name)) {
-                entry.setCommitedRevision(value.getString());
-            } else if (SVNProperty.COMMITTED_DATE.equals(name)) {
-                entry.setCommitedDate(value.getString());
-            } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
-                entry.setLastAuthor(value.getString());
-            } else {
-                if (value == null) {
+            if (SVNProperty.isEntryProperty(name)) {
+                if (SVNProperty.COMMITTED_REVISION.equals(name)) {
+                    entry.setCommitedRevision(value.getString());
+                } else if (SVNProperty.COMMITTED_DATE.equals(name)) {
+                    entry.setCommitedDate(value.getString());
+                } else if (SVNProperty.LAST_AUTHOR.equals(name)) {
+                    entry.setLastAuthor(value.getString());
+                } else if (SVNProperty.LOCK_TOKEN.equals(name) && value == null) {
                     entry.addRemovedProperty(name);
-                } else {
-                    entry.setHasChangedProperty(true);
                 }
+                return;
+            }
+
+            if (value == null) {
+                entry.addRemovedProperty(name);
+            } else {
+                entry.setHasChangedProperty(true);
             }
         }
     }
