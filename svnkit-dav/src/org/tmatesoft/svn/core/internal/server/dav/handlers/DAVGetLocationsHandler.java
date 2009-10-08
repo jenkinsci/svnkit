@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,14 +23,13 @@ import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
-import org.tmatesoft.svn.core.io.ISVNLocationEntryHandler;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
  */
-public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLocationEntryHandler {
+public class DAVGetLocationsHandler extends DAVReportHandler {
 
     private static final String GET_LOCATIONS_REPORT = "get-locations-report";
     
@@ -52,20 +53,22 @@ public class DAVGetLocationsHandler extends DAVReportHandler implements ISVNLoca
     public void execute() throws SVNException {
         setDAVResource(getRequestedDAVResource(false, false));
 
-        writeXMLHeader(GET_LOCATIONS_REPORT);
-
         String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getGetLocationsRequest().getPath());
-        getDAVResource().getRepository().getLocations(path, getGetLocationsRequest().getPegRevision(), getGetLocationsRequest().getRevisions(), this);
+        Collection locations = getDAVResource().getRepository().getLocations(path, (Collection)null, getGetLocationsRequest().getPegRevision(), 
+                getGetLocationsRequest().getRevisions());
 
+        Map attrs = new SVNHashMap();
+        writeXMLHeader(GET_LOCATIONS_REPORT);
+        for (Iterator locationsIter = locations.iterator(); locationsIter.hasNext();) {
+            SVNLocationEntry locationEntry = (SVNLocationEntry) locationsIter.next();
+            attrs.clear();
+            attrs.put(PATH_ATTR, locationEntry.getPath());
+            attrs.put(REVISION_ATTR, String.valueOf(locationEntry.getRevision()));
+            StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "location", SVNXMLUtil.XML_STYLE_SELF_CLOSING, 
+                    attrs, null);
+            write(xmlBuffer);
+        }
         writeXMLFooter(GET_LOCATIONS_REPORT);
     }
 
-    public void handleLocationEntry(SVNLocationEntry locationEntry) throws SVNException {
-        Map attrs = new SVNHashMap();
-        locationEntry.getPath();
-        attrs.put(PATH_ATTR, locationEntry.getPath());
-        attrs.put(REVISION_ATTR, String.valueOf(locationEntry.getRevision()));
-        StringBuffer xmlBuffer = SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "location", SVNXMLUtil.XML_STYLE_SELF_CLOSING, attrs, null);
-        write(xmlBuffer);
-    }
 }

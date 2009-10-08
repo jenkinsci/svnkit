@@ -886,7 +886,7 @@ public class FSFS {
         }
         
         if (!revPropsFile.exists() && !returnMissing) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", String.valueOf(revision));
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return revPropsFile;
@@ -1614,7 +1614,7 @@ public class FSFS {
         File revisionFile = getRevisionFile(revision);
         
         if (!revisionFile.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", String.valueOf(revision));
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return new FSFile(revisionFile);
@@ -1623,7 +1623,7 @@ public class FSFS {
     protected FSFile getPackOrRevisionFSFile(long revision) throws SVNException {
         File file = getAbsoluteRevisionPath(revision);
         if (!file.exists()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", new Long(revision));
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, "No such revision {0}", String.valueOf(revision));
             SVNErrorManager.error(err, SVNLogType.FSFS);
         }
         return new FSFile(file);
@@ -1803,7 +1803,7 @@ public class FSFS {
         }
         
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NO_SUCH_REVISION, 
-                "No such revision {0}", new Long(revision));
+                "No such revision {0}", String.valueOf(revision));
         SVNErrorManager.error(err, SVNLogType.FSFS);
     }
     

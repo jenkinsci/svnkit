@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVPathUtil;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
 import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
@@ -79,14 +80,10 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             getLogRequest().getTargetPaths()[i] = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), currentPath);
         }
 
-        getDAVResource().getRepository().log(getLogRequest().getTargetPaths(),
-                getLogRequest().getStartRevision(),
-                getLogRequest().getEndRevision(),
-                getLogRequest().isDiscoverChangedPaths(),
-                getLogRequest().isStrictNodeHistory(),
-                getLogRequest().getLimit(),
-                getLogRequest().isIncludeMergedRevisions(),
-                getLogRequest().getRevisionProperties(),
+        DAVLogRequest logRequest = getLogRequest();
+        getDAVResource().getRepository().log(logRequest.getTargetPaths(), logRequest.getStartRevision(),
+                logRequest.getEndRevision(), logRequest.isDiscoverChangedPaths(), logRequest.isStrictNodeHistory(),
+                logRequest.getLimit(), logRequest.isIncludeMergedRevisions(), logRequest.getRevisionProperties(),
                 this);
 
         writeXMLFooter(null);
@@ -111,14 +108,18 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
             String propValue = revProps.getStringValue(propName);
             
             if (SVNRevisionProperty.AUTHOR.equals(propName)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), propValue, xmlBuffer);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.CREATOR_DISPLAY_NAME.getName(), propValue, null, 
+                        false, true, xmlBuffer);
             } else if (SVNRevisionProperty.DATE.equals(propName)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "date", propValue, xmlBuffer);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "date", propValue, null, false, true, xmlBuffer);
             } else if (SVNRevisionProperty.LOG.equals(propName)) {
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), propValue, xmlBuffer);
+                String comment = SVNEncodingUtil.fuzzyEscape(propValue);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.DAV_NAMESPACE_PREFIX, DAVElement.COMMENT.getName(), comment, null, false, true, xmlBuffer);
             } else {
                 noCustomProperties = false;
-                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", propValue, NAME_ATTR, propName, xmlBuffer);
+                String encodedPropName = SVNEncodingUtil.xmlEncodeCDATA(propName, false);
+                SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, "revprop", propValue, NAME_ATTR, encodedPropName, false, 
+                        true, xmlBuffer);
             }
         }
 
