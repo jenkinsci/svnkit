@@ -50,7 +50,7 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
     private ISqlJetTable myTable;
     private FSFS myFSFS;
     
-    public static FSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
+    public static IFSRepresentationCacheManager openRepresentationCache(FSFS fsfs) throws SVNException {
         final FSRepresentationCacheManager cacheObj = new FSRepresentationCacheManager();
         try {
             cacheObj.myRepCacheDB = SqlJetDb.open(fsfs.getRepositoryCacheFile(), true);
