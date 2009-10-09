@@ -14,6 +14,7 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
 
@@ -320,8 +321,29 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     }
     
     private static void registerFactories() throws SVNException {
-        Collection factories = SVNClassLoader.loadAdminFactories();
-        ourFactories.addAll(factories);
+        Map props = SVNClassLoader.loadProperties();
+        for (Iterator propKeysIter = props.keySet().iterator(); propKeysIter.hasNext();) {
+            String key = (String) propKeysIter.next();
+            if (key.startsWith("svnkit.adminareafactory.")) {
+                String className = (String) props.get(key);
+                try {
+                    Class clazz = SVNClassLoader.class.getClassLoader().loadClass(className);
+                    if (clazz == null) {
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Could not load class " + className);
+                        continue;
+                    }    
+
+                    Object factoryObject = clazz.newInstance();
+                    if (factoryObject instanceof SVNAdminAreaFactory) {
+                        SVNAdminAreaFactory adminAreaFactory = (SVNAdminAreaFactory) factoryObject;
+                        registerFactory(adminAreaFactory);
+                    }
+                } catch (Throwable th) {
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Exception caught while loading class " + className + ": " + th.getMessage());
+                    continue;
+                }
+            }
+        }
     }
     
 }

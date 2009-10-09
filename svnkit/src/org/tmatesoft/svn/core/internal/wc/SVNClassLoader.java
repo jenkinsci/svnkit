@@ -14,18 +14,14 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -33,61 +29,51 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNClassLoader {
-    private static final String FACTORIES = "adminfactories.properties";
-    private static final String DEFAULT_FACTORIES_PROPERTIES = "factory1=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea16Factory\n" + 
-                                                               "factory2=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15Factory\n" +
-                                                               "factory3=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14Factory\n" +
-                                                               "factory4=org.tmatesoft.svn.core.internal.wc.admin.SVNXMLAdminAreaFactory\n"; 
+    private static final String SVNKIT_PROPERTIES = "svnkit.properties";
+    private static final String SVNKIT_PROPERTIES_SYSTEM_PROPERTY = "svnkit.properties.property";
     
-    public static Collection loadAdminFactories() throws SVNException {
-        return loadClassInstances(FACTORIES, DEFAULT_FACTORIES_PROPERTIES);
-    }
+    private static final String DEFAULT_PROPERTIES = "svnkit.adminareafactory.1=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea16Factory\n" + 
+                                                     "svnkit.adminareafactory.2=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea15Factory\n" +
+                                                     "svnkit.adminareafactory.3=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14Factory\n" +
+                                                     "svnkit.adminareafactory.4=org.tmatesoft.svn.core.internal.wc.admin.SVNXMLAdminAreaFactory\n" +
+                                                     "svnkit.repcachemanagerfactory.1=org.tmatesoft.svn.core.internal.io.fs.repcache.FSRepresentationCacheManagerFactory\n" +
+                                                     "svnkit.repcachemanagerfactory.2=org.tmatesoft.svn.core.internal.io.fs.repcache.FSEmptyRepresentationCacheManagerFactory\n"; 
 
-    public static Collection loadClassInstances(String propertiesFileName, String defaultProperties) throws SVNException {
-        Collection classNames = loadValues(propertiesFileName, defaultProperties);
-        
-        Collection instances = new TreeSet();
-        for (Iterator classesIter = classNames.iterator(); classesIter.hasNext();) {
-            String className = (String) classesIter.next();
-            try {
-                Class clazz = SVNClassLoader.class.getClassLoader().loadClass(className);
-                if (clazz == null) {
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Could not load class " + className);
-                    continue;
-                }    
-                Object factoryObject = clazz.newInstance();
-                if (factoryObject instanceof SVNAdminAreaFactory) {
-                    SVNAdminAreaFactory adminAreaFactory = (SVNAdminAreaFactory) factoryObject;
-                    instances.add(adminAreaFactory);
-                }
-            } catch (Throwable th) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Exception caught while loading class " + className + ": " + th.getMessage());
-                continue;
-            }
-        }
-        return instances;
-    }
     
-    private static Collection loadValues(String propertiesFileName, String defaultPropertiesContents) throws SVNException {
-        Properties adminFactoriesProps = new Properties(); 
-        InputStream resourceStream = SVNClassLoader.class.getClassLoader().getResourceAsStream(propertiesFileName);
-        if (resourceStream == null) {
-            resourceStream = new ByteArrayInputStream(defaultPropertiesContents.getBytes());
-        }
+    public static Map loadProperties() throws SVNException {
+        Properties props = new Properties(); 
+        InputStream resourceStream = new ByteArrayInputStream(DEFAULT_PROPERTIES.getBytes());
         
         try {
-            adminFactoriesProps.load(resourceStream);
+            //1. first load default props
+            props.load(resourceStream);
+            
+            //2. and 3. second try to locate a props file from a system property
+            //if none found, use default name for the props file
+            String svnkitPropertiesResource = System.getProperty(SVNKIT_PROPERTIES_SYSTEM_PROPERTY, SVNKIT_PROPERTIES);
+            resourceStream = SVNClassLoader.class.getClassLoader().getResourceAsStream(svnkitPropertiesResource);
+            if (resourceStream != null) {
+                props.load(resourceStream);
+            }
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        } finally {
+            SVNFileUtil.closeFile(resourceStream);
         }
-        
-        List values = new LinkedList();
-        for (Iterator keysIter = adminFactoriesProps.keySet().iterator(); keysIter.hasNext();) {
-            String key = (String) keysIter.next();
-            String value = adminFactoriesProps.getProperty(key);
-            values.add(value);
+
+        //4. try to iterate over possible keys and load values from 
+        //system properties with the same names
+        //Properties finalProps = new Properties(); 
+        Map finalProps = new TreeMap();
+        for (Iterator propNamesIter = props.keySet().iterator(); propNamesIter.hasNext();) {
+            String key = (String) propNamesIter.next();
+            String value = props.getProperty(key);
+            value = System.getProperty(key, value);
+            //finalProps.setProperty(key, value);
+            finalProps.put(key, value);
         }
-        return values;
+
+        return finalProps;
     }
 }
