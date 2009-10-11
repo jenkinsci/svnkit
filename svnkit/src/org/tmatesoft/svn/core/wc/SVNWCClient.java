@@ -3171,6 +3171,15 @@ public class SVNWCClient extends SVNBasicClient {
                             e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
                         ISVNAddParameters.Action action = getAddParameters().onInconsistentEOLs(path);
                         if (action == ISVNAddParameters.REPORT_ERROR) {
+                            ISVNEventHandler eventHandler = getEventDispatcher();
+                            try {
+                                setEventHandler(null);
+                                doRevert(path, dir, SVNDepth.EMPTY, false, null);
+                            } catch (SVNException svne) {
+                            } finally {
+                                setEventHandler(eventHandler);
+                            }
+
                             throw e;
                         } else if (action == ISVNAddParameters.ADD_AS_IS) {
                             SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
@@ -3179,6 +3188,15 @@ public class SVNWCClient extends SVNBasicClient {
                             mimeType = SVNFileUtil.BINARY_MIME_TYPE;
                         }
                     } else {
+                        ISVNEventHandler eventHandler = getEventDispatcher();
+                        try {
+                            setEventHandler(null);
+                            doRevert(path, dir, SVNDepth.EMPTY, false, null);
+                        } catch (SVNException svne) {
+                        } finally {
+                            setEventHandler(eventHandler);
+                        }
+
                         throw e;
                     }
                 }

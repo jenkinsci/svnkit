@@ -102,6 +102,9 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     public void setInMemoryConfigOptions(Map configOptions) {
         myConfigOptions = configOptions;
+        if (myConfigFile != null) {
+            myConfigFile.setGroupsToOptions(myConfigOptions);
+        }
     }
     
     /**
