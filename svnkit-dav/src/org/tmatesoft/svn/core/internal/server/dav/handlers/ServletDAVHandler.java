@@ -100,8 +100,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.XMLReader;
-
+import org.tmatesoft.svn.core.internal.io.dav.http.XMLReader;
 /**
  * @author TMate Software Ltd.
  * @version 1.2.0
@@ -1775,13 +1774,14 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
             try {
                 mySAXParser = getSAXParserFactory().newSAXParser();
                 if (myRequest.getContentLength() > 0) {
-                    XMLReader reader = mySAXParser.getXMLReader();
+                    org.xml.sax.XMLReader reader = mySAXParser.getXMLReader();
                     reader.setContentHandler(this);
                     reader.setDTDHandler(this);
                     reader.setErrorHandler(this);
                     reader.setEntityResolver(this);
                     stream = new CountingInputStream(getRequestInputStream());
-                    reader.parse(new InputSource(stream));
+                    XMLReader xmlReader = new XMLReader(stream);
+                    reader.parse(new InputSource(xmlReader));
                 }
             } catch (ParserConfigurationException e) {
                 if (stream == null || stream.getBytesRead() > 0) {
