@@ -37,7 +37,8 @@ public class SVNClassLoader {
                                                      "svnkit.adminareafactory.3=org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14Factory\n" +
                                                      "svnkit.adminareafactory.4=org.tmatesoft.svn.core.internal.wc.admin.SVNXMLAdminAreaFactory\n" +
                                                      "svnkit.repcachemanagerfactory.1=org.tmatesoft.svn.core.internal.io.fs.repcache.FSRepresentationCacheManagerFactory\n" +
-                                                     "svnkit.repcachemanagerfactory.2=org.tmatesoft.svn.core.internal.io.fs.repcache.FSEmptyRepresentationCacheManagerFactory\n"; 
+                                                     "svnkit.repcachemanagerfactory.2=org.tmatesoft.svn.core.internal.io.fs.repcache.FSEmptyRepresentationCacheManagerFactory\n" +
+                                                     "svnkit.saslauthenticator.1=org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator\n"; 
 
     
     public static Map loadProperties() throws SVNException {

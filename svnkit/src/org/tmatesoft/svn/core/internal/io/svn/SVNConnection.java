@@ -20,6 +20,7 @@ import java.io.SequenceInputStream;
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
+import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -176,12 +178,18 @@ public class SVNConnection {
     
     private SVNAuthenticator createSASLAuthenticator() throws SVNException {
         try {
-            Class saslClass = 
-                SVNConnection.class.getClassLoader().loadClass("org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator");
-            if (saslClass != null) {
-                Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
-                if (constructor != null) {
-                    return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
+            Map svnkitProps = SVNClassLoader.loadProperties();
+            for (Iterator svnkitPropsIter = svnkitProps.keySet().iterator(); svnkitPropsIter.hasNext();) {
+                String key = (String) svnkitPropsIter.next();
+                if (key.startsWith("svnkit.saslauthenticator.")) {
+                    String saslAuthenticatorClassName = (String) svnkitProps.get(key);
+                    Class saslClass = SVNConnection.class.getClassLoader().loadClass(saslAuthenticatorClassName);
+                    if (saslClass != null) {
+                        Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
+                        if (constructor != null) {
+                            return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
+                        }
+                    }
                 }
             }
         } catch (Throwable th) {
