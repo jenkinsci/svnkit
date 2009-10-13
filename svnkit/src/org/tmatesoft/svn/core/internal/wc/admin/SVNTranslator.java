@@ -198,6 +198,10 @@ public class SVNTranslator {
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             String linkPath = SVNFileUtil.getSymlinkName(src);
+            if (linkPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", src);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 os.write("link ".getBytes("UTF-8"));
