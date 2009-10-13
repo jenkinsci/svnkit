@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><project>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.sun.jna</groupId>
+  <groupId>net.java.dev.jna</groupId>
   <artifactId>jna</artifactId>
   <packaging>jar</packaging>
   <version>%jna.version%</version>
