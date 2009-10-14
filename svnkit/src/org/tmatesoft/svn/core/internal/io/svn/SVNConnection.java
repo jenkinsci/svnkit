@@ -17,10 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
-import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -31,7 +29,6 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -177,25 +174,7 @@ public class SVNConnection {
     }
     
     private SVNAuthenticator createSASLAuthenticator() throws SVNException {
-        try {
-            Map svnkitProps = SVNClassLoader.loadProperties();
-            for (Iterator svnkitPropsIter = svnkitProps.keySet().iterator(); svnkitPropsIter.hasNext();) {
-                String key = (String) svnkitPropsIter.next();
-                if (key.startsWith("svnkit.saslauthenticator.")) {
-                    String saslAuthenticatorClassName = (String) svnkitProps.get(key);
-                    Class saslClass = SVNConnection.class.getClassLoader().loadClass(saslAuthenticatorClassName);
-                    if (saslClass != null) {
-                        Constructor constructor = saslClass.getConstructor(new Class[] {SVNConnection.class});
-                        if (constructor != null) {
-                            return (SVNAuthenticator) constructor.newInstance(new Object[] {this});
-                        }
-                    }
-                }
-            }
-        } catch (Throwable th) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, th.getMessage());
-        }
-        return new SVNPlainAuthenticator(this);
+        return SVNClassLoader.getSASLAuthenticator(this);
     }
     
     private void addCapabilities(List capabilities) throws SVNException {

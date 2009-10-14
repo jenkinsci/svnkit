@@ -14,7 +14,6 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
 
@@ -32,7 +31,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -53,11 +51,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     private static ISVNAdminAreaFactorySelector ourDefaultSelector = new DefaultSelector();
 
     static {
-        try {
-            SVNAdminAreaFactory.registerFactories();
-        } catch (SVNException svne) {
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Failed to initialize admin area factories: " + svne.getMessage());
-        }
+        SVNAdminAreaFactory.registerFactories();
     }
     
     public static void setUpgradeEnabled(boolean enabled) {
@@ -320,30 +314,8 @@ public abstract class SVNAdminAreaFactory implements Comparable {
 
     }
     
-    private static void registerFactories() throws SVNException {
-        Map props = SVNClassLoader.loadProperties();
-        for (Iterator propKeysIter = props.keySet().iterator(); propKeysIter.hasNext();) {
-            String key = (String) propKeysIter.next();
-            if (key.startsWith("svnkit.adminareafactory.")) {
-                String className = (String) props.get(key);
-                try {
-                    Class clazz = SVNClassLoader.class.getClassLoader().loadClass(className);
-                    if (clazz == null) {
-                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Could not load class " + className);
-                        continue;
-                    }    
-
-                    Object factoryObject = clazz.newInstance();
-                    if (factoryObject instanceof SVNAdminAreaFactory) {
-                        SVNAdminAreaFactory adminAreaFactory = (SVNAdminAreaFactory) factoryObject;
-                        registerFactory(adminAreaFactory);
-                    }
-                } catch (Throwable th) {
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Exception caught while loading class " + className + ": " + th.getMessage());
-                    continue;
-                }
-            }
-        }
+    private static void registerFactories() {
+        ourFactories.addAll(SVNClassLoader.getAvailableAdminAreaFactories());
     }
     
 }

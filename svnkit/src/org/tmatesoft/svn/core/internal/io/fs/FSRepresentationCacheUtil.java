@@ -12,8 +12,6 @@
 package org.tmatesoft.svn.core.internal.io.fs;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.fs.repcache.IFSRepresentationCacheManagerFactory;
@@ -46,35 +44,11 @@ public class FSRepresentationCacheUtil {
                     Class clazz = FSRepresentationCacheUtil.class.getClassLoader().loadClass(SQLJET_DB_CLASS_NAME);
                     ourIsAvailable = clazz != null;
                     if (ourIsAvailable) {
-                        Map props = SVNClassLoader.loadProperties();
-                        for (Iterator propKeysIter = props.keySet().iterator(); propKeysIter.hasNext();) {
-                            String key = (String) propKeysIter.next();
-                            if (key.startsWith("svnkit.repcachemanagerfactory.")) {
-                                String className = (String) props.get(key);
-                                Class repcacheManagerFactoryClass = null;
-                                try {
-                                    repcacheManagerFactoryClass = loadRepCacheManagerFactoryClass(className);
-                                } catch (Throwable th) {
-                                }
-
-                                if (repcacheManagerFactoryClass != null) {
-                                    Object object = null;
-                                    try {
-                                        object = repcacheManagerFactoryClass.newInstance();
-                                    } catch (Throwable th) {
-                                    }
-
-                                    if (object != null && object instanceof IFSRepresentationCacheManagerFactory) {
-                                        ourRepCacheManagerFactory = (IFSRepresentationCacheManagerFactory) object;
-                                        ourIsAvailable = true;
-                                        break;
-                                    }
-                                } 
-                               
-                                ourIsAvailable = false;
-                                continue;
-                                
-                            }
+                        ourRepCacheManagerFactory = SVNClassLoader.getFSRepresentationCacheManagerFactory();
+                        if (ourRepCacheManagerFactory != null) {
+                            ourIsAvailable = true;
+                        } else {
+                            ourIsAvailable = false;
                         }
                     }
                 }
@@ -104,16 +78,6 @@ public class FSRepresentationCacheUtil {
         if (ourRepCacheManagerFactory != null) {
             ourRepCacheManagerFactory.createRepresentationCache(path);
         }
-    }
-    
-    private static Class loadRepCacheManagerFactoryClass(String className) {
-        if (className != null) {
-            try {
-                return FSRepresentationCacheUtil.class.getClassLoader().loadClass(className);
-            } catch (ClassNotFoundException cnfe) {
-            }
-        }
-        return null;
     }
     
     private static boolean isAvailable() {
