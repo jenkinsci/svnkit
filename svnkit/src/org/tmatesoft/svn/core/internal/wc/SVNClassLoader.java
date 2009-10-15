@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -122,7 +123,7 @@ public class SVNClassLoader {
     }
 
     private static Collection getAllClasses(String keyPrefix) {
-        Collection classes = new TreeSet();
+        Collection classes = new LinkedList();
         Map svnkitProps = SVNClassLoader.loadProperties();
         for (Iterator svnkitPropsIter = svnkitProps.keySet().iterator(); svnkitPropsIter.hasNext();) {
             String key = (String) svnkitPropsIter.next();
