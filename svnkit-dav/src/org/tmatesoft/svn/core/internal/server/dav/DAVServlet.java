@@ -133,32 +133,33 @@ public class DAVServlet extends HttpServlet {
         } catch (DAVException de) {
             response.setContentType(XML_CONTENT_TYPE);
             handleError(de, response);
+        } catch (SVNException svne) {
+            StringWriter sw = new StringWriter();
+            svne.printStackTrace(new PrintWriter(sw));
+            String msg = sw.getBuffer().toString();
+            SVNErrorCode errorCode = svne.getErrorMessage().getErrorCode();
+            if (errorCode == SVNErrorCode.FS_NOT_DIRECTORY ||
+                    errorCode == SVNErrorCode.FS_NOT_FOUND ||
+                    errorCode == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
+            } else if (errorCode == SVNErrorCode.NO_AUTH_FILE_PATH) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
+            } else if (errorCode == SVNErrorCode.RA_NOT_AUTHORIZED) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, msg);
+            } else {
+                String errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, svne.getMessage());
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType(XML_CONTENT_TYPE);
+                response.getWriter().print(errorBody);
+            } 
         } catch (Throwable th) {
             StringWriter sw = new StringWriter();
             th.printStackTrace(new PrintWriter(sw));
             String msg = sw.getBuffer().toString();
-            if (th instanceof SVNException) {
-                SVNException e = (SVNException) th;
-                SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
-                if (errorCode == SVNErrorCode.FS_NOT_DIRECTORY ||
-                        errorCode == SVNErrorCode.FS_NOT_FOUND ||
-                        errorCode == SVNErrorCode.RA_DAV_PATH_NOT_FOUND) {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
-                } else if (errorCode == SVNErrorCode.NO_AUTH_FILE_PATH) {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
-                } else if (errorCode == SVNErrorCode.RA_NOT_AUTHORIZED) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, msg);
-                } else {
-                    String errorBody = generateStandardizedErrorBody(errorCode.getCode(), null, null, e.getMessage());
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    response.setContentType(XML_CONTENT_TYPE);
-                    response.getWriter().print(errorBody);
-                } 
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-            }
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
+        } finally {
+            response.flushBuffer();
         }
-        response.flushBuffer();
     }
 
     private void logRequest(HttpServletRequest request) {
@@ -200,7 +201,7 @@ public class DAVServlet extends HttpServlet {
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, logBuffer.toString());
     }
     
-    private void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {
+    public static void handleError(DAVException error, HttpServletResponse servletResponse) throws IOException {
         SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, error);
         DAVResponse response = error.getResponse();
         if (response == null) {
@@ -273,6 +274,7 @@ public class DAVServlet extends HttpServlet {
         if (tagName != null && tagName.length() > 0) {
             SVNXMLUtil.openXMLTag(prefix, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);
         }
+
         SVNXMLUtil.openXMLTag(SVNXMLUtil.SVN_APACHE_PROPERTY_PREFIX, "human-readable", SVNXMLUtil.XML_STYLE_NORMAL, "errcode", 
                 String.valueOf(errorID), xmlBuffer);
         xmlBuffer.append(SVNEncodingUtil.xmlEncodeCDATA(description));

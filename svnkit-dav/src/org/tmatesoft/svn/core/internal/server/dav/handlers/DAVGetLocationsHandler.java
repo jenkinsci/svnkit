@@ -19,11 +19,18 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
+import org.tmatesoft.svn.core.internal.server.dav.DAVResource;
+import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -34,9 +41,12 @@ public class DAVGetLocationsHandler extends DAVReportHandler {
     private static final String GET_LOCATIONS_REPORT = "get-locations-report";
     
     private DAVGetLocationsRequest myDAVRequest;
+    private DAVReportHandler myCommonReportHandler;
 
-    public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    public DAVGetLocationsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
+        myCommonReportHandler = commonReportHandler;
     }
 
     protected DAVRequest getDAVRequest() {
@@ -51,11 +61,26 @@ public class DAVGetLocationsHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
-        setDAVResource(getRequestedDAVResource(false, false));
+        myCommonReportHandler.checkSVNNamespace(null);
 
-        String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getGetLocationsRequest().getPath());
-        Collection locations = getDAVResource().getRepository().getLocations(path, (Collection)null, getGetLocationsRequest().getPegRevision(), 
-                getGetLocationsRequest().getRevisions());
+        setDAVResource(getRequestedDAVResource(false, false));
+        
+        DAVResource resource = getDAVResource();
+        DAVGetLocationsRequest request = getGetLocationsRequest();
+        String path = request.getPath();
+        long pegRevision = request.getPegRevision();
+        
+        if (path == null || !SVNRevision.isValidRevisionNumber(pegRevision)) {
+            throw new DAVException("Not all parameters passed.", HttpServletResponse.SC_BAD_REQUEST, SVNLogType.NETWORK, 
+                    DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE);
+        }
+        
+        if (!path.startsWith("/")) {
+            path = SVNPathUtil.append(resource.getResourceURI().getPath(), path);    
+        }
+        
+        SVNRepository repository = resource.getRepository(); 
+        Collection locations = repository.getLocations(path, (Collection)null, pegRevision, request.getRevisions());
 
         Map attrs = new SVNHashMap();
         writeXMLHeader(GET_LOCATIONS_REPORT);

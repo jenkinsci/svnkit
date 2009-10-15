@@ -90,6 +90,7 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     private String myFileBaseChecksum = null;
     private boolean myFileTextChanged = false;
     private EditorEntry myFileEditorEntry;
+    private DAVReportHandler myCommonReportHandler;
 
     Stack myEditorEntries;
 
@@ -98,9 +99,11 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
         UPDATE_REPORT_NAMESPACES.add(DAVElement.SVN_DAV_PROPERTY_NAMESPACE);
     }
 
-    public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    public DAVUpdateHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
         setSVNDiffVersion(getSVNDiffVersion());
+        myCommonReportHandler = commonReportHandler;
     }
 
     public DAVRequest getDAVRequest() {
@@ -412,6 +415,8 @@ public class DAVUpdateHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void execute() throws SVNException {
+        myCommonReportHandler.checkSVNNamespace("The request does not contain the 'svn:' namespace, so it is not going to have" + 
+                " an svn:target-revision element. That element is required.");
         writeXMLHeader(null);
 
         try {

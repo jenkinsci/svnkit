@@ -34,9 +34,12 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
     
     private static final String MERGEINFO_REPORT = "mergeinfo-report";
     private DAVMergeInfoRequest myDAVRequest;
+    private DAVReportHandler myCommonReportHandler;
 
-    public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    public DAVMergeInfoHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
+        myCommonReportHandler = commonReportHandler;
     }
 
     protected DAVRequest getDAVRequest() {
@@ -51,10 +54,11 @@ public class DAVMergeInfoHandler extends DAVReportHandler {
     }
 
     public void execute() throws SVNException {
+        myCommonReportHandler.checkSVNNamespace(null);
+
         setDAVResource(getRequestedDAVResource(false, false));
 
         String responseBody = generateResponseBody();
-
         try {
             setResponseContentLength(responseBody.getBytes(UTF8_ENCODING).length);
         } catch (UnsupportedEncodingException e) {

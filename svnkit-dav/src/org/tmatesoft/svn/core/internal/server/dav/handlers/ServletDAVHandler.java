@@ -193,6 +193,7 @@ public abstract class ServletDAVHandler extends BasicDAVHandler {
     protected static final DAVElement GET_LOCKS_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-locks-report");
     protected static final DAVElement REPLAY_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "replay-report");
     protected static final DAVElement MERGEINFO_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "mergeinfo-report");
+    protected static final DAVElement GET_DELETED_REVISION_REPORT = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "get-deleted-rev-report");
     protected static final DAVElement LOCK_PATH_ELEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "lock-path");
     protected static final DAVElement LOCK_TOKEN_ELEM = DAVElement.getElement(DAVElement.SVN_NAMESPACE, "lock-token");
     

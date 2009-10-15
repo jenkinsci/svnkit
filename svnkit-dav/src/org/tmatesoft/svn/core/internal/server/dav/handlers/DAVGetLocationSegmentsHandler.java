@@ -53,14 +53,20 @@ public class DAVGetLocationSegmentsHandler extends DAVReportHandler implements I
     
     private DAVGetLocationSegmentsRequest myDAVRequest;
     private boolean myIsOpenerSent;
+    private DAVReportHandler myCommonReportHandler;
     
-    protected DAVGetLocationSegmentsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    protected DAVGetLocationSegmentsHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
+        myCommonReportHandler = commonReportHandler;
     }
 
     public void execute() throws SVNException {
+        myCommonReportHandler.checkSVNNamespace(null);
+
         DAVResource resource = getRequestedDAVResource(false, false); 
         setDAVResource(resource);
+        
         DAVGetLocationSegmentsRequest request = getLocationSegmentsRequest();
         
         String path = null; 

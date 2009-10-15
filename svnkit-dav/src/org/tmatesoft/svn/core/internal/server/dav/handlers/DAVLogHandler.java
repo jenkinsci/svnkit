@@ -41,9 +41,12 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
 
     private DAVLogRequest myDAVRequest;
     private int myDepth = 0;
+    private DAVReportHandler myCommonReportHandler;
 
-    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    public DAVLogHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
+        myCommonReportHandler = commonReportHandler;
     }
 
     protected DAVRequest getDAVRequest() {
@@ -70,6 +73,7 @@ public class DAVLogHandler extends DAVReportHandler implements ISVNLogEntryHandl
     }
 
     public void execute() throws SVNException {
+        myCommonReportHandler.checkSVNNamespace(null);
         setDAVResource(getRequestedDAVResource(false, false));
 
         writeXMLHeader(null);

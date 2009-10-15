@@ -37,11 +37,13 @@ import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
 
     private DAVReplayRequest myDAVRequest;
+    private DAVReportHandler myCommonReportHandler;
 
-    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response) {
+    public DAVReplayHandler(DAVRepositoryManager repositoryManager, HttpServletRequest request, HttpServletResponse response, 
+            DAVReportHandler commonReportHandler) {
         super(repositoryManager, request, response);
+        myCommonReportHandler = commonReportHandler;
     }
-
 
     protected DAVRequest getDAVRequest() {
         return getReplayRequest();
@@ -55,8 +57,10 @@ public class DAVReplayHandler extends DAVReportHandler implements ISVNEditor {
     }
 
     public void execute() throws SVNException {
+        myCommonReportHandler.checkSVNNamespace("The request does not contain the 'svn:' namespace, so it is not going" + 
+                " to have an svn:revision element. That element is required.");
+        
         setDAVResource(getRequestedDAVResource(false, false));
-
         writeXMLHeader(null);
 
         getRequestedRepository().replay(getReplayRequest().getLowRevision(),

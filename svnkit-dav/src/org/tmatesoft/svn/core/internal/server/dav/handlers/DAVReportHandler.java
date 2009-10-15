@@ -22,6 +22,7 @@ import java.nio.charset.CodingErrorAction;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -78,6 +79,7 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     private boolean myWriteTextDeltaHeader = true;
     private boolean mySVNDiffVersion = false;
+    private boolean myIsUnknownReport;
 
     static {
         REPORT_NAMESPACES.add(DAVElement.SVN_NAMESPACE);
@@ -112,6 +114,14 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     protected void setDAVResource(DAVResource DAVResource) {
         myDAVResource = DAVResource;
+    }
+
+    protected void checkSVNNamespace(String errorMessage) throws DAVException {
+        errorMessage = errorMessage == null ? "The request does not contain the 'svn:' namespace, so it is not going to have certain required elements." : errorMessage; 
+        List namespaces = getNamespaces();
+        if (!namespaces.contains(DAVElement.SVN_NAMESPACE)) {
+            throw new DAVException(errorMessage, HttpServletResponse.SC_BAD_REQUEST, SVNLogType.NETWORK, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE);
+        }
     }
 
     public boolean doCompress() {
@@ -151,6 +161,11 @@ public class DAVReportHandler extends ServletDAVHandler {
 
     public void execute() throws SVNException {
         long read = readInput(false);
+        if (myIsUnknownReport) {
+            throw new DAVException("The requested report is unknown.", null, HttpServletResponse.SC_NOT_IMPLEMENTED, null, SVNLogType.DEFAULT, Level.FINE, 
+                    null, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE, SVNErrorCode.UNSUPPORTED_FEATURE.getCode(), null);
+        }
+        
         if (read == 0) {
             throw new DAVException("The request body must specify a report.", HttpServletResponse.SC_BAD_REQUEST, SVNLogType.NETWORK);
         }
@@ -163,25 +178,30 @@ public class DAVReportHandler extends ServletDAVHandler {
     }
 
     private void initReportHandler(DAVElement rootElement) {
+        myIsUnknownReport = false;
         if (rootElement == DATED_REVISIONS_REPORT) {
             setReportHandler(new DAVDatedRevisionHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == FILE_REVISIONS_REPORT) {
             setReportHandler(new DAVFileRevisionsHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == GET_LOCATIONS) {
-            setReportHandler(new DAVGetLocationsHandler(myRepositoryManager, myRequest, myResponse));
+            setReportHandler(new DAVGetLocationsHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == LOG_REPORT) {
-            setReportHandler(new DAVLogHandler(myRepositoryManager, myRequest, myResponse));
+            setReportHandler(new DAVLogHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == MERGEINFO_REPORT) {
-            setReportHandler(new DAVMergeInfoHandler(myRepositoryManager, myRequest, myResponse));
+            setReportHandler(new DAVMergeInfoHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == GET_LOCKS_REPORT) {
             setReportHandler(new DAVGetLocksHandler(myRepositoryManager, myRequest, myResponse));
         } else if (rootElement == REPLAY_REPORT) {
-            setReportHandler(new DAVReplayHandler(myRepositoryManager, myRequest, myResponse));
+            setReportHandler(new DAVReplayHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == UPDATE_REPORT) {
-            setReportHandler(new DAVUpdateHandler(myRepositoryManager, myRequest, myResponse));
+            setReportHandler(new DAVUpdateHandler(myRepositoryManager, myRequest, myResponse, this));
         } else if (rootElement == GET_LOCATION_SEGMENTS) {
-            DAVGetLocationSegmentsHandler handler = new DAVGetLocationSegmentsHandler(myRepositoryManager, myRequest, myResponse);
-            setReportHandler(handler);
+            setReportHandler(new DAVGetLocationSegmentsHandler(myRepositoryManager, myRequest, myResponse, this));
+        } else if (rootElement == GET_DELETED_REVISION_REPORT) {
+            setReportHandler(new DAVGetDeletedRevisionHandler(myRepositoryManager, myRequest, myResponse, this));
+        } else {
+            myIsUnknownReport = true;
+            setReportHandler(new DumpReportHandler(myRepositoryManager, myRequest, myResponse));
         }
     }
 
@@ -294,6 +314,24 @@ public class DAVReportHandler extends ServletDAVHandler {
         } else {
             xmlBuffer = SVNXMLUtil.openCDataTag(SVNXMLUtil.SVN_NAMESPACE_PREFIX, tagName, propertyValue.getString(), NAME_ATTR, propertyName, null);
             write(xmlBuffer);            
+        }
+    }
+
+    private static class DumpReportHandler extends DAVReportHandler {
+        private DAVRequest myDAVRequest;
+        
+        protected DumpReportHandler(DAVRepositoryManager connector, HttpServletRequest request, HttpServletResponse response) {
+            super(connector, request, response);
+        }
+        
+        protected DAVRequest getDAVRequest() {
+            if (myDAVRequest == null) {
+                myDAVRequest = new DAVRequest() {
+                    protected void init() throws SVNException {
+                    }
+                };
+            }
+            return myDAVRequest;
         }
     }
 }

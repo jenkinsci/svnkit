@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.server.dav.handlers;
 
 import java.io.OutputStream;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,17 +20,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.server.dav.DAVException;
 import org.tmatesoft.svn.core.internal.server.dav.DAVRepositoryManager;
-import org.tmatesoft.svn.core.internal.server.dav.DAVXMLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -67,13 +63,9 @@ public class DAVFileRevisionsHandler extends DAVReportHandler implements ISVNFil
     }
 
     public void execute() throws SVNException {
+        myCommonReportHandler.checkSVNNamespace(null);
+
         setDAVResource(getRequestedDAVResource(false, false));
-        List namespaces = myCommonReportHandler.getNamespaces();
-        if (!namespaces.contains(DAVElement.SVN_NAMESPACE)) {
-            throw new DAVException("The request does not contain the 'svn:' namespace, so it is not going to have certain required elements.", 
-                    HttpServletResponse.SC_BAD_REQUEST, SVNLogType.NETWORK, DAVXMLUtil.SVN_DAV_ERROR_TAG, DAVElement.SVN_DAV_ERROR_NAMESPACE);
-        }
-        
         myWriteHeader = true;
         String path = SVNPathUtil.append(getDAVResource().getResourceURI().getPath(), getFileRevsionsRequest().getPath());
         try {
