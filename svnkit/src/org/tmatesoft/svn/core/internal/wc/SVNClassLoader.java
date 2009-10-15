@@ -53,26 +53,48 @@ public class SVNClassLoader {
     public static Collection getAvailableAdminAreaFactories() {
         Collection instances = getAllClasses("svnkit.adminareafactory.");
         Collection factories = new TreeSet();
-        for (Iterator instanceIter = instances.iterator(); instanceIter.hasNext();) {
-            Object object = instanceIter.next();
-            if (object instanceof SVNAdminAreaFactory) {
+        for (Iterator classesIter = instances.iterator(); classesIter.hasNext();) {
+            Class adminAreaFactoryClass = (Class) classesIter.next();
+            Object object = null;
+            try {
+                object = adminAreaFactoryClass.newInstance();
+            } catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Failed to instantiate an admin area factory class " + 
+                        adminAreaFactoryClass.getName() + ": " + th.getMessage());
+                continue;
+            }
+        
+            if (object != null && object instanceof SVNAdminAreaFactory) {
                 factories.add(object);
             }
         }
         return factories;
+
     }
     
     public static SVNAuthenticator getSASLAuthenticator(SVNConnection connection) throws SVNException {
-        Class saslAuthenticatorClass = getFirstAvailableClass("svnkit.saslauthenticator.");
-        if (saslAuthenticatorClass != null) {
+        Collection saslAuthenticatorClasses = getAllClasses("svnkit.saslauthenticator.");
+        for (Iterator classesItera = saslAuthenticatorClasses.iterator(); classesItera.hasNext();) {
+            Class saslAuthenticatorClass = (Class) classesItera.next();
+            Constructor constructor = null;
             try {
-                Constructor constructor = saslAuthenticatorClass.getConstructor(new Class[] { SVNConnection.class });
-                if (constructor != null) {
-                    return (SVNAuthenticator) constructor.newInstance(new Object[] { connection });
-                }
+                constructor = saslAuthenticatorClass.getConstructor(new Class[] { SVNConnection.class });
             } catch (Throwable th) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Could not instantiate a SASL authenticator: {0}", th.getMessage());
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Failed to get constructor of a SASL authenticator (" + 
+                        saslAuthenticatorClass.getName() + "): " + th.getMessage());
+            }
+
+            if (constructor != null) {
+                Object object = null;
+                try {
+                    object = constructor.newInstance(new Object[] { connection });
+                } catch (Throwable th) {
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Failed to instantiate a SASL authenticator ( " + saslAuthenticatorClass.getName() + 
+                            "): " + th.getMessage());
+                } 
+                if (object != null && object instanceof SVNAuthenticator) {
+                    return (SVNAuthenticator) object;
+                }
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "No SASL authenticator class found!");
@@ -81,22 +103,24 @@ public class SVNClassLoader {
     }
     
     public static IFSRepresentationCacheManagerFactory getFSRepresentationCacheManagerFactory() {
-        Class repCacheManagerFactoryClass = getFirstAvailableClass("svnkit.repcachemanagerfactory.");
-        if (repCacheManagerFactoryClass != null) {
+        Collection repCacheManagerFactoryClasses = getAllClasses("svnkit.repcachemanagerfactory.");
+        for (Iterator classesIter = repCacheManagerFactoryClasses.iterator(); classesIter.hasNext();) {
+            Class repCacheManagerFactoryClass = (Class) classesIter.next();
             Object object = null;
             try {
                 object = repCacheManagerFactoryClass.newInstance();
             } catch (Throwable th) {
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Could not instantiate " + repCacheManagerFactoryClass.getName() + ": " + th.getMessage());
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Could not instantiate a rep-cache manager class " + 
+                        repCacheManagerFactoryClass.getName() + ": " + th.getMessage());
             }
 
             if (object != null && object instanceof IFSRepresentationCacheManagerFactory) {
                 return (IFSRepresentationCacheManagerFactory) object;
             }
-        } 
+        }
         return null;
     }
-    
+
     private static Collection getAllClasses(String keyPrefix) {
         Collection classes = new TreeSet();
         Map svnkitProps = SVNClassLoader.loadProperties();
@@ -112,54 +136,19 @@ public class SVNClassLoader {
                 try {
                     clazz = SVNClassLoader.class.getClassLoader().loadClass(className);
                 } catch (Throwable th) {
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Could not load class " + className + ": " + th.getMessage());
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Failed to load class " + className + ": " + th.getMessage());
                     continue;
                 }
 
                 if (clazz == null) {
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Could not load class " + className);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Failed to load class " + className);
                     continue;
                 }    
 
-                Object object = null;
-                try {
-                    object = clazz.newInstance();
-                } catch (Throwable th) {
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.WC, "Could not instantiate class " + className + ": " + th.getMessage());
-                    continue;
-                }
-
-                if (object != null) {
-                    classes.add(object);
-                }
+                classes.add(clazz);
             }
         }
         return classes;
-    }
-    
-    private static Class getFirstAvailableClass(String keyPrefix) {
-        Map svnkitProps = SVNClassLoader.loadProperties();
-        for (Iterator svnkitPropsIter = svnkitProps.keySet().iterator(); svnkitPropsIter.hasNext();) {
-            String key = (String) svnkitPropsIter.next();
-            if (key.startsWith(keyPrefix)) {
-                String className = (String) svnkitProps.get(key);
-                if (className == null) {
-                    continue;
-                }
-                
-                Class clazz = null;
-                try {
-                    clazz = SVNClassLoader.class.getClassLoader().loadClass(className);
-                } catch (ClassNotFoundException e) {
-                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Failed to load class '" + className + "': " + e.getMessage());
-                }
-                
-                if (clazz != null) {
-                    return clazz;
-                }
-            }
-        }
-        return null;
     }
     
     private static Map loadProperties() {
