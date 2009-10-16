@@ -138,7 +138,7 @@ public class DAVElementProperty {
         if (attrs.getLength() != 0) {
             attributes = new SVNHashMap();
             for (int i = 0; i < attrs.getLength(); i++) {
-                attributes.put(attrs.getQName(i), attrs.getValue(i));
+                attributes.put(attrs.getLocalName(i), attrs.getValue(i));
             }
         }
         return attributes;

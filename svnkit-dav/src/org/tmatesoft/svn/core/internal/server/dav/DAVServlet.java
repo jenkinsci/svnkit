@@ -244,12 +244,11 @@ public class DAVServlet extends HttpServlet {
                     errorMessageBuffer.append("</m:human-readable>\n");
                 }
                 errorMessageBuffer.append("</D:error>\n");
-                
                 servletResponse.getWriter().print(errorMessageBuffer.toString());
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, errorMessageBuffer.toString());
                 return;
             }
-            servletResponse.sendError(error.getResponseCode(), "");//TODO: FIXME
+            servletResponse.setStatus(error.getResponseCode());
             return;
         }
         

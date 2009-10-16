@@ -43,6 +43,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -98,8 +99,9 @@ public class DAVResource {
         try {
             myRepository.testConnection();//this should create an FSFS object
         } catch (SVNException svne) {
-            throw DAVException.convertError(svne.getErrorMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                    "Error occurred while accessing a repository at {0}", new Object[] { myRepository.getLocation() });
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, svne.getMessage());
+            SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "Could not open the requested SVN filesystem");
+            throw DAVException.convertError(err, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Could not fetch resource information.", null);
         }
         myLockTokens = lockTokens;
         myClientCapabilities = clientCapabilities;
