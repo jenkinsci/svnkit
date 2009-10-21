@@ -3124,7 +3124,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
                 continue;
             }
-            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i].getName())) {
+            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i])) {
                 continue;
             }
             SVNFileType childType = SVNFileType.getType(children[i]);

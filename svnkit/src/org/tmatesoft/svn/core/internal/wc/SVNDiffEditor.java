@@ -546,7 +546,7 @@ public class SVNDiffEditor implements ISVNEditor {
             } else if (dir != null) {// && SVNStatusEditor.isIgnored(, name)dir.isIgnored(file.getName())) {
                 Collection globalIgnores = SVNStatusEditor.getGlobalIgnores(myWCAccess.getOptions());
                 Collection ignores = SVNStatusEditor.getIgnorePatterns(dir, globalIgnores);
-                if (SVNStatusEditor.isIgnored(ignores, file.getName())) {
+                if (SVNStatusEditor.isIgnored(ignores, file)) {
                     continue;
                 }
             }
