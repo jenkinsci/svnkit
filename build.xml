@@ -52,8 +52,8 @@
         <javac debug="true" destdir="svnkit/bin" srcdir="svnkit/src" classpathref="library.classpath">
             <exclude name="org/tmatesoft/svn/util/SVNTest.java"/>
             <exclude name="org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceTest.java"/>
-            <exclude name="org/tmatesoft/svn/core/internal/io/svn/sasl/**" unless="compile.all" />
-            <exclude name="org/tmatesoft/svn/core/internal/io/fs/repcache/**" unless="compile.all" />
+            <exclude name="org/tmatesoft/svn/core/internal/io/svn/sasl/**" if="compatibility.mode" />
+            <exclude name="org/tmatesoft/svn/core/internal/io/fs/repcache/**" if="compatibility.mode" />
         </javac>
         <javac debug="true"
                destdir="svnkit-cli/bin"
@@ -185,10 +185,6 @@
                 <exclude name="org/tigris/subversion/javahl/SVNAdmin**" />
                 <exclude name="org/tigris/subversion/javahl/Path**" />
             </fileset>        	
-            <fileset dir="svnkit/src">
-                <include name="org/tmatesoft/svn/core/internal/io/svn/sasl/*.class" unless="compile.all" />
-                <include name="org/tmatesoft/svn/core/internal/io/fs/repcache/*.class" unless="compile.all" />
-            </fileset>
             <fileset dir="${basedir}" >
                 <include name="COPYING" />
             </fileset>
