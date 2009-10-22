@@ -22,7 +22,7 @@
       <version>%jna.version%</version>
     </dependency>
     <dependency>
-      <groupId>com.trilead</groupId>
+      <groupId>org.tmatesoft.svnkit</groupId>
       <artifactId>trilead-ssh2</artifactId>
       <version>%trilead.ssh2.version%</version>
     </dependency>
