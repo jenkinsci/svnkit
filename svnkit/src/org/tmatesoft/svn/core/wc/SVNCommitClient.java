@@ -39,7 +39,6 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNCommitPathHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
@@ -51,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNImportMediator;
 import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
@@ -681,6 +681,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 filePath = newDir + "/" + filePath;
             }
         }
+        Collection ignores = useGlobalIgnores ? SVNStatusEditor.getGlobalIgnores(getOptions()) : null;
         checkCancelled();
         boolean changed = false;
         SVNCommitInfo info = null;
@@ -697,7 +698,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, 
                         ignoreUnknownNodeTypes, depth, commitEditor);
             } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
-                if (!useGlobalIgnores || !DefaultSVNOptions.isIgnored(getOptions(), path.getName())) {
+                if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path)) {
                     changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
                 }
             } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
@@ -1474,6 +1475,7 @@ public class SVNCommitClient extends SVNBasicClient {
         File[] children = SVNFileListUtil.listFiles(dir);
         boolean changed = false;
         ISVNFileFilter filter = getCommitHandler() instanceof ISVNFileFilter ? (ISVNFileFilter) getCommitHandler() : null;
+        Collection ignores = useGlobalIgnores ? SVNStatusEditor.getGlobalIgnores(getOptions()) : null;
         for (int i = 0; children != null && i < children.length; i++) {
             File file = children[i];
             if (SVNFileUtil.getAdminDirectoryName().equals(file.getName())) {
@@ -1481,7 +1483,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            if (useGlobalIgnores && DefaultSVNOptions.isIgnored(getOptions(), file.getName())) {
+            if (useGlobalIgnores && SVNStatusEditor.isIgnored(ignores, file)) {
                 continue;
             }
             if (filter != null && !filter.accept(file)) {

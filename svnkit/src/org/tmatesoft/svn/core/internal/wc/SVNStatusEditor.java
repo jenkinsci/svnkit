@@ -312,7 +312,7 @@ public class SVNStatusEditor {
     
     private void sendUnversionedStatus(File file, String name, SVNNodeKind fileType, boolean special, 
             SVNAdminArea dir, Collection ignorePatterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
-        boolean isIgnored = isIgnored(ignorePatterns, name);
+        boolean isIgnored = isIgnored(ignorePatterns, file);
         String path = dir.getRelativePath(myAdminInfo.getAnchor());
         path = SVNPathUtil.append(path, name);  
         boolean isExternal = isExternal(path);
@@ -380,10 +380,18 @@ public class SVNStatusEditor {
         return Collections.EMPTY_SET;
     }
     
-    public static boolean isIgnored(Collection patterns, String name) {
+    public static boolean isIgnored(Collection patterns, File file) {
+        String name = file.getName();
+        String dirName = null;
+        boolean isDirectory = SVNFileType.getType(file) == SVNFileType.DIRECTORY;
+        if (isDirectory) {
+            dirName = name + "/";
+        }
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
             if (DefaultSVNOptions.matches(pattern, name)) {
+                return true;
+            } else if (isDirectory && DefaultSVNOptions.matches(pattern, dirName)) {
                 return true;
             }
         }
