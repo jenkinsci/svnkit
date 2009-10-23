@@ -9,15 +9,18 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.test.wc;
+package org.tmatesoft.svn.core.internal.wc;
 
+import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
  * @author TMate Software Ltd.
  * @version 1.3
  */
-public interface ISVNWorkingCopyWalker {
-    
-    public void handleEntry(AbstractSVNTestFile file) throws SVNException;
+public interface ISVNReusableEditor extends ISVNEditor {
+
+    void reset(long revision1, long revision2);
+
+    void cleanup() throws SVNException;
 }
