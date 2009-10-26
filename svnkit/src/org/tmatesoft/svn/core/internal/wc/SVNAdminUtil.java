@@ -42,7 +42,8 @@ public class SVNAdminUtil {
     private static final String PROP_WORK_DIR_NAME = "props";
     private static final String PROP_WC_DIR_NAME = "wcprops";
     private static final String TMP_DIR_NAME = "tmp";
-
+    private static final String SDB_FILE_NAME = "wc.db";
+    
     private static final String DIR_PROPS_FILE = "dir-props";
     private static final String DIR_BASE_PROPS_FILE = "dir-prop-base";
     private static final String DIR_REVERT_PROPS_FILE = "dir-prop-revert";
@@ -190,6 +191,11 @@ public class SVNAdminUtil {
             buffer.append(WORK_EXT);
         }
         return buffer.toString();
+    }
+
+    public static File getSDBFile(File dir) {
+        File sdbFile = new File(dir, SVNFileUtil.getAdminDirectoryName());
+        return new File(sdbFile, SDB_FILE_NAME);
     }
     
     /**
