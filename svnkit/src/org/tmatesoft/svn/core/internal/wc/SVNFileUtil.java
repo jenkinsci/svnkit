@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.internal.util.SVNFormatUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
+import org.tmatesoft.svn.core.internal.util.jna.SVNOS2Util;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
@@ -459,7 +460,13 @@ public class SVNFileUtil {
         if (!isWindows) {
             renamed = src.renameTo(dst);
         } else {
-            if (SVNJNAUtil.moveFile(src, dst)) {
+	        // check for os/2 first because on os/2
+    	    // isWindows is also true
+            if (isOS2) {
+                if (SVNOS2Util.moveFile(src, dst)) {
+                    renamed = true;
+                }
+            } else if (SVNJNAUtil.moveFile(src, dst)) {
                 renamed = true;
             } else {
                 boolean wasRO = dst.exists() && !dst.canWrite();
@@ -509,7 +516,13 @@ public class SVNFileUtil {
             } catch (InvocationTargetException e) {
             }
         }
-        if (isWindows) {
+        // check for os/2 first because on os/2
+        // isWindows is also true
+        if (isOS2) {
+            if (SVNOS2Util.setWritable(file)) {
+                return true;
+            }
+        } else if (isWindows) {
             if (SVNJNAUtil.setWritable(file)) {
                 return true;
             }
@@ -936,6 +949,12 @@ public class SVNFileUtil {
     }
 
     public static void setHidden(File file, boolean hidden) {
+        // check for os/2 first because on os/2
+        // isWindows is also true
+        if (isOS2 && SVNOS2Util.setHidden(file, hidden)) {
+            return;
+        }
+
         if (isWindows && SVNJNAUtil.setHidden(file)) {
             return;
         }
