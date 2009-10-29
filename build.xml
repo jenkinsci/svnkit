@@ -54,6 +54,7 @@
             <exclude name="org/tmatesoft/svn/core/internal/wc/FSMergerBySequenceTest.java"/>
             <exclude name="org/tmatesoft/svn/core/internal/io/svn/sasl/**" if="compatibility.mode" />
             <exclude name="org/tmatesoft/svn/core/internal/io/fs/repcache/**" if="compatibility.mode" />
+            <exclude name="org/tmatesoft/svn/core/internal/wc/db/**" if="compatibility.mode" />
         </javac>
         <javac debug="true"
                destdir="svnkit-cli/bin"
