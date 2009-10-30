@@ -301,6 +301,36 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode WC_CANNOT_MOVE_FILE_EXTERNAL =  new SVNErrorCode(WC_CATEGORY, 31, "Cannot move a file external");
 
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_DB_ERROR = new SVNErrorCode(WC_CATEGORY, 32, "Something's amiss with the wc sqlite database");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_MISSING = new SVNErrorCode(WC_CATEGORY, 33, "The working copy is missing");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_NOT_SYMLINK = new SVNErrorCode(WC_CATEGORY, 34, "The specified node is not a symlink");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_PATH_UNEXPECTED_STATUS = new SVNErrorCode(WC_CATEGORY, 35, "The specified path has an unexpected status");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_UPGRADE_REQUIRED = new SVNErrorCode(WC_CATEGORY, 36, "The working copy needs to be upgraded");
+    
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_CLEANUP_REQUIRED = new SVNErrorCode(WC_CATEGORY, 37, "Previous operation was interrupted; run 'svn cleanup'");
+    
     public static final SVNErrorCode FS_GENERAL = new SVNErrorCode(FS_CATEGORY, 0, "General filesystem error");
     public static final SVNErrorCode FS_CLEANUP = new SVNErrorCode(FS_CATEGORY, 1, "Error closing filesystem");
     public static final SVNErrorCode FS_ALREADY_OPEN = new SVNErrorCode(FS_CATEGORY, 2, "Filesystem is already open");

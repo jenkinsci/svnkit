@@ -44,7 +44,10 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static final int WC_FORMAT_14 = 8;
     public static final int WC_FORMAT_15 = 9;
     public static final int WC_FORMAT_16 = 10;
-
+    
+    public static final int SVN_WC_VERSION = 15;
+    public static final int SVN_WC__HAS_WORK_QUEUE = 13;
+    
     private static final Collection ourFactories = new TreeSet();
     private static boolean ourIsUpgradeEnabled = Boolean.valueOf(System.getProperty("svnkit.upgradeWC", System.getProperty("javasvn.upgradeWC", "true"))).booleanValue();
     private static ISVNAdminAreaFactorySelector ourSelector;

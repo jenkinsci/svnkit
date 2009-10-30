@@ -25,18 +25,23 @@ import java.util.TreeMap;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.internal.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.repcache.FSRepresentationCacheManager;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -46,7 +51,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
-    private static final int SVN_WC_VERSION = 15;
     
     private static final String[] WC_METADATA_SQL_12 = { 
         "CREATE TABLE REPOSITORY ( id INTEGER PRIMARY KEY AUTOINCREMENT, " + 
@@ -191,37 +195,163 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                                 "keep_local = NULL WHERE depth = 'exclude';"
     };
     
+    private static final String I_ROOT_INDEX = "I_ROOT";
+    private static final String REPOSITORY_TABLE = "REPOSITORY";
     
-    public void createDB(File dirPath, SVNURL reposRootURL, String reposUUID) throws SVNException {
-        SqlJetDb db = openDB(dirPath, SqlJetTransactionMode.WRITE);
+    private long myCurrentReposId;
+    private long myCurrentWCId;
+    private SqlJetDb myDB;
+    
+    private SVNWorkingCopyDB17() {
         
     }
     
-    public void createReposId(SqlJetDb db) throws SVNException {
+    public static SVNWorkingCopyDB17 newInstance(File path, String reposRoot, String reposUUID, long initialRevision, SVNDepth depth) throws SVNException {
+        if (depth == null || depth == SVNDepth.UNKNOWN) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "depth must be a valid value");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        SVNWorkingCopyDB17 wcDB = new SVNWorkingCopyDB17();
+        wcDB.createDB(path, reposRoot, reposUUID);
+        return wcDB;
+    }
+    
+    private void createWCRoot(File wcRoot, int format, boolean autoUpgrade, boolean enforceEmptyWorkQueue) throws SVNException {
         try {
-            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            if (myDB != null) {
+                format = myDB.getOptions().getUserVersion();
+            }
+            if (format < 1) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure: wc format could not be less than 1");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (format < 4) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                        "Working copy format of ''{0}'' is too old ({1}); please check out your working copy again", new Object[] { wcRoot, String.valueOf(format) });
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (format > SVNAdminAreaFactory.SVN_WC_VERSION) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                        "This client is too old to work with the working copy at\n''{0}'' (format {1}).\nYou need to get a newer Subversion client.", 
+                        new Object[] { wcRoot, String.valueOf(format) });
+            }
+            if (format < SVNAdminAreaFactory.SVN_WC_VERSION && autoUpgrade) {
+                //TODO: this feature will come here later..
+            }
+            if (format >= SVNAdminAreaFactory.SVN_WC__HAS_WORK_QUEUE && enforceEmptyWorkQueue) {
+                verifyThereIsNoWork();
+            }
+            
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        
+    }
+    
+    public void insertBaseNode(SVNBaseNode node) throws SVNException {
+        try {
+            myDB.beginTransaction(SqlJetTransactionMode.WRITE);
             try {
-//            printRecords(table.order(table.getPrimaryKeyIndexName()));
+                ISqlJetTable table = myDB.getTable("BASE_NODE");
+                long wcId = node.getWCId();
+                String localRelativePath = node.getLocalRelativePath();
+                long reposId = node.getReposId();
+                String reposRelativePath = node.getReposRelativePath();
+                String parentRelPath = null;
+                if (localRelativePath != null && !"".equals(localRelativePath)) {
+                    parentRelPath = SVNPathUtil.removeTail(localRelativePath);
+                }
+                
+                String status = node.getStatus().toString();
+                String kind = node.getKind().toString();
+                long revision = node.getRevision();
+                
+                table.insert(wcId, localRelativePath, reposId, reposRelativePath, parentRelPath, status, kind, revision);
             } finally {
-                db.commit();
+                myDB.commit();
             }    
         } catch (SqlJetException e) {
             SVNSqlJetUtil.convertException(e);
         }
     }
     
-    public SqlJetDb openDB(File dirPath, SqlJetTransactionMode mode) throws SVNException {
+    private void verifyThereIsNoWork() throws SVNException {
+        try {
+            myDB.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable table = myDB.getTable("WORK_QUEUE");
+                ISqlJetCursor cursor = table.open();
+                try {
+                    if (!cursor.eof()) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CLEANUP_REQUIRED);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                } finally {
+                    cursor.close();
+                }
+                
+            } finally {
+                myDB.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+    }
+    
+    private void createDB(File dirPath, String reposRoot, String reposUUID) throws SVNException {
+        SqlJetDb db = openDB(dirPath, SqlJetTransactionMode.WRITE);
+        myCurrentReposId = createReposId(db, reposRoot, reposUUID);
+
+        try {
+            db.beginTransaction(SqlJetTransactionMode.WRITE);
+            try {
+                ISqlJetTable table = db.getTable("WCROOT");
+                //store here necessary path
+            } finally {
+                db.commit();
+            }
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+    }
+    
+    private long createReposId(SqlJetDb db, String reposRoot, String reposUUID) throws SVNException {
+        try {
+            db.beginTransaction(SqlJetTransactionMode.WRITE);
+            try {
+                ISqlJetTable table = db.getTable("REPOSITORY");
+                ISqlJetCursor cursor = table.lookup("I_ROOT", reposRoot);
+                try {
+                    if (!cursor.eof()) {
+                        return cursor.getInteger("id");
+                    }
+                } finally {
+                    cursor.close();
+                }
+                
+                return table.insert(reposRoot, reposUUID);
+            } finally {
+                db.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return -1;
+    }
+    
+    private SqlJetDb openDB(File dirPath, SqlJetTransactionMode mode) throws SVNException {
         File sdbFile = SVNAdminUtil.getSDBFile(dirPath); 
 
         ISqlJetTransaction openTxn = new ISqlJetTransaction() {
           
             public Object run(SqlJetDb db) throws SqlJetException {
                 int version = db.getOptions().getUserVersion();
-                if (version < SVN_WC_VERSION) {
+                if (version < SVNAdminAreaFactory.SVN_WC_VERSION) {
                     db.getOptions().setAutovacuum(true);
                     db.runWriteTransaction(new ISqlJetTransaction() {
                         public Object run(SqlJetDb db) throws SqlJetException {
-                            db.getOptions().setUserVersion(SVN_WC_VERSION);
+                            db.getOptions().setUserVersion(SVNAdminAreaFactory.SVN_WC_VERSION);
                             InputStream commandsStream = null;
                             try {
                                 commandsStream = SVNWorkingCopyDB17.class.getClassLoader().getResourceAsStream("wc-metadata.sql");
@@ -249,14 +379,14 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                             return null;
                         }
                     });
-                } else if (version > SVN_WC_VERSION) {
+                } else if (version > SVNAdminAreaFactory.SVN_WC_VERSION) {
                     throw new SqlJetException("Schema format " + version + " not recognized");   
                 }
                 return null;
             }
         };
 
-        return SVNSqlJetUtil.openDB(sdbFile, openTxn, mode, SVN_WC_VERSION);
+        return SVNSqlJetUtil.openDB(sdbFile, openTxn, mode, SVNAdminAreaFactory.SVN_WC_VERSION);
     }
 
     
