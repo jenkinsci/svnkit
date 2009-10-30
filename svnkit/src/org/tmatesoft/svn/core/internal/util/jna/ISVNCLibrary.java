@@ -29,7 +29,11 @@ interface ISVNCLibrary extends Library {
 
     public int lstat(String path, Pointer stat);
 
+    public int _lstat(String path, Pointer stat);
+
     public int __xstat64(int ver, String path, Pointer stat);
+
+    public int _stat(String path, Pointer stat);
 
     public int stat(String path, Pointer stat);
 

@@ -25,6 +25,7 @@ import com.sun.jna.Memory;
 public class SVNLinuxUtil {
 
     private static Memory ourSharedMemory;
+    private static final boolean ourIsDashStat = Boolean.getBoolean("svnkit.jna.dash_stat");
     
     static {
         try {
@@ -51,9 +52,13 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
+                    if (ourIsDashStat && SVNFileUtil.isBSD) {
+                        rc = cLibrary._lstat(path, ourSharedMemory);
+                    } else {
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
+                    }
                 }
                 if (rc < 0) {
                     if (file.exists() || file.isDirectory() || file.isFile()) {
@@ -100,9 +105,13 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
+                    if (ourIsDashStat && SVNFileUtil.isBSD) {
+                        rc = cLibrary._lstat(path, ourSharedMemory);
+                    } else {
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
+                    }
                 }
                 if (rc < 0) {
                     return null;
@@ -179,9 +188,13 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
+                    if (ourIsDashStat && SVNFileUtil.isBSD) {
+                        rc = cLibrary._lstat(path, ourSharedMemory);
+                    } else {
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
+                    }
                 }
                 if (rc < 0) {
                     return false;
@@ -230,9 +243,13 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
+                    if (ourIsDashStat && SVNFileUtil.isBSD) {
+                        rc = cLibrary._lstat(path, ourSharedMemory);
+                    } else {
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.lstat(path, ourSharedMemory) : 
                             cLibrary.__lxstat64(0, path, ourSharedMemory);
+                    }
                 }
                 if (rc < 0) {
                     return false;
@@ -281,9 +298,13 @@ public class SVNLinuxUtil {
                 ourSharedMemory.clear();
                 int rc;
                 synchronized (cLibrary) {
-                    rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
+                    if (ourIsDashStat && SVNFileUtil.isBSD) {
+                        rc = cLibrary._stat(path, ourSharedMemory);
+                    } else {
+                        rc = SVNFileUtil.isOSX || SVNFileUtil.isBSD || SVNFileUtil.isSolaris ? 
                             cLibrary.stat(path, ourSharedMemory) : 
                             cLibrary.__xstat64(0, path, ourSharedMemory);
+                    }
                 }
                 if (rc < 0) {
                     return false;
