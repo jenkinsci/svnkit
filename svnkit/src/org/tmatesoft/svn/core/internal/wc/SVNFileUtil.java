@@ -781,6 +781,11 @@ public class SVNFileUtil {
             SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         }
         String linkPath = getSymlinkName(src);
+        if (linkPath == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", src);
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+        }
         OutputStream os = openFileForWriting(linkFile);
         try {
             os.write("link ".getBytes("UTF-8"));
@@ -1274,7 +1279,9 @@ public class SVNFileUtil {
                 }
             } else if (fileType == SVNFileType.SYMLINK) {
                 String name = getSymlinkName(file);
-                createSymlink(dst, name);
+                if (name != null) {
+                    createSymlink(dst, name);
+                }
             }
         }
     }

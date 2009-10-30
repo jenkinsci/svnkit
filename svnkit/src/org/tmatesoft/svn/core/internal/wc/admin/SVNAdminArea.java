@@ -1385,7 +1385,12 @@ public abstract class SVNAdminArea {
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = SVNTranslator.getTranslatingInputStream(textStream, charset, eols, true, keywordsMap, false);
                     } else {
-                        String symlinkContents = "link " + SVNFileUtil.getSymlinkName(text);
+                        String linkPath = SVNFileUtil.getSymlinkName(text);
+                        if (linkPath == null) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", text);
+                            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                        }
+                        String symlinkContents = "link " + linkPath;
                         textStream = new ByteArrayInputStream(symlinkContents.getBytes());
                     }
                 } else if (needsTranslation) {
