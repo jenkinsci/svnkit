@@ -217,6 +217,7 @@ abstract class HTTPAuthentication {
                         negoAuth.respondTo(source);
                     }
                     auth = negoAuth;
+                    break;
                 }
             }
         }
