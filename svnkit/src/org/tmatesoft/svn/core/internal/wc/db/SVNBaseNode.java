@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 
@@ -36,7 +37,8 @@ public class SVNBaseNode {
     private long myChangedRevision;
     private Date myChangedDate;
     private String myChangedAuthor;
-    
+    private SVNDepth myDepth;
+
     private List myChildren;
     private SVNChecksum myChecksum;
     private long myTranslatedSize;
@@ -66,7 +68,7 @@ public class SVNBaseNode {
         return myRevision;
     }
     
-    public SVNProperties getProps() {
+    public SVNProperties getProperties() {
         return myProps;
     }
     
@@ -102,4 +104,11 @@ public class SVNBaseNode {
         return myLocalRelativePath;
     }
     
+    public SVNDepth getDepth() {
+        return myDepth;
+    }
+    
+    public boolean hasChildren() {
+        return myChildren != null && !myChildren.isEmpty();
+    }
 }

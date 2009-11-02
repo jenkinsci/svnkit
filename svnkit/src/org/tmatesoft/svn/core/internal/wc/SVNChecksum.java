@@ -17,6 +17,7 @@ package org.tmatesoft.svn.core.internal.wc;
  * @author  TMate Software Ltd.
  */
 public class SVNChecksum {
+    
     private SVNChecksumKind myKind;
     private String myDigest;
     
@@ -33,4 +34,8 @@ public class SVNChecksum {
         return myDigest;
     }
 
+    public String toString() {
+        String checksumRep = myKind == SVNChecksumKind.MD5 ? "$md5 $" : "$sha1$";
+        return checksumRep + myDigest;
+    }
 }

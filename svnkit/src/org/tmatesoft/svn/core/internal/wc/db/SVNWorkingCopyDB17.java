@@ -17,7 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -34,14 +37,17 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.repcache.FSRepresentationCacheManager;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -242,7 +248,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (format >= SVNAdminAreaFactory.SVN_WC__HAS_WORK_QUEUE && enforceEmptyWorkQueue) {
                 verifyThereIsNoWork();
             }
-            
         } catch (SqlJetException e) {
             SVNSqlJetUtil.convertException(e);
         }
@@ -254,20 +259,63 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             myDB.beginTransaction(SqlJetTransactionMode.WRITE);
             try {
                 ISqlJetTable table = myDB.getTable("BASE_NODE");
-                long wcId = node.getWCId();
+                
+                Map fieldsToValues = new HashMap();
                 String localRelativePath = node.getLocalRelativePath();
-                long reposId = node.getReposId();
-                String reposRelativePath = node.getReposRelativePath();
+                
+                fieldsToValues.put("wc_id", node.getWCId());
+                fieldsToValues.put("local_relpath", localRelativePath);
+                fieldsToValues.put("repos_id", node.getReposId());
+                fieldsToValues.put("repos_relpath", node.getReposRelativePath());
+
                 String parentRelPath = null;
                 if (localRelativePath != null && !"".equals(localRelativePath)) {
-                    parentRelPath = SVNPathUtil.removeTail(localRelativePath);
+                    fieldsToValues.put("parent_relpath", SVNPathUtil.removeTail(localRelativePath));
                 }
                 
-                String status = node.getStatus().toString();
-                String kind = node.getKind().toString();
-                long revision = node.getRevision();
+                fieldsToValues.put("presence", node.getStatus().toString());
+                fieldsToValues.put("kind", node.getKind().toString());
+                fieldsToValues.put("revnum", node.getRevision());
                 
-                table.insert(wcId, localRelativePath, reposId, reposRelativePath, parentRelPath, status, kind, revision);
+                SVNProperties props = node.getProperties();
+                byte[] propsBlob = null;
+                if (props != null) {
+                    SVNSkel skel = SVNSkel.createPropList(props.asMap());
+                    propsBlob = skel.unparse();
+                }
+                
+                fieldsToValues.put("properties", propsBlob);
+                if (SVNRevision.isValidRevisionNumber(node.getChangedRevision())) {
+                    fieldsToValues.put("changed_rev", node.getChangedRevision());
+                }
+                if (node.getChangedDate() != null) {
+                    fieldsToValues.put("changed_date", node.getChangedDate().getTime());
+                }
+
+                fieldsToValues.put("changed_author", node.getChangedAuthor());
+                
+                if (node.getKind() == SVNWCDbKind.DIR) {
+                    fieldsToValues.put("depth", SVNDepth.asString(node.getDepth()));
+                } else if (node.getKind() == SVNWCDbKind.FILE) {
+                    fieldsToValues.put("checksum", node.getChecksum().toString());
+                    if (node.getTranslatedSize() > 0) {
+                        fieldsToValues.put("translated_size", node.getTranslatedSize());
+                    }
+                } else if (node.getKind() == SVNWCDbKind.SYMLINK) {
+                    if (node.getTarget() != null) {
+                        fieldsToValues.put("symlink_target", node.getTarget());
+                    }
+                }
+                
+                table.insertByFieldNames(fieldsToValues);
+                
+                if (node.getKind() == SVNWCDbKind.DIR && node.hasChildren()) {
+                    List children = node.getChildren();
+                    for (ListIterator childIter = children.listIterator(children.size()); childIter.hasPrevious();) {
+                        SVNBaseNode object = (SVNBaseNode) childIter.previous();
+                        
+                    }
+                }
             } finally {
                 myDB.commit();
             }    
