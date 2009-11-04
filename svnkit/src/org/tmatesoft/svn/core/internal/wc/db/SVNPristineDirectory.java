@@ -11,29 +11,38 @@
  */
 package org.tmatesoft.svn.core.internal.wc.db;
 
-import java.util.Map;
+import java.io.File;
 
 
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
+public class SVNPristineDirectory {
+    private SVNWCRoot myWCRoot;
+    private SVNPristineDirectory myParentDirectory;
+    private boolean myIsLocked;
+    private boolean myIsObstructedFile;
+    private File myPath;
     
-    private Map myPathsToPristineDirs;
-    private boolean myIsAutoUpgrade;
-    private boolean myIsEnforceEmptyWorkQueue;
-    
-    private SVNWorkingCopyDB17() {
-        
+    public SVNWCRoot getWCRoot() {
+        return myWCRoot;
     }
     
-    public void readInfo() {
-        
+    public SVNPristineDirectory getParentDirectory() {
+        return myParentDirectory;
     }
     
-    public void parseLocalAbsPath() {
-        
+    public boolean isIsLocked() {
+        return myIsLocked;
+    }
+    
+    public boolean isIsObstructedFile() {
+        return myIsObstructedFile;
+    }
+    
+    public File getPath() {
+        return myPath;
     }
     
 }

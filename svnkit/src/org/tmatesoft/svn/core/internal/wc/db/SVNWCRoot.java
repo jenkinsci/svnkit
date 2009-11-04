@@ -11,11 +11,33 @@
  */
 package org.tmatesoft.svn.core.internal.wc.db;
 
+import java.io.File;
+
 
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
 public class SVNWCRoot {
+    private int myFormat;
+    private SVNWCDataBaseStorage myStorage;
+    private File myPath;
+    private long myWCId;
 
+    public int getFormat() {
+        return myFormat;
+    }
+    
+    public SVNWCDataBaseStorage getStorage() {
+        return myStorage;
+    }
+    
+    public File getPath() {
+        return myPath;
+    }
+    
+    public long getWCId() {
+        return myWCId;
+    }
+    
 }
