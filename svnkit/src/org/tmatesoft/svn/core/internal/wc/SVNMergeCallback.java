@@ -283,7 +283,17 @@ public class SVNMergeCallback extends AbstractDiffCallback {
         
         SVNEntry entry = getWCAccess().getEntry(mergedFile, true);
         SVNFileType type = SVNFileType.getType(mergedFile);
-        if (entry == null || entry.isScheduledForDeletion() || type != SVNFileType.DIRECTORY) {
+        if (entry == null || entry.isScheduledForDeletion()) {
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.EDIT, SVNConflictReason.DELETED);
+            setIsConflicted(isTreeConflicted, true);
+        } else if (entry.isDirectory() && type == SVNFileType.NONE) {
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.EDIT, SVNConflictReason.MISSING);
+            setIsConflicted(isTreeConflicted, true);
+        } else if (entry.isDirectory() && type != SVNFileType.DIRECTORY) {
+            myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.EDIT, SVNConflictReason.OBSTRUCTED);
+            setIsConflicted(isTreeConflicted, true);
+        } else if (type != SVNFileType.DIRECTORY) {
+            // entry of different kind as well, directory has been deleted.
             myMergeDriver.recordTreeConflict(mergedFile, dir, SVNNodeKind.DIR, SVNConflictAction.EDIT, SVNConflictReason.DELETED);
             setIsConflicted(isTreeConflicted, true);
         }
