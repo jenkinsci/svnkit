@@ -47,6 +47,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -212,7 +213,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         
     }
     
-    public static SVNWorkingCopyDB17 newInstance(File path, String reposRoot, String reposUUID, long initialRevision, SVNDepth depth) throws SVNException {
+    public static SVNWorkingCopyDB17 initDB(File path, String reposRoot, String reposRelativePath, String reposUUID, 
+            long initialRevision, SVNDepth depth) throws SVNException {
         if (depth == null || depth == SVNDepth.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "depth must be a valid value");
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -220,7 +222,21 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         
         SVNWorkingCopyDB17 wcDB = new SVNWorkingCopyDB17();
         wcDB.createDB(path, reposRoot, reposUUID);
+        wcDB.createWCRoot(path, -1, false, false);
+        
+        SVNWCDbStatus status = SVNWCDbStatus.NORMAL;
+        if (initialRevision > 0) {
+            status = SVNWCDbStatus.INCOMPLETE;
+        }
+        
+        SVNBaseNode baseNode = new SVNBaseNode(status, SVNWCDbKind.DIR, wcDB.myCurrentWCId, wcDB.myCurrentReposId, reposRelativePath, 
+                "", initialRevision, null, SVNRepository.INVALID_REVISION, null, null, depth, null, null, -1, null);
+        wcDB.insertBaseNode(baseNode);
         return wcDB;
+    }
+    
+    public void readInfo() {
+        
     }
     
     private void createWCRoot(File wcRoot, int format, boolean autoUpgrade, boolean enforceEmptyWorkQueue) throws SVNException {
@@ -241,6 +257,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                         "This client is too old to work with the working copy at\n''{0}'' (format {1}).\nYou need to get a newer Subversion client.", 
                         new Object[] { wcRoot, String.valueOf(format) });
+                SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (format < SVNAdminAreaFactory.SVN_WC_VERSION && autoUpgrade) {
                 //TODO: this feature will come here later..
@@ -251,7 +268,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         } catch (SqlJetException e) {
             SVNSqlJetUtil.convertException(e);
         }
-        
     }
     
     public void insertBaseNode(SVNBaseNode node) throws SVNException {
@@ -268,7 +284,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 fieldsToValues.put("repos_id", node.getReposId());
                 fieldsToValues.put("repos_relpath", node.getReposRelativePath());
 
-                String parentRelPath = null;
                 if (localRelativePath != null && !"".equals(localRelativePath)) {
                     fieldsToValues.put("parent_relpath", SVNPathUtil.removeTail(localRelativePath));
                 }
@@ -312,8 +327,15 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 if (node.getKind() == SVNWCDbKind.DIR && node.hasChildren()) {
                     List children = node.getChildren();
                     for (ListIterator childIter = children.listIterator(children.size()); childIter.hasPrevious();) {
-                        SVNBaseNode object = (SVNBaseNode) childIter.previous();
-                        
+                        String childName = (String) childIter.previous();
+                        fieldsToValues.clear();
+                        fieldsToValues.put("wc_id", node.getWCId());
+                        fieldsToValues.put("local_relpath", SVNPathUtil.append(node.getLocalRelativePath(), childName));
+                        fieldsToValues.put("presence", "incomplete");
+                        fieldsToValues.put("kind", "unknown");
+                        fieldsToValues.put("revnum", node.getRevision());
+                        fieldsToValues.put("parent_relpath", node.getLocalRelativePath());
+                        table.insertByFieldNames(fieldsToValues);
                     }
                 }
             } finally {
@@ -355,6 +377,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             db.beginTransaction(SqlJetTransactionMode.WRITE);
             try {
                 ISqlJetTable table = db.getTable("WCROOT");
+                Map fieldsToValues = new HashMap();
+                fieldsToValues.put("local_abspath", "");
+                myCurrentWCId = table.insertByFieldNames(fieldsToValues);
                 //store here necessary path
             } finally {
                 db.commit();

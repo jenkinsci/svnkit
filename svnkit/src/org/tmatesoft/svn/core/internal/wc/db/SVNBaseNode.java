@@ -43,6 +43,27 @@ public class SVNBaseNode {
     private SVNChecksum myChecksum;
     private long myTranslatedSize;
     private String myTarget;
+
+    public SVNBaseNode(SVNWCDbStatus status, SVNWCDbKind kind, long wcId, long reposId, String reposRelativePath, String localRelativePath, 
+            long revision, SVNProperties props, long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth, List children, 
+            SVNChecksum checksum, long translatedSize, String target) {
+        myStatus = status;
+        myKind = kind;
+        myWCId = wcId;
+        myReposId = reposId;
+        myReposRelativePath = reposRelativePath;
+        myLocalRelativePath = localRelativePath;
+        myRevision = revision;
+        myProps = props;
+        myChangedRevision = changedRevision;
+        myChangedDate = changedDate;
+        myChangedAuthor = changedAuthor;
+        myDepth = depth;
+        myChildren = children;
+        myChecksum = checksum;
+        myTranslatedSize = translatedSize;
+        myTarget = target;
+    }
     
     public SVNWCDbStatus getStatus() {
         return myStatus;

@@ -17,19 +17,19 @@ package org.tmatesoft.svn.core.internal.wc.db;
  * @author  TMate Software Ltd.
  */
 public class SVNWCDbStatus {
-    private static final SVNWCDbStatus NORMAL = new SVNWCDbStatus("normal");
-    private static final SVNWCDbStatus ADDED = new SVNWCDbStatus(null);
-    private static final SVNWCDbStatus MOVED_HERE = new SVNWCDbStatus(null);
-    private static final SVNWCDbStatus COPIED = new SVNWCDbStatus(null);
-    private static final SVNWCDbStatus DELETED = new SVNWCDbStatus(null);
-    private static final SVNWCDbStatus OBSTRUCTED = new SVNWCDbStatus(null);
-    private static final SVNWCDbStatus OBSTRUCTED_DELETE = new SVNWCDbStatus(null);
-    private static final SVNWCDbStatus OBSTRUCTED_ADD = new SVNWCDbStatus(null); 
-    private static final SVNWCDbStatus ABSENT = new SVNWCDbStatus("absent");
-    private static final SVNWCDbStatus EXCLUDED = new SVNWCDbStatus("excluded");
-    private static final SVNWCDbStatus NOT_PRESENT = new SVNWCDbStatus("not-present");
-    private static final SVNWCDbStatus INCOMPLETE = new SVNWCDbStatus("incomplete");
-    private static final SVNWCDbStatus BASE_DELETED = new SVNWCDbStatus("base-deleted");
+    public static final SVNWCDbStatus NORMAL = new SVNWCDbStatus("normal");
+    public static final SVNWCDbStatus ADDED = new SVNWCDbStatus(null);
+    public static final SVNWCDbStatus MOVED_HERE = new SVNWCDbStatus(null);
+    public static final SVNWCDbStatus COPIED = new SVNWCDbStatus(null);
+    public static final SVNWCDbStatus DELETED = new SVNWCDbStatus(null);
+    public static final SVNWCDbStatus OBSTRUCTED = new SVNWCDbStatus(null);
+    public static final SVNWCDbStatus OBSTRUCTED_DELETE = new SVNWCDbStatus(null);
+    public static final SVNWCDbStatus OBSTRUCTED_ADD = new SVNWCDbStatus(null); 
+    public static final SVNWCDbStatus ABSENT = new SVNWCDbStatus("absent");
+    public static final SVNWCDbStatus EXCLUDED = new SVNWCDbStatus("excluded");
+    public static final SVNWCDbStatus NOT_PRESENT = new SVNWCDbStatus("not-present");
+    public static final SVNWCDbStatus INCOMPLETE = new SVNWCDbStatus("incomplete");
+    public static final SVNWCDbStatus BASE_DELETED = new SVNWCDbStatus("base-deleted");
     
     private String myName;
     
