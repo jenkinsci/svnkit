@@ -592,7 +592,7 @@ public class SVNSSHSession {
                 if (list != null && list.contains(this)) {
                     list.remove(this);
                 }
-                if (list.isEmpty()) {
+                if (list != null && list.isEmpty()) {
                     ourConnectionsPool.remove(myKey);
                 }
                 dispose();
