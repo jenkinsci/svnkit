@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc.db;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+
 
 /**
  * @version 1.3
@@ -25,6 +27,14 @@ public class SVNPristineDirectory {
     private boolean myIsObstructedFile;
     private File myPath;
     
+    public SVNPristineDirectory(SVNWCRoot wcRoot, SVNPristineDirectory parentDirectory, boolean isLocked, boolean isObstructedFile, File path) {
+        myWCRoot = wcRoot;
+        myParentDirectory = parentDirectory;
+        myIsLocked = isLocked;
+        myIsObstructedFile = isObstructedFile;
+        myPath = path;
+    }
+
     public SVNWCRoot getWCRoot() {
         return myWCRoot;
     }
@@ -45,4 +55,17 @@ public class SVNPristineDirectory {
         return myPath;
     }
     
+    public void setWCRoot(SVNWCRoot wcRoot) {
+        myWCRoot = wcRoot;
+    }
+
+    public String computeRelPath() {
+        String path1 = myWCRoot.getPath().getAbsolutePath();
+        String path2 = myPath.getAbsolutePath();
+        String relPath = SVNPathUtil.getPathAsChild(path1, path2);
+        if (relPath == null) {
+            return "";
+        }
+        return relPath;
+    }
 }

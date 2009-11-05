@@ -251,7 +251,16 @@ public class SVNErrorCode implements Serializable {
     public static final SVNErrorCode WC_LOCKED = new SVNErrorCode(WC_CATEGORY, 4, "Attempted to lock an already-locked dir");
     public static final SVNErrorCode WC_NOT_LOCKED = new SVNErrorCode(WC_CATEGORY, 5, "Working copy not locked; this is probably a bug, please report");
     public static final SVNErrorCode WC_INVALID_LOCK = new SVNErrorCode(WC_CATEGORY, 6, "Invalid lock");
-    public static final SVNErrorCode WC_NOT_DIRECTORY = new SVNErrorCode(WC_CATEGORY, 7, "Path is not a working copy directory");
+
+    /**
+     * @since 1.4, SVN 1.7
+     */
+    public static final SVNErrorCode WC_NOT_WORKING_COPY = new SVNErrorCode(WC_CATEGORY, 7, "Path is not a working copy directory");
+
+    /**
+     * @deprecated This name is deprecated. Use WC_NOT_WORKING_COPY. Provided for backward compatibility with pre-1.4 API
+     */
+    public static final SVNErrorCode WC_NOT_DIRECTORY = WC_NOT_WORKING_COPY;
     public static final SVNErrorCode WC_NOT_FILE = new SVNErrorCode(WC_CATEGORY, 8, "Path is not a working copy file");
     public static final SVNErrorCode WC_BAD_ADM_LOG = new SVNErrorCode(WC_CATEGORY, 9, "Problem running log");
     public static final SVNErrorCode WC_PATH_NOT_FOUND = new SVNErrorCode(WC_CATEGORY, 10, "Can't find a working copy path");
