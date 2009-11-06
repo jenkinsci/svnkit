@@ -229,7 +229,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNWCRoot wcRoot = createWCRoot(path, db, FORMAT_FROM_SDB, wcId, false, false);
         
         SVNPristineDirectory pDir = new SVNPristineDirectory(wcRoot, null, false, false, path);
-        Map dirData = getPatsToPristineDirs();
+        Map dirData = getPathsToPristineDirs();
         dirData.put(path, pDir);
         
         SVNWCDbStatus status = SVNWCDbStatus.NORMAL;
@@ -243,7 +243,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         insertBaseNode(baseNode, db);
     }
     
-    public String parseLocalAbsPath(File path) throws SVNException {
+    public String parseLocalAbsPath(File path, SVNPristineDirectory[] pristineDir) throws SVNException {
         SVNPristineDirectory dir = getPristineDirectory(path);
         if (dir != null && dir.getWCRoot() != null) {
             String relPath = dir.computeRelPath();
@@ -254,7 +254,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         boolean isObstructionPossible = false;
         boolean movedUpwards = false;
         String buildRelPath = null;
-        String relPath = null;        
+        String localRelPath = null;        
         SVNFileType type = SVNFileType.getType(path);
         if (type != SVNFileType.DIRECTORY) {
             File parent = path.getParentFile();
@@ -262,8 +262,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             dir = getPristineDirectory(parent);
             if (dir != null && dir.getWCRoot() != null) {
                 String dirRelPath = dir.computeRelPath();
-                relPath = SVNPathUtil.append(dirRelPath, name);
-                return relPath;
+                localRelPath = SVNPathUtil.append(dirRelPath, name);
+                return localRelPath;
             }
             
             if (type == SVNFileType.NONE) {
@@ -278,7 +278,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             dir = new SVNPristineDirectory(null, null, false, false, path);
         } else {
             if (!dir.getPath().equals(path)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure: in SVNWokringCopyDB17.parseLocalAbsPath() paths are not equal");
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "Assertion failure #1 in SVNWokringCopyDB17.parseLocalAbsPath()");
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
@@ -345,13 +346,99 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
             
         String dirRelPath = dir.computeRelPath();
+        localRelPath = SVNPathUtil.append(dirRelPath, buildRelPath);
         
+        if (isObstructionPossible) {
+            if (movedUpwards) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                        "Assertion failure #2 in SVNWorkingCopyDB17.parseLocalAbsPath()");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            
+            File parentPath = path.getParentFile();
+            SVNPristineDirectory parentDir = getPristineDirectory(parentPath);
+            if (parentDir == null || parentDir.getWCRoot() == null) {
+                boolean errorOccured = false;
+                try {
+                    sdb = openDB(parentPath, SqlJetTransactionMode.WRITE);
+                } catch (SVNException e) {
+                    SVNErrorMessage err = e.getErrorMessage();
+                    if (err.getErrorCode() != SVNErrorCode.SQLITE_ERROR) {
+                        throw e;
+                    }
+                    parentDir = null;
+                    errorOccured = true;
+                }
+                
+                if (!errorOccured) {
+                    if (parentDir == null) {
+                        parentDir = new SVNPristineDirectory(null, null, false, false, parentPath);
+                    } else {
+                        if (!parentPath.equals(parentDir.getPath())) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
+                                    "Assertion failure #3 in SVNWorkingCopyDB17.parseLocalAbsPath()");
+                            SVNErrorManager.error(err, SVNLogType.WC);
+                        }
+                    }
+                    
+                    SVNWCRoot wcRoot = createWCRoot(parentDir.getPath(), sdb, 1, FORMAT_FROM_SDB, myIsAutoUpgrade, myIsEnforceEmptyWorkQueue);
+                    parentDir.setWCRoot(wcRoot);
+                    setPristineDir(parentDir.getPath(), parentDir);
+                    dir.setParentDirectory(parentDir);
+                }
+            }
+            
+            if (parentDir != null) {
+                String lookForRelPath = path.getName();
+                boolean isObstructedFile = isObstructedFile(parentDir.getWCRoot(), lookForRelPath);
+                if (isObstructedFile) {
+                    dir = parentDir;
+                    localRelPath = lookForRelPath;
+                }
+            }
+        }
         return null;
+    }
+    
+    private boolean isObstructedFile(SVNWCRoot wcRoot, String localRelativePath) throws SVNException {
+        if (wcRoot == null || wcRoot.getStorage() == null || wcRoot.getFormat() == FORMAT_FROM_SDB) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.isObstructedFile()");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+        
+        SqlJetDb db = wcRoot.getStorage();
+        try {
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable table = db.getTable("WORKING_NODE");
+                ISqlJetCursor cursor = table.lookup(table.getPrimaryKeyIndexName(), wcRoot.getWCId(), localRelativePath);
+                try {
+                    if (!cursor.eof()) {
+                        String kindStr = cursor.getString("kind");
+                        return SVNWCDbKind.parseKind(kindStr) == SVNWCDbKind.FILE;
+                    }
+                } finally {
+                    cursor.close();
+                }
+                
+                table = db.getTable("BASE_NODE");
+                cursor = table.lookup(table.getPrimaryKeyIndexName(), wcRoot.getWCId(), localRelativePath);
+                if (!cursor.eof()) {
+                    String kindStr = cursor.getString("kind");
+                    return SVNWCDbKind.parseKind(kindStr) == SVNWCDbKind.FILE;
+                }
+            } finally {
+                db.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return false;
     }
     
     private long fetchWCId(SqlJetDb db) throws SVNException {
         try {
-            db.beginTransaction(SqlJetTransactionMode.WRITE);
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
             try {
                 ISqlJetTable table = db.getTable("WCROOT");
                 ISqlJetCursor cursor = table.lookup("I_LOCAL_ABSPATH", null);
@@ -612,11 +699,16 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return null;
     }
 
-    private Map getPatsToPristineDirs() {
+    private Map getPathsToPristineDirs() {
         if (myPathsToPristineDirs == null) {
             myPathsToPristineDirs = new HashMap();
         }
         return myPathsToPristineDirs;
+    }
+    
+    private void setPristineDir(File path, SVNPristineDirectory dir) {
+        Map pathsToPristineDirs = getPathsToPristineDirs();
+        pathsToPristineDirs.put(path, dir);
     }
 
 }

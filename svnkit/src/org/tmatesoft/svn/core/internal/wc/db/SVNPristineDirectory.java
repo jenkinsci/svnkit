@@ -68,4 +68,8 @@ public class SVNPristineDirectory {
         }
         return relPath;
     }
+
+    public void setParentDirectory(SVNPristineDirectory parentDirectory) {
+        myParentDirectory = parentDirectory;
+    }
 }

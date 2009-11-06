@@ -33,4 +33,18 @@ public class SVNWCDbKind {
     public String toString() {
         return myName;
     }
+    
+    public static SVNWCDbKind parseKind(String kind) {
+        if (FILE.myName.equals(kind)) {
+            return FILE;
+        } else if (DIR.myName.equals(kind)) {
+            return DIR;
+        } else if (SYMLINK.myName.equals(kind)) {
+            return SYMLINK;
+        } else if (SUBDIR.myName.equals(kind)) {
+            return SUBDIR;
+        }
+        return UNKNOWN;
+    }
+    
 }
