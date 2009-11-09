@@ -16,7 +16,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -243,10 +245,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         insertBaseNode(baseNode, db);
     }
     
-    public String parseLocalAbsPath(File path, SVNPristineDirectory[] pristineDir) throws SVNException {
-        SVNPristineDirectory dir = getPristineDirectory(path);
-        if (dir != null && dir.getWCRoot() != null) {
-            String relPath = dir.computeRelPath();
+    public String parseLocalAbsPath(File path, SVNPristineDirectory[] pristineDir, SqlJetTransactionMode mode) throws SVNException {
+        mode = SqlJetTransactionMode.WRITE;
+        pristineDir[0] = getPristineDirectory(path);
+        if (pristineDir[0] != null && pristineDir[0].getWCRoot() != null) {
+            String relPath = pristineDir[0].computeRelPath();
             return relPath;
         }
         
@@ -259,9 +262,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         if (type != SVNFileType.DIRECTORY) {
             File parent = path.getParentFile();
             String name = path.getName();
-            dir = getPristineDirectory(parent);
-            if (dir != null && dir.getWCRoot() != null) {
-                String dirRelPath = dir.computeRelPath();
+            pristineDir[0] = getPristineDirectory(parent);
+            if (pristineDir[0] != null && pristineDir[0].getWCRoot() != null) {
+                String dirRelPath = pristineDir[0].computeRelPath();
                 localRelPath = SVNPathUtil.append(dirRelPath, name);
                 return localRelPath;
             }
@@ -274,10 +277,10 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             isObstructionPossible = true;
         }
         
-        if (dir == null) {
-            dir = new SVNPristineDirectory(null, null, false, false, path);
+        if (pristineDir[0] == null) {
+            pristineDir[0] = new SVNPristineDirectory(null, null, false, false, path);
         } else {
-            if (!dir.getPath().equals(path)) {
+            if (!pristineDir[0].getPath().equals(path)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
                         "Assertion failure #1 in SVNWokringCopyDB17.parseLocalAbsPath()");
                 SVNErrorManager.error(err, SVNLogType.WC);
@@ -290,7 +293,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNPristineDirectory foundDir = null;
         while (true) {
             try {
-                sdb = openDB(path, SqlJetTransactionMode.WRITE);
+                sdb = openDB(path, mode);
                 break;
             } catch (SVNException svne) {
                 SVNErrorMessage err = svne.getErrorMessage();
@@ -324,7 +327,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
          
         if (foundDir != null) {
-            dir.setWCRoot(foundDir.getWCRoot());
+            pristineDir[0].setWCRoot(foundDir.getWCRoot());
         } else if (wcFormat == 0) {
             long wcId = -1;
             try {
@@ -338,14 +341,14 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             }
 
             SVNWCRoot wcRoot = createWCRoot(path, sdb, FORMAT_FROM_SDB, wcId, myIsAutoUpgrade, myIsEnforceEmptyWorkQueue);
-            dir.setWCRoot(wcRoot);
+            pristineDir[0].setWCRoot(wcRoot);
         } else {
             SVNWCRoot wcRoot = createWCRoot(path, sdb, wcFormat, UNKNOWN_WC_ID, myIsAutoUpgrade, myIsEnforceEmptyWorkQueue);
-            dir.setWCRoot(wcRoot);
+            pristineDir[0].setWCRoot(wcRoot);
             isObstructionPossible = false;
         }
             
-        String dirRelPath = dir.computeRelPath();
+        String dirRelPath = pristineDir[0].computeRelPath();
         localRelPath = SVNPathUtil.append(dirRelPath, buildRelPath);
         
         if (isObstructionPossible) {
@@ -360,7 +363,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (parentDir == null || parentDir.getWCRoot() == null) {
                 boolean errorOccured = false;
                 try {
-                    sdb = openDB(parentPath, SqlJetTransactionMode.WRITE);
+                    sdb = openDB(parentPath, mode);
                 } catch (SVNException e) {
                     SVNErrorMessage err = e.getErrorMessage();
                     if (err.getErrorCode() != SVNErrorCode.SQLITE_ERROR) {
@@ -384,20 +387,102 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     SVNWCRoot wcRoot = createWCRoot(parentDir.getPath(), sdb, 1, FORMAT_FROM_SDB, myIsAutoUpgrade, myIsEnforceEmptyWorkQueue);
                     parentDir.setWCRoot(wcRoot);
                     setPristineDir(parentDir.getPath(), parentDir);
-                    dir.setParentDirectory(parentDir);
+                    pristineDir[0].setParentDirectory(parentDir);
                 }
             }
             
             if (parentDir != null) {
                 String lookForRelPath = path.getName();
                 boolean isObstructedFile = isObstructedFile(parentDir.getWCRoot(), lookForRelPath);
+                pristineDir[0].setIsObstructedFile(isObstructedFile);
                 if (isObstructedFile) {
-                    dir = parentDir;
+                    pristineDir[0] = parentDir;
                     localRelPath = lookForRelPath;
+                    return localRelPath;
                 }
             }
         }
-        return null;
+        
+        setPristineDir(pristineDir[0].getPath(), pristineDir[0]);
+        if (!movedUpwards) {
+            return localRelPath;
+        }
+        
+        SVNPristineDirectory childDir = pristineDir[0];
+        do {
+            File parentPath = childDir.getPath().getParentFile();
+            SVNPristineDirectory parentDir = getPristineDirectory(parentPath);
+            if (parentDir == null) {
+                parentDir = new SVNPristineDirectory(pristineDir[0].getWCRoot(), null, false, false, parentPath);
+                setPristineDir(parentDir.getPath(), parentDir);
+            } else if (parentDir.getWCRoot() == null) {
+                parentDir.setWCRoot(pristineDir[0].getWCRoot());
+            }
+            
+            childDir.setParentDirectory(parentDir);
+            childDir = parentDir;
+        } while (childDir != foundDir && !childDir.getPath().equals(path));
+            
+        return localRelPath;
+    }
+    
+    public SVNPristineDirectory navigateToParent(File path, SVNPristineDirectory child, SqlJetTransactionMode mode) throws SVNException {
+        SVNPristineDirectory[] parentDir = new SVNPristineDirectory[1];
+        parentDir[0] = child.getParentDirectory() ;
+        if (parentDir[0] != null && parentDir[0].getWCRoot() != null) {
+            return parentDir[0];
+        }
+        File parentPath = child.getPath().getParentFile();
+        
+        parseLocalAbsPath(parentPath, parentDir, mode);
+        verifyPristineDirectoryIsUsable(parentDir[0]);
+        child.setParentDirectory(parentDir[0]);
+        return parentDir[0];
+    }
+    
+    public Collection gatherChildren(File path, boolean baseOnly) throws SVNException {
+        SVNPristineDirectory[] pristineDir = new SVNPristineDirectory[0];
+        String localRelPath = parseLocalAbsPath(path, pristineDir, SqlJetTransactionMode.READ_ONLY);
+        verifyPristineDirectoryIsUsable(pristineDir[0]);
+        SVNWCRoot wcRoot = pristineDir[0].getWCRoot(); 
+        SqlJetDb db = wcRoot.getStorage();
+        Collection childNames = selectChildrenUsingWCIdAndParentRelPath("BASE_NODE", "I_PARENT", wcRoot.getWCId(), localRelPath, db, null);
+        if (!baseOnly) {
+            childNames = selectChildrenUsingWCIdAndParentRelPath("WORKING_NODE", "I_WORKING_PARENT", wcRoot.getWCId(), localRelPath, db, childNames);
+        }
+        return childNames;
+    }
+    
+    private Collection selectChildrenUsingWCIdAndParentRelPath(String tableName, String cursorName, long wcId, String parentRelPath, SqlJetDb db, Collection childNames) throws SVNException {
+        childNames = childNames == null ? new LinkedList() : childNames;
+        try {
+            db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable table = db.getTable(tableName);
+                ISqlJetCursor cursor = table.lookup(cursorName, wcId, parentRelPath);
+                try {
+                    while (!cursor.eof()) {
+                        String childRelPath = cursor.getString("local_relpath");
+                        childNames.add(SVNPathUtil.tail(childRelPath));
+                    }
+                } finally {
+                    cursor.close();
+                }
+                
+            } finally {
+                db.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return childNames;
+    }
+    
+    private void verifyPristineDirectoryIsUsable(SVNPristineDirectory pristineDirectory) throws SVNException {
+        if (pristineDirectory == null || pristineDirectory.getWCRoot() == null || pristineDirectory.getWCRoot().getFormat() != SVNAdminAreaFactory.SVN_WC_VERSION) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: unusable SVNPristineDirectory object met");
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
     }
     
     private boolean isObstructedFile(SVNWCRoot wcRoot, String localRelativePath) throws SVNException {
@@ -441,7 +526,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
             try {
                 ISqlJetTable table = db.getTable("WCROOT");
-                ISqlJetCursor cursor = table.lookup("I_LOCAL_ABSPATH", null);
+                ISqlJetCursor cursor = table.lookup("I_LOCAL_ABSPATH", new Object[] { null });
                 try {
                     if (!cursor.eof()) {
                         return cursor.getInteger("id");

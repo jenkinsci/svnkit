@@ -51,6 +51,10 @@ public class SVNPristineDirectory {
         return myIsObstructedFile;
     }
     
+    public void setIsObstructedFile(boolean isObstructedFile) {
+        myIsObstructedFile = isObstructedFile;
+    }
+
     public File getPath() {
         return myPath;
     }
