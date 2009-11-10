@@ -16,8 +16,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -38,6 +41,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -453,8 +457,28 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return childNames;
     }
     
+    public void addBaseDirectory(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, long changedRevision, 
+            Date changedDate, String changedAuthor, Collection children, SVNDepth depth) throws SVNException {        
+        SVNPristineDirectory[] pristineDir = new SVNPristineDirectory[0];
+        String localRelPath = parseLocalAbsPath(path, pristineDir, SqlJetTransactionMode.WRITE);
+        verifyPristineDirectoryIsUsable(pristineDir[0]);
+        SVNWCRoot wcRoot = pristineDir[0].getWCRoot(); 
+        long reposId = createReposId(wcRoot.getStorage(), reposRootURL, reposUUID);
+        SVNBaseNode baseNode = new SVNBaseNode(SVNWCDbStatus.NORMAL, SVNWCDbKind.DIR, wcRoot.getWCId(), reposId, reposRelPath, localRelPath, revision, props, 
+                changedRevision, changedDate, changedAuthor, depth, new ArrayList(children), null, -1, null);
+        insertBaseNode(baseNode, wcRoot.getStorage());
+    }
+    
+    public void addBaseFile(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, long changedRevision, 
+            String changedAuthor, SVNChecksum checksum, long translatedSize) throws SVNException {
+        SVNPristineDirectory[] pristineDir = new SVNPristineDirectory[0];
+        String localRelPath = parseLocalAbsPath(path, pristineDir, SqlJetTransactionMode.WRITE);
+        verifyPristineDirectoryIsUsable(pristineDir[0]);
+//        long reposId = createReposId(db, reposRoot, reposUUID)
+    }
+    
     private Collection selectChildrenUsingWCIdAndParentRelPath(String tableName, String cursorName, long wcId, String parentRelPath, SqlJetDb db, Collection childNames) throws SVNException {
-        childNames = childNames == null ? new LinkedList() : childNames;
+        childNames = childNames == null ? new HashSet() : childNames;
         try {
             db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
             try {
@@ -463,7 +487,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 try {
                     while (!cursor.eof()) {
                         String childRelPath = cursor.getString("local_relpath");
-                        childNames.add(SVNPathUtil.tail(childRelPath));
+                        String childName = SVNPathUtil.tail(childRelPath); 
+                        childNames.add(childName);
                     }
                 } finally {
                     cursor.close();
