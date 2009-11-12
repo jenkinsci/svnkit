@@ -348,8 +348,9 @@ public class SVNExternal {
                 myLine = myLine.substring(1);
             }
             int index = 0;
+            StringBuffer result = new StringBuffer();
             while(index < myLine.length()) {
-                ch = myLine.charAt(index);
+                ch = myLine.charAt(index);                
                 if (quouteType == 0) {
                     if (Character.isWhitespace(ch)) {
                         break;
@@ -363,15 +364,29 @@ public class SVNExternal {
                         break;
                     }
                 }
+                if (ch == '\\') {
+                    // append qouted character, so far whitespace only
+                    if (index + 1 < myLine.length()) {
+                        char escaped = myLine.charAt(index + 1);
+                        if (escaped == ' ' || escaped == '\'' || escaped == '\"') {
+                            // append escaped char instead of backslash
+                            result.append(escaped);
+                            index++;
+                            index++;
+                            continue;
+                        }
+                    } 
+                }
+                result.append(ch);
                 index++;
+                
             }
-            String token = myLine.substring(0, index);
             if (index + 1 < myLine.length()) {
                 myLine = myLine.substring(index + 1);
             } else {
                 myLine = "";
             }
-            return token;
+            return result.toString();
         }
     }
 
