@@ -150,7 +150,9 @@ public class DefaultSVNSSLTrustManager implements X509TrustManager {
 					try {
 						storeServerCertificate(myRealm, data, failures);
 					} catch (SVNException e) {
-						throw new SVNSSLUtil.CertificateNotTrustedException("svn: Server SSL certificate for '" + myRealm + "' cannot be saved");
+                        // ignore that exception, as we only need to trust now and may save data later.
+                        //throw new SVNSSLUtil.CertificateNotTrustedException("svn: Server SSL certificate for '" + myRealm + "' cannot be saved");
+					    SVNDebugLog.getDefaultLog().logError(SVNLogType.NETWORK, e);
 					}
 				}
 				if (result != ISVNAuthenticationProvider.REJECTED) {
