@@ -391,11 +391,9 @@
             </fileset>
         </copy>
 
-    	<copy todir="build/eclipse/${jna.plugin.name}">
-            <fileset dir="build/lib">
-                <include name="jna.jar" />
-            </fileset>
-        </copy>
+    	<unjar dest="build/eclipse/${jna.plugin.name}" src="build/lib/jna.jar">
+    	</unjar>
+    	<delete dir="build/eclipse/${jna.plugin.name}/META-INF"></delete>
         <copy todir="build/eclipse/${jna.plugin.name}">
             <fileset dir="svnkit-eclipse/com.sun.jna">
                 <include name="MANIFEST.MF" />
