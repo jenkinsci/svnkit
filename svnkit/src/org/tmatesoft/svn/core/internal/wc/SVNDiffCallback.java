@@ -102,7 +102,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         if (file1 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, null);
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(myRevision1), getRevision(myRevision2), mimeType1, mimeType2, myResult);
-            if (useDefaultEncoding) {
+            if (!useDefaultEncoding) {
                 myGenerator.setEncoding(null);
             }
         }
