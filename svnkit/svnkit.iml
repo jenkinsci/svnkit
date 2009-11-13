@@ -35,9 +35,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="sqljet">
+      <library>
         <CLASSES>
-          <root url="file://$MODULE_DIR$/../contrib/sqljet/sqljet.jar!/" />
+          <root url="jar://$MODULE_DIR$/../contrib/sqljet/sqljet.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
