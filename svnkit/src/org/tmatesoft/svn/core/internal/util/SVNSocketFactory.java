@@ -49,10 +49,15 @@ import org.tmatesoft.svn.core.SVNCancelException;
 public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
+    private static int ourSocketReceiveBufferSize = 32*1024;
 
     public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket socket = new Socket();
+        int bufferSize = getSocketReceiveBufferSize();
+        if (bufferSize > 0) {
+            socket.setReceiveBufferSize(bufferSize);
+        }
         InetSocketAddress socketAddress = new InetSocketAddress(address, port);
         connect(socket, socketAddress, connectTimeout, cancel);
         socket.setReuseAddress(true);
@@ -66,6 +71,10 @@ public class SVNSocketFactory {
     public static Socket createSSLSocket(KeyManager[] keyManagers, TrustManager trustManager, String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket sslSocket = createSSLContext(keyManagers, trustManager).getSocketFactory().createSocket();
+        int bufferSize = getSocketReceiveBufferSize();
+        if (bufferSize > 0) {
+            sslSocket.setReceiveBufferSize(bufferSize);
+        }
         InetSocketAddress socketAddress = new InetSocketAddress(address, port);
         connect(sslSocket, socketAddress, connectTimeout, cancel);
         sslSocket.setReuseAddress(true);
@@ -130,6 +139,14 @@ public class SVNSocketFactory {
             return InetAddress.getByAddress(hostName, bytes);
         }
         return InetAddress.getByName(hostName);
+    }
+    
+    public static synchronized void setSocketReceiveBufferSize(int size) {
+        ourSocketReceiveBufferSize = size;
+    }
+
+    public static synchronized int getSocketReceiveBufferSize() {
+        return ourSocketReceiveBufferSize;
     }
     
     public static void setSocketStaleCheckEnabled(boolean enabled) {
