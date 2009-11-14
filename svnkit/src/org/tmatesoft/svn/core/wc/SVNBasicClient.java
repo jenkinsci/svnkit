@@ -598,9 +598,11 @@ public class SVNBasicClient implements ISVNEventHandler {
         }
     }
 
+    /**
+     * @param path path relative to the repository location.
+     */
     protected Map getReposMergeInfo(SVNRepository repository, String path, long revision, 
     		SVNMergeInfoInheritance inheritance, boolean squelchIncapable) throws SVNException {
-    	SVNURL oldURL = ensureSessionURL(repository, null);
     	Map reposMergeInfo = null;
     	try {
     		reposMergeInfo = repository.getMergeInfo(new String[] { path }, revision, inheritance, false);
@@ -608,10 +610,6 @@ public class SVNBasicClient implements ISVNEventHandler {
     		if (!squelchIncapable || svne.getErrorMessage().getErrorCode() != SVNErrorCode.UNSUPPORTED_FEATURE) {
     			throw svne;
     		}
-    	} finally {
-        	if (oldURL != null) {
-        		repository.setLocation(oldURL, false);
-        	}
     	}
     	
     	Map targetMergeInfo = null;
@@ -636,12 +634,13 @@ public class SVNBasicClient implements ISVNEventHandler {
             mergeInfo = getWCMergeInfo(path, entry, null, inherit, false, indirect);
         }
         
-        if (mergeInfo == null) {
+        if (mergeInfo == null) {            
             if (!entry.isScheduledForAddition()) {
                 Map fileToProp = SVNPropertiesManager.getWorkingCopyPropertyValues(path, entry, 
                         SVNProperty.MERGE_INFO, SVNDepth.EMPTY, true);
                 SVNPropertyValue mergeInfoProp = (SVNPropertyValue) fileToProp.get(path);
                 if (mergeInfoProp == null) {
+                    SVNURL oldLocation = null;
                     boolean closeRepository = false;
                     Map reposMergeInfo = null;
                     String repositoryPath = null;
@@ -650,12 +649,18 @@ public class SVNBasicClient implements ISVNEventHandler {
                             repository = createRepository(url, null, null, false);
                             closeRepository = true;
                         }
-                        repositoryPath = getPathRelativeToRoot(null, url, entry.getRepositoryRootURL(), 
-                        		null, repository);
+                        repositoryPath = getPathRelativeToSession(url, null, repository);
+                        oldLocation = repository.getLocation();
+                        if (repositoryPath == null) {
+                            repositoryPath = "";
+                            repository.setLocation(url, false);
+                        }
                         reposMergeInfo = getReposMergeInfo(repository, repositoryPath, revision, inherit, true);
                     } finally {
                         if (closeRepository) {
                             repository.closeSession();
+                        } else if (oldLocation != null) {
+                            repository.setLocation(oldLocation, false);
                         }
                     }
                     
@@ -797,6 +802,23 @@ public class SVNBasicClient implements ISVNEventHandler {
         absPath = absPath.substring(reposRootPath.length());
         if (!absPath.startsWith("/")) {
             absPath = "/" + absPath;
+        }
+        return absPath;
+    }
+
+    protected String getPathRelativeToSession(SVNURL url, SVNURL sessionURL, SVNRepository repos) throws SVNException {
+        if (sessionURL == null) {
+            sessionURL = repos.getLocation();
+        }
+        
+        String reposPath = sessionURL.getPath();
+        String absPath = url.getPath();
+        if (!absPath.startsWith(reposPath)) {
+            return null;
+        }
+        absPath = absPath.substring(reposPath.length());
+        if (absPath.startsWith("/")) {
+            absPath = absPath.substring(1);
         }
         return absPath;
     }

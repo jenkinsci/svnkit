@@ -515,7 +515,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     }
 
     protected Map getMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL repositoryRoot[]) throws SVNException {
-        SVNRepository repository = null;
+        SVNRepository repository = null;        
         try {
             repository = createRepository(url, null, null, true); 
             long revisionNum = getRevisionNumber(pegRevision, repository, null);
@@ -523,7 +523,11 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             if (repositoryRoot != null && repositoryRoot.length > 0) {
                 repositoryRoot[0] = reposRoot;
             }
-            String relPath = getPathRelativeToRoot(null, url, reposRoot, null, null);
+            String relPath = getPathRelativeToSession(url, null, repository);
+            if (relPath == null) {
+                repository.setLocation(url, false);
+                relPath = "";
+            }
             return getReposMergeInfo(repository, relPath, revisionNum, 
                     SVNMergeInfoInheritance.INHERITED, false);
         } finally {
