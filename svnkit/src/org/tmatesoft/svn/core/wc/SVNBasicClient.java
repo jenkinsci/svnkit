@@ -813,7 +813,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         
         String reposPath = sessionURL.getPath();
         String absPath = url.getPath();
-        if (!absPath.startsWith(reposPath)) {
+        if (!absPath.startsWith(reposPath + "/") && !absPath.equals(reposPath)) {
             return null;
         }
         absPath = absPath.substring(reposPath.length());
