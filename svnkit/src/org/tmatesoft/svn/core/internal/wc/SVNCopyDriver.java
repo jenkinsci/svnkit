@@ -333,6 +333,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             CopyPathInfo info = (CopyPathInfo) pathsMap.remove(svnURL.toString());
             if (info != null) {
                 info.mySourcePath = getPathRelativeToRoot(null, SVNURL.parseURIEncoded(info.mySource), SVNURL.parseURIEncoded(rootURL), null, null);
+                info.mySourceRelativePath = getPathRelativeToSession(SVNURL.parseURIEncoded(info.mySource), topURL, null);
                 pathsMap.put(url, info);
             }
             
@@ -1614,7 +1615,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                 }
             } else {
                 if (myIsMove) {
-                    if (commitPath.equals(pathInfo.mySourcePath)) {
+                    if (commitPath.equals(pathInfo.mySourceRelativePath)) {
                         doDelete = true;
                     } else {
                         doAdd = true;
@@ -1648,6 +1649,7 @@ public class SVNCopyDriver extends SVNBasicClient {
     }
 
     private static class CopyPathInfo {
+        public String mySourceRelativePath;
         public boolean isDirAdded;
         public boolean isResurrection;
 
