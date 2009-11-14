@@ -611,10 +611,10 @@ public class SVNBasicClient implements ISVNEventHandler {
     			throw svne;
     		}
     	}
-    	
+    	String rootRelativePath = getPathRelativeToRoot(null, repository.getLocation(), repository.getRepositoryRoot(false), null, repository);
     	Map targetMergeInfo = null;
     	if (reposMergeInfo != null) {
-    		SVNMergeInfo mergeInfo = (SVNMergeInfo) reposMergeInfo.get(path);
+    		SVNMergeInfo mergeInfo = (SVNMergeInfo) reposMergeInfo.get(rootRelativePath);
     		if (mergeInfo != null) {
     			targetMergeInfo = mergeInfo.getMergeSourcesToMergeLists();
     		}

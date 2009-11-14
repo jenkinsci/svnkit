@@ -331,8 +331,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             paths.set(i, url);
             CopyPathInfo info = (CopyPathInfo) pathsMap.remove(svnURL.toString());
             if (info != null) {
-                info.mySourcePath = SVNURL.parseURIEncoded(info.mySource).getPath();
-                info.mySourcePath = SVNPathUtil.getPathAsChild(topURL.getPath(), info.mySourcePath);
+                info.mySourcePath = getPathRelativeToRoot(null, SVNURL.parseURIEncoded(info.mySource), SVNURL.parseURIEncoded(rootURL), null, null);
                 pathsMap.put(url, info);
             }
             
@@ -1572,7 +1571,6 @@ public class SVNCopyDriver extends SVNBasicClient {
                         repos.setLocation(url, false);
                         mergeInfoPath = "";
                     }
-                    // XXX
                     targetMergeInfo = getReposMergeInfo(repos, mergeInfoPath, srcRevision,
                     		SVNMergeInfoInheritance.INHERITED, true);
                 } finally {
