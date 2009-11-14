@@ -189,24 +189,29 @@ public class SVNCopyDriver extends SVNBasicClient {
         List newDirs = new ArrayList();
         SVNURL oldLocation = null;
         if (makeParents) {
-            oldLocation = nonTopRepos.getLocation();
             CopyPair pair = (CopyPair) copyPairs.get(0);
-            nonTopRepos.setLocation(SVNURL.parseURIEncoded(pair.myDst).removePathTail(), false);
-            SVNNodeKind kind = nonTopRepos.checkPath("", -1);
-            while (kind == SVNNodeKind.NONE) {
-                newDirs.add(nonTopRepos.getLocation().toString());
-                nonTopRepos.setLocation(nonTopRepos.getLocation().removePathTail(), false);
-                kind = nonTopRepos.checkPath("", -1);
+            if (!pair.myDst.equals(rootURL)) {
+                oldLocation = nonTopRepos.getLocation();
+                nonTopRepos.setLocation(SVNURL.parseURIEncoded(pair.myDst).removePathTail(), false);
+                SVNNodeKind kind = nonTopRepos.checkPath("", -1);
+                while (kind == SVNNodeKind.NONE) {
+                    newDirs.add(nonTopRepos.getLocation().toString());
+                    nonTopRepos.setLocation(nonTopRepos.getLocation().removePathTail(), false);
+                    kind = nonTopRepos.checkPath("", -1);
+                }
             }
         } else if (Boolean.getBoolean("svnkit.compatibleHash")) {            
             // XXX: hack for tests to generate error message tests will like.
-            oldLocation = nonTopRepos.getLocation();
+            // do not check paths above repository root.
             CopyPair pair = (CopyPair) copyPairs.get(0);
-            nonTopRepos.setLocation(SVNURL.parseURIEncoded(pair.myDst).removePathTail(), false);
-            SVNNodeKind kind = nonTopRepos.checkPath("", -1);
-            if (kind == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' path not found", nonTopRepos.getLocation());
-                SVNErrorManager.error(err, SVNLogType.WC);
+            if (!pair.myDst.equals(rootURL)) {
+                oldLocation = nonTopRepos.getLocation();
+                nonTopRepos.setLocation(SVNURL.parseURIEncoded(pair.myDst).removePathTail(), false);
+                SVNNodeKind kind = nonTopRepos.checkPath("", -1);
+                if (kind == SVNNodeKind.NONE) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' path not found", nonTopRepos.getLocation());
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
             }
         }
         if (oldLocation != null) {
