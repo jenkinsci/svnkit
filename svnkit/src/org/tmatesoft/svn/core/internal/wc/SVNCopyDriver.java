@@ -332,8 +332,10 @@ public class SVNCopyDriver extends SVNBasicClient {
             paths.set(i, url);
             CopyPathInfo info = (CopyPathInfo) pathsMap.remove(svnURL.toString());
             if (info != null) {
-                info.mySourcePath = getPathRelativeToRoot(null, SVNURL.parseURIEncoded(info.mySource), SVNURL.parseURIEncoded(rootURL), null, null);
-                info.mySourceRelativePath = getPathRelativeToSession(SVNURL.parseURIEncoded(info.mySource), topURL, null);
+                if (info.mySource != null) {
+                    info.mySourcePath = getPathRelativeToRoot(null, SVNURL.parseURIEncoded(info.mySource), SVNURL.parseURIEncoded(rootURL), null, null);
+                    info.mySourceRelativePath = getPathRelativeToSession(SVNURL.parseURIEncoded(info.mySource), topURL, null);
+                }
                 pathsMap.put(url, info);
             }
             
