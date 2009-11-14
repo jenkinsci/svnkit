@@ -194,7 +194,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             nonTopRepos.setLocation(SVNURL.parseURIEncoded(pair.myDst).removePathTail(), false);
             SVNNodeKind kind = nonTopRepos.checkPath("", -1);
             while(kind == SVNNodeKind.NONE) {
-                newDirs.add(nonTopRepos.getLocation());
+                newDirs.add(nonTopRepos.getLocation().toString());
                 nonTopRepos.setLocation(nonTopRepos.getLocation().removePathTail(), false);
                 kind = nonTopRepos.checkPath("", -1);
             }
@@ -256,8 +256,9 @@ public class SVNCopyDriver extends SVNBasicClient {
         List commitItems = new ArrayList(copyPairs.size() * 2);
         if (makeParents) {
             for (Iterator newDirsIter = newDirs.iterator(); newDirsIter.hasNext();) {
-                SVNURL itemURL = (SVNURL) newDirsIter.next();
-                SVNCommitItem item = new SVNCommitItem(null, itemURL, null, SVNNodeKind.NONE, null, null, true, false, false, false, false, false);
+                String itemURL = (String) newDirsIter.next();
+                SVNCommitItem item = new SVNCommitItem(null, 
+                        SVNURL.parseURIEncoded(itemURL), null, SVNNodeKind.NONE, null, null, true, false, false, false, false, false);
                 commitItems.add(item);
             }
         }
