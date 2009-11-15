@@ -51,6 +51,11 @@ public class FSEmptyRepresentationCacheManager implements IFSRepresentationCache
      * @throws SVNException
      */
     public void runWriteTransaction(IFSSqlJetTransaction transaction) throws SVNException {
+        transaction.run();
+    }
+
+    public void runReadTransaction(IFSSqlJetTransaction transaction) throws SVNException {
+        transaction.run();
     }
 
 }

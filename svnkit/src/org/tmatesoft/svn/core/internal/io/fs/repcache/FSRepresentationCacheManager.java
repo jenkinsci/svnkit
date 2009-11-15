@@ -211,4 +211,23 @@ public class FSRepresentationCacheManager implements IFSRepresentationCacheManag
             }
         }
     }
+
+    public void runReadTransaction(final IFSSqlJetTransaction transaction) throws SVNException {
+        if (myRepCacheDB != null) {
+            try {
+                myRepCacheDB.runReadTransaction(new ISqlJetTransaction() {
+                    public Object run(SqlJetDb db) throws SqlJetException {
+                        try {
+                            transaction.run();
+                        } catch (SVNException e) {
+                            throw new SqlJetException(e);
+                        }
+                        return null;
+                    }
+                });
+            } catch (SqlJetException e) {
+                SVNErrorManager.error(convertError(e), SVNLogType.FSFS);
+            }
+        }
+    }
 }
