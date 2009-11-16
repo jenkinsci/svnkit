@@ -11,8 +11,6 @@ contrib/maven/maven-ant-tasks-2.0.10.jar -text
 contrib/sequence/SEQUENCE-LICENSE eol=lf
 contrib/servlet-api/servlet-api-2.3src.zip -text
 contrib/servlet-api/servlet-api.jar -text
-contrib/sqljet/SQLJET-LICENSE -text
-contrib/sqljet/SQLJET-README.txt -text
 contrib/sqljet/antlr-runtime-3.1.3.jar -text
 contrib/sqljet/sqljet.jar -text
 contrib/sqljet/sqljet.src.zip -text
