@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -26,6 +27,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
+import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -409,15 +411,23 @@ public class SVNWCAccess implements ISVNEventHandler {
     }
     
     private void doClose(Map adminAreas, boolean preserveLocks) throws SVNException {
-        for (Iterator paths = adminAreas.keySet().iterator(); paths.hasNext();) {
-            File path = (File) paths.next();
-            SVNAdminArea adminArea = (SVNAdminArea) adminAreas.get(path);
-            if (adminArea == null) {
-                paths.remove();
-                continue;
+        Set closedAreas = new SVNHashSet();
+        try {
+            for (Iterator paths = adminAreas.keySet().iterator(); paths.hasNext();) {
+                File path = (File) paths.next();
+                SVNAdminArea adminArea = (SVNAdminArea) adminAreas.get(path);
+                if (adminArea == null) {
+                    closedAreas.add(path);
+                    continue;
+                }
+                doClose(adminArea, preserveLocks);
+                closedAreas.add(path);
             }
-            doClose(adminArea, preserveLocks);
-            paths.remove();
+        } finally {
+            for (Iterator paths = closedAreas.iterator(); paths.hasNext();) {
+                File path = (File) paths.next();
+                adminAreas.remove(path);
+            }
         }
     }
 
