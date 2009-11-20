@@ -1,5 +1,5 @@
 Version 1.0.1
-(17 Nov 2009, from /branches/1.0.x)
+(20 Nov 2009, from /branches/1.0.x)
 
 Repository: http://svn.sqljet.com/repos/sqljet/tags/1.0.1/
 Issues Tracker: http://code.google.com/p/sqljet/issues/list
@@ -19,6 +19,7 @@ Issues Tracker: http://code.google.com/p/sqljet/issues/list
   * Fields size was stored in db schema as x.x (float numbers), fixed (-r637)
   * NPE in SqlJetMemPage.clearCell fixed (issue #112) (-r649)
   * Problems using case mismatching names of tables and indices fixed (-r674, 679, 700)
+  * Table and indices names with '$' was not supported, fixed (issue #116) (-r765) 
   * Number of concurrency issues fixed.
 
 Version 1.0.0
