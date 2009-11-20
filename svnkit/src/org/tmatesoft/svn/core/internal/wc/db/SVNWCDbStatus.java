@@ -40,4 +40,21 @@ public class SVNWCDbStatus {
     public String toString() {
         return myName;
     }
+    
+    public static SVNWCDbStatus parseStatus(String presence) {
+        if (NORMAL.myName.equals(presence)) {
+            return NORMAL;
+        } else if (ABSENT.myName.equals(presence)) {
+            return ABSENT;
+        } else if (EXCLUDED.myName.equals(presence)) {
+            return EXCLUDED;
+        } else if (NOT_PRESENT.myName.equals(presence)) {
+            return NOT_PRESENT;
+        } else if (INCOMPLETE.myName.equals(presence)) {
+            return INCOMPLETE;
+        } else if (BASE_DELETED.myName.equals(presence)) {
+            return BASE_DELETED;
+        }
+        return null;
+    }
 }
