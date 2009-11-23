@@ -510,6 +510,25 @@ public class SVNPropertiesManager {
         }
     }
 
+    public static String determineEncodingByMimeType(String mimeType) {
+        if (!SVNProperty.isTextMimeType(mimeType)) {
+            return null;
+        }
+        for (StringTokenizer tokenizer = new StringTokenizer(mimeType, ";", false); tokenizer.hasMoreTokens();) {
+            String token = tokenizer.nextToken();
+            token = token.trim();
+            if (!token.startsWith("charset")) {
+                continue;
+            }
+            token = token.substring("charset".length()).trim();
+            if (!token.startsWith("=")) {
+                continue;
+            }
+            return token.substring("=".length()).trim();
+        }
+        return null;
+    }
+
     public static void validateEOLProperty(String path, ISVNFileContentFetcher fetcher) throws SVNException {
         SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
 

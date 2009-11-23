@@ -11,29 +11,30 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.File;
-import java.io.OutputStream;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
+import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
+
+import java.io.File;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 
 /**
+ * @author TMate Software Ltd.
  * @version 1.3
- * @author  TMate Software Ltd.
  */
 public class SVNDiffCallback extends AbstractDiffCallback {
-    
+
     private ISVNDiffGenerator myGenerator;
     private OutputStream myResult;
     private long myRevision2;
     private long myRevision1;
-    
+
     private static final SVNStatusType[] EMPTY_STATUS = {SVNStatusType.UNKNOWN, SVNStatusType.UNKNOWN};
 
     public SVNDiffCallback(SVNAdminArea adminArea, ISVNDiffGenerator generator, long rev1, long rev2, OutputStream result) {
@@ -51,7 +52,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     public boolean isDiffUnversioned() {
         return myGenerator.isDiffUnversioned();
     }
-    
+
     public boolean isDiffCopiedAsAdded() {
         return myGenerator.isDiffCopied();
     }
@@ -82,7 +83,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return EMPTY_STATUS;
     }
 
-    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1, 
+    public SVNStatusType[] fileChanged(String path, File file1, File file2, long revision1, long revision2, String mimeType1,
             String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
         if (file1 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, diff);
@@ -97,7 +98,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return EMPTY_STATUS;
     }
 
-    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties, 
+    public SVNStatusType fileDeleted(String path, File file1, File file2, String mimeType1, String mimeType2, SVNProperties originalProperties,
             boolean[] isTreeConflicted) throws SVNException {
         if (file1 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, null);
@@ -120,7 +121,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         myGenerator.displayPropDiff(getDisplayPath(path), originalProperties, regularDiff, myResult);
         return SVNStatusType.UNKNOWN;
     }
-    
+
     private String getRevision(long revision) {
         if (revision >= 0) {
             return "(revision " + revision + ")";
@@ -131,20 +132,36 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     private boolean defineEncoding(SVNProperties properties, SVNProperties diff) {
         if (myGenerator instanceof DefaultSVNDiffGenerator) {
             DefaultSVNDiffGenerator defaultGenerator = (DefaultSVNDiffGenerator) myGenerator;
+            if (defaultGenerator.hasEncoding()) {
+                return true;
+            }
             if (!defaultGenerator.hasEncoding()) {
-                boolean hasOriginCharset = properties  == null ? false : properties.containsName(SVNProperty.CHARSET);
                 String originCharset = properties == null ? null : properties.getStringValue(SVNProperty.CHARSET);
-                boolean hasChangedCharset = diff == null ? false : diff.containsName(SVNProperty.CHARSET);
+                if (originCharset != null) {
+                    defaultGenerator.setEncoding("UTF-8");
+                    return false;
+                }
+
                 String changedCharset = diff == null ? null : diff.getStringValue(SVNProperty.CHARSET);
-                if (hasOriginCharset || (hasChangedCharset && changedCharset != null)) {
-                    if (originCharset != null) {
-                        defaultGenerator.setEncoding("UTF-8");
-                        return false;
-                    }
-                    if (changedCharset != null) {
-                        defaultGenerator.setEncoding("UTF-8");
-                        return false;
-                    }
+                if (changedCharset != null) {
+                    defaultGenerator.setEncoding("UTF-8");
+                    return false;
+                }
+
+                String originMimeType = properties == null ? null : properties.getStringValue(SVNProperty.MIME_TYPE);
+                String originEncoding = SVNPropertiesManager.determineEncodingByMimeType(originMimeType);
+                boolean originEncodingSupported = originEncoding != null && Charset.isSupported(originEncoding);
+                if (originEncodingSupported) {
+                    defaultGenerator.setEncoding(originEncoding);
+                    return false;
+                }
+
+                String changedMimeType = diff == null ? null : diff.getStringValue(SVNProperty.MIME_TYPE);
+                String changedEncoding = SVNPropertiesManager.determineEncodingByMimeType(changedMimeType);
+                boolean changedEncodingSupported = changedEncoding != null && Charset.isSupported(changedEncoding);
+                if (changedEncodingSupported) {
+                    defaultGenerator.setEncoding(changedEncoding);
+                    return false;
                 }
             }
         }
