@@ -247,89 +247,32 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     public SVNWorkingCopyDB17() {
     }
     
-    public void readInfo(File path, SVNWCDbLock lock, Map entryAttrs, SVNWCDbStatus[] status) throws SVNException {
+    public void readInfo(File path, SVNWCDbLock lock, Map entryAttrs, SVNWCDbStatus[] status, SVNWCDbKind[] kind) throws SVNException {
         SVNPristineDirectory[] pristineDir = new SVNPristineDirectory[1];
         String localRelPath = parseLocalAbsPath(path, pristineDir, SqlJetTransactionMode.READ_ONLY);
         verifyPristineDirectoryIsUsable(pristineDir[0]);
         SVNWCRoot wcRoot = pristineDir[0].getWCRoot();
-        boolean haveBase = false;
-        boolean haveWorking = false;
-        boolean haveActual = false;
-        Map baseNodeResult = null;
-        Map workingNodeResult = null;
-        Map actualNodeResult = null;
         SqlJetDb sdb = wcRoot.getStorage();
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            try {
-                ISqlJetTable baseNodeTable = sdb.getTable(BASE_NODE_TABLE);
-                ISqlJetCursor baseNodeCursor = baseNodeTable.lookup(baseNodeTable.getPrimaryKeyIndexName(), wcRoot.getWCId(), localRelPath);
-                try {
-                    haveBase = !baseNodeCursor.eof();
-                    if (haveBase) {
-                        baseNodeResult = new HashMap();
-                        for(String field : SELECT_BASE_NODE_FIELDS) {
-                            baseNodeResult.put(field, baseNodeCursor.getValue(field));
-                        }            
-                    } else {
-                        baseNodeResult = Collections.EMPTY_MAP; 
-                    }
-                } finally {
-                    baseNodeCursor.close();
-                }
-                
-                if (!baseNodeResult.isEmpty() && lock != null) {
-                    ISqlJetTable lockTable = sdb.getTable(LOCK_TABLE);
-                    ISqlJetCursor lockCursor = lockTable.lookup(lockTable.getPrimaryKeyIndexName(), baseNodeResult.get("repos_id"), baseNodeResult.get("repos_relpath"));
-                    try {
-                        if (!lockCursor.eof()) {
-                            for (String field : SELECT_LOCK_FIELDS) {
-                                baseNodeResult.put(field, lockCursor.getValue(field));
-                            }
-                        }
-                    } finally {
-                        lockCursor.close();
-                    }
-                }
-                
-                ISqlJetTable workingNodeTable = sdb.getTable(WORKING_NODE_TABLE);
-                ISqlJetCursor workingNodeCursor = workingNodeTable.lookup(workingNodeTable.getPrimaryKeyIndexName(), wcRoot.getWCId(), localRelPath);
-                try {
-                    haveWorking = !workingNodeCursor.eof();
-                    if (haveWorking) {
-                        workingNodeResult = new HashMap();
-                        for (String field : SELECT_WORKING_NODE_FIELDS) {
-                            workingNodeResult.put(field, workingNodeCursor.getValue(field));
-                        }
-                    } else {
-                        workingNodeResult = Collections.EMPTY_MAP;
-                    }
-                } finally {
-                    workingNodeCursor.close();
-                }
-                
-                ISqlJetTable actualNodeTable = sdb.getTable(ACTUAL_NODE_TABLE);
-                ISqlJetCursor actualNodeCursor = actualNodeTable.lookup(actualNodeTable.getPrimaryKeyIndexName(), wcRoot.getWCId(), localRelPath);
-                try {
-                    haveActual = !actualNodeCursor.eof();
-                    if (haveActual) {
-                        actualNodeResult = new HashMap();
-                        for (String field : SELECT_ACTUAL_NODE_FIELDS) {
-                            actualNodeResult.put(field, actualNodeCursor.getValue(field));
-                        }
-                    } else {
-                        actualNodeResult = Collections.EMPTY_MAP;
-                    }
-                } finally {
-                    actualNodeCursor.close();
-                }
-            } finally {
-                sdb.commit();
-            }    
-        } catch (SqlJetException e) {
-            SVNSqlJetUtil.convertException(e);
+        Map baseNodeResult = selectBaseNode(sdb, wcRoot.getWCId(), localRelPath);
+        if (!baseNodeResult.isEmpty() && lock != null) {
+            baseNodeResult = selectLockForBase(sdb, baseNodeResult);
         }
+        Map workingNodeResult = selectWorkingNode(sdb, wcRoot.getWCId(), localRelPath);
+        Map actualNodeResult = selectActualNode(sdb, wcRoot.getWCId(), localRelPath);
+
+        boolean haveBase = !baseNodeResult.isEmpty();
+        boolean haveWorking = !workingNodeResult.isEmpty();
+        boolean haveActual = !actualNodeResult.isEmpty();
         
+        String reposRootURL = null;
+        String reposUUID = null;
+        long revision = SVNRepository.INVALID_REVISION;
+        long changedRevision = SVNRepository.INVALID_REVISION;
+        long changedDateMillis = -1;
+        long lastModTimeMillis = -1;
+        String reposRelPath = null;
+        String changedAuthor = null;
+        SVNDepth depth = null;
         if (haveBase || haveWorking) {
             SVNWCDbKind nodeKind = null;
             String kindStr = null;
@@ -345,15 +288,105 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     String statusStr = (String) baseNodeResult.get("presence");
                     status[0] = SVNWCDbStatus.parseStatus(statusStr);
                     
-//                    if ((status[0] == SVNWCDbStatus.ABSENT || status[0] == SVNWCDbStatus.EXCLUDED) &&) {
-                        
-//                    }
+                    if ((status[0] == SVNWCDbStatus.ABSENT || status[0] == SVNWCDbStatus.EXCLUDED) && haveWorking) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.readInfo()");
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
                     
                     if (nodeKind == SVNWCDbKind.SUBDIR && status[0] == SVNWCDbStatus.NORMAL) {
-                        
+                        status[0] = SVNWCDbStatus.OBSTRUCTED;
                     }
                 }
-               
+                
+                if (haveWorking) {
+                    String statusStr = (String) workingNodeResult.get("presence");
+                    SVNWCDbStatus workStatus = SVNWCDbStatus.parseStatus(statusStr);
+                    if (workStatus != SVNWCDbStatus.NORMAL && workStatus != SVNWCDbStatus.NOT_PRESENT && workStatus != SVNWCDbStatus.BASE_DELETED && 
+                            workStatus != SVNWCDbStatus.INCOMPLETE) {
+                        if (workStatus == SVNWCDbStatus.INCOMPLETE) {
+                            status[0] = SVNWCDbStatus.INCOMPLETE;
+                        } else if (workStatus == SVNWCDbStatus.NOT_PRESENT || workStatus == SVNWCDbStatus.BASE_DELETED) {
+                            if (nodeKind == SVNWCDbKind.SUBDIR) {
+                                status[0] = SVNWCDbStatus.OBSTRUCTED_DELETE;
+                            } else {
+                                status[0] = SVNWCDbStatus.DELETED;
+                            }
+                        } else {
+                            if (nodeKind == SVNWCDbKind.SUBDIR) {
+                                status[0] = SVNWCDbStatus.OBSTRUCTED_ADD;
+                            } else {
+                                status[0] = SVNWCDbStatus.ADDED;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (kind != null) {
+                if (nodeKind == SVNWCDbKind.SUBDIR) {
+                    kind[0] = SVNWCDbKind.DIR;
+                } else {
+                    kind[0] = nodeKind;
+                }
+            }
+            
+            //revision
+            if (!haveWorking) {
+                revision = (Long) baseNodeResult.get("revnum");
+            }
+            
+            //repository relative path
+            if (!haveWorking) {
+                reposRelPath = (String) baseNodeResult.get("repos_relpath");
+            }
+            
+            //repository root url, repository uuid
+            Long reposId = (Long) baseNodeResult.get("repos_id");
+            if (!haveWorking && reposId != null) {
+                RepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
+                reposRootURL = reposInfo.myRoot;
+                reposUUID = reposInfo.myUUID;
+            }
+        
+            //changed revision
+            if (haveWorking) {
+                changedRevision = (Long) workingNodeResult.get("changed_rev");
+            } else {
+                changedRevision = (Long) baseNodeResult.get("changed_rev");
+            }
+            
+            //changed date
+            if (haveWorking) {
+                changedDateMillis = (Long) workingNodeResult.get("changed_date");
+            } else {
+                changedDateMillis = (Long) baseNodeResult.get("changed_date");
+            }
+            
+            //changed author
+            if (haveWorking) {
+                changedAuthor = (String) workingNodeResult.get("changed_author");
+            } else {
+                changedAuthor = (String) baseNodeResult.get("changed_author");
+            }
+            
+            //last modification time
+            if (haveWorking) {
+                lastModTimeMillis = (Long) workingNodeResult.get("last_mod_time");
+            } else {
+                lastModTimeMillis = (Long) baseNodeResult.get("last_mod_time");
+            }
+            
+            if (nodeKind != SVNWCDbKind.DIR && nodeKind != SVNWCDbKind.SUBDIR) {
+                depth = SVNDepth.UNKNOWN;
+            } else {
+                String depthStr = null;
+                if (haveWorking) {
+                    depthStr = (String) workingNodeResult.get("depth");
+                } else {
+                    depthStr = (String) baseNodeResult.get("depth");
+                }
+                
+                
             }
         }
     }
@@ -805,6 +838,139 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         //TODO: flush entries;
     }
     
+    public RepositoryInfo fetchRepositoryInfo(SqlJetDb sdb, long reposId) throws SVNException {
+        try {
+            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable repositoryTable = sdb.getTable(REPOSITORY_TABLE);
+                ISqlJetCursor cursor = repositoryTable.lookup(repositoryTable.getPrimaryKeyIndexName(), reposId);
+                try {
+                    if (!cursor.eof()) {
+                        String root = (String) cursor.getValue("root");
+                        String uuid = (String) cursor.getValue("uuid");
+                        return new RepositoryInfo(root, uuid); 
+                    }
+                } finally {
+                    cursor.close();
+                }
+            } finally {
+                sdb.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return null;
+    }
+    
+    private Map selectActualNode(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
+        Map actualNodeResult = null;
+        try {
+            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable actualNodeTable = sdb.getTable(ACTUAL_NODE_TABLE);
+                ISqlJetCursor actualNodeCursor = actualNodeTable.lookup(actualNodeTable.getPrimaryKeyIndexName(), wcId, localRelPath);
+                try {
+                    if (!actualNodeCursor.eof()) {
+                        actualNodeResult = new HashMap();
+                        for (String field : SELECT_ACTUAL_NODE_FIELDS) {
+                            actualNodeResult.put(field, actualNodeCursor.getValue(field));
+                        }
+                    } else {
+                        actualNodeResult = Collections.EMPTY_MAP;
+                    }
+                } finally {
+                    actualNodeCursor.close();
+                }
+            } finally {
+                sdb.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return actualNodeResult;
+    }
+    
+    private Map selectLockForBase(SqlJetDb sdb, Map baseNodeResult) throws SVNException {
+        try {
+            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable lockTable = sdb.getTable(LOCK_TABLE);
+                ISqlJetCursor lockCursor = lockTable.lookup(lockTable.getPrimaryKeyIndexName(), baseNodeResult.get("repos_id"), 
+                        baseNodeResult.get("repos_relpath"));
+                try {
+                    if (!lockCursor.eof()) {
+                        for (String field : SELECT_LOCK_FIELDS) {
+                            baseNodeResult.put(field, lockCursor.getValue(field));
+                        }
+                    }
+                } finally {
+                    lockCursor.close();
+                }
+            } finally {
+                sdb.commit();
+            }
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }        
+        return baseNodeResult;
+    }
+    
+    private Map selectBaseNode(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
+        Map baseNodeResult = null;
+        try {
+            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable baseNodeTable = sdb.getTable(BASE_NODE_TABLE);
+                ISqlJetCursor baseNodeCursor = baseNodeTable.lookup(baseNodeTable.getPrimaryKeyIndexName(), wcId, localRelPath);
+                try {
+                    if (!baseNodeCursor.eof()) {
+                        baseNodeResult = new HashMap();
+                        for(String field : SELECT_BASE_NODE_FIELDS) {
+                            baseNodeResult.put(field, baseNodeCursor.getValue(field));
+                        }            
+                    } else {
+                        baseNodeResult = Collections.EMPTY_MAP; 
+                    }
+                } finally {
+                    baseNodeCursor.close();
+                }
+            } finally {
+                sdb.commit();
+            }
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }        
+        return baseNodeResult;
+    }
+    
+    private Map selectWorkingNode(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
+        Map workingNodeResult = null;
+        try {
+            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable workingNodeTable = sdb.getTable(WORKING_NODE_TABLE);
+                ISqlJetCursor workingNodeCursor = workingNodeTable.lookup(workingNodeTable.getPrimaryKeyIndexName(), wcId, localRelPath);
+                try {
+                    if (!workingNodeCursor.eof()) {
+                        workingNodeResult = new HashMap();
+                        for (String field : SELECT_WORKING_NODE_FIELDS) {
+                            workingNodeResult.put(field, workingNodeCursor.getValue(field));
+                        }
+                    } else {
+                        workingNodeResult = Collections.EMPTY_MAP;
+                    }
+                } finally {
+                    workingNodeCursor.close();
+                }
+            } finally {
+                sdb.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return workingNodeResult;
+    }
+    
     private Collection selectChildrenUsingWCIdAndParentRelPath(String tableName, String cursorName, long wcId, String parentRelPath, SqlJetDb db, Collection childNames) throws SVNException {
         childNames = childNames == null ? new HashSet() : childNames;
         try {
@@ -821,7 +987,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 } finally {
                     cursor.close();
                 }
-                
             } finally {
                 db.commit();
             }    
@@ -1152,4 +1317,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         pathsToPristineDirs.put(path, dir);
     }
 
+    private static class RepositoryInfo {
+        private String myRoot;
+        private String myUUID;
+        public RepositoryInfo(String root, String uuid) {
+            myRoot = root;
+            myUUID = uuid;
+        }
+        
+    }
 }
