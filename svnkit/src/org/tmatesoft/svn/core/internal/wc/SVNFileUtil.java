@@ -81,6 +81,8 @@ public class SVNFileUtil {
 
     public static final int STREAM_CHUNK_SIZE = 16384;
 
+    public static final int FILE_CREATION_ATTEMPTS_COUNT = 10;
+
     public final static OutputStream DUMMY_OUT = new OutputStream() {
 
         public void write(int b) throws IOException {
@@ -302,15 +304,20 @@ public class SVNFileUtil {
     public static void createEmptyFile(File file) throws SVNException {
         boolean created;
         if (file != null && file.getParentFile() != null && !file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
+            File parentDir = file.getParentFile();
+            boolean parentCreated = parentDir.mkdirs();
+            if (!parentCreated) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new directory ''{0}''", parentDir);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
         }
         
         IOException ioError = null;
         try {
-            created = file != null ? file.createNewFile() : false;
-        } catch (IOException e) {
+            created = createNewFile(file);
+        } catch (IOException ioe) {
             created = false;
-            ioError = e;
+            ioError = ioe;
         }
         if (!created) {
             SVNErrorMessage err = null;
@@ -322,6 +329,27 @@ public class SVNFileUtil {
             }
             SVNErrorManager.error(err, ioError != null ? ioError : new Exception(), Level.FINE, SVNLogType.WC);
         }
+    }
+
+    public static boolean createNewFile(File file) throws IOException {
+        if (file == null) {
+            return false;
+        }
+        boolean created = false;
+        int count = FILE_CREATION_ATTEMPTS_COUNT;
+
+        while (!created && (count > 0)) {
+            created = file.createNewFile();
+            if (!created) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ie) {
+                    SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
+                }
+            }
+            count--;
+        }
+        return created;
     }
 
     /**
