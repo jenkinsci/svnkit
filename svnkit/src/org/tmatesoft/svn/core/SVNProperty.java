@@ -428,6 +428,18 @@ public class SVNProperty {
     }
 
     /**
+     * Says if the given property name starts with the {@link #SVNKIT_PREFIX}.
+     *
+     * @param name a property name to check
+     * @return <span class="javakeyword">true</span> if <code>name</code> is
+     *         not <span class="javakeyword">null</span> and starts with the
+     * {@link #SVNKIT_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
+     */
+    public static boolean isSVNKitProperty(String name) {
+        return name != null && name.startsWith(SVNKIT_PREFIX);
+    }
+
+    /**
      * Checks if a property is regular. 
      * 
      * <p/>
