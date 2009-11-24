@@ -167,8 +167,10 @@ public class SVNPropertiesManager {
                     InputStream is = SVNFileUtil.openFileForReading(path, SVNLogType.WC);
                     try {
                         SVNTranslator.copy(is, os);
+                    } catch (IOExceptionWrapper ioew) {
+                        throw ioew.getOriginalException();
                     } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), SVNLogType.DEFAULT);
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e, SVNLogType.DEFAULT);
                     } finally {
                         SVNFileUtil.closeFile(is);
                     }
@@ -539,11 +541,13 @@ public class SVNPropertiesManager {
             fetcher.fetchFileContent(out);
         } catch (SVNException e) {
             handleInconsistentEOL(e, path);
+            throw e;
         } finally {
             try {
                 out.close();
             } catch (IOExceptionWrapper wrapper) {
                 handleInconsistentEOL(wrapper.getOriginalException(), path);
+                throw wrapper.getOriginalException();
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.DEFAULT);
             }
@@ -556,11 +560,23 @@ public class SVNPropertiesManager {
     }
 
     private static void handleInconsistentEOL(SVNException svne, String path) throws SVNException {
-        if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
+        SVNErrorMessage errorMessage = svne.getErrorMessage();
+        while (errorMessage != null && errorMessage.getErrorCode() != SVNErrorCode.IO_INCONSISTENT_EOL) {
+            errorMessage = errorMessage.getChildErrorMessage();
+        }
+        if (errorMessage != null && errorMessage.getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has inconsistent newlines", path);
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
-        } else {
-            throw svne;
+        }
+        Throwable cause = svne.getCause();
+        if (cause == null) {
+            return;
+        }
+        if (cause instanceof SVNException) {
+            handleInconsistentEOL((SVNException) cause, path);
+        } else if (cause instanceof IOExceptionWrapper) {
+            IOExceptionWrapper wrapper = (IOExceptionWrapper) cause;
+            handleInconsistentEOL(wrapper.getOriginalException(), path);
         }
     }
 }
