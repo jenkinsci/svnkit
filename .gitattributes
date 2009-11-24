@@ -86,6 +86,7 @@ svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/IFSRepresentationCacheManager.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$1$1.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$1.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$2.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/io/fs/repcache/FSRepresentationCacheManager$3.class -text
