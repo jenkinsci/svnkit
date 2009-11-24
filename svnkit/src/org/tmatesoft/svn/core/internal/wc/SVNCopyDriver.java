@@ -535,11 +535,22 @@ public class SVNCopyDriver extends SVNBasicClient {
             if (srcIsURL == dstIsURL) {
                 for (Iterator ps = pairs.iterator(); ps.hasNext();) {
                     CopyPair pair = (CopyPair) ps.next();
-                    File srcPath = new File(pair.mySource);
-                    File dstPath = new File(pair.myDst);
-                    if (srcPath.equals(dstPath)) {
+                    boolean same;
+                    Object p;
+                    if (!srcIsURL) {
+                        File srcPath = new File(pair.mySource);
+                        File dstPath = new File(pair.myDst);
+                        same = srcPath.equals(dstPath);
+                        p = srcPath;
+                    } else {
+                        SVNURL srcURL = SVNURL.parseURIEncoded(pair.mySource);
+                        SVNURL dstURL = SVNURL.parseURIEncoded(pair.myDst);
+                        same = srcURL.getPath().equals(dstURL.getPath());
+                        p = srcURL;
+                    }
+                    if (same) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                                "Cannot move path ''{0}'' into itself", srcPath);
+                                "Cannot move path ''{0}'' into itself", p);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }
