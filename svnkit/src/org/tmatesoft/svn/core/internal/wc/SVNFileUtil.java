@@ -81,7 +81,7 @@ public class SVNFileUtil {
 
     public static final int STREAM_CHUNK_SIZE = 16384;
 
-    public static final int FILE_CREATION_ATTEMPTS_COUNT = 10;
+    public static final int FILE_CREATION_ATTEMPTS_COUNT = 11;
 
     public final static OutputStream DUMMY_OUT = new OutputStream() {
 
@@ -336,7 +336,7 @@ public class SVNFileUtil {
             return false;
         }
         boolean created = false;
-        int count = FILE_CREATION_ATTEMPTS_COUNT;
+        int count = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
 
         while (!created && (count > 0)) {
             created = file.createNewFile();
@@ -1361,7 +1361,7 @@ public class SVNFileUtil {
     }
     
     public static FileOutputStream createFileOutputStream(File file, boolean append) throws IOException {
-        int retryCount = SVNFileUtil.isWindows ? 11 : 1;
+        int retryCount = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
         FileOutputStream os = null;
         for (int i = 0; i < retryCount; i++) {
             try {
