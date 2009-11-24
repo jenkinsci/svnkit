@@ -511,6 +511,9 @@ public class SVNPropertiesManager {
     }
 
     public static String determineEncodingByMimeType(String mimeType) {
+        if (mimeType == null) {
+            return null;
+        }
         if (!SVNProperty.isTextMimeType(mimeType)) {
             return null;
         }
