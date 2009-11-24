@@ -21,7 +21,7 @@ We expect next version of Trilead library (build 214) to be compatible with SVNK
 
 3) SQLJet
 
-SQLJet library, version 1.0.1.b774 (1.0.1 RC3).
+SQLJet library, version 1.0.1.b789 (1.0.1).
 
 License: GNU GPL with double licensing option (contact support@sqljet.com).
 Note: SQLJet is an optional component for enabling representation cache feature when working with local 1.6 Subversion repositories. 
