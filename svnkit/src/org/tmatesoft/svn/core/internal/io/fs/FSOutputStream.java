@@ -215,12 +215,12 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             return;
         }
         myIsClosed = true;
-        long truncateToSize = -1;
+        final long truncateToSize[] = new long[] {-1};
         try {
             ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.toByteArray());
             myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
 
-            FSRepresentation rep = new FSRepresentation();
+            final FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
 
             long offset = myTargetFileOS.getPosition();
@@ -236,19 +236,22 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setMD5HexDigest(SVNFileUtil.toHexDigest(myMD5Digest));
             rep.setSHA1HexDigest(SVNFileUtil.toHexDigest(mySHA1Digest));
             
-            FSRepresentation oldRepresentation = null;
             FSFS fsfs = myTxnRoot.getOwner();
-            IFSRepresentationCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
+            final IFSRepresentationCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
             if (reposCacheManager != null) {
-                oldRepresentation = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
-            }
-            
-            if (oldRepresentation != null) {
-                oldRepresentation.setUniquifier(rep.getUniquifier());
-                oldRepresentation.setMD5HexDigest(rep.getMD5HexDigest());
-                truncateToSize = myRepOffset;
-                myRevNode.setTextRepresentation(oldRepresentation);
-            } else {
+                reposCacheManager.runReadTransaction(new IFSSqlJetTransaction() {
+                    public void run() throws SVNException {
+                        FSRepresentation oldRep = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
+                        if (oldRep != null) {
+                            oldRep.setUniquifier(rep.getUniquifier());
+                            oldRep.setMD5HexDigest(rep.getMD5HexDigest());
+                            truncateToSize[0] = myRepOffset;
+                            myRevNode.setTextRepresentation(oldRep);
+                        }
+                    }
+                });
+            } 
+            if (truncateToSize[0] < 0){
                 myTargetFileOS.write("ENDREP\n".getBytes("UTF-8"));
                 myRevNode.setTextRepresentation(rep);
             }
@@ -257,7 +260,7 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         } catch (SVNException svne) {
             throw new IOException(svne.getMessage());
         } finally {
-            closeStreams(truncateToSize);
+            closeStreams(truncateToSize[0]);
             try {
                 myTxnLock.unlock();
             } catch (SVNException e) {

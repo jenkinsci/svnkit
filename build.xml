@@ -224,6 +224,7 @@
                 <include name="contrib/sequence/SEQUENCE-LICENSE" />
                 <include name="contrib/trilead/TRILEAD-LICENSE" />
                 <include name="contrib/sqljet/SQLJET-LICENSE" />
+                <include name="contrib/sqljet/ANTLR-LICENSE" />
                 <include name="contrib/sqljet/SQLJET-README.txt" />
             </fileset>
         </copy>
@@ -361,6 +362,7 @@
                 <include name="TRILEAD-LICENSE" />
                 <include name="SEQUENCE-LICENSE" />
                 <include name="JAVAHL-LICENSE" />
+                <include name="ANTLR-LICENSE" />
                 <include name="SQLJET-LICENSE" />
                 <include name="SQLJET-README.txt" />
             </fileset>

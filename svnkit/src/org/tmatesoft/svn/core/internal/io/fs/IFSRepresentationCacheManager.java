@@ -23,6 +23,8 @@ public interface IFSRepresentationCacheManager {
     public void insert(final FSRepresentation representation, boolean rejectDup) throws SVNException;
 
     public void runWriteTransaction(IFSSqlJetTransaction transaction) throws SVNException;
+
+    public void runReadTransaction(IFSSqlJetTransaction transaction) throws SVNException;
     
     public FSRepresentation getRepresentationByHash(String hash) throws SVNException;
     
