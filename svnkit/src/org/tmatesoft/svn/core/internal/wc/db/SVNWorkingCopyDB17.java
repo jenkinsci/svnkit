@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -247,7 +248,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     public SVNWorkingCopyDB17() {
     }
     
-    public void readInfo(File path, SVNWCDbLock lock, Map entryAttrs, SVNWCDbStatus[] status, SVNWCDbKind[] kind) throws SVNException {
+    public void readInfo(File path, SVNWCDbLock[] lock, Map entryAttrs, SVNWCDbStatus[] status, SVNWCDbKind[] kind, boolean[] isTextMode, 
+            boolean[] isPropsMode, boolean[] isBaseShadowed, boolean[] isConflicted) throws SVNException {
         SVNPristineDirectory[] pristineDir = new SVNPristineDirectory[1];
         String localRelPath = parseLocalAbsPath(path, pristineDir, SqlJetTransactionMode.READ_ONLY);
         verifyPristineDirectoryIsUsable(pristineDir[0]);
@@ -270,8 +272,16 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         long changedRevision = SVNRepository.INVALID_REVISION;
         long changedDateMillis = -1;
         long lastModTimeMillis = -1;
+        long translatedSize = -1;
+        long originalRevision = SVNRepository.INVALID_REVISION;
         String reposRelPath = null;
         String changedAuthor = null;
+        String checksum = null;
+        String target = null;
+        String changeList = null;
+        String originalReposRelPath = null;
+        String originalRootURL = null;
+        String originalUUID = null;
         SVNDepth depth = null;
         if (haveBase || haveWorking) {
             SVNWCDbKind nodeKind = null;
@@ -330,50 +340,40 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 }
             }
             
-            //revision
-            if (!haveWorking) {
-                revision = (Long) baseNodeResult.get("revnum");
-            }
-            
-            //repository relative path
-            if (!haveWorking) {
-                reposRelPath = (String) baseNodeResult.get("repos_relpath");
-            }
-            
             //repository root url, repository uuid
             Long reposId = (Long) baseNodeResult.get("repos_id");
-            if (!haveWorking && reposId != null) {
-                RepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
-                reposRootURL = reposInfo.myRoot;
-                reposUUID = reposInfo.myUUID;
-            }
-        
-            //changed revision
-            if (haveWorking) {
-                changedRevision = (Long) workingNodeResult.get("changed_rev");
-            } else {
+
+            if (!haveWorking) {
+                //revision
+                revision = (Long) baseNodeResult.get("revnum");
+            
+                //repository relative path
+                reposRelPath = (String) baseNodeResult.get("repos_relpath");
+                
+                if (reposId != null) {
+                    RepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
+                    reposRootURL = reposInfo.myRoot;
+                    reposUUID = reposInfo.myUUID;
+                }
+
                 changedRevision = (Long) baseNodeResult.get("changed_rev");
-            }
-            
-            //changed date
-            if (haveWorking) {
-                changedDateMillis = (Long) workingNodeResult.get("changed_date");
-            } else {
                 changedDateMillis = (Long) baseNodeResult.get("changed_date");
-            }
-            
-            //changed author
-            if (haveWorking) {
-                changedAuthor = (String) workingNodeResult.get("changed_author");
-            } else {
                 changedAuthor = (String) baseNodeResult.get("changed_author");
-            }
-            
-            //last modification time
-            if (haveWorking) {
-                lastModTimeMillis = (Long) workingNodeResult.get("last_mod_time");
-            } else {
                 lastModTimeMillis = (Long) baseNodeResult.get("last_mod_time");
+                
+            } else {
+                changedRevision = (Long) workingNodeResult.get("changed_rev");
+                changedDateMillis = (Long) workingNodeResult.get("changed_date");
+                changedAuthor = (String) workingNodeResult.get("changed_author");
+                lastModTimeMillis = (Long) workingNodeResult.get("last_mod_time");
+                originalReposRelPath = (String) workingNodeResult.get("copyfrom_repos_path");
+                Long copyFromReposIdObj = (Long) workingNodeResult.get("copyfrom_repos_id");
+                if (copyFromReposIdObj != null) {
+                    RepositoryInfo reposInfo = fetchRepositoryInfo(sdb, copyFromReposIdObj.longValue());
+                    originalRootURL = reposInfo.myRoot;
+                    originalUUID = reposInfo.myUUID;
+                }
+                originalRevision = (Long) workingNodeResult.get("copyfrom_revnum");
             }
             
             if (nodeKind != SVNWCDbKind.DIR && nodeKind != SVNWCDbKind.SUBDIR) {
@@ -386,9 +386,97 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     depthStr = (String) baseNodeResult.get("depth");
                 }
                 
-                
+                if (depthStr == null) {
+                    depth = SVNDepth.UNKNOWN;
+                } else {
+                    depth = SVNDepth.fromString(depthStr);
+                }
             }
+            
+            if (nodeKind == SVNWCDbKind.FILE) {
+                if (haveWorking) {
+                    checksum = (String) workingNodeResult.get("checksum");
+                } else {
+                    checksum = (String) baseNodeResult.get("checksum");
+                }
+                
+                //TODO: parse checksum?
+            }
+            
+            Long translatedSizeObj = null;
+            if (haveWorking) {
+                translatedSizeObj = (Long) workingNodeResult.get("translated_size");
+            } else {
+                translatedSizeObj = (Long) baseNodeResult.get("translated_size");
+            }
+
+            if (translatedSizeObj == null) {
+                translatedSize = -1;
+            } else {
+                translatedSize = translatedSizeObj.longValue();
+            }
+
+            if (nodeKind == SVNWCDbKind.SYMLINK) {
+                if (haveWorking) {
+                    target = (String) workingNodeResult.get("symlink_target");
+                } else {
+                    target = (String) baseNodeResult.get("symlink_target");
+                }
+            }
+            
+            if (haveActual) {
+                changeList = (String) actualNodeResult.get("changelist");
+            } 
+            
+            if (isTextMode != null) {
+                //TODO: ?
+                isTextMode[0] = false;
+            }
+            
+            if (isPropsMode != null) {
+                isPropsMode[0] = haveActual && actualNodeResult.get("properties") != null;
+            }
+            
+            if (isBaseShadowed != null) {
+                isBaseShadowed[0] = haveBase && haveWorking;
+            }
+            
+            if (isConflicted != null) {
+                if (haveActual) {
+                    isConflicted[0] = actualNodeResult.get("conflict_old") != null || actualNodeResult.get("conflict_new") != null ||
+                                      actualNodeResult.get("conflict_working") != null || actualNodeResult.get("prop_reject") != null;
+                    
+                } else {
+                    isConflicted[0] = false;
+                }
+            }
+            
+            if (lock != null) {
+                String lockToken = (String) baseNodeResult.get("lock_token");
+                if (lockToken == null) {
+                    lock[0] = null;
+                } else {
+                    String owner = (String) baseNodeResult.get("lock_owner");
+                    String comment = (String) baseNodeResult.get("lock_comment");
+                    Long dateMillis = (Long) baseNodeResult.get("lock_date");
+                    lock[0] = new SVNWCDbLock(lockToken, owner, comment, new Date(dateMillis));
+                }
+            }
+        } else if (haveActual) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Corrupt data for ''{0}''", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
+        
+        if (isConflicted != null && !isConflicted[0]) {
+            
+        }
+    }
+    
+    public SVNTreeConflictDescription readTreeConflict(File path) {
+        return null;
     }
     
     //TODO: temporary API
