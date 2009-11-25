@@ -339,13 +339,26 @@ public class SVNFileUtil {
         int count = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
 
         while (!created && (count > 0)) {
-            created = file.createNewFile();
-            if (!created) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ie) {
-                    SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
+            IOException ioError = null;
+            try {
+                created = file.createNewFile();
+            } catch (IOException e) {
+                ioError = e;
+            }
+            if (ioError != null) {
+                if (count == 1) {
+                    throw ioError;
+                } else {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ie) {
+                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
+                    }
                 }
+            }
+
+            if (ioError == null && !created) {
+                return false;
             }
             count--;
         }
