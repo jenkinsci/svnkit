@@ -56,11 +56,12 @@ public class SVNThreadPool {
         }
 
         Thread thread = new Thread(task);
+        thread.setDaemon(true);
         thread.start();
         return null;
     }
     
-    public void cancell(Object futureObject) {
+    public void cancel(Object futureObject) {
         if (futureObject != null) {
             try {
                 Method cancelMethod = futureObject.getClass().getMethod("cancel", new Class[] { boolean.class });
@@ -112,7 +113,7 @@ public class SVNThreadPool {
                     Method setCorePoolSizeMethod = myExecutorService.getClass().getMethod("setCorePoolSize", new Class[] { int.class });
                     Method setMaximumPoolSize = myExecutorService.getClass().getMethod("setMaximumPoolSize", new Class[] { int.class });
                     if (setCorePoolSizeMethod != null) {
-                        setCorePoolSizeMethod.invoke(myExecutorService, new Object[] { new Integer(10) });
+                        setCorePoolSizeMethod.invoke(myExecutorService, new Object[] { new Integer(2) });
                     }
                     
                     if (setMaximumPoolSize != null) {

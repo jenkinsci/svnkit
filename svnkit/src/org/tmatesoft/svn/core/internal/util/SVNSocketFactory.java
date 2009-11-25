@@ -106,13 +106,16 @@ public class SVNSocketFactory {
         }
 
         SVNSocketConnection socketConnection = new SVNSocketConnection(socket, address, timeout);
-        Object future = ourThreadPool.run(socketConnection);
+//        Object future = ourThreadPool.run(socketConnection);
+        Thread thread = new Thread(socketConnection);
+        thread.setDaemon(true);
+        thread.start();
         
         while (!socketConnection.isSocketConnected()) {
             try {
                 cancel.checkCancelled();
             } catch (SVNCancelException e) {
-                ourThreadPool.cancell(future);
+//                ourThreadPool.cancel(future);
                 throw e;
             }
         }
