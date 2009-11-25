@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
@@ -49,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -471,12 +473,43 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         
         if (isConflicted != null && !isConflicted[0]) {
-            
+            SVNTreeConflictDescription treeConflict = readTreeConflict(path);
+            isConflicted[0] = treeConflict != null;
         }
+        
+        entryAttrs.put(SVNProperty.REVISION, String.valueOf(revision));
+        entryAttrs.put(SVNProperty.REPOS, reposRootURL);
+        
     }
     
-    public SVNTreeConflictDescription readTreeConflict(File path) {
-        return null;
+    public SVNTreeConflictDescription readTreeConflict(File path) throws SVNException {
+        SVNPristineDirectory[] pristineDir = new SVNPristineDirectory[1];
+        File parent = path.getParentFile();
+        String localRelPath = null;
+        try {
+            localRelPath = parseLocalAbsPath(parent, pristineDir, SqlJetTransactionMode.WRITE);
+        } catch (SVNException svne) {
+            SVNErrorMessage err = svne.getErrorMessage();
+            if (err.getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                return null;
+            }
+            throw svne;
+        }
+        
+        verifyPristineDirectoryIsUsable(pristineDir[0]);
+        SVNWCRoot wcRoot = pristineDir[0].getWCRoot(); 
+        Map actualNodeResult = selectActualNode(wcRoot.getStorage(), wcRoot.getWCId(), localRelPath);
+        if (actualNodeResult.isEmpty()) {
+            return null;
+        }
+        
+        String treeConflictData = (String) actualNodeResult.get("tree_conflict_data");
+        if (treeConflictData == null) {
+            return null;
+        }
+        
+        Map treeConflicts = SVNTreeConflictUtil.readTreeConflicts(parent, treeConflictData);
+        return (SVNTreeConflictDescription) treeConflicts.get(path.getName());
     }
     
     //TODO: temporary API
