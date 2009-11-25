@@ -81,6 +81,8 @@ public class SVNFileUtil {
 
     public static final int STREAM_CHUNK_SIZE = 16384;
 
+    public static final int FILE_CREATION_ATTEMPTS_COUNT = 11;
+
     public final static OutputStream DUMMY_OUT = new OutputStream() {
 
         public void write(int b) throws IOException {
@@ -307,10 +309,10 @@ public class SVNFileUtil {
         
         IOException ioError = null;
         try {
-            created = file != null ? file.createNewFile() : false;
-        } catch (IOException e) {
+            created = createNewFile(file);
+        } catch (IOException ioe) {
             created = false;
-            ioError = e;
+            ioError = ioe;
         }
         if (!created) {
             SVNErrorMessage err = null;
@@ -322,6 +324,39 @@ public class SVNFileUtil {
             }
             SVNErrorManager.error(err, ioError != null ? ioError : new Exception(), Level.FINE, SVNLogType.WC);
         }
+    }
+
+    public static boolean createNewFile(File file) throws IOException {
+        if (file == null) {
+            return false;
+        }
+        boolean created = false;
+        int count = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
+
+        while (!created && (count > 0)) {
+            IOException ioError = null;
+            try {
+                created = file.createNewFile();
+            } catch (IOException e) {
+                ioError = e;
+            }
+            if (ioError != null) {
+                if (count == 1) {
+                    throw ioError;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ie) {
+                    SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
+                }
+            }
+
+            if (ioError == null && !created) {
+                return false;
+            }
+            count--;
+        }
+        return created;
     }
 
     /**
@@ -473,7 +508,7 @@ public class SVNFileUtil {
                 setReadonly(src, false);
                 setReadonly(dst, false);
                 // use special loop on windows.
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < FILE_CREATION_ATTEMPTS_COUNT; i++) {
                     dst.delete();
                     if (src.renameTo(dst)) {
                         if (wasRO && !isOpenVMS) {
@@ -1333,7 +1368,7 @@ public class SVNFileUtil {
     }
     
     public static FileOutputStream createFileOutputStream(File file, boolean append) throws IOException {
-        int retryCount = SVNFileUtil.isWindows ? 11 : 1;
+        int retryCount = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
         FileOutputStream os = null;
         for (int i = 0; i < retryCount; i++) {
             try {
