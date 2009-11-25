@@ -348,12 +348,11 @@ public class SVNFileUtil {
             if (ioError != null) {
                 if (count == 1) {
                     throw ioError;
-                } else {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ie) {
-                        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
-                    }
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ie) {
+                    SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
                 }
             }
 
