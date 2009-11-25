@@ -513,7 +513,7 @@ public class SVNFileUtil {
                 setReadonly(src, false);
                 setReadonly(dst, false);
                 // use special loop on windows.
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < FILE_CREATION_ATTEMPTS_COUNT; i++) {
                     dst.delete();
                     if (src.renameTo(dst)) {
                         if (wasRO && !isOpenVMS) {
