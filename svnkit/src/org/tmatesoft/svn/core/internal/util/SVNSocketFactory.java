@@ -50,7 +50,9 @@ public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
     private static int ourSocketReceiveBufferSize = 32*1024;
-
+    private static SVNThreadPool ourThreadPool = new SVNThreadPool(); 
+    
+    
     public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
         Socket socket = new Socket();
@@ -104,11 +106,15 @@ public class SVNSocketFactory {
         }
 
         SVNSocketConnection socketConnection = new SVNSocketConnection(socket, address, timeout);
-        Thread connectionThread = new Thread(socketConnection);
-        connectionThread.start();
-
+        Object future = ourThreadPool.run(socketConnection);
+        
         while (!socketConnection.isSocketConnected()) {
-            cancel.checkCancelled();
+            try {
+                cancel.checkCancelled();
+            } catch (SVNCancelException e) {
+                ourThreadPool.cancell(future);
+                throw e;
+            }
         }
         
         if (socketConnection.getError() != null) {
