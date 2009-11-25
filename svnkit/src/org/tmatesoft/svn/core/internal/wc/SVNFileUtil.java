@@ -304,12 +304,7 @@ public class SVNFileUtil {
     public static void createEmptyFile(File file) throws SVNException {
         boolean created;
         if (file != null && file.getParentFile() != null && !file.getParentFile().exists()) {
-            File parentDir = file.getParentFile();
-            boolean parentCreated = parentDir.mkdirs();
-            if (!parentCreated) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot create new directory ''{0}''", parentDir);
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            file.getParentFile().mkdirs();
         }
         
         IOException ioError = null;
