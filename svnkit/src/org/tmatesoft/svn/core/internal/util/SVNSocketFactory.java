@@ -35,8 +35,6 @@ import org.tmatesoft.svn.core.ISVNCanceller;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
-import org.tmatesoft.svn.util.SVNDebugLog;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * <code>SVNSocketFactory</code> is a utility class that represents a custom
@@ -103,6 +101,10 @@ public class SVNSocketFactory {
         return sslSocket;
     }
 
+    public static ISVNThreadPool getThreadPool() {
+        return ourThreadPool;
+    }
+    
     private static void connect(Socket socket, InetSocketAddress address, int timeout, ISVNCanceller cancel) throws IOException, SVNException {
         if (cancel == null) {
             socket.connect(address, timeout);
@@ -117,7 +119,6 @@ public class SVNSocketFactory {
                 cancel.checkCancelled();
             } catch (SVNCancelException e) {
                 task.cancel(true);
-                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Caught the cancel signal");
                 throw e;
             }
         }

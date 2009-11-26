@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import org.tmatesoft.svn.core.SVNCancelException;
-
 
 /**
  * @version 1.3

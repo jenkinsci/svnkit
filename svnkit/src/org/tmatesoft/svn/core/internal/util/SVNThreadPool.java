@@ -38,7 +38,6 @@ public class SVNThreadPool implements ISVNThreadPool {
         ThreadPoolExecutor threadPool = getThreadPool(daemon);
         try {
             Future<?> future = threadPool.submit(task);
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "future object is " + future);
             return new SVNTask(future); 
         } catch (RejectedExecutionException e) {
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Could not submit task: " + e.getMessage());
@@ -63,7 +62,7 @@ public class SVNThreadPool implements ISVNThreadPool {
         return myThreadPool;
     }
 
-    private CustomThreadFactory getThreadFactory(boolean daemon) {
+    private synchronized CustomThreadFactory getThreadFactory(boolean daemon) {
         if (myThreadFactory == null) {
             myThreadFactory = new CustomThreadFactory(daemon);
         } else {
