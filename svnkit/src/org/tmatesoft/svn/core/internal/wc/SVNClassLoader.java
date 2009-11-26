@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.io.fs.repcache.IFSRepresentationCacheManagerFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNAuthenticator;
 import org.tmatesoft.svn.core.internal.io.svn.SVNConnection;
+import org.tmatesoft.svn.core.internal.util.ISVNThreadPool;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -48,8 +49,29 @@ public class SVNClassLoader {
                                                      "svnkit.repcachemanagerfactory.1=org.tmatesoft.svn.core.internal.io.fs.repcache.FSRepresentationCacheManagerFactory\n" +
                                                      "svnkit.repcachemanagerfactory.2=org.tmatesoft.svn.core.internal.io.fs.repcache.FSEmptyRepresentationCacheManagerFactory\n" +
                                                      "svnkit.saslauthenticator.1=org.tmatesoft.svn.core.internal.io.svn.sasl.SVNSaslAuthenticator\n" +
-                                                     "svnkit.saslauthenticator.2=org.tmatesoft.svn.core.internal.io.svn.SVNPlainAuthenticator\n"; 
+                                                     "svnkit.saslauthenticator.2=org.tmatesoft.svn.core.internal.io.svn.SVNPlainAuthenticator\n" +
+                                                     "svnkit.threadpool.1=org.tmatesoft.svn.core.internal.util.SVNThreadPool\n" +
+                                                     "svnkit.threadpool.2=org.tmatesoft.svn.core.internal.util.SVNEmptyThreadPool\n"; 
 
+    public static ISVNThreadPool getThreadPool() {
+        Collection threadPoolClasses = getAllClasses("svnkit.threadpool.");
+        for (Iterator classesIter = threadPoolClasses.iterator(); classesIter.hasNext();) {
+            Class threadPoolClass = (Class) classesIter.next();
+            Object object = null;
+            try {
+                object = threadPoolClass.newInstance();
+            } catch (Throwable th) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Could not instantiate a thread pool class " + 
+                        threadPoolClass.getName() + ": " + th.getMessage());
+            }
+
+            if (object != null && object instanceof ISVNThreadPool) {
+                return (ISVNThreadPool) object;
+            }
+        }
+        return null;
+        
+    }
     
     public static Collection getAvailableAdminAreaFactories() {
         Collection instances = getAllClasses("svnkit.adminareafactory.");

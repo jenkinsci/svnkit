@@ -11,118 +11,95 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
-import java.lang.reflect.Method;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNThreadPool {
+public class SVNThreadPool implements ISVNThreadPool {
     
-    private static Method ourNewCachedThreadPoolMethod;
+    private ThreadPoolExecutor myThreadPool;
+    private CustomThreadFactory myThreadFactory;
+    private ISVNThreadPool myFailSafePool;
     
-    static {
+    public ISVNTask run(Runnable task, boolean daemon) throws SVNException {
+        ThreadPoolExecutor threadPool = getThreadPool(daemon);
         try {
-            Class executorsClass = SVNThreadPool.class.getClassLoader().loadClass("java.util.concurrent.Executors");
-            if (executorsClass != null) {
-                ourNewCachedThreadPoolMethod = executorsClass.getMethod("newCachedThreadPool", null);
-            }
-        } catch (Throwable e) {
+            Future<?> future = threadPool.submit(task);
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "future object is " + future);
+            return new SVNTask(future); 
+        } catch (RejectedExecutionException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "Could not submit task: " + e.getMessage());
         }
+        
+        ISVNThreadPool failSafePool = getFailSafePool();
+        return failSafePool.run(task, daemon);
+    }
+    
+    private synchronized ISVNThreadPool getFailSafePool() {
+        if (myFailSafePool == null) {
+            myFailSafePool = new SVNEmptyThreadPool();
+        }
+        return myFailSafePool;
+    }
+    
+    private synchronized ThreadPoolExecutor getThreadPool(boolean daemon) {
+        CustomThreadFactory threadFactory = getThreadFactory(daemon);
+        if (myThreadPool == null) {
+            myThreadPool = new ThreadPoolExecutor(2, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), threadFactory);
+        }
+        return myThreadPool;
     }
 
-    private Object myExecutorService;  
-    private Method mySubmitMethod;
+    private CustomThreadFactory getThreadFactory(boolean daemon) {
+        if (myThreadFactory == null) {
+            myThreadFactory = new CustomThreadFactory(daemon);
+        } else {
+            myThreadFactory.setIsDaemon(daemon);
+        }
+        
+        return myThreadFactory; 
+    }
     
-    public Object run(Runnable task) {
-        Object futureObject = null;
-        Object executorService = getExecutorService();
-        if (executorService != null) {
-            boolean fallBackToThread = false;
-            try {
-                Method submitMethod = getSubmitMethod();
-                if (submitMethod != null) {
-                    futureObject = submitMethod.invoke(executorService, new Object[] { task });
-                } else {
-                    fallBackToThread = true;
-                }
-            } catch (Throwable th) {
-                fallBackToThread = true;
-            }
-            if (!fallBackToThread) {
-                return futureObject;
-            }
+    private static class CustomThreadFactory implements ThreadFactory {
+        private static final AtomicInteger ourPoolNumber = new AtomicInteger(1);
+        private final ThreadGroup myGroup;
+        private final AtomicInteger myThreadNumber = new AtomicInteger(1);
+        private final String myNamePrefix;
+        private boolean myIsDaemon;
+        
+        CustomThreadFactory(boolean daemon) {
+            SecurityManager s = System.getSecurityManager();
+            myGroup = (s != null)? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
+            myNamePrefix = "pool-" + ourPoolNumber.getAndIncrement() + "-svnkit-thread-";
+            myIsDaemon = daemon;
         }
 
-        Thread thread = new Thread(task);
-        thread.setDaemon(true);
-        thread.start();
-        return null;
-    }
-    
-    public void cancel(Object futureObject) {
-        if (futureObject != null) {
-            try {
-                Method cancelMethod = futureObject.getClass().getMethod("cancel", new Class[] { boolean.class });
-                if (cancelMethod != null) {
-                    cancelMethod.invoke(futureObject, new Object[] { Boolean.TRUE });
-                }
-            } catch (Throwable e) {
+        public void setIsDaemon(boolean isDaemon) {
+            myIsDaemon = isDaemon;
+        }
+        
+        public Thread newThread(Runnable task) {
+            Thread thread = new Thread(myGroup, task, myNamePrefix + myThreadNumber.getAndIncrement(), 0);
+            thread.setDaemon(myIsDaemon);
+            if (thread.getPriority() != Thread.NORM_PRIORITY) {
+                thread.setPriority(Thread.NORM_PRIORITY);
             }
+            return thread;
         }
+        
     }
     
-    public synchronized void dispose() {
-        if (myExecutorService != null) {
-            try {
-                Method shutdownMethod = myExecutorService.getClass().getMethod("shutdown", null);
-                if (shutdownMethod != null) {
-                    shutdownMethod.invoke(myExecutorService, null);
-                }
-
-                Method shutdownNowMethod = myExecutorService.getClass().getMethod("shutdownNow", null);
-                if (shutdownNowMethod != null) {
-                    shutdownNowMethod.invoke(myExecutorService, null);
-                }
-                myExecutorService = null;
-                mySubmitMethod = null;
-            } catch (Throwable e) {
-            }
-        }
-    }
-    
-    private synchronized Method getSubmitMethod() {
-        if (mySubmitMethod == null) {
-            Object executorService = getExecutorService();
-            if (executorService != null) {
-                try {
-                    mySubmitMethod = executorService.getClass().getMethod("submit", new Class[] { Runnable.class });
-                } catch (Throwable e) {
-                }
-            }
-        }
-        return mySubmitMethod;
-    }
-    
-    private synchronized Object getExecutorService() {
-        if (myExecutorService == null && ourNewCachedThreadPoolMethod != null) {
-            try {
-                myExecutorService = ourNewCachedThreadPoolMethod.invoke(null, null);
-                if (myExecutorService != null) {
-                    Method setCorePoolSizeMethod = myExecutorService.getClass().getMethod("setCorePoolSize", new Class[] { int.class });
-                    Method setMaximumPoolSize = myExecutorService.getClass().getMethod("setMaximumPoolSize", new Class[] { int.class });
-                    if (setCorePoolSizeMethod != null) {
-                        setCorePoolSizeMethod.invoke(myExecutorService, new Object[] { new Integer(2) });
-                    }
-                    
-                    if (setMaximumPoolSize != null) {
-                        setMaximumPoolSize.invoke(myExecutorService, new Object[] { new Integer(Integer.MAX_VALUE) });
-                    }
-                }
-            } catch (Throwable th) {
-            }  
-        }
-        return myExecutorService;
-    }
 }

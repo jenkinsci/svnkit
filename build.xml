@@ -57,6 +57,8 @@
             <exclude name="org/tmatesoft/svn/core/internal/wc/db/**" if="compatibility.mode" />
             <exclude name="org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea17.java" if="compatibility.mode" />
             <exclude name="org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea17Factory.java" if="compatibility.mode" />
+        	<exclude name="org/tmatesoft/svn/core/internal/util/SVNThreadPool.java" if="compatibility.mode" />
+        	<exclude name="org/tmatesoft/svn/core/internal/util/SVNTask.java" if="compatibility.mode" />        	
         </javac>
         <javac debug="true"
                destdir="svnkit-cli/bin"
