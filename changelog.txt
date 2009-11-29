@@ -1,3 +1,15 @@
+== version 1.3.2 ==
+
++ Changes made in Subversion since version 1.6.5 implemented, 
+  all Subversion 1.6.6 features are supported.
+   
+   * Negotiate authorization mechanism was not used when multiple authorization 
+     schemes were offered to client by server. 
+   * SQLJet library upgraded to version 1.0.1.
+   * JNA library upgraded to version 3.2.3.
+      
++ Bugfixes and performance improvements.
+
 == version 1.3.1 ==
 
 + Changes made in Subversion since version 1.6.2 implemented, 
