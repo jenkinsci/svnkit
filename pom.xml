@@ -17,22 +17,19 @@
   </distributionManagement>
   <dependencies>
     <dependency>
-      <groupId>com.sun.jna</groupId>
+      <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
       <version>%jna.version%</version>
-      <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.trilead</groupId>
-      <artifactId>trilead</artifactId>
+      <groupId>org.tmatesoft.svnkit</groupId>
+      <artifactId>trilead-ssh2</artifactId>
       <version>%trilead.ssh2.version%</version>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.tmatesoft.sqljet</groupId>
       <artifactId>sqljet</artifactId>
       <version>%sqljet.version%</version>
-      <optional>true</optional>
     </dependency>
   </dependencies>
 </project>
