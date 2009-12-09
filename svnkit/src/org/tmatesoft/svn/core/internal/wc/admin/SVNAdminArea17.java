@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -25,6 +26,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -54,13 +56,19 @@ public class SVNAdminArea17 extends SVNAdminArea {
     }
 
     protected Map fetchEntries() throws SVNException {
-        List childNames = myWCDb.gatherChildren(getRoot(), false);
+        File path = getRoot();
+        List childNames = myWCDb.gatherChildren(path, false);
         childNames.add(getThisDirName());
         
         for (ListIterator iterator = childNames.listIterator(childNames.size()); iterator.hasPrevious();) {
             String name = (String) iterator.previous();
-            
-            
+            SVNEntryInfo info = myWCDb.readInfo(path, true, true, true, false, false, true, true, false, true, true, true, false);
+            if (getThisDirName().equals(name)) {
+                Collection conflictVictims = myWCDb.readConflictVictims(path);
+                for (Iterator conflictVictimsIter = conflictVictims.iterator(); conflictVictimsIter.hasNext();) {
+                    
+                }
+            }
         }
         return null;
     }
