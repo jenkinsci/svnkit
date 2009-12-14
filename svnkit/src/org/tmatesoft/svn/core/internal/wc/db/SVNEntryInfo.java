@@ -38,7 +38,7 @@ public class SVNEntryInfo {
     private String myCopyFromURL;
     private long myCommittedRevision;
     private Date myCommittedDate;
-    private String myCommittedAuthr;
+    private String myCommittedAuthor;
     private String myConflictOld;
     private String myConflictNew;
     private String myConflictWorking;
@@ -132,8 +132,8 @@ public class SVNEntryInfo {
         return myCommittedDate;
     }
     
-    public String getCommittedAuthr() {
-        return myCommittedAuthr;
+    public String getCommittedAuthor() {
+        return myCommittedAuthor;
     }
     
     public String getConflictOld() {
@@ -344,8 +344,8 @@ public class SVNEntryInfo {
         myCommittedDate = committedDate;
     }
     
-    public void setCommittedAuthr(String committedAuthr) {
-        myCommittedAuthr = committedAuthr;
+    public void setCommittedAuthor(String committedAuthr) {
+        myCommittedAuthor = committedAuthr;
     }
     
     public void setConflictOld(String conflictOld) {

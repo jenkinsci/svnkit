@@ -16,18 +16,25 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
+import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbKind;
+import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
@@ -57,16 +64,65 @@ public class SVNAdminArea17 extends SVNAdminArea {
 
     protected Map fetchEntries() throws SVNException {
         File path = getRoot();
+        
+        SqlJetDb sdb = myWCDb.getDBTemp(path, false);
         List childNames = myWCDb.gatherChildren(path, false);
         childNames.add(getThisDirName());
         
         for (ListIterator iterator = childNames.listIterator(childNames.size()); iterator.hasPrevious();) {
             String name = (String) iterator.previous();
+            Map entryAttributes = new HashMap();
+            SVNEntry entry = new SVNEntry(entryAttributes, null, name);
             SVNEntryInfo info = myWCDb.readInfo(path, true, true, true, false, false, true, true, false, true, true, true, false);
+            entry.setRevision(info.getRevision());
+            entry.setRepositoryRoot(info.getReposURL());
+            entry.setUUID(info.getUUID());
+            entry.setCommittedRevision(info.getCommittedRevision());
+            entry.setAuthor(info.getCommittedAuthor());
+            entry.setTextTime(SVNDate.formatDate(info.getLastTextTime()));
+            entry.setDepth(info.getDepth());
+            entry.setChangelistName(info.getChangeList());
+            entry.setCopyFromRevision(info.getCopyFromRevision());
+            
             if (getThisDirName().equals(name)) {
+                Map treeConflicts = null;
                 Collection conflictVictims = myWCDb.readConflictVictims(path);
                 for (Iterator conflictVictimsIter = conflictVictims.iterator(); conflictVictimsIter.hasNext();) {
-                    
+                    String childName = (String) conflictVictimsIter.next();
+                    File childFile = new File(path, childName);
+                    Collection childConflicts = myWCDb.readConflicts(childFile);
+                    for (Iterator childConflictsIter = childConflicts.iterator(); childConflictsIter.hasNext();) {
+                        SVNConflictDescription conflict = (SVNConflictDescription) childConflictsIter.next();
+                        if (conflict instanceof SVNTreeConflictDescription) {
+                            SVNTreeConflictDescription treeConflict = (SVNTreeConflictDescription) conflict;
+                            if (treeConflicts == null) {
+                                treeConflicts = new HashMap();
+                            }
+                            treeConflicts.put(childName, treeConflict);
+                        }
+                    }
+                }
+                
+                if (treeConflicts != null) {
+                    entry.setTreeConflicts(treeConflicts);
+                }
+            }
+            
+            SVNWCDbStatus status = info.getWCDBStatus();
+            SVNWCDbKind kind = info.getWCDBKind();
+            String reposRelPath = info.getReposRelPath();
+            if (status == SVNWCDbStatus.NORMAL || status == SVNWCDbStatus.INCOMPLETE) {
+                boolean haveRow = false;
+                if (kind == SVNWCDbKind.DIR) {
+                    if (myWCDb.checkIfIsNotPresent(sdb, 1, name)) {
+                        entry.setSchedule(null);
+                        entry.setDeleted(true);
+                    } else {
+                        entry.setSchedule(null);
+                        if (reposRelPath == null) {
+                            
+                        }
+                    }
                 }
             }
         }

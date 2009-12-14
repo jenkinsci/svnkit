@@ -143,6 +143,14 @@ public class SVNEntry {
         return setAttributeValue(SVNProperty.REVISION, Long.toString(revision));
     }
 
+    public boolean setCommittedRevision(long cmtRevision) {
+        return setAttributeValue(SVNProperty.COMMITTED_REVISION, Long.toString(cmtRevision));
+    }
+
+    public boolean setAuthor(String cmtAuthor) {
+        return setAttributeValue(SVNProperty.LAST_AUTHOR, cmtAuthor);
+    }
+    
     public boolean setChangelistName(String changelistName) {
         return setAttributeValue(SVNProperty.CHANGELIST, changelistName);
     }
