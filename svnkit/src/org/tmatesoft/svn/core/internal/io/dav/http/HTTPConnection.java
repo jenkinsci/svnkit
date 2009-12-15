@@ -125,7 +125,7 @@ class HTTPConnection implements IHTTPConnection {
     private boolean myIsSpoolAll;
     private File mySpoolDirectory;
     private long myNextRequestTimeout;
-    
+
     public HTTPConnection(SVNRepository repository, String charset, File spoolDirectory, boolean spoolAll) throws SVNException {
         myRepository = repository;
         myCharset = charset;
@@ -828,6 +828,7 @@ class HTTPConnection implements IHTTPConnection {
     }
 
     private OutputStream getOutputStream() throws IOException {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.DEFAULT, "socket output stream requested...");
         if (myOutputStream == null) {
             if (mySocket == null) {
                 return null;
@@ -983,6 +984,7 @@ class HTTPConnection implements IHTTPConnection {
     private class CancellableSocketInputStream extends InputStream {
         private InputStream mySocketIS;
         private ISVNCanceller myCanceller;
+        private SVNSocketReadTask myTaskHolder;
         
         public CancellableSocketInputStream(InputStream socketIS, ISVNCanceller canceller) {
             mySocketIS = socketIS;
@@ -990,20 +992,17 @@ class HTTPConnection implements IHTTPConnection {
         }
         
         public int read() throws IOException {
-            SVNSocketReadTask socketReadTask = new SVNSocketReadTask();
-            socketReadTask.reset(mySocketIS, null, 0, 0, 1);
+            SVNSocketReadTask socketReadTask = getTaskHolder();
             return runReadTask(socketReadTask);
         }
         
         public int read(byte[] b) throws IOException {
-            SVNSocketReadTask socketReadTask = new SVNSocketReadTask();
-            socketReadTask.reset(mySocketIS, b, 0, 0, 2);
+            SVNSocketReadTask socketReadTask = getTaskHolder(b);
             return runReadTask(socketReadTask);
         }
         
-        public int read(byte b[], int off, int len) throws IOException {
-            SVNSocketReadTask socketReadTask = new SVNSocketReadTask();
-            socketReadTask.reset(mySocketIS, b, off, len, 3);
+        public int read(byte[] b, int off, int len) throws IOException {
+            SVNSocketReadTask socketReadTask = getTaskHolder(b, off, len);
             return runReadTask(socketReadTask);
         }
         
@@ -1011,6 +1010,30 @@ class HTTPConnection implements IHTTPConnection {
             mySocket.close();
         }
         
+        private SVNSocketReadTask getTaskHolder() {
+            if (myTaskHolder == null) {
+                myTaskHolder = new SVNSocketReadTask();
+            }
+            myTaskHolder.reset(mySocketIS, null, 0, 0, 1);
+            return myTaskHolder;
+        }
+
+        private SVNSocketReadTask getTaskHolder(byte[] b) {
+            if (myTaskHolder == null) {
+                myTaskHolder = new SVNSocketReadTask();
+            }
+            myTaskHolder.reset(mySocketIS, b, 0, 0, 2);
+            return myTaskHolder;
+        }
+
+        private SVNSocketReadTask getTaskHolder(byte[] b, int off, int len) {
+            if (myTaskHolder == null) {
+                myTaskHolder = new SVNSocketReadTask();
+            }
+            myTaskHolder.reset(mySocketIS, b, off, len, 3);
+            return myTaskHolder;
+        }
+
         private int runReadTask(SVNSocketReadTask socketReadTask) throws IOException {
             ISVNThreadPool threadPool = SVNSocketFactory.getThreadPool();
             ISVNTask task = null;
