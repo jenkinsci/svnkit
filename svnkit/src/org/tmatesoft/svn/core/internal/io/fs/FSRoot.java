@@ -138,7 +138,8 @@ public abstract class FSRoot {
         try {
             revNode = getRevisionNode(path);
         } catch (SVNException svne) {
-            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_FOUND ||
+                    svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NOT_DIRECTORY) {
                 return SVNNodeKind.NONE;
             }
             throw svne;
