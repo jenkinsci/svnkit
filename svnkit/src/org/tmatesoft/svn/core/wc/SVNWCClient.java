@@ -2556,13 +2556,6 @@ public class SVNWCClient extends SVNBasicClient {
     public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, 
             ISVNInfoHandler handler) throws SVNException {
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        if (revision == null || !revision.isValid()) {
-            revision = SVNRevision.HEAD;
-        }
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = revision;
-        }
-
         long[] revNum = { SVNRepository.INVALID_REVISION };
         SVNRepository repos = createRepository(url, null, null, pegRevision, revision, revNum);
         
@@ -2655,8 +2648,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNLock lock = null;
         if (rootEntry.getKind() == SVNNodeKind.FILE) {
             try {
-                SVNRepositoryLocation[] locations = getLocations(url, null, null, revision, SVNRevision.HEAD, 
-                        SVNRevision.UNDEFINED);
+                SVNRepositoryLocation[] locations = getLocations(url, null, null, SVNRevision.create(revNum[0]), SVNRevision.HEAD, SVNRevision.UNDEFINED);
                 if (locations != null && locations.length > 0) {
                     SVNURL headURL = locations[0].getURL();
                     if (headURL.equals(url)) {
@@ -2679,8 +2671,7 @@ public class SVNWCClient extends SVNBasicClient {
             }
         }
 
-        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, SVNRevision.create(revNum[0]), 
-                rootEntry, lock);
+        SVNInfo info = SVNInfo.createInfo(baseName, reposRoot, reposUUID, url, SVNRevision.create(revNum[0]), rootEntry, lock);
         handler.handleInfo(info);
         
         if (depth.compareTo(SVNDepth.EMPTY) > 0 && rootEntry.getKind() == SVNNodeKind.DIR) {
