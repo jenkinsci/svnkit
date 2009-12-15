@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import org.omg.CORBA.RepositoryIdHelper;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -31,6 +32,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
+import org.tmatesoft.svn.core.internal.wc.db.SVNRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
@@ -120,7 +122,7 @@ public class SVNAdminArea17 extends SVNAdminArea {
                     } else {
                         entry.setSchedule(null);
                         if (reposRelPath == null) {
-                            
+                            SVNRepositoryInfo reposInfo = myWCDb.scanBaseRepos(path);
                         }
                     }
                 }

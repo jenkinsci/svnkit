@@ -19,15 +19,20 @@ import org.tmatesoft.svn.core.SVNURL;
  * @author  TMate Software Ltd.
  */
 public class SVNRepositoryInfo {
-    private SVNURL myURL;
+    private String myRootURL;
     private String myUUID;
     
-    public SVNURL getURL() {
-        return myURL;
+    public SVNRepositoryInfo(String url, String uuid) {
+        myRootURL = url;
+        myUUID = uuid;
+    }
+
+    public String getRootURL() {
+        return myRootURL;
     }
     
-    public void setURL(SVNURL url) {
-        myURL = url;
+    public void setRootURL(String url) {
+        myRootURL = url;
     }
     
     public String getUUID() {

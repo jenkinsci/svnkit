@@ -369,9 +369,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 reposRelPath = (String) baseNodeResult.get("repos_relpath");
                 
                 if (reposId != null) {
-                    RepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
-                    reposRootURL = reposInfo.myRoot;
-                    reposUUID = reposInfo.myUUID;
+                    SVNRepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
+                    reposRootURL = reposInfo.getRootURL();
+                    reposUUID = reposInfo.getUUID();
                 }
 
                 changedRevision = (Long) baseNodeResult.get("changed_rev");
@@ -389,9 +389,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 }
                 Long copyFromReposIdObj = (Long) workingNodeResult.get("copyfrom_repos_id");
                 if (copyFromReposIdObj != null && (fetchOriginalRootURL || fetchOriginalUUID)) {
-                    RepositoryInfo reposInfo = fetchRepositoryInfo(sdb, copyFromReposIdObj.longValue());
-                    originalRootURL = reposInfo.myRoot;
-                    originalUUID = reposInfo.myUUID;
+                    SVNRepositoryInfo reposInfo = fetchRepositoryInfo(sdb, copyFromReposIdObj.longValue());
+                    originalRootURL = reposInfo.getRootURL();
+                    originalUUID = reposInfo.getUUID();
                 }
                 if (fetchOriginalRevision) {
                     originalRevision = (Long) workingNodeResult.get("copyfrom_revnum");
@@ -589,7 +589,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         String localRelPath = parsedPristineDirectory.myLocalRelativePath;
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
-        return null;
+        SVNWCRoot wcRoot = pristineDir.getWCRoot();
+        RepositoryId reposIdObj = scanUpwardsForRepository(wcRoot, localRelPath);
+        return fetchRepositoryInfo(wcRoot.getStorage(), reposIdObj.getReposId());
     }
     
     public boolean checkIfIsNotPresent(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
@@ -1168,7 +1170,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         //TODO: flush entries;
     }
     
-    public RepositoryInfo fetchRepositoryInfo(SqlJetDb sdb, long reposId) throws SVNException {
+    public SVNRepositoryInfo fetchRepositoryInfo(SqlJetDb sdb, long reposId) throws SVNException {
         try {
             sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
             try {
@@ -1178,7 +1180,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     if (!cursor.eof()) {
                         String root = (String) cursor.getValue("root");
                         String uuid = (String) cursor.getValue("uuid");
-                        return new RepositoryInfo(root, uuid); 
+                        return new SVNRepositoryInfo(root, uuid); 
                     }
                 } finally {
                     cursor.close();
@@ -1192,8 +1194,51 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return null;
     }
     
-    private void scanUpwardsForRepository() {
-        
+    private RepositoryId scanUpwardsForRepository(SVNWCRoot wcRoot, String localRelPath) throws SVNException {
+        String name = SVNPathUtil.tail(localRelPath);
+        SqlJetDb sdb = wcRoot.getStorage(); 
+        if (sdb == null || wcRoot.getWCId() < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.scanUpwardsForRepository()");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        String relPathSuffix = "";
+        String currentRelPath = localRelPath;
+        while ( true ) {
+            Map baseNodeResult = selectBaseNode(sdb, wcRoot.getWCId(), currentRelPath);
+            if (baseNodeResult.isEmpty()) {
+                SVNErrorMessage err = null;
+                if (!"".equals(relPathSuffix) || "".equals(localRelPath)) {
+                    err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Parent(s) of ''{0}'' should have been present.", localRelPath);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } else {
+                    err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", localRelPath);
+                }
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            
+            Long reposIdObj = (Long) baseNodeResult.get("repos_id"); 
+            if (reposIdObj != null) {
+                long reposId = reposIdObj.longValue();
+                String reposRelPath = (String) baseNodeResult.get("repos_relpath");
+                if (reposRelPath == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.scanUpwardsForRepository()");
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                }
+                
+                reposRelPath = SVNPathUtil.append(reposRelPath, relPathSuffix);
+                return new RepositoryId(reposId, reposRelPath);
+            }
+            
+            if ("".equals(currentRelPath)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Parent(s) of ''{0}'' should have repository information.", localRelPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            
+            String currentPathName = SVNPathUtil.tail(currentRelPath);
+            currentRelPath = SVNPathUtil.removeTail(currentRelPath);
+            relPathSuffix = SVNPathUtil.append(currentPathName, relPathSuffix);
+        }
     }
     
     private Map selectActualNode(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
@@ -1667,12 +1712,22 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         
     }
     
-    private static class RepositoryInfo {
-        private String myRoot;
-        private String myUUID;
-        public RepositoryInfo(String root, String uuid) {
-            myRoot = root;
-            myUUID = uuid;
+    private static class RepositoryId {
+        private long myReposId;
+        private String myReposRelPath;
+
+        public RepositoryId(long reposId, String reposRelPath) {
+            myReposId = reposId;
+            myReposRelPath = reposRelPath;
         }
+
+        public long getReposId() {
+            return myReposId;
+        }
+        
+        public String getReposRelPath() {
+            return myReposRelPath;
+        }
+        
     }
 }
