@@ -66,11 +66,8 @@ public class FSMergerBySequence {
 	public int merge(QSequenceLineRAData baseData,
 	                 QSequenceLineRAData localData, QSequenceLineRAData latestData,
 	                 SVNDiffOptions options,
-	                 OutputStream result) throws IOException {
-
-		//        dump("base", baseData);
-		//        dump("latest", latestData);
-		//        dump("local", localData);
+	                 OutputStream result, 
+	                 SVNDiffConflictChoiceStyle style) throws IOException {
 
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
@@ -107,10 +104,23 @@ public class FSMergerBySequence {
 					final QSequenceDifferenceBlock localStartBlock = local.current();
 					final QSequenceDifferenceBlock latestStartBlock = latest.current();
 					if (checkConflict(local, latest, localLines, latestLines, baseLines.getLineCount())) {
-						baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), localLines, latestLines, baseLineIndex, transformedLocalLines);
-						local.forward();
-						latest.forward();
-						conflict = true;
+						if (style == SVNDiffConflictChoiceStyle.CHOOSE_LATEST) {
+		                    baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
+                            local.forward();
+		                    latest.forward();
+		                    merged = true;
+						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED) {
+		                    baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
+		                    local.forward();
+		                    latest.forward();
+		                    merged = true;
+						} else {
+	                        //TODO: this is actually SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST style 
+						    baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), localLines, latestLines, baseLineIndex, transformedLocalLines);
+	                        local.forward();
+	                        latest.forward();
+	                        conflict = true;
+						}
 						continue;
 					}
 				}

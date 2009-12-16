@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.wc;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 
@@ -41,7 +42,7 @@ public interface ISVNMerger {
      * @return                  result of merging 
      * @throws SVNException 
      */
-    public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException;
+    public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options, SVNDiffConflictChoiceStyle style) throws SVNException;
    
     /**
      * Given <code>adminArea</code>/<code>localPath</code> and property changes (<code>propDiff</code>) based 

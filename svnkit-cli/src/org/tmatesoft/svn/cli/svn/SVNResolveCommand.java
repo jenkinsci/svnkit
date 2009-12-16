@@ -54,9 +54,9 @@ public class SVNResolveCommand extends SVNCommand {
             choice = SVNConflictChoice.MERGED;
         } else if (accept == SVNConflictAcceptPolicy.BASE) {
             choice = SVNConflictChoice.BASE;
-        } else if (accept == SVNConflictAcceptPolicy.THEIRS) {
+        } else if (accept == SVNConflictAcceptPolicy.THEIRS_CONFLICT) {
             choice = SVNConflictChoice.THEIRS_CONFLICT;
-        } else if (accept == SVNConflictAcceptPolicy.MINE) {
+        } else if (accept == SVNConflictAcceptPolicy.MINE_CONFLICT) {
             choice = SVNConflictChoice.MINE_CONFLICT;
         } else if (accept == SVNConflictAcceptPolicy.MINE_FULL) {
             choice = SVNConflictChoice.MINE_FULL;
