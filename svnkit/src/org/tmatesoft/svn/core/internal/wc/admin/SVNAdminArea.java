@@ -42,6 +42,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -331,6 +332,10 @@ public abstract class SVNAdminArea {
                 ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
                 SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_LATEST : 
                     SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+                if (merger instanceof DefaultSVNMerger) {
+                    DefaultSVNMerger defaultMerger = (DefaultSVNMerger) merger;
+                    defaultMerger.setDiffConflictStyle(style);
+                }
                 
                 autoResolveSourceFile = SVNAdminUtil.createTmpFile(this);
 
@@ -342,7 +347,7 @@ public abstract class SVNAdminArea {
                 String latestLabel = ".new";
                 
                 mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
-                merger.mergeText(mergeFileSet, false, null, style);
+                merger.mergeText(mergeFileSet, false, null);
                 mergeFileSet.dispose();
                 removeSource = true;
             }
@@ -517,7 +522,7 @@ public abstract class SVNAdminArea {
 
 	    SVNMergeResult mergeResult;
 	    try {
-	        mergeResult = merger.mergeText(mergeFileSet, dryRun, options, null);
+	        mergeResult = merger.mergeText(mergeFileSet, dryRun, options);
 	    }
 	    finally {
 		    if (dryRun) {

@@ -77,15 +77,22 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	}
 	
     private ISVNConflictHandler myConflictCallback;
-
+    private SVNDiffConflictChoiceStyle myDiffConflictStyle;
+    
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
         this(start, sep, end, null);
     }
 
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictHandler callback) {
+        this(start, sep, end, callback, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+    }
+
+    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictHandler callback, SVNDiffConflictChoiceStyle style) {
         super(start, sep, end);
         myConflictCallback = callback;
+        myDiffConflictStyle = style;
     }
+
 
 	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff, 
@@ -208,12 +215,19 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         return SVNMergeResult.createMergeResult(status, null);
 	}
 
+	public SVNDiffConflictChoiceStyle getDiffConflictStyle() {
+        return myDiffConflictStyle;
+    }
+    
+    public void setDiffConflictStyle(SVNDiffConflictChoiceStyle diffConflictStyle) {
+        myDiffConflictStyle = diffConflictStyle;
+    }
+
     protected SVNStatusType mergeBinary(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException {
         return SVNStatusType.CONFLICTED;
     }
 
-    protected SVNStatusType mergeText(File baseFile, File localFile, File latestFile, SVNDiffOptions options, File resultFile, 
-            SVNDiffConflictChoiceStyle style) throws SVNException {
+    protected SVNStatusType mergeText(File baseFile, File localFile, File latestFile, SVNDiffOptions options, File resultFile) throws SVNException {
         FSMergerBySequence merger = new FSMergerBySequence(getConflictStartMarker(), getConflictSeparatorMarker(), getConflictEndMarker());
         int mergeResult = 0;
         RandomAccessFile localIS = null;
@@ -229,7 +243,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
             QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
-            mergeResult = merger.merge(baseData, localData, latestData, options, result, style);
+            mergeResult = merger.merge(baseData, localData, latestData, options, result, getDiffConflictStyle());
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e, SVNLogType.WC);

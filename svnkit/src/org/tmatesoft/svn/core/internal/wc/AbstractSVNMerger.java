@@ -52,12 +52,12 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
         return myEnd;
     }
 
-    public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options, SVNDiffConflictChoiceStyle style) throws SVNException {
+    public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException {
         SVNStatusType status;
         if (files.isBinary()) {
             status = mergeBinary(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
         } else {
-            status = mergeText(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile(), style);
+            status = mergeText(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
         }
 
         if (!files.isBinary() && status != SVNStatusType.CONFLICTED) {
@@ -82,7 +82,7 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
 
     protected abstract SVNMergeResult processMergedFiles(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException;
 
-    protected abstract SVNStatusType mergeText(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile, SVNDiffConflictChoiceStyle style) throws SVNException;
+    protected abstract SVNStatusType mergeText(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException;
 
     protected abstract SVNStatusType mergeBinary(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException;
 }
