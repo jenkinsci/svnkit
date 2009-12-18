@@ -11,10 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
@@ -79,10 +77,26 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     private ISVNConflictHandler myConflictCallback;
     private SVNDiffConflictChoiceStyle myDiffConflictStyle;
     
+    /**
+     * 
+     * @param start
+     * @param sep
+     * @param end
+     * @param callback
+     * @deprecated use {@link #DefaultSVNMerger(byte[], byte[], byte[], ISVNConflictHandler, SVNDiffConflictChoiceStyle)} instead
+     */
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
         this(start, sep, end, null);
     }
 
+    /**
+     * 
+     * @param start
+     * @param sep
+     * @param end
+     * @param callback
+     * @deprecated use {@link #DefaultSVNMerger(byte[], byte[], byte[], ISVNConflictHandler, SVNDiffConflictChoiceStyle)} instead
+     */
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictHandler callback) {
         this(start, sep, end, callback, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
     }
@@ -92,7 +106,6 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         myConflictCallback = callback;
         myDiffConflictStyle = style;
     }
-
 
 	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff, 
@@ -348,70 +361,15 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
     protected SVNMergeResult handleChooseConflicted(boolean chooseMine, SVNMergeFileSet files) throws SVNException {
         File tmpFile = SVNAdminUtil.createTmpFile(files.getAdminArea());
-        String separator = new String(getConflictSeparatorMarker());
-        String mineMarker = new String(getConflictStartMarker());
-        String theirsMarker = new String(getConflictEndMarker());
-        OutputStream tmpOS = null;
-        BufferedReader reader = null;
-        boolean skip = false;
-        try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(files.getResultFile())));
-            tmpOS = SVNFileUtil.openFileForWriting(tmpFile);
-            String line = null;
-            
-            while ((line = reader.readLine()) != null) {
-                if (mineMarker.equals(line)) {
-                    skip = chooseMine ? false : true;
-                    continue;
-                } else if (separator.equals(line)) {
-                    skip = chooseMine ? true : false;
-                    continue;
-                } else if (theirsMarker.equals(line)) {
-                    skip = false;
-                    continue;
-                } else if (line.endsWith(mineMarker)) {
-                    int ind = line.indexOf(mineMarker);
-                    line = line.substring(0, ind);
-                    tmpOS.write(line.getBytes());
-                    tmpOS.write('\n');
-                    
-                    skip = chooseMine ? false : true;
-                    continue;
-                } else if (line.endsWith(separator)) {
-                    if (chooseMine) {
-                        int ind = line.indexOf(separator);
-                        line = line.substring(0, ind);
-                        tmpOS.write(line.getBytes());
-                        tmpOS.write('\n');
-                    }
+        
+        setDiffConflictStyle(chooseMine ? SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED : SVNDiffConflictChoiceStyle.CHOOSE_LATEST);
 
-                    skip = chooseMine ? true : false;
-                    continue;
-                } else if (line.endsWith(theirsMarker)) {
-                    if (!chooseMine) {
-                        int ind = line.indexOf(theirsMarker);
-                        line = line.substring(0, ind);
-                        tmpOS.write(line.getBytes());
-                        tmpOS.write('\n');
-                    }
-                    
-                    skip = false;
-                    continue;
-                }
-                if (!skip) {
-                    tmpOS.write(line.getBytes());
-                    tmpOS.write('\n');
-                }
-            }
-        } catch (IOException ioe) {
-            String conflictedPart = chooseMine ? "mine-conflict" : "theirs-conflict";
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Error occured while resolving to " + conflictedPart + ": {0}", ioe.getMessage());
-            SVNErrorManager.error(err, ioe, SVNLogType.WC);
-        } finally {
-            SVNFileUtil.closeFile(tmpOS);
-            SVNFileUtil.closeFile(reader);
-        }
+        File leftFile = files.getBaseFile();
+        File rightFile = files.getRepositoryFile();
+        File detranslatedTarget = files.getLocalFile();
+        
+
+        mergeText(leftFile, detranslatedTarget, rightFile, getDiffOptions(), tmpFile);
 
         SVNLog log = files.getLog();
         if (log != null) {

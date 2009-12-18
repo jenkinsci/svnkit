@@ -68,7 +68,9 @@ public class FSMergerBySequence {
 	                 SVNDiffOptions options,
 	                 OutputStream result, 
 	                 SVNDiffConflictChoiceStyle style) throws IOException {
-
+	    
+	    style = style == null ? SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST : style;
+	    
 		final QSequenceLineResult localResult;
 		final QSequenceLineResult latestResult;
 		final QSequenceLineTeeSimplifier mySimplifer = createSimplifier(options);
@@ -91,9 +93,9 @@ public class FSMergerBySequence {
 			int baseLineIndex = -1;
 			boolean conflict = false;
 			boolean merged = false;
-
+			boolean chooseOnlyConflicts = style == SVNDiffConflictChoiceStyle.CHOOSE_ONLY_CONFLICTS;
 			while (local.hasCurrent() || latest.hasCurrent()) {
-				if (local.hasCurrent() && latest.hasCurrent() && isEqualChange(local.current(), latest.current(), localLines, latestLines)) {
+				if (!chooseOnlyConflicts && local.hasCurrent() && latest.hasCurrent() && isEqualChange(local.current(), latest.current(), localLines, latestLines)) {
 					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
 					local.forward();
 					latest.forward();
@@ -114,8 +116,7 @@ public class FSMergerBySequence {
 		                    local.forward();
 		                    latest.forward();
 		                    merged = true;
-						} else {
-	                        //TODO: this is actually SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST style 
+						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
 						    baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), localLines, latestLines, baseLineIndex, transformedLocalLines);
 	                        local.forward();
 	                        latest.forward();
@@ -125,21 +126,23 @@ public class FSMergerBySequence {
 					}
 				}
 
-				if (local.hasCurrent() && isBefore(local.current(), latest.hasCurrent() ? latest.current() : null)) {
+				if (!chooseOnlyConflicts && local.hasCurrent() && isBefore(local.current(), latest.hasCurrent() ? latest.current() : null)) {
 					baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
 					local.forward();
 					merged = true;
 					continue;
 				}
 
-				if (latest.hasCurrent()) {
+				if (!chooseOnlyConflicts && latest.hasCurrent()) {
 					baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
 					latest.forward();
 					merged = true;
 				}
 			}
 
-			appendTransformedLocalLines(baseLineIndex, baseLines.getLineCount(), transformedLocalLines, result);
+			if (!chooseOnlyConflicts) {
+	            appendTransformedLocalLines(baseLineIndex, baseLines.getLineCount(), transformedLocalLines, result);
+			}
 
 			if (conflict) {
 				return CONFLICTED;

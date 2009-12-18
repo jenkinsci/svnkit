@@ -11,10 +11,9 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 
 import org.tmatesoft.svn.cli.SVNCommandUtil;
@@ -22,11 +21,11 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.FSMergerBySequence;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNConflictHandler;
-import org.tmatesoft.svn.core.wc.ISVNMerger;
-import org.tmatesoft.svn.core.wc.ISVNMergerFactory;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictChoice;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -35,6 +34,9 @@ import org.tmatesoft.svn.core.wc.SVNConflictResult;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import de.regnis.q.sequence.line.QSequenceLineRAData;
+import de.regnis.q.sequence.line.QSequenceLineRAFileData;
 
 
 /**
@@ -56,6 +58,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
         if (conflictDescription.isTreeConflict()) {
             return null;
         }
+        
         SVNMergeFileSet files = conflictDescription.getMergeFiles();
         if (myAccept == SVNConflictAcceptPolicy.POSTPONE) {
             return new SVNConflictResult(SVNConflictChoice.POSTPONE, null);
@@ -401,43 +404,31 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
     }
     
     private void showConflictedChunks(SVNMergeFileSet files) throws SVNException {
-        String mineMarker = "<<<<<<< " + files.getLocalLabel();
-        String newMineMarker = "<<<<<<< MINE (select with 'mc')";
-        String theirsMarker = ">>>>>>> " + files.getRepositoryLabel();
-        String newTheirsMarker = ">>>>>>> THEIRS (select with 'tc')"; 
-        BufferedReader reader = null;
-        boolean output = false;
+        byte[] conflictStartMarker = "<<<<<<< MINE (select with 'mc')".getBytes();
+        byte[] conflictSeparator = "=======".getBytes();
+        byte[] conflictEndMarker = ">>>>>>> THEIRS (select with 'tc')".getBytes();
+        
+        SVNDiffOptions options = new SVNDiffOptions(false, false, true);
+        FSMergerBySequence merger = new FSMergerBySequence(conflictStartMarker, conflictSeparator, conflictEndMarker);
+        RandomAccessFile localIS = null;
+        RandomAccessFile latestIS = null;
+        RandomAccessFile baseIS = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(files.getResultFile())));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                if (mineMarker.equals(line)) {
-                    line = newMineMarker;
-                    output = true;
-                } else if (theirsMarker.equals(line)) {
-                    mySVNEnvironment.getErr().println(newTheirsMarker);
-                    output = false;
-                } else if (line.endsWith(mineMarker)) {
-                    int ind = line.indexOf(mineMarker);
-                    line = line.substring(0, ind) + newMineMarker;
-                    output = true;
-                } else if (line.endsWith(theirsMarker)) {
-                    int ind = line.indexOf(theirsMarker);
-                    line = line.substring(0, ind) + newTheirsMarker;
-                    mySVNEnvironment.getErr().println(line);
-                    output = false;
-                    continue;
-                }
-                if (output) {
-                    mySVNEnvironment.getErr().println(line);
-                }
-            }
-        } catch (IOException ioe) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
-                    "Error occured while showing conflict chunks: {0}", ioe.getMessage());
-            SVNErrorManager.error(err, ioe, SVNLogType.CLIENT);
+            localIS = new RandomAccessFile(files.getWCFile(), "r");
+            latestIS = new RandomAccessFile(files.getRepositoryFile(), "r");
+            baseIS = new RandomAccessFile(files.getBaseFile(), "r");
+
+            QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
+            QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
+            QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
+            merger.merge(baseData, localData, latestData, options, mySVNEnvironment.getOut(), SVNDiffConflictChoiceStyle.CHOOSE_ONLY_CONFLICTS);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
+            SVNErrorManager.error(err, e, SVNLogType.WC);
         } finally {
-            SVNFileUtil.closeFile(reader);
+            SVNFileUtil.closeFile(localIS);
+            SVNFileUtil.closeFile(baseIS);
+            SVNFileUtil.closeFile(latestIS);
         }
     }
 

@@ -33,6 +33,7 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
     private byte[] myStart;
     private byte[] mySeparator;
     private byte[] myEnd;
+    private SVNDiffOptions myDiffOptions;
 
     protected AbstractSVNMerger(byte[] start, byte[] sep, byte[] end) {
         myStart = start;
@@ -52,7 +53,12 @@ public abstract class AbstractSVNMerger implements ISVNMerger {
         return myEnd;
     }
 
+    protected SVNDiffOptions getDiffOptions() {
+        return myDiffOptions;
+    }
+    
     public SVNMergeResult mergeText(SVNMergeFileSet files, boolean dryRun, SVNDiffOptions options) throws SVNException {
+        myDiffOptions = options;
         SVNStatusType status;
         if (files.isBinary()) {
             status = mergeBinary(files.getBaseFile(), files.getLocalFile(), files.getRepositoryFile(), options, files.getResultFile());
