@@ -472,4 +472,22 @@ public class SVNPathUtil {
                 path.charAt(basePath.length()) == '/'));
     }
 
+    public static boolean isAbsolute(String path) {
+        if (path == null) {
+            return false;
+        }
+        
+        if (path.startsWith("/")) {
+            return true;
+        }
+        
+        if (SVNFileUtil.isWindows && path.length() > 1) {
+            char ch0 = path.charAt(0);
+            char ch1 = path.charAt(1);
+            if (((ch0 >= 'A' && ch0 <= 'Z') || (ch0 >= 'a' && ch0 <= 'z')) && ch1 == ':') {
+                return true;
+            }
+        }
+        return false;
+    }
 }

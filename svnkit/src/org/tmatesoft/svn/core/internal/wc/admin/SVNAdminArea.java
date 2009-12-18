@@ -42,7 +42,9 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNMerger;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNDiffConflictChoiceStyle;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -303,21 +305,66 @@ public abstract class SVNAdminArea {
         }
 
         String autoResolveSource = null;
+        File autoResolveSourceFile = null;
+        boolean removeSource = false;
         if (conflictChoice == SVNConflictChoice.BASE) {
             autoResolveSource = entry.getConflictOld();
         } else if (conflictChoice == SVNConflictChoice.MINE_FULL) {
             autoResolveSource = entry.getConflictWorking();
         } else if (conflictChoice == SVNConflictChoice.THEIRS_FULL) {
             autoResolveSource = entry.getConflictNew();
+        } else if (conflictChoice == SVNConflictChoice.THEIRS_CONFLICT || conflictChoice == SVNConflictChoice.MINE_CONFLICT) {
+            if (entry.getConflictOld() != null && entry.getConflictNew() != null && entry.getConflictWorking() != null) {
+                String conflictOld = entry.getConflictOld();
+                String conflictNew = entry.getConflictNew();
+                String conflictWorking = entry.getConflictWorking();
+                
+                ISVNMergerFactory factory = myWCAccess.getOptions().getMergerFactory();
+                
+                File conflictOldFile = SVNPathUtil.isAbsolute(conflictOld) ? new File(conflictOld) : getFile(conflictOld);
+                File conflictNewFile = SVNPathUtil.isAbsolute(conflictNew) ? new File(conflictNew) : getFile(conflictNew);
+                File conflictWorkingFile = SVNPathUtil.isAbsolute(conflictWorking) ? new File(conflictWorking) : getFile(conflictWorking);
+                    
+                byte[] conflictStart = ("<<<<<<< " + conflictWorking).getBytes();
+                byte[] conflictEnd = (">>>>>>> " + conflictNew).getBytes();
+                byte[] separator = ("=======").getBytes();
+
+                ISVNMerger merger = factory.createMerger(conflictStart, separator, conflictEnd);
+                SVNDiffConflictChoiceStyle style = conflictChoice == SVNConflictChoice.THEIRS_CONFLICT ? SVNDiffConflictChoiceStyle.CHOOSE_LATEST : 
+                    SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED;
+                if (merger instanceof DefaultSVNMerger) {
+                    DefaultSVNMerger defaultMerger = (DefaultSVNMerger) merger;
+                    defaultMerger.setDiffConflictStyle(style);
+                }
+                
+                autoResolveSourceFile = SVNAdminUtil.createTmpFile(this);
+
+                SVNMergeFileSet mergeFileSet = new SVNMergeFileSet(this, null, conflictOldFile, conflictWorkingFile, name, conflictNewFile, 
+                        autoResolveSourceFile, null, null);
+
+                String localLabel = ".working";
+                String baseLabel = ".old";
+                String latestLabel = ".new";
+                
+                mergeFileSet.setMergeLabels(baseLabel, localLabel, latestLabel);
+                merger.mergeText(mergeFileSet, false, null);
+                mergeFileSet.dispose();
+                removeSource = true;
+            }
         } else if (conflictChoice != SVNConflictChoice.MERGED) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS,
-                    "Invalid 'conflict_result' argument");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Invalid 'conflict_result' argument");
             SVNErrorManager.error(err, SVNLogType.DEFAULT);
         }
-
+        
         if (autoResolveSource != null) {
-            File autoResolveSourceFile = getFile(autoResolveSource);
+            autoResolveSourceFile = getFile(autoResolveSource);
+        }
+        
+        if (autoResolveSourceFile != null) {
             SVNFileUtil.copyFile(autoResolveSourceFile, getFile(name), false);
+            if (removeSource) {
+                SVNFileUtil.deleteFile(autoResolveSourceFile);
+            }
         }
 
         if (!text && !props) {

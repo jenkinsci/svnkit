@@ -77,15 +77,22 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	}
 	
     private ISVNConflictHandler myConflictCallback;
-
+    private SVNDiffConflictChoiceStyle myDiffConflictStyle;
+    
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end) {
         this(start, sep, end, null);
     }
 
     public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictHandler callback) {
+        this(start, sep, end, callback, SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST);
+    }
+
+    public DefaultSVNMerger(byte[] start, byte[] sep, byte[] end, ISVNConflictHandler callback, SVNDiffConflictChoiceStyle style) {
         super(start, sep, end);
         myConflictCallback = callback;
+        myDiffConflictStyle = style;
     }
+
 
 	public SVNMergeResult mergeProperties(String localPath, SVNProperties workingProperties, 
 			SVNProperties baseProperties, SVNProperties serverBaseProps, SVNProperties propDiff, 
@@ -208,6 +215,14 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         return SVNMergeResult.createMergeResult(status, null);
 	}
 
+	public SVNDiffConflictChoiceStyle getDiffConflictStyle() {
+        return myDiffConflictStyle;
+    }
+    
+    public void setDiffConflictStyle(SVNDiffConflictChoiceStyle diffConflictStyle) {
+        myDiffConflictStyle = diffConflictStyle;
+    }
+
     protected SVNStatusType mergeBinary(File baseFile, File localFile, File repositoryFile, SVNDiffOptions options, File resultFile) throws SVNException {
         return SVNStatusType.CONFLICTED;
     }
@@ -228,7 +243,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             QSequenceLineRAData baseData = new QSequenceLineRAFileData(baseIS);
             QSequenceLineRAData localData = new QSequenceLineRAFileData(localIS);
             QSequenceLineRAData latestData = new QSequenceLineRAFileData(latestIS);
-            mergeResult = merger.merge(baseData, localData, latestData, options, result);
+            mergeResult = merger.merge(baseData, localData, latestData, options, result, getDiffConflictStyle());
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
             SVNErrorManager.error(err, e, SVNLogType.WC);
@@ -307,24 +322,26 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
     
     protected SVNMergeResult handleChooseBase(SVNMergeFileSet files) throws SVNException {
-        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
-
-        command.put(SVNLog.NAME_ATTR, files.getBasePath());
-        command.put(SVNLog.DEST_ATTR, files.getWCPath());
-        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-        command.clear();
+        if (log != null) {
+            SVNProperties command = new SVNProperties();
+            command.put(SVNLog.NAME_ATTR, files.getBasePath());
+            command.put(SVNLog.DEST_ATTR, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
+        }
         return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
     }
     
     protected SVNMergeResult handleChooseRepository(SVNMergeFileSet files) throws SVNException {
-        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
-        
-        command.put(SVNLog.NAME_ATTR, files.getRepositoryPath());
-        command.put(SVNLog.DEST_ATTR, files.getWCPath());
-        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-        command.clear();
+        if (log != null) {
+            SVNProperties command = new SVNProperties();
+            command.put(SVNLog.NAME_ATTR, files.getRepositoryPath());
+            command.put(SVNLog.DEST_ATTR, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
+        }
 
         return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
     }
@@ -397,16 +414,18 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         }
 
         SVNLog log = files.getLog();
-        SVNProperties command = new SVNProperties();
-        String tmpBasePath = SVNFileUtil.getBasePath(tmpFile);
-        command.put(SVNLog.NAME_ATTR, tmpBasePath);
-        command.put(SVNLog.DEST_ATTR, files.getWCPath());
-        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-        command.clear();
+        if (log != null) {
+            SVNProperties command = new SVNProperties();
+            String tmpBasePath = SVNFileUtil.getBasePath(tmpFile);
+            command.put(SVNLog.NAME_ATTR, tmpBasePath);
+            command.put(SVNLog.DEST_ATTR, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
 
-        command.put(SVNLog.NAME_ATTR, tmpBasePath);
-        log.addCommand(SVNLog.DELETE, command, false);
-        command.clear();
+            command.put(SVNLog.NAME_ATTR, tmpBasePath);
+            log.addCommand(SVNLog.DELETE, command, false);
+            command.clear();
+        }
 
         return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
     }
@@ -440,10 +459,12 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         if (!files.getLocalPath().equals(files.getWCPath())) {
             File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel(), false);
             String minePath = SVNFileUtil.getBasePath(mineFile);
-            command.put(SVNLog.NAME_ATTR, files.getLocalPath());
-            command.put(SVNLog.DEST_ATTR, minePath);
-            log.addCommand(SVNLog.MOVE, command, false);
-            command.clear();
+            if (log != null) {
+                command.put(SVNLog.NAME_ATTR, files.getLocalPath());
+                command.put(SVNLog.DEST_ATTR, minePath);
+                log.addCommand(SVNLog.MOVE, command, false);
+                command.clear();
+            }
             command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), minePath);
         } else {
             command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), "");
@@ -460,11 +481,12 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     protected void makeBinaryConflictEntry(SVNMergeFileSet files, String newFilePath, String oldFilePath) throws SVNException {
         SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
-
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldFilePath);
-        log.logChangedEntryProperties(files.getWCPath(), command);
-        command.clear();
+        if (log != null) {
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldFilePath);
+            log.logChangedEntryProperties(files.getWCPath(), command);
+            command.clear();
+        }
         files.getAdminArea().saveEntries(false);
     }
 
@@ -472,14 +494,16 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         SVNProperties command = new SVNProperties();
         File root = files.getAdminArea().getRoot();
         SVNLog log = files.getLog();
-
+        
         if (files.getCopyFromFile() != null) {
             String copyFromPath = files.getCopyFromPath();
             String detranslatedPath = files.getWCPath();
-            command.put(SVNLog.NAME_ATTR, copyFromPath);
-            command.put(SVNLog.DEST_ATTR, detranslatedPath);
-            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-            command.clear();
+            if (log != null) {
+                command.put(SVNLog.NAME_ATTR, copyFromPath);
+                command.put(SVNLog.DEST_ATTR, detranslatedPath);
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+            }
         }
 
         File mineFile = SVNFileUtil.createUniqueFile(root, files.getWCPath(), files.getLocalLabel(), false);
@@ -491,39 +515,42 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         String minePath = SVNFileUtil.getBasePath(mineFile);
         
         String basePath = files.getBasePath();
-        command.put(SVNLog.NAME_ATTR, basePath);
-        command.put(SVNLog.DEST_ATTR, oldPath);
-        command.put(SVNLog.ATTR2, files.getWCPath());
-        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-        command.clear();
-
         String latestPath = files.getRepositoryPath();
-        command.put(SVNLog.NAME_ATTR, latestPath);
-        command.put(SVNLog.DEST_ATTR, newPath);
-        command.put(SVNLog.ATTR2, files.getWCPath());
-        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-        command.clear();
-
         File tmpTargetCopy = SVNTranslator.getTranslatedFile(files.getAdminArea(), files.getWCPath(), files.getWCFile(), 
-                                                             false, false, false, true);
+                false, false, false, true);
         String tmpTargetCopyPath = SVNFileUtil.getBasePath(tmpTargetCopy);
-        command.put(SVNLog.NAME_ATTR, tmpTargetCopyPath);
-        command.put(SVNLog.DEST_ATTR, minePath);
-        command.put(SVNLog.ATTR2, files.getWCPath());
-        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-        command.clear();
 
-        if (!tmpTargetCopy.equals(files.getLocalFile())) {
+        if (log != null) {
+            command.put(SVNLog.NAME_ATTR, basePath);
+            command.put(SVNLog.DEST_ATTR, oldPath);
+            command.put(SVNLog.ATTR2, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
+
+            command.put(SVNLog.NAME_ATTR, latestPath);
+            command.put(SVNLog.DEST_ATTR, newPath);
+            command.put(SVNLog.ATTR2, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
+
             command.put(SVNLog.NAME_ATTR, tmpTargetCopyPath);
-            log.addCommand(SVNLog.DELETE, command, false);
+            command.put(SVNLog.DEST_ATTR, minePath);
+            command.put(SVNLog.ATTR2, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+            command.clear();
+
+            if (!tmpTargetCopy.equals(files.getLocalFile())) {
+                command.put(SVNLog.NAME_ATTR, tmpTargetCopyPath);
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            }
+
+            command.put(SVNLog.NAME_ATTR, files.getResultPath());
+            command.put(SVNLog.DEST_ATTR, files.getWCPath());
+            command.put(SVNLog.ATTR2, files.getWCPath());
+            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
             command.clear();
         }
-
-	    command.put(SVNLog.NAME_ATTR, files.getResultPath());
-	    command.put(SVNLog.DEST_ATTR, files.getWCPath());
-	    command.put(SVNLog.ATTR2, files.getWCPath());
-	    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-	    command.clear();
 
         makeTextConflictEntry(files, minePath, newPath, oldPath);
         
@@ -531,14 +558,15 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     }
 
     protected void makeTextConflictEntry(SVNMergeFileSet files, String mineFilePath, String newFilePath, String oldFilePath) throws SVNException {
-        SVNProperties command = new SVNProperties();
         SVNLog log = files.getLog();
-        
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), mineFilePath);
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
-        command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldFilePath);
-        log.logChangedEntryProperties(files.getWCPath(), command);
-        command.clear();
+        if (log != null) {
+            SVNProperties command = new SVNProperties();
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_WRK), mineFilePath);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_NEW), newFilePath);
+            command.put(SVNProperty.shortPropertyName(SVNProperty.CONFLICT_OLD), oldFilePath);
+            log.logChangedEntryProperties(files.getWCPath(), command);
+            command.clear();
+        }
     }
     
     protected SVNMergeResult handleChooseMerged(SVNMergeFileSet files, SVNMergeResult mergeResult) throws SVNException {
@@ -547,21 +575,25 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         if (mergeResult.getMergeStatus() != SVNStatusType.CONFLICTED) {
             // do normal merge.
             if (mergeResult.getMergeStatus() != SVNStatusType.UNCHANGED) {
-                command.put(SVNLog.NAME_ATTR, files.getResultPath());
-                command.put(SVNLog.DEST_ATTR, files.getWCPath());
-                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-                command.clear();
+                if (log != null) {
+                    command.put(SVNLog.NAME_ATTR, files.getResultPath());
+                    command.put(SVNLog.DEST_ATTR, files.getWCPath());
+                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                    command.clear();
+                }
             }
             return mergeResult;
         } else if (files.isBinary()) {
             // this action is not applicable for binary conflited files.
             return handleMarkConflicted(files);
         } else {
-            // for text file we could use merged version in case of conflict.
-            command.put(SVNLog.NAME_ATTR, files.getResultPath());
-            command.put(SVNLog.DEST_ATTR, files.getWCPath());
-            log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
-            command.clear();
+            if (log != null) {
+                // for text file we could use merged version in case of conflict.
+                command.put(SVNLog.NAME_ATTR, files.getResultPath());
+                command.put(SVNLog.DEST_ATTR, files.getWCPath());
+                log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                command.clear();
+            }
             return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
         }
     }
@@ -580,21 +612,26 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
         SVNLog log = files.getLog();
 
         if (!files.getLocalPath().equals(files.getWCPath())) {
-            command.put(SVNLog.NAME_ATTR, files.getLocalPath());
+            if (log != null) {
+                command.put(SVNLog.NAME_ATTR, files.getLocalPath());
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+            }
+        }
+        
+        if (log != null) {
+            command.put(SVNLog.NAME_ATTR, files.getWCPath());
+            log.addCommand(SVNLog.MAYBE_EXECUTABLE, command, false);
+            command.clear();
+
+            command.put(SVNLog.NAME_ATTR, files.getWCPath());
+            log.addCommand(SVNLog.MAYBE_READONLY, command, false);
+            command.clear();
+
+            command.put(SVNLog.NAME_ATTR, files.getResultPath());
             log.addCommand(SVNLog.DELETE, command, false);
             command.clear();
         }
-        command.put(SVNLog.NAME_ATTR, files.getWCPath());
-        log.addCommand(SVNLog.MAYBE_EXECUTABLE, command, false);
-        command.clear();
-
-        command.put(SVNLog.NAME_ATTR, files.getWCPath());
-        log.addCommand(SVNLog.MAYBE_READONLY, command, false);
-        command.clear();
-
-        command.put(SVNLog.NAME_ATTR, files.getResultPath());
-        log.addCommand(SVNLog.DELETE, command, false);
-        command.clear();
     }
 
     private SVNStatusType applySinglePropertyAdd(String localPath, boolean isDir, SVNStatusType status, 
@@ -890,7 +927,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                         QSequenceLineRAData baseData = new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(theValue));
                         QSequenceLineRAData localData = new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(workingValue));
                         QSequenceLineRAData latestData = new QSequenceLineRAByteData(SVNPropertyValue.getPropertyAsBytes(newValue));
-                        merger.merge(baseData, localData, latestData, null, result);
+                        merger.merge(baseData, localData, latestData, null, result, null);
                     } catch (IOException e) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                         SVNErrorManager.error(err, e, SVNLogType.WC);

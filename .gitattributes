@@ -100,6 +100,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslInputStream.class -te
 svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl/SaslOutputStream.class -text
 svnkit/src/org/tmatesoft/svn/core/internal/util/jna/SVNOS2Util.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/ISVNAuthStoreHandler.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/SVNDiffConflictChoiceStyle.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea16.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea16Factory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf

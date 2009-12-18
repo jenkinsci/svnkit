@@ -61,9 +61,9 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             return new SVNConflictResult(SVNConflictChoice.BASE, null);
         } else if (myAccept == SVNConflictAcceptPolicy.WORKING) {
             return new SVNConflictResult(SVNConflictChoice.MERGED, null);
-        } else if (myAccept == SVNConflictAcceptPolicy.MINE) {
+        } else if (myAccept == SVNConflictAcceptPolicy.MINE_CONFLICT) {
             return new SVNConflictResult(SVNConflictChoice.MINE_CONFLICT, null);
-        } else if (myAccept == SVNConflictAcceptPolicy.THEIRS) {
+        } else if (myAccept == SVNConflictAcceptPolicy.THEIRS_CONFLICT) {
             return new SVNConflictResult(SVNConflictChoice.THEIRS_CONFLICT, null);
         } else if (myAccept == SVNConflictAcceptPolicy.MINE_FULL) {
             return new SVNConflictResult(SVNConflictChoice.MINE_FULL, null);
