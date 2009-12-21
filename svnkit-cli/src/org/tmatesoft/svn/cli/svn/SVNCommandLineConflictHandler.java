@@ -407,9 +407,10 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
         byte[] conflictStartMarker = "<<<<<<< MINE (select with 'mc')".getBytes();
         byte[] conflictSeparator = "=======".getBytes();
         byte[] conflictEndMarker = ">>>>>>> THEIRS (select with 'tc')".getBytes();
+        byte[] conflictOriginalMarker = "||||||| ORIGINAL".getBytes();
         
         SVNDiffOptions options = new SVNDiffOptions(false, false, true);
-        FSMergerBySequence merger = new FSMergerBySequence(conflictStartMarker, conflictSeparator, conflictEndMarker);
+        FSMergerBySequence merger = new FSMergerBySequence(conflictStartMarker, conflictSeparator, conflictEndMarker, conflictOriginalMarker);
         RandomAccessFile localIS = null;
         RandomAccessFile latestIS = null;
         RandomAccessFile baseIS = null;
