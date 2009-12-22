@@ -433,7 +433,7 @@ public class FSMergerBySequence {
 		for (baseLineIndex++; baseLineIndex < to; baseLineIndex++) {
 			final QSequenceLine sequenceLine = (QSequenceLine)transformedLocalLines.get(baseLineIndex);
 			if (sequenceLine == null) {
-				throw new RuntimeException();
+				throw new IOException("Can not merge: sequence line is null for this base index");
 			}
 			writeLine(result, sequenceLine);
 		}
