@@ -822,7 +822,9 @@ class HTTPConnection implements IHTTPConnection {
             if (mySocket == null) {
                 return null;
             }
-            myInputStream = new CancellableSocketInputStream(new BufferedInputStream(mySocket.getInputStream(), 2048), myRepository.getCanceller());
+//            myInputStream = new CancellableSocketInputStream(new BufferedInputStream(mySocket.getInputStream(), 2048), myRepository.getCanceller());
+            myInputStream = new BufferedInputStream(mySocket.getInputStream(), 2048);
+
         }
         return myInputStream;
     }
