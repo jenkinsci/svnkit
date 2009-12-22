@@ -119,18 +119,20 @@ public class FSMergerBySequence {
 					final QSequenceDifferenceBlock latestStartBlock = latest.current();
 					if (checkConflict(local, latest, localLines, latestLines, baseLines.getLineCount())) {
 						if (style == SVNDiffConflictChoiceStyle.CHOOSE_LATEST) {
-		                    baseLineIndex = appendLines(result, latest.current(), latestLines, baseLineIndex, transformedLocalLines);
-                            local.forward();
+                            baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), 
+                                    localLines, latestLines, baseLineIndex, transformedLocalLines, style);
+		                    local.forward();
 		                    latest.forward();
 		                    merged = true;
 						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED) {
-		                    baseLineIndex = appendLines(result, local.current(), localLines, baseLineIndex, transformedLocalLines);
+                            baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), 
+                                    localLines, latestLines, baseLineIndex, transformedLocalLines, style);
 		                    local.forward();
 		                    latest.forward();
 		                    merged = true;
 						} else if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
 						    baseLineIndex = createConflict(result, localStartBlock, local.current(), latestStartBlock, latest.current(), 
-						            localLines, latestLines, baseLineIndex, transformedLocalLines);
+						            localLines, latestLines, baseLineIndex, transformedLocalLines, style);
 	                        local.forward();
 	                        latest.forward();
 	                        conflict = true;
@@ -318,7 +320,8 @@ public class FSMergerBySequence {
 	                           QSequenceDifferenceBlock latestStart,
 	                           QSequenceDifferenceBlock latestEnd,
 	                           QSequenceLineCache localLines, QSequenceLineCache latestLines,
-	                           int baseLineIndex, List transformedLocalLines) throws IOException {
+	                           int baseLineIndex, List transformedLocalLines, 
+	                           SVNDiffConflictChoiceStyle style) throws IOException {
 		final int minBaseFrom = Math.min(localStart.getLeftFrom(), latestStart.getLeftFrom());
 		final int maxBaseTo = Math.max(localEnd.getLeftTo(), latestEnd.getLeftTo());
 
@@ -329,15 +332,29 @@ public class FSMergerBySequence {
 		final int latestFrom = Math.max(0, latestStart.getRightFrom() - (latestStart.getLeftFrom() - minBaseFrom));
 		final int latestTo = Math.min(latestLines.getLineCount() - 1, latestEnd.getRightTo() + (maxBaseTo - latestEnd.getLeftTo()));
 
-		writeBytesAndEol(result, myConflictStart);
-		for (int index = localFrom; index <= localTo; index++) {
-			writeLine(result, localLines.getLine(index));
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        writeBytesAndEol(result, myConflictStart);
 		}
-		writeBytesAndEol(result, myConflictSeparator);
-		for (int index = latestFrom; index <= latestTo; index++) {
-			writeLine(result, latestLines.getLine(index));
+
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED || style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        for (int index = localFrom; index <= localTo; index++) {
+	            writeLine(result, localLines.getLine(index));
+	        }
 		}
-		writeBytesAndEol(result, myConflictEnd);
+		
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        writeBytesAndEol(result, myConflictSeparator);
+		}
+
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_LATEST || style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        for (int index = latestFrom; index <= latestTo; index++) {
+	            writeLine(result, latestLines.getLine(index));
+	        }
+		}
+		
+		if (style == SVNDiffConflictChoiceStyle.CHOOSE_MODIFIED_LATEST) {
+	        writeBytesAndEol(result, myConflictEnd);
+		}
 
 		return maxBaseTo;
 	}
