@@ -400,7 +400,7 @@ public class SVNCommandLineConflictHandler implements ISVNConflictHandler {
             choice = SVNConflictChoice.POSTPONE;
         }
         
-        return new SVNConflictResult(choice, null);
+        return new SVNConflictResult(choice, null, saveMerged);
     }
     
     private void showConflictedChunks(SVNMergeFileSet files) throws SVNException {

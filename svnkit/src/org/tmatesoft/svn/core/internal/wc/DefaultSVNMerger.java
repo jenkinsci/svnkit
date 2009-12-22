@@ -314,6 +314,18 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                     SVNErrorManager.error(err, SVNLogType.DEFAULT);
                 }
                 
+                if (result.isIsSaveMerged()) {
+                    File mergedFile = result.getMergedFile() != null ? result.getMergedFile() : files.getResultFile();
+                    File mergeTarget = files.getWCFile();
+                    File editedMergedFile = SVNFileUtil.createUniqueFile(mergeTarget.getParentFile(), mergeTarget.getName(), ".edited", false);
+                    SVNLog log = files.getLog();
+                    SVNProperties command = new SVNProperties();
+                    command.put(SVNLog.NAME_ATTR, SVNFileUtil.getBasePath(mergedFile));
+                    command.put(SVNLog.DEST_ATTR, editedMergedFile.getName());
+                    log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+                    command.clear();
+                }
+                
                 SVNConflictChoice choice = result.getConflictChoice();
                 if (choice == SVNConflictChoice.BASE) {
                     return DefaultSVNMergerAction.CHOOSE_BASE;                        
