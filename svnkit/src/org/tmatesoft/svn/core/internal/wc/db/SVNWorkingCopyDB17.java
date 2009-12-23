@@ -594,6 +594,28 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return fetchRepositoryInfo(wcRoot.getStorage(), reposIdObj.getReposId());
     }
     
+    public boolean determineKeepLocal(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
+        try {
+            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+            try {
+                ISqlJetTable workingNodeTable = sdb.getTable(WORKING_NODE_TABLE);
+                ISqlJetCursor workingNodeCursor = workingNodeTable.lookup(workingNodeTable.getPrimaryKeyIndexName(), wcId, localRelPath);
+                try {
+                    if (!workingNodeCursor.eof()) {
+                        return workingNodeCursor.getBoolean("keep_local");
+                    } 
+                } finally {
+                    workingNodeCursor.close();
+                }
+            } finally {
+                sdb.commit();
+            }    
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        }
+        return false;
+    }
+    
     public boolean checkIfIsNotPresent(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
         try {
             sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
@@ -1195,7 +1217,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
     
     private RepositoryId scanUpwardsForRepository(SVNWCRoot wcRoot, String localRelPath) throws SVNException {
-        String name = SVNPathUtil.tail(localRelPath);
         SqlJetDb sdb = wcRoot.getStorage(); 
         if (sdb == null || wcRoot.getWCId() < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.scanUpwardsForRepository()");

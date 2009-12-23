@@ -114,17 +114,26 @@ public class SVNAdminArea17 extends SVNAdminArea {
             SVNWCDbKind kind = info.getWCDBKind();
             String reposRelPath = info.getReposRelPath();
             if (status == SVNWCDbStatus.NORMAL || status == SVNWCDbStatus.INCOMPLETE) {
-                boolean haveRow = false;
+                boolean notPresent = false;
                 if (kind == SVNWCDbKind.DIR) {
-                    if (myWCDb.checkIfIsNotPresent(sdb, 1, name)) {
-                        entry.setSchedule(null);
-                        entry.setDeleted(true);
-                    } else {
-                        entry.setSchedule(null);
-                        if (reposRelPath == null) {
-                            SVNRepositoryInfo reposInfo = myWCDb.scanBaseRepos(path);
-                        }
+                    notPresent = myWCDb.checkIfIsNotPresent(sdb, 1, name);
+                }
+                if (notPresent) {
+                    entry.setSchedule(null);
+                    entry.setDeleted(true);
+                } else {
+                    entry.setSchedule(null);
+                    if (reposRelPath == null) {
+                        SVNRepositoryInfo reposInfo = myWCDb.scanBaseRepos(path);
+                        entry.setRepositoryRoot(reposInfo.getRootURL());
+                        entry.setUUID(reposInfo.getUUID());
                     }
+                    entry.setIncomplete(true);
+                }
+            } else if (status == SVNWCDbStatus.DELETED || status == SVNWCDbStatus.OBSTRUCTED_DELETE) {
+                entry.scheduleForDeletion();
+                if (entry.isThisDir()) {
+                    entry.setKeepLocal(myWCDb.determineKeepLocal(sdb, 1, entry.getName()));
                 }
             }
         }
