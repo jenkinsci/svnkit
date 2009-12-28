@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea17Factory extends SVNAdminAreaFactory {
+    public static final int SVN_WC_VERSION = SVNAdminAreaFactory.WC_FORMAT_17;
 
     /**
      * @param area

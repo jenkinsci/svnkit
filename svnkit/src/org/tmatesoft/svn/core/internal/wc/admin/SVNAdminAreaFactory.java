@@ -44,8 +44,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
     public static final int WC_FORMAT_14 = 8;
     public static final int WC_FORMAT_15 = 9;
     public static final int WC_FORMAT_16 = 10;
+    public static final int WC_FORMAT_17 = 16;
     
-    public static final int SVN_WC_VERSION = 15;
+    public static final int SVN_WC_VERSION = WC_FORMAT_17;
     public static final int SVN_WC__HAS_WORK_QUEUE = 13;
     
     private static final Collection ourFactories = new TreeSet();
