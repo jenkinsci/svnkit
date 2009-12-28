@@ -52,6 +52,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea17Factory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
@@ -316,10 +317,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     String statusStr = (String) baseNodeResult.get("presence");
                     status = SVNWCDbStatus.parseStatus(statusStr);
                     
-                    if ((status == SVNWCDbStatus.ABSENT || status == SVNWCDbStatus.EXCLUDED) && haveWorking) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.readInfo()");
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
+                    SVNErrorManager.assertionFailure((status != SVNWCDbStatus.ABSENT && status != SVNWCDbStatus.EXCLUDED) || !haveWorking, null, SVNLogType.WC);
                     
                     if (nodeKind == SVNWCDbKind.SUBDIR && status == SVNWCDbStatus.NORMAL) {
                         status = SVNWCDbStatus.OBSTRUCTED;
@@ -521,6 +519,98 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         info.setWCDBStatus(status);
         info.setReposRelPath(reposRelPath);
         return info;
+    }
+    
+    public SVNEntryInfo getBaseInfo(File path, boolean fetchLock) throws SVNException {
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
+        String localRelPath = parsedPristineDirectory.myLocalRelativePath;
+        SVNPristineDirectory pristineDirectory = parsedPristineDirectory.getPristineDirectory();
+        SVNWCRoot wcRoot = pristineDirectory.getWCRoot();
+        SqlJetDb sdb = wcRoot.getStorage(); 
+        verifyPristineDirectoryIsUsable(pristineDirectory);
+        
+        Map baseNodeResult = selectBaseNode(sdb, wcRoot.getWCId(), localRelPath);
+        if (!baseNodeResult.isEmpty() && fetchLock) {
+            baseNodeResult = selectLockForBase(sdb, baseNodeResult);
+        }
+        
+        SVNWCDbKind kind = null;
+        SVNWCDbStatus status = null;
+        long revision = SVNRepository.INVALID_REVISION;
+        long changedRevision = SVNRepository.INVALID_REVISION;
+        String changedAuthor = null;
+        long changedDateMillis = -1;
+        long lastModTimeMillis = -1;
+        
+        SVNWCDbLock lock = null;
+        String reposRelPath = null;
+        String reposRootURL = null;
+        String reposUUID = null;
+        SVNDepth depth = null;
+        String checksum = null;
+        
+        if (!baseNodeResult.isEmpty()) {
+            String kindStr = (String) baseNodeResult.get("kind");
+            SVNWCDbKind nodeKind = SVNWCDbKind.parseKind(kindStr);
+            if (nodeKind == SVNWCDbKind.SUBDIR) {
+                kind = SVNWCDbKind.DIR;
+            } else {
+                kind = nodeKind;
+            }
+
+            String statusStr = (String) baseNodeResult.get("presence");
+            status = SVNWCDbStatus.parseStatus(statusStr);
+
+            if (nodeKind == SVNWCDbKind.SUBDIR && status == SVNWCDbStatus.NORMAL) {
+                status = SVNWCDbStatus.OBSTRUCTED;
+            }
+            
+            revision = (Long) baseNodeResult.get("revnum");
+            reposRelPath = (String) baseNodeResult.get("repos_relpath");
+            if (fetchLock) {
+                String lockToken = (String) baseNodeResult.get("lock_token");
+                if (lockToken == null) {
+                    lock = null;
+                } else {
+                    String owner = (String) baseNodeResult.get("lock_owner");
+                    String comment = (String) baseNodeResult.get("lock_comment");
+                    Long dateMillis = (Long) baseNodeResult.get("lock_date");
+                    lock = new SVNWCDbLock(lockToken, owner, comment, new Date(dateMillis));
+                }
+            }
+
+            Long reposId = (Long) baseNodeResult.get("repos_id");
+            if (reposId != null) {
+                SVNRepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
+                reposRootURL = reposInfo.getRootURL();
+                reposUUID = reposInfo.getUUID();
+            }
+            
+            changedRevision = (Long) baseNodeResult.get("changed_rev");
+            changedDateMillis = (Long) baseNodeResult.get("changed_date");
+            changedAuthor = (String) baseNodeResult.get("changed_author");
+            lastModTimeMillis = (Long) baseNodeResult.get("last_mod_time");
+
+            if (nodeKind != SVNWCDbKind.DIR) {
+                depth = SVNDepth.UNKNOWN;
+            } else {
+                String depthStr = (String) baseNodeResult.get("depth");
+                if (depthStr == null) {
+                    depth = SVNDepth.UNKNOWN;
+                } else {
+                    depth = SVNDepth.fromString(depthStr);
+                }
+            }
+
+            if (nodeKind == SVNWCDbKind.FILE) {
+                checksum = (String) baseNodeResult.get("checksum");
+                //TODO: parse checksum?
+            }
+        }
+        
+        
+        
+        return null;
     }
     
     public Collection readConflictVictims(File path) throws SVNException {
@@ -814,11 +904,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         if (pristineDir == null) {
             pristineDir = new SVNPristineDirectory(null, null, false, false, path);
         } else {
-            if (!pristineDir.getPath().equals(path)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                        "Assertion failure #1 in SVNWokringCopyDB17.parseLocalAbsPath()");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+            SVNErrorManager.assertionFailure(pristineDir.getPath().equals(path), null, SVNLogType.WC);
         }
         
         SqlJetDb sdb = null;
@@ -886,11 +972,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         localRelPath = SVNPathUtil.append(dirRelPath, buildRelPath);
         
         if (isObstructionPossible) {
-            if (movedUpwards) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                        "Assertion failure #2 in SVNWorkingCopyDB17.parseLocalAbsPath()");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+            SVNErrorManager.assertionFailure(!movedUpwards, null, SVNLogType.WC);
             
             File parentPath = path.getParentFile();
             SVNPristineDirectory parentDir = getPristineDirectory(parentPath);
@@ -911,11 +993,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     if (parentDir == null) {
                         parentDir = new SVNPristineDirectory(null, null, false, false, parentPath);
                     } else {
-                        if (!parentPath.equals(parentDir.getPath())) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                                    "Assertion failure #3 in SVNWorkingCopyDB17.parseLocalAbsPath()");
-                            SVNErrorManager.error(err, SVNLogType.WC);
-                        }
+                        SVNErrorManager.assertionFailure(parentPath.equals(parentDir.getPath()), null, SVNLogType.WC);
                     }
                     
                     SVNWCRoot wcRoot = createWCRoot(parentDir.getPath(), sdb, 1, FORMAT_FROM_SDB, myIsAutoUpgrade, myIsEnforceEmptyWorkQueue);
@@ -991,29 +1069,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     public void addBaseDirectory(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, long changedRevision, 
             Date changedDate, String changedAuthor, List children, SVNDepth depth) throws SVNException {        
-        SVNErrorMessage err = null;
-        if (reposRelPath == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.addBaseDirectory()");
-        }
-        if (reposUUID == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.addBaseDirectory()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #3 in SVNWorkingCopyDB17.addBaseDirectory()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(changedRevision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #4 in SVNWorkingCopyDB17.addBaseDirectory()");
-        }
-        if (props == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #5 in SVNWorkingCopyDB17.addBaseDirectory()");
-        }
-        if (children == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #6 in SVNWorkingCopyDB17.addBaseDirectory()");
-        }
-        
-        if (err != null) {
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
+
+        SVNErrorManager.assertionFailure(reposRelPath != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(changedRevision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(props != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(children != null, null, SVNLogType.WC);
         
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
@@ -1028,29 +1090,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     public void addBaseFile(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, long changedRevision, 
             Date changedDate, String changedAuthor, SVNChecksum checksum, long translatedSize) throws SVNException {
-        SVNErrorMessage err = null;
-        if (reposRelPath == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.addBaseFile()");
-        }
-        if (reposUUID == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.addBaseFile()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #3 in SVNWorkingCopyDB17.addBaseFile()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(changedRevision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #4 in SVNWorkingCopyDB17.addBaseFile()");
-        }
-        if (checksum == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #5 in SVNWorkingCopyDB17.addBaseFile()");
-        }
-        if (props == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #6 in SVNWorkingCopyDB17.addBaseFile()");
-        }
-        if (err != null) {
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-
+        SVNErrorManager.assertionFailure(reposRelPath != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(changedRevision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(checksum != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(props != null, null, SVNLogType.WC);
         
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
@@ -1065,29 +1110,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     public void addBaseSymlink(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, long changedRevision, 
             Date changedDate, String changedAuthor, String target) throws SVNException {
-        SVNErrorMessage err = null;
-        if (reposRelPath == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.addBaseSymlink()");
-        }
-        if (reposUUID == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.addBaseSymlink()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #3 in SVNWorkingCopyDB17.addBaseSymlink()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(changedRevision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #4 in SVNWorkingCopyDB17.addBaseSymlink()");
-        }
-        if (props == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #5 in SVNWorkingCopyDB17.addBaseSymlink()");
-        }
-        if (target == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #6 in SVNWorkingCopyDB17.addBaseSymlink()");
-        }
-        if (err != null) {
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        
+        SVNErrorManager.assertionFailure(reposRelPath != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(changedRevision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(props != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(target != null, null, SVNLogType.WC);
         
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
@@ -1101,22 +1129,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
     
     public void addBaseAbsentNode(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, SVNWCDbKind kind, SVNWCDbStatus status) throws SVNException {
-        SVNErrorMessage err = null;
-        if (reposRelPath == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.addBaseAbsentNode()");
-        }
-        if (reposUUID == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.addBaseAbsentNode()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #3 in SVNWorkingCopyDB17.addBaseAbsentNode()");
-        }
-        if (status != SVNWCDbStatus.ABSENT && status != SVNWCDbStatus.EXCLUDED && status != SVNWCDbStatus.NOT_PRESENT) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #4 in SVNWorkingCopyDB17.addBaseAbsentNode()");
-        }
-        if (err != null) {
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
+        SVNErrorManager.assertionFailure(reposRelPath != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(status == SVNWCDbStatus.ABSENT || status == SVNWCDbStatus.EXCLUDED || status == SVNWCDbStatus.NOT_PRESENT, 
+                null, SVNLogType.WC);
 
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
@@ -1134,20 +1151,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     //TODO: this must be removed by the release
     public void addTmpBaseSubDirectory(File path, String reposRelPath, String reposRootURL, String reposUUID, long revision, 
             long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth) throws SVNException {
-        SVNErrorMessage err = null;
-        if (reposRelPath == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.addTmpBaseSubDirectory()");
-        }
-        if (reposUUID == null) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.addTmpBaseSubDirectory()");
-        }
-        if (!SVNRevision.isValidRevisionNumber(revision)) {
-            err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #3 in SVNWorkingCopyDB17.addTmpBaseSubDirectory()");
-        }
-        if (err != null) {
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-
+        SVNErrorManager.assertionFailure(reposRelPath != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
         
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
@@ -1218,10 +1224,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     private RepositoryId scanUpwardsForRepository(SVNWCRoot wcRoot, String localRelPath) throws SVNException {
         SqlJetDb sdb = wcRoot.getStorage(); 
-        if (sdb == null || wcRoot.getWCId() < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.scanUpwardsForRepository()");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
+        SVNErrorManager.assertionFailure(sdb != null && wcRoot.getWCId() >= 0, null, SVNLogType.WC);
 
         String relPathSuffix = "";
         String currentRelPath = localRelPath;
@@ -1242,10 +1245,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (reposIdObj != null) {
                 long reposId = reposIdObj.longValue();
                 String reposRelPath = (String) baseNodeResult.get("repos_relpath");
-                if (reposRelPath == null) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #2 in SVNWorkingCopyDB17.scanUpwardsForRepository()");
-                    SVNErrorManager.error(err, SVNLogType.WC);
-                }
+                SVNErrorManager.assertionFailure(reposRelPath != null, null, SVNLogType.WC);
                 
                 reposRelPath = SVNPathUtil.append(reposRelPath, relPathSuffix);
                 return new RepositoryId(reposId, reposRelPath);
@@ -1399,17 +1399,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
     
     private void verifyPristineDirectoryIsUsable(SVNPristineDirectory pristineDirectory) throws SVNException {
-        if (pristineDirectory == null || pristineDirectory.getWCRoot() == null || pristineDirectory.getWCRoot().getFormat() != SVNAdminAreaFactory.SVN_WC_VERSION) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: unusable SVNPristineDirectory object met");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(pristineDirectory != null && pristineDirectory.getWCRoot() != null && 
+                pristineDirectory.getWCRoot().getFormat() == SVNAdminArea17Factory.SVN_WC_VERSION, "an unusable pristine directory object met", SVNLogType.WC);
     }
     
     private boolean isObstructedFile(SVNWCRoot wcRoot, String localRelativePath) throws SVNException {
-        if (wcRoot == null || wcRoot.getStorage() == null || wcRoot.getFormat() == FORMAT_FROM_SDB) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure #1 in SVNWorkingCopyDB17.isObstructedFile()");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
+        SVNErrorManager.assertionFailure(wcRoot != null && wcRoot.getStorage() != null && wcRoot.getFormat() != FORMAT_FROM_SDB, null, SVNLogType.WC);
         
         SqlJetDb db = wcRoot.getStorage();
         try {
@@ -1472,10 +1467,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (db != null) {
                 format = db.getOptions().getUserVersion();
             }
-            if (format < 1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failure: wc format could not be less than 1");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
+            SVNErrorManager.assertionFailure(format >= 1, "wc format could not be less than 1", SVNLogType.WC);
             if (format < 4) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                         "Working copy format of ''{0}'' is too old ({1}); please check out your working copy again", new Object[] { wcRoot, String.valueOf(format) });

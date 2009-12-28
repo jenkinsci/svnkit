@@ -100,19 +100,19 @@ public class SVNEntryInfo {
         return mySchedule;
     }
     
-    public boolean isIsCopied() {
+    public boolean isCopied() {
         return myIsCopied;
     }
     
-    public boolean isIsDeleted() {
+    public boolean isDeleted() {
         return myIsDeleted;
     }
     
-    public boolean isIsAbsent() {
+    public boolean isAbsent() {
         return myIsAbsent;
     }
     
-    public boolean isIsIncomplete() {
+    public boolean isIncomplete() {
         return myIsIncomplete;
     }
     
@@ -184,7 +184,7 @@ public class SVNEntryInfo {
         return myWorkingSize;
     }
     
-    public boolean isIsKeepLocal() {
+    public boolean isKeepLocal() {
         return myIsKeepLocal;
     }
     
@@ -220,19 +220,19 @@ public class SVNEntryInfo {
         return myWCDBKind;
     }
     
-    public boolean isIsTextMode() {
+    public boolean isTextMode() {
         return myIsTextMode;
     }
     
-    public boolean isIsPropsMode() {
+    public boolean isPropsMode() {
         return myIsPropsMode;
     }
     
-    public boolean isIsBaseShadowed() {
+    public boolean isBaseShadowed() {
         return myIsBaseShadowed;
     }
     
-    public boolean isIsConflicted() {
+    public boolean isConflicted() {
         return myIsConflicted;
     }
     

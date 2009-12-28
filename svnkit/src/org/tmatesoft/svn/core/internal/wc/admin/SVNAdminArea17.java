@@ -18,12 +18,10 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import org.omg.CORBA.RepositoryIdHelper;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -31,6 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbKind;
@@ -39,6 +38,7 @@ import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -75,6 +75,10 @@ public class SVNAdminArea17 extends SVNAdminArea {
             String name = (String) iterator.previous();
             Map entryAttributes = new HashMap();
             SVNEntry entry = new SVNEntry(entryAttributes, null, name);
+            SVNEntry parentEntry = null;
+            if (entry.isThisDir()) {
+                parentEntry = entry;
+            }
             SVNEntryInfo info = myWCDb.readInfo(path, true, true, true, false, false, true, true, false, true, true, true, false);
             entry.setRevision(info.getRevision());
             entry.setRepositoryRoot(info.getReposURL());
@@ -134,6 +138,16 @@ public class SVNAdminArea17 extends SVNAdminArea {
                 entry.scheduleForDeletion();
                 if (entry.isThisDir()) {
                     entry.setKeepLocal(myWCDb.determineKeepLocal(sdb, 1, entry.getName()));
+                }
+            } else if (status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD) {
+                if (!entry.isThisDir()) {
+                    SVNErrorManager.assertionFailure(parentEntry != null, null, SVNLogType.WC);
+                    SVNErrorManager.assertionFailure(!SVNRevision.isValidRevisionNumber(entry.getRevision()), null, SVNLogType.WC);
+                    entry.setRevision(parentEntry.getRevision());
+                }
+                
+                if (info.isBaseShadowed()) {
+                    
                 }
             }
         }
