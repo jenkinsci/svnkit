@@ -125,4 +125,16 @@ public class SVNErrorManager {
         } 
         throw new SVNException(err1, cause);
     }
+    
+    public static void assertionFailure(boolean isTrueCondition, String optionalMessage, SVNLogType logType) throws SVNException {
+        if (!isTrueCondition) {
+            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+            StackTraceElement callerStackElement = stackTraceElements[2];
+            String genericAssertionFailureReport = "Assertion failure in class {0} (file {1}) in method {2} on line {3}"; 
+            genericAssertionFailureReport = optionalMessage != null ? genericAssertionFailureReport + ": {4}" : genericAssertionFailureReport;
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, genericAssertionFailureReport, new Object[] { callerStackElement.getClassName(), 
+                    callerStackElement.getFileName(), callerStackElement.getMethodName(), String.valueOf(callerStackElement.getLineNumber()), optionalMessage });
+            error(err, logType);
+        }
+    }
 }

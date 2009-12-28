@@ -151,12 +151,8 @@ public class FSHotCopier {
             SVNFileUtil.copyDirectory(srcOwner.getPackDir(packedShard), dstOwner.getPackDir(packedShard), false, null);
         }
         
-        if (rev != minUnpackedRevision) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "Assertion failed: expected minimal unpacked revision {0}, but real revision is {1}", 
-                    new Object[] { String.valueOf(minUnpackedRevision), String.valueOf(rev) });
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
+        SVNErrorManager.assertionFailure(rev == minUnpackedRevision, "expected minimal unpacked revision " + String.valueOf(minUnpackedRevision) + ", but real revision is " + 
+                String.valueOf(rev), SVNLogType.FSFS);
             
         for (; rev <= youngestRev; rev++) {
             File dstDir = dstRevsDir;

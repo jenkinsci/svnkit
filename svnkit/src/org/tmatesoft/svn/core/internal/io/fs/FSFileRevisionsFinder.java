@@ -66,11 +66,7 @@ public class FSFileRevisionsFinder {
             mergedPathRevisions = new LinkedList();
         }
        
-        if (mainLinePathRevisions.isEmpty()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILURE in FSFileRevisionsFinder: mainLinePathRevisions is empty");
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
+        SVNErrorManager.assertionFailure(!mainLinePathRevisions.isEmpty(), "no main line path revisions found", SVNLogType.FSFS);
 
         SendBaton sb = new SendBaton();
         sb.myLastProps = new SVNProperties();

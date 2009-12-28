@@ -16,6 +16,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
+
 
 /**
  * @version 1.3
@@ -144,7 +149,12 @@ public class ChunkedInputStream extends InputStream {
                             baos.write(b);
                     }
                     break;
-                default: throw new RuntimeException("assertion failed");
+                default: 
+                    try {
+                        SVNErrorManager.assertionFailure(false, null, SVNLogType.NETWORK);
+                    } catch (SVNException svne) {
+                        throw new IOExceptionWrapper(svne);
+                    }
             }
         }
 

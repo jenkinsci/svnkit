@@ -2978,15 +2978,9 @@ public abstract class SVNRepository {
             endRevision = 0;
         }
         
-        if (pegRevision < startRevision || startRevision < endRevision) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "assertion failure in getLocationSegmentsFromLog:\n" +
-                    "  pegRevision is {0}\n" +
-                    "  startRevision is {1}\n" +
-                    "  endRevision is {2}", new Object[] { new Long(pegRevision), 
-                    new Long(startRevision), new Long(endRevision) });
-            SVNErrorManager.error(err, SVNLogType.NETWORK);
-        }
+
+        SVNErrorManager.assertionFailure(pegRevision >= startRevision, null, SVNLogType.NETWORK);
+        SVNErrorManager.assertionFailure(startRevision >= endRevision, null, SVNLogType.NETWORK);
         
         SVNNodeKind kind = checkPath(path, pegRevision);
         if (kind == SVNNodeKind.NONE) {

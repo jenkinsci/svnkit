@@ -33,11 +33,4 @@ public class SVNDebugLog {
         return ourDefaultLog;
     }
 
-    public static void assertCondition(SVNLogType logType, boolean condition, String message) {
-        if (!condition) {
-            getDefaultLog().logSevere(logType, message);
-            getDefaultLog().logSevere(logType, new Exception(message));
-        }
-    }
-
 }

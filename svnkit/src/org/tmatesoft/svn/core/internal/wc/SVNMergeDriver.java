@@ -2037,12 +2037,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     protected Map[] getFullMergeInfo(SVNEntry entry, boolean[] indirect, SVNMergeInfoInheritance inherit,
             SVNRepository repos, File target, long start, long end) throws SVNException {
         Map[] result = new Map[2];
-        if (!SVNRevision.isValidRevisionNumber(start) || !SVNRevision.isValidRevisionNumber(end) || 
-                start <= end) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILED in SVNMergeDriver.getFullMergeInfo()");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(start) && SVNRevision.isValidRevisionNumber(end) && start > end, null, SVNLogType.WC);
         
         //get recorded merge info
         result[0] = getWCOrRepositoryMergeInfo(target, entry, inherit, indirect, false, repos);
@@ -2854,11 +2849,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     
     private void adjustDeletedSubTreeRanges(MergePath child, MergePath parent, long revision1, long revision2, 
             SVNURL primaryURL, SVNRepository repository) throws SVNException {
-        if (parent.myRemainingRanges == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "Assertions failed: parent must already have non-null remaining ranges set");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
+
+        SVNErrorManager.assertionFailure(parent.myRemainingRanges != null, "parent must already have non-null remaining ranges set", SVNLogType.WC);
 
         String relativePath = getPathRelativeToRoot(null, primaryURL, repository.getLocation(), null, repository);
         if (relativePath.startsWith("/")) {
@@ -2881,10 +2873,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                     child.myRemainingRanges = parent.myRemainingRanges.dup();
                 } else {
                     long primaryURLDeletedRevision = repository.getDeletedRevision(relativePath, olderRev, youngerRev);
-                    if (!SVNRevision.isValidRevisionNumber(primaryURLDeletedRevision)) {
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: deleted revision must exist");
-                        SVNErrorManager.error(err, SVNLogType.WC);
-                    }
+                    SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(primaryURLDeletedRevision), "deleted revision must exist", SVNLogType.WC);
                     if (isRollback) {
                         child.myRemainingRanges = child.myRemainingRanges.reverse();
                         parent.myRemainingRanges = parent.myRemainingRanges.reverse();
@@ -3118,12 +3107,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                 return;
             }
             
-            if (intersection.getSize() != 1) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                        "assertion failure in SVNMergeDriver.LogHandlerFilter.handleLogEntry: intersection list " +
-                        "size is {0}", new Integer(intersection.getSize()));
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            SVNErrorManager.assertionFailure(intersection.getSize() == 1, "intersection list size is " + intersection.getSize(), SVNLogType.WC);
             if (myRealHandler != null) {
                 myRealHandler.handleLogEntry(logEntry);
             }

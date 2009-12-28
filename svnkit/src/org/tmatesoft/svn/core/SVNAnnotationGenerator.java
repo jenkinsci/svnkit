@@ -367,12 +367,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             return;
         }
 
-        if (myPreviousFile == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILURE in SVNAnnotationGenerator.reportAnnotations(): myPreviousFile is null, " +
-                    "generator has to have been called at least once");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(myPreviousFile != null, null, SVNLogType.WC);
         int mergedCount = -1;
         if (myIncludeMergedRevisions) {
             if (myBlameChunks.isEmpty()) {
@@ -622,12 +617,7 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
         for (; i < chain.size() - 1 && k < mergedChain.size() - 1; i++, k++) {
             BlameChunk chunk = (BlameChunk) chain.get(i);
             BlameChunk mergedChunk = (BlameChunk) mergedChain.get(k);
-            if (chunk.blockStart != mergedChunk.blockStart) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN,                               
-                        "ASSERTION FAILURE in SVNAnnotationGenerator.normalizeBlames():" +
-                        "current chunks should always start at the same offset");
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            SVNErrorManager.assertionFailure(chunk.blockStart == mergedChunk.blockStart, null, SVNLogType.WC);
 
             BlameChunk nextChunk = (BlameChunk) chain.get(i + 1);
             BlameChunk nextMergedChunk = (BlameChunk) mergedChain.get(k + 1);

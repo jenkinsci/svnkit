@@ -11,7 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.delta;
 
-import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -168,7 +169,7 @@ public class SVNRangeTree {
         public SVNRangeListNode head;
     }
     
-    public SVNRangeListNode buildRangeList(int offset, int limit) {
+    public SVNRangeListNode buildRangeList(int offset, int limit) throws SVNException {
         SVNRangeListNode tail = null;
         SVNRangeTreeNode node = myRoot;
         
@@ -197,7 +198,7 @@ public class SVNRangeTree {
                 }
             }
         }
-        SVNDebugLog.assertCondition(SVNLogType.DEFAULT, false, "assert #6");
+        SVNErrorManager.assertionFailure(false, null, SVNLogType.DEFAULT);
         return tail;
     }
 
@@ -210,7 +211,7 @@ public class SVNRangeTree {
     
     private SVNRangeTreeNode myScratchNode = new SVNRangeTreeNode(0,0,0); 
     
-    public void splay(int offset) {
+    public void splay(int offset) throws SVNException {
         if (myRoot == null) {
             return;
         }
@@ -260,7 +261,7 @@ public class SVNRangeTree {
             if (root.left.right == null) {
                 SVNRangeTreeNode node = root.left;
                 root.left = node.right;
-                SVNDebugLog.assertCondition(SVNLogType.DEFAULT, root.left == null, "not null I");
+                SVNErrorManager.assertionFailure(root.left == null, null, SVNLogType.DEFAULT);
                 node.right = root;
                 root = node;
             } else {
@@ -280,19 +281,17 @@ public class SVNRangeTree {
                 } else {
                     nodeOwner.right = root.left;
                 }
-                SVNDebugLog.assertCondition(SVNLogType.DEFAULT, root.right == null, "root.right should be null"); 
-                
+                SVNErrorManager.assertionFailure(root.right == null, null, SVNLogType.DEFAULT);
                 right.left = root.right;
                 root.left = left;
                 root.right = right;
             }
         }
         myRoot = root;
-        SVNDebugLog.assertCondition(SVNLogType.DEFAULT, 
-                (offset >= root.offset) || (root.left == null && root.prev == null), "assert #4");
+        SVNErrorManager.assertionFailure((offset >= root.offset) || (root.left == null && root.prev == null), null, SVNLogType.DEFAULT);
     }
     
-    public void insert(int offset, int limit, int targetOffset) {
+    public void insert(int offset, int limit, int targetOffset) throws SVNException {
         if (myRoot == null) {
             myRoot = allocateTreeNode(offset, limit, targetOffset);
             return;
@@ -327,7 +326,7 @@ public class SVNRangeTree {
                 cleanTree(limit);
             }   
         } else if (offset < myRoot.offset) {
-            SVNDebugLog.assertCondition(SVNLogType.DEFAULT, myRoot.left == null, "assert #5");
+            SVNErrorManager.assertionFailure(myRoot.left == null, null, SVNLogType.DEFAULT);
             SVNRangeTreeNode node = allocateTreeNode(offset, limit, targetOffset);
             
             node.left = node.prev = null;

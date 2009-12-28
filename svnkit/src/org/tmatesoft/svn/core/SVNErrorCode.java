@@ -175,6 +175,9 @@ public class SVNErrorCode implements Serializable {
     public static final int RA_SVN_CATEGORY = ERR_BASE + 18*ERR_CATEGORY_SIZE;
     public static final int AUTHN_CATEGORY = ERR_BASE + 19*ERR_CATEGORY_SIZE;
     public static final int AUTHZ_CATEGORY = ERR_BASE + 20*ERR_CATEGORY_SIZE;
+    public static final int DIFF_CATEGORY = ERR_BASE + 21*ERR_CATEGORY_SIZE;
+    public static final int RA_SERF_CATEGORY = ERR_BASE + 22*ERR_CATEGORY_SIZE;
+    public static final int MALFUNC_CATEGORY = ERR_BASE + 23*ERR_CATEGORY_SIZE;
     
     public static final SVNErrorCode UNKNOWN = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 100, "Unknown error");
     public static final SVNErrorCode IO_ERROR = new SVNErrorCode(MISC_CATEGORY, ERR_CATEGORY_SIZE - 101, "Generic IO error");
@@ -602,4 +605,8 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode CL_NO_EXTERNAL_MERGE_TOOL = new SVNErrorCode(CL_CATEGORY, 10, "No external merge tool available");
 
+    /**
+     * @since 1.3.3
+     */
+    public static final SVNErrorCode ASSERTION_FAIL = new SVNErrorCode(MALFUNC_CATEGORY, 0, "Assertion failure");
 }

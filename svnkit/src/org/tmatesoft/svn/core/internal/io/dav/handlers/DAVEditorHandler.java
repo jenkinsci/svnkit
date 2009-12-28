@@ -581,11 +581,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
         }
         
         if (myIsFetchContent) {
-            if (myHref == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                        "assertion failure in DAVEditorHandler.fetchFile(): myHref is null");
-                SVNErrorManager.error(err, SVNLogType.NETWORK);
-            }
+            SVNErrorManager.assertionFailure(myHref != null, "myHref is null", SVNLogType.NETWORK);
             String deltaBaseVersionURL = myPath != null ? (String) myVersionURLs.get(myPath) : null;
             DeltaOutputStreamWrapper osWrapper = new DeltaOutputStreamWrapper(deltaBaseVersionURL != null, myPath);
             DAVConnection connection = getConnection();

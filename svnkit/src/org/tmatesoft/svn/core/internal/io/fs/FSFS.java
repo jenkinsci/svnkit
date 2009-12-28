@@ -531,11 +531,7 @@ public class FSFS {
     
     protected void writeDBFormat(int format, long maxFilesPerDir, boolean overwrite) throws SVNException {
         File formatFile = getDBFormatFile();
-        if (!(format >= 1 && format <= DB_FORMAT)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "assertion failure in FSFS.writeFormat(): format == {0}", new Integer(format));
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
+        SVNErrorManager.assertionFailure(format >= 1 && format <= DB_FORMAT, "unexpected format " + String.valueOf(format), SVNLogType.FSFS);
         String contents = null;
         if (format >= LAYOUT_FORMAT_OPTION_MINIMAL_FORMAT) {
             if (maxFilesPerDir > 0) {
@@ -1651,15 +1647,8 @@ public class FSFS {
     }
 
     protected File getPackedRevPath(long revision, String kind) throws SVNException {
-        if (myMaxFilesPerDirectory == 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Asserion failed: myMaxFilesPerDirectory is {0}", String.valueOf(myMaxFilesPerDirectory));
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
-        
-        if (!isPackedRevision(revision)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: revision {0} is not packed", String.valueOf(revision));
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
+        SVNErrorManager.assertionFailure(myMaxFilesPerDirectory > 0, "max files per directory is 0 or negative: " + String.valueOf(myMaxFilesPerDirectory), SVNLogType.FSFS);
+        SVNErrorManager.assertionFailure(isPackedRevision(revision), "revision " + String.valueOf(revision) + " is not packed", SVNLogType.FSFS);
         
         File file = new File(getDBRevsDir(), (revision/myMaxFilesPerDirectory) + PACK_EXT);
         file = new File(file, kind);
@@ -1679,11 +1668,7 @@ public class FSFS {
     }
 
     protected File getRevisionFile(long revision) throws SVNException {
-        if (isPackedRevision(revision)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: revision {0} is not expected to be packed", 
-                    String.valueOf(revision));
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
+        SVNErrorManager.assertionFailure(isPackedRevision(revision), "revision " + String.valueOf(revision) + " is not expected to be packed", SVNLogType.FSFS);
         File revisionFile = null;
         if (myMaxFilesPerDirectory > 0) {
             File shardDir = new File(getDBRevsDir(), String.valueOf(revision/myMaxFilesPerDirectory));
@@ -1768,11 +1753,7 @@ public class FSFS {
         }
         
         Long revOffsetLong = (Long) manifest.get((int) (revision % myMaxFilesPerDirectory));
-        if (revOffsetLong == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "Assertion failed: offset for revision {0} is null", 
-                    String.valueOf(revision));
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
+        SVNErrorManager.assertionFailure(revOffsetLong != null, "offset for revision " + String.valueOf(revision) + " is null", SVNLogType.FSFS);
         return revOffsetLong.longValue();
     }
 

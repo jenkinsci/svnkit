@@ -214,12 +214,7 @@ public class SVNMergeRangeList {
             }
         }
         
-        if (i < myRanges.length && j < rangeList.myRanges.length) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                    "ASSERTION FAILURE in SVNMergeRangeList.merge(): expected to reach the end of at least " +
-                    "one range list");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
+        SVNErrorManager.assertionFailure(i >= myRanges.length || j >= rangeList.myRanges.length, "expected to reach the end of at least one range list", SVNLogType.DEFAULT);
         
         for (; i < myRanges.length; i++) {
             SVNMergeRange range = myRanges[i];

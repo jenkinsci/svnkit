@@ -1036,13 +1036,7 @@ public class SVNUpdateEditor15 implements ISVNUpdateEditor, ISVNCleanupHandler {
         }
 
         if (fileInfo.addedWithHistory && !fileInfo.receivedTextDelta) {
-            if (fileInfo.baseFile != null || fileInfo.newBaseFile != null || fileInfo.copiedBaseText == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, "assertion failure in " +
-                        "SVNUpdateEditor.closeFile(): fileInfo.baseFile = {0}, fileInfo.newBaseFile = {1}, " +
-                        "fileInfo.copiedBaseText = {2}", new Object[] { fileInfo.baseFile, fileInfo.newBaseFile, 
-                        fileInfo.copiedBaseText });
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            SVNErrorManager.assertionFailure(fileInfo.baseFile == null && fileInfo.newBaseFile == null && fileInfo.copiedBaseText != null, null, SVNLogType.WC);
             SVNAdminArea adminArea = fileInfo.getAdminArea();
             SVNEntry entry = adminArea.getEntry(fileInfo.Name, false);
             boolean replaced = entry != null && entry.isScheduledForReplacement();

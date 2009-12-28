@@ -100,12 +100,7 @@ public class SVNCommitUtil {
         
         for (; index < pathsArray.length; index++) {
             String commitPath = pathsArray[index];
-            if (!SVNPathUtil.isCanonical(commitPath)) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNKNOWN, 
-                        "Assertion failed in  SVNCommitUtil.driveCommitEditor(): path ''{0}'' is not canonical", 
-                        commitPath);
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
+            SVNErrorManager.assertionFailure(SVNPathUtil.isCanonical(commitPath), "path '" + commitPath + "' is not canonical", SVNLogType.DEFAULT);                
             
             String commonAncestor = lastPath == null || "".equals(lastPath) ? "" : SVNPathUtil.getCommonPathAncestor(commitPath, lastPath);
             if (lastPath != null) {
