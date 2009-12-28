@@ -1668,7 +1668,7 @@ public class FSFS {
     }
 
     protected File getRevisionFile(long revision) throws SVNException {
-        SVNErrorManager.assertionFailure(isPackedRevision(revision), "revision " + String.valueOf(revision) + " is not expected to be packed", SVNLogType.FSFS);
+        SVNErrorManager.assertionFailure(!isPackedRevision(revision), "revision " + String.valueOf(revision) + " is not expected to be packed", SVNLogType.FSFS);
         File revisionFile = null;
         if (myMaxFilesPerDirectory > 0) {
             File shardDir = new File(getDBRevsDir(), String.valueOf(revision/myMaxFilesPerDirectory));
