@@ -128,13 +128,17 @@ public class SVNErrorManager {
     
     public static void assertionFailure(boolean isTrueCondition, String optionalMessage, SVNLogType logType) throws SVNException {
         if (!isTrueCondition) {
-            StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
-            StackTraceElement callerStackElement = stackTraceElements[2];
-            String genericAssertionFailureReport = "Assertion failure in class {0} (file {1}) in method {2} on line {3}"; 
-            genericAssertionFailureReport = optionalMessage != null ? genericAssertionFailureReport + ": {4}" : genericAssertionFailureReport;
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, genericAssertionFailureReport, new Object[] { callerStackElement.getClassName(), 
-                    callerStackElement.getFileName(), callerStackElement.getMethodName(), String.valueOf(callerStackElement.getLineNumber()), optionalMessage });
-            error(err, logType);
+            try {
+                throw new Exception();
+            } catch (Exception e) {
+                StackTraceElement[] stackTraceElements = e.getStackTrace();
+                StackTraceElement callerStackElement = stackTraceElements[1];
+                String genericAssertionFailureReport = "Assertion failure in class ''{0}'' (file {1}) in method ''{2}'' on line {3}"; 
+                genericAssertionFailureReport = optionalMessage != null ? genericAssertionFailureReport + ": {4}" : genericAssertionFailureReport;
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, genericAssertionFailureReport, new Object[] { callerStackElement.getClassName(), 
+                        callerStackElement.getFileName(), callerStackElement.getMethodName(), String.valueOf(callerStackElement.getLineNumber()), optionalMessage });
+                error(err, logType);
+            }
         }
     }
 }
