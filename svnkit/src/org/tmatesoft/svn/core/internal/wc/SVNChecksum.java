@@ -11,8 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -45,7 +43,9 @@ public class SVNChecksum {
     }
     
     public static SVNChecksum parseChecksum(String checksum) throws SVNException {
-        SVNErrorManager.assertionFailure(checksum != null && checksum.length() >= 6, null, SVNLogType.WC);
-        return null;
+        SVNErrorManager.assertionFailure(checksum != null && checksum.length() > 6, null, SVNLogType.WC);
+        SVNChecksumKind kind = checksum.charAt(1) == 'm' ? SVNChecksumKind.MD5 : SVNChecksumKind.SHA1; 
+        String hexDigest = checksum.substring(6);
+        return new SVNChecksum(kind, hexDigest);
     }
 }

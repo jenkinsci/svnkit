@@ -541,13 +541,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         String changedAuthor = null;
         long changedDateMillis = -1;
         long lastModTimeMillis = -1;
-        
+        long translatedSize = -1;
         SVNWCDbLock lock = null;
         String reposRelPath = null;
         String reposRootURL = null;
         String reposUUID = null;
         SVNDepth depth = null;
-        String checksum = null;
+        SVNChecksum checksum = null;
         
         if (!baseNodeResult.isEmpty()) {
             String kindStr = (String) baseNodeResult.get("kind");
@@ -603,13 +603,37 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             }
 
             if (nodeKind == SVNWCDbKind.FILE) {
-                checksum = (String) baseNodeResult.get("checksum");
-                //TODO: parse checksum?
+                String checksumStr = (String) baseNodeResult.get("checksum");
+                if (checksumStr != null) {
+                    try {
+                        checksum = SVNChecksum.parseChecksum(checksumStr);
+                    } catch (SVNException svne) {
+                        SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.", 
+                                path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
             }
+            
+            Long translatedSizeObj = null;
+            translatedSizeObj = (Long) baseNodeResult.get("translated_size");
+            if (translatedSizeObj == null) {
+                translatedSize = -1;
+            } else {
+                translatedSize = translatedSizeObj.longValue();
+            }
+        } else {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", path);
+            SVNErrorManager.error(err, SVNLogType.WC);
         }
         
         
-        
+        SVNEntryInfo info = new SVNEntryInfo();
+        info.setWCDBKind(kind);
+        info.setWCDBStatus(status);
+        info.setRevision(revision);
+        info.setReposRelPath(reposRelPath);
+//        info.set
         return null;
     }
     
