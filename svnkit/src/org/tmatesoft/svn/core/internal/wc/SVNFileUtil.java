@@ -80,8 +80,7 @@ public class SVNFileUtil {
     public static final boolean is64Bit;
 
     public static final int STREAM_CHUNK_SIZE = 16384;
-
-    public static final int FILE_CREATION_ATTEMPTS_COUNT = 11;
+    private static final int FILE_CREATION_ATTEMPTS_COUNT;
 
     public final static OutputStream DUMMY_OUT = new OutputStream() {
 
@@ -113,6 +112,18 @@ public class SVNFileUtil {
     public static final String BINARY_MIME_TYPE = "application/octet-stream";
 
     static {
+        String retryCountStr = System.getProperty("svnkit.fs.win32_retry_count", "100");
+        int retryCount = -1;
+        try {
+            retryCount = Integer.parseInt(retryCountStr);
+        } catch (NumberFormatException nfe) {
+            retryCount = -1;
+        }
+        if (retryCount < 0) {
+            retryCount = 100;
+        }
+        FILE_CREATION_ATTEMPTS_COUNT = retryCount;
+        
         String osName = System.getProperty("os.name");
         String osNameLC = osName == null ? null : osName.toLowerCase();
 
@@ -332,7 +343,7 @@ public class SVNFileUtil {
         }
         boolean created = false;
         int count = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
-
+        long sleep = 1;
         while (!created && (count > 0)) {
             IOException ioError = null;
             try {
@@ -345,9 +356,12 @@ public class SVNFileUtil {
                     throw ioError;
                 }
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(sleep);
                 } catch (InterruptedException ie) {
                     SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, ie, Level.FINEST);
+                }
+                if (sleep < 128) {
+                    sleep = sleep * 2;
                 }
             }
 
@@ -508,6 +522,7 @@ public class SVNFileUtil {
                 setReadonly(src, false);
                 setReadonly(dst, false);
                 // use special loop on windows.
+                long sleep = 1;
                 for (int i = 0; i < FILE_CREATION_ATTEMPTS_COUNT; i++) {
                     dst.delete();
                     if (src.renameTo(dst)) {
@@ -517,8 +532,11 @@ public class SVNFileUtil {
                         return;
                     }
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(sleep);
                     } catch (InterruptedException e) {
+                    }
+                    if (sleep < 128) {
+                        sleep = sleep * 2;
                     }
                 }
             }
@@ -1054,7 +1072,8 @@ public class SVNFileUtil {
         if (!isWindows || file.isDirectory() || !file.exists()) {
             return file.delete();
         }
-        for (int i = 0; i < 10; i++) {
+        long sleep = 1;
+        for (int i = 0; i < FILE_CREATION_ATTEMPTS_COUNT; i++) {
             if (file.delete() && !file.exists()) {
                 return true;
             }
@@ -1063,8 +1082,11 @@ public class SVNFileUtil {
             }
             setReadonly(file, false);
             try {
-                Thread.sleep(100);
+                Thread.sleep(sleep);
             } catch (InterruptedException e) {
+            }
+            if (sleep < 128) {
+                sleep = sleep * 2;
             }
         }
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot delete file ''{0}''", file);
@@ -1370,6 +1392,7 @@ public class SVNFileUtil {
     public static FileOutputStream createFileOutputStream(File file, boolean append) throws IOException {
         int retryCount = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
         FileOutputStream os = null;
+        long sleep = 1;
         for (int i = 0; i < retryCount; i++) {
             try {
                 os = new FileOutputStream(file, append);
@@ -1381,8 +1404,11 @@ public class SVNFileUtil {
                 SVNFileUtil.closeFile(os);
                 if (file.exists() && file.isFile() && file.canWrite()) {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(sleep);
                     } catch (InterruptedException e1) {
+                    }
+                    if (sleep < 128) {
+                        sleep = sleep * 2;
                     }
                     continue;
                 }
@@ -1441,8 +1467,9 @@ public class SVNFileUtil {
     }
     
     public static FileInputStream createFileInputStream(File file) throws IOException {
-        int retryCount = SVNFileUtil.isWindows ? 11 : 1;
+        int retryCount = SVNFileUtil.isWindows ? FILE_CREATION_ATTEMPTS_COUNT : 1;
         FileInputStream is = null;
+        long sleep = 1;
         for (int i = 0; i < retryCount; i++) {
             try {
                 is = new FileInputStream(file);
@@ -1454,8 +1481,11 @@ public class SVNFileUtil {
                 SVNFileUtil.closeFile(is);
                 if (file.exists() && file.isFile() && file.canRead()) {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(sleep);
                     } catch (InterruptedException e1) {
+                    }
+                    if (sleep < 128) {
+                        sleep = sleep * 2;
                     }
                     continue;
                 }
