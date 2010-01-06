@@ -147,8 +147,22 @@ public class SVNAdminArea17 extends SVNAdminArea {
                 }
                 
                 if (info.isBaseShadowed()) {
-                    
+                    SVNEntryInfo baseInfo = myWCDb.getBaseInfo(path, false);
+                    entry.setRevision(baseInfo.getRevision());
+                    if (baseInfo.getWCDBStatus() == SVNWCDbStatus.NOT_PRESENT) {
+                        entry.setDeleted(true);
+                        entry.scheduleForAddition();
+                    } else {
+                        entry.scheduleForReplacement();
+                    }
+                } else {
+                    if (kind == SVNWCDbKind.DIR && !entry.isThisDir()) {
+                        
+                    }
+                   
                 }
+                
+                
             }
         }
         return null;

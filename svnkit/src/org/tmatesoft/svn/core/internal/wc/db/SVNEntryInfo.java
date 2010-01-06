@@ -15,6 +15,7 @@ import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 
 
 /**
@@ -44,7 +45,7 @@ public class SVNEntryInfo {
     private String myConflictWorking;
     private String myPropertyRejectFilePath;
     private Date myLastTextTime;
-    private String myChecksum;
+    private SVNChecksum myChecksum;
     private String myLockToken;
     private Date myLockCreationDate;
     private boolean myHasProps;
@@ -156,7 +157,7 @@ public class SVNEntryInfo {
         return myLastTextTime;
     }
     
-    public String getChecksum() {
+    public SVNChecksum getChecksum() {
         return myChecksum;
     }
     
@@ -368,7 +369,7 @@ public class SVNEntryInfo {
         myLastTextTime = lastTextTime;
     }
     
-    public void setChecksum(String checksum) {
+    public void setChecksum(SVNChecksum checksum) {
         myChecksum = checksum;
     }
     
