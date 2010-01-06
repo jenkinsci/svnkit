@@ -285,4 +285,12 @@ public class SVNCommitItem {
         }
         return myOutgoingProperties;
     }
+
+    void setContentsModified(boolean modified) {
+        myIsContentsModified = modified;
+    }
+
+    void setPropertiesModified(boolean modified) {
+        myIsPropertiesModified = modified;
+    }
 }
