@@ -236,8 +236,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     private static final String[] SELECT_LOCK_FIELDS = { "lock_token", "lock_owner", "lock_comment", "lock_date" };
     
-    private static final String[] SELECT_WORKING_NODE_FIELDS = { "presence", "kind", "checksum", "translated_size", "changed_rev", "changed_date", 
-        "changed_author", "depth", "symlink_target", "copyfrom_repos_id", "copyfrom_repos_path", "copyfrom_revnum", "moved_here", "moved_to", "last_mod_time", "properties" };
     
     private static final String[] SELECT_ACTUAL_NODE_FIELDS = { "prop_reject", "changelist", "conflict_old", "conflict_new", "conflict_working", "tree_conflict_data", 
         "properties" };
@@ -253,6 +251,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     private SVNSelectBaseNodeStrategy mySelectBaseStrategy;
     private SVNSelectParentStubInfoStrategy mySelectParentStubInfoStrategy;
+    private SVNSelectWorkingNodeStrategy mySelectWorkingStrategy;
+    private SVNSelectActualNodeStrategy mySelectActualNodeStrategy;
     
     public SVNWorkingCopyDB17() {
     }
@@ -267,12 +267,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
         SqlJetDb sdb = wcRoot.getStorage();
-        Map baseNodeResult = selectBaseNode(sdb, getSelectBaseStrategy(wcRoot.getWCId(), localRelPath));
+        Map baseNodeResult = selectNode(sdb, SVNDbTables.base_node, getSelectBaseStrategy(wcRoot.getWCId(), localRelPath));
         if (!baseNodeResult.isEmpty() && fetchLock) {
             baseNodeResult = selectLockForBase(sdb, baseNodeResult);
         }
-        Map workingNodeResult = selectWorkingNode(sdb, wcRoot.getWCId(), localRelPath);
-        Map actualNodeResult = selectActualNode(sdb, wcRoot.getWCId(), localRelPath);
+
+        Map workingNodeResult = selectNode(sdb, SVNDbTables.working_node, getSelectWorkingStrategy(wcRoot.getWCId(), localRelPath));
+        Map actualNodeResult = selectNode(sdb, SVNDbTables.actual_node, getSelectActualNodeStrategy(wcRoot.getWCId(), localRelPath));
 
         boolean haveBase = !baseNodeResult.isEmpty();
         boolean haveWorking = !workingNodeResult.isEmpty();
@@ -538,7 +539,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SqlJetDb sdb = wcRoot.getStorage(); 
         verifyPristineDirectoryIsUsable(pristineDirectory);
         
-        Map<SVNDbTableField, Object> baseNodeResult = selectBaseNode(sdb, getSelectBaseStrategy(wcRoot.getWCId(), localRelPath));
+        Map<SVNDbTableField, Object> baseNodeResult = selectNode(sdb, SVNDbTables.base_node, getSelectBaseStrategy(wcRoot.getWCId(), localRelPath));
         if (!baseNodeResult.isEmpty() && fetchLock) {
             baseNodeResult = selectLockForBase(sdb, baseNodeResult);
         }
@@ -852,7 +853,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         
         verifyPristineDirectoryIsUsable(pristineDirectory);
         SVNWCRoot wcRoot = pristineDirectory.getWCRoot(); 
-        Map actualNodeResult = selectActualNode(wcRoot.getStorage(), wcRoot.getWCId(), localRelPath);
+        Map actualNodeResult = selectNode(wcRoot.getStorage(), SVNDbTables.actual_node, getSelectActualNodeStrategy(wcRoot.getWCId(), localRelPath));
         if (actualNodeResult.isEmpty()) {
             return null;
         }
@@ -892,7 +893,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         localRelPath = SVNPathUtil.append(localRelPath, baseName);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
         
-        Map<SVNDbTableField, Object> baseNodeResult = selectBaseNode(wcRoot.getStorage(), getSelectParentStubStrategy(wcRoot.getWCId(), localRelPath));
+        Map<SVNDbTableField, Object> baseNodeResult = selectNode(wcRoot.getStorage(), SVNDbTables.base_node, getSelectParentStubStrategy(wcRoot.getWCId(), localRelPath));
         String presenceValue = (String) baseNodeResult.get("presence");
 //        if (presenceValue != null && "") {
             
@@ -1303,7 +1304,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         String relPathSuffix = "";
         String currentRelPath = localRelPath;
         while ( true ) {
-            Map<SVNDbTableField, Object> baseNodeResult = selectBaseNode(sdb, getSelectBaseStrategy(wcRoot.getWCId(), currentRelPath));
+            Map<SVNDbTableField, Object> baseNodeResult = selectNode(sdb, SVNDbTables.base_node, getSelectBaseStrategy(wcRoot.getWCId(), currentRelPath));
             if (baseNodeResult.isEmpty()) {
                 SVNErrorMessage err = null;
                 if (!"".equals(relPathSuffix) || "".equals(localRelPath)) {
@@ -1336,34 +1337,6 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
     }
     
-    private Map selectActualNode(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
-        Map actualNodeResult = null;
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            try {
-                ISqlJetTable actualNodeTable = sdb.getTable(ACTUAL_NODE_TABLE);
-                ISqlJetCursor actualNodeCursor = actualNodeTable.lookup(actualNodeTable.getPrimaryKeyIndexName(), wcId, localRelPath);
-                try {
-                    if (!actualNodeCursor.eof()) {
-                        actualNodeResult = new HashMap();
-                        for (String field : SELECT_ACTUAL_NODE_FIELDS) {
-                            actualNodeResult.put(field, actualNodeCursor.getValue(field));
-                        }
-                    } else {
-                        actualNodeResult = Collections.EMPTY_MAP;
-                    }
-                } finally {
-                    actualNodeCursor.close();
-                }
-            } finally {
-                sdb.commit();
-            }    
-        } catch (SqlJetException e) {
-            SVNSqlJetUtil.convertException(e);
-        }
-        return actualNodeResult;
-    }
-    
     private Map selectLockForBase(SqlJetDb sdb, Map baseNodeResult) throws SVNException {
         try {
             sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
@@ -1389,43 +1362,15 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return baseNodeResult;
     }
     
-    private Map<SVNDbTableField, Object> selectBaseNode(SqlJetDb sdb, SVNAbstractSelectStrategy selectStrategy) throws SVNException {
+    private Map<SVNDbTableField, Object> selectNode(SqlJetDb sdb, SVNDbTables tableName, SVNAbstractSelectStrategy selectStrategy) throws SVNException {
         try {
             sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            ISqlJetTable baseNodeTable = sdb.getTable(SVNDbTables.base_node.toString());
+            ISqlJetTable baseNodeTable = sdb.getTable(tableName.toString());
             return selectStrategy.runSelect(baseNodeTable);
         } catch (SqlJetException e) {
             SVNSqlJetUtil.convertException(e);
         } 
         return null;
-    }
-    
-    private Map selectWorkingNode(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
-        Map workingNodeResult = null;
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            try {
-                ISqlJetTable workingNodeTable = sdb.getTable(WORKING_NODE_TABLE);
-                ISqlJetCursor workingNodeCursor = workingNodeTable.lookup(workingNodeTable.getPrimaryKeyIndexName(), wcId, localRelPath);
-                try {
-                    if (!workingNodeCursor.eof()) {
-                        workingNodeResult = new HashMap();
-                        for (String field : SELECT_WORKING_NODE_FIELDS) {
-                            workingNodeResult.put(field, workingNodeCursor.getValue(field));
-                        }
-                    } else {
-                        workingNodeResult = Collections.EMPTY_MAP;
-                    }
-                } finally {
-                    workingNodeCursor.close();
-                }
-            } finally {
-                sdb.commit();
-            }    
-        } catch (SqlJetException e) {
-            SVNSqlJetUtil.convertException(e);
-        }
-        return workingNodeResult;
     }
     
     private Collection selectChildrenUsingWCIdAndParentRelPath(String tableName, String cursorName, long wcId, String parentRelPath, SqlJetDb db, Collection childNames) throws SVNException {
@@ -1772,6 +1717,15 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return mySelectBaseStrategy;
     }
 
+    private SVNAbstractSelectStrategy getSelectWorkingStrategy(long wcId, String localRelPath) {
+        if (mySelectWorkingStrategy == null) {
+            mySelectWorkingStrategy = new SVNSelectWorkingNodeStrategy(wcId, localRelPath);
+        } else {
+            mySelectWorkingStrategy.reset(wcId, localRelPath);
+        }
+        return mySelectWorkingStrategy;
+    }
+
     private SVNAbstractSelectStrategy getSelectParentStubStrategy(long wcId, String localRelPath) {
         if (mySelectParentStubInfoStrategy == null) {
             mySelectParentStubInfoStrategy = new SVNSelectParentStubInfoStrategy(wcId, localRelPath);
@@ -1779,6 +1733,15 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             mySelectParentStubInfoStrategy.reset(wcId, localRelPath);
         }
         return mySelectParentStubInfoStrategy;
+    }
+
+    private SVNAbstractSelectStrategy getSelectActualNodeStrategy(long wcId, String localRelPath) {
+        if (mySelectActualNodeStrategy == null) {
+            mySelectActualNodeStrategy = new SVNSelectActualNodeStrategy(wcId, localRelPath);
+        } else {
+            mySelectActualNodeStrategy.reset(wcId, localRelPath);
+        }
+        return mySelectActualNodeStrategy;
     }
 
     private void setPristineDir(File path, SVNPristineDirectory dir) {

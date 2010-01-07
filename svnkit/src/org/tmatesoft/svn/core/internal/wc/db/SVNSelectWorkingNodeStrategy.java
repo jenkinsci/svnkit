@@ -22,10 +22,24 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  */
 public class SVNSelectWorkingNodeStrategy extends SVNAbstractSelectStrategy {
 
-    private static final SVNDbTableField[] OUR_WORKING_NODE_FIELDS = { SVNDbTableField.presence, SVNDbTableField.kind, SVNDbTableField.checksum, 
-        SVNDbTableField.translated_size, SVNDbTableField.changed_rev, SVNDbTableField.changed_date, SVNDbTableField.changed_author, 
-        SVNDbTableField.depth, SVNDbTableField.symlink_target, SVNDbTableField.copyfrom_repos_id, SVNDbTableField.copyfrom_repos_path, 
-        SVNDbTableField.copyfrom_revnum, SVNDbTableField.moved_here, SVNDbTableField.moved_to, SVNDbTableField.last_mod_time, SVNDbTableField.properties};
+    private static final SVNDbTableField[] OUR_WORKING_NODE_FIELDS = { 
+        SVNDbTableField.presence, 
+        SVNDbTableField.kind, 
+        SVNDbTableField.checksum, 
+        SVNDbTableField.translated_size, 
+        SVNDbTableField.changed_rev, 
+        SVNDbTableField.changed_date, 
+        SVNDbTableField.changed_author, 
+        SVNDbTableField.depth, 
+        SVNDbTableField.symlink_target, 
+        SVNDbTableField.copyfrom_repos_id, 
+        SVNDbTableField.copyfrom_repos_path, 
+        SVNDbTableField.copyfrom_revnum, 
+        SVNDbTableField.moved_here, 
+        SVNDbTableField.moved_to, 
+        SVNDbTableField.last_mod_time, 
+        SVNDbTableField.properties
+    };
 
     private long myWCId;
     private String myLocalRelativePath;

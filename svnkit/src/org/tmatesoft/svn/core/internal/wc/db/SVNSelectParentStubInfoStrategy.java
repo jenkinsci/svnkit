@@ -24,7 +24,10 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author  TMate Software Ltd.
  */
 public class SVNSelectParentStubInfoStrategy extends SVNAbstractSelectStrategy {
-    private static final SVNDbTableField[] OUR_SELECT_PARENT_STUB_INFO_FIELDS = { SVNDbTableField.presence, SVNDbTableField.revnum };
+    private static final SVNDbTableField[] OUR_SELECT_PARENT_STUB_INFO_FIELDS = { 
+        SVNDbTableField.presence, 
+        SVNDbTableField.revnum 
+    };
 
     private long myWCId;
     private String myLocalRelativePath;

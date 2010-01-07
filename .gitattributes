@@ -131,6 +131,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNDbTables.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNEntryInfo.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNPristineDirectory.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNRepositoryInfo.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNSelectActualNodeStrategy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNSelectBaseNodeStrategy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNSelectParentStubInfoStrategy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNSelectWorkingNodeStrategy.java -text
