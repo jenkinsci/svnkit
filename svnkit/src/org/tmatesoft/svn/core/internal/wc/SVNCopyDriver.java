@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -721,9 +723,19 @@ public class SVNCopyDriver extends SVNBasicClient {
 
                 pathsToExternalsProps.clear();
 
-                SVNCommitUtil.harvestCommitables(allCommitables, dirArea, srcFile,
+                Map sourceCommittables = new HashMap();
+                SVNCommitUtil.harvestCommitables(sourceCommittables, dirArea, srcFile,
                         null, entry, source.myDst, entry.getURL(), true, false, false, null, SVNDepth.INFINITY,
                         false, null, commitParameters, pathsToExternalsProps);
+                
+                // filter out file externals.
+                // path of the source relative to wcAccess anchor.
+                String basePath = SVNPathUtil.canonicalizePath(wcAccess.getAnchor().getAbsolutePath());
+                String sourcePath = SVNPathUtil.canonicalizePath(srcFile.getAbsolutePath());
+                String path = SVNPathUtil.getRelativePath(basePath, sourcePath);
+                SVNCommitUtil.filterOutFileExternals(Collections.singletonList(path), sourceCommittables, wcAccess);
+                
+                allCommitables.putAll(sourceCommittables);
 
                 SVNCommitItem item = (SVNCommitItem) allCommitables.get(srcFile);
                 SVNURL srcURL = entry.getSVNURL();
