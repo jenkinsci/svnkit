@@ -154,23 +154,26 @@ public class SVNExternal {
 
     public String toString() {
         String value = "";
+        String path = quotePath(myPath);
+        String url = quotePath(myURL);
+        
         if (myIsPegRevisionExplicit && SVNRevision.isValidRevisionNumber(myPegRevision.getNumber())) {
             if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
                 value += "-r" + myRevision + " ";
             }
-            value += myURL + "@" + myPegRevision + " " + myPath;
+            value += url + "@" + myPegRevision + " " + path;
         } else {
             if (myIsNewFormat) {
                 if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
                     value += "-r" + myRevision + " ";
                 }
-                value += myURL + " " + myPath;
+                value += url + " " + path;
             } else {
-                value += myPath; 
+                value += path; 
                 if (myIsRevisionExplicit && SVNRevision.isValidRevisionNumber(myRevision.getNumber())) {
                     value += " -r" + myRevision;
                 }            
-                value += " " + myURL;
+                value += " " + url;
             }
         }
         return value;
@@ -266,6 +269,15 @@ public class SVNExternal {
             externals.add(external);
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
+    }
+    
+    private static String quotePath(String path) {
+        for(int i = 0; i < path.length(); i++) {
+            if (Character.isWhitespace(path.charAt(i))) {
+                return "\"" + path + "\"";
+            }
+        }
+        return path;
     }
     
     private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
