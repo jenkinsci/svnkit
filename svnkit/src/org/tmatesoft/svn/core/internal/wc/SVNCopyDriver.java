@@ -766,18 +766,22 @@ public class SVNCopyDriver extends SVNBasicClient {
                         for (int k = 0; k < externals.length; k++) {
                             File externalWC = new File(localPath, externals[k].getPath());
                             SVNEntry externalEntry = null;
+                            SVNRevision externalsWCRevision = SVNRevision.UNDEFINED;
+
                             try {
                                 wcAccess.open(externalWC, false, 0);
+                                externalEntry = wcAccess.getEntry(externalWC, false);
                             } catch (SVNException svne) {
                                 if (svne instanceof SVNCancelException) {
                                     throw svne;
                                 }
                             } finally {
                                 wcAccess.closeAdminArea(externalWC);
-                            }                            
-                            externalEntry = wcAccess.getEntry(externalWC, false);
-                            SVNRevision externalsWCRevision = SVNRevision.UNDEFINED;
+                            }
                             
+                            if (externalEntry == null) {
+                                externalEntry = wcAccess.getEntry(externalWC, false);
+                            }                            
                             if (externalEntry != null && (externalEntry.isThisDir() || externalEntry.getExternalFilePath() != null)) {
                                 externalsWCRevision = SVNRevision.create(externalEntry.getRevision());
                             }
