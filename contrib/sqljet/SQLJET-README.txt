@@ -1,4 +1,4 @@
-This is a README.txt file for SQLJet v1.0.1
+This is a README.txt file for SQLJet build from '1.0.x' branch.
 SQLJet is a pure Java (tm) embedded database management engine with SQLite format support.
 
 1. DESCRIPTION
