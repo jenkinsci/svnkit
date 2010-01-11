@@ -26,8 +26,10 @@ import org.tmatesoft.sqljet.core.table.SqlJetDb;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAbstractSelectStrategy {
-
-    public Map<SVNDbTableField, Object> runSelect(ISqlJetTable table) throws SqlJetException {
+    protected SVNAbstractSelectStrategy() {
+    }
+    
+    public Object runSelect(ISqlJetTable table) throws SqlJetException {
         SqlJetDb sdb = table.getDataBase();
         Map<SVNDbTableField, Object> result = Collections.EMPTY_MAP;
         try {
@@ -37,7 +39,7 @@ public abstract class SVNAbstractSelectStrategy {
                     result = new HashMap<SVNDbTableField, Object>();
                     for(SVNDbTableField field : getFieldNames()) {
                         result.put(field, cursor.getValue(field.toString()));
-                    }            
+                    }   
                 } 
             } finally {
                 cursor.close();
@@ -49,6 +51,7 @@ public abstract class SVNAbstractSelectStrategy {
         return result;
     }
 
+    
     protected abstract SVNDbTableField[] getFieldNames(); 
     
     protected abstract ISqlJetCursor getCursor(ISqlJetTable table) throws SqlJetException;
