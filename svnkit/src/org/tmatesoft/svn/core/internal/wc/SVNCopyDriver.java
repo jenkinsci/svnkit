@@ -67,6 +67,11 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNCopyDriver extends SVNBasicClient {
 
     private SVNWCAccess myWCAccess;
+    private boolean myIsDisableLocalModificationsCopying;
+    
+    public void setDisableLocalModificationCopying(boolean disable) {
+        myIsDisableLocalModificationsCopying = disable;
+    }
     
     protected SVNCopyDriver(ISVNAuthenticationManager authManager, ISVNOptions options) {
         super(authManager, options);
@@ -830,6 +835,42 @@ public class SVNCopyDriver extends SVNBasicClient {
             }
 
             commitItems = new ArrayList(allCommitables.values());
+            // in case of 'base' commit, remove all 'deletions', mark all other items as non-modified, remove additions and copies from other urls.
+            
+            if (myIsDisableLocalModificationsCopying) {
+                ArrayList harmlessItems = new ArrayList();
+                for(int i = 0 ; i < commitItems.size(); i++) {
+                    SVNCommitItem item = (SVNCommitItem) commitItems.get(i);
+                    if (item.isDeleted()) {
+                        // deletion or replacement, skip it.
+                        continue;
+                    }                
+                    if (item.isAdded()) {
+                        if (!item.isCopied()) {
+                            // this is just new file or directory
+                            continue;
+                        }
+                        SVNURL copyFromURL = item.getCopyFromURL();
+                        if (copyFromURL == null) {
+                            // also skip.
+                            continue;
+                        }                    
+                        SVNEntry entry = wcAccess.getEntry(item.getFile(), false);
+                        if (entry == null) {
+                            continue;
+                        }
+                        SVNURL expectedURL = entry.getSVNURL();
+                        if (!copyFromURL.equals(expectedURL)) {
+                            // copied from some other location.
+                            continue;
+                        }
+                    }
+                    setCommitItemFlags(item, false, false);
+                    harmlessItems.add(item);                
+                }
+                commitItems = harmlessItems;
+            }
+            
             // add parents to commits hash?
             if (makeParents) {
                 for (int i = 0; i < newDirs.size(); i++) {

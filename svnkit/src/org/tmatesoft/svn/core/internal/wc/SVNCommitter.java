@@ -147,7 +147,7 @@ public class SVNCommitter implements ISVNCommitPathHandler {
             }
         }
         
-        if (item.isPropertiesModified()) {
+        if (item.isPropertiesModified() || (outgoingProperties != null && !outgoingProperties.isEmpty())) {
             if (item.getKind() == SVNNodeKind.FILE) {
                 if (!fileOpen) {
                     try {
@@ -171,10 +171,12 @@ public class SVNCommitter implements ISVNCommitPathHandler {
                 closeDir = true;
             }
 
-            try {
-                sendPropertiesDelta(commitPath, item, commitEditor);
-            } catch (SVNException e) {
-                fixError(commitPath, e, item.getKind());
+            if (item.isPropertiesModified()) {
+                try {
+                    sendPropertiesDelta(commitPath, item, commitEditor);
+                } catch (SVNException e) {
+                    fixError(commitPath, e, item.getKind());
+                }
             }
             
             if (outgoingProperties != null) {

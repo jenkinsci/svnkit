@@ -1086,6 +1086,11 @@ public class SVNBasicClient implements ISVNEventHandler {
     protected void setCommitItemProperty(SVNCommitItem item, String name, SVNPropertyValue value) {
         item.setProperty(name, value);
     }
+
+    protected void setCommitItemFlags(SVNCommitItem item, boolean contentModified, boolean propertiesModified) {
+        item.setContentsModified(contentModified);
+        item.setPropertiesModified(propertiesModified);
+    }
     
     private static final class LocationsLogEntryHandler implements ISVNLogEntryHandler {
         
