@@ -123,10 +123,11 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/admin/SVNAdminArea17Factory.java -
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/README.txt eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/config eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
+svnkit/src/org/tmatesoft/svn/core/internal/wc/db/ISVNRecordHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/ISVNWorkingCopyDB.java -text
-svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNAbstractSelectStrategy.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNAbstractDbStrategy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNBaseNode.java -text
-svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNCommonSelectStrategy.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNCommonDbStrategy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNDbIndexes.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNDbTableField.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNDbTables.java -text

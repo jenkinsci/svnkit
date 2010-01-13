@@ -20,24 +20,29 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNCommonSelectStrategy extends SVNAbstractSelectStrategy {
+public class SVNCommonDbStrategy extends SVNAbstractDbStrategy {
 
     //null index implies a primary index
     private SVNDbIndexes myIndex;
     private Object[] myLookUpObjects;
     private SVNDbTableField[] myFields;
     
-    public SVNCommonSelectStrategy(SVNDbIndexes index, Object[] lookUpObjects, SVNDbTableField[] fields) {
+    public SVNCommonDbStrategy(SVNDbIndexes index, Object[] lookUpObjects, SVNDbTableField[] fields) {
         super();
         myIndex = index;
         myLookUpObjects = lookUpObjects;
         myFields = fields;
     }
 
-    public SVNCommonSelectStrategy(Object[] lookUpObjects, SVNDbTableField[] fields) {
+    public SVNCommonDbStrategy(Object[] lookUpObjects, SVNDbTableField[] fields) {
         super();
         myLookUpObjects = lookUpObjects;
         myFields = fields;
+    }
+
+    public SVNCommonDbStrategy(Object[] lookUpObjects) {
+        super();
+        myLookUpObjects = lookUpObjects;
     }
 
     public void reset(SVNDbIndexes index, Object[] lookUpObjects, SVNDbTableField[] fields) {
@@ -50,9 +55,16 @@ public class SVNCommonSelectStrategy extends SVNAbstractSelectStrategy {
         myLookUpObjects = lookUpObjects;
         myFields = fields;
     }
+    
+    public void reset(Object[] lookUpObjects) {
+        myLookUpObjects = lookUpObjects;
+    }
 
     @Override
     protected ISqlJetCursor getCursor(ISqlJetTable table) throws SqlJetException {
+        if (myLookUpObjects == null) {
+            return table.open();
+        }
         return table.lookup(myIndex == null ? table.getPrimaryKeyIndexName() : myIndex.toString(), myLookUpObjects);
     }
 

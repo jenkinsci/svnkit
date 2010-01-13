@@ -15,7 +15,7 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -46,7 +46,7 @@ public class SVNSqlJetUtil {
 
     
     public static void convertException(SqlJetException e) throws SVNException {
-        SVNErrorManager.error(convertError(e), e, SVNLogType.DEFAULT);
+        SVNErrorManager.error(convertError(e), e, SVNLogType.WC);
     }
     
     public static SVNErrorMessage convertError(SqlJetException e) {

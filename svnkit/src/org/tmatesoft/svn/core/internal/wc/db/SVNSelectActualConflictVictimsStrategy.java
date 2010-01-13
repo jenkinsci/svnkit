@@ -25,7 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNSelectActualConflictVictimsStrategy extends SVNAbstractSelectStrategy {
+public class SVNSelectActualConflictVictimsStrategy extends SVNAbstractDbStrategy {
     
     private long myWCId;
     private String myParentRelativePath;
