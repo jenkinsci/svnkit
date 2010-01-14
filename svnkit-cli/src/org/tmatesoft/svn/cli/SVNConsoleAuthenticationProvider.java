@@ -201,7 +201,11 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             } else if ("".equals(password)) {
                 password = null;
             }
-            return new SVNSSLAuthentication(new File(path), password, authMayBeStored);
+            try {
+                return new SVNSSLAuthentication(new File(path), password, authMayBeStored);
+            } catch (IOException e) {
+                throw new RuntimeException(e); // hack to minimize patching
+            }
         }
         return null;
     }
