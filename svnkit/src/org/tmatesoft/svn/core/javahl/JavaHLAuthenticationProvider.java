@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.javahl;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.cert.X509Certificate;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -80,8 +81,12 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                     if ("".equals(password)) {
                         password = null;
                     }
-                    boolean save = prompt4.userAllowedSave();
-                    return new SVNSSLAuthentication(new File(cert), password, save);
+                    try {
+                        boolean save = prompt4.userAllowedSave();
+                        return new SVNSSLAuthentication(new File(cert), password, save);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                    }
                 }
             }
             return null;                        

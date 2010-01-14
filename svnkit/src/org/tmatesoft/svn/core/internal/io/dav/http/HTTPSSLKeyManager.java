@@ -11,7 +11,11 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.security.KeyStore;
@@ -42,14 +46,26 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public final class HTTPSSLKeyManager implements X509KeyManager {
+    public static KeyManager[] loadClientCertificate(File clientCertFile, String clientCertPassword) throws SVNException {
+        try {
+            FileInputStream in = new FileInputStream(clientCertFile);
+            try {
+                return loadClientCertificate(in,clientCertPassword);
+            } finally {
+                in.close();
+            }
+        } catch (IOException e) {
+            throw new SVNException(SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, e.getMessage(), null, SVNErrorMessage.TYPE_ERROR, e), e);
+        }
+    }
 
-	public static KeyManager[] loadClientCertificate(File clientCertFile, String clientCertPassword) throws SVNException {
+	public static KeyManager[] loadClientCertificate(InputStream clientCertFile, String clientCertPassword) throws SVNException {
 		char[] passphrase = null;
 		if (clientCertPassword != null) {
 			passphrase = clientCertPassword.toCharArray();
 		}
 		KeyStore keyStore = null;
-		final InputStream is = SVNFileUtil.openFileForReading(clientCertFile, SVNLogType.NETWORK);
+		final InputStream is = new BufferedInputStream(clientCertFile);
 		try {
 			keyStore = KeyStore.getInstance("PKCS12");
 			if (keyStore != null) {
@@ -249,7 +265,7 @@ public final class HTTPSSLKeyManager implements X509KeyManager {
 
 			final KeyManager[] keyManagers;
 			try {
-				keyManagers = loadClientCertificate(myAuthentication.getCertificateFile(), myAuthentication.getPassword());
+				keyManagers = loadClientCertificate(new ByteArrayInputStream(myAuthentication.getCertificateFile()), myAuthentication.getPassword());
 			}
 			catch (SVNException ex) {
 				final SVNErrorMessage sslErr = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "SSL handshake failed: ''{0}''", new Object[] { ex.getMessage() }, SVNErrorMessage.TYPE_ERROR, ex.getCause());

@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -497,8 +498,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
 		        String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
 		        File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
-		        return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
-	        }
+                try {
+                    return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
+                } catch (IOException e) {
+                    throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                }
+            }
 
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {

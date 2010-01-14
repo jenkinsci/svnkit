@@ -11,7 +11,12 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 /**
  * The <b>SVNSSLAuthentication</b> class represents user's credentials used 
@@ -24,7 +29,7 @@ import java.io.File;
  */
 public class SVNSSLAuthentication extends SVNAuthentication {
 
-    private File myCertificate;
+    private byte[] myCertificate;
     private String myPassword;
     
     /**
@@ -35,12 +40,25 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      * @param storageAllowed   to store or not this credential in a 
      *                         credentials cache    
      */
-    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) {
+    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) throws IOException {
+        super(ISVNAuthenticationManager.SSL, null, storageAllowed);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        FileInputStream in = new FileInputStream(certFile);
+        try {
+            SVNTranslator.copy(in,baos);
+        } finally {
+            in.close();
+        }
+        myCertificate = baos.toByteArray();
+        myPassword = password;
+    }
+
+    public SVNSSLAuthentication(byte[] certFile, String password, boolean storageAllowed) {
         super(ISVNAuthenticationManager.SSL, null, storageAllowed);
         myCertificate = certFile;
         myPassword = password;
     }
-    
+
     /**
      * Return a user's password. 
      * 
@@ -55,7 +73,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      * 
      * @return certificate file
      */
-    public File getCertificateFile() {
+    public byte[] getCertificateFile() {
         return myCertificate;
     }
 }
