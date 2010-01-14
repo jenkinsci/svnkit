@@ -548,6 +548,10 @@ public class SVNCommitUtil {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
+        
+        // filter out file externals that were not explicitly specified.
+        filterOutFileExternals(paths, commitables, baseAccess);
+        
         if (isRecursionForced) {
             // if commit is non-recursive and forced and there are elements included into commit 
             // that not only 'copied' but also has local mods (modified or deleted), remove those items?
@@ -581,6 +585,20 @@ public class SVNCommitUtil {
             }
         }
         return (SVNCommitItem[]) commitables.values().toArray(new SVNCommitItem[commitables.values().size()]);
+    }
+    
+    public static void filterOutFileExternals(Collection explicitPaths, Map commitables, SVNWCAccess baseAccess) throws SVNException {
+        for (Iterator items = commitables.values().iterator(); items.hasNext();) {
+            baseAccess.checkCancelled();
+            SVNCommitItem item = (SVNCommitItem) items.next();
+            SVNEntry entry = baseAccess.getEntry(item.getFile(), false);
+            if (entry != null && entry.isFile() && entry.getExternalFilePath() != null) {
+                if (!explicitPaths.contains(item.getPath())) {
+                    items.remove();
+                }
+            }
+        }
+
     }
 
     public static SVNURL translateCommitables(SVNCommitItem[] items, Map decodedPaths) throws SVNException {
