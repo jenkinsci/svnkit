@@ -517,7 +517,8 @@ public class SVNFileUtil {
                 }
             } else if (SVNJNAUtil.moveFile(src, dst)) {
                 renamed = true;
-            } else {
+            } 
+            if (!renamed) {
                 boolean wasRO = dst.exists() && !dst.canWrite();
                 setReadonly(src, false);
                 setReadonly(dst, false);
