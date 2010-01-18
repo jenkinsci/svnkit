@@ -379,16 +379,31 @@ public class SVNStatusEditor {
         }
         return Collections.EMPTY_SET;
     }
-    
     public static boolean isIgnored(Collection patterns, File file) {
+        return isIgnored(patterns, file, null);
+    }
+    
+    public static boolean isIgnored(Collection patterns, File file, String relativePath) {
         String name = file.getName();
         String dirName = null;
         boolean isDirectory = SVNFileType.getType(file) == SVNFileType.DIRECTORY;
         if (isDirectory) {
             dirName = name + "/";
         }
+        
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
+            if (pattern.startsWith("/") && relativePath != null) {
+                System.out.println("pattern: " + pattern);
+                System.out.println("path: " + relativePath);
+                if (DefaultSVNOptions.matches(pattern, relativePath)) {
+                    System.out.println("matches");
+                    return true;
+                }
+                System.out.println("no match");
+                continue;
+            }
+            
             if (DefaultSVNOptions.matches(pattern, name)) {
                 return true;
             } else if (isDirectory && DefaultSVNOptions.matches(pattern, dirName)) {

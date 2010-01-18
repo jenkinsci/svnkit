@@ -3109,13 +3109,17 @@ public class SVNWCClient extends SVNBasicClient {
         if (!noIgnore) {
             ignores = SVNStatusEditor.getIgnorePatterns(dir, SVNStatusEditor.getGlobalIgnores(getOptions()));
         }
+        File wcRoot = SVNWCUtil.getWorkingCopyRoot(parentDir.getRoot(), true);
+        String relativePath = SVNPathUtil.getRelativePath(wcRoot.getAbsolutePath().replace(File.separatorChar, '/'), dir.getRoot().getAbsolutePath().replace(File.separatorChar, '/'));
+        relativePath = relativePath != null ? "/" + relativePath : null;
+
         File[] children = SVNFileListUtil.listFiles(dir.getRoot());
         for (int i = 0; children != null && i < children.length; i++) {
             checkCancelled();
             if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
                 continue;
             }
-            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i])) {
+            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i], relativePath != null ? SVNPathUtil.append(relativePath, children[i].getName()): null)) {
                 continue;
             }
             SVNFileType childType = SVNFileType.getType(children[i]);
