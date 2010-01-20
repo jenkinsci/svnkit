@@ -482,10 +482,24 @@ public class SVNWCManager {
         }
         
         if (entry.getExternalFilePath() != null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL, 
-                    "Cannot remove the file external at ''{0}''; please propedit or propdel the svn:externals description that created it", 
-                    path);
-            SVNErrorManager.error(err, SVNLogType.WC);
+            // check if there is an external property.
+            String externalProperty = dir.getProperties(dir.getThisDirName()).getStringPropertyValue(SVNProperty.EXTERNALS);
+            String name = entry.getName();
+            if (externalProperty != null) {
+                SVNExternal[] externals = SVNExternal.parseExternals("", externalProperty);
+                for (int i = 0; i < externals.length; i++) {
+                    if (name.equals(externals[i].getPath())) {
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CANNOT_DELETE_FILE_EXTERNAL, 
+                                "Cannot remove the file external at ''{0}''; please propedit or propdel the svn:externals description that created it", 
+                                path);
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                }
+            }
+            dir.removeFromRevisionControl(name, deleteFiles, false);
+            SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, 0, SVNEventAction.DELETE, null, null, null);
+            wcAccess.handleEvent(event);
+            return;
         }
         
         String schedule = entry.getSchedule();
