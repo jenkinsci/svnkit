@@ -30,7 +30,7 @@ public class SVNBaseNode {
     private SVNWCDbKind myKind;
     private long myWCId;
     private long myReposId;
-    private String myReposRelativePath;
+    private String myReposPath;
     private String myLocalRelativePath;
     private long myRevision;
     private SVNProperties myProps;
@@ -44,14 +44,14 @@ public class SVNBaseNode {
     private long myTranslatedSize;
     private String myTarget;
 
-    public SVNBaseNode(SVNWCDbStatus status, SVNWCDbKind kind, long wcId, long reposId, String reposRelativePath, String localRelativePath, 
+    public SVNBaseNode(SVNWCDbStatus status, SVNWCDbKind kind, long wcId, long reposId, String reposPath, String localRelativePath, 
             long revision, SVNProperties props, long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth, List children, 
             SVNChecksum checksum, long translatedSize, String target) {
         myStatus = status;
         myKind = kind;
         myWCId = wcId;
         myReposId = reposId;
-        myReposRelativePath = reposRelativePath;
+        myReposPath = reposPath;
         myLocalRelativePath = localRelativePath;
         myRevision = revision;
         myProps = props;
@@ -81,8 +81,8 @@ public class SVNBaseNode {
         return myReposId;
     }
     
-    public String getReposRelativePath() {
-        return myReposRelativePath;
+    public String getReposPath() {
+        return myReposPath;
     }
     
     public long getRevision() {

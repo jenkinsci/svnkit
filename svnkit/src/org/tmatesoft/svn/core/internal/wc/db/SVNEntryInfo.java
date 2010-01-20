@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.wc.db;
 
+import java.io.File;
 import java.util.Date;
 
 import org.tmatesoft.svn.core.SVNDepth;
@@ -66,12 +67,17 @@ public class SVNEntryInfo {
     private boolean myIsPropsMode;
     private boolean myIsBaseShadowed;
     private boolean myIsConflicted;
+    private boolean myIsBaseReplaced;
     private long myOriginalRevision;
     private String myOriginalUUID;
     private String myOriginalRootURL;
-    private String myOriginalReposRelPath;
+    private String myOriginalReposPath;
     private String myTarget;
-    private String myReposRelPath;
+    private String myReposPath;
+    private File myOperationRootPath;
+    private File myDeletedBasePath;
+    private File myMovedToPath;
+    private File myDeletedWorkingPath;
     
     public String getName() {
         return myName;
@@ -85,7 +91,7 @@ public class SVNEntryInfo {
         return myURL;
     }
     
-    public String getReposURL() {
+    public String getReposRootURL() {
         return myReposURL;
     }
     
@@ -249,20 +255,60 @@ public class SVNEntryInfo {
         return myOriginalRootURL;
     }
     
-    public String getOriginalReposRelPath() {
-        return myOriginalReposRelPath;
+    public String getOriginalReposPath() {
+        return myOriginalReposPath;
     }
     
     public String getTarget() {
         return myTarget;
     }
     
-    public String getReposRelPath() {
-        return myReposRelPath;
+    public String getReposPath() {
+        return myReposPath;
+    }
+
+    public File getOperationRootPath() {
+        return myOperationRootPath;
     }
     
-    public void setReposRelPath(String reposRelPath) {
-        myReposRelPath = reposRelPath;
+    public File getDeletedBasePath() {
+        return myDeletedBasePath;
+    }
+    
+    public boolean isBaseReplaced() {
+        return myIsBaseReplaced;
+    }
+    
+    public File getMovedToPath() {
+        return myMovedToPath;
+    }
+    
+    public File getDeletedWorkingPath() {
+        return myDeletedWorkingPath;
+    }
+    
+    public void setDeletedWorkingPath(File deletedWorkingPath) {
+        myDeletedWorkingPath = deletedWorkingPath;
+    }
+
+    public void setMovedToPath(File movedToPath) {
+        myMovedToPath = movedToPath;
+    }
+
+    public void setIsBaseReplaced(boolean isBaseReplaced) {
+        myIsBaseReplaced = isBaseReplaced;
+    }
+
+    public void setDeletedBasePath(File deletedBasePath) {
+        myDeletedBasePath = deletedBasePath;
+    }
+
+    public void setOperationRootPath(File operationRootPath) {
+        myOperationRootPath = operationRootPath;
+    }
+    
+    public void setReposPath(String reposPath) {
+        myReposPath = reposPath;
     }
 
     public void setTarget(String target) {
@@ -281,8 +327,8 @@ public class SVNEntryInfo {
         myOriginalRootURL = originalRootURL;
     }
     
-    public void setOriginalReposRelPath(String originalReposRelPath) {
-        myOriginalReposRelPath = originalReposRelPath;
+    public void setOriginalReposPath(String originalReposRelPath) {
+        myOriginalReposPath = originalReposRelPath;
     }
     
     public void setName(String name) {
@@ -297,7 +343,7 @@ public class SVNEntryInfo {
         myURL = uRL;
     }
     
-    public void setReposURL(String reposURL) {
+    public void setReposRootURL(String reposURL) {
         myReposURL = reposURL;
     }
     
@@ -421,16 +467,16 @@ public class SVNEntryInfo {
         myFileExternalRevision = fileExternalRevision;
     }
     
-    public void setWCDBLock(SVNWCDbLock wCDBLock) {
-        myWCDBLock = wCDBLock;
+    public void setWCDBLock(SVNWCDbLock wcDBLock) {
+        myWCDBLock = wcDBLock;
     }
     
-    public void setWCDBStatus(SVNWCDbStatus wCDBStatus) {
-        myWCDBStatus = wCDBStatus;
+    public void setWCDBStatus(SVNWCDbStatus wcDBStatus) {
+        myWCDBStatus = wcDBStatus;
     }
     
-    public void setWCDBKind(SVNWCDbKind wCDBKind) {
-        myWCDBKind = wCDBKind;
+    public void setWCDBKind(SVNWCDbKind wcDBKind) {
+        myWCDBKind = wcDBKind;
     }
     
     public void setIsTextMode(boolean isTextMode) {

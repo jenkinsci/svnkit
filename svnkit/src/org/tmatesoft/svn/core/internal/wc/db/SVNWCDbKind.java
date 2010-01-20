@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc.db;
 
+import org.tmatesoft.svn.core.SVNNodeKind;
+
 
 /**
  * @version 1.3
@@ -47,4 +49,14 @@ public class SVNWCDbKind {
         return UNKNOWN;
     }
     
+    public static SVNNodeKind convertWCDbKind(SVNWCDbKind kind) {
+        if (kind == DIR) {
+            return SVNNodeKind.DIR;
+        } else if (kind == FILE) {
+            return SVNNodeKind.FILE;
+        } else if (kind == SYMLINK) {
+            return SVNNodeKind.FILE;
+        } 
+        return SVNNodeKind.UNKNOWN;
+    }
 }

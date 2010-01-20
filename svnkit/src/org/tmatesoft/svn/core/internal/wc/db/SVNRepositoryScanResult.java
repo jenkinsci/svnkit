@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * Copyright (c) 2004-2009 TMate Software Ltd.  All rights reserved.
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution.  The terms
@@ -16,29 +16,21 @@ package org.tmatesoft.svn.core.internal.wc.db;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNRepositoryInfo {
-    private String myRootURL;
-    private String myUUID;
+public class SVNRepositoryScanResult {
+    private SVNRepositoryInfo myReposInfo;
+    private String myReposPath;
     
-    public SVNRepositoryInfo(String url, String uuid) {
-        myRootURL = url;
-        myUUID = uuid;
+    public SVNRepositoryScanResult(SVNRepositoryInfo reposInfo, String reposPath) {
+        myReposInfo = reposInfo;
+        myReposPath = reposPath;
     }
 
-    public String getRootURL() {
-        return myRootURL;
+    public SVNRepositoryInfo getReposInfo() {
+        return myReposInfo;
     }
-    
-    public void setRootURL(String url) {
-        myRootURL = url;
-    }
-    
-    public String getUUID() {
-        return myUUID;
-    }
-    
-    public void setUUID(String uuid) {
-        myUUID = uuid;
+
+    public String getReposPath() {
+        return myReposPath;
     }
     
 }

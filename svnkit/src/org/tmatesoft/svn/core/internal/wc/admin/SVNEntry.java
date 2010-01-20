@@ -235,6 +235,10 @@ public class SVNEntry {
         return (String) myAttributes.get(SVNProperty.LAST_AUTHOR);
     }
 
+    public void setCommittedDate(String date) {
+        setAttributeValue(SVNProperty.COMMITTED_DATE, date);
+    }
+    
     public String getCommittedDate() {
         return (String) myAttributes.get(SVNProperty.COMMITTED_DATE);
     }
@@ -286,6 +290,10 @@ public class SVNEntry {
         return (String) myAttributes.get(SVNProperty.CHECKSUM);
     }
 
+    public void setChecksum(String checksum) {
+        myAttributes.put(SVNProperty.CHECKSUM, checksum);
+    }
+    
     public void setLockComment(String comment) {
         myAttributes.put(SVNProperty.LOCK_COMMENT, comment);
     }
