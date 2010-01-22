@@ -504,6 +504,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                         throw new RuntimeException(e); // hack to minimize patching - Kohsuke
                     }
                 }
+                return null;
             }
 
             File dir = new File(myDirectory, kind);
