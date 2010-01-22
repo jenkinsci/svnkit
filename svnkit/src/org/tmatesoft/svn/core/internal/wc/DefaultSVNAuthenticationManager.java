@@ -497,11 +497,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		        Map properties = getHostProperties(host);
 		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
 		        String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
-		        File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
-                try {
-                    return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored);
-                } catch (IOException e) {
-                    throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                if (sslClientCert!=null) {
+                    try {
+                        return new SVNSSLAuthentication(new File(sslClientCert), sslClientCertPassword, authMayBeStored);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                    }
                 }
             }
 
