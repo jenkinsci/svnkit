@@ -21,8 +21,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.zip.Checksum;
 
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -36,7 +34,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNRepositoryScanResult;

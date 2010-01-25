@@ -180,7 +180,7 @@ public class SVNSkel {
         if (data == null) {
             return null;
         }
-        return createAtom(data);
+        return createAtom(data, 0, data.length);
     }
 
     public static SVNSkel createAtom(byte[] data, int offset, int length) {

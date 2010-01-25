@@ -315,22 +315,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNDbTableField.file_external
     };
     
-    private static final String BASE_NODE_TABLE = "BASE_NODE";
-    private static final String PARENT_INDEX = "I_PARENT";
-    private static final String WORKING_NODE_TABLE = "WORKING_NODE";
-    private static final String WORKING_PARENT_INDEX = "I_WORKING_PARENT";
-    private static final String ROOT_INDEX = "I_ROOT";
-    private static final String UUID_INDEX = "I_UUID";
-    private static final String REPOSITORY_TABLE = "REPOSITORY";
-    private static final String WCROOT_TABLE = "WCROOT";
-    private static final String LOCAL_ABSOLUTE_PATH_INDEX = "I_LOCAL_ABSPATH";
-    private static final String PRISTINE_TABLE = "PRISTINE";
-    private static final String ACTUAL_NODE_TABLE = "ACTUAL_NODE";
-    private static final String ACTUAL_PARENT_INDEX = "I_ACTUAL_PARENT";
-    private static final String ACTUAL_CHANGELIST_INDEX = "I_ACTUAL_CHANGELIST";
-    private static final String LOCK_TABLE = "LOCK";
-    private static final String WORK_QUEUE_TABLE = "WORK_QUEUE";
-    private static final String WC_LOCK_TABLE = "WC_LOCK";
+    protected static final SVNDbTableField[] OUR_DAV_CACHE_FIELD = {
+        SVNDbTableField.dav_cache
+    };
     
     private Map myPathsToPristineDirs;
     private boolean myIsAutoUpgrade;
@@ -1521,6 +1508,41 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return null;
     }
     
+    public void writeEntry(final File path, final SVNEntry thisDir, final SVNEntry thisEntry) throws SVNException {
+        
+        SVNDbCommand command = new SVNDbCommand() {
+            
+            public Object execCommand() throws SqlJetException, SVNException {
+                final SqlJetDb sdb = getDBTemp(path, false);
+
+                long reposId = 0;
+                String reposRootURL = null;
+                
+                if (thisDir.getUUID() != null) {
+                    reposId = ensureRepos(path, thisDir.getRepositoryRoot(), thisDir.getUUID());
+                    reposRootURL = thisDir.getRepositoryRoot();
+                }
+                
+                long wcId = fetchWCId(sdb);
+                
+                return null;
+            }
+        };
+        
+//        command.runDbCommand(sdb, null, SqlJetTransactionMode.WRITE, true);
+    }
+    
+//    public SVNProperties getBaseDAVCache(File path) {
+//        runSelect(sdb, tableName, dbStrategy)
+//    }
+    
+    private long ensureRepos(File path, String reposRootURL, String reposUUID) throws SVNException {
+        ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
+        SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
+        verifyPristineDirectoryIsUsable(pristineDir);
+        return createReposId(pristineDir.getWCRoot().getStorage(), reposRootURL, reposUUID);
+    }
+    
     private RepositoryId scanUpwardsForRepository(SVNWCRoot wcRoot, String localRelPath) throws SVNException {
         SqlJetDb sdb = wcRoot.getStorage(); 
         SVNErrorManager.assertionFailure(sdb != null && wcRoot.getWCId() >= 0, null, SVNLogType.WC);
@@ -1562,101 +1584,66 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
     }
     
-    private Object runSelect(SqlJetDb sdb, SVNDbTables tableName, SVNAbstractDbStrategy dbStrategy) throws SVNException {
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            try {
-                ISqlJetTable table = sdb.getTable(tableName.toString());
-                return dbStrategy.runSelect(table);
-            } finally {
-                sdb.commit();
+    private Object runSelect(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy) throws SVNException {
+        SVNDbCommand command = new SVNDbCommand() {
+            
+            public Object execCommand() throws SqlJetException, SVNException {
+                return dbStrategy.runSelect(getTable());
             }
-        } catch (SqlJetException e) {
-            convertException(sdb, false, e);
-        } 
-        return null;
-    }
-
-    private void runSelect(SqlJetDb sdb, SVNDbTables tableName, SVNAbstractDbStrategy dbStrategy, ISVNRecordHandler handler) throws SVNException {
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
-            try {
-                ISqlJetTable table = sdb.getTable(tableName.toString());
-                dbStrategy.runSelect(table, handler);
-            } finally {
-                sdb.commit();
-            }
-        } catch (SqlJetException e) {
-            convertException(sdb, false, e);
-        } 
-    }
-
-    private void runDelete(SqlJetDb sdb, SVNDbTables tableName, SVNAbstractDbStrategy dbStrategy, ISVNRecordHandler handler) throws SVNException {
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.WRITE);
-            try {
-                ISqlJetTable table = sdb.getTable(tableName.toString());
-                dbStrategy.runDelete(table, handler);
-            } finally {
-                sdb.commit();
-            }    
-        } catch (SqlJetException e) {
-            convertException(sdb, true, e);
-        }
-    }
-    
-    private long runInsertByFieldNames(SqlJetDb sdb, SVNDbTables tableName, SqlJetConflictAction conflictAction, 
-            SVNAbstractDbStrategy dbStrategy, Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.WRITE);
-            try {
-                ISqlJetTable table = sdb.getTable(tableName.toString());
-                return dbStrategy.runInsertByFieldNames(table, conflictAction, fieldsToValues);
-            } finally {
-                sdb.commit();
-            }
-        } catch (SqlJetException e) {
-            convertException(sdb, true, e);
-        }
-        return -1;
-    }
-
-    private long runInsert(SqlJetDb sdb, SVNDbTables tableName, SqlJetConflictAction conflictAction, 
-            SVNAbstractDbStrategy dbStrategy, Object... values) throws SVNException {
-        try {
-            sdb.beginTransaction(SqlJetTransactionMode.WRITE);
-            try {
-                ISqlJetTable table = sdb.getTable(tableName.toString());
-                return dbStrategy.runInsert(table, conflictAction, values);
-            } finally {
-                sdb.commit();
-            }
-        } catch (SqlJetException e) {
-            convertException(sdb, true, e);
-        }
-        return -1;
-    }
-
-    private void convertException(SqlJetDb sdb, boolean rollback, SqlJetException e) throws SVNException {
-        if (rollback) {
-            SqlJetException rollBackException = null;
-            try {
-                sdb.rollback();
-            } catch (SqlJetException e1) {
-                rollBackException = e1;
-            }
-                
-            if (rollBackException != null) {
-                SVNErrorMessage err = SVNSqlJetUtil.convertError(rollBackException);
-                SVNErrorMessage originalErr = SVNSqlJetUtil.convertError(e);
-                err.setChildErrorMessage(originalErr);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        }
+        };
         
-        SVNSqlJetUtil.convertException(e);
+        return command.runDbCommand(sdb, tableName, SqlJetTransactionMode.READ_ONLY, false);
+    }
+
+    private void runSelect(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, final ISVNRecordHandler handler) throws SVNException {
+        SVNDbCommand command = new SVNDbCommand() {
+            
+            public Object execCommand() throws SqlJetException, SVNException {
+                dbStrategy.runSelect(getTable(), handler);
+                return null;
+            }
+        };
+        command.runDbCommand(sdb, tableName, SqlJetTransactionMode.READ_ONLY, false);
+    }
+
+    private void runDelete(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, final ISVNRecordHandler handler) throws SVNException {
+        
+        SVNDbCommand command = new SVNDbCommand() {
+        
+            public Object execCommand() throws SqlJetException, SVNException {
+                dbStrategy.runDelete(getTable(), handler);
+                return null;
+            }
+        };
+        command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
     
+    private long runInsertByFieldNames(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction, 
+            final SVNAbstractDbStrategy dbStrategy, final Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
+        
+        SVNDbCommand command = new SVNDbCommand() {
+        
+            public Object execCommand() throws SqlJetException, SVNException {
+                return dbStrategy.runInsertByFieldNames(getTable(), conflictAction, fieldsToValues);
+            }
+        };
+        
+        return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
+    }
+
+    private long runInsert(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction, 
+            final SVNAbstractDbStrategy dbStrategy, final Object... values) throws SVNException {
+
+        SVNDbCommand command = new SVNDbCommand() {
+            
+            public Object execCommand() throws SqlJetException, SVNException {
+                return dbStrategy.runInsert(getTable(), conflictAction, values);
+            }
+        };
+        
+        return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
+    }
+
     private Collection selectChildrenUsingWCIdAndParentRelPath(SVNDbTables table, SVNDbIndexes index, long wcId, String parentRelPath, 
             SqlJetDb db, Collection childNames) throws SVNException {
         childNames = childNames == null ? new HashSet() : childNames;
