@@ -316,30 +316,9 @@ public class SVNStatusEditor {
             SVNAdminArea dir, Collection ignorePatterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
         String path = dir.getRelativePath(myAdminInfo.getAnchor());
         path = SVNPathUtil.append(path, name);  
-        String rootRelativePath = null;
 
-        boolean needToComputeRelativePath = false;
-        for (Iterator patterns = ignorePatterns.iterator(); patterns.hasNext();) {
-            String pattern = (String) patterns.next();
-            if (pattern.startsWith("/")) {
-                needToComputeRelativePath = true;
-                break;
-            }
-        }
-        if (needToComputeRelativePath) {
-            if (myWCRootPath == null) {
-                File root = SVNWCUtil.getWorkingCopyRoot(dir.getRoot(), true);
-                myWCRootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
-            }
-            if (myWCRootPath != null) {
-                rootRelativePath = file.getAbsolutePath().replace(File.separatorChar, '/');
-                rootRelativePath = SVNPathUtil.getPathAsChild(myWCRootPath, rootRelativePath);
-                if (rootRelativePath != null && !rootRelativePath.startsWith("/")) {
-                    rootRelativePath = "/" + rootRelativePath;
-                }
-            }
-        }
-        boolean isIgnored = isIgnored(ignorePatterns, file, rootRelativePath);
+        boolean isIgnored = isIgnored(ignorePatterns, file, getWCRootRelativePath(ignorePatterns, file));
+        
         boolean isExternal = isExternal(path);
         SVNStatus status = assembleStatus(file, dir, null, null, fileType, special, true, 
         		isIgnored);
@@ -359,6 +338,43 @@ public class SVNStatusEditor {
 
     	return SVNStatusUtil.assembleStatus(file, dir, entry, parentEntry, fileKind, special, reportAll, 
     			isIgnored, myRepositoryLocks, myRepositoryRoot, myWCAccess);
+    }
+    
+    protected String getWCRootPath() {
+        if (myWCRootPath == null) {
+            try {
+                File root = SVNWCUtil.getWorkingCopyRoot(myAdminInfo.getAnchor().getRoot(), true);
+                if (root != null) {
+                    myWCRootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+                }
+            } catch (SVNException e) {
+                // ignore.
+            }
+        }
+        return myWCRootPath;
+    }
+    
+    protected String getWCRootRelativePath(Collection ignorePatterns, File file) {
+        boolean needToComputeWCRelativePath = false;
+        for (Iterator patterns = ignorePatterns.iterator(); patterns.hasNext();) {
+            String pattern = (String) patterns.next();
+            if (pattern.startsWith("/")) {
+                needToComputeWCRelativePath = true;
+                break;
+            }
+        }
+        if (!needToComputeWCRelativePath) {
+            return null;
+        }
+        String rootRelativePath = null;
+        if (getWCRootPath() != null) {
+            rootRelativePath = file.getAbsolutePath().replace(File.separatorChar, '/');
+            rootRelativePath = SVNPathUtil.getPathAsChild(getWCRootPath(), rootRelativePath);
+            if (rootRelativePath != null && !rootRelativePath.startsWith("/")) {
+                rootRelativePath = "/" + rootRelativePath;
+            }
+        }
+        return rootRelativePath;
     }
     
     private boolean isExternal(String path) {
@@ -404,6 +420,7 @@ public class SVNStatusEditor {
         }
         return Collections.EMPTY_SET;
     }
+    
     public static boolean isIgnored(Collection patterns, File file) {
         return isIgnored(patterns, file, null);
     }
