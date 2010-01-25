@@ -41,6 +41,7 @@ import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -64,6 +65,7 @@ public class SVNDiffEditor implements ISVNEditor {
     private File myTempDirectory;
     private AbstractDiffCallback myDiffCallback;
     private Collection myChangeLists;
+    private String myWCRootPath;
     
     public SVNDiffEditor(SVNWCAccess wcAccess, SVNAdminAreaInfo info, AbstractDiffCallback callback,
             boolean useAncestry, boolean reverseDiff, boolean compareToBase, SVNDepth depth,
@@ -546,7 +548,30 @@ public class SVNDiffEditor implements ISVNEditor {
             } else if (dir != null) {// && SVNStatusEditor.isIgnored(, name)dir.isIgnored(file.getName())) {
                 Collection globalIgnores = SVNStatusEditor.getGlobalIgnores(myWCAccess.getOptions());
                 Collection ignores = SVNStatusEditor.getIgnorePatterns(dir, globalIgnores);
-                if (SVNStatusEditor.isIgnored(ignores, file)) {
+                
+                String rootRelativePath = null;
+                boolean needToComputeRelativePath = false;
+                for (Iterator patterns = ignores.iterator(); patterns.hasNext();) {
+                    String pattern = (String) patterns.next();
+                    if (pattern.startsWith("/")) {
+                        needToComputeRelativePath = true;
+                        break;
+                    }
+                }
+                if (needToComputeRelativePath) {
+                    if (myWCRootPath == null) {
+                        File wcRoot = SVNWCUtil.getWorkingCopyRoot(dir.getRoot(), true);
+                        myWCRootPath = wcRoot.getAbsolutePath().replace(File.separatorChar, '/');
+                    }
+                    if (myWCRootPath != null) {
+                        rootRelativePath = file.getAbsolutePath().replace(File.separatorChar, '/');
+                        rootRelativePath = SVNPathUtil.getPathAsChild(myWCRootPath, rootRelativePath);
+                        if (rootRelativePath != null && !rootRelativePath.startsWith("/")) {
+                            rootRelativePath = "/" + rootRelativePath;
+                        }
+                    }
+                }
+                if (SVNStatusEditor.isIgnored(ignores, file, rootRelativePath)) {
                     continue;
                 }
             }

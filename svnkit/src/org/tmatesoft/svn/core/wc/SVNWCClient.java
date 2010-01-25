@@ -1755,7 +1755,8 @@ public class SVNWCClient extends SVNBasicClient {
                 dir = wcAccess.open(path.getParentFile(), true, 0);
             }
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.FILES) >= 0) {
-                addDirectory(path, dir, force, includeIgnored, depth, depthIsSticky);
+                File wcRoot = SVNWCUtil.getWorkingCopyRoot(dir.getRoot(), true);
+                addDirectory(wcRoot, path, dir, force, includeIgnored, depth, depthIsSticky);
             } else if (fileType == SVNFileType.FILE || fileType == SVNFileType.SYMLINK) {
                 addFile(path, fileType, dir);
             } else {
@@ -3094,7 +3095,7 @@ public class SVNWCClient extends SVNBasicClient {
         }
     }
 
-    private void addDirectory(File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth, boolean setDepth) throws SVNException {
+    private void addDirectory(File wcRoot, File path, SVNAdminArea parentDir, boolean force, boolean noIgnore, SVNDepth depth, boolean setDepth) throws SVNException {
         checkCancelled();
         try {
             SVNWCManager.add(path, parentDir, null, SVNRevision.UNDEFINED, setDepth ? SVNDepth.INFINITY : null);
@@ -3109,14 +3110,20 @@ public class SVNWCClient extends SVNBasicClient {
         if (!noIgnore) {
             ignores = SVNStatusEditor.getIgnorePatterns(dir, SVNStatusEditor.getGlobalIgnores(getOptions()));
         }
+        String relativePath = SVNPathUtil.getRelativePath(wcRoot.getAbsolutePath().replace(File.separatorChar, '/'), dir.getRoot().getAbsolutePath().replace(File.separatorChar, '/'));
+        relativePath = relativePath != null ? "/" + relativePath : null;
+
         File[] children = SVNFileListUtil.listFiles(dir.getRoot());
         for (int i = 0; children != null && i < children.length; i++) {
             checkCancelled();
             if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
                 continue;
             }
-            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i])) {
-                continue;
+            if (!noIgnore) {
+                String rootRelativePath = relativePath != null ? SVNPathUtil.append(relativePath, children[i].getName()): null;
+                if (SVNStatusEditor.isIgnored(ignores, children[i], rootRelativePath)) {
+                    continue;
+                }
             }
             SVNFileType childType = SVNFileType.getType(children[i]);
             if (childType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
@@ -3124,7 +3131,7 @@ public class SVNWCClient extends SVNBasicClient {
                 if (depth == SVNDepth.IMMEDIATES) {
                     depthBelowHere = SVNDepth.EMPTY;
                 }
-                addDirectory(children[i], dir, force, noIgnore, depthBelowHere, setDepth);
+                addDirectory(wcRoot, children[i], dir, force, noIgnore, depthBelowHere, setDepth);
             } else if (childType != SVNFileType.UNKNOWN && childType != SVNFileType.DIRECTORY && 
                     depth.compareTo(SVNDepth.FILES) >= 0) {
                 try {

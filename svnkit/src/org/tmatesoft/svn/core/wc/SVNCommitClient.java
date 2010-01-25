@@ -698,7 +698,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 changed |= importDir(deltaGenerator, path, newDirPath, useGlobalIgnores, 
                         ignoreUnknownNodeTypes, depth, commitEditor);
             } else if (srcKind == SVNFileType.FILE || srcKind == SVNFileType.SYMLINK) {
-                if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path)) {
+                if (!useGlobalIgnores || !SVNStatusEditor.isIgnored(ignores, path, "/" + path.getName())) {
                     changed |= importFile(deltaGenerator, path, srcKind, filePath, commitEditor);
                 }
             } else if (srcKind == SVNFileType.NONE || srcKind == SVNFileType.UNKNOWN) {
@@ -1483,13 +1483,13 @@ public class SVNCommitClient extends SVNBasicClient {
                 handleEvent(skippedEvent, ISVNEventHandler.UNKNOWN);
                 continue;
             }
-            if (useGlobalIgnores && SVNStatusEditor.isIgnored(ignores, file)) {
-                continue;
-            }
             if (filter != null && !filter.accept(file)) {
                 continue;
             }
             String path = importPath == null ? file.getName() : SVNPathUtil.append(importPath, file.getName());
+            if (useGlobalIgnores && SVNStatusEditor.isIgnored(ignores, file, "/" + path)) {
+                continue;
+            }
             SVNFileType fileType = SVNFileType.getType(file);
             if (fileType == SVNFileType.DIRECTORY && depth.compareTo(SVNDepth.IMMEDIATES) >= 0) {
                 editor.addDir(path, null, -1);

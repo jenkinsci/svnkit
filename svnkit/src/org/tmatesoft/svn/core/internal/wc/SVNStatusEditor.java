@@ -38,6 +38,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
 /**
@@ -61,6 +62,7 @@ public class SVNStatusEditor {
     private SVNURL myRepositoryRoot;
     private Map myRepositoryLocks;
     private long myTargetRevision;
+    private String myWCRootPath;
     
     public SVNStatusEditor(ISVNOptions options, SVNWCAccess wcAccess, SVNAdminAreaInfo info, boolean noIgnore, boolean reportAll, SVNDepth depth,
             ISVNStatusHandler handler) {
@@ -312,9 +314,11 @@ public class SVNStatusEditor {
     
     private void sendUnversionedStatus(File file, String name, SVNNodeKind fileType, boolean special, 
             SVNAdminArea dir, Collection ignorePatterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
-        boolean isIgnored = isIgnored(ignorePatterns, file);
         String path = dir.getRelativePath(myAdminInfo.getAnchor());
         path = SVNPathUtil.append(path, name);  
+
+        boolean isIgnored = isIgnored(ignorePatterns, file, getWCRootRelativePath(ignorePatterns, file));
+        
         boolean isExternal = isExternal(path);
         SVNStatus status = assembleStatus(file, dir, null, null, fileType, special, true, 
         		isIgnored);
@@ -334,6 +338,43 @@ public class SVNStatusEditor {
 
     	return SVNStatusUtil.assembleStatus(file, dir, entry, parentEntry, fileKind, special, reportAll, 
     			isIgnored, myRepositoryLocks, myRepositoryRoot, myWCAccess);
+    }
+    
+    protected String getWCRootPath() {
+        if (myWCRootPath == null) {
+            try {
+                File root = SVNWCUtil.getWorkingCopyRoot(myAdminInfo.getAnchor().getRoot(), true);
+                if (root != null) {
+                    myWCRootPath = root.getAbsolutePath().replace(File.separatorChar, '/');
+                }
+            } catch (SVNException e) {
+                // ignore.
+            }
+        }
+        return myWCRootPath;
+    }
+    
+    protected String getWCRootRelativePath(Collection ignorePatterns, File file) {
+        boolean needToComputeWCRelativePath = false;
+        for (Iterator patterns = ignorePatterns.iterator(); patterns.hasNext();) {
+            String pattern = (String) patterns.next();
+            if (pattern.startsWith("/")) {
+                needToComputeWCRelativePath = true;
+                break;
+            }
+        }
+        if (!needToComputeWCRelativePath) {
+            return null;
+        }
+        String rootRelativePath = null;
+        if (getWCRootPath() != null) {
+            rootRelativePath = file.getAbsolutePath().replace(File.separatorChar, '/');
+            rootRelativePath = SVNPathUtil.getPathAsChild(getWCRootPath(), rootRelativePath);
+            if (rootRelativePath != null && !rootRelativePath.startsWith("/")) {
+                rootRelativePath = "/" + rootRelativePath;
+            }
+        }
+        return rootRelativePath;
     }
     
     private boolean isExternal(String path) {
@@ -381,14 +422,26 @@ public class SVNStatusEditor {
     }
     
     public static boolean isIgnored(Collection patterns, File file) {
+        return isIgnored(patterns, file, null);
+    }
+    
+    public static boolean isIgnored(Collection patterns, File file, String relativePath) {
         String name = file.getName();
         String dirName = null;
         boolean isDirectory = SVNFileType.getType(file) == SVNFileType.DIRECTORY;
         if (isDirectory) {
             dirName = name + "/";
         }
+        
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
+            if (pattern.startsWith("/") && relativePath != null) {
+                if (DefaultSVNOptions.matches(pattern, relativePath)) {
+                    return true;
+                }
+                continue;
+            }
+            
             if (DefaultSVNOptions.matches(pattern, name)) {
                 return true;
             } else if (isDirectory && DefaultSVNOptions.matches(pattern, dirName)) {
