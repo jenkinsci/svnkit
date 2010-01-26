@@ -436,7 +436,8 @@ public class SVNStatusEditor {
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
             if (pattern.startsWith("/") && relativePath != null) {
-                if (DefaultSVNOptions.matches(pattern, relativePath)) {
+                if (DefaultSVNOptions.matches(pattern, relativePath) || 
+                   (isDirectory && DefaultSVNOptions.matches(pattern, relativePath + "/"))) {
                     return true;
                 }
                 continue;
