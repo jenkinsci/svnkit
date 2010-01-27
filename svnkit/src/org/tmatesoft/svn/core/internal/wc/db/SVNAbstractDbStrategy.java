@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -34,7 +35,8 @@ public abstract class SVNAbstractDbStrategy {
             
             public void handleRecord(ISqlJetCursor recordCursor) throws SqlJetException {
                 for(SVNDbTableField field : getFieldNames()) {
-                    result.put(field, recordCursor.getValue(field.toString()));
+                    Object valObj = recordCursor.getValue(field.toString());
+                    result.put(field, valObj);
                 }   
             }
         });

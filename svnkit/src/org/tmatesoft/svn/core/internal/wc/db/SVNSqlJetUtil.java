@@ -17,14 +17,15 @@ import java.util.Map;
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
+import org.tmatesoft.sqljet.core.internal.SqlJetUtility;
 import org.tmatesoft.sqljet.core.table.ISqlJetRunnableWithLock;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -36,11 +37,17 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNSqlJetUtil {
 
-    public static Map getFieldProperties(ISqlJetCursor cursor, String fieldName) throws SqlJetException, SVNException {
-        byte[] blobBytes = cursor.getBlobAsArray(fieldName);
-        SVNSkel skel = SVNSkel.createAtom(blobBytes);
-        
-        return skel != null ? skel.parsePropList() : null;
+    public static SVNProperties getPropertiesFromBLOB(Object obj) throws SVNException {
+        if (obj != null && obj instanceof ISqlJetMemoryPointer) {//check if it's a BLOB object and convert it to byte[] if it is
+            byte[] bytes = SqlJetUtility.readByteBuffer((ISqlJetMemoryPointer) obj);
+            SVNSkel skel = SVNSkel.createAtom(bytes);
+            Map propsMap = skel != null ? skel.parsePropList() : null;
+            if (propsMap == null) {
+                return null;
+            }
+            return SVNProperties.wrap(propsMap);
+        }
+        return null;
     }
     
     public static SqlJetDb openDB(File dbFile, ISqlJetTransaction sqlTransaction, SqlJetTransactionMode mode, int latestSchema) throws SVNException {

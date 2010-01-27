@@ -157,7 +157,7 @@ public class SVNAdminArea17 extends SVNAdminArea {
             } else if (status == SVNWCDbStatus.DELETED || status == SVNWCDbStatus.OBSTRUCTED_DELETE) {
                 entry.scheduleForDeletion();
                 if (entry.isThisDir()) {
-                    entry.setKeepLocal(myWCDb.determineKeepLocal(sdb, 1, entry.getName()));
+                    entry.setKeepLocal(myWCDb.determineKeepLocal(path));
                 }
             } else if (status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD) {
                 if (!entry.isThisDir()) {

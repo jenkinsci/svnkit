@@ -126,6 +126,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/config/servers eol=lf
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/ISVNRecordHandler.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/ISVNWorkingCopyDB.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNAbstractDbStrategy.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNActualNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNBaseNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNCommonDbStrategy.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNDbCommand.java -text
@@ -143,6 +144,7 @@ svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNWCDbLock.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNWCDbStatus.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNWCRoot.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNWorkingCopyDB17.java -text
+svnkit/src/org/tmatesoft/svn/core/internal/wc/db/SVNWorkingNode.java -text
 svnkit/src/org/tmatesoft/svn/core/internal/wc/db/wc-metadata.sql -text
 svnkit/src/org/tmatesoft/svn/core/io/repository/template.jar -text
 svnkit/src/org/tmatesoft/svn/core/wc/ISVNFileFilter.java -text

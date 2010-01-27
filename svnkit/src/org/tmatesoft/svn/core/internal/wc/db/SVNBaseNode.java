@@ -44,6 +44,10 @@ public class SVNBaseNode {
     private long myTranslatedSize;
     private String myTarget;
 
+    public SVNBaseNode() {
+        
+    }
+    
     public SVNBaseNode(SVNWCDbStatus status, SVNWCDbKind kind, long wcId, long reposId, String reposPath, String localRelativePath, 
             long revision, SVNProperties props, long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth, List children, 
             SVNChecksum checksum, long translatedSize, String target) {
@@ -63,6 +67,13 @@ public class SVNBaseNode {
         myChecksum = checksum;
         myTranslatedSize = translatedSize;
         myTarget = target;
+    }
+    
+    public static SVNBaseNode maybeCreateNewInstance(SVNBaseNode baseNode) {
+        if (baseNode != null) {
+            return baseNode;
+        }
+        return new SVNBaseNode();
     }
     
     public SVNWCDbStatus getStatus() {
@@ -131,5 +142,85 @@ public class SVNBaseNode {
     
     public boolean hasChildren() {
         return myChildren != null && !myChildren.isEmpty();
+    }
+
+    
+    public void setStatus(SVNWCDbStatus status) {
+        myStatus = status;
+    }
+
+    
+    public void setKind(SVNWCDbKind kind) {
+        myKind = kind;
+    }
+
+    
+    public void setWCId(long wCId) {
+        myWCId = wCId;
+    }
+
+    
+    public void setReposId(long reposId) {
+        myReposId = reposId;
+    }
+
+    
+    public void setReposPath(String reposPath) {
+        myReposPath = reposPath;
+    }
+
+    
+    public void setLocalRelativePath(String localRelativePath) {
+        myLocalRelativePath = localRelativePath;
+    }
+
+    
+    public void setRevision(long revision) {
+        myRevision = revision;
+    }
+
+    
+    public void setProps(SVNProperties props) {
+        myProps = props;
+    }
+
+    
+    public void setChangedRevision(long changedRevision) {
+        myChangedRevision = changedRevision;
+    }
+
+    
+    public void setChangedDate(Date changedDate) {
+        myChangedDate = changedDate;
+    }
+
+    
+    public void setChangedAuthor(String changedAuthor) {
+        myChangedAuthor = changedAuthor;
+    }
+
+    
+    public void setDepth(SVNDepth depth) {
+        myDepth = depth;
+    }
+
+    
+    public void setChildren(List children) {
+        myChildren = children;
+    }
+
+    
+    public void setChecksum(SVNChecksum checksum) {
+        myChecksum = checksum;
+    }
+
+    
+    public void setTranslatedSize(long translatedSize) {
+        myTranslatedSize = translatedSize;
+    }
+
+    
+    public void setTarget(String target) {
+        myTarget = target;
     }
 }
