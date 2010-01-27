@@ -138,6 +138,8 @@ public class SVNAdminClient extends SVNBasicClient {
     private FSHotCopier myHotCopier;
     private SVNDumpStreamParser myDumpStreamParser;
     private SVNDumpEditor myDumpEditor;
+    
+    private static final int LOCK_RETRY_COUNT = 10;
 
     /**
      * Creates a new admin client.
@@ -1631,7 +1633,7 @@ public class SVNAdminClient extends SVNBasicClient {
         String lockToken = hostName + ":" + SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
         int i = 0;
         SVNErrorMessage childError = null;
-        for (i = 0; i < 10; i++) {
+        for (i = 0; i < LOCK_RETRY_COUNT; i++) {
             checkCancelled();
             SVNPropertyValue reposLockToken = repos.getRevisionPropertyValue(0, SVNRevisionProperty.LOCK);
             if (reposLockToken != null) {
@@ -1645,7 +1647,7 @@ public class SVNAdminClient extends SVNBasicClient {
                 } catch (InterruptedException e) {
                     //
                 }
-            } else {
+            } else if (i < LOCK_RETRY_COUNT - 1) {
                 repos.setRevisionPropertyValue(0, SVNRevisionProperty.LOCK, SVNPropertyValue.create(lockToken));
             }
         }
