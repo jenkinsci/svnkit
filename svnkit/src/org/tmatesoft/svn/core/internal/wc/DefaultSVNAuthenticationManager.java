@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -206,7 +207,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 return auth;
             }
             if (i == 3) {
-                SVNErrorManager.cancel("authentication cancelled", SVNLogType.WC);
+                SVNErrorManager.cancel("No credential to try. Authentication failed", SVNLogType.WC);
             }
         }
         // end of probe. if we were asked for username for ssh and didn't find anything 
@@ -636,11 +637,15 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
 		        if (sslClientCert != null && !"".equals(sslClientCert)) {
 	                String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
-	                File clientCertFile = sslClientCert != null ? new File(sslClientCert) : null;
-	                return new SVNSSLAuthentication(clientCertFile, sslClientCertPassword, authMayBeStored, url, false);
-		        }
-                //try looking in svn.ssl.client-passphrase directory cache 
-	        }
+                if (sslClientCert!=null) {
+                    try {
+                        return new SVNSSLAuthentication(new File(sslClientCert), sslClientCertPassword, authMayBeStored, url, false);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                    }
+                }
+                return null;
+            }
 
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {

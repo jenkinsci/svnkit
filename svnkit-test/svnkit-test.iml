@@ -2,7 +2,6 @@
 <module relativePaths="true" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/bin" />
-    <output-test url="file://$MODULE_DIR$/bin" />
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
@@ -14,18 +13,27 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="sequence" />
-    <orderEntry type="module" module-name="svnkit" />
-    <orderEntry type="module" module-name="javahl" />
-    <orderEntry type="module" module-name="svnkit-cli" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/junit/junit.jar!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/junit/junit.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="javahl" />
+    <orderEntry type="library" name="template" level="project" />
+    <orderEntry type="module" module-name="svnkit-cli" />
+  </component>
+  <component name="PluginUploader.PluginUploadConfigurable">
+    <option name="ARCHIVE_PATH" />
+    <option name="PLUGIN_ID" />
+  </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="2" />
+    </Base>
   </component>
 </module>
 

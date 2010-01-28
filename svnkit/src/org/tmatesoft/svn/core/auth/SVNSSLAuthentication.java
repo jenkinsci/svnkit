@@ -11,7 +11,12 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 import org.tmatesoft.svn.core.SVNURL;
 
@@ -26,7 +31,7 @@ import org.tmatesoft.svn.core.SVNURL;
  */
 public class SVNSSLAuthentication extends SVNAuthentication {
 
-    private File myCertificate;
+    private byte[] myCertificate;
     private String myPassword;
     
     /**
@@ -37,21 +42,28 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      * @param storageAllowed   to store or not this credential in a 
      *                         credentials cache    
      */
-    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) {
-        this(certFile, password, storageAllowed, null, false);
+    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed, SVNURL url, boolean isPartial) throws IOException {
+        super(ISVNAuthenticationManager.SSL, null, storageAllowed);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        FileInputStream in = new FileInputStream(certFile);
+        try {
+            SVNTranslator.copy(in,baos);
+        } finally {
+            in.close();
+        }
+        myCertificate = baos.toByteArray();
+        myPassword = password;
     }
 
-    /**
-     * Creates an SSL credentials object. 
-     * 
-     * @param certFile         user's certificate file
-     * @param password         user's password 
-     * @param storageAllowed   to store or not this credential in a 
-     *                         credentials cache
-     * @param url              url these credentials are applied to
-     * @since 1.3.1
-     */
-    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed, SVNURL url, boolean isPartial) {
+    public SVNSSLAuthentication(File certFile, String password, boolean storageAllowed) throws IOException {
+        this(certFile,password,storageAllowed,null,false);
+    }
+
+    public SVNSSLAuthentication(byte[] certFile, String password, boolean storageAllowed) {
+        this(certFile,password,storageAllowed,null,false);
+    }
+    
+    public SVNSSLAuthentication(byte[] certFile, String password, boolean storageAllowed, SVNURL url, boolean isPartial) {
         super(ISVNAuthenticationManager.SSL, null, storageAllowed, url, isPartial);
         myCertificate = certFile;
         myPassword = password;
@@ -71,7 +83,7 @@ public class SVNSSLAuthentication extends SVNAuthentication {
      * 
      * @return certificate file
      */
-    public File getCertificateFile() {
+    public byte[] getCertificateFile() {
         return myCertificate;
     }
 }

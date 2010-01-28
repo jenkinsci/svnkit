@@ -85,8 +85,7 @@ public class SVNSSHConnector implements ISVNConnector {
             SSHConnectionInfo connection = null;
             
             // lock SVNSSHSession to make sure connection opening and session creation is atomic.
-            SVNSSHSession.lock(Thread.currentThread());
-            try {
+            synchronized(SVNSSHSession.class) {
                 while (authentication != null) {
                     try {
                         connection = SVNSSHSession.getConnection(repository.getLocation(), authentication, authManager.getConnectTimeout(repository), myIsUseConnectionPing);
@@ -160,8 +159,6 @@ public class SVNSSHConnector implements ISVNConnector {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_CONNECTION_CLOSED, "Cannot connect to ''{0}'': {1}", new Object[] {repository.getLocation().setPath("", false), e.getMessage()});
                     SVNErrorManager.error(err, e, SVNLogType.NETWORK);
                 }
-            } finally {
-                SVNSSHSession.unlock();
             }
         }
     }
@@ -172,10 +169,9 @@ public class SVNSSHConnector implements ISVNConnector {
         if (mySession != null) {
             // close session and close owning connection if necessary.
             // close session and connection in atomic way.
-            SVNSSHSession.lock(Thread.currentThread());
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
-                    Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
-            try {
+            synchronized (SVNSSHSession.class) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK,
+                        Thread.currentThread() + ": ABOUT TO CLOSE SESSION IN : " + myConnection);
                 if (myConnection != null) {
                     if (myConnection.closeSession(mySession)) {
                         // no sessions left in connection, close it.
@@ -186,8 +182,6 @@ public class SVNSSHConnector implements ISVNConnector {
                         myConnection = null;
                     }
                 }
-            } finally {
-                SVNSSHSession.unlock();
             }
             
         }

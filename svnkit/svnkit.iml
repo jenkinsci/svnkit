@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
     <output url="file://$MODULE_DIR$/bin" />
-    <output-test url="file://$MODULE_DIR$/bin" />
     <exclude-output />
     <exclude-exploded />
     <content url="file://$MODULE_DIR$">
@@ -17,18 +16,18 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/trilead/trilead.jar!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/ganymed/ganymed.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../contrib/trilead/trileadsrc.zip!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/ganymed/ganymedsrc.zip!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../contrib/jna/jna.jar!/" />
+          <root url="jar://$TEMPLATE$/ws/hudson/local-versions/svnkit/patched/contrib/jna/jna.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -45,6 +44,15 @@
         </SOURCES>
       </library>
     </orderEntry>
+  </component>
+  <component name="PluginUploader.PluginUploadConfigurable">
+    <option name="ARCHIVE_PATH" />
+    <option name="PLUGIN_ID" />
+  </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="2" />
+    </Base>
   </component>
 </module>
 
