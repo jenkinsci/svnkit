@@ -22,6 +22,7 @@ import java.util.StringTokenizer;
 
 import javax.net.ssl.TrustManager;
 
+import com.trilead.ssh2.crypto.Base64;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -637,15 +638,17 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 		        String sslClientCert = (String) properties.get("ssl-client-cert-file"); // PKCS#12
 		        if (sslClientCert != null && !"".equals(sslClientCert)) {
 	                String sslClientCertPassword = (String) properties.get("ssl-client-cert-password");
-                if (sslClientCert!=null) {
-                    try {
-                        return new SVNSSLAuthentication(new File(sslClientCert), sslClientCertPassword, authMayBeStored, url, false);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                    if (sslClientCert!=null) {
+                        try {
+                            return new SVNSSLAuthentication(new File(sslClientCert), sslClientCertPassword, authMayBeStored, url, false);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                        }
                     }
+                    return null;
                 }
-                return null;
-            }
+                //try looking in svn.ssl.client-passphrase directory cache
+	        }
 
             File dir = new File(myDirectory, kind);
             if (!dir.isDirectory()) {
@@ -707,7 +710,12 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                     } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
                         return new SVNUserNameAuthentication(userName, authMayBeStored, url, false);
                     } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-                        return new SVNSSLAuthentication(new File(path), passphrase, authMayBeStored, url, false);
+                        String cert = SVNPropertyValue.getPropertyAsString(values.getSVNPropertyValue("cert"));
+                        try {
+                            return new SVNSSLAuthentication(Base64.decode(cert.toCharArray()), passphrase, authMayBeStored, url, false);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e); // hack to minimize patching - Kohsuke
+                        }
                     }
                 } catch (SVNException e) {
                     //
@@ -872,8 +880,7 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
                 values.put("passphrase", cipher.encrypt(sslAuth.getPassword()));
             }
             if (sslAuth.getCertificateFile() != null) {
-                String path = sslAuth.getCertificateFile().getAbsolutePath();
-                values.put("key", path);
+                values.put("cert", new String(Base64.encode(sslAuth.getCertificateFile())));
             }
 
         }

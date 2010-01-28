@@ -2,21 +2,6 @@
 <project version="4">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
-    <buildFile url="file://$PROJECT_DIR$/build.xml">
-      <additionalClassPath />
-      <antReference projectDefault="true" />
-      <customJdkName value="" />
-      <maximumHeapSize value="128" />
-      <maximumStackSize value="2" />
-      <properties />
-    </buildFile>
-  </component>
-  <component name="BuildJarProjectSettings">
-    <option name="BUILD_JARS_ON_MAKE" value="false" />
-  </component>
-  <component name="CodeStyleProjectProfileManger">
-    <option name="PROJECT_PROFILE" />
-    <option name="USE_PROJECT_LEVEL_SETTINGS" value="false" />
   </component>
   <component name="CompilerConfiguration">
     <option name="DEFAULT_COMPILER" value="Javac" />
@@ -27,54 +12,30 @@
     <wildcardResourcePatterns>
       <entry name="?*.properties" />
       <entry name="?*.xml" />
-      <entry name="?*.html" />
-      <entry name="?*.dtd" />
-      <entry name="?*.tld" />
       <entry name="?*.gif" />
       <entry name="?*.png" />
       <entry name="?*.jpeg" />
       <entry name="?*.jpg" />
+      <entry name="?*.html" />
+      <entry name="?*.dtd" />
+      <entry name="?*.tld" />
+      <entry name="?*.ftl" />
     </wildcardResourcePatterns>
     <annotationProcessing enabled="false" useClasspath="true" />
   </component>
   <component name="CopyrightManager" default="">
     <module2copyright />
   </component>
-  <component name="DependenciesAnalyzeManager">
-    <option name="myForwardDirection" value="false" />
-  </component>
   <component name="DependencyValidationManager">
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
-  <component name="EclipseCompilerSettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="true" />
-    <option name="DEPRECATION" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
-  </component>
-  <component name="EclipseEmbeddedCompilerSettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="true" />
-    <option name="DEPRECATION" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
-  </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
-  <component name="EntryPointsManager">
-    <entry_points version="2.0" />
-  </component>
-  <component name="ExportToHTMLSettings">
-    <option name="PRINT_LINE_NUMBERS" value="false" />
-    <option name="OPEN_IN_BROWSER" value="false" />
-    <option name="OUTPUT_DIRECTORY" />
-  </component>
-  <component name="IdProvider" IDEtalkID="50DFADB72ECB9280341B1C3ED0808C5D" />
   <component name="InspectionProjectProfileManager">
     <profiles>
       <profile version="1.0" is_locked="false">
         <option name="myName" value="Project Default" />
         <option name="myLocal" value="false" />
+        <inspection_tool class="CollectionsFieldAccessReplaceableByMethodCall" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="EmptyCatchBlock" enabled="false" level="WARNING" enabled_by_default="false">
           <option name="m_includeComments" value="true" />
           <option name="m_ignoreTestCases" value="true" />
@@ -112,18 +73,21 @@
           <option name="IGNORE_DUPLICATED_THROWS" value="false" />
           <option name="myAdditionalJavadocTags" value="" />
         </inspection_tool>
+        <inspection_tool class="Since15" enabled="true" level="WARNING" enabled_by_default="true">
+          <option name="FORBID_15_API" value="false" />
+          <option name="FORBID_16_API" value="true" />
+        </inspection_tool>
+        <inspection_tool class="StringBufferReplaceableByStringBuilder" enabled="true" level="WARNING" enabled_by_default="true" />
+        <inspection_tool class="SynchronizationOnLocalVariableOrMethodParameter" enabled="false" level="WARNING" enabled_by_default="false">
+          <option name="reportLocalVariables" value="true" />
+          <option name="reportMethodParameters" value="true" />
+        </inspection_tool>
+        <inspection_tool class="UNCHECKED_WARNING" enabled="false" level="WARNING" enabled_by_default="false" />
       </profile>
     </profiles>
     <option name="PROJECT_PROFILE" value="Project Default" />
     <option name="USE_PROJECT_PROFILE" value="true" />
     <version value="1.0" />
-  </component>
-  <component name="JavacSettings">
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="DEPRECATION" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-    <option name="MAXIMUM_HEAP_SIZE" value="128" />
   </component>
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -141,46 +105,6 @@
     <option name="HEAP_SIZE" />
     <option name="LOCALE" />
     <option name="OPEN_IN_BROWSER" value="true" />
-  </component>
-  <component name="JikesSettings">
-    <option name="JIKES_PATH" value="" />
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="DEPRECATION" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="IS_EMACS_ERRORS_MODE" value="true" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
-  </component>
-  <component name="LogConsolePreferences">
-    <option name="FILTER_ERRORS" value="false" />
-    <option name="FILTER_WARNINGS" value="false" />
-    <option name="FILTER_INFO" value="true" />
-    <option name="CUSTOM_FILTER" />
-  </component>
-  <component name="MavenBuildProjectComponent">
-    <option name="mavenExecutable" value="" />
-    <option name="Settings File" value="C:\Documents and Settings\kohsuke\.m2\settings.xml" />
-    <option name="mavenCommandLineParams" value="" />
-    <option name="vmOptions" value="" />
-    <option name="useMavenEmbedder" value="false" />
-    <option name="useFilter" value="false" />
-    <option name="Batch Mode" value="false" />
-    <option name="Check Plugin Updates" value="false" />
-    <option name="Debug" value="false" />
-    <option name="Errors" value="false" />
-    <option name="Fail At End" value="false" />
-    <option name="Fail Fast" value="false" />
-    <option name="Fail Never" value="false" />
-    <option name="Lax Checksums" value="false" />
-    <option name="No Plugin Registry" value="false" />
-    <option name="No Plugin Updates" value="false" />
-    <option name="Non Recursive" value="false" />
-    <option name="Offline" value="false" />
-    <option name="Reactor" value="false" />
-    <option name="Strict Checksums" value="false" />
-    <option name="Update Plugins" value="false" />
-    <option name="Update Snapshots" value="false" />
-    <option name="Skip Tests" value="false" />
-    <pom-list />
   </component>
   <component name="MavenProjectsManager">
     <option name="originalFiles">
@@ -313,577 +237,114 @@
   <component name="ProjectDetails">
     <option name="projectName" value="svnkit" />
   </component>
-  <component name="ProjectDictionaryState">
-    <dictionary name="kohsuke">
-      <words>
-        <w>passphrase</w>
-      </words>
-    </dictionary>
-  </component>
-  <component name="ProjectKey">
-    <option name="state" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.2/svnkit.ipr" />
-  </component>
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/contrib/javahl/javahl.iml" filepath="$PROJECT_DIR$/contrib/javahl/javahl.iml" />
-      <module fileurl="file://$PROJECT_DIR$/contrib/sequence/sequence.iml" filepath="$PROJECT_DIR$/contrib/sequence/sequence.iml" />
-      <module fileurl="file://$PROJECT_DIR$/svnkit/svnkit.iml" filepath="$PROJECT_DIR$/svnkit/svnkit.iml" />
-      <module fileurl="file://$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" filepath="$PROJECT_DIR$/svnkit-cli/svnkit-cli.iml" />
-      <module fileurl="file://$PROJECT_DIR$/doc/examples/svnkit-examples.iml" filepath="$PROJECT_DIR$/doc/examples/svnkit-examples.iml" />
-      <module fileurl="file://$PROJECT_DIR$/svnkit-test/svnkit-test.iml" filepath="$PROJECT_DIR$/svnkit-test/svnkit-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/svnkit.iml" filepath="$PROJECT_DIR$/svnkit.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_3" assert-keyword="false" jdk-15="false" project-jdk-name="1.6" project-jdk-type="JavaSDK" />
-  <component name="ResourceManagerContainer">
-    <option name="myResourceBundles">
-      <value>
-        <list size="0" />
-      </value>
-    </option>
-  </component>
-  <component name="RmicSettings">
-    <option name="IS_EANABLED" value="false" />
-    <option name="DEBUGGING_INFO" value="true" />
-    <option name="GENERATE_NO_WARNINGS" value="false" />
-    <option name="GENERATE_IIOP_STUBS" value="false" />
-    <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_5" assert-keyword="true" jdk-15="true" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/classes" />
   </component>
   <component name="SvnBranchConfigurationManager">
-    <option name="myConfigurationMap">
-      <map>
-        <entry key="$PROJECT_DIR$">
-          <value>
-            <SvnBranchConfiguration>
-              <option name="branchMap">
-                <map>
-                  <entry key="http://svn.svnkit.com/repos/svnkit/branches">
-                    <value>
-                      <list>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1242392462939" />
-                          <option name="revision" value="5851" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.3.x" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1239961783875" />
-                          <option name="revision" value="5745" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1236948811058" />
-                          <option name="revision" value="5585" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x-os2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1236191573358" />
-                          <option name="revision" value="5535" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x-logger" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1227794410054" />
-                          <option name="revision" value="5281" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/merge-ext" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1227742491673" />
-                          <option name="revision" value="5280" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x-merge-ext" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1222785511072" />
-                          <option name="revision" value="4947" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/serf" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1217282475301" />
-                          <option name="revision" value="4597" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.1.x" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1215965147983" />
-                          <option name="revision" value="4525" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x-javadoc" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1215805254734" />
-                          <option name="revision" value="4517" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x-sspi" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1215282350790" />
-                          <option name="revision" value="4496" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.2.x-javahl" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1214201905882" />
-                          <option name="revision" value="4406" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/tests" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1213370390968" />
-                          <option name="revision" value="4339" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/sasl" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1206667583762" />
-                          <option name="revision" value="4071" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/svnmap" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1202949207833" />
-                          <option name="revision" value="3833" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/wc2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1195688616367" />
-                          <option name="revision" value="3670" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/ssh.ping" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1185211997254" />
-                          <option name="revision" value="3250" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/svn1.5" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1174501974786" />
-                          <option name="revision" value="2991" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/servlet" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1152287272675" />
-                          <option name="revision" value="2535" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/polarion" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1148915828757" />
-                          <option name="revision" value="2483" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/1.0.x" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1146655751472" />
-                          <option name="revision" value="2426" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/HTTPAuth" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1137657841958" />
-                          <option name="revision" value="2006" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/fs" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1133130826473" />
-                          <option name="revision" value="1787" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/errorcodes" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1124747261260" />
-                          <option name="revision" value="1378" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/0.9.0.httpclient2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1124634998112" />
-                          <option name="revision" value="1366" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/0.9.0.httpclient" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1122986777432" />
-                          <option name="revision" value="1238" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/0.9.0" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1122843403865" />
-                          <option name="revision" value="1222" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/idea" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1120044432968" />
-                          <option name="revision" value="966" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/branches/deprecated" />
-                        </SvnBranchItem>
-                      </list>
-                    </value>
-                  </entry>
-                  <entry key="http://svn.svnkit.com/repos/svnkit/tags">
-                    <value>
-                      <list>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1242214100938" />
-                          <option name="revision" value="5847" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.3.0" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1241003743132" />
-                          <option name="revision" value="5822" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.3.0-beta3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1240500911390" />
-                          <option name="revision" value="5802" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.3.0-beta2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1239711620863" />
-                          <option name="revision" value="5726" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.3.0-beta" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1235752447315" />
-                          <option name="revision" value="5521" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1231432080472" />
-                          <option name="revision" value="5405" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1227843234214" />
-                          <option name="revision" value="5297" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1222798838652" />
-                          <option name="revision" value="4949" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1222277366754" />
-                          <option name="revision" value="4927" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-rc4" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1221660591709" />
-                          <option name="revision" value="4889" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-rc3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1220383173937" />
-                          <option name="revision" value="4820" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-rc2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1220122491902" />
-                          <option name="revision" value="4806" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-rc1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1218556998919" />
-                          <option name="revision" value="4710" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta5" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1216934288649" />
-                          <option name="revision" value="4583" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta4" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1216386481925" />
-                          <option name="revision" value="4552" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1214923234792" />
-                          <option name="revision" value="4471" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1214003496617" />
-                          <option name="revision" value="4401" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.2.0-beta" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1214003396808" />
-                          <option name="revision" value="4400" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.8" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1208443342333" />
-                          <option name="revision" value="4173" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.7" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1203640016498" />
-                          <option name="revision" value="3857" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.6" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1201801847179" />
-                          <option name="revision" value="3817" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.5" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1185149560180" />
-                          <option name="revision" value="3248" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.4" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1182524610241" />
-                          <option name="revision" value="3176" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1175203981503" />
-                          <option name="revision" value="3019" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1170329262469" />
-                          <option name="revision" value="2930" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1163527836864" />
-                          <option name="revision" value="2805" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.0" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1161290245685" />
-                          <option name="revision" value="2714" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.0.beta5" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1153910058223" />
-                          <option name="revision" value="2553" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.0.beta4" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1153418410493" />
-                          <option name="revision" value="2546" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.0.beta3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1148938445639" />
-                          <option name="revision" value="2487" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.0.beta2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1148928850783" />
-                          <option name="revision" value="2486" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.6" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1147973583429" />
-                          <option name="revision" value="2464" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.5" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1144424274524" />
-                          <option name="revision" value="2379" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.4" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1143829240334" />
-                          <option name="revision" value="2334" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.1.0.beta" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1139688852863" />
-                          <option name="revision" value="2120" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1137434356050" />
-                          <option name="revision" value="1994" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1134675974818" />
-                          <option name="revision" value="1849" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1130885714449" />
-                          <option name="revision" value="1697" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/1.0.0" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1129738931951" />
-                          <option name="revision" value="1607" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.9.3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1124810175571" />
-                          <option name="revision" value="1388" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.9.2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1124013525811" />
-                          <option name="revision" value="1325" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.9.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1121357014904" />
-                          <option name="revision" value="1067" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.9.0.beta" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1119820325363" />
-                          <option name="revision" value="945" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.9.0.alpha" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1114030221042" />
-                          <option name="revision" value="442" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.8.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1113930088493" />
-                          <option name="revision" value="440" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.8" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1112971575401" />
-                          <option name="revision" value="396" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.7.2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1112892550566" />
-                          <option name="revision" value="391" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.7.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1112629156298" />
-                          <option name="revision" value="380" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.7" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1111170891411" />
-                          <option name="revision" value="356" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.6" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1109854113235" />
-                          <option name="revision" value="334" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.5" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1109783571339" />
-                          <option name="revision" value="329" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.4" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1108956897278" />
-                          <option name="revision" value="318" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.3" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1108669665569" />
-                          <option name="revision" value="289" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.2" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1107886083854" />
-                          <option name="revision" value="242" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.1" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1107455680750" />
-                          <option name="revision" value="209" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/0.8.0" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1107197926288" />
-                          <option name="revision" value="192" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20050131" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1106232382547" />
-                          <option name="revision" value="157" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20050120" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1105553403143" />
-                          <option name="revision" value="142" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20050112" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1105026825620" />
-                          <option name="revision" value="94" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20050106" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1104954909656" />
-                          <option name="revision" value="81" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20050105" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1103832971525" />
-                          <option name="revision" value="60" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20041223" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1103639332130" />
-                          <option name="revision" value="49" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20041221" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1103470443343" />
-                          <option name="revision" value="36" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20041219" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1103309769411" />
-                          <option name="revision" value="23" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20041217" />
-                        </SvnBranchItem>
-                        <SvnBranchItem>
-                          <option name="creationDateMillis" value="1103214700323" />
-                          <option name="revision" value="8" />
-                          <option name="url" value="http://svn.svnkit.com/repos/svnkit/tags/20041216" />
-                        </SvnBranchItem>
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
-              <option name="branchUrls">
-                <list>
-                  <option value="http://svn.svnkit.com/repos/svnkit/branches" />
-                  <option value="http://svn.svnkit.com/repos/svnkit/tags" />
-                </list>
-              </option>
-              <option name="trunkUrl" value="http://svn.svnkit.com/repos/svnkit/trunk" />
-            </SvnBranchConfiguration>
-          </value>
-        </entry>
-      </map>
-    </option>
-    <option name="myVersion" value="124" />
     <option name="mySupportsUserInfoFilter" value="true" />
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="svn" />
   </component>
-  <component name="WebServicesPlugin" addRequiredLibraries="true" />
-  <component name="com.intellij.jsf.UserDefinedFacesConfigs">
-    <option name="USER_DEFINED_CONFIGS">
-      <value>
-        <list size="0" />
-      </value>
-    </option>
-  </component>
-  <component name="copyright">
-    <Base>
-      <setting name="state" value="2" />
-    </Base>
-  </component>
-    <library name="Maven: com.sun.jna:jna:3.0.5">
-        <root url="jar://$MAVEN_REPOSITORY$/com/sun/jna/jna/3.0.5/jna-3.0.5.jar!/" />
-      <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/com/sun/jna/jna/3.0.5/jna-3.0.5-javadoc.jar!/" />
-      </JAVADOC>
-      <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/sun/jna/jna/3.0.5/jna-3.0.5-sources.jar!/" />
-      </SOURCES>
-    </library>
-    <library name="Maven: org.jvnet.hudson:trilead-ssh2:build212-hudson-1">
+  <component name="libraryTable">
+    <library name="Maven: org.tmatesoft.sqljet:sqljet:1.0.1">
       <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-1/trilead-ssh2-build212-hudson-1.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/tmatesoft/sqljet/sqljet/1.0.1/sqljet-1.0.1.jar!/" />
       </CLASSES>
       <JAVADOC>
-        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-1/trilead-ssh2-build212-hudson-1-javadoc.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/tmatesoft/sqljet/sqljet/1.0.1/sqljet-1.0.1-javadoc.jar!/" />
       </JAVADOC>
       <SOURCES>
-        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-1/trilead-ssh2-build212-hudson-1-sources.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/org/tmatesoft/sqljet/sqljet/1.0.1/sqljet-1.0.1-sources.jar!/" />
       </SOURCES>
+    </library>
+    <library name="Maven: org.antlr:antlr-runtime:3.1.3">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr-runtime/3.1.3/antlr-runtime-3.1.3.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr-runtime/3.1.3/antlr-runtime-3.1.3-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/antlr/antlr-runtime/3.1.3/antlr-runtime-3.1.3-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.antlr:stringtemplate:3.2">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/antlr/stringtemplate/3.2/stringtemplate-3.2.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/antlr/stringtemplate/3.2/stringtemplate-3.2-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/antlr/stringtemplate/3.2/stringtemplate-3.2-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: antlr:antlr:2.7.7">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/antlr/antlr/2.7.7/antlr-2.7.7.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/antlr/antlr/2.7.7/antlr-2.7.7-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/antlr/antlr/2.7.7/antlr-2.7.7-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: org.jvnet.hudson:trilead-ssh2:build212-hudson-5">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-5/trilead-ssh2-build212-hudson-5.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-5/trilead-ssh2-build212-hudson-5-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/org/jvnet/hudson/trilead-ssh2/build212-hudson-5/trilead-ssh2-build212-hudson-5-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: net.java.dev.jna:jna:3.2.3">
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/3.2.3/jna-3.2.3.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/3.2.3/jna-3.2.3-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/3.2.3/jna-3.2.3-sources.jar!/" />
+      </SOURCES>
+    </library>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl />
+          </splitter-proportions>
+          <settings />
+        </UIState>
+      </state>
+      <state key="Copyright.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl />
+          </splitter-proportions>
+        </UIState>
+      </state>
+      <state key="ScopeChooserConfigurable.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl />
+          </splitter-proportions>
+          <settings />
+        </UIState>
+      </state>
+    </states>
+  </component>
 </project>
 
