@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.ISVNFileContentFetcher;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
+import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
@@ -58,7 +59,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
-import org.tmatesoft.svn.core.internal.wc.SVNCommitUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
@@ -92,6 +92,9 @@ import org.tmatesoft.svn.util.SVNLogType;
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
  * <td>doAdd()</td><td>'svn add'</td>
+ * </tr>
+ * <tr bgcolor="#EAEAEA" align="left">
+ * <td>doGetFileContents()</td><td>'svn cat'</td>
  * </tr>
  * <tr bgcolor="#EAEAEA" align="left">
  * <td>doDelete()</td><td>'svn delete'</td>
@@ -172,6 +175,8 @@ public class SVNWCClient extends SVNBasicClient {
 
     private ISVNAddParameters myAddParameters;
     private ISVNCommitHandler myCommitHandler;
+
+    private boolean myIsRevertMissingDirectories;
 
     /**
      * Constructs and initializes an <b>SVNWCClient</b> object
@@ -284,6 +289,14 @@ public class SVNWCClient extends SVNBasicClient {
         }
 
         return myAddParameters;
+    }
+    
+    public void setRevertMissingDirectories(boolean revertMissing) {
+        myIsRevertMissingDirectories = revertMissing;
+    }
+
+    public boolean isRevertMissingDirectories() {
+        return myIsRevertMissingDirectories;
     }
 
     /**
@@ -843,7 +856,11 @@ public class SVNWCClient extends SVNBasicClient {
         if (commitMessage == null) {
             return SVNCommitInfo.NULL;
         }
+        
         commitMessage = SVNCommitUtil.validateCommitMessage(commitMessage);
+        SVNPropertiesManager.validateRevisionProperties(revisionProperties);
+        
+        SVNCommitInfo commitInfo = null;
         ISVNEditor commitEditor = repos.getCommitEditor(commitMessage, null, true, revisionProperties, null);
         try {
             commitEditor.openRoot(revNumber);
@@ -855,13 +872,15 @@ public class SVNWCClient extends SVNBasicClient {
                 commitEditor.changeDirProperty(propName, propValue);
             }
             commitEditor.closeDir();
+            commitInfo = commitEditor.closeEdit();
         } catch (SVNException svne) {
             commitEditor.abortEdit();
+            throw svne;
         }
         if (handler != null) {
             handler.handleProperty(url, new SVNPropertyData(propName, propValue, getOptions()));
         }
-        return commitEditor.closeEdit();
+        return commitInfo;
     }
 
     /**
@@ -1396,7 +1415,7 @@ public class SVNWCClient extends SVNBasicClient {
         SVNWCAccess wcAccess = createWCAccess();
         path = path.getAbsoluteFile();
         try {
-            if (!force) {
+            if (!force && deleteFiles) {
                 SVNWCManager.canDelete(path, getOptions(), this);
             }
             SVNAdminArea root = wcAccess.open(path.getParentFile(), true, 0);
@@ -1448,7 +1467,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             boolean recursive) throws SVNException {
         SVNDepth depth = SVNDepth.getInfinityOrEmptyDepth(recursive);
-        doAdd(path, force, mkdir, climbUnversionedParents, depth, true, false, 
+        doAdd(path, force, mkdir, climbUnversionedParents, depth, false, false, 
                 climbUnversionedParents);
     }
 
@@ -1491,7 +1510,7 @@ public class SVNWCClient extends SVNBasicClient {
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             boolean recursive, boolean includeIgnored) throws SVNException {
         SVNDepth depth = SVNDepth.getInfinityOrEmptyDepth(recursive);
-        doAdd(path, force, mkdir, climbUnversionedParents, depth, true,
+        doAdd(path, force, mkdir, climbUnversionedParents, depth, false,
                 includeIgnored, climbUnversionedParents);
     }
 
@@ -1529,8 +1548,9 @@ public class SVNWCClient extends SVNBasicClient {
      * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
      * 
      * @param path                      working copy path
-     * @param force                     if <span class="javakeyword">true</span> 
-     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param force                     if <span class="javakeyword">true</span>, this method does not throw exceptions 
+     *                                  on already-versioned items 
+     * @param mkdir                     if <span class="javakeyword">true</span>, create a directory also at <code>path</code>
      * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param includeIgnored            if <span class="javakeyword">true</span>, does not apply ignore patterns 
@@ -1549,7 +1569,7 @@ public class SVNWCClient extends SVNBasicClient {
      */
     public void doAdd(File path, boolean force, boolean mkdir, boolean climbUnversionedParents, 
             SVNDepth depth, boolean includeIgnored, boolean makeParents) throws SVNException {
-        doAdd(path, force, mkdir, climbUnversionedParents, depth, true, includeIgnored, makeParents);
+        doAdd(path, force, mkdir, climbUnversionedParents, depth, false, includeIgnored, makeParents);
     }
 
     /**
@@ -1586,8 +1606,9 @@ public class SVNWCClient extends SVNBasicClient {
      * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
      * 
      * @param paths                     working copy paths to add  
-     * @param force                     if <span class="javakeyword">true</span> 
-     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param force                     if <span class="javakeyword">true</span>, this method does not throw exceptions 
+     *                                  on already-versioned items 
+     * @param mkdir                     if <span class="javakeyword">true</span>, create a directory also at <code>path</code>
      * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param depthIsSticky             if depth should be recorded to the working copy
@@ -1653,8 +1674,8 @@ public class SVNWCClient extends SVNBasicClient {
      * occurs. This scheduling can be removed with a call to {@link #doRevert(File[], SVNDepth, Collection)}.
      * 
      * @param path                      working copy path
-     * @param force                     if <span class="javakeyword">true</span> 
-     * @param mkdir                     does not throw exceptions on already-versioned items
+     * @param force                     if <span class="javakeyword">true</span>, this method does not throw exceptions on already-versioned items 
+     * @param mkdir                     if <span class="javakeyword">true</span>, create a directory also at <code>path</code>
      * @param climbUnversionedParents   not used; make use of <code>makeParents</code> instead
      * @param depth                     tree depth
      * @param depthIsSticky             if depth should be recorded to the working copy
@@ -1881,7 +1902,7 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, SVNEventAction.REVERT, null, null);
                         dispatchEvent(event);
                         continue;
-                    }
+                    } 
                     throw e;
                 } finally {
                     wcAccess.close();
@@ -2063,6 +2084,11 @@ public class SVNWCClient extends SVNBasicClient {
                         SVNAdminArea parentArea = wcAccess.probeRetrieve(parentDir);
                         SVNTreeConflictDescription tc = parentArea.getTreeConflict(path.getName());
                         if (tc != null) {
+                            if (choice != SVNConflictChoice.MERGED) {
+                                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CONFLICT_RESOLVER_FAILURE, 
+                                        "Tree conflicts can only be resolved to ''working'' state; ''{0}'' not resolved", path);
+                                SVNErrorManager.error(err, SVNLogType.WC);
+                            }
                             parentArea.deleteTreeConflict(path.getName());
                             kind = tc.getNodeKind();
                             resolved = true;
@@ -3098,7 +3124,7 @@ public class SVNWCClient extends SVNBasicClient {
             if (SVNFileUtil.getAdminDirectoryName().equals(children[i].getName())) {
                 continue;
             }
-            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i].getName())) {
+            if (!noIgnore && SVNStatusEditor.isIgnored(ignores, children[i])) {
                 continue;
             }
             SVNFileType childType = SVNFileType.getType(children[i]);
@@ -3145,6 +3171,15 @@ public class SVNWCClient extends SVNBasicClient {
                             e.getErrorMessage().getMessage().indexOf("newlines") >= 0) {
                         ISVNAddParameters.Action action = getAddParameters().onInconsistentEOLs(path);
                         if (action == ISVNAddParameters.REPORT_ERROR) {
+                            ISVNEventHandler eventHandler = getEventDispatcher();
+                            try {
+                                setEventHandler(null);
+                                doRevert(path, dir, SVNDepth.EMPTY, false, null);
+                            } catch (SVNException svne) {
+                            } finally {
+                                setEventHandler(eventHandler);
+                            }
+
                             throw e;
                         } else if (action == ISVNAddParameters.ADD_AS_IS) {
                             SVNPropertiesManager.setProperty(dir.getWCAccess(), path, propName, null, false);
@@ -3153,6 +3188,15 @@ public class SVNWCClient extends SVNBasicClient {
                             mimeType = SVNFileUtil.BINARY_MIME_TYPE;
                         }
                     } else {
+                        ISVNEventHandler eventHandler = getEventDispatcher();
+                        try {
+                            setEventHandler(null);
+                            doRevert(path, dir, SVNDepth.EMPTY, false, null);
+                        } catch (SVNException svne) {
+                        } finally {
+                            setEventHandler(eventHandler);
+                        }
+
                         throw e;
                     }
                 }
@@ -3299,6 +3343,16 @@ public class SVNWCClient extends SVNBasicClient {
         if (entry != null && entry.getKind() == SVNNodeKind.DIR) {
             SVNFileType fileType = SVNFileType.getType(path);
             if (fileType != SVNFileType.DIRECTORY && !entry.isScheduledForAddition()) {
+                if (isRevertMissingDirectories() && entry.getSchedule() != null && !entry.isThisDir()) {
+                    // missing directory scheduled for deletion in parent.
+                    boolean reverted = revert(parent, entry.getName(), entry, useCommitTimes);
+                    if (reverted) {
+                        SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), 
+                            SVNEventAction.REVERT, null, null, null);
+                        dispatchEvent(event);
+                    }
+                    return reverted;
+                }
                 SVNEvent event = SVNEventFactory.createSVNEvent(dir.getFile(entry.getName()), entry.getKind(), null, entry.getRevision(), SVNEventAction.FAILED_REVERT, null, null, null);
                 dispatchEvent(event);
                 return false;

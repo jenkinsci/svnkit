@@ -117,4 +117,10 @@ public abstract class AbstractDiffCallback {
         myDeletedPaths = null;
     }
 
+    protected void setIsConflicted(boolean[] isConflictedResult, boolean isConflicted) {
+        if (isConflictedResult != null && isConflictedResult.length > 0) {
+            isConflictedResult[0] = isConflicted;
+        }
+    }
+
 }

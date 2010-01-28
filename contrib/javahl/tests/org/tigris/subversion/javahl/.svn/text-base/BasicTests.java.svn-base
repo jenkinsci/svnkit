@@ -2164,10 +2164,13 @@ public class BasicTests extends SVNTests
             // examining the WC.
             assertEquals("Unexpected repos file size for '" + info + '\'',
                          -1, info.getReposSize());
-
-           // Examine depth
-           assertEquals(Depth.infinity, info.getDepth());
         }
+        Revision rev = new Revision.Number(1);
+        infos = client.info2(thisTest.getWCPath(), rev, rev, true);
+        assertEquals(failureMsg, 21, infos.length);
+
+        // Examine default
+        assertEquals(Depth.unknown, infos[0].getDepth());
 
         // Create wc with a depth of Depth.empty
         String secondWC = thisTest.getWCPath() + ".empty";

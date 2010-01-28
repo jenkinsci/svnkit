@@ -174,7 +174,7 @@ public class FSHotCopier {
                 String shard = String.valueOf(rev / maxFilesPerDirectory);
                 dstDir = new File(dstRevPropsDir, shard);
             }
-            SVNFileUtil.copyFile(srcOwner.getRevisionPropertiesFile(rev), new File(dstDir, String.valueOf(rev)), 
+            SVNFileUtil.copyFile(srcOwner.getRevisionPropertiesFile(rev, false), new File(dstDir, String.valueOf(rev)), 
                     true);
         }
 

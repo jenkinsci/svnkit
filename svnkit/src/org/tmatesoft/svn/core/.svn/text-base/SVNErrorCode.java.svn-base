@@ -197,6 +197,26 @@ public class SVNErrorCode implements Serializable {
      */
     public static final SVNErrorCode BAD_UUID = new SVNErrorCode(BAD_CATEGORY, 8, "Bogus UUID");
     
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_CONFIG_VALUE = new SVNErrorCode(BAD_CATEGORY, 9, "Invalid configuration value");
+    
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_SERVER_SPECIFICATION = new SVNErrorCode(BAD_CATEGORY, 10, "Bogus server specification");
+
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_CHECKSUM_KIND = new SVNErrorCode(BAD_CATEGORY, 11, "Unsupported checksum type");
+
+    /**
+     * @since 1.3, SVN 1.6
+     */
+    public static final SVNErrorCode BAD_CHECKSUM_PARSE = new SVNErrorCode(BAD_CATEGORY, 12, "Invalid character in hex checksum");
+
     public static final SVNErrorCode XML_ATTRIB_NOT_FOUND = new SVNErrorCode(XML_CATEGORY, 0, "No such XML tag attribute");
     public static final SVNErrorCode XML_MISSING_ANCESTRY = new SVNErrorCode(XML_CATEGORY, 1, "<delta-pkg> is missing ancestry");
     public static final SVNErrorCode XML_UNKNOWN_ENCODING = new SVNErrorCode(XML_CATEGORY, 2, "Unrecognized binary data encoding; can't decode");
@@ -498,11 +518,35 @@ public class SVNErrorCode implements Serializable {
      * @since  1.2.0, SVN 1.5
      */
     public static final SVNErrorCode UNKNOWN_CHANGELIST = new SVNErrorCode(MISC_CATEGORY, 24, "Unknown changelist");
-    
+    /**
+     * @since  1.3, SVN 1.6
+     */
     public static final SVNErrorCode RESERVED_FILENAME_SPECIFIED = new SVNErrorCode(MISC_CATEGORY, 25, "Reserved directory name in command line arguments");
-
+    /**
+     * @since  1.3, SVN 1.6
+     */
     public static final SVNErrorCode UNKNOWN_CAPABILITY = new SVNErrorCode(MISC_CATEGORY, 26, "Inquiry about unknown capability");
-
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode TEST_SKIPPED = new SVNErrorCode(MISC_CATEGORY, 27, "Test skipped");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode ATOMIC_INIT_FAILURE = new SVNErrorCode(MISC_CATEGORY, 29, "Couldn't perform atomic initialization");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode SQLITE_ERROR = new SVNErrorCode(MISC_CATEGORY, 30, "SQLite error");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode SQLITE_READONLY = new SVNErrorCode(MISC_CATEGORY, 31, "Attempted to write to readonly SQLite db");
+    /**
+     * @since  1.3, SVN 1.6
+     */
+    public static final SVNErrorCode UNSUPPORTED_SCHEMA = new SVNErrorCode(MISC_CATEGORY, 32, "Unsupported schema found in SQLite db");
+    
     public static final SVNErrorCode CL_ARG_PARSING_ERROR = new SVNErrorCode(CL_CATEGORY, 0, "Client error in parsing arguments");
     public static final SVNErrorCode CL_INSUFFICIENT_ARGS = new SVNErrorCode(CL_CATEGORY, 1, "Not enough args provided");
     public static final SVNErrorCode CL_MUTUALLY_EXCLUSIVE_ARGS = new SVNErrorCode(CL_CATEGORY, 2, "Mutually exclusive arguments specified");

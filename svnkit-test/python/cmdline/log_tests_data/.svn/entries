@@ -1,18 +1,17 @@
-9
+10
 
 dir
-37842
-http://svn.collab.net/repos/svn/tags/1.6.2/subversion/tests/cmdline/log_tests_data
-http://svn.collab.net/repos/svn
+903915
+http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/tests/cmdline/log_tests_data
+http://svn.apache.org/repos/asf
 
 
 
 2008-10-14T09:20:20.876437Z
-33630
+873704
 danielsh
 
 
-svn:special svn:externals svn:needs-lock
 
 
 
@@ -24,7 +23,8 @@ svn:special svn:externals svn:needs-lock
 
 
 
-612f8ebc-c883-4be0-9ee0-a4e9ef946e3a
+
+13f79535-47bb-0310-9956-ffa450edef68
 
 xml-invalid-chars.dump
 file
@@ -32,10 +32,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:33.000000Z
 bdd8e477b5b7976c8c8b487d4bbed144
 2007-10-03T23:21:06.707076Z
-26918
+866992
 kfogel
 
 
@@ -66,10 +66,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:33.000000Z
 b19d245d1008fc0e8627387b6345378c
 2008-10-14T09:20:20.876437Z
-33630
+873704
 danielsh
 has-props
 

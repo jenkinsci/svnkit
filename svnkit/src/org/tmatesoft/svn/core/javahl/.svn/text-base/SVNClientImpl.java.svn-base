@@ -2218,10 +2218,21 @@ public class SVNClientImpl implements SVNClientInterface {
 
     public void logMessages(String path, Revision pegRevision, RevisionRange[] ranges, boolean stopOnCopy, boolean discoverPath, boolean includeMergedRevisions, String[] revProps, long limit,
             LogMessageCallback callback) throws ClientException {
-        // TODO
+        final LogMessageCallback logMessageCallback = callback;
+        for (int i = 0; i < ranges.length; i++) {
+            RevisionRange range = ranges[i];
+            logMessages(path, pegRevision, range.getFromRevision(), range.getToRevision(), stopOnCopy, discoverPath, includeMergedRevisions, revProps, limit,
+                    new ISVNLogEntryHandler() {
+                        public void handleLogEntry(SVNLogEntry logEntry) {
+                            JavaHLObjectFactory.handleLogMessage(logEntry, logMessageCallback);
+                        }
+                    }
+            );
+        }
     }
 
     public void setRevProperty(String path, String name, Revision rev, String value, String originalValue, boolean force) throws ClientException {
-        // TODO
+        // TODO use original value.
+        setRevProperty(path, name, rev, value, force);
     }
 }

@@ -52,6 +52,22 @@ public class SVNTranslator {
 
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
+    public static String transalteString(String str, byte[] eol, Map keywords, boolean repair, boolean expand) throws SVNException {
+        ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
+        OutputStream resultOS = null;
+        try {
+            resultOS = getTranslatingOutputStream(bufferOS, null, eol, repair, keywords, expand);
+            resultOS.write(str.getBytes());
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error while translating a string");
+            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
+        } finally {
+            SVNFileUtil.closeFile(resultOS);
+        }
+        
+        return new String(bufferOS.toByteArray());
+    }
+    
     public static void translate(SVNAdminArea adminArea, String name, String srcPath,
                                  String dstPath, boolean expand) throws SVNException {
         translate(adminArea, name, srcPath, dstPath, false, expand);
@@ -182,6 +198,10 @@ public class SVNTranslator {
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             String linkPath = SVNFileUtil.getSymlinkName(src);
+            if (linkPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", src);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try {
                 os.write("link ".getBytes("UTF-8"));
@@ -424,8 +444,10 @@ public class SVNTranslator {
         byte[] buffer = new byte[8192];
         while (true) {
             int read = src.read(buffer);
-            if (read <= 0) {
+            if (read < 0) {
                 return;
+            } else if (read == 0) {
+                continue;
             }
             dst.write(buffer, 0, read);
         }

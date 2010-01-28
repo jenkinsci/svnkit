@@ -1,8 +1,8 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-test/src/org/tmatesoft/svn/core/io/benchmark
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit-test/src/org/tmatesoft/svn/core/io/benchmark
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -12,7 +12,7 @@ http://svn.svnkit.com/repos/svnkit
 alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:17.000000Z
+2010-01-28T00:13:48.000000Z
 d377914b4e9332f3f708ea93da6b2afd
 2009-04-21T14:43:00.959095Z
 5772
@@ -66,7 +66,7 @@ file
 
 
 
-2009-05-27T05:49:17.000000Z
+2010-01-28T00:13:48.000000Z
 529cee2931afdc80d8641bb63cde6358
 2009-04-21T14:43:00.959095Z
 5772
@@ -100,7 +100,7 @@ file
 
 
 
-2009-05-27T05:49:17.000000Z
+2010-01-28T00:13:48.000000Z
 7080797174badb4d979b5f07514008ac
 2009-04-21T14:43:00.959095Z
 5772
@@ -134,7 +134,7 @@ file
 
 
 
-2009-05-27T05:49:17.000000Z
+2010-01-28T00:13:48.000000Z
 a5443ca629c6f0aba4cbdfb3ed2843dc
 2009-04-21T14:43:00.959095Z
 5772
@@ -168,7 +168,7 @@ file
 
 
 
-2009-05-27T05:49:17.000000Z
+2010-01-28T00:13:48.000000Z
 0ed9574af0adc65f7cce7452bb5b696f
 2009-04-21T14:43:00.959095Z
 5772

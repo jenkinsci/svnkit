@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -110,10 +111,12 @@ public class SVNSyncCommandEnvironment extends AbstractSVNCommandEnvironment {
 
     protected ISVNAuthenticationManager createClientAuthenticationManager() {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
-        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, 
-                myPassword, !myIsNoAuthCache);
+        DefaultSVNAuthenticationManager authManager = (DefaultSVNAuthenticationManager) SVNWCUtil.createDefaultAuthenticationManager(configDir, 
+                myUserName, myPassword, !myIsNoAuthCache);
         if (!myIsNonInteractive) {
-            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate));
+            SVNConsoleAuthenticationProvider authProvider = new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate);
+            authManager.setAuthStoreHandler(authProvider);
+            authManager.setAuthenticationProvider(authProvider);
         }
         return authManager;
     }

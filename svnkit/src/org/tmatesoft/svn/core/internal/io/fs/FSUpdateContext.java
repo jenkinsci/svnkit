@@ -264,8 +264,6 @@ public class FSUpdateContext {
             }
         }
 
-        getEditor().targetRevision(getTargetRevision());
-
         String fullTargetPath = getReportTargetPath();
         String fullSourcePath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRepository.getRepositoryPath(""), getReportTarget()));
         FSEntry targetEntry = fakeDirEntry(fullTargetPath, getTargetRoot());
@@ -277,7 +275,7 @@ public class FSUpdateContext {
         }
 
         if ("".equals(getReportTarget()) && targetEntry == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Target path does not exist");
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_PATH_SYNTAX, "Target path ''{0}'' does not exist", getReportTargetPath());
             SVNErrorManager.error(err, SVNLogType.FSFS);
         } else if ("".equals(getReportTarget()) && (sourceEntry == null || sourceEntry.getType() != SVNNodeKind.DIR || 
                 targetEntry.getType() != SVNNodeKind.DIR)) {
@@ -293,6 +291,7 @@ public class FSUpdateContext {
             myDeltaCombiner = new SVNDeltaCombiner();
         }
 
+        getEditor().targetRevision(getTargetRevision());
         getEditor().openRoot(sourceRevision);
 
         if ("".equals(getReportTarget())) {

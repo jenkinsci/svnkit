@@ -39,4 +39,14 @@ public class SVNFormatUtil {
         int hi = (b >> 4) & 0xf;
         return Integer.toHexString(hi) + Integer.toHexString(lo);
     }
+
+    public static void appendHexNumber(StringBuffer target, byte b) {
+        int lo = b & 0xf;
+        int hi = (b >> 4) & 0xf;
+        target.append(HEX[hi]);
+        target.append(HEX[lo]);
+    }
+    
+    private static char[] HEX = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
 }

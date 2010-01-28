@@ -114,7 +114,8 @@ public class DAVProppatchHandler extends BasicDAVHandler {
     }
 
     private static StringBuffer appendProperty(StringBuffer xmlBuffer, String name, SVNPropertyValue value) {
-        String prefix = SVNProperty.isSVNProperty(name) ? SVNXMLUtil.SVN_SVN_PROPERTY_PREFIX : SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX;
+        String prefix = SVNProperty.isSVNProperty(name) && !SVNProperty.isSVNKitProperty(name) ?
+                SVNXMLUtil.SVN_SVN_PROPERTY_PREFIX : SVNXMLUtil.SVN_CUSTOM_PROPERTY_PREFIX;
         String tagName = SVNProperty.shortPropertyName(name);
         if (value == null){
             return SVNXMLUtil.openXMLTag(prefix, tagName, SVNXMLUtil.XML_STYLE_SELF_CLOSING, null, xmlBuffer);            

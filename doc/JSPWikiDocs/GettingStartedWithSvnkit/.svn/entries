@@ -1,8 +1,8 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/doc/JSPWikiDocs/GettingStartedWithSvnkit
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/doc/JSPWikiDocs/GettingStartedWithSvnkit
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -12,7 +12,7 @@ http://svn.svnkit.com/repos/svnkit
 sa
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:37.000000Z
+2010-01-28T00:05:31.000000Z
 2f006ccbb22c77ee3f91d6dd566bbe83
 2007-01-26T19:26:17.328519Z
 2919

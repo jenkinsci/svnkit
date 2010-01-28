@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -261,7 +262,7 @@ public class SVNDiffWindow {
                 if (toSkip > 0) {
                     applyBaton.mySourceStream.skip(toSkip);
                 }
-                applyBaton.mySourceStream.read(applyBaton.mySourceBuffer, length, applyBaton.mySourceBuffer.length - length);
+                SVNFileUtil.readIntoBuffer(applyBaton.mySourceStream, applyBaton.mySourceBuffer, length, applyBaton.mySourceBuffer.length - length);
             } catch (IOException e) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
                 SVNErrorManager.error(err, e, SVNLogType.DEFAULT);

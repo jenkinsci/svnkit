@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.auth;
 
+import org.tmatesoft.svn.core.SVNURL;
+
 /**
  * The <b>SVNAuthentication</b> is the base class that represents user 
  * credentials. <b>SVNAuthentication</b> provides only a username. Other 
@@ -35,6 +37,8 @@ public class SVNAuthentication {
     private String myUserName;
     private boolean myIsStorageAllowed;
     private String myKind;
+    private SVNURL myURL;
+    private boolean myIsPartial;
     
     /**
      * Creates a username user credential object given a username. 
@@ -46,11 +50,28 @@ public class SVNAuthentication {
      *                          global auth cache, otherwise not
      */
     public SVNAuthentication(String kind, String userName, boolean storageAllowed) {
+        this(kind, userName, storageAllowed, null, false);
+    }
+
+    /**
+     * Creates a username user credential object given a username. 
+     * 
+     * @param kind              a credential kind
+     * @param userName          a repository account username 
+     * @param storageAllowed    if <span class="javakeyword">true</span> then
+     *                          this credential is allowed to be stored in the 
+     *                          global auth cache, otherwise not
+     * @param url               url these credentials are applied to
+     * @since 1.3.1
+     */
+    public SVNAuthentication(String kind, String userName, boolean storageAllowed, SVNURL url, boolean isPartial) {
         myUserName = userName;
         myIsStorageAllowed = storageAllowed;
         myKind = kind;
+        myURL = url;
+        myIsPartial = isPartial;
     }
-    
+
     /**
      * Reurns the username. 
      * 
@@ -69,6 +90,19 @@ public class SVNAuthentication {
     public boolean isStorageAllowed() {
         return myIsStorageAllowed;
     }
+
+    /**
+     * Says if these credentials are partial. 
+     * Partial credentials could miss password\passhprase 
+     * and could be used to complement missing information.  
+     * 
+     * @return <span class="javakeyword">true</span> if parital;
+     *         otherwise <span class="javakeyword">false</span>
+     * @since 1.3
+     */
+    public boolean isPartial() {
+        return myIsPartial;
+    }
     
     /**
      * Returns a credential kind for which this authentication 
@@ -78,6 +112,10 @@ public class SVNAuthentication {
      */
     public String getKind() {
         return myKind;
+    }
+
+    public SVNURL getURL() {
+        return myURL;
     }
 
 }

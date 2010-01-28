@@ -67,8 +67,15 @@ public class SVNPropertiesManager {
         NOT_ALLOWED_FOR_DIR.add(SVNProperty.MIME_TYPE);
     }
 
-    public static boolean setWCProperty(SVNWCAccess access, File path, String propName, SVNPropertyValue propValue,
-                                        boolean write) throws SVNException {
+    public static void validateRevisionProperties(SVNProperties revisionProperties) throws SVNException {
+        if (hasSVNProperties(revisionProperties)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_PROPERTY_NAME, 
+                    "Standard properties can't be set explicitly as revision properties");
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
+        }
+    }
+    
+    public static boolean setWCProperty(SVNWCAccess access, File path, String propName, SVNPropertyValue propValue, boolean write) throws SVNException {
         SVNEntry entry = access.getVersionedEntry(path, false);
         SVNAdminArea dir = entry.getKind() == SVNNodeKind.DIR ? access.retrieve(path) : access.retrieve(path.getParentFile());
         SVNVersionedProperties wcProps = dir.getWCProperties(entry.getName());
@@ -160,8 +167,10 @@ public class SVNPropertiesManager {
                     InputStream is = SVNFileUtil.openFileForReading(path, SVNLogType.WC);
                     try {
                         SVNTranslator.copy(is, os);
+                    } catch (IOExceptionWrapper ioew) {
+                        throw ioew.getOriginalException();
                     } catch (IOException e) {
-                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), SVNLogType.DEFAULT);
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e, SVNLogType.DEFAULT);
                     } finally {
                         SVNFileUtil.closeFile(is);
                     }
@@ -457,6 +466,19 @@ public class SVNPropertiesManager {
         return value;
     }
 
+    private static boolean hasSVNProperties(SVNProperties props) {
+        if (props == null) {
+            return false;
+        }
+        for (Iterator names = props.nameSet().iterator(); names.hasNext();) {
+            String propName = (String) names.next();
+            if (SVNProperty.isSVNProperty(propName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static void validatePropertyName(String path, String name, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = null;
         if (kind == SVNNodeKind.DIR) {
@@ -497,11 +519,13 @@ public class SVNPropertiesManager {
             fetcher.fetchFileContent(out);
         } catch (SVNException e) {
             handleInconsistentEOL(e, path);
+            throw e;
         } finally {
             try {
                 out.close();
             } catch (IOExceptionWrapper wrapper) {
                 handleInconsistentEOL(wrapper.getOriginalException(), path);
+                throw wrapper.getOriginalException();
             } catch (IOException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.DEFAULT);
             }
@@ -514,11 +538,23 @@ public class SVNPropertiesManager {
     }
 
     private static void handleInconsistentEOL(SVNException svne, String path) throws SVNException {
-        if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
+        SVNErrorMessage errorMessage = svne.getErrorMessage();
+        while (errorMessage != null && errorMessage.getErrorCode() != SVNErrorCode.IO_INCONSISTENT_EOL) {
+            errorMessage = errorMessage.getChildErrorMessage();
+        }
+        if (errorMessage != null && errorMessage.getErrorCode() == SVNErrorCode.IO_INCONSISTENT_EOL) {
             SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ILLEGAL_TARGET, "File ''{0}'' has inconsistent newlines", path);
             SVNErrorManager.error(error, SVNLogType.DEFAULT);
-        } else {
-            throw svne;
+        }
+        Throwable cause = svne.getCause();
+        if (cause == null) {
+            return;
+        }
+        if (cause instanceof SVNException) {
+            handleInconsistentEOL((SVNException) cause, path);
+        } else if (cause instanceof IOExceptionWrapper) {
+            IOExceptionWrapper wrapper = (IOExceptionWrapper) cause;
+            handleInconsistentEOL(wrapper.getOriginalException(), path);
         }
     }
 }

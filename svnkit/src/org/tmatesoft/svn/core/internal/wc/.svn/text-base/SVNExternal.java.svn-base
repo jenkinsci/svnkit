@@ -348,14 +348,9 @@ public class SVNExternal {
                 myLine = myLine.substring(1);
             }
             int index = 0;
+            StringBuffer result = new StringBuffer();
             while(index < myLine.length()) {
-                ch = myLine.charAt(index);
-                if (ch == '\\') {
-                    // skip escaped character.
-                    index++;
-                    index++;
-                    continue;
-                }
+                ch = myLine.charAt(index);                
                 if (quouteType == 0) {
                     if (Character.isWhitespace(ch)) {
                         break;
@@ -369,27 +364,22 @@ public class SVNExternal {
                         break;
                     }
                 }
-                index++;
-            }
-            String token = myLine.substring(0, index);
-            StringBuffer result = new StringBuffer();
-            index = 0;
-            while(index < token.length()) {
-                ch = token.charAt(index);
-                if (ch != '\\') {
-                    result.append(ch);
-                } else {
-                    if (index + 1 < token.length()) {
-                        char escaped = token.charAt(index + 1);
-                        if (escaped == 't') {
-                            result.append("\t");
-                        } else {
+                if (ch == '\\') {
+                    // append qouted character, so far whitespace only
+                    if (index + 1 < myLine.length()) {
+                        char escaped = myLine.charAt(index + 1);
+                        if (escaped == ' ' || escaped == '\'' || escaped == '\"') {
+                            // append escaped char instead of backslash
                             result.append(escaped);
+                            index++;
+                            index++;
+                            continue;
                         }
-                    }
-                    index++;
+                    } 
                 }
+                result.append(ch);
                 index++;
+                
             }
             if (index + 1 < myLine.length()) {
                 myLine = myLine.substring(index + 1);

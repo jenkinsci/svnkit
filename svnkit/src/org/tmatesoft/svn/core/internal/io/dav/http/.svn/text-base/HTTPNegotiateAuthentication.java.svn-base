@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
+import java.util.Map;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -19,15 +20,47 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.util.SVNBase64;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
-class HTTPNegotiateAuthentication extends HTTPAuthentication {
+public class HTTPNegotiateAuthentication extends HTTPAuthentication {
+    
+    private static final String NEGOTIATE_TYPE_PROPERTY = "svnkit.negotiate.type"; 
+    private static final String NEGOTIATE_TYPE_SPNEGO = "spnego"; 
+    private static final String NEGOTIATE_TYPE_KERBEROS = "krb"; 
+
+    private static Map ourOids = new SVNHashMap();
+    
+    static {
+        try {
+            ourOids.put(NEGOTIATE_TYPE_KERBEROS, new Oid("1.2.840.113554.1.2.2") );
+        } catch (GSSException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
+        }
+        try {
+            ourOids.put(NEGOTIATE_TYPE_SPNEGO, new Oid("1.3.6.1.5.5.2") );
+        } catch (GSSException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
+        }
+    }
+    
+    private static Oid getDefaultOID() {
+        String defaultOid = System.getProperty(NEGOTIATE_TYPE_PROPERTY, NEGOTIATE_TYPE_SPNEGO);
+        if (defaultOid == null || "".equals(defaultOid)) {
+            defaultOid = NEGOTIATE_TYPE_SPNEGO;
+        }
+        Oid oid = (Oid) ourOids.get(defaultOid);
+        if (oid != null) {
+            return oid;
+        }
+        return (Oid) ourOids.get(NEGOTIATE_TYPE_SPNEGO);
+    }
 
     private class SVNKitCallbackHandler implements CallbackHandler {
 
@@ -62,12 +95,12 @@ class HTTPNegotiateAuthentication extends HTTPAuthentication {
 
     public static synchronized boolean isSupported() {
         if (ourIsNegotiateSupported == null) {
-            try {
-                Oid spnegoOid = new Oid("1.3.6.1.5.5.2");
-                ourIsNegotiateSupported = Boolean.valueOf(Arrays.asList(GSSManager.getInstance().getMechs()).contains(spnegoOid));
-            } catch (GSSException gsse) {
-                ourIsNegotiateSupported = Boolean.FALSE;
+            Oid spnegoOid = getDefaultOID();
+            Oid[] supportedOids = GSSManager.getInstance().getMechs();
+            for (int i = 0; i < supportedOids.length; i++) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: supported OID: " + supportedOids[i]);
             }
+            ourIsNegotiateSupported = Boolean.valueOf(Arrays.asList(GSSManager.getInstance().getMechs()).contains(spnegoOid));
         }
         return ourIsNegotiateSupported.booleanValue();
     }
@@ -84,6 +117,7 @@ class HTTPNegotiateAuthentication extends HTTPAuthentication {
     private int myTokenLength;
 
     public void respondTo(String challenge) {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: respond to, challenge: " + challenge);
         if (challenge == null) {
             myToken = new byte[0];
             myTokenLength = 0;
@@ -91,36 +125,50 @@ class HTTPNegotiateAuthentication extends HTTPAuthentication {
             myToken = new byte[(challenge.length() * 3 + 3) / 4];
             myTokenLength = SVNBase64.base64ToByteArray(new StringBuffer(challenge), myToken);
         }
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: respond to, token length: " + myTokenLength);
     }
     
     private void initializeSubject() {
-        if (mySubject != null)
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize subject");
+        if (mySubject != null) {
             return;
+        }
+        
         try {
             LoginContext ctx = new LoginContext("com.sun.security.jgss.krb5.initiate", new SVNKitCallbackHandler());
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize subject, login context: " + ctx);
             ctx.login();
             mySubject = ctx.getSubject();
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize subject, subject: " + mySubject);
         } catch (LoginException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
         }
     }
 
     private void initializeContext() throws GSSException {
         if (mySpnegoOid == null) {
-            mySpnegoOid = new Oid("1.3.6.1.5.5.2");
+            mySpnegoOid = getDefaultOID();
         }
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize context, OID: " + mySpnegoOid);
         GSSName serverName = myGSSManager.createName(getServerPrincipalName(), GSSName.NT_HOSTBASED_SERVICE);
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize context, server name: " + serverName);
         myGSSContext = myGSSManager.createContext(serverName, mySpnegoOid, null, GSSContext.DEFAULT_LIFETIME);
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: initialize context, GSS Context: " + myGSSContext);
     }
 
     public String authenticate() throws SVNException {
-        if (!isStarted())
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate: isStarted:" + isStarted());
+        if (!isStarted()) {
             initializeSubject();
+        }
 
         PrivilegedExceptionAction action = new PrivilegedExceptionAction() {
             public Object run() throws SVNException {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: isStarted: " + isStarted());
                 if (!isStarted()) {
                     try {
                         initializeContext();
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: context initializaed");
                     } catch (GSSException gsse) {
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
                         SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -132,6 +180,10 @@ class HTTPNegotiateAuthentication extends HTTPAuthentication {
         
                 try {
                     outtoken = myGSSContext.initSecContext(myToken, 0, myTokenLength);
+                    SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: out token: " + outtoken);
+                    if (outtoken != null) {
+                        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: out token: " + SVNBase64.byteArrayToBase64(outtoken));
+                    }
                 } catch (GSSException gsse) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "Negotiate authentication failed: ''{0}''", gsse.getMajorString());
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
@@ -141,38 +193,50 @@ class HTTPNegotiateAuthentication extends HTTPAuthentication {
                 if (myToken != null) {
                     return "Negotiate " + SVNBase64.byteArrayToBase64(outtoken);
                 }
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate action: myToken is null");
                 return null;
             }
         };
         
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate: subject:" + mySubject);
         if (mySubject != null) {
             try {
-                return (String) Subject.doAs(mySubject, action);
+                String result = (String) Subject.doAs(mySubject, action);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate: result:" + result);
+                return result;
             } catch (PrivilegedActionException e) {
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
                 Throwable cause = e.getCause();
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, cause);
                 if (cause instanceof SVNException) {
                     throw (SVNException)cause;
                 }
-                throw new RuntimeException(cause);
+                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), SVNLogType.NETWORK);
             }
         }
         
         try {
+            String result = (String) action.run();
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: authenticate: result (2):" + result);
             return (String) action.run();
         } catch (Exception cause) {
             if (cause instanceof SVNException) {
-                throw (SVNException)cause;
+                throw (SVNException) cause;
             }
-            throw new RuntimeException(cause);            
+            SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, cause), SVNLogType.NETWORK);
         }
+        return null;
     }
 
     public boolean isStarted() {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: isStarted: " + myGSSContext);
         return myGSSContext != null;
     }
     
     public boolean needsLogin() {
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: needsLogin");
         initializeSubject();
+        SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "NEGOTIATE: needsLogin, mySubject: " + mySubject);
         return mySubject == null;
     }
     

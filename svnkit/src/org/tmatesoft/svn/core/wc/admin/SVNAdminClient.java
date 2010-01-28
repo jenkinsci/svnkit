@@ -46,6 +46,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSPacker;
 import org.tmatesoft.svn.core.internal.io.fs.FSRecoverer;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
+import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -54,10 +55,13 @@ import org.tmatesoft.svn.core.internal.wc.DefaultLoadHandler;
 import org.tmatesoft.svn.core.internal.wc.ISVNLoadHandler;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminDeltifier;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminHelper;
+import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDumpStreamParser;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNPropertiesManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.ISVNLockHandler;
 import org.tmatesoft.svn.core.io.SVNCapability;
@@ -127,12 +131,13 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since   1.2
  */
 public class SVNAdminClient extends SVNBasicClient {
+
     private ISVNLogEntryHandler mySyncHandler;
-    private DefaultLoadHandler myLoadHandler;
     private DefaultDumpFilterHandler myDumpFilterHandler;
     private ISVNAdminEventHandler myEventHandler;
     private FSHotCopier myHotCopier;
     private SVNDumpStreamParser myDumpStreamParser;
+    private SVNDumpEditor myDumpEditor;
 
     /**
      * Creates a new admin client.
@@ -394,12 +399,15 @@ public class SVNAdminClient extends SVNBasicClient {
                         String.valueOf(endRevision));
                 SVNErrorManager.error(err, SVNLogType.FSFS);
             }
-            
+
+            int normalizedRevPropsCount = 0;
             long step = startRevision > endRevision ? -1 : 1;
             for (long i = startRevision; i != endRevision + step; i += step) {
                 checkCancelled();
-                copyRevisionProperties(info.myRepository, toRepos, i, false);
+                SVNProperties normalizedProps = copyRevisionProperties(info.myRepository, toRepos, i, false);
+                normalizedRevPropsCount += normalizedProps.size();
             }
+            handleNormalizedProperties(normalizedRevPropsCount, 0);
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -491,7 +499,8 @@ public class SVNAdminClient extends SVNBasicClient {
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.FROM_UUID, SVNPropertyValue.create(uuid));
             toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, 
                     SVNPropertyValue.create("0"));
-            copyRevisionProperties(fromRepos, toRepos, 0, false);
+            SVNProperties normalizedProps = copyRevisionProperties(fromRepos, toRepos, 0, false);
+            handleNormalizedProperties(normalizedProps.size(), 0);
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -559,8 +568,13 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doPack(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        FSPacker packer = new FSPacker(myEventHandler);
-        packer.pack(fsfs);
+        try {
+            FSPacker packer = new FSPacker(myEventHandler);
+            packer.pack(fsfs);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
+        }
+            
     }
     
     /**
@@ -638,6 +652,7 @@ public class SVNAdminClient extends SVNBasicClient {
             SVNPropertyValue currentlyCopying = toRepos.getRevisionPropertyValue(0, 
                     SVNRevisionProperty.CURRENTLY_COPYING);
             long toLatestRevision = toRepos.getLatestRevision();
+            int normalizedRevPropsCount = 0;
 
             if (currentlyCopying != null) {
                 long copyingRev = -1;
@@ -655,7 +670,8 @@ public class SVNAdminClient extends SVNBasicClient {
                     SVNErrorManager.error(err, SVNLogType.FSFS);
                 } else if (copyingRev == toLatestRevision) {
                     if (copyingRev > lastMergedRevision) {
-                        copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
+                        SVNProperties normalizedProps = copyRevisionProperties(fromRepos, toRepos, toLatestRevision, true);
+                        normalizedRevPropsCount += normalizedProps.size();
                         lastMergedRevision = copyingRev;
                     }
                     toRepos.setRevisionPropertyValue(0, SVNRevisionProperty.LAST_MERGED_REVISION, SVNPropertyValue.create(SVNProperty.toString(lastMergedRevision)));
@@ -685,6 +701,8 @@ public class SVNAdminClient extends SVNBasicClient {
                     mySyncHandler, getDebugLog(), this, this);
             
             fromRepos.replayRange(startRevision, endRevision, 0, true, replayHandler);
+            handleNormalizedProperties(normalizedRevPropsCount + replayHandler.getNormalizedRevPropsCount(), 
+                    replayHandler.getNormalizedNodePropsCount());
         } catch (SVNException svne) {
             error = svne;
         } finally {
@@ -723,20 +741,24 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doListLocks(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        File digestFile = fsfs.getDigestFileFromRepositoryPath("/");
-        ISVNLockHandler handler = new ISVNLockHandler() {
-            public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-                checkCancelled();
-                if (myEventHandler != null) {
-                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.LOCK_LISTED, lock, error, null);
-                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        try {
+            File digestFile = fsfs.getDigestFileFromRepositoryPath("/");
+            ISVNLockHandler handler = new ISVNLockHandler() {
+                public void handleLock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                    checkCancelled();
+                    if (myEventHandler != null) {
+                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.LOCK_LISTED, lock, error, null);
+                        myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                    }
+                    
                 }
-                
-            }
-            public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
-            }
-        };
-        fsfs.walkDigestFiles(digestFile, handler, false);
+                public void handleUnlock(String path, SVNLock lock, SVNErrorMessage error) throws SVNException {
+                }
+            };
+            fsfs.walkDigestFiles(digestFile, handler, false);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
+        }
     }
 
     /**
@@ -768,35 +790,39 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        for (int i = 0; i < paths.length; i++) {
-            String path = paths[i];
-            if (path == null) {
-                continue;
-            }
-            checkCancelled();
-            
-            SVNLock lock = null;
-            try {
-                lock = fsfs.getLockHelper(path, false);
-                if (lock == null) {
-                    if (myEventHandler != null) {
-                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NOT_LOCKED, null, null, "Path '" + path + "' isn't locked.");
-                        myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
-                    }
+        try {
+            for (int i = 0; i < paths.length; i++) {
+                String path = paths[i];
+                if (path == null) {
                     continue;
                 }
+                checkCancelled();
                 
-                fsfs.unlockPath(path, lock.getID(), null, true, false);
-                if (myEventHandler != null) {
-                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCKED, lock, null, "Removed lock on '" + path + "'.");
-                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
-                }
-            } catch (SVNException svne) {
-                if (myEventHandler != null) {
-                    SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCK_FAILED, lock, svne.getErrorMessage(), "svnadmin: " + svne.getErrorMessage().getFullMessage());
-                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                SVNLock lock = null;
+                try {
+                    lock = fsfs.getLockHelper(path, false);
+                    if (lock == null) {
+                        if (myEventHandler != null) {
+                            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NOT_LOCKED, null, null, "Path '" + path + "' isn't locked.");
+                            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                        }
+                        continue;
+                    }
+                    
+                    fsfs.unlockPath(path, lock.getID(), null, true, false);
+                    if (myEventHandler != null) {
+                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCKED, lock, null, "Removed lock on '" + path + "'.");
+                        myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                    }
+                } catch (SVNException svne) {
+                    if (myEventHandler != null) {
+                        SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UNLOCK_FAILED, lock, svne.getErrorMessage(), "svnadmin: " + svne.getErrorMessage().getFullMessage());
+                        myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                    }
                 }
             }
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
         }
     }
     
@@ -818,15 +844,19 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doListTransactions(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        Map txns = fsfs.listTransactions();
-
-        for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
-            String txnName = (String) names.next();
-            File txnDir = (File) txns.get(txnName);
-            if (myEventHandler != null) {
-                SVNAdminEvent event = new SVNAdminEvent(txnName, txnDir, SVNAdminEventAction.TRANSACTION_LISTED);
-                myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        try {
+            Map txns = fsfs.listTransactions();
+    
+            for(Iterator names = txns.keySet().iterator(); names.hasNext();) {
+                String txnName = (String) names.next();
+                File txnDir = (File) txns.get(txnName);
+                if (myEventHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(txnName, txnDir, SVNAdminEventAction.TRANSACTION_LISTED);
+                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
             }
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
         }
     }
     
@@ -853,15 +883,19 @@ public class SVNAdminClient extends SVNBasicClient {
         }
 
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        for (int i = 0; i < transactions.length; i++) {
-            String txnName = transactions[i];
-            fsfs.openTxn(txnName);
-            fsfs.purgeTxn(txnName);
-            SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Transaction '" + txnName + "' removed.\n");
-            if (myEventHandler != null) {
-                SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);
-                myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        try {
+            for (int i = 0; i < transactions.length; i++) {
+                String txnName = transactions[i];
+                fsfs.openTxn(txnName);
+                fsfs.purgeTxn(txnName);
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, "Transaction '" + txnName + "' removed.\n");
+                if (myEventHandler != null) {
+                    SVNAdminEvent event = new SVNAdminEvent(txnName, fsfs.getTransactionDir(txnName), SVNAdminEventAction.TRANSACTION_REMOVED);
+                    myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+                }
             }
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
         }
     }
 
@@ -900,16 +934,20 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doVerify(File repositoryRoot, SVNRevision startRevision, SVNRevision endRevision) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        long startRev = startRevision.getNumber();
-        long endRev = endRevision.getNumber();
-        if (startRev < 0) {
-            startRev = 0;
-        }
-        if (endRev < 0) {
-            endRev = fsfs.getYoungestRevision();
-        }
+        try {
+            long youngestRevision = fsfs.getYoungestRevision();
+            
+            long lowerRev = SVNAdminHelper.getRevisionNumber(startRevision, youngestRevision, fsfs);
+            long upperRev = SVNAdminHelper.getRevisionNumber(endRevision, youngestRevision, fsfs);
 
-        dump(fsfs, SVNFileUtil.DUMMY_OUT, startRev, endRev, false, false);
+            if (!SVNRevision.isValidRevisionNumber(upperRev)) {
+                upperRev = lowerRev;
+            }
+
+            verify(fsfs, lowerRev, upperRev);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
+        }
     }
     
     /**
@@ -941,24 +979,28 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doDump(File repositoryRoot, OutputStream dumpStream, SVNRevision startRevision, SVNRevision endRevision, boolean isIncremental, boolean useDeltas) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        long youngestRevision = fsfs.getYoungestRevision();
-        
-        long lowerR = SVNAdminHelper.getRevisionNumber(startRevision, youngestRevision, fsfs);
-        long upperR = SVNAdminHelper.getRevisionNumber(endRevision, youngestRevision, fsfs);
-        
-        if (!SVNRevision.isValidRevisionNumber(lowerR)) {
-            lowerR = 0;
-            upperR = youngestRevision;
-        } else if (!SVNRevision.isValidRevisionNumber(upperR)) {
-            upperR = lowerR; 
+        try {
+            long youngestRevision = fsfs.getYoungestRevision();
+            
+            long lowerR = SVNAdminHelper.getRevisionNumber(startRevision, youngestRevision, fsfs);
+            long upperR = SVNAdminHelper.getRevisionNumber(endRevision, youngestRevision, fsfs);
+            
+            if (!SVNRevision.isValidRevisionNumber(lowerR)) {
+                lowerR = 0;
+                upperR = youngestRevision;
+            } else if (!SVNRevision.isValidRevisionNumber(upperR)) {
+                upperR = lowerR; 
+            }
+            
+            if (lowerR > upperR) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "First revision cannot be higher than second");
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
+            
+            dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
         }
-        
-        if (lowerR > upperR) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, "First revision cannot be higher than second");
-            SVNErrorManager.error(err, SVNLogType.FSFS);
-        }
-        
-        dump(fsfs, dumpStream, lowerR, upperR, isIncremental, useDeltas);
     }
     
     /**
@@ -1020,10 +1062,16 @@ public class SVNAdminClient extends SVNBasicClient {
     public void doLoad(File repositoryRoot, InputStream dumpStream, boolean usePreCommitHook, 
             boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
         CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-        ISVNLoadHandler handler = getLoadHandler(repositoryRoot, usePreCommitHook, usePostCommitHook, 
-                uuidAction, parentDir);
-        SVNDumpStreamParser parser = getDumpStreamParser();
-        parser.parseDumpStream(dumpStream, handler, decoder);
+        FSFS fsfs = null;
+        try {
+            fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
+            ISVNLoadHandler handler = createLoadHandler(fsfs, usePreCommitHook, usePostCommitHook, 
+                    uuidAction, parentDir);
+            SVNDumpStreamParser parser = getDumpStreamParser();
+            parser.parseDumpStream(dumpStream, handler, decoder);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
+        }
     }
 
     /**
@@ -1041,13 +1089,21 @@ public class SVNAdminClient extends SVNBasicClient {
      * @since                    1.2.0, SVN 1.5.0
      */
     public void doRecover(File repositoryRoot) throws SVNException {
-        FSFS fsfs = SVNAdminHelper.openRepositoryForRecovery(repositoryRoot);
-        if (myEventHandler != null) {
-            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.RECOVERY_STARTED);
-            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        FSFS fsfs = null;
+        try {
+            fsfs = SVNAdminHelper.openRepositoryForRecovery(repositoryRoot);
+            
+            if (myEventHandler != null) {
+                SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.RECOVERY_STARTED);
+                myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+            }
+            FSRecoverer recoverer = new FSRecoverer(fsfs, this);
+            recoverer.runRecovery();
+        } finally {
+            if (fsfs != null) {
+                fsfs.close();
+            }
         }
-        FSRecoverer recoverer = new FSRecoverer(fsfs, this);
-        recoverer.runRecovery();
     }
     
     /**
@@ -1072,16 +1128,20 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doUpgrade(File repositoryRoot)throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        if (myEventHandler != null) {
-            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UPGRADE);
-            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        try {
+            if (myEventHandler != null) {
+                SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.UPGRADE);
+                myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+            }
+            
+            File reposFormatFile = fsfs.getRepositoryFormatFile();
+            int format = fsfs.getReposFormat();
+            SVNFileUtil.writeVersionFile(reposFormatFile, format);
+            fsfs.upgrade();
+            SVNFileUtil.writeVersionFile(reposFormatFile, FSFS.REPOSITORY_FORMAT);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
         }
-        
-        File reposFormatFile = fsfs.getRepositoryFormatFile();
-        int format = fsfs.getReposFormat();
-        SVNFileUtil.writeVersionFile(reposFormatFile, format);
-        fsfs.upgrade();
-        SVNFileUtil.writeVersionFile(reposFormatFile, FSFS.REPOSITORY_FORMAT);
     }
     
     /**
@@ -1100,17 +1160,21 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doSetUUID(File repositoryRoot, String uuid) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        if (uuid == null) {
-            uuid = SVNUUIDGenerator.generateUUIDString();
-        } else {
-            String[] components = uuid.split("-");
-            if (components.length != 5) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_UUID, "Malformed UUID ''{0}''", 
-                        uuid);
-                SVNErrorManager.error(err, SVNLogType.FSFS);
+        try {
+            if (uuid == null) {
+                uuid = SVNUUIDGenerator.generateUUIDString();
+            } else {
+                String[] components = uuid.split("-");
+                if (components.length != 5) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_UUID, "Malformed UUID ''{0}''", 
+                            uuid);
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
+                }
             }
+            fsfs.setUUID(uuid);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
         }
-        fsfs.setUUID(uuid);
     }
     
     /**
@@ -1124,8 +1188,12 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public void doHotCopy(File srcRepositoryRoot, File newRepositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(srcRepositoryRoot, false);
-        FSHotCopier copier = getHotCopier();
-        copier.runHotCopy(fsfs, newRepositoryRoot);
+        try {
+            FSHotCopier copier = getHotCopier();
+            copier.runHotCopy(fsfs, newRepositoryRoot);
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
+        }
     }
     
     /**
@@ -1141,7 +1209,11 @@ public class SVNAdminClient extends SVNBasicClient {
      */
     public long getYoungestRevision(File repositoryRoot) throws SVNException {
         FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-        return fsfs.getYoungestRevision();
+        try {
+            return fsfs.getYoungestRevision();
+        } finally {
+            SVNAdminHelper.closeRepository(fsfs);
+        }
     }
     
     /**
@@ -1272,11 +1344,56 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
+    protected void handleNormalizedProperties(int normalizedRevPropsCount, int normalizedNodePropsCount) throws SVNException {
+        if (myEventHandler != null && (normalizedRevPropsCount > 0 || normalizedNodePropsCount > 0)) {
+            String message = MessageFormat.format("NOTE: Normalized {0}* properties to LF line endings ({1} rev-props, {2} node-props).", 
+                    new Object[] { SVNProperty.SVN_PREFIX, String.valueOf(normalizedRevPropsCount), String.valueOf(normalizedNodePropsCount) });
+            SVNAdminEvent event = new SVNAdminEvent(SVNAdminEventAction.NORMALIZED_PROPERTIES, message);
+            myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+        }
+    }
+    
     private FSHotCopier getHotCopier() {
         if (myHotCopier == null) {
             myHotCopier = new FSHotCopier();
         }
         return myHotCopier;
+    }
+    
+    private void verify(FSFS fsfs, long startRev, long endRev) throws SVNException {
+        long youngestRev = fsfs.getYoungestRevision();
+        if (!SVNRevision.isValidRevisionNumber(startRev)) {
+            startRev = 0;
+        }
+        if (!SVNRevision.isValidRevisionNumber(endRev)) {
+            endRev = youngestRev;
+        }
+        
+        if (startRev > endRev) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, "Start revision {0} is greater than end revision {1}", 
+                    new Object[] { String.valueOf(startRev), String.valueOf(endRev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        if (endRev > youngestRev) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.REPOS_BAD_ARGS, 
+                    "End revision {0} is invalid (youngest revision is {1})", new Object[] { String.valueOf(endRev), 
+                    String.valueOf(youngestRev) });
+            SVNErrorManager.error(err, SVNLogType.FSFS);
+        }
+        
+        for (long rev = startRev; rev <= endRev; rev++) {
+            FSRevisionRoot toRoot = fsfs.createRevisionRoot(rev);
+            ISVNEditor editor = getDumpEditor(fsfs, toRoot, rev, startRev, "/", SVNFileUtil.DUMMY_OUT, false, true);
+            editor = SVNCancellableEditor.newInstance(editor, getEventDispatcher(), getDebugLog());
+            FSRepositoryUtil.replay(fsfs, toRoot, "", SVNRepository.INVALID_REVISION, false, editor);
+            String message = "* Verified revision " + rev + ".";
+        
+            if (myEventHandler != null) {
+                SVNAdminEvent event = new SVNAdminEvent(rev, SVNAdminEventAction.REVISION_DUMPED, message);
+                myEventHandler.handleAdminEvent(event, ISVNEventHandler.UNKNOWN);
+            }
+        }        
     }
     
     private void dump(FSFS fsfs, OutputStream dumpStream, long start, long end, boolean isIncremental, boolean useDeltas) throws SVNException {
@@ -1353,7 +1470,7 @@ public class SVNAdminClient extends SVNBasicClient {
             writeRevisionRecord(dumpStream, fsfs, toRev);
             boolean useDeltasForRevision = useDeltas && (isIncremental || i != start);
             FSRevisionRoot toRoot = fsfs.createRevisionRoot(toRev);
-            ISVNEditor dumpEditor = new SVNDumpEditor(fsfs, toRoot, toRev, start, "/", dumpStream, useDeltasForRevision);
+            ISVNEditor dumpEditor = getDumpEditor(fsfs, toRoot, toRev, start, "/", dumpStream, useDeltasForRevision, false);
 
             if (i == start && !isIncremental) {
                 FSRevisionRoot fromRoot = fsfs.createRevisionRoot(fromRev);
@@ -1405,21 +1522,16 @@ public class SVNAdminClient extends SVNBasicClient {
         }
     }
     
-    private DefaultLoadHandler getLoadHandler(File repositoryRoot, boolean usePreCommitHook, 
-            boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) throws SVNException {
-        if (myLoadHandler == null) {
-            FSFS fsfs = SVNAdminHelper.openRepository(repositoryRoot, true);
-            DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, 
-                    parentDir, myEventHandler);
-            handler.setFSFS(fsfs);
-            myLoadHandler = handler;
-        } else {
-            myLoadHandler.setUsePreCommitHook(usePreCommitHook);
-            myLoadHandler.setUsePostCommitHook(usePostCommitHook);
-            myLoadHandler.setUUIDAction(uuidAction);
-            myLoadHandler.setParentDir(parentDir);
-        }
-        return myLoadHandler;
+    private DefaultLoadHandler createLoadHandler(FSFS fsfs, boolean usePreCommitHook, 
+            boolean usePostCommitHook, SVNUUIDAction uuidAction, String parentDir) {
+        DefaultLoadHandler handler = new DefaultLoadHandler(usePreCommitHook, usePostCommitHook, uuidAction, 
+                parentDir, myEventHandler);
+        handler.setFSFS(fsfs);
+        handler.setUsePreCommitHook(usePreCommitHook);
+        handler.setUsePostCommitHook(usePostCommitHook);
+        handler.setUUIDAction(uuidAction);
+        handler.setParentDir(parentDir);
+        return handler;
     }
 
     private DefaultDumpFilterHandler getDumpFilterHandler(OutputStream os, boolean exclude, 
@@ -1441,8 +1553,18 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         return myDumpStreamParser;
     }
+    
+    private SVNDumpEditor getDumpEditor(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, 
+            boolean useDeltas, boolean isVerify) {
+        if (myDumpEditor == null) {
+            myDumpEditor = new SVNDumpEditor(fsfs, root, toRevision, oldestDumpedRevision, rootPath, dumpStream, useDeltas, isVerify);
+        } else {
+            myDumpEditor.reset(fsfs, root, toRevision, oldestDumpedRevision, rootPath, dumpStream, useDeltas, isVerify);
+        }
+        return myDumpEditor;
+    }
 
-    private void copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, 
+    private SVNProperties copyRevisionProperties(SVNRepository fromRepository, SVNRepository toRepository, 
             long revision, boolean sync) throws SVNException {
         int filteredCount = 0;
         
@@ -1452,12 +1574,14 @@ public class SVNAdminClient extends SVNBasicClient {
         }
         
         SVNProperties revProps = fromRepository.getRevisionProperties(revision, null);
+        SVNProperties normalizedProps = normalizeRevisionProperties(revProps);
         filteredCount += SVNAdminHelper.writeRevisionProperties(toRepository, revision, revProps);
         
         if (sync) {
             SVNAdminHelper.removePropertiesNotInSource(toRepository, revision, revProps, existingRevProps);
         }
         handlePropertesCopied(filteredCount > 0, revision);
+        return normalizedProps;
     }
 
     private SessionInfo openSourceRepository(SVNRepository targetRepos) throws SVNException {
@@ -1548,4 +1672,28 @@ public class SVNAdminClient extends SVNBasicClient {
             myLastMergedRevision = lastMergedRev;
         }
     }
+    
+    public static SVNProperties normalizeRevisionProperties(SVNProperties revProps) throws SVNException {
+        SVNProperties normalizedProps = new SVNProperties();
+        for (Iterator propNamesIter = revProps.nameSet().iterator(); propNamesIter.hasNext();) {
+            String propName = (String) propNamesIter.next();
+            if (SVNPropertiesManager.propNeedsTranslation(propName)) {
+                SVNPropertyValue value = revProps.getSVNPropertyValue(propName); 
+                String normalizedValue = normalizeString(SVNPropertyValue.getPropertyAsString(value));
+                if (normalizedValue != null) {
+                    normalizedProps.put(propName, SVNPropertyValue.create(normalizedValue));
+                }
+            }
+        }
+        revProps.putAll(normalizedProps);
+        return normalizedProps;
+    }
+
+    public static String normalizeString(String string) throws SVNException {
+        if (string != null && string.indexOf(SVNProperty.EOL_CR_BYTES[0]) != -1) {
+            return SVNTranslator.transalteString(string, SVNProperty.EOL_LF_BYTES, null, true, false);
+        }
+        return null;
+    }
+
 }

@@ -12,6 +12,9 @@
 
 package org.tmatesoft.svn.core;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * The <b>SVNProperty</b> class is a representation class for both versioned
  * properties (user-managed svn specials) and for metaproperties (untweakable)
@@ -425,6 +428,18 @@ public class SVNProperty {
     }
 
     /**
+     * Says if the given property name starts with the {@link #SVNKIT_PREFIX}.
+     *
+     * @param name a property name to check
+     * @return <span class="javakeyword">true</span> if <code>name</code> is
+     *         not <span class="javakeyword">null</span> and starts with the
+     * {@link #SVNKIT_PREFIX} prefix, otherwise <span class="javakeyword">false</span>
+     */
+    public static boolean isSVNKitProperty(String name) {
+        return name != null && name.startsWith(SVNKIT_PREFIX);
+    }
+
+    /**
      * Checks if a property is regular. 
      * 
      * <p/>
@@ -455,7 +470,12 @@ public class SVNProperty {
      * @see #isBinaryMimeType(String)
      */
     public static boolean isTextMimeType(String mimeType) {
-        return mimeType == null || mimeType.startsWith("text/");
+        if (mimeType == null || mimeType.startsWith("text/")) {
+            return true;
+        }
+        synchronized (ourTextMimeTypes) {
+            return ourTextMimeTypes.contains(mimeType);
+        }
     }
 
     /**
@@ -587,5 +607,38 @@ public class SVNProperty {
      */
     public static boolean isBooleanProperty(String propName) {
         return SVNProperty.EXECUTABLE.equals(propName) || SVNProperty.SPECIAL.equals(propName) || SVNProperty.NEEDS_LOCK.equals(propName);
+    }
+    
+
+    private static final Set ourTextMimeTypes = new HashSet();
+
+    /**
+     * Adds custom mime-type value that should be considered as text.
+     * Otherwise only 'null' mime-types and those starting with 'text/' are considered as text.
+     */
+    public static void addTextMimeType(String textMimeType) {
+        if (textMimeType != null) {
+            synchronized (ourTextMimeTypes) {
+                ourTextMimeTypes.add(textMimeType);
+            }
+        }
+    }
+    
+    /**
+     * Returns custom mime-types previously added.
+     */
+    public Set getTextMimeTypes() {
+        synchronized (ourTextMimeTypes) {
+            return new HashSet(ourTextMimeTypes);
+        }
+    }
+
+    /**
+     * Clears custom mime-types previously added.
+     */
+    public static void clearTextMimeTypes() {
+        synchronized (ourTextMimeTypes) {
+            ourTextMimeTypes.clear();
+        }
     }
 }

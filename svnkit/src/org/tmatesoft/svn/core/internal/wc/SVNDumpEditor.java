@@ -28,6 +28,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.delta.SVNDeltaCombiner;
 import org.tmatesoft.svn.core.internal.io.fs.CountingOutputStream;
+import org.tmatesoft.svn.core.internal.io.fs.FSEntry;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryUtil;
 import org.tmatesoft.svn.core.internal.io.fs.FSRevisionNode;
@@ -35,6 +36,7 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRevisionRoot;
 import org.tmatesoft.svn.core.internal.io.fs.FSRoot;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaGenerator;
@@ -57,11 +59,13 @@ public class SVNDumpEditor implements ISVNEditor {
     private String myRootPath;
     private OutputStream myDumpStream;
     private boolean myUseDeltas;
+    private boolean myIsVerify;
     private DirectoryInfo myCurrentDirInfo;
     private SVNDeltaCombiner myDeltaCombiner;
     private SVNDeltaGenerator myDeltaGenerator;
     
-    public SVNDumpEditor(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, boolean useDeltas) {
+    public SVNDumpEditor(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, 
+            boolean useDeltas, boolean isVerify) {
         myRoot = root;
         myFSFS = fsfs;
         myTargetRevision = toRevision;
@@ -69,6 +73,20 @@ public class SVNDumpEditor implements ISVNEditor {
         myRootPath = rootPath;
         myDumpStream = dumpStream;
         myUseDeltas = useDeltas;
+        myIsVerify = isVerify;
+    }
+    
+    public void reset(FSFS fsfs, FSRoot root, long toRevision, long oldestDumpedRevision, String rootPath, OutputStream dumpStream, 
+            boolean useDeltas, boolean isVerify) {
+        myRoot = root;
+        myFSFS = fsfs;
+        myTargetRevision = toRevision;
+        myOldestDumpedRevision = oldestDumpedRevision;
+        myRootPath = rootPath;
+        myDumpStream = dumpStream;
+        myUseDeltas = useDeltas;
+        myIsVerify = isVerify;
+        myCurrentDirInfo = null;
     }
     
     public void abortEdit() throws SVNException {
@@ -82,7 +100,7 @@ public class SVNDumpEditor implements ISVNEditor {
 
     public void addDir(String path, String copyFromPath, long copyFromRevision) throws SVNException {
         DirectoryInfo parent = myCurrentDirInfo;
-        myCurrentDirInfo = createDirectoryInfo(path, copyFromPath, copyFromRevision, true, parent);
+        myCurrentDirInfo = createDirectoryInfo(path, copyFromPath, copyFromRevision, parent);
         boolean isDeleted = parent.myDeletedEntries.containsKey(path);
         boolean isCopy = copyFromPath != null && SVNRevision.isValidRevisionNumber(copyFromRevision);
         dumpNode(path, SVNNodeKind.DIR, isDeleted ? SVNAdminHelper.NODE_ACTION_REPLACE : SVNAdminHelper.NODE_ACTION_ADD, isCopy, isCopy ? copyFromPath : null, isCopy ? copyFromRevision : -1);
@@ -103,7 +121,8 @@ public class SVNDumpEditor implements ISVNEditor {
 
     public void changeDirProperty(String name, SVNPropertyValue value) throws SVNException {
         if (!myCurrentDirInfo.myIsWrittenOut) {
-            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
+            dumpNode(myCurrentDirInfo.myFullPath, SVNNodeKind.DIR, SVNAdminHelper.NODE_ACTION_CHANGE, false, 
+                    myCurrentDirInfo.myComparePath, myCurrentDirInfo.myCompareRevision);
             myCurrentDirInfo.myIsWrittenOut = true;
         }
     }
@@ -112,6 +131,26 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     public void closeDir() throws SVNException {
+        if (myIsVerify) {
+            FSRevisionNode node = myRoot.getRevisionNode(myCurrentDirInfo.myFullPath);
+            Map entries = node.getDirEntries(myFSFS);
+            for (Iterator entriesIter = entries.keySet().iterator(); entriesIter.hasNext();) {
+                String entryName = (String) entriesIter.next();
+                String entryPath = SVNPathUtil.append(myCurrentDirInfo.myFullPath, entryName);
+                SVNNodeKind kind = myRoot.checkNodeKind(entryPath);
+                FSRevisionNode entryNode = myRoot.getRevisionNode(entryPath);
+                if (kind == SVNNodeKind.DIR) {
+                    entryNode.getDirEntries(myFSFS);
+                } else if (kind == SVNNodeKind.FILE) {
+                    entryNode.getFileLength();
+                } else {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, 
+                            "Unexpected node kind {0} for ''{1}''", new Object[] { kind, entryPath });
+                    SVNErrorManager.error(err, SVNLogType.FSFS);
+                }
+            }
+        }
+        
         for (Iterator entries = myCurrentDirInfo.myDeletedEntries.keySet().iterator(); entries.hasNext();) {
             String path = (String) entries.next();
             dumpNode(path, SVNNodeKind.UNKNOWN, SVNAdminHelper.NODE_ACTION_DELETE, false, null, -1);
@@ -138,7 +177,7 @@ public class SVNDumpEditor implements ISVNEditor {
             cmpPath = SVNPathUtil.append(parent.myComparePath, SVNPathUtil.tail(path));
             cmpRev = parent.myCompareRevision;
         }
-        myCurrentDirInfo = createDirectoryInfo(path, cmpPath, cmpRev, false, parent);
+        myCurrentDirInfo = createDirectoryInfo(path, cmpPath, cmpRev, parent);
     }
 
     public void openFile(String path, long revision) throws SVNException {
@@ -153,7 +192,7 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     public void openRoot(long revision) throws SVNException {
-        myCurrentDirInfo = createDirectoryInfo(null, null, -1, false, null);
+        myCurrentDirInfo = createDirectoryInfo(null, null, -1, null);
     }
 
     public void targetRevision(long revision) throws SVNException {
@@ -170,6 +209,7 @@ public class SVNDumpEditor implements ISVNEditor {
     }
 
     private void dumpNode(String path, SVNNodeKind kind, int nodeAction, boolean isCopy, String cmpPath, long cmpRev) throws SVNException {
+        File tmpFile = null;
         try {
             writeDumpData(SVNAdminHelper.DUMPFILE_NODE_PATH + ": " + (path.startsWith("/") ? path.substring(1) : path) + "\n");
             
@@ -232,7 +272,7 @@ public class SVNDumpEditor implements ISVNEditor {
                         }
                         mustDumpProps = true;
                     } else {
-                        if (cmpRev < myOldestDumpedRevision) {
+                        if (!myIsVerify && cmpRev < myOldestDumpedRevision) {
                             SVNDebugLog.getDefaultLog().logFine(SVNLogType.FSFS, 
                                     "WARNING: Referencing data in revision " + cmpRev + 
                                     ", which is older than the oldest\nWARNING: dumped revision (" + 
@@ -275,7 +315,7 @@ public class SVNDumpEditor implements ISVNEditor {
                 SVNProperties props = node.getProperties(myFSFS);
                 SVNProperties oldProps = null;
                 if (myUseDeltas && compareRoot != null) {
-                    FSRevisionNode cmpNode = myRoot.getRevisionNode(comparePath);
+                    FSRevisionNode cmpNode = compareRoot.getRevisionNode(comparePath);
                     oldProps = cmpNode.getProperties(myFSFS);
                     writeDumpData(SVNAdminHelper.DUMPFILE_PROP_DELTA + ": true\n");
                 }
@@ -286,15 +326,12 @@ public class SVNDumpEditor implements ISVNEditor {
                 contentLength += propContents.length();
                 writeDumpData(SVNAdminHelper.DUMPFILE_PROP_CONTENT_LENGTH + ": " + propContents.length() + "\n");
             }
-            
-            File tmpFile = null;
             if (mustDumpText && kind == SVNNodeKind.FILE) {
                 long txtLength = 0; 
                 FSRevisionNode node = myRoot.getRevisionNode(canonicalPath);
 
                 if (myUseDeltas) {
                     tmpFile = SVNFileUtil.createTempFile("dump", ".tmp");
-                    tmpFile.deleteOnExit();
                     
                     InputStream sourceStream = null;
                     InputStream targetStream = null;
@@ -348,6 +385,9 @@ public class SVNDumpEditor implements ISVNEditor {
                             }
                             
                             hexDigest = revNode.getFileSHA1Checksum();
+                            if (hexDigest == null) {
+                                hexDigest = computeSHA1Checksum(compareRoot, comparePath);
+                            }
                             if (hexDigest != null && hexDigest.length() > 0) {
                                 writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_DELTA_BASE_SHA1 + ": " + hexDigest + "\n");
                             }
@@ -371,6 +411,9 @@ public class SVNDumpEditor implements ISVNEditor {
                 }
                 
                 checksum = node.getFileSHA1Checksum();
+                if (checksum == null) {
+                    checksum = computeSHA1Checksum(myRoot, canonicalPath);
+                }
                 if (checksum != null && checksum.length() > 0) {
                     writeDumpData(SVNAdminHelper.DUMPFILE_TEXT_CONTENT_SHA1 + ": " + checksum + "\n");
                 }
@@ -396,12 +439,24 @@ public class SVNDumpEditor implements ISVNEditor {
                     SVNFileUtil.closeFile(source);
                 }
             }
-            
             writeDumpData("\n\n");
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
             SVNErrorManager.error(err, ioe, SVNLogType.FSFS);
+        } finally {
+            SVNFileUtil.deleteFile(tmpFile);
         }
+    }
+    
+    private String computeSHA1Checksum(FSRoot revision, String filePath) throws SVNException {
+        InputStream is = revision.getFileStreamForPath(getDeltaCombiner(), filePath);
+        SVNChecksumInputStream checksum = null;
+        try {
+            checksum = new SVNChecksumInputStream(is, "SHA1");
+        } finally {
+            SVNFileUtil.closeFile(checksum);
+        }        
+        return checksum != null ? checksum.getDigest() : null;
     }
     
     private SVNDeltaGenerator getDeltaGenerator() {
@@ -420,7 +475,7 @@ public class SVNDumpEditor implements ISVNEditor {
         return myDeltaCombiner;
     }
 
-    private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, boolean added, DirectoryInfo parent) {
+    private DirectoryInfo createDirectoryInfo(String path, String copyFromPath, long copyFromRev, DirectoryInfo parent) {
         String fullPath = null;
         if (parent != null) {
             fullPath = SVNPathUtil.getAbsolutePath(SVNPathUtil.append(myRootPath, path));
@@ -433,7 +488,7 @@ public class SVNDumpEditor implements ISVNEditor {
             cmpPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath; 
         }
         
-        return new DirectoryInfo(fullPath, cmpPath, copyFromRev, added, parent);
+        return new DirectoryInfo(fullPath, cmpPath, copyFromRev, parent);
     }
 
     private void writeDumpData(String data) throws IOException {
@@ -444,15 +499,13 @@ public class SVNDumpEditor implements ISVNEditor {
         String myFullPath;
         String myComparePath;
         long myCompareRevision;
-        boolean myIsAdded;
         boolean myIsWrittenOut;
         Map myDeletedEntries;
         DirectoryInfo myParentInfo;
         
-        public DirectoryInfo(String path, String cmpPath, long cmpRev, boolean added, DirectoryInfo parent) {
+        public DirectoryInfo(String path, String cmpPath, long cmpRev, DirectoryInfo parent) {
             myFullPath = path;
             myParentInfo = parent;
-            myIsAdded = added;
             myComparePath = cmpPath;
             myCompareRevision = cmpRev;
             myDeletedEntries = new SVNHashMap();

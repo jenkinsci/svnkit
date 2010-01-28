@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/internal/delta
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/core/internal/delta
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-04-21T14:43:00.959095Z
-5772
+2009-09-11T12:58:06.148244Z
+6086
 alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2009-05-27T05:49:48.000000Z
-0087b98195702dad4c2ad416b7f30dbb
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:41.000000Z
+a1bffb2476ae460a16c7930f02c8393b
+2009-09-11T12:58:06.148244Z
+6086
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-23883
+23877
 
 SVNXDeltaAlgorithm.java
 file
@@ -66,7 +66,7 @@ file
 
 
 
-2009-05-27T05:49:48.000000Z
+2010-01-28T00:13:48.000000Z
 b895e5d770da24d3610200bb1f3c54b5
 2009-04-21T14:43:00.959095Z
 5772
@@ -100,10 +100,10 @@ file
 
 
 
-2009-05-27T05:49:48.000000Z
-d181e735017e8898e420c7fa50eed36e
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:41.000000Z
+ece06123e2f0836726d852e46375cd52
+2009-06-19T14:37:04.002209Z
+5926
 alex
 has-props
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-8700
+8801
 
 SVNRangeTree.java
 file
@@ -134,10 +134,10 @@ file
 
 
 
-2009-05-27T05:49:48.000000Z
-ff854f7c32bb949455b85b00af1c2ddc
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:41.000000Z
+67ab74e72afb688f00b4409ccdec42e1
+2009-09-11T12:58:06.148244Z
+6086
 alex
 has-props
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-12584
+13234
 
 SVNDeltaAlgorithm.java
 file
@@ -168,7 +168,7 @@ file
 
 
 
-2009-05-27T05:49:48.000000Z
+2010-01-28T00:13:48.000000Z
 5b12949bc891b75f019fb965810b20ee
 2009-04-21T14:43:00.959095Z
 5772
@@ -202,10 +202,10 @@ file
 
 
 
-2009-05-27T05:49:48.000000Z
-f66b7823819a0021d0a3682c2dba8866
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:41.000000Z
+f7e4cd1037bf7744d7cd50a73aa60f25
+2009-09-11T12:58:06.148244Z
+6086
 alex
 has-props
 
@@ -228,5 +228,5 @@ has-props
 
 
 
-6392
+6464
 

@@ -15,6 +15,7 @@ import java.util.Arrays;
 
 /**
  * @version 1.3
+ * @deprecated {@link SVNXDeltaAlgorithm} is used instead in all cases.
  * @author  TMate Software Ltd.
  */
 public class SVNVDeltaAlgorithm extends SVNDeltaAlgorithm {

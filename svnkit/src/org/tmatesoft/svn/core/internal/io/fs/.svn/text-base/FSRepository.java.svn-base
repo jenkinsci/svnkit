@@ -682,7 +682,10 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
 		return false;
 	}
 
-    void closeRepository() {
+    void closeRepository() throws SVNException {
+        if (myFSFS != null) {
+            myFSFS.close();
+        }
         unlock();
     }
 
@@ -915,7 +918,7 @@ public class FSRepository extends SVNRepository implements ISVNReporter {
                     if (userName == null || "".equals(userName.trim())) {
                         userName = System.getProperty("user.name");
                     }
-                    auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed());
+                    auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), getLocation(), false);
                     if (userName != null && !"".equals(userName.trim())) {
                         authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, realm, null, auth);
                         return auth.getUserName();

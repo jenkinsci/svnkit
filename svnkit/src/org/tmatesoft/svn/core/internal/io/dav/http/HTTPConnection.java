@@ -54,6 +54,7 @@ import org.tmatesoft.svn.core.internal.util.FixedSizeInputStream;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableOutputStream;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -234,10 +235,10 @@ class HTTPConnection implements IHTTPConnection {
             byte[] buffer = getBuffer(); 
             while(length > 0) {
                 int read = source.read(buffer, 0, (int) Math.min(buffer.length, length));
-                length -= read;
                 if (read > 0) {
+                    length -= read;
                     getOutputStream().write(buffer, 0, read);
-                } else {
+                } else if (read < 0) {
                     break;
                 }
             }
@@ -281,16 +282,18 @@ class HTTPConnection implements IHTTPConnection {
         if ("".equals(path) || path == null) {
             path = "/";
         }
+        
+        ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
 
         // 1. prompt for ssl client cert if needed, if cancelled - throw cancellation exception.
-        HTTPSSLKeyManager keyManager = myKeyManager == null && myRepository.getAuthenticationManager() != null ? createKeyManager() : myKeyManager;
-        TrustManager trustManager = myTrustManager == null && myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().getTrustManager(myRepository.getLocation()) : myTrustManager;
+        HTTPSSLKeyManager keyManager = myKeyManager == null && authManager != null ? createKeyManager() : myKeyManager;
+        TrustManager trustManager = myTrustManager == null && authManager != null ? authManager.getTrustManager(myRepository.getLocation()) : myTrustManager;
 
         String sslRealm = "<" + myHost.getProtocol() + "://" + myHost.getHost() + ":" + myHost.getPort() + ">";
         SVNAuthentication httpAuth = myLastValidAuth;
-        boolean isAuthForced = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().isAuthenticationForced() : false;
+        boolean isAuthForced = authManager != null ? authManager.isAuthenticationForced() : false;
         if (httpAuth == null && isAuthForced) {
-            httpAuth = myRepository.getAuthenticationManager().getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
+            httpAuth = authManager.getFirstAuthentication(ISVNAuthenticationManager.PASSWORD, sslRealm, null);
             myChallengeCredentials = new HTTPBasicAuthentication((SVNPasswordAuthentication)httpAuth, myCharset);
         } 
         String realm = null;
@@ -417,8 +420,13 @@ class HTTPConnection implements IHTTPConnection {
                 err = request.getErrorMessage();
             } else if (myIsProxied && status.getCode() == HttpURLConnection.HTTP_PROXY_AUTH) {
                 Collection proxyAuthHeaders = request.getResponseHeader().getHeaderValues(HTTPHeader.PROXY_AUTHENTICATE_HEADER);
+                Collection authTypes = null;
+                if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
+                    DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
+                    authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
+                }
                 try {
-                    myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset); 
+                    myProxyAuthentication = HTTPAuthentication.parseAuthParameters(proxyAuthHeaders, myProxyAuthentication, myCharset, authTypes); 
                 } catch (SVNException svne) {
                     myRepository.getDebugLog().logFine(SVNLogType.NETWORK, svne);
                     err = svne.getErrorMessage(); 
@@ -435,7 +443,6 @@ class HTTPConnection implements IHTTPConnection {
 
                 err = SVNErrorMessage.create(SVNErrorCode.RA_NOT_AUTHORIZED, "HTTP proxy authorization failed");
                 SVNURL location = myRepository.getLocation();
-                ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
                 if (proxyManager != null) {
                     proxyManager.acknowledgeProxyContext(false, err);
@@ -463,15 +470,21 @@ class HTTPConnection implements IHTTPConnection {
                 //forcing it, credentials should not be immediately
                 //thrown away
                 boolean skip = false;
-                isAuthForced = myRepository.getAuthenticationManager() != null ? myRepository.getAuthenticationManager().isAuthenticationForced() : false;
+                isAuthForced = authManager != null ? authManager.isAuthenticationForced() : false;
                 if (isAuthForced) {
                     if (httpAuth != null && myChallengeCredentials != null && !HTTPAuthentication.isSchemeSupportedByServer(myChallengeCredentials.getAuthenticationScheme(), authHeaderValues)) {
                         skip = true;
                     }
                 }
                 
+                Collection authTypes = null;
+                if (authManager != null && authManager instanceof DefaultSVNAuthenticationManager) {
+                    DefaultSVNAuthenticationManager defaultAuthManager = (DefaultSVNAuthenticationManager) authManager;
+                    authTypes = defaultAuthManager.getAuthTypes(myRepository.getLocation());
+                }
+                
                 try {
-                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials, myCharset); 
+                    myChallengeCredentials = HTTPAuthentication.parseAuthParameters(authHeaderValues, myChallengeCredentials, myCharset, authTypes); 
                 } catch (SVNException svne) {
                     err = svne.getErrorMessage(); 
                     break;
@@ -522,7 +535,6 @@ class HTTPConnection implements IHTTPConnection {
                     continue;
                 }
 
-                ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 if (authManager == null) {
                     err = request.getErrorMessage();
                     break;
@@ -583,18 +595,17 @@ class HTTPConnection implements IHTTPConnection {
             
             if (myIsProxied) {
                 SVNURL location = myRepository.getLocation();
-                ISVNAuthenticationManager authManager = myRepository.getAuthenticationManager();
                 ISVNProxyManager proxyManager = authManager != null ? authManager.getProxyManager(location) : null;
                 if (proxyManager != null) {
                     proxyManager.acknowledgeProxyContext(true, null);
                 }
             }
             
-            if (httpAuth != null && realm != null && myRepository.getAuthenticationManager() != null) {
-                myRepository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
+            if (httpAuth != null && realm != null && authManager != null) {
+                authManager.acknowledgeAuthentication(true, ISVNAuthenticationManager.PASSWORD, realm, null, httpAuth);
             }
-	        if (trustManager != null && myRepository.getAuthenticationManager() != null) {
-		        myRepository.getAuthenticationManager().acknowledgeTrustManager(trustManager);
+	        if (trustManager != null && authManager != null) {
+		        authManager.acknowledgeTrustManager(trustManager);
 	        }
             
             if (httpAuth != null) {
@@ -612,7 +623,6 @@ class HTTPConnection implements IHTTPConnection {
             SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         // err2 is another default context...
-//        myRepository.getDebugLog().info(err.getMessage());
         myRepository.getDebugLog().logFine(SVNLogType.NETWORK, new Exception(err.getMessage()));
         SVNErrorMessage err2 = SVNErrorMessage.create(SVNErrorCode.RA_DAV_REQUEST_FAILED, "{0} request failed on ''{1}''", new Object[] {method, path}, err.getType(), err.getCause());
         SVNErrorManager.error(err, err2, SVNLogType.NETWORK);
@@ -889,7 +899,7 @@ class HTTPConnection implements IHTTPConnection {
 
     private static synchronized SAXParserFactory getSAXParserFactory() throws FactoryConfigurationError {
         if (ourSAXParserFactory == null) {
-            ourSAXParserFactory = SAXParserFactory.newInstance();
+            ourSAXParserFactory = createSAXParserFactory();
             Map supportedFeatures = new SVNHashMap();
             try {
                 ourSAXParserFactory.setFeature("http://xml.org/sax/features/namespaces", true);
@@ -913,7 +923,7 @@ class HTTPConnection implements IHTTPConnection {
             } catch (ParserConfigurationException e) {
             }
             if (supportedFeatures.size() < 3) {
-                ourSAXParserFactory = SAXParserFactory.newInstance();
+                ourSAXParserFactory = createSAXParserFactory();
                 for (Iterator names = supportedFeatures.keySet().iterator(); names.hasNext();) {
                     String name = (String) names.next();
                     try {
@@ -928,6 +938,39 @@ class HTTPConnection implements IHTTPConnection {
             ourSAXParserFactory.setValidating(false);
         }
         return ourSAXParserFactory;
+    }
+    
+    public static SAXParserFactory createSAXParserFactory() {
+        String legacy = System.getProperty("svnkit.sax.useDefault");
+        if (legacy == null || !Boolean.valueOf(legacy).booleanValue()) {
+            return SAXParserFactory.newInstance();
+        }
+        // instantiate JVM parser.
+        String[] parsers = {"com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl", // 1.5, 1.6
+                            "org.apache.crimson.jaxp.SAXParserFactoryImpl", // 1.4
+                            };
+        for (int i = 0; i < parsers.length; i++) {
+            String className = parsers[i];
+            ClassLoader loader = HTTPConnection.class.getClassLoader();
+            try {
+                Class clazz = null;
+                if (loader != null) {
+                    clazz = loader.loadClass(className);
+                } else {
+                    clazz = Class.forName(className);
+                }
+                if (clazz != null) {
+                    Object factory = clazz.newInstance();
+                    if (factory instanceof SAXParserFactory) {
+                        return (SAXParserFactory) factory;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+            } catch (InstantiationException e) {
+            } catch (IllegalAccessException e) {
+            }
+        }
+        return SAXParserFactory.newInstance();
     }
 
     public void setSpoolResponse(boolean spoolResponse) {

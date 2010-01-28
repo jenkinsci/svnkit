@@ -476,21 +476,29 @@ public class SVNMergeInfoUtil {
     }
     
     public static Map removeMergeInfo(Map eraser, Map whiteBoard) {
+        return removeMergeInfo(eraser, whiteBoard, true);
+    }
+
+    public static Map removeMergeInfo(Map eraser, Map whiteBoard, boolean considerInheritance) {
         Map mergeInfo = new TreeMap();
-        walkMergeInfoHashForDiff(mergeInfo, null, whiteBoard, eraser, true);
+        walkMergeInfoHashForDiff(mergeInfo, null, whiteBoard, eraser, considerInheritance);
         return mergeInfo;
     }
-    
+
     public static Map intersectMergeInfo(Map mergeInfo1, Map mergeInfo2) {
+        return intersectMergeInfo(mergeInfo1, mergeInfo2, true);
+    }
+
+    public static Map intersectMergeInfo(Map mergeInfo1, Map mergeInfo2, boolean considerInheritance) {
         Map mergeInfo = new TreeMap();
         for (Iterator pathsIter = mergeInfo1.keySet().iterator(); pathsIter.hasNext();) {
             String path = (String) pathsIter.next();
             SVNMergeRangeList rangeList1 = (SVNMergeRangeList) mergeInfo1.get(path);
             SVNMergeRangeList rangeList2 = (SVNMergeRangeList) mergeInfo2.get(path);
             if (rangeList2 != null) {
-                rangeList2 = rangeList2.intersect(rangeList1, true);
+                rangeList2 = rangeList2.intersect(rangeList1, considerInheritance);
                 if (!rangeList2.isEmpty()) {
-                    mergeInfo.put(path, rangeList2);
+                    mergeInfo.put(path, rangeList2.dup());
                 }
             }
         }

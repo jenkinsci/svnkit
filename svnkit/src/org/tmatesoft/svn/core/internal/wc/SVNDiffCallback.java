@@ -56,7 +56,8 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         return myGenerator.isDiffCopied();
     }
 
-    public SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflictAdded) throws SVNException {
+    public SVNStatusType directoryAdded(String path, long revision, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
         myGenerator.displayAddedDirectory(getDisplayPath(path), getRevision(myRevision1), getRevision(revision));
         return SVNStatusType.UNKNOWN;
     }
@@ -101,7 +102,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         if (file1 != null) {
             boolean useDefaultEncoding = defineEncoding(originalProperties, null);
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(myRevision1), getRevision(myRevision2), mimeType1, mimeType2, myResult);
-            if (useDefaultEncoding) {
+            if (!useDefaultEncoding) {
                 myGenerator.setEncoding(null);
             }
         }
@@ -151,14 +152,17 @@ public class SVNDiffCallback extends AbstractDiffCallback {
     }
 
     public SVNStatusType directoryDeleted(String path, boolean[] isTreeConflicted) throws SVNException {
-        return null;
+        setIsConflicted(isTreeConflicted, false);
+        return directoryDeleted(path);
     }
 
     public void directoryOpened(String path, long revision, boolean[] isTreeConflicted) throws SVNException {
+        setIsConflicted(isTreeConflicted, false);
     }
 
     public SVNStatusType[] directoryClosed(String path, boolean[] isTreeConflicted) throws SVNException {
-        return null;
+        setIsConflicted(isTreeConflicted, false);
+        return EMPTY_STATUS;
     }
 
 }

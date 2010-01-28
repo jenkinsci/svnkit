@@ -1,8 +1,8 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/contrib/sequence/src
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/contrib/sequence/src
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -12,7 +12,7 @@ http://svn.svnkit.com/repos/svnkit
 alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 

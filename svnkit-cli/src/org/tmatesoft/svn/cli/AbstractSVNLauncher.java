@@ -87,6 +87,7 @@ public abstract class AbstractSVNLauncher {
             success();
         } catch (Throwable th) {
             SVNDebugLog.getDefaultLog().logSevere(SVNLogType.CLIENT, th);            
+            th.printStackTrace();
             if (env != null) {
                 env.dispose();
             }

@@ -94,10 +94,10 @@ public class SVNRevision {
     }
 
     private static Pattern ISO_8601_EXTENDED_DATE_ONLY_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})"); 
-    private static Pattern ISO_8601_EXTENDED_UTC_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?(?:Z)?"); 
+    private static Pattern ISO_8601_EXTENDED_UTC_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?(Z)?"); 
     private static Pattern ISO_8601_EXTENDED_OFFSET_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?([+-])(\\d{2})(:(\\d{2}))?"); 
     private static Pattern ISO_8601_BASIC_DATE_ONLY_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})"); 
-    private static Pattern ISO_8601_BASIC_UTC_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})((\\d{2})([.,](\\d{1,6}))?)?(?:Z)?"); 
+    private static Pattern ISO_8601_BASIC_UTC_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})((\\d{2})([.,](\\d{1,6}))?)?(Z)?"); 
     private static Pattern ISO_8601_BASIC_OFFSET_PATTERN = Pattern.compile("(\\d{4})(\\d{2})(\\d{2})T(\\d{2})(\\d{2})((\\d{2})([.,](\\d{1,6}))?)?([+-])(\\d{2})((\\d{2}))?"); 
     private static Pattern ISO_8601_GNU_FORMAT_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2})T(\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?([+-])(\\d{2})((\\d{2}))?"); 
     private static Pattern SVN_LOG_DATE_FORMAT_PATTERN = Pattern.compile("(\\d{4})-(\\d{1,2})-(\\d{1,2}) (\\d{1,2}):(\\d{2})(:(\\d{2})([.,](\\d{1,6}))?)?( ([+-])(\\d{2})(\\d{2})?)?"); 
@@ -376,6 +376,10 @@ public class SVNRevision {
                                 zoneOffsetInMillis = zoneOffsetInMillis * ((hoursOffset*3600 + 
                                                      minutesOffset*60)*1000);
                                 date.set(Calendar.ZONE_OFFSET, zoneOffsetInMillis);
+                            } else if (((pattern == ISO_8601_EXTENDED_UTC_PATTERN) || (pattern == ISO_8601_BASIC_UTC_PATTERN))
+                            		&& "Z".equals(matcher.group(10))) {
+                                date.set(Calendar.ZONE_OFFSET, 0);
+                                date.set(Calendar.DST_OFFSET, 0);
                             }
                         } else if (pattern == TIME_ONLY_PATTERN) {
                             int hours = Integer.parseInt(matcher.group(1));

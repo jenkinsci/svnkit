@@ -84,7 +84,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private String myKeywordLocale = DEFAULT_LOCALE; 
     private String myKeywordTimezone = DEFAULT_TIMEZONE;
     private SimpleDateFormat myKeywordDateFormat = new SimpleDateFormat("yyyy-MM-dd' 'HH:mm:ss' 'ZZZZ' ('E', 'dd' 'MMM' 'yyyy')'");
-    
+    private Map myConfigOptions;
     
     public DefaultSVNOptions() {
         this(null, true);
@@ -100,6 +100,13 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return getBooleanValue(value, false);
     }
 
+    public void setInMemoryConfigOptions(Map configOptions) {
+        myConfigOptions = configOptions;
+        if (myConfigFile != null) {
+            myConfigFile.setGroupsToOptions(myConfigOptions);
+        }
+    }
+    
     /**
      * Enables or disables the commit-times option.
      *
@@ -671,6 +678,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
             SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, "config"));
             SVNConfigFile systemConfig = new SVNConfigFile(new File(SVNFileUtil.getSystemConfigurationDirectory(), "config"));
             myConfigFile = new SVNCompositeConfigFile(systemConfig, userConfig);
+            myConfigFile.setGroupsToOptions(myConfigOptions);
         }
         return myConfigFile;
     }
@@ -752,7 +760,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
         return SVNWCUtil.getDefaultConfigurationDirectory();
     }
 
-    private static boolean getBooleanValue(String value, boolean defaultValue) {
+    public static boolean getBooleanValue(String value, boolean defaultValue) {
         if (value == null) {
             return defaultValue;
         }

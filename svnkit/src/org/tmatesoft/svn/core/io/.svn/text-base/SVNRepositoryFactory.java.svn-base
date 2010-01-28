@@ -28,9 +28,11 @@ import java.util.regex.Pattern;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNRevisionProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.fs.FSFS;
+import org.tmatesoft.svn.core.internal.io.fs.FSRepresentationCacheUtil;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNUUIDGenerator;
@@ -647,11 +649,18 @@ public abstract class SVNRepositoryFactory {
 
             // set creation date.
             File rev0File = new File(path, maxFilesPerDir > 0 ? "db/revprops/0/0" : "db/revprops/0");
-            SVNWCProperties props = new SVNWCProperties(rev0File, null);
             String date = SVNDate.formatDate(new Date(System.currentTimeMillis()), true);
-            props.setPropertyValue(SVNRevisionProperty.DATE, date);
+            Map props = new SVNHashMap();
+            props.put(SVNRevisionProperty.DATE, date);
+            SVNWCProperties.setProperties(SVNProperties.wrap(props), rev0File, null, SVNWCProperties.SVN_HASH_TERMINATOR);
         
             setSGID(new File(path, FSFS.DB_DIR));
+            
+            if (fsFormat >= FSFS.MIN_REP_SHARING_FORMAT) {
+                File repCacheFile = new File(path, FSFS.DB_DIR + "/" + FSFS.REP_CACHE_DB);
+                FSRepresentationCacheUtil.create(repCacheFile);
+            }
+            
         } finally {
             SVNFileUtil.closeFile(uuidOS);
             SVNFileUtil.closeFile(reposFormatOS);
@@ -673,8 +682,10 @@ public abstract class SVNRepositoryFactory {
             os = SVNFileUtil.openFileForWriting(dstFile);
             while(true) {
                 int r = is.read(buffer);
-                if (r <= 0) {
+                if (r < 0) {
                     break;
+                } else if (r == 0) {
+                    continue;
                 }
                 os.write(buffer, 0, r);
             }
@@ -714,8 +725,10 @@ public abstract class SVNRepositoryFactory {
                         fos = SVNFileUtil.openFileForWriting(entryFile);
                         while(true) {
                             int r = fis.read(buffer);
-                            if (r <= 0) {
+                            if (r < 0) {
                                 break;
+                            } else if (r == 0) {
+                                continue;
                             }
                             fos.write(buffer, 0, r);
                         }

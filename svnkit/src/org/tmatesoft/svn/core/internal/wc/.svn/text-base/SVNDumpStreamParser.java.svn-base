@@ -209,16 +209,26 @@ public class SVNDumpStreamParser {
                     }
                     
                     byte buf[] = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
+
+                    long numRead = 0;
+                    long numToRead = remaining;
                     while (remaining > 0) {
-                        int numToRead = remaining >= SVNFileUtil.STREAM_CHUNK_SIZE ? 
+                        int readSize = remaining >= SVNFileUtil.STREAM_CHUNK_SIZE ? 
                                 SVNFileUtil.STREAM_CHUNK_SIZE : (int) remaining;
-                        int numRead = dumpStream.read(buf, 0, numToRead);
-                        
-                        remaining -= numRead;
-                        if (numRead != numToRead) {
-                            SVNAdminHelper.generateIncompleteDataError();
+
+                        int r = dumpStream.read(buf, 0, readSize);
+                        if (r < 0) {
+                            break;
                         }
+                        
+                        numRead += r;
+                        remaining -= r;
                     }
+
+                    if (numRead != numToRead) {
+                        SVNAdminHelper.generateIncompleteDataError();
+                    }
+
                 }
                 
                 if (foundNode) {

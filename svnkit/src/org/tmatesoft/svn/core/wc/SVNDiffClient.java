@@ -39,10 +39,10 @@ import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNDiffStatusEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExtendedMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -89,7 +89,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since   1.2
  * @author  TMate Software Ltd.
  */
-public class SVNDiffClient extends SVNExtendedMergeDriver {
+public class SVNDiffClient extends SVNMergeDriver {
 
     private ISVNDiffGenerator myDiffGenerator;
     private SVNDiffOptions myDiffOptions;
@@ -3013,7 +3013,7 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
         
         Map srcHistory = getHistoryAsMergeInfo(realMergeSrcURL, null, realSrcPegRevision, SVNRepository.INVALID_REVISION, 
                 SVNRepository.INVALID_REVISION, null, null);
-        Map mergeInfo = SVNMergeInfoUtil.intersectMergeInfo(targetMergeInfo, srcHistory);
+        Map mergeInfo = SVNMergeInfoUtil.intersectMergeInfo(targetMergeInfo, srcHistory, false);
         SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
         long youngestRev = SVNRepository.INVALID_REVISION;
         String logTarget = null;
@@ -3066,7 +3066,7 @@ public class SVNDiffClient extends SVNExtendedMergeDriver {
             repos.closeSession();
         }
         
-        Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory);
+        Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory, false);
         SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
         long youngestRev = SVNRepository.INVALID_REVISION;
         String logTarget = null;

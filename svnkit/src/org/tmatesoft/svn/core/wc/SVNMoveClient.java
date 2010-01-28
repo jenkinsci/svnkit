@@ -231,12 +231,13 @@ public class SVNMoveClient extends SVNCopyDriver {
                     dstParentArea = wcAccess.open(dstParent, true, 0);
                 }
 
-                SVNEntry srcEntry = srcParentArea.getEntry(src.getName(), false);
+                SVNEntry srcEntry = srcParentArea.getVersionedEntry(src.getName(), false);
                 SVNEntry dstEntry = dstParentArea.getEntry(dst.getName(), false);
 
                 File srcWCRoot = SVNWCUtil.getWorkingCopyRoot(src, true);
                 File dstWCRoot = SVNWCUtil.getWorkingCopyRoot(dst, true);
                 boolean sameWC = srcWCRoot != null && srcWCRoot.equals(dstWCRoot);
+                
                 if (sameWC && dstEntry != null
                         && (dstEntry.isScheduledForDeletion() || dstEntry.getKind() != srcEntry.getKind())) {
                     wcAccess.close();
@@ -255,6 +256,17 @@ public class SVNMoveClient extends SVNCopyDriver {
                     }
                     myWCClient.doDelete(src, true, false);
                     return;
+                } else if (!sameWC) {
+                    SVNEntry dstTmpEntry = dstEntry != null ? dstEntry : dstParentArea.getVersionedEntry(dstParentArea.getThisDirName(), false); 
+                    if (srcEntry.getRepositoryRoot() != null && dstTmpEntry.getRepositoryRoot() != null &&
+                            srcEntry.getRepositoryRoot().equals(dstTmpEntry.getRepositoryRoot())) {
+                        //this is the case when different WCs occur to be from the same repository,
+                        //use SVNCopyClient to move between them
+                        wcAccess.close();
+                        SVNCopySource source = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
+                        myCopyClient.doCopy(new SVNCopySource[] { source }, dst, true, false, true);
+                        return;
+                    }
                 }
 
                 if (dstEntry != null) {

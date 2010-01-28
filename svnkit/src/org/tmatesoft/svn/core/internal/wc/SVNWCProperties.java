@@ -259,17 +259,6 @@ public class SVNWCProperties {
         return null;
     }
 
-    public void setPropertyValue(String name, String value) throws SVNException {
-        byte[] bytes = null;
-        try {
-            bytes = value == null ? null : value.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            bytes = value.getBytes();
-        }
-        int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
-        setPropertyValue(name, bytes != null ? new ByteArrayInputStream(bytes) : null, length);
-    }
-
     public void setPropertyValue(String name, SVNPropertyValue value) throws SVNException {
         byte[] bytes = SVNPropertyValue.getPropertyAsBytes(value);
         int length = bytes != null && bytes.length >= 0 ? bytes.length : -1;
@@ -343,18 +332,6 @@ public class SVNWCProperties {
             }
         });
         return locallyChangedProperties;
-    }
-
-    public void copyTo(SVNWCProperties destination) throws SVNException {
-        if (isEmpty()) {
-            SVNFileUtil.deleteFile(destination.getFile());
-        } else {
-            SVNFileUtil.copyFile(getFile(), destination.getFile(), false);
-        }
-    }
-
-    public void delete() throws SVNException {
-        SVNFileUtil.deleteFile(getFile());
     }
 
     public static void setProperties(SVNProperties namesToValues, File target, File tmpFile, String terminator) throws SVNException {
@@ -437,7 +414,8 @@ public class SVNWCProperties {
                 int l = 0;
                 while ((l = readLength(is, 'K')) > 0) {
                     byte[] nameBytes = new byte[l];
-                    is.read(nameBytes);
+                
+                    SVNFileUtil.readIntoBuffer(is, nameBytes, 0, nameBytes.length);
                     is.read();
                     if (name.equals(new String(nameBytes, "UTF-8"))) {
                         // skip property, will be appended.
@@ -475,7 +453,9 @@ public class SVNWCProperties {
         }
         if (os != null) {
             byte[] value = new byte[length];
-            int r = is.read(value);
+            
+            int r = SVNFileUtil.readIntoBuffer(is, value, 0, value.length);
+            
             if (r >= 0) {
                 os.write(value, 0, r);
             } else {
@@ -514,7 +494,7 @@ public class SVNWCProperties {
 
     private static int readLength(InputStream is, char type) throws IOException {
         byte[] buffer = new byte[255];
-        int r = is.read(buffer, 0, 4);
+        int r = SVNFileUtil.readIntoBuffer(is, buffer, 0, 4);
         if (r != 4) {
             throw new IOException("invalid properties file format");
         }

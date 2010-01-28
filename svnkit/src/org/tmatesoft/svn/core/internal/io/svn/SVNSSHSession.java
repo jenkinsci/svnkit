@@ -164,6 +164,13 @@ public class SVNSSHSession {
             }
             // close whole connection only if there are others usable left.
             LinkedList connectionsList = (LinkedList) ourConnectionsPool.get(connectionInfo.getKey());
+            if (connectionsList == null) {
+                connectionInfo.dispose();
+                SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": NOTHING TO CLOSE, " +
+                        "NO CONNECTIONS FOUND: " + connectionInfo);
+                return;
+            }
+
             if (connectionsList.size() <= 1) {
                 connectionInfo.startTimeout();
                 SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": NOT CLOSED, " +
@@ -585,7 +592,7 @@ public class SVNSSHSession {
                 if (list != null && list.contains(this)) {
                     list.remove(this);
                 }
-                if (list.isEmpty()) {
+                if (list != null && list.isEmpty()) {
                     ourConnectionsPool.remove(myKey);
                 }
                 dispose();

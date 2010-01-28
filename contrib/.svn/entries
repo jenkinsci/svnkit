@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/contrib
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/contrib
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-05-13T11:28:20.938259Z
-5847
+2009-11-27T15:43:50.657821Z
+6266
 sa
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -26,10 +26,16 @@ svn:special svn:externals svn:needs-lock
 
 0a862816-5deb-0310-9199-c792c6ae6c6e
 
+sqljet
+dir
+
 trilead
 dir
 
 javahl
+dir
+
+maven
 dir
 
 jna

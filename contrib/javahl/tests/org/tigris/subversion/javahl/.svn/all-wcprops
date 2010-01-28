@@ -1,35 +1,35 @@
 K 25
 svn:wc:ra_dav:version-url
-V 93
-/repos/svn/!svn/ver/36662/trunk/subversion/bindings/javahl/tests/org/tigris/subversion/javahl
+V 110
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/bindings/javahl/tests/org/tigris/subversion/javahl
 END
 SVNAdminTests.java
 K 25
 svn:wc:ra_dav:version-url
-V 112
-/repos/svn/!svn/ver/26775/trunk/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/SVNAdminTests.java
+V 129
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/SVNAdminTests.java
 END
 BasicTests.java
 K 25
 svn:wc:ra_dav:version-url
-V 109
-/repos/svn/!svn/ver/36662/trunk/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/BasicTests.java
+V 126
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/BasicTests.java
 END
 RunTests.java
 K 25
 svn:wc:ra_dav:version-url
-V 107
-/repos/svn/!svn/ver/26775/trunk/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/RunTests.java
+V 124
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/RunTests.java
 END
 SVNTests.java
 K 25
 svn:wc:ra_dav:version-url
-V 107
-/repos/svn/!svn/ver/26775/trunk/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/SVNTests.java
+V 124
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/SVNTests.java
 END
 WC.java
 K 25
 svn:wc:ra_dav:version-url
-V 101
-/repos/svn/!svn/ver/24797/trunk/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/WC.java
+V 118
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/bindings/javahl/tests/org/tigris/subversion/javahl/WC.java
 END

@@ -632,10 +632,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             BlameChunk nextChunk = (BlameChunk) chain.get(i + 1);
             BlameChunk nextMergedChunk = (BlameChunk) mergedChain.get(k + 1);
             if (nextChunk.blockStart < nextMergedChunk.blockStart) {
-                nextMergedChunk.blockStart = nextChunk.blockStart;
+                BlameChunk tmpChunk = new BlameChunk();
+                tmpChunk.copy(mergedChunk);
+                tmpChunk.blockStart = nextChunk.blockStart;
+                mergedChain.add(k + 1, tmpChunk);
+                nextMergedChunk = tmpChunk;
             }
             if (nextChunk.blockStart > nextMergedChunk.blockStart) {
-                nextChunk.blockStart = nextMergedChunk.blockStart;
+                BlameChunk tmpChunk = new BlameChunk();
+                tmpChunk.copy(chunk);
+                tmpChunk.blockStart = nextMergedChunk.blockStart;
+                chain.add(i + 1, tmpChunk);
             }
         }
 
@@ -699,6 +706,17 @@ public class SVNAnnotationGenerator implements ISVNFileRevisionHandler {
             revision = chunk.revision;
             path = chunk.path;
             blockStart = chunk.blockStart;
+        }
+        
+        public String toString() {
+            StringBuffer buf = new StringBuffer();
+            buf.append("\n----\nPath: " + path);
+            buf.append("\nRevision: " + revision);
+            buf.append("\nAuthor: " + author);
+            buf.append("\nDate: " + SVNDate.formatConsoleShortDate(date));
+            buf.append("\nBlock start: " + blockStart);
+            buf.append("\n");
+            return buf.toString();
         }
     }
     

@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -21,9 +22,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.cli.AbstractSVNCommand;
@@ -40,6 +43,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -130,6 +134,8 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private Collection myChangelists;
     private String myAuthorOfInterest;
     private String myRegularExpression;
+    private Map myConfigOptions;
+    private Map myServersOptions;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -224,15 +230,23 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             }
             options.setConflictHandler(new SVNCommandLineConflictHandler(myResolveAccept, this));
         }
+        
+        options.setInMemoryConfigOptions(myConfigOptions);
         return options;
     }
 
     protected ISVNAuthenticationManager createClientAuthenticationManager() {
         File configDir = myConfigDir != null ? new File(myConfigDir) : SVNWCUtil.getDefaultConfigurationDirectory();        
-        ISVNAuthenticationManager authManager = SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
+        DefaultSVNAuthenticationManager authManager = (DefaultSVNAuthenticationManager) SVNWCUtil.createDefaultAuthenticationManager(configDir, myUserName, myPassword, !myIsNoAuthCache);
+        
         if (!myIsNonInteractive) {
-            authManager.setAuthenticationProvider(new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate));
+            SVNConsoleAuthenticationProvider consoleAuthProvider = new SVNConsoleAuthenticationProvider(myIsTrustServerCertificate);
+            authManager.setAuthStoreHandler(consoleAuthProvider);
+            authManager.setAuthenticationProvider(consoleAuthProvider);
         }
+        
+        authManager.setInMemoryConfigOptions(myConfigOptions);
+        authManager.setInMemoryServersOptions(myServersOptions);
         return authManager;
     }
 
@@ -474,6 +488,15 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
             myNewTarget = optionValue.getValue();
         } else if (option == SVNOption.CONFIG_DIR) {
             myConfigDir = optionValue.getValue();
+        } else if (option == SVNOption.CONFIG_OPTION) {
+            if (myConfigOptions == null) {
+                myConfigOptions = new HashMap();
+            }
+            if (myServersOptions == null) {
+                myServersOptions = new HashMap();
+            }
+            
+            SVNCommandUtil.parseConfigOption(optionValue.getValue(), myConfigOptions, myServersOptions);
         } else if (option == SVNOption.AUTOPROPS) {
             if (myIsNoAutoProps) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_MUTUALLY_EXCLUSIVE_ARGS, 

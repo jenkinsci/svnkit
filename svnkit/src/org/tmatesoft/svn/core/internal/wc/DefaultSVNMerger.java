@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.wc;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
@@ -261,6 +263,10 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 	        mergeResult = handleChooseMerged(files, mergeResult);
 	    } else if (mergeAction == DefaultSVNMergerAction.MARK_RESOLVED) {
 	        mergeResult = handleMarkResolved(files, mergeResult);
+	    } else if (mergeAction == DefaultSVNMergerAction.CHOOSE_REPOSITORY_CONFLICTED) {
+	        mergeResult = handleChooseConflicted(false, files);
+	    } else if (mergeAction == DefaultSVNMergerAction.CHOOSE_WORKING_CONFLICTED) {
+	        mergeResult = handleChooseConflicted(true, files);
 	    }
 
 	    postMergeCleanup(files);
@@ -289,6 +295,10 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                     return DefaultSVNMergerAction.CHOOSE_WORKING;                        
                 } else if (choice == SVNConflictChoice.THEIRS_FULL) {
                     return DefaultSVNMergerAction.CHOOSE_REPOSITORY;                        
+                } else if (choice == SVNConflictChoice.MINE_CONFLICT) {
+                    return DefaultSVNMergerAction.CHOOSE_WORKING_CONFLICTED;
+                } else if (choice == SVNConflictChoice.THEIRS_CONFLICT) {
+                    return DefaultSVNMergerAction.CHOOSE_REPOSITORY_CONFLICTED;
                 }
 	        }
 	        return DefaultSVNMergerAction.MARK_CONFLICTED;
@@ -318,7 +328,89 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
         return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
     }
-    
+
+    protected SVNMergeResult handleChooseConflicted(boolean chooseMine, SVNMergeFileSet files) throws SVNException {
+        File tmpFile = SVNAdminUtil.createTmpFile(files.getAdminArea());
+        String separator = new String(getConflictSeparatorMarker());
+        String mineMarker = new String(getConflictStartMarker());
+        String theirsMarker = new String(getConflictEndMarker());
+        OutputStream tmpOS = null;
+        BufferedReader reader = null;
+        boolean skip = false;
+        try {
+            reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(files.getResultFile())));
+            tmpOS = SVNFileUtil.openFileForWriting(tmpFile);
+            String line = null;
+            
+            while ((line = reader.readLine()) != null) {
+                if (mineMarker.equals(line)) {
+                    skip = chooseMine ? false : true;
+                    continue;
+                } else if (separator.equals(line)) {
+                    skip = chooseMine ? true : false;
+                    continue;
+                } else if (theirsMarker.equals(line)) {
+                    skip = false;
+                    continue;
+                } else if (line.endsWith(mineMarker)) {
+                    int ind = line.indexOf(mineMarker);
+                    line = line.substring(0, ind);
+                    tmpOS.write(line.getBytes());
+                    tmpOS.write('\n');
+                    
+                    skip = chooseMine ? false : true;
+                    continue;
+                } else if (line.endsWith(separator)) {
+                    if (chooseMine) {
+                        int ind = line.indexOf(separator);
+                        line = line.substring(0, ind);
+                        tmpOS.write(line.getBytes());
+                        tmpOS.write('\n');
+                    }
+
+                    skip = chooseMine ? true : false;
+                    continue;
+                } else if (line.endsWith(theirsMarker)) {
+                    if (!chooseMine) {
+                        int ind = line.indexOf(theirsMarker);
+                        line = line.substring(0, ind);
+                        tmpOS.write(line.getBytes());
+                        tmpOS.write('\n');
+                    }
+                    
+                    skip = false;
+                    continue;
+                }
+                if (!skip) {
+                    tmpOS.write(line.getBytes());
+                    tmpOS.write('\n');
+                }
+            }
+        } catch (IOException ioe) {
+            String conflictedPart = chooseMine ? "mine-conflict" : "theirs-conflict";
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Error occured while resolving to " + conflictedPart + ": {0}", ioe.getMessage());
+            SVNErrorManager.error(err, ioe, SVNLogType.WC);
+        } finally {
+            SVNFileUtil.closeFile(tmpOS);
+            SVNFileUtil.closeFile(reader);
+        }
+
+        SVNLog log = files.getLog();
+        SVNProperties command = new SVNProperties();
+        String tmpBasePath = SVNFileUtil.getBasePath(tmpFile);
+        command.put(SVNLog.NAME_ATTR, tmpBasePath);
+        command.put(SVNLog.DEST_ATTR, files.getWCPath());
+        log.addCommand(SVNLog.COPY_AND_TRANSLATE, command, false);
+        command.clear();
+
+        command.put(SVNLog.NAME_ATTR, tmpBasePath);
+        log.addCommand(SVNLog.DELETE, command, false);
+        command.clear();
+
+        return SVNMergeResult.createMergeResult(SVNStatusType.MERGED, null);
+    }
+
     protected SVNMergeResult handleChooseWorking(SVNMergeFileSet files) throws SVNException {
         if (files == null) {
             SVNErrorManager.cancel("", SVNLogType.WC);

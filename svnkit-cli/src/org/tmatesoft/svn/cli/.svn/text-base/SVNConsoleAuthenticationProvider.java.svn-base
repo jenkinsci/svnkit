@@ -18,10 +18,12 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.cert.X509Certificate;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
@@ -31,18 +33,49 @@ import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
+import org.tmatesoft.svn.core.internal.wc.ISVNAuthStoreHandler;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 
 /**
  * @version 1.0
  * @author  TMate Software Ltd.
  */
-public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider {
+public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvider, ISVNAuthStoreHandler {
     
+    private static final String OUR_PASSPHRASE_PROMPT_TEXT = "-----------------------------------------------------------------------\n" +
+                                                             "ATTENTION!  Your passphrase for client certificate:\n" +
+                                                             "\n" +
+                                                             "   {0}\n" +
+                                                             "\n" +
+                                                             "can only be stored to disk unencrypted!  You are advised to configure\n" + 
+                                                             "your system so that Subversion can store passphrase encrypted, if\n" +
+                                                             "possible.  See the documentation for details.\n" + 
+                                                             "\n" + 
+                                                             "You can avoid future appearances of this warning by setting the value\n" +
+                                                             "of the ''store-ssl-client-cert-pp-plaintext'' option to either ''yes'' or\n" +
+                                                             "''no'' in ''{1}''.\n" +
+                                                             "-----------------------------------------------------------------------\n";        
+    private static final String OUR_PASSWORD_PROMPT_TEXT =   "-----------------------------------------------------------------------\n" +
+                                                             "ATTENTION!  Your password for authentication realm:\n" +
+                                                             "\n" +
+                                                             "   {0}\n" + 
+                                                             "\n" + 
+                                                             "can only be stored to disk unencrypted!  You are advised to configure\n" + 
+                                                             "your system so that Subversion can store passwords encrypted, if\n" + 
+                                                             "possible.  See the documentation for details.\n" +
+                                                             "\n" + 
+                                                             "You can avoid future appearances of this warning by setting the value\n" +
+                                                             "of the ''store-plaintext-passwords'' option to either ''yes'' or ''no'' in\n" +
+                                                             "''{1}''.\n" +
+                                                             "-----------------------------------------------------------------------\n";
+    
+    private static final String OUR_PASSWORD_PROMPT_STRING = "Store password unencrypted (yes/no)? ";
+    private static final String OUR_PASSPHRASE_PROMPT_STRING = "Store passphrase unencrypted (yes/no)? ";
     private static final int MAX_PROMPT_COUNT = 3;
     private Map myRequestsCount = new HashMap();
     private boolean myIsTrustServerCertificate;
-
+    
     public SVNConsoleAuthenticationProvider(boolean trustServerCertificate) {
         myIsTrustServerCertificate = trustServerCertificate;
     }
@@ -97,8 +130,24 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
         
         if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {
             String name = null;
+            String defaultUserName = null;
+            if (previousAuth != null) {
+                if (previousAuth.isPartial()) {
+                    name = previousAuth.getUserName();
+                } else if (previousAuth.getUserName() != null) {
+                    defaultUserName = previousAuth.getUserName();
+                }
+            }
+
             printRealm(realm);
-            name = prompt("Username");
+
+            if (name == null) {
+                String promptString = defaultUserName == null  ? "Username" : "Username [" + defaultUserName + "]";
+                name = prompt(promptString);
+                if ("".equals(name) && defaultUserName != null) {
+                    name = defaultUserName;
+                }
+            }
             if (name == null) {
                 return null;
             }
@@ -106,46 +155,126 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             if (password == null) {
                 return null;
             }
-            return new SVNPasswordAuthentication(name, password, authMayBeStored);
+            return new SVNPasswordAuthentication(name, password, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSH.equals(kind)) {
             String name = null;
+            String defaultUserName = null;
+            String defaultPassword = null;
+            String defaultPassphrase = null;
+            File defaultPrivateKeyFile = null;
+            int defaultPort = -1;
+
+            if (url.getUserInfo() != null && !"".equals(url.getUserInfo())) {
+                defaultUserName = url.getUserInfo();
+            }
+            
+            if (previousAuth != null && previousAuth instanceof SVNSSHAuthentication) {
+                SVNSSHAuthentication sshPreviousAuth = (SVNSSHAuthentication) previousAuth;
+                defaultUserName = defaultUserName == null ? sshPreviousAuth.getUserName() : defaultUserName;
+
+                defaultPassword = sshPreviousAuth.getPassword();
+                defaultPassphrase = sshPreviousAuth.getPassphrase();
+                defaultPrivateKeyFile = sshPreviousAuth.getPrivateKeyFile();
+                defaultPort = sshPreviousAuth.getPortNumber();
+            }
+            
             printRealm(realm);
-            name = prompt("Username");
+
+            name = prompt(defaultUserName == null ? "Username" : "Username [" + defaultUserName + "]");
+            if ("".equals(name) && defaultUserName != null) {
+                name = defaultUserName;
+            }
+            
             if (name == null) {
                 return null;
             }
-            String password = promptPassword("Password for '" + url.getHost() + "' (leave blank if you are going to use private key)");
+
+            String passwordPrompt = null;
+            if (defaultPassword != null) {
+                passwordPrompt = "Password for '" + url.getHost() + "' (leave blank if you are going to use private key) [";
+                for (int i = 0; i < defaultPassword.length(); i++) {
+                    passwordPrompt += "*";
+                }
+                passwordPrompt += "]";
+            } else {
+                passwordPrompt = "Password for '" + url.getHost() + "' (leave blank if you are going to use private key)";
+            }
+            
+            String password = promptPassword(passwordPrompt);
             if (password == null) {
                 return null;
             } else if ("".equals(password)) {
-                password = null;
+                if (defaultPassword != null) {
+                    password = defaultPassword;
+                } else {
+                    password = null;
+                }
             }
-            String keyFile = null;
+
+            String keyFilePath = null;
+            File keyFile = null;
             String passphrase = null;
             if (password == null) {
-                while(keyFile == null) {
-                    keyFile = prompt("Private key for '" + url.getHost() + "' (OpenSSH format)");
-                    if ("".equals(keyFile)) {
+                while(keyFilePath == null) {
+                    String privateKeyFilePrompt = null;
+                    if (defaultPrivateKeyFile != null) {
+                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format) [" + defaultPrivateKeyFile.getAbsolutePath() + "]";
+                    } else {
+                        privateKeyFilePrompt = "Private key for '" + url.getHost() + "' (OpenSSH format)"; 
+                    }
+
+                    keyFilePath = prompt(privateKeyFilePrompt);
+                    if ("".equals(keyFilePath)) {
+                        if (defaultPrivateKeyFile != null) {
+                            if (!defaultPrivateKeyFile.isFile() || !defaultPrivateKeyFile.canRead()) {
+                                defaultPrivateKeyFile = null;
+                                keyFilePath = null;
+                                keyFile = null;
+                                continue;
+                            }
+                            keyFile = defaultPrivateKeyFile;
+                            keyFilePath = keyFile.getAbsolutePath();
+                        }
                         continue;
                     }
-                    if (keyFile == null) {
+
+                    if (keyFilePath == null) {
                         return null;
                     }
-                    File file = new File(keyFile);
-                    if (!file.isFile() || !file.canRead()) {
+                    
+                    keyFile = new File(keyFilePath);
+                    if (!keyFile.isFile() || !keyFile.canRead()) {
+                        keyFilePath = null;
                         keyFile = null;
                         continue;
                     }
                 }
-                passphrase = promptPassword("Private key passphrase [none]");
+                
+                String passphrasePrompt = null;
+                if (defaultPassphrase != null) {
+                    passphrasePrompt = "Private key passphrase [";
+                    for (int i = 0; i < defaultPassphrase.length(); i++) {
+                        passphrasePrompt += "*";
+                    }
+                    passphrasePrompt += "]";
+                } else {
+                    passphrasePrompt = "Private key passphrase [none]";
+                }
+                
+                passphrase = promptPassword(passphrasePrompt);
                 if ("".equals(passphrase)) {
-                    passphrase = null;
+                    if (defaultPassphrase != null) {
+                        passphrase = defaultPassphrase;
+                    } else {
+                        passphrase = null;
+                    }
                 } else if (passphrase == null) {
                     return null;
                 }
             }
-            int port = 22;
-            String portValue = prompt("Port number for '" + url.getHost() + "' [22]");
+
+            int port = defaultPort > 0 ? defaultPort : 22;
+            String portValue = prompt("Port number for '" + url.getHost() + "' [" + port + "]");
             if (portValue == null) {
                 return null;
             }
@@ -155,9 +284,9 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 } catch (NumberFormatException e) {}
             }
             if (password != null) {
-                return new SVNSSHAuthentication(name, password, port, authMayBeStored);
+                return new SVNSSHAuthentication(name, password, port, authMayBeStored, url, false);
             } else if (keyFile != null) {
-                return new SVNSSHAuthentication(name, new File(keyFile), passphrase, port, authMayBeStored);
+                return new SVNSSHAuthentication(name, keyFile, passphrase, port, authMayBeStored, url, false);
             }
         } else if (ISVNAuthenticationManager.USERNAME.equals(kind)) {
             String name = System.getProperty("user.name");
@@ -165,7 +294,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                 name = null;
             }
             if (name != null) {
-                return new SVNUserNameAuthentication(name, authMayBeStored);
+                return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
             }
             printRealm(realm);
             name = prompt(!"file".equals(url.getProtocol()) ? 
@@ -177,7 +306,7 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             if ("".equals(name.trim())) {
                 name = System.getProperty("user.name");
             }            
-            return new SVNUserNameAuthentication(name, authMayBeStored);
+            return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
             printRealm(realm);
             String path = null;
@@ -201,11 +330,38 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             } else if ("".equals(password)) {
                 password = null;
             }
-            return new SVNSSLAuthentication(new File(path), password, authMayBeStored);
+            return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
         }
         return null;
     }
 
+    public boolean canStorePlainTextPasswords(String realm, SVNAuthentication auth) throws SVNException {
+        return isPlainTextAllowed(realm, OUR_PASSWORD_PROMPT_TEXT, OUR_PASSWORD_PROMPT_STRING);
+    }
+
+    public boolean canStorePlainTextPassphrases(String realm, SVNAuthentication auth) throws SVNException {
+        return isPlainTextAllowed(realm, OUR_PASSPHRASE_PROMPT_TEXT, OUR_PASSPHRASE_PROMPT_STRING);
+    }
+
+    private boolean isPlainTextAllowed(String realm, String promptText, String promptString) {
+        File configPath = new File(SVNWCUtil.getDefaultConfigurationDirectory(), "servers");
+        String formattedMessage = MessageFormat.format(promptText, new Object[] { realm, configPath.getAbsolutePath() });
+
+        System.err.print(formattedMessage);
+        while (true) {
+            System.err.print(promptString);
+            System.err.flush();
+            String answer = readLine();
+            
+            if ("yes".equalsIgnoreCase(answer)) {
+                return true; 
+            } else if ("no".equalsIgnoreCase(answer)) {
+                return false;
+            } 
+            promptString = "Please type 'yes' or 'no': ";
+        }
+    }
+    
     private static void printRealm(String realm) {
         if (realm != null) {
             System.err.println("Authentication realm: " + realm);
@@ -258,4 +414,5 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             return null;
         }
     }
+
 }

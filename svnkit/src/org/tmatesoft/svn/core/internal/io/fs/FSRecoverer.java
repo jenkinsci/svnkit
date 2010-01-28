@@ -87,7 +87,7 @@ public class FSRecoverer {
         
         File revpropFile = null;
         try {
-            revpropFile = myOwner.getRevisionPropertiesFile(maxRev);
+            revpropFile = myOwner.getRevisionPropertiesFile(maxRev, false);
         } catch (SVNException svne) {
             if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.FS_NO_SUCH_REVISION) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_CORRUPT, "Revision {0} has a revs file but no revprops file", 

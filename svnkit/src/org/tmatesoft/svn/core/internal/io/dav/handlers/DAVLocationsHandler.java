@@ -63,7 +63,9 @@ public class DAVLocationsHandler extends BasicDAVHandler {
             if (revStr != null) {
                 String path = attrs.getValue("path");
                 if (path != null && myLocationEntryHandler != null) {
-                    path = "/" + path; 
+                    if (!path.startsWith("/")) {
+                        path = "/" + path; 
+                    }
                     try {
                         myLocationEntryHandler.handleLocationEntry(new SVNLocationEntry(Long.parseLong(revStr), path));
                     } catch (NumberFormatException nfe) {

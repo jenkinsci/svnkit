@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/io/repository
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/core/io/repository
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-03-09T17:16:46.351182Z
-5551
-sa
+2009-08-11T21:09:44.899587Z
+6014
+alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,11 +32,11 @@ file
 
 
 
-2009-05-27T05:49:52.000000Z
-2c3df0a89e7071eab1a2597b064847ef
-2009-03-09T17:16:46.351182Z
-5551
-sa
+2010-01-28T00:17:43.000000Z
+7c709f1f7bc761ef0a10b0d51c0cfb7c
+2009-08-11T21:09:44.899587Z
+6014
+alex
 has-props
 
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-16692
+16301
 

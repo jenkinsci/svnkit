@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.fs;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -46,6 +47,8 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     private String myAuthor;
     private Collection myLockTokens;
     private SVNDeltaCombiner myDeltaCombiner;
+    private boolean myIsComputeChecksum;
+    private String myComputedChecksum;
 
     public FSDeltaConsumer(String basePath, FSTransactionRoot txnRoot, FSFS fsfs, FSCommitter committer, String author, Collection lockTokens) {
         myBasePath = basePath;
@@ -87,7 +90,7 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
             if (myDeltaProcessor == null) {
                 myDeltaProcessor = new SVNDeltaProcessor();
             }
-            myDeltaProcessor.applyTextDelta(sourceStream, targetStream, false);
+            myDeltaProcessor.applyTextDelta(sourceStream, targetStream, myIsComputeChecksum);
         } catch (SVNException svne) {
             SVNFileUtil.closeFile(sourceStream);
             throw svne;
@@ -135,17 +138,30 @@ public class FSDeltaConsumer implements ISVNDeltaConsumer {
     }
 
     public void textDeltaEnd(String path) throws SVNException {
-        myDeltaProcessor.textDeltaEnd();
+        myComputedChecksum = myDeltaProcessor.textDeltaEnd();
     }
     
-    public void close() {
+    public String getChecksum() {
+        return myComputedChecksum;
+    }
+    
+    public void close() throws SVNException {
         abort();
     }
 
-    public void abort() {
+    public void abort() throws SVNException {
         if (myTargetStream != null) {
-            myTargetStream.closeStreams();
+            try {
+                myTargetStream.closeStreams(-1);
+            } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e);
+                SVNErrorManager.error(err, SVNLogType.FSFS);
+            }
         }
+    }
+    
+    public void setComputeChecksum(boolean computeChecksum) {
+        myIsComputeChecksum = computeChecksum;
     }
     
     private SVNDeltaCombiner getCombiner() {

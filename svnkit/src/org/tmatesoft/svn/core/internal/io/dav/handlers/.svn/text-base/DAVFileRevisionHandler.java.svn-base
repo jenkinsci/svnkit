@@ -82,6 +82,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
 
     protected void startElement(DAVElement parent, DAVElement element, Attributes attrs) throws SVNException {
         if (element == FILE_REVISION) {
+            myIsMergedRevision = false;
             myPath = attrs.getValue("path");
             if (myPath == null) {
                 missingAttributeError(element, "path");
@@ -208,5 +209,6 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 new Object[]{attr, element});
         SVNErrorManager.error(err, SVNLogType.NETWORK);
     }
+    
 }
  

@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-eclipse/com.sun.jna
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit-eclipse/com.sun.jna
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-04-29T11:22:02.082013Z
-5823
-sa
+2009-11-13T20:05:47.327767Z
+6215
+alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
+2010-01-28T00:13:48.000000Z
 d852230610c35546d5b38bd751e3597b
 2008-12-09T18:00:12.660586Z
 5351
@@ -66,10 +66,10 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
-2db2d67e930722200e5ac15c18838bea
-2008-09-28T21:59:03.325681Z
-4941
+2010-01-28T00:17:10.000000Z
+7b3ea625c046d53e80feef8e98b1a8a3
+2009-11-13T20:05:47.327767Z
+6215
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-341
+335
 
 feature.xml
 file
@@ -100,7 +100,7 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
+2010-01-28T00:13:48.000000Z
 98ba0b95f00d8d146afdcb8d8f745641
 2009-04-29T11:22:02.082013Z
 5823

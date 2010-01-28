@@ -1,8 +1,8 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/core/internal/io/svn/sasl
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -12,7 +12,7 @@ http://svn.svnkit.com/repos/svnkit
 alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:13:48.000000Z
 e1d27c4ba6eaee1f28099f431f9ad122
 2009-04-21T14:43:00.959095Z
 5772
@@ -66,7 +66,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:05:31.000000Z
 1d82f173add5b1ae27ec98dd731ac108
 2008-09-22T16:05:22.749374Z
 4903
@@ -100,7 +100,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:05:31.000000Z
 cf7cd65f74e0a994888c17e4cbb88775
 2008-07-30T20:15:50.925761Z
 4616
@@ -134,7 +134,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:13:48.000000Z
 cdda49c74e676ea002c7a58ee9f2fea6
 2009-04-21T14:43:00.959095Z
 5772
@@ -168,7 +168,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:05:31.000000Z
 062b5a60a0371250fa3e6b730c76e6db
 2008-09-22T16:13:48.984238Z
 4904
@@ -202,7 +202,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:05:31.000000Z
 80dd319068ec029afdf57fdaf40bd22c
 2008-09-02T14:50:35.280626Z
 4810
@@ -236,7 +236,7 @@ file
 
 
 
-2009-05-27T05:49:42.000000Z
+2010-01-28T00:13:48.000000Z
 28692b6bdf3ae369b500806905da4de8
 2009-04-21T14:43:00.959095Z
 5772

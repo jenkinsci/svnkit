@@ -76,12 +76,15 @@ public class SVNRangeTree {
     private void freeTreeNode(SVNRangeTreeNode node) {
         if (node.next != null) {
             node.next.prev = node.prev;
-            node.next = null;
         }
         if (node.prev != null) {
             node.prev.next = node.next;
-            node.prev = null;
         }
+        node.next = null;
+        node.prev = null;
+        node.left = null;
+        node.right = null;
+        
         // remove if from the allocated list, it has to be there.
         if (myAllocatedTreeNodes == node) {
             myAllocatedTreeNodes = myAllocatedTreeNodes.nextFree;
@@ -219,33 +222,27 @@ public class SVNRangeTree {
 
         while(true) {
             if (offset < root.offset) {
-                if (root.left == null) {
-                    break;
-                }
-                if (offset < root.left.offset) {
+                if (root.left != null && offset < root.left.offset) {
                     SVNRangeTreeNode node = root.left;
                     root.left = node.right;
                     node.right = root;
                     root = node;
-                    if (root.left == null) {
-                        break;
-                    }
+                }
+                if (root.left == null) {
+                    break;
                 }
                 right.left = root;
                 right = root;
                 root = root.left;
             } else if (offset > root.offset) {
-                if (root.right == null) {
-                    break;
-                }
-                if (offset > root.right.offset) {
+                if (root.right != null && offset > root.right.offset) {
                     SVNRangeTreeNode node = root.right;
                     root.right = node.left;
                     node.left = root;
                     root = node;
-                    if (root.right == null) {
-                        break;
-                    }
+                }
+                if (root.right == null) {
+                    break;
                 }
                 left.right = root;
                 left = root;
@@ -267,19 +264,25 @@ public class SVNRangeTree {
                 node.right = root;
                 root = node;
             } else {
-                SVNRangeTreeNode node = root.left;
-                SVNRangeTreeNode prevNode = node;
-                while(node.right != null) {
-                    prevNode = node;
-                    node = node.right;
+                SVNRangeTreeNode nodePointer = root.left;
+                SVNRangeTreeNode nodeOwner = root;
+                boolean isLeft = true;
+                while(nodePointer.right != null) {
+                    nodeOwner = nodePointer;
+                    nodePointer = nodePointer.right;
+                    isLeft = false;
                 }
-                // node should now become root.
                 right = root;
                 left = root.left;
-                root = node;
-                //node = root.left;
-                prevNode.right = root.left;
-                right.left = null;
+                root = nodePointer;
+                if (isLeft) {
+                    nodeOwner.left = root.left;
+                } else {
+                    nodeOwner.right = root.left;
+                }
+                SVNDebugLog.assertCondition(SVNLogType.DEFAULT, root.right == null, "root.right should be null"); 
+                
+                right.left = root.right;
                 root.left = left;
                 root.right = right;
             }
@@ -336,18 +339,29 @@ public class SVNRangeTree {
     
     private void cleanTree(int limit) {
         int topOffset = limit + 1;
-        SVNRangeTreeNode parent = myRoot;
-        SVNRangeTreeNode node = myRoot.right;
-        while(node != null) {
-            int offset = node.right != null && node.right.offset < topOffset ? node.right.offset : topOffset;
-            if (node.limit <= limit || (node.offset < limit && offset < limit)) {
-                parent.right = null;
-                parent = node;
-                deleteSubtree(node);
-                node = null;
+        SVNRangeTreeNode rightNode = myRoot.right;
+        SVNRangeTreeNode owner = myRoot;
+        if (rightNode == null) {
+            return;
+        }
+        boolean left = false;
+        while(rightNode != null) {
+            int offset = rightNode.right != null && rightNode.right.offset < topOffset ? rightNode.offset : topOffset;
+            if (rightNode.limit <= limit || (rightNode.offset < limit && offset < limit)) {
+                SVNRangeTreeNode rightRight = rightNode.right;
+                rightNode.right = null;
+                if (left) {
+                    owner.left = rightRight;
+                } else {
+                    owner.right = rightRight;
+                }
+                deleteSubtree(rightNode);                
+                rightNode = left ? owner.left : owner.right;
             } else {
-                topOffset = node.offset;
-                node = node.left;
+                topOffset = rightNode.offset;
+                owner = rightNode;
+                rightNode = rightNode.left; 
+                left = true;
             }
         }
     }

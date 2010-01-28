@@ -1544,7 +1544,8 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
         boolean created = false;
         try {
-            created = myLockFile.createNewFile();
+            // Stian was here.
+            created = SVNFileUtil.createNewFile(myLockFile);
         } catch (IOException e) {
             SVNErrorCode code = e.getMessage().indexOf("denied") >= 0 ? SVNErrorCode.WC_LOCKED : SVNErrorCode.WC_NOT_LOCKED;
             SVNErrorMessage err = SVNErrorMessage.create(code, "Cannot lock working copy ''{0}'': {1}", 
@@ -1700,7 +1701,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
                 long wkTimestamp = workingFile.lastModified(); 
                 if (tmpTimestamp != wkTimestamp) {
                     // check if wc file is not modified
-                    File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", false);
+                    File tmpFile2 = SVNFileUtil.createUniqueFile(tmpFile.getParentFile(), fileName, ".tmp", true);
                     try {
                         String tmpFile2Path = SVNFileUtil.getBasePath(tmpFile2);
                         SVNTranslator.translate(this, fileName, fileName, tmpFile2Path, false);

@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/io/diff
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/core/io/diff
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-05-12T11:28:48.076298Z
-5838
-sa
+2009-09-11T12:58:06.148244Z
+6086
+alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:53.000000Z
+2010-01-28T00:13:48.000000Z
 44821b85d7318bc5a6979c702f5d51eb
 2009-05-12T11:28:48.076298Z
 5838
@@ -66,7 +66,7 @@ file
 
 
 
-2009-05-27T05:49:53.000000Z
+2010-01-28T00:13:48.000000Z
 34fe3e9b5e701f2b6c3d1cfe86b996b1
 2009-05-12T11:28:48.076298Z
 5838
@@ -100,7 +100,7 @@ file
 
 
 
-2009-05-27T05:49:53.000000Z
+2010-01-28T00:13:48.000000Z
 41f72ce8faff8b9670a257fe6b4a1c07
 2009-05-12T11:28:48.076298Z
 5838
@@ -134,11 +134,11 @@ file
 
 
 
-2009-05-27T05:49:53.000000Z
-81e196c3a175f9c951cdbadd33fe7546
-2009-05-12T11:28:48.076298Z
-5838
-sa
+2010-01-28T00:17:43.000000Z
+a71c2804e4d78d5008aaa86b718084d4
+2009-09-11T12:58:06.148244Z
+6086
+alex
 has-props
 
 
@@ -160,7 +160,7 @@ has-props
 
 
 
-14215
+13973
 
 SVNDiffWindow.java
 file
@@ -168,11 +168,11 @@ file
 
 
 
-2009-05-27T05:49:53.000000Z
-e6fde761bcaa644f9d57c6eacb59a04d
-2009-05-12T11:28:48.076298Z
-5838
-sa
+2010-01-28T00:17:43.000000Z
+26be4e79a23497f8a54343ed90db2f2d
+2009-06-19T14:37:04.002209Z
+5926
+alex
 has-props
 
 
@@ -194,7 +194,7 @@ has-props
 
 
 
-28343
+28421
 
 package.html
 file
@@ -202,7 +202,7 @@ file
 
 
 
-2009-05-27T05:49:53.000000Z
+2010-01-28T00:05:31.000000Z
 f881722251e9b59a1d49c039c418ac3e
 2008-07-29T19:33:42.126931Z
 4610

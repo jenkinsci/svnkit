@@ -60,7 +60,7 @@ public class SVNTunnelConnector extends SVNAbstractTunnelConnector {
             if (userName == null || "".equals(userName.trim())) {
                 userName = System.getProperty("user.name");
             }
-            auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed());
+            auth = new SVNUserNameAuthentication(userName, auth.isStorageAllowed(), repository.getLocation(), false);
             repository.getAuthenticationManager().acknowledgeAuthentication(true, ISVNAuthenticationManager.USERNAME, host, null, auth);
             expandedTunnel += " --tunnel-user " + userName;
             

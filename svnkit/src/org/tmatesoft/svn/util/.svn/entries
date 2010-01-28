@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/util
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/util
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-05-13T11:28:20.938259Z
-5847
+2009-11-27T15:43:50.657821Z
+6266
 sa
 has-props
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:55.000000Z
+2010-01-28T00:13:48.000000Z
 2df5c1c07b4127414699c2921efe07ed
 2009-04-21T14:43:00.959095Z
 5772
@@ -66,10 +66,10 @@ file
 
 
 
-2009-05-27T05:49:55.000000Z
-2dfb7a8df7a788fbc7511542090889d3
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:43.000000Z
+7eaa3187679df95eb4bc24f13bc854f5
+2009-06-02T20:22:34.607430Z
+5878
 alex
 has-props
 
@@ -92,7 +92,7 @@ has-props
 
 
 
-2929
+2966
 
 Version.java
 file
@@ -100,10 +100,10 @@ file
 
 
 
-2009-05-27T05:49:55.000000Z
-91bcc0059d6437d0f38f5824578ce5b3
-2009-05-13T11:28:20.938259Z
-5847
+2010-01-28T00:17:43.000000Z
+f58c2cc18e55c06869f17811f5bcb564
+2009-11-27T15:43:50.657821Z
+6266
 sa
 has-props
 
@@ -126,7 +126,7 @@ has-props
 
 
 
-4221
+4533
 
 ISVNDebugLog.java
 file
@@ -134,7 +134,7 @@ file
 
 
 
-2009-05-27T05:49:55.000000Z
+2010-01-28T00:13:48.000000Z
 4b77fb8b877d8e0f5819b34b6601eb93
 2009-04-21T14:43:00.959095Z
 5772
@@ -168,7 +168,7 @@ file
 
 
 
-2009-05-27T05:49:55.000000Z
+2010-01-28T00:13:48.000000Z
 410055124db98eeaa5a5ca5b89315be1
 2009-04-21T14:43:00.959095Z
 5772

@@ -51,6 +51,9 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
     
     public SVNTreeConflictDescription getTreeConflict(String victimName) throws SVNException {
         SVNEntry dirEntry = getEntry(getThisDirName(), false);
+        if (dirEntry == null) {
+            return null;
+        }
         Map conflicts = dirEntry.getTreeConflicts();
         return (SVNTreeConflictDescription) conflicts.get(getFile(victimName));
     }
@@ -58,7 +61,8 @@ public class SVNAdminArea16 extends SVNAdminArea15 {
     public void addTreeConflict(SVNTreeConflictDescription conflict) throws SVNException {
         SVNTreeConflictDescription existingDescription = getTreeConflict(conflict.getPath().getName());
         if (existingDescription != null) {
-            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Attempt to add tree conflict that already exists");
+            SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Attempt to add tree conflict that already exists at ''{0}''", 
+                    conflict.getPath());
             SVNErrorManager.error(error, SVNLogType.WC);
         }
         Map conflicts = new SVNHashMap();

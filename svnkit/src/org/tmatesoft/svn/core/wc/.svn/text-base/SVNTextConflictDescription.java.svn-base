@@ -40,7 +40,7 @@ public class SVNTextConflictDescription extends SVNConflictDescription {
     /**
      * Returns <code>true</code>.
      * 
-     * @returns <code>true</code>
+     * @return <code>true</code>
      * @since 1.3
      */
     public boolean isTextConflict() {
@@ -50,7 +50,7 @@ public class SVNTextConflictDescription extends SVNConflictDescription {
     /**
      * Returns <code>false</code>.
      * 
-     * @returns <code>false</code>
+     * @return <code>false</code>
      * @since 1.3
      */
     public boolean isPropertyConflict() {
@@ -60,7 +60,7 @@ public class SVNTextConflictDescription extends SVNConflictDescription {
     /**
      * Returns <code>false</code>.
      * 
-     * @returns <code>false</code>
+     * @return <code>false</code>
      * @since 1.3
      */
     public boolean isTreeConflict() {
@@ -70,7 +70,7 @@ public class SVNTextConflictDescription extends SVNConflictDescription {
     /**
      * Returns <code>null</code>.
      * 
-     * @returns <code>null</code>
+     * @return <code>null</code>
      * @since 1.3
      */
     public String getPropertyName() {

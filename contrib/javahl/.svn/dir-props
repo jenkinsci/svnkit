@@ -1,0 +1,13 @@
+K 13
+svn:externals
+V 184
+src http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/bindings/javahl/src/
+tests http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/bindings/javahl/tests/
+
+K 10
+svn:ignore
+V 13
+bin
+bin-test
+
+END

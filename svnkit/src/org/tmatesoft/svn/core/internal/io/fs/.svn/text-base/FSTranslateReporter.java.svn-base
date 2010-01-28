@@ -72,7 +72,7 @@ public class FSTranslateReporter implements ISVNReporter {
         }
     }
     
-    public void closeRepository() {
+    public void closeRepository() throws SVNException {
         if (!myIsRepositoryClosed) {
             myDelegate.closeRepository();
             myIsRepositoryClosed = true;

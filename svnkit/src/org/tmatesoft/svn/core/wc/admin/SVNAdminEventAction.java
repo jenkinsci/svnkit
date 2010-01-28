@@ -203,5 +203,7 @@ public class SVNAdminEventAction {
      * @since 1.2 
      */
     public static final SVNAdminEventAction PACK_END = new SVNAdminEventAction(24);
+    
+    public static final SVNAdminEventAction NORMALIZED_PROPERTIES = new SVNAdminEventAction(25);
 
 }

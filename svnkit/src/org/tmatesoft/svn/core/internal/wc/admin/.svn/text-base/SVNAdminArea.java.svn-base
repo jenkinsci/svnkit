@@ -1375,7 +1375,7 @@ public abstract class SVNAdminArea {
                 textStream = special ? null : SVNFileUtil.openFileForReading(text, SVNLogType.WC);
                 if (checksum) {
                     if (entry.getChecksum() != null) {
-                        checksumStream = new SVNChecksumInputStream(baseStream, SVNChecksumInputStream.MD5_ALGORITHM, false, false);
+                        checksumStream = new SVNChecksumInputStream(baseStream, SVNChecksumInputStream.MD5_ALGORITHM);
                         baseStream = checksumStream;
                     }
                 }
@@ -1385,7 +1385,12 @@ public abstract class SVNAdminArea {
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = SVNTranslator.getTranslatingInputStream(textStream, charset, eols, true, keywordsMap, false);
                     } else {
-                        String symlinkContents = "link " + SVNFileUtil.getSymlinkName(text);
+                        String linkPath = SVNFileUtil.getSymlinkName(text);
+                        if (linkPath == null) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", text);
+                            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                        }
+                        String symlinkContents = "link " + linkPath;
                         textStream = new ByteArrayInputStream(symlinkContents.getBytes());
                     }
                 } else if (needsTranslation) {
@@ -1397,8 +1402,8 @@ public abstract class SVNAdminArea {
                 byte[] buffer2 = new byte[8192];
                 try {
                     while(true) {
-                        int r1 = baseStream.read(buffer1);
-                        int r2 = textStream.read(buffer2);
+                        int r1 = SVNFileUtil.readIntoBuffer(baseStream, buffer1, 0, buffer1.length);
+                        int r2 = SVNFileUtil.readIntoBuffer(textStream, buffer2, 0, buffer2.length);
                         r1 = r1 == -1 ? 0 : r1;
                         r2 = r2 == -1 ? 0 : r2;
                         if (r1 != r2) {

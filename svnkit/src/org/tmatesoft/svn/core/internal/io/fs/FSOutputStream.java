@@ -43,7 +43,8 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     public static final int WRITE_BUFFER_SIZE = 2*SVN_DELTA_WINDOW_SIZE;
 
     private boolean isHeaderWritten;
-    private CountingOutputStream myTargetFile;
+    private CountingOutputStream myTargetFileOS;
+    private File myTargetFile;
     private long myDeltaStart;
     private long myRepSize;
     private long myRepOffset;
@@ -59,10 +60,11 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     private boolean myIsCompress;
     private FSWriteLock myTxnLock;
 
-    private FSOutputStream(FSRevisionNode revNode, CountingOutputStream file, InputStream source, long deltaStart, 
+    private FSOutputStream(FSRevisionNode revNode, CountingOutputStream targetFileOS, File targetFile, InputStream source, long deltaStart, 
             long repSize, long repOffset, FSTransactionRoot txnRoot, boolean compress, FSWriteLock txnLock) throws SVNException {
         myTxnRoot = txnRoot;
-        myTargetFile = file;
+        myTargetFileOS = targetFileOS;
+        myTargetFile = targetFile;
         mySourceStream = source;
         myDeltaStart = deltaStart;
         myRepSize = repSize;
@@ -91,9 +93,11 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         myIsCompress = compress;
     }
 
-    private void reset(FSRevisionNode revNode, CountingOutputStream file, InputStream source, long deltaStart, long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
+    private void reset(FSRevisionNode revNode, CountingOutputStream targetFileOS, File targetFile, InputStream source, long deltaStart, 
+            long repSize, long repOffset, FSTransactionRoot txnRoot, FSWriteLock txnLock) {
         myTxnRoot = txnRoot;
-        myTargetFile = file;
+        myTargetFileOS = targetFileOS;
+        myTargetFile = targetFile;
         mySourceStream = source;
         myDeltaStart = deltaStart;
         myRepSize = repSize;
@@ -148,11 +152,11 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
 
             if (dstStream instanceof FSOutputStream) {
                 FSOutputStream fsOS = (FSOutputStream) dstStream;
-                fsOS.reset(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot, txnLock);
+                fsOS.reset(revNode, revWriter, targetFile, sourceStream, deltaStart, 0, offset, txnRoot, txnLock);
                 return dstStream;
             }
 
-            return new FSOutputStream(revNode, revWriter, sourceStream, deltaStart, 0, offset, txnRoot, 
+            return new FSOutputStream(revNode, revWriter, targetFile, sourceStream, deltaStart, 0, offset, txnRoot, 
                     compress, txnLock);
 
         } catch (IOException ioe) {
@@ -211,15 +215,15 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             return;
         }
         myIsClosed = true;
-
+        final long truncateToSize[] = new long[] {-1};
         try {
             ByteArrayInputStream target = new ByteArrayInputStream(myTextBuffer.toByteArray());
             myDeltaGenerator.sendDelta(null, mySourceStream, mySourceOffset, target, this, false);
 
-            FSRepresentation rep = new FSRepresentation();
+            final FSRepresentation rep = new FSRepresentation();
             rep.setOffset(myRepOffset);
 
-            long offset = myTargetFile.getPosition();
+            long offset = myTargetFileOS.getPosition();
 
             rep.setSize(offset - myDeltaStart);
             rep.setExpandedSize(myRepSize);
@@ -232,14 +236,31 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
             rep.setMD5HexDigest(SVNFileUtil.toHexDigest(myMD5Digest));
             rep.setSHA1HexDigest(SVNFileUtil.toHexDigest(mySHA1Digest));
             
-            myTargetFile.write("ENDREP\n".getBytes("UTF-8"));
-            myRevNode.setTextRepresentation(rep);
+            FSFS fsfs = myTxnRoot.getOwner();
+            final IFSRepresentationCacheManager reposCacheManager = fsfs.getRepositoryCacheManager();
+            if (reposCacheManager != null) {
+                reposCacheManager.runReadTransaction(new IFSSqlJetTransaction() {
+                    public void run() throws SVNException {
+                        FSRepresentation oldRep = reposCacheManager.getRepresentationByHash(rep.getSHA1HexDigest());
+                        if (oldRep != null) {
+                            oldRep.setUniquifier(rep.getUniquifier());
+                            oldRep.setMD5HexDigest(rep.getMD5HexDigest());
+                            truncateToSize[0] = myRepOffset;
+                            myRevNode.setTextRepresentation(oldRep);
+                        }
+                    }
+                });
+            } 
+            if (truncateToSize[0] < 0){
+                myTargetFileOS.write("ENDREP\n".getBytes("UTF-8"));
+                myRevNode.setTextRepresentation(rep);
+            }
             myRevNode.setIsFreshTxnRoot(false);
-            myTxnRoot.getOwner().putTxnRevisionNode(myRevNode.getId(), myRevNode);
+            fsfs.putTxnRevisionNode(myRevNode.getId(), myRevNode);
         } catch (SVNException svne) {
             throw new IOException(svne.getMessage());
         } finally {
-            closeStreams();
+            closeStreams(truncateToSize[0]);
             try {
                 myTxnLock.unlock();
             } catch (SVNException e) {
@@ -249,9 +270,12 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
         }
     }
 
-    public void closeStreams() {
-        SVNFileUtil.closeFile(myTargetFile);
+    public void closeStreams(long truncateToSize) throws IOException {
+        SVNFileUtil.closeFile(myTargetFileOS);
         SVNFileUtil.closeFile(mySourceStream);
+        if (truncateToSize >= 0) {
+            SVNFileUtil.truncate(myTargetFile, truncateToSize);
+        }
     }
 
     public FSRevisionNode getRevisionNode() {
@@ -259,9 +283,9 @@ public class FSOutputStream extends OutputStream implements ISVNDeltaConsumer {
     }
 
     public OutputStream textDeltaChunk(String path, SVNDiffWindow diffWindow) throws SVNException {
-        mySourceOffset += diffWindow.getInstructionsLength();
+        mySourceOffset += diffWindow.getSourceViewLength();
         try {
-            diffWindow.writeTo(myTargetFile, !isHeaderWritten, myIsCompress);
+            diffWindow.writeTo(myTargetFileOS, !isHeaderWritten, myIsCompress);
             isHeaderWritten = true;
         } catch (IOException ioe) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());

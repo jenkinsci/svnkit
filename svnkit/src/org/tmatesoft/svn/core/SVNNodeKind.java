@@ -12,6 +12,11 @@
 
 package org.tmatesoft.svn.core;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 
 /**
  * The <b>SVNNodeKind</b> class is used to describe the kind of a 
@@ -28,7 +33,10 @@ package org.tmatesoft.svn.core;
  * @since   1.2
  * @see 	SVNDirEntry
  */
-public final class SVNNodeKind implements Comparable {
+public final class SVNNodeKind implements Comparable, Serializable {
+    
+    private static final long serialVersionUID = 5851L;
+
     /**
      * This node kind is used to say that a node is missing  
      */
@@ -112,4 +120,28 @@ public final class SVNNodeKind implements Comparable {
         int otherID = ((SVNNodeKind) o).myID;
         return myID > otherID ? 1 : myID < otherID ? -1 : 0;
     }
+    
+    private void writeObject(ObjectOutputStream os) throws IOException {
+        os.writeInt(myID);
+    }
+
+    private void readObject(ObjectInputStream is) throws IOException {
+        myID = is.readInt();
+    }
+    
+    private Object readResolve() {
+        return fromID(myID);
+    }
+
+    private static SVNNodeKind fromID(int id) {
+        if (DIR.myID == id) {
+            return DIR;
+        } else if (FILE.myID == id) {
+            return FILE;
+        } else if (NONE.myID == id) {
+            return NONE;
+        } 
+        return UNKNOWN;
+    }
+
 }

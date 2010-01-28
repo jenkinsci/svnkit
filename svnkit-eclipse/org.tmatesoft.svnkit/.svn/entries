@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit-eclipse/org.tmatesoft.svnkit
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit-eclipse/org.tmatesoft.svnkit
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-04-29T11:22:02.082013Z
-5823
-sa
+2009-08-11T21:27:13.216686Z
+6015
+alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,7 +32,7 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
+2010-01-28T00:13:48.000000Z
 60c9adb494077372c9693dd8687f041a
 2009-04-21T13:49:59.984092Z
 5771
@@ -69,10 +69,10 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
-8cc9e9c321a865adf731e56d59b2bec4
-2008-09-28T21:59:03.325681Z
-4941
+2010-01-28T00:17:10.000000Z
+a6a60119ed3f1e6d586dabd360256323
+2009-08-11T21:09:44.899587Z
+6014
 alex
 has-props
 
@@ -95,7 +95,7 @@ has-props
 
 
 
-1972
+2038
 
 .options
 file
@@ -103,7 +103,7 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
+2010-01-28T00:05:31.000000Z
 a88d2580e9df1bb8dc0560aec775bf0f
 2008-07-08T15:25:07.302963Z
 4507
@@ -137,7 +137,7 @@ file
 
 
 
-2009-05-27T05:49:32.000000Z
+2010-01-28T00:13:48.000000Z
 31cb47eae9cf7b185aac05b1f37af762
 2009-04-29T11:22:02.082013Z
 5823

@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft/svn/core/internal/io/dav/http
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-04-21T14:43:00.959095Z
-5772
+2009-11-02T14:07:44.200045Z
+6188
 alex
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
-07af612ee305988e87db230962598172
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:37.000000Z
+bb024efe740d227107593dbf440be808
+2009-09-03T15:15:38.543563Z
+6065
 alex
 has-props
 
@@ -58,7 +58,7 @@ has-props
 
 
 
-44020
+45720
 
 IHTTPConnectionFactory.java
 file
@@ -66,7 +66,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 af18b829decae6234721bca13e340ec8
 2009-04-21T14:43:00.959095Z
 5772
@@ -100,7 +100,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 252ae53cf108a1adc5fc7f9620dcb95b
 2009-04-21T14:43:00.959095Z
 5772
@@ -134,7 +134,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 e1b70dd595679897b95dce1ca04f9142
 2009-04-21T14:43:00.959095Z
 5772
@@ -168,7 +168,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 c86cc1bf39b859d76a973428d2785342
 2009-04-21T14:43:00.959095Z
 5772
@@ -196,16 +196,16 @@ has-props
 
 35617
 
-HTTPNegotiateAuthentication.java
+HTTPAuthentication.java
 file
 
 
 
 
-2009-05-27T05:49:47.000000Z
-73f4c067b74c49ac96a783b7197c7aa2
-2009-04-01T15:48:23.840707Z
-5636
+2010-01-28T00:17:37.000000Z
+be6bc008c3c04046fb60f75770cadbfb
+2009-11-02T14:07:44.200045Z
+6188
 alex
 has-props
 
@@ -228,7 +228,7 @@ has-props
 
 
 
-6327
+12654
 
 HTTPDigestAuthentication.java
 file
@@ -236,7 +236,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 6156912d0a93b16c98175ba172a4e14c
 2009-04-21T14:43:00.959095Z
 5772
@@ -264,16 +264,16 @@ has-props
 
 7383
 
-HTTPAuthentication.java
+HTTPNegotiateAuthentication.java
 file
 
 
 
 
-2009-05-27T05:49:47.000000Z
-3b1d2d85ee04b6807be4b43689736ce1
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:17:37.000000Z
+0deeda2a86b553e69fcaabeb9db33732
+2009-10-30T19:38:17.829659Z
+6182
 alex
 has-props
 
@@ -296,41 +296,7 @@ has-props
 
 
 
-12382
-
-HTTPNativeNTLMAuthentication.java
-file
-
-
-
-
-2009-05-27T05:49:47.000000Z
-244977c51597b21b1152f3bd4e69a2af
-2009-04-21T13:49:59.984092Z
-5771
-alex
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2667
+10699
 
 HTTPBasicAuthentication.java
 file
@@ -338,7 +304,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 edc0e44f6bc15b2a2b8954363d2f6200
 2009-04-21T14:43:00.959095Z
 5772
@@ -366,16 +332,16 @@ has-props
 
 1960
 
-HTTPStatus.java
+HTTPNativeNTLMAuthentication.java
 file
 
 
 
 
-2009-05-27T05:49:47.000000Z
-3f903474a272bee9bca0606a34708c89
-2009-04-21T14:43:00.959095Z
-5772
+2010-01-28T00:13:48.000000Z
+244977c51597b21b1152f3bd4e69a2af
+2009-04-21T13:49:59.984092Z
+5771
 alex
 has-props
 
@@ -398,7 +364,7 @@ has-props
 
 
 
-4078
+2667
 
 XMLReader.java
 file
@@ -406,7 +372,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 a9959bd0c8647fd2fc4f7ec323638c9b
 2009-04-21T14:43:00.959095Z
 5772
@@ -434,14 +400,14 @@ has-props
 
 2230
 
-HTTPRequest.java
+HTTPStatus.java
 file
 
 
 
 
-2009-05-27T05:49:47.000000Z
-3fe58e3403e6bd6b2a462e09f0bb8992
+2010-01-28T00:13:48.000000Z
+3f903474a272bee9bca0606a34708c89
 2009-04-21T14:43:00.959095Z
 5772
 alex
@@ -466,7 +432,7 @@ has-props
 
 
 
-17251
+4078
 
 HTTPHeader.java
 file
@@ -474,7 +440,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 b54a8cb6beb1d4a8f8ce71f90f2cf9e0
 2009-04-21T14:43:00.959095Z
 5772
@@ -502,13 +468,47 @@ has-props
 
 6725
 
+HTTPRequest.java
+file
+
+
+
+
+2010-01-28T00:13:48.000000Z
+3fe58e3403e6bd6b2a462e09f0bb8992
+2009-04-21T14:43:00.959095Z
+5772
+alex
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+17251
+
 HTTPBodyInputStream.java
 file
 
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 131603aba4d8578915c5b5cec7943811
 2009-04-21T14:43:00.959095Z
 5772
@@ -542,7 +542,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 fbb9468c28e0f45d867049339e538e7b
 2009-04-21T14:43:00.959095Z
 5772
@@ -576,7 +576,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 ac8281be447b40bed66836f1023236c4
 2009-04-21T14:43:00.959095Z
 5772
@@ -610,7 +610,7 @@ file
 
 
 
-2009-05-27T05:49:47.000000Z
+2010-01-28T00:13:48.000000Z
 767b276c16509b5fe7c3439aead55d00
 2009-04-21T14:43:00.959095Z
 5772

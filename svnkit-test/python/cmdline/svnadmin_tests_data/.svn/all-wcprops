@@ -1,11 +1,11 @@
 K 25
 svn:wc:ra_dav:version-url
-V 81
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svnadmin_tests_data
+V 93
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/svnadmin_tests_data
 END
 mergeinfo_included.dump
 K 25
 svn:wc:ra_dav:version-url
-V 105
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/svnadmin_tests_data/mergeinfo_included.dump
+V 117
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/svnadmin_tests_data/mergeinfo_included.dump
 END

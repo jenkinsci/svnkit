@@ -1,18 +1,17 @@
-9
+10
 
 dir
-37842
-http://svn.collab.net/repos/svn/tags/1.6.2/subversion/tests/cmdline/svntest
-http://svn.collab.net/repos/svn
+903915
+http://svn.apache.org/repos/asf/subversion/tags/1.6.6/subversion/tests/cmdline/svntest
+http://svn.apache.org/repos/asf
 
 
 
-2009-02-16T20:35:25.698675Z
-35895
+2009-08-18T14:05:42.061869Z
+878871
 hwright
 has-props
 
-svn:special svn:externals svn:needs-lock
 
 
 
@@ -24,7 +23,8 @@ svn:special svn:externals svn:needs-lock
 
 
 
-612f8ebc-c883-4be0-9ee0-a4e9ef946e3a
+
+13f79535-47bb-0310-9956-ffa450edef68
 
 wc.py
 file
@@ -32,10 +32,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 79902e527313ca41e02c2fb4821dac56
 2008-12-09T15:27:16.347376Z
-34624
+874698
 julianfoad
 has-props
 
@@ -66,10 +66,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 f98bfed21ff4b47f28d903ce7917c464
 2008-11-01T23:51:36.966986Z
-33995
+874069
 arfrever
 has-props
 
@@ -100,10 +100,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 059ba77dfa7642e017655ffa29805472
 2009-01-25T03:05:08.982142Z
-35451
+875525
 arfrever
 has-props
 
@@ -134,10 +134,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 c1f76b97a664252676229c704258985c
 2009-02-16T19:49:25.772744Z
-35886
+875960
 arfrever
 has-props
 
@@ -168,10 +168,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 d70943a59e034d32a5f5f9d25a763199
 2009-02-16T12:53:32.389090Z
-35877
+875951
 sbutler
 has-props
 
@@ -202,10 +202,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 13b20e7b6a86d5bd2a7313fd0213dd9b
 2008-11-02T00:14:38.890089Z
-33996
+874070
 arfrever
 has-props
 
@@ -236,10 +236,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
-ec21ed796129142a7694cfcf9307fd26
-2009-02-16T20:35:25.698675Z
-35895
+2010-01-28T00:20:34.000000Z
+17937f6b2c41d8320f670ff69f90412a
+2009-08-18T14:05:42.061869Z
+878871
 hwright
 has-props
 
@@ -262,7 +262,7 @@ has-props
 
 
 
-53288
+53700
 
 verify.py
 file
@@ -270,10 +270,10 @@ file
 
 
 
-2009-05-27T05:50:02.000000Z
+2010-01-28T00:20:34.000000Z
 c6c36b5516a4a7752d1218e4787da021
 2009-01-25T16:00:45.325770Z
-35455
+875529
 arfrever
 has-props
 

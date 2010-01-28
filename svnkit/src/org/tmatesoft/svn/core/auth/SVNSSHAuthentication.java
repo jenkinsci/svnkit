@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.auth;
 
 import java.io.File;
 
+import org.tmatesoft.svn.core.SVNURL;
+
 /**
  * The <b>SVNSSHAuthentication</b> class represents a kind of credentials used 
  * to authenticate a user over an SSH tunnel.
@@ -49,11 +51,28 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed) {
-        super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
-        myPassword = password;
-        myPortNumber = portNumber;
+        this(userName, password, portNumber, storageAllowed, null, false);
     }
-    
+
+    /**
+     * Creates a user credential object for authenticating over an ssh tunnel. 
+     * This kind of credentials is used when an ssh connection requires 
+     * a user password instead of an ssh private key.
+     * 
+     * @param userName         the name of a user to authenticate 
+     * @param password         the user's password
+     * @param portNumber       the number of a port to establish an ssh tunnel over  
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     * @param url              url these credentials are applied to
+     * @since 1.3.1
+     */
+    public SVNSSHAuthentication(String userName, String password, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, storageAllowed, url, isPartial);
+        myPassword = password;
+    }
+
     /**
      * Creates a user credential object for authenticating over an ssh tunnel. 
      * This kind of credentials is used when an ssh connection requires 
@@ -68,12 +87,30 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed) {
-        super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
-        myPrivateKeyFile = keyFile;
-        myPassphrase = passphrase;
-        myPortNumber = portNumber;
+        this(userName, keyFile, passphrase, portNumber, storageAllowed, null, false);
     }
 
+    /**
+     * Creates a user credential object for authenticating over an ssh tunnel. 
+     * This kind of credentials is used when an ssh connection requires 
+     * an ssh private key.
+     * 
+     * @param userName         the name of a user to authenticate 
+     * @param keyFile          the user's ssh private key file 
+     * @param passphrase       a password to the ssh private key
+     * @param portNumber       the number of a port to establish an ssh tunnel over  
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     * @param url              url these credentials are applied to
+     * @since 1.3.1
+     */
+    public SVNSSHAuthentication(String userName, File keyFile, String passphrase, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, storageAllowed, url, isPartial);
+        myPrivateKeyFile = keyFile;
+        myPassphrase = passphrase;
+    }
+    
     /**
      * Creates a user credential object for authenticating over an ssh tunnel. 
      * This kind of credentials is used when an ssh connection requires 
@@ -88,9 +125,32 @@ public class SVNSSHAuthentication extends SVNAuthentication {
      *                         global auth cache, otherwise not
      */
     public SVNSSHAuthentication(String userName, char[] privateKey, String passphrase, int portNumber, boolean storageAllowed) {
-        super(ISVNAuthenticationManager.SSH, userName, storageAllowed);
+        this(userName, privateKey, passphrase, portNumber, storageAllowed, null, false);
+    }
+
+    /**
+     * Creates a user credential object for authenticating over an ssh tunnel. 
+     * This kind of credentials is used when an ssh connection requires 
+     * an ssh private key.
+     * 
+     * @param userName         the name of a user to authenticate 
+     * @param privateKey       the user's ssh private key 
+     * @param passphrase       a password to the ssh private key
+     * @param portNumber       the number of a port to establish an ssh tunnel over  
+     * @param storageAllowed   if <span class="javakeyword">true</span> then
+     *                         this credential is allowed to be stored in the 
+     *                         global auth cache, otherwise not
+     * @param url              url these credentials are applied to
+     * @since 1.3.1
+     */
+    public SVNSSHAuthentication(String userName, char[] privateKey, String passphrase, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        this(userName, portNumber, storageAllowed, url, isPartial);
         myPrivateKeyValue = privateKey;
         myPassphrase = passphrase;
+    }
+
+    private SVNSSHAuthentication(String userName, int portNumber, boolean storageAllowed, SVNURL url, boolean isPartial) {
+        super(ISVNAuthenticationManager.SSH, userName, storageAllowed, url, isPartial);
         myPortNumber = portNumber;
     }
     

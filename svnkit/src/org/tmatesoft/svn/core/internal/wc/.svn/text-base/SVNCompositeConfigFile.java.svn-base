@@ -22,7 +22,12 @@ public class SVNCompositeConfigFile {
     
     private SVNConfigFile myUserFile;
     private SVNConfigFile mySystemFile;
-
+    
+    /**
+     * Highest priority in-memory read-only options.
+     */
+    private Map myGroupsToOptions;
+    
     public SVNCompositeConfigFile(SVNConfigFile systemFile, SVNConfigFile userFile) {
         mySystemFile = systemFile;
         myUserFile = userFile;
@@ -32,11 +37,33 @@ public class SVNCompositeConfigFile {
         Map system = mySystemFile.getProperties(groupName);
         Map user = myUserFile.getProperties(groupName);
         system.putAll(user);
+        
+        if (myGroupsToOptions != null) {
+            Map groupOptions = (Map) myGroupsToOptions.get(groupName);
+            if (groupOptions != null) {
+                system.putAll(groupOptions);
+            }
+        }
         return system;
     }
 
+    public void setGroupsToOptions(Map groupToOptions) {
+        myGroupsToOptions = groupToOptions;
+    }
+    
     public String getPropertyValue(String groupName, String propertyName) {
-        String value = myUserFile.getPropertyValue(groupName, propertyName);
+        String value = null;
+        if (myGroupsToOptions != null) {
+            Map groupOptions = (Map) myGroupsToOptions.get(groupName);
+            if (groupOptions != null) {
+                value = (String) groupOptions.get(propertyName);
+            }
+        }
+        
+        if (value == null) {
+            value = myUserFile.getPropertyValue(groupName, propertyName);    
+        }
+        
         if (value == null) {
             value = mySystemFile.getPropertyValue(groupName, propertyName);
         }

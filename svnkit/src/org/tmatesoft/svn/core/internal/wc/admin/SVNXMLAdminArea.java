@@ -1120,16 +1120,10 @@ public class SVNXMLAdminArea extends SVNAdminArea {
     }
 
     public boolean hasTreeConflict(String name) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
-        SVNErrorManager.error(err, SVNLogType.WC);
         return false;
     }
 
     public SVNTreeConflictDescription getTreeConflict(String name) throws SVNException {
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE,
-                "This feature is not supported in version {0} of working copy format", String.valueOf(getFormatVersion()));
-        SVNErrorManager.error(err, SVNLogType.WC);
         return null;
     }
 

@@ -1,18 +1,18 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/svnkit/src/org/tmatesoft
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/svnkit/src/org/tmatesoft
 http://svn.svnkit.com/repos/svnkit
 
 
 
-2009-05-13T11:28:20.938259Z
-5847
+2009-11-27T15:43:50.657821Z
+6266
 sa
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 

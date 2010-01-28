@@ -404,7 +404,7 @@ public class SVNReader {
                     int toRead = (int) value;
                     while (toRead > 0) {
                         int r = is.read(buffer, buffer.length - toRead, toRead);
-                        if (r <= 0) {
+                        if (r < 0) {
                             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_SVN_MALFORMED_DATA);
                             SVNErrorManager.error(err, SVNLogType.NETWORK);
                         }

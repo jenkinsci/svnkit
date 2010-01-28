@@ -81,7 +81,6 @@ public class FSRepresentation {
     public String getUniquifier() {
         return myUniquifier;
     }
-
     
     public void setUniquifier(String uniquifier) {
         myUniquifier = uniquifier;
@@ -127,12 +126,13 @@ public class FSRepresentation {
         if (myOffset != rep.myOffset) {
             return false;
         }
-        if (myUniquifier == null && rep.myUniquifier != null) {
+        if (myUniquifier == rep.myUniquifier) {
+            return true;
+        } else if (myUniquifier == null || rep.myUniquifier == null) {
             return false;
-        } else if (myUniquifier != null) {
+        } else {
             return myUniquifier.equals(rep.myUniquifier);
         }
-        return true;
     }
 
     public String getStringRepresentation(int dbFormat) {

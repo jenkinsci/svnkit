@@ -1256,7 +1256,7 @@ public class SVNUpdateClient extends SVNBasicClient {
      * Says whether keywords expansion during export operations is turned on or not.
      * @return <span class="javakeyword">true</span> if expanding keywords;
      *         <span class="javakeyword">false</span> otherwise
-     * @sinec  1.3
+     * @since  1.3
      */
     public boolean isExportExpandsKeywords() {
         return myIsExportExpandsKeywords;

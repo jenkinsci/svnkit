@@ -1,8 +1,8 @@
-9
+10
 
 dir
-5861
-http://svn.svnkit.com/repos/svnkit/tags/1.3.0/www/kb/examples
+6331
+http://svn.svnkit.com/repos/svnkit/tags/1.3.2/www/kb/examples
 http://svn.svnkit.com/repos/svnkit
 
 
@@ -12,7 +12,7 @@ http://svn.svnkit.com/repos/svnkit
 semen
 
 
-svn:special svn:externals svn:needs-lock
+
 
 
 
@@ -35,7 +35,7 @@ file
 
 
 
-2009-05-27T05:49:16.000000Z
+2010-01-28T00:05:32.000000Z
 3f8eac243b80a317baf7340a7f0587e4
 2008-07-29T19:33:42.126931Z
 4610
@@ -69,7 +69,7 @@ file
 
 
 
-2009-05-27T05:49:16.000000Z
+2010-01-28T00:05:32.000000Z
 3739c61c6beeaa287789fe25330d8113
 2008-07-29T19:33:42.126931Z
 4610

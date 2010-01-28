@@ -1,101 +1,101 @@
 K 25
 svn:wc:ra_dav:version-url
-V 79
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data
+V 91
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data
 END
 svn_help_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 95
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help_stdout
+V 107
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help_stdout
 END
 svn_help_bogus-cmd_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 105
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help_bogus-cmd_stdout
+V 117
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help_bogus-cmd_stdout
 END
 svn_help--version_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 104
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help--version_stdout
+V 116
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help--version_stdout
 END
 svn_help_log_switch_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 106
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help_log_switch_stderr
+V 118
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help_log_switch_stderr
 END
 svn_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 90
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_stderr
+V 102
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_stderr
 END
 svn--version_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 99
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn--version_stderr
+V 111
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn--version_stderr
 END
 svn--version--quiet_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 106
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn--version--quiet_stderr
+V 118
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn--version--quiet_stderr
 END
 svn--help_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 96
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn--help_stderr
+V 108
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn--help_stderr
 END
 svn_help_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 95
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help_stderr
+V 107
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help_stderr
 END
 svn_help_bogus-cmd_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 105
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help_bogus-cmd_stderr
+V 117
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help_bogus-cmd_stderr
 END
 svn_help--version_stderr
 K 25
 svn:wc:ra_dav:version-url
-V 104
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help--version_stderr
+V 116
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help--version_stderr
 END
 svn_help_log_switch_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 106
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_help_log_switch_stdout
+V 118
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_help_log_switch_stdout
 END
 svn_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 90
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn_stdout
+V 102
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn_stdout
 END
 svn--version_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 99
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn--version_stdout
+V 111
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn--version_stdout
 END
 svn--version--quiet_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 106
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn--version--quiet_stdout
+V 118
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn--version--quiet_stdout
 END
 svn--help_stdout
 K 25
 svn:wc:ra_dav:version-url
-V 96
-/repos/svn/!svn/ver/37640/tags/1.6.2/subversion/tests/cmdline/getopt_tests_data/svn--help_stdout
+V 108
+/repos/asf/!svn/ver/880128/subversion/tags/1.6.6/subversion/tests/cmdline/getopt_tests_data/svn--help_stdout
 END
