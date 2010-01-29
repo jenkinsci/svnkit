@@ -38,4 +38,101 @@ public class SVNActualNode {
         }
         return new SVNActualNode();
     }
+
+    
+    public long getWCId() {
+        return myWCId;
+    }
+
+    
+    public void setWCId(long wCId) {
+        myWCId = wCId;
+    }
+
+    
+    public String getLocalRelPath() {
+        return myLocalRelPath;
+    }
+
+    
+    public void setLocalRelPath(String localRelPath) {
+        myLocalRelPath = localRelPath;
+    }
+
+    
+    public String getParentRelPath() {
+        return myParentRelPath;
+    }
+
+    
+    public void setParentRelPath(String parentRelPath) {
+        myParentRelPath = parentRelPath;
+    }
+
+    
+    public SVNProperties getProperties() {
+        return myProperties;
+    }
+
+    
+    public void setProperties(SVNProperties properties) {
+        myProperties = properties;
+    }
+
+    
+    public String getConflictOld() {
+        return myConflictOld;
+    }
+
+    
+    public void setConflictOld(String conflictOld) {
+        myConflictOld = conflictOld;
+    }
+
+    
+    public String getConflictNew() {
+        return myConflictNew;
+    }
+
+    
+    public void setConflictNew(String conflictNew) {
+        myConflictNew = conflictNew;
+    }
+
+    
+    public String getConflictWorking() {
+        return myConflictWorking;
+    }
+
+    
+    public void setConflictWorking(String conflictWorking) {
+        myConflictWorking = conflictWorking;
+    }
+
+    
+    public String getPropReject() {
+        return myPropReject;
+    }
+
+    
+    public void setPropReject(String propReject) {
+        myPropReject = propReject;
+    }
+
+    
+    public String getChangeList() {
+        return myChangeList;
+    }
+
+    public void setChangeList(String changeList) {
+        myChangeList = changeList;
+    }
+    
+    public String getTreeConflictData() {
+        return myTreeConflictData;
+    }
+    
+    public void setTreeConflictData(String treeConflictData) {
+        myTreeConflictData = treeConflictData;
+    }
 }

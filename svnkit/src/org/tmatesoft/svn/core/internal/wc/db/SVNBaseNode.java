@@ -11,7 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc.db;
 
-import java.io.File;
 import java.util.Date;
 import java.util.List;
 
@@ -43,11 +42,12 @@ public class SVNBaseNode {
     private SVNChecksum myChecksum;
     private long myTranslatedSize;
     private String myTarget;
-
-    public SVNBaseNode() {
-        
-    }
+    private String myParentRelPath; 
+    private Date myLastModifiedTime;
     
+    public SVNBaseNode() {
+    }
+
     public SVNBaseNode(SVNWCDbStatus status, SVNWCDbKind kind, long wcId, long reposId, String reposPath, String localRelativePath, 
             long revision, SVNProperties props, long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth, List children, 
             SVNChecksum checksum, long translatedSize, String target) {
@@ -68,7 +68,25 @@ public class SVNBaseNode {
         myTranslatedSize = translatedSize;
         myTarget = target;
     }
+
     
+    public Date getLastModifiedTime() {
+        return myLastModifiedTime;
+    }
+
+    
+    public void setLastModifiedTime(Date lastModifiedTime) {
+        myLastModifiedTime = lastModifiedTime;
+    }
+
+    public String getParentRelPath() {
+        return myParentRelPath;
+    }
+    
+    public void setParentRelPath(String parentRelPath) {
+        myParentRelPath = parentRelPath;
+    }
+
     public static SVNBaseNode maybeCreateNewInstance(SVNBaseNode baseNode) {
         if (baseNode != null) {
             return baseNode;

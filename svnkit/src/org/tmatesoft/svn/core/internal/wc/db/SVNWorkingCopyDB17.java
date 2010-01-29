@@ -1633,11 +1633,73 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     long originalRevision = info.getOriginalRevision();
                     if (opRootPath != null && originalReposPath != null && SVNRevision.isValidRevisionNumber(originalRevision) && 
                             originalRevision != entry.getRevision()) {
-//                        String relPathToEntry = SVNPathUtil.getPathAsChild(path, pathChild)
+                        String relPathToEntry = SVNPathUtil.getPathAsChild(opRootPath.getAbsolutePath(), entryPath.getAbsolutePath());
+                        String newCopyFromPath = SVNPathUtil.append(originalReposPath, relPathToEntry);
+                        workingNode.setCopyFromReposId(reposId);
+                        workingNode.setCopyFromReposPath(newCopyFromPath);
+                        workingNode.setCopyFromRevision(entry.getRevision());
                     }
                 } catch (SVNException svne) {
-                    
+                    //
                 }
+            }
+        }
+        
+        if (entry.isKeepLocal()) {
+            SVNErrorManager.assertionFailure(workingNode != null, null, SVNLogType.WC);
+            SVNErrorManager.assertionFailure(entry.isScheduledForDeletion(), null, SVNLogType.WC);
+            workingNode.setIsKeepLocal(true);
+        }
+        
+        if (entry.isAbsent()) {
+            SVNErrorManager.assertionFailure(workingNode == null, null, SVNLogType.WC);
+            SVNErrorManager.assertionFailure(baseNode != null, null, SVNLogType.WC);
+            baseNode.setStatus(SVNWCDbStatus.ABSENT);
+        }
+        
+        if (entry.getConflictOld() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setConflictOld(entry.getConflictOld());
+            actualNode.setConflictNew(entry.getConflictNew());
+            actualNode.setConflictWorking(entry.getConflictWorking());
+        }
+        
+        if (entry.getPropRejectFile() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setPropReject(entry.getPropRejectFile());
+        }
+        
+        if (entry.getChangelistName() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setChangeList(entry.getChangelistName());
+        }
+        
+        if (entry.getTreeConflictData() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setTreeConflictData(entry.getTreeConflictData());
+        }
+        
+        if (entry.getExternalFilePath() != null) {
+            baseNode = SVNBaseNode.maybeCreateNewInstance(baseNode);
+        }
+        
+        if (baseNode != null) {
+            baseNode.setWCId(wcId);
+            baseNode.setLocalRelativePath(localRelPath);
+            baseNode.setParentRelPath(parentRelPath);
+            baseNode.setRevision(entry.getRevision());
+            baseNode.setLastModifiedTime(SVNDate.parseDateString(entry.getTextTime()));
+            baseNode.setTranslatedSize(entry.getWorkingSize());
+            if (entry.getDepth() != SVNDepth.EXCLUDE) {
+                baseNode.setDepth(entry.getDepth());
+            } else {
+                baseNode.setStatus(SVNWCDbStatus.EXCLUDED);
+                baseNode.setDepth(SVNDepth.INFINITY);
+            }
+            
+            if (entry.isDeleted()) {
+                SVNErrorManager.assertionFailure(!entry.isIncomplete(), null, SVNLogType.WC);
+//                baseNode.setStatus(status)
             }
         }
     }
