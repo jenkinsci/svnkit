@@ -463,6 +463,8 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
                             if (!"".equals(name.trim())) {
                                 if (pValue.startsWith("\"") && pValue.endsWith("\"") && pValue.length() > 1) {
                                     pValue = pValue.substring(1, pValue.length() - 1);
+                                } else if (pValue.startsWith("\'") && pValue.endsWith("\'") && pValue.length() > 1) {
+                                    pValue = pValue.substring(1, pValue.length() - 1);
                                 }
                                 target.put(name, pValue);
                             }
