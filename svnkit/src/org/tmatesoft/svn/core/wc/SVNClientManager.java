@@ -134,6 +134,8 @@ public class SVNClientManager implements ISVNRepositoryPool {
 
     private boolean myIsIgnoreExternals;
 
+    private SVNPatchClient myPatchClient;
+
     private SVNClientManager(ISVNOptions options, ISVNRepositoryPool repositoryPool) {
         myOptions = options;
         if (myOptions == null) {
@@ -546,6 +548,29 @@ public class SVNClientManager implements ISVNRepositoryPool {
         return myDiffClient;
     }
 
+    
+    /**
+     * Returns an instance of the {@link SVNPatchClient} class. 
+     * 
+     * <p>
+     * If it's the first time this method is being called the object is
+     * created, initialized and then returned. Further calls to this
+     * method will get the same object instantiated at that moment of 
+     * the first call. <b>SVNClientManager</b> does not reinstantiate
+     * its <b>SVN</b>*<b>Client</b> objects. 
+     * 
+     * @return an <b>SVNPatchClient</b> instance
+     */
+    public SVNPatchClient getPatchClient() {
+        if (myPatchClient == null) {
+            myPatchClient = new SVNPatchClient(this, myOptions);
+            myPatchClient.setEventHandler(myEventHandler);
+            myPatchClient.setDebugLog(getDebugLog());
+            myPatchClient.setIgnoreExternals(myIsIgnoreExternals);
+        }
+        return myPatchClient;
+    }
+    
     /**
      * Returns an instance of the {@link SVNLogClient} class. 
      * 

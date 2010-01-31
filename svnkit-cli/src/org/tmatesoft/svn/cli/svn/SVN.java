@@ -68,6 +68,7 @@ public class SVN extends AbstractSVNLauncher {
         AbstractSVNCommand.registerCommand(new SVNUnLockCommand());
         AbstractSVNCommand.registerCommand(new SVNUpdateCommand());
         AbstractSVNCommand.registerCommand(new SVNMergeInfoCommand());
+        AbstractSVNCommand.registerCommand(new SVNPatchCommand());
     }
 
     protected void registerOptions() {
@@ -138,6 +139,9 @@ public class SVN extends AbstractSVNLauncher {
         SVNCommandLine.registerOption(SVNOption.DIFF_CMD);
         SVNCommandLine.registerOption(SVNOption.TRUST_SERVER_CERT);
         SVNCommandLine.registerOption(SVNOption.CONFIG_OPTION);
+
+        SVNCommandLine.registerOption(SVNOption.STRIP);
+        
     }
 
     protected boolean needArgs() {
