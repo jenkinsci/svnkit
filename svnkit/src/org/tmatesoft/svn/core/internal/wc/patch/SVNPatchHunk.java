@@ -430,7 +430,7 @@ public class SVNPatchHunk {
                 if (offset == null) {
                     return false;
                 }
-                hunkRange.length = offset;
+                hunkRange.length = offset.longValue();
 
                 /*
                  * Snip off the end of the string, so we can comfortably parse
@@ -449,7 +449,7 @@ public class SVNPatchHunk {
         if (offset == null) {
             return false;
         }
-        hunkRange.start = offset;
+        hunkRange.start = offset.longValue();
         return true;
 
     }
