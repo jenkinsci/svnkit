@@ -344,8 +344,11 @@ public class SVNWCUtil {
      */
     public static File getWorkingCopyRoot(File versionedDir, boolean stopOnExtenrals) throws SVNException {
         versionedDir = versionedDir.getAbsoluteFile();
-        if (versionedDir == null || (!isVersionedDirectory(versionedDir) && !isVersionedDirectory(versionedDir.getParentFile()))) {
-            // both this dir and its parent are not versioned.
+        if (versionedDir == null || 
+                (!isVersionedDirectory(versionedDir) && 
+                (versionedDir.getParentFile() == null || !isVersionedDirectory(versionedDir.getParentFile())))) {
+            // both this dir and its parent are not versioned, 
+            // or dir is root and not versioned
             return null;
         }
 

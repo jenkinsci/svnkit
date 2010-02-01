@@ -114,7 +114,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             return version;
         }
         if (error == null) {
-            checkWCNG(path.getAbsoluteFile(), path);
+            if (path != null) {
+                checkWCNG(path.getAbsoluteFile(), path);
+            }
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
         }
         SVNErrorManager.error(error, logLevel, SVNLogType.WC);
@@ -177,7 +179,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
             }
         }
         if (error == null) {
-            checkWCNG(path.getAbsoluteFile(), path);
+            if (path != null) {
+                checkWCNG(path.getAbsoluteFile(), path);
+            }
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
         }
         SVNErrorManager.error(error, logLevel, SVNLogType.WC);
