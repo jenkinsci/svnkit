@@ -20,6 +20,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.SVNPropertyValue;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
@@ -43,13 +44,15 @@ public class SVNDiffStatusEditor implements ISVNEditor {
     private long myRevision;
     private SVNURL myRootURL;
     private File myAnchor;
+    private String myTarget;
     
-    public SVNDiffStatusEditor(File anchor, SVNRepository repos, long revision, ISVNDiffStatusHandler handler) {
+    public SVNDiffStatusEditor(File anchor, String target, SVNRepository repos, long revision, ISVNDiffStatusHandler handler) {
         myRepository = repos;
         myHandler = handler;
         myRevision = revision;
         myRootURL = repos.getLocation();
         myAnchor = anchor;
+        myTarget = target;
     }
 
     public void openRoot(long revision) throws SVNException {
@@ -61,7 +64,7 @@ public class SVNDiffStatusEditor implements ISVNEditor {
 
     public void deleteEntry(String path, long revision) throws SVNException {
         SVNNodeKind kind = myRepository.checkPath(path, myRevision);
-        SVNDiffStatus status = new SVNDiffStatus(new File(myAnchor, path), myRootURL.appendPath(path, false), path, SVNStatusType.STATUS_DELETED, false, kind);
+        SVNDiffStatus status = new SVNDiffStatus(myAnchor != null ? new File(myAnchor, path) : null, myRootURL.appendPath(path, false), path, SVNStatusType.STATUS_DELETED, false, kind);
         myHandler.handleDiffStatus(status);
     }
 
@@ -137,14 +140,20 @@ public class SVNDiffStatusEditor implements ISVNEditor {
     private class SVNSummarize {
         
         public SVNSummarize(SVNSummarize parent, String path, SVNNodeKind kind) {
-            myPath = path;
             myKind = kind;
             myType = SVNStatusType.STATUS_NONE;
             myParent = parent;
+            if (myTarget != null && path.equals(myTarget) || path.startsWith(myTarget + "/")) {
+                path = SVNPathUtil.removeHead(path);
+            }
+            if (path.startsWith("/")) {
+                path = path.substring(1);
+            }
+            myPath = path;
         }
         
         public SVNDiffStatus toStatus() throws SVNException {
-            return new SVNDiffStatus(new File(myAnchor, myPath), myRootURL.appendPath(myPath, false), myPath, myType, myPropChanged, myKind);
+            return new SVNDiffStatus(myAnchor != null ? new File(myAnchor, myPath) : null, myRootURL.appendPath(myPath, false), myPath, myType, myPropChanged, myKind);
         }
         
         private String myPath;

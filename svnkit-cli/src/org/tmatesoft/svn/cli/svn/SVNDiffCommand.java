@@ -258,11 +258,17 @@ public class SVNDiffCommand extends SVNXMLCommand implements ISVNDiffStatusHandl
             return;
         }
         String path = diffStatus.getPath();
-        if (!SVNCommandUtil.isURL(path)) {
-            if (diffStatus.getFile() != null) {
-                path = getSVNEnvironment().getRelativePath(diffStatus.getFile());
-            }
+        
+        if (diffStatus.getFile() != null) {
+            path = getSVNEnvironment().getRelativePath(diffStatus.getFile());
             path = SVNCommandUtil.getLocalPath(path);
+        } else if (diffStatus.getURL() != null) {
+            path = diffStatus.getURL().toString();
+        } else {
+            path = diffStatus.getPath();
+            if (!SVNCommandUtil.isURL(path)) {
+                path = SVNCommandUtil.getLocalPath(path);
+            }
         }
         if (getSVNEnvironment().isXML()) {
             StringBuffer buffer = new StringBuffer();
