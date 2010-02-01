@@ -64,8 +64,20 @@ public class SVNDiffStatusEditor implements ISVNEditor {
 
     public void deleteEntry(String path, long revision) throws SVNException {
         SVNNodeKind kind = myRepository.checkPath(path, myRevision);
-        SVNDiffStatus status = new SVNDiffStatus(myAnchor != null ? new File(myAnchor, path) : null, myRootURL.appendPath(path, false), path, SVNStatusType.STATUS_DELETED, false, kind);
+        String statusPath = getStatusPath(path);
+        SVNDiffStatus status = new SVNDiffStatus(myAnchor != null ? new File(myAnchor, path) : null, myRootURL.appendPath(path, false), statusPath, SVNStatusType.STATUS_DELETED, false, kind);
         myHandler.handleDiffStatus(status);
+    }
+
+    private String getStatusPath(String path) {
+        String statusPath = path;
+        if (myTarget != null && (path.equals(myTarget) || path.startsWith(myTarget + "/"))) {
+            statusPath = SVNPathUtil.removeHead(path);
+        }
+        if (statusPath.startsWith("/")) {
+            statusPath = statusPath.substring(1);
+        }
+        return statusPath;
     }
 
     public void openDir(String path, long revision) throws SVNException {
@@ -143,19 +155,15 @@ public class SVNDiffStatusEditor implements ISVNEditor {
             myKind = kind;
             myType = SVNStatusType.STATUS_NONE;
             myParent = parent;
-            if (myTarget != null && path.equals(myTarget) || path.startsWith(myTarget + "/")) {
-                path = SVNPathUtil.removeHead(path);
-            }
-            if (path.startsWith("/")) {
-                path = path.substring(1);
-            }
-            myPath = path;
+            myFile = myAnchor != null ? new File(myAnchor, path) : null;
+            myPath = getStatusPath(path);
         }
         
         public SVNDiffStatus toStatus() throws SVNException {
-            return new SVNDiffStatus(myAnchor != null ? new File(myAnchor, myPath) : null, myRootURL.appendPath(myPath, false), myPath, myType, myPropChanged, myKind);
+            return new SVNDiffStatus(myFile, myRootURL.appendPath(myPath, false), myPath, myType, myPropChanged, myKind);
         }
         
+        private File myFile;
         private String myPath;
         private SVNNodeKind myKind;
         private SVNStatusType myType;
