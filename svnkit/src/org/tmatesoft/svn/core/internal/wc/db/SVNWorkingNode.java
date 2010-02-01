@@ -11,11 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.wc.db;
 
+
 import java.util.Date;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -30,15 +33,15 @@ public class SVNWorkingNode {
     private SVNNodeKind myKind;
     private long myCopyFromReposId;
     private String myCopyFromReposPath;
-    private long myCopyFromRevision;
+    private long myCopyFromRevision = SVNRepository.INVALID_REVISION;
     private boolean myIsMovedHere;
-    private String myIsMovedTo;
+    private String myMovedTo;
     private SVNChecksum myChecksum;
-    private long myTranslatedSize;
-    private long myChangedRevision;
+    private long myTranslatedSize = -1;
+    private long myChangedRevision = SVNRepository.INVALID_REVISION;
     private Date myChangedDate;
     private String myChangedAuthor;
-    private String myDepth;
+    private SVNDepth myDepth;
     private Date myLastModifiedTime;
     private SVNProperties myProperties;
     private boolean myIsKeepLocal;
@@ -82,12 +85,12 @@ public class SVNWorkingNode {
         return myCopyFromRevision;
     }
     
-    public boolean isIsMovedHere() {
+    public boolean isMovedHere() {
         return myIsMovedHere;
     }
     
-    public String getIsMovedTo() {
-        return myIsMovedTo;
+    public String getMovedTo() {
+        return myMovedTo;
     }
     
     public SVNChecksum getChecksum() {
@@ -110,7 +113,7 @@ public class SVNWorkingNode {
         return myChangedAuthor;
     }
     
-    public String getDepth() {
+    public SVNDepth getDepth() {
         return myDepth;
     }
     
@@ -122,7 +125,7 @@ public class SVNWorkingNode {
         return myProperties;
     }
     
-    public boolean isIsKeepLocal() {
+    public boolean isKeepLocal() {
         return myIsKeepLocal;
     }
 
@@ -172,8 +175,8 @@ public class SVNWorkingNode {
     }
 
     
-    public void setIsMovedTo(String isMovedTo) {
-        myIsMovedTo = isMovedTo;
+    public void setMovedTo(String isMovedTo) {
+        myMovedTo = isMovedTo;
     }
 
     
@@ -202,7 +205,7 @@ public class SVNWorkingNode {
     }
 
     
-    public void setDepth(String depth) {
+    public void setDepth(SVNDepth depth) {
         myDepth = depth;
     }
 
@@ -217,7 +220,7 @@ public class SVNWorkingNode {
     }
 
     
-    public void setIsKeepLocal(boolean isKeepLocal) {
+    public void setKeepLocal(boolean isKeepLocal) {
         myIsKeepLocal = isKeepLocal;
     }
     

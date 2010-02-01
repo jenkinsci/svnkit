@@ -15,8 +15,10 @@ import java.util.Date;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.io.SVNRepository;
 
 
 /**
@@ -26,49 +28,26 @@ import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 public class SVNBaseNode {
 
     private SVNWCDbStatus myStatus;
-    private SVNWCDbKind myKind;
+    private SVNWCDbKind myWCDbKind;
+    private SVNNodeKind myNodeKind;
     private long myWCId;
-    private long myReposId;
+    private long myReposId = -1;
     private String myReposPath;
     private String myLocalRelativePath;
-    private long myRevision;
+    private long myRevision = SVNRepository.INVALID_REVISION;
     private SVNProperties myProps;
-    private long myChangedRevision;
+    private long myChangedRevision = SVNRepository.INVALID_REVISION;
     private Date myChangedDate;
     private String myChangedAuthor;
     private SVNDepth myDepth;
 
     private List myChildren;
     private SVNChecksum myChecksum;
-    private long myTranslatedSize;
+    private long myTranslatedSize = -1;
     private String myTarget;
     private String myParentRelPath; 
     private Date myLastModifiedTime;
     
-    public SVNBaseNode() {
-    }
-
-    public SVNBaseNode(SVNWCDbStatus status, SVNWCDbKind kind, long wcId, long reposId, String reposPath, String localRelativePath, 
-            long revision, SVNProperties props, long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth, List children, 
-            SVNChecksum checksum, long translatedSize, String target) {
-        myStatus = status;
-        myKind = kind;
-        myWCId = wcId;
-        myReposId = reposId;
-        myReposPath = reposPath;
-        myLocalRelativePath = localRelativePath;
-        myRevision = revision;
-        myProps = props;
-        myChangedRevision = changedRevision;
-        myChangedDate = changedDate;
-        myChangedAuthor = changedAuthor;
-        myDepth = depth;
-        myChildren = children;
-        myChecksum = checksum;
-        myTranslatedSize = translatedSize;
-        myTarget = target;
-    }
-
     
     public Date getLastModifiedTime() {
         return myLastModifiedTime;
@@ -98,8 +77,8 @@ public class SVNBaseNode {
         return myStatus;
     }
     
-    public SVNWCDbKind getKind() {
-        return myKind;
+    public SVNWCDbKind getWCDbKind() {
+        return myWCDbKind;
     }
     
     public long getWCId() {
@@ -163,13 +142,22 @@ public class SVNBaseNode {
     }
 
     
+    public SVNNodeKind getNodeKind() {
+        return myNodeKind;
+    }
+
+    
+    public void setNodeKind(SVNNodeKind nodeKind) {
+        myNodeKind = nodeKind;
+    }
+
     public void setStatus(SVNWCDbStatus status) {
         myStatus = status;
     }
 
     
-    public void setKind(SVNWCDbKind kind) {
-        myKind = kind;
+    public void setWCDbKind(SVNWCDbKind kind) {
+        myWCDbKind = kind;
     }
 
     

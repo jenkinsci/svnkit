@@ -12,7 +12,6 @@
 package org.tmatesoft.svn.core.internal.wc.db;
 
 import org.tmatesoft.svn.core.SVNProperties;
-import org.tmatesoft.svn.core.wc.SVNChangelistClient;
 
 
 /**

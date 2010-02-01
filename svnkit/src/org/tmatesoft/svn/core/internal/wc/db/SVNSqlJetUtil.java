@@ -94,4 +94,106 @@ public class SVNSqlJetUtil {
         });
     }
 
+    public static final SVNDbTableField[] OUR_BASE_NODE_FIELDS = { 
+        SVNDbTableField.repos_id, 
+        SVNDbTableField.repos_relpath, 
+        SVNDbTableField.presence, 
+        SVNDbTableField.kind, 
+        SVNDbTableField.checksum, 
+        SVNDbTableField.translated_size, 
+        SVNDbTableField.changed_rev, 
+        SVNDbTableField.changed_date, 
+        SVNDbTableField.changed_author, 
+        SVNDbTableField.depth, 
+        SVNDbTableField.symlink_target, 
+        SVNDbTableField.last_mod_time, 
+        SVNDbTableField.properties 
+    };
+    
+    public static final SVNDbTableField[] OUR_PRESENCE_FIELD = {
+        SVNDbTableField.presence
+    };
+    
+    protected static final SVNDbTableField[] OUR_PARENT_STUB_INFO_FIELDS = { 
+        SVNDbTableField.presence, 
+        SVNDbTableField.revnum 
+    };
+    
+    public static final SVNDbTableField[] OUR_LOCK_FIELDS = { 
+        SVNDbTableField.lock_token, 
+        SVNDbTableField.lock_owner, 
+        SVNDbTableField.lock_comment, 
+        SVNDbTableField.lock_date 
+    };
+    
+    public static final SVNDbTableField[] OUR_ACTUAL_NODE_FIELDS = { 
+        SVNDbTableField.prop_reject, 
+        SVNDbTableField.changelist, 
+        SVNDbTableField.conflict_old, 
+        SVNDbTableField.conflict_new, 
+        SVNDbTableField.conflict_working, 
+        SVNDbTableField.tree_conflict_data, 
+        SVNDbTableField.properties 
+    };
+    
+    public static final SVNDbTableField[] OUR_ACTUAL_TREE_CONFLICT_FIELDS = {
+        SVNDbTableField.tree_conflict_data
+    };
+    
+    public static final SVNDbTableField[] OUR_CONFLICT_DETAILS_FIELDS = {
+        SVNDbTableField.prop_reject,
+        SVNDbTableField.conflict_new,
+        SVNDbTableField.conflict_old, 
+        SVNDbTableField.conflict_working
+    };
+    
+    public static final SVNDbTableField[] OUR_WORKING_NODE_FIELDS = { 
+        SVNDbTableField.presence, 
+        SVNDbTableField.kind, 
+        SVNDbTableField.checksum, 
+        SVNDbTableField.translated_size, 
+        SVNDbTableField.changed_rev, 
+        SVNDbTableField.changed_date, 
+        SVNDbTableField.changed_author, 
+        SVNDbTableField.depth, 
+        SVNDbTableField.symlink_target, 
+        SVNDbTableField.copyfrom_repos_id, 
+        SVNDbTableField.copyfrom_repos_path, 
+        SVNDbTableField.copyfrom_revnum, 
+        SVNDbTableField.moved_here, 
+        SVNDbTableField.moved_to, 
+        SVNDbTableField.last_mod_time, 
+        SVNDbTableField.properties
+    };
+    
+    public static final SVNDbTableField[] OUR_KEEP_LOCAL_FIELD = {
+        SVNDbTableField.keep_local
+    };
+    
+    public static final SVNDbTableField[] OUR_SELECT_REPOSITORY_BY_ID_FIELDS = {
+        SVNDbTableField.root,
+        SVNDbTableField.uuid
+    };
+    
+    public static final SVNDbTableField[] OUR_KIND_FIELD = {
+        SVNDbTableField.kind
+    };
+    
+    public static final SVNDbTableField[] OUR_ID_FIELD = {
+        SVNDbTableField.id
+    };
+    
+    public static final SVNDbTableField[] OUR_DELETION_INFO_FIELDS = {
+        SVNDbTableField.presence,
+        SVNDbTableField.moved_to
+    };
+    
+    public static final SVNDbTableField[] OUR_FILE_EXTERNAL_FIELD = {
+        SVNDbTableField.file_external
+    };
+    
+    public static final SVNDbTableField[] OUR_DAV_CACHE_FIELD = {
+        SVNDbTableField.dav_cache
+    };
+
 }

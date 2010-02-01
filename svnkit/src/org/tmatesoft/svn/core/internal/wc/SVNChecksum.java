@@ -42,7 +42,7 @@ public class SVNChecksum {
         return checksumRep + myDigest;
     }
     
-    public static SVNChecksum parseChecksum(String checksum) throws SVNException {
+    public static SVNChecksum deserializeChecksum(String checksum) throws SVNException {
         SVNErrorManager.assertionFailure(checksum != null && checksum.length() > 6, null, SVNLogType.WC);
         SVNChecksumKind kind = checksum.charAt(1) == 'm' ? SVNChecksumKind.MD5 : SVNChecksumKind.SHA1; 
         String hexDigest = checksum.substring(6);

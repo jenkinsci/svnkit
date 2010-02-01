@@ -302,4 +302,30 @@ public class SVNAdminUtil {
         return revision;
     }
 
+    public static String serializeExternalFileData(Map entryAttrs) throws SVNException {
+        String representation = null;
+        String path = (String) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PATH);
+        SVNRevision revision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_REVISION);
+        SVNRevision pegRevision = (SVNRevision) entryAttrs.get(SVNProperty.FILE_EXTERNAL_PEG_REVISION);
+        if (path != null) {
+            String revStr = SVNAdminUtil.asString(revision, path);
+            String pegRevStr = SVNAdminUtil.asString(pegRevision, path);
+            representation = pegRevStr + ":" + revStr + ":" + path;
+        }
+        return representation;
+    }
+
+    public static String asString(SVNRevision revision, String path) throws SVNException {
+        if (revision == SVNRevision.HEAD || 
+                SVNRevision.isValidRevisionNumber(revision.getNumber())) {
+            return revision.toString();
+        }
+        
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Illegal file external revision kind {0} for path ''{1}''", 
+        
+                new Object[] { revision.toString(), path });
+        SVNErrorManager.error(err, SVNLogType.WC);
+        return null;
+    }
+
 }

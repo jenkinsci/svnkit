@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.ISqlJetMemoryPointer;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -84,6 +83,20 @@ public abstract class SVNAbstractDbStrategy {
         return table.insertByFieldNamesOr(conflictAction, convertedFieldsToValues);
     }
 
+    public void runUpdate(ISqlJetTable table, Map<SVNDbTableField, Object> fieldsToValues) throws SqlJetException {
+        ISqlJetCursor cursor = getCursor(table);
+        try {
+            if (!cursor.eof()) {
+                Map<String, Object> convertedFieldsToValues = convertValuesMap(fieldsToValues);
+                do {
+                    cursor.updateByFieldNames(convertedFieldsToValues);
+                } while (cursor.next());
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+    
     public long runInsert(ISqlJetTable table, SqlJetConflictAction conflictAction, Object... values) throws SqlJetException {
         return table.insertOr(conflictAction, values);
     }

@@ -22,25 +22,39 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
+import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNSkel;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.db.SVNActualNode;
+import org.tmatesoft.svn.core.internal.wc.db.SVNBaseNode;
+import org.tmatesoft.svn.core.internal.wc.db.SVNDbCommand;
+import org.tmatesoft.svn.core.internal.wc.db.SVNDbTableField;
+import org.tmatesoft.svn.core.internal.wc.db.SVNDbTables;
 import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNRepositoryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNRepositoryScanResult;
+import org.tmatesoft.svn.core.internal.wc.db.SVNSqlJetUtil;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbKind;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbLock;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
+import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingNode;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17.IsDirDeletedResult;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -499,8 +513,476 @@ public class SVNAdminArea17 extends SVNAdminArea {
     protected void writeEntries(Writer writer) throws IOException, SVNException {
     }
 
+    public void writeEntry(final File path, final SVNEntry thisDir, final SVNEntry thisEntry) throws SVNException {
+        
+        SVNDbCommand command = new SVNDbCommand() {
+            
+            public Object execCommand() throws SqlJetException, SVNException {
+                final SqlJetDb sdb = myWCDb.getDBTemp(path, false);
+                File thisPath = new File(path, thisEntry.getName());
+                long reposId = 0;
+                String reposRootURL = null;
+                
+                if (thisDir.getUUID() != null) {
+                    reposId = myWCDb.ensureRepos(path, thisDir.getRepositoryRoot(), thisDir.getUUID());
+                    reposRootURL = thisDir.getRepositoryRoot();
+                }
+                
+                long wcId = myWCDb.fetchWCId(sdb);
+                SVNProperties davCache = null;
+                try {
+                    davCache = myWCDb.getBaseDAVCache(path);
+                } catch (SVNException svne) {
+                    SVNErrorMessage err = svne.getErrorMessage();
+                    if (err.getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                        throw svne;
+                    }
+                }
+                
+                Object[] lookUpObjects = new Object[] { wcId, thisEntry.getName() };
+                Map<SVNDbTableField, Object> baseResult = (Map<SVNDbTableField, Object>) myWCDb.runSelect(sdb, SVNDbTables.base_node, 
+                        myWCDb.getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_BASE_NODE_FIELDS, null));
+                Object baseProps = null;
+                if (!baseResult.isEmpty()) {
+                    baseProps = baseResult.get(SVNDbTableField.properties);
+                }
+                
+                Map<SVNDbTableField, Object> workingResult = (Map<SVNDbTableField, Object>) myWCDb.runSelect(sdb, SVNDbTables.working_node, 
+                        myWCDb.getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_WORKING_NODE_FIELDS, null));
+                Object workingProps = null;
+                if (!workingResult.isEmpty()) {
+                    workingProps = workingResult.get(SVNDbTableField.properties);
+                }
+                
+                Map<SVNDbTableField, Object> actualResult = (Map<SVNDbTableField, Object>) myWCDb.runSelect(sdb, SVNDbTables.actual_node, 
+                        myWCDb.getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_ACTUAL_NODE_FIELDS, null));
+                Object actualProps = null;
+                if (!actualResult.isEmpty()) {
+                    actualProps = actualResult.get(SVNDbTableField.properties);
+                }
+                
+                myWCDb.runDelete(sdb, SVNDbTables.working_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), null);
+                myWCDb.runDelete(sdb, SVNDbTables.base_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), null);
+                myWCDb.runDelete(sdb, SVNDbTables.actual_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), null);
+                
+                return null;
+            }
+        };
+        
+//        command.runDbCommand(sdb, null, SqlJetTransactionMode.WRITE, true);
+    }
+    
+    private void writeEntry(SqlJetDb sdb, long wcId, long reposId, String reposRootURL, SVNEntry entry, 
+            String localRelPath, File entryPath, SVNEntry thisDir, boolean alwaysCreateActual, boolean createLocks) throws SVNException {
+        String parentRelPath = null;
+        if (localRelPath != null && !"".equals(localRelPath)) {
+            parentRelPath = SVNPathUtil.removeTail(localRelPath);
+        }
+        
+        SVNWorkingNode workingNode = null;
+        SVNBaseNode baseNode = null;
+        SVNActualNode actualNode = null;
+        if (entry.getSchedule() == null) {
+            if (entry.isCopied()) {
+                workingNode = SVNWorkingNode.maybeCreateWorkingNode(workingNode);
+            } else {
+                baseNode = SVNBaseNode.maybeCreateNewInstance(baseNode);
+            }
+        } else if (entry.isScheduledForAddition()) {
+            workingNode = SVNWorkingNode.maybeCreateWorkingNode(workingNode);
+        } else if (entry.isScheduledForDeletion()) {
+            workingNode = SVNWorkingNode.maybeCreateWorkingNode(workingNode);
+            if (!(entry.isCopied() || (thisDir.isCopied() && thisDir.isScheduledForAddition()))) {
+               baseNode = SVNBaseNode.maybeCreateNewInstance(baseNode); 
+            }
+        } else if (entry.isScheduledForReplacement()) {
+            workingNode = SVNWorkingNode.maybeCreateWorkingNode(workingNode);
+            baseNode = SVNBaseNode.maybeCreateNewInstance(baseNode);
+        }
+        
+        if (entry.isDeleted()) {
+            baseNode = SVNBaseNode.maybeCreateNewInstance(baseNode);
+        }
+        
+        if (entry.isCopied()) {
+            workingNode = SVNWorkingNode.maybeCreateWorkingNode(workingNode);
+            if (entry.getCopyFromURL() != null) {
+                workingNode.setCopyFromReposId(reposId);
+                String relativeURL = null;
+                String copyFromURL = entry.getCopyFromURL();
+                if (reposRootURL != null && copyFromURL != null && copyFromURL.startsWith(reposRootURL)) {
+                    relativeURL = copyFromURL.substring(reposRootURL.length());
+                    if (relativeURL.startsWith("/")) {
+                        relativeURL = relativeURL.substring(1);
+                    }
+                }
+                
+                if (relativeURL == null) {
+                    workingNode.setCopyFromReposPath("");
+                } else {
+                    workingNode.setCopyFromReposPath(SVNEncodingUtil.uriEncode(relativeURL));
+                }
+                workingNode.setCopyFromRevision(entry.getCopyFromRevision());
+            } else {
+                File parentPath = entryPath.getParentFile();
+                try {
+                    SVNEntryInfo info = myWCDb.scanAddition(parentPath, false, false, false, true, true, false, false, true, false);
+                    File opRootPath = info.getOperationRootPath();
+                    String originalReposPath = info.getOriginalReposPath();
+                    long originalRevision = info.getOriginalRevision();
+                    if (opRootPath != null && originalReposPath != null && SVNRevision.isValidRevisionNumber(originalRevision) && 
+                            originalRevision != entry.getRevision()) {
+                        String relPathToEntry = SVNPathUtil.getPathAsChild(opRootPath.getAbsolutePath(), entryPath.getAbsolutePath());
+                        String newCopyFromPath = SVNPathUtil.append(originalReposPath, relPathToEntry);
+                        workingNode.setCopyFromReposId(reposId);
+                        workingNode.setCopyFromReposPath(newCopyFromPath);
+                        workingNode.setCopyFromRevision(entry.getRevision());
+                    }
+                } catch (SVNException svne) {
+                    //
+                }
+            }
+        }
+        
+        if (entry.isKeepLocal()) {
+            SVNErrorManager.assertionFailure(workingNode != null, null, SVNLogType.WC);
+            SVNErrorManager.assertionFailure(entry.isScheduledForDeletion(), null, SVNLogType.WC);
+            workingNode.setKeepLocal(true);
+        }
+        
+        if (entry.isAbsent()) {
+            SVNErrorManager.assertionFailure(workingNode == null, null, SVNLogType.WC);
+            SVNErrorManager.assertionFailure(baseNode != null, null, SVNLogType.WC);
+            baseNode.setStatus(SVNWCDbStatus.ABSENT);
+        }
+        
+        if (entry.getConflictOld() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setConflictOld(entry.getConflictOld());
+            actualNode.setConflictNew(entry.getConflictNew());
+            actualNode.setConflictWorking(entry.getConflictWorking());
+        }
+        
+        if (entry.getPropRejectFile() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setPropReject(entry.getPropRejectFile());
+        }
+        
+        if (entry.getChangelistName() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setChangeList(entry.getChangelistName());
+        }
+        
+        if (entry.getTreeConflictData() != null) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setTreeConflictData(entry.getTreeConflictData());
+        }
+        
+        if (entry.getExternalFilePath() != null) {
+            baseNode = SVNBaseNode.maybeCreateNewInstance(baseNode);
+        }
+        
+        if (baseNode != null) {
+            baseNode.setWCId(wcId);
+            baseNode.setLocalRelativePath(localRelPath);
+            baseNode.setParentRelPath(parentRelPath);
+            baseNode.setRevision(entry.getRevision());
+            baseNode.setLastModifiedTime(SVNDate.parseDateString(entry.getTextTime()));
+            baseNode.setTranslatedSize(entry.getWorkingSize());
+            if (entry.getDepth() != SVNDepth.EXCLUDE) {
+                baseNode.setDepth(entry.getDepth());
+            } else {
+                baseNode.setStatus(SVNWCDbStatus.EXCLUDED);
+                baseNode.setDepth(SVNDepth.INFINITY);
+            }
+            
+            if (entry.isDeleted()) {
+                SVNErrorManager.assertionFailure(!entry.isIncomplete(), null, SVNLogType.WC);
+                baseNode.setStatus(SVNWCDbStatus.NOT_PRESENT);
+                baseNode.setNodeKind(entry.getKind());
+            } else {
+                baseNode.setNodeKind(entry.getKind());
+                if (entry.isIncomplete()) {
+                    SVNErrorManager.assertionFailure(baseNode.getStatus() == SVNWCDbStatus.NORMAL, null, SVNLogType.WC);
+                    baseNode.setStatus(SVNWCDbStatus.INCOMPLETE);
+                }
+            }
+            
+            if (entry.isDirectory()) {
+                baseNode.setChecksum(null);
+            } else {
+                baseNode.setChecksum(new SVNChecksum(SVNChecksumKind.MD5, entry.getChecksum()));
+            }
+            
+            if (reposRootURL != null) {
+                baseNode.setReposId(reposId);
+                if (entry.getURL() != null) {
+                    String relativeURL = null;
+                    if (entry.getURL().startsWith(reposRootURL)) {
+                        relativeURL = entry.getURL().substring(reposRootURL.length());
+                        if (relativeURL.startsWith("/")) {
+                            relativeURL = relativeURL.substring(1);
+                        }
+                    }
+                    
+                    if (relativeURL == null) {
+                        baseNode.setReposPath("");
+                    } else {
+                        baseNode.setReposPath(SVNEncodingUtil.uriDecode(relativeURL));
+                    }
+                } else {
+                    String basePath = null;
+                    if (thisDir.getURL() != null && thisDir.getURL().startsWith(reposRootURL)) {
+                        basePath = thisDir.getURL().substring(reposRootURL.length());
+                        if (basePath.startsWith("/")) {
+                            
+                        }
+                    }
+                    
+                    if (basePath == null) {
+                        baseNode.setReposPath(entry.getName());
+                    } else {
+                        baseNode.setReposPath(SVNPathUtil.append(SVNEncodingUtil.uriDecode(basePath), entry.getName()));
+                    }
+                }
+            }
+            
+            baseNode.setChangedRevision(entry.getCommittedRevision());
+            baseNode.setChangedDate(SVNDate.parseDate(entry.getCommittedDate()));
+            baseNode.setChangedAuthor(entry.getAuthor());
+            insertBaseNode(baseNode, sdb);
+            if (entry.getLockToken() != null && createLocks) {
+                SVNWCDbLock lock = new SVNWCDbLock(entry.getLockToken(), entry.getLockOwner(), entry.getLockComment(), 
+                        SVNDate.parseDate(entry.getLockCreationDate()));
+                myWCDb.addLock(entryPath, lock);
+            }
+            
+            if (entry.getExternalFilePath() != null) {
+                String serializedExternal = SVNAdminUtil.serializeExternalFileData(entry.asMap());
+                Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+                fieldsToValues.put(SVNDbTableField.file_external, serializedExternal);
+                myWCDb.runUpdate(sdb, SVNDbTables.base_node, myWCDb.getCommonDbStrategy(new Object[] { 1, entry.getName() }, 
+                        SVNSqlJetUtil.OUR_FILE_EXTERNAL_FIELD, null), fieldsToValues);
+            }
+        }
+        
+        if (workingNode != null) {
+            workingNode.setWCId(wcId);
+            workingNode.setLocalRelPath(localRelPath);
+            workingNode.setParentRelPath(parentRelPath);
+            workingNode.setChangedRevision(SVNRepository.INVALID_REVISION);
+            workingNode.setLastModifiedTime(SVNDate.parseDate(entry.getTextTime()));
+            workingNode.setTranslatedSize(entry.getWorkingSize());
+            
+            if (entry.getDepth() != SVNDepth.EXCLUDE) {
+                workingNode.setDepth(entry.getDepth());
+            } else {
+                workingNode.setStatus(SVNWCDbStatus.EXCLUDED);
+                workingNode.setDepth(SVNDepth.INFINITY);
+            }
+            
+            if (entry.isDirectory()) {
+                workingNode.setChecksum(null);
+            } else {
+                workingNode.setChecksum(new SVNChecksum(SVNChecksumKind.MD5, entry.getChecksum()));
+            }
+            
+            if (entry.isScheduledForDeletion()) {
+                if (entry.isIncomplete()) {
+                    workingNode.setStatus(SVNWCDbStatus.INCOMPLETE);
+                } else {
+                    if (entry.isCopied() || (thisDir.isCopied() && thisDir.isScheduledForAddition())) {
+                        workingNode.setStatus(SVNWCDbStatus.NOT_PRESENT);
+                    } else {
+                        workingNode.setStatus(SVNWCDbStatus.DELETED);
+                    }
+                }
+                workingNode.setKind(entry.getKind());
+            } else {
+                workingNode.setKind(entry.getKind());
+                if (entry.isIncomplete()) {
+                    SVNErrorManager.assertionFailure(workingNode.getStatus() == SVNWCDbStatus.NORMAL, null, SVNLogType.WC);
+                    workingNode.setStatus(SVNWCDbStatus.INCOMPLETE);
+                }
+            }
+            
+            workingNode.setChangedRevision(entry.getCommittedRevision());
+            workingNode.setChangedAuthor(entry.getAuthor());
+            workingNode.setChangedDate(SVNDate.parseDate(entry.getCommittedDate()));
+            insertWorkingNode(sdb, workingNode);
+        }
+        
+        if (actualNode != null || alwaysCreateActual) {
+            actualNode = SVNActualNode.maybeCreateActualNode(actualNode);
+            actualNode.setWCId(wcId);
+            actualNode.setLocalRelPath(localRelPath);
+            actualNode.setParentRelPath(parentRelPath);
+            insertActualNode(sdb, actualNode);
+        }
+    }
+
     protected int writeExtraOptions(Writer writer, String entryName, Map entryAttrs, int emptyFields) throws SVNException, IOException {
         return 0;
     }
+    
+    private void insertBaseNode(SVNBaseNode baseNode, SqlJetDb sdb) throws SVNException {
+        Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+        fieldsToValues.put(SVNDbTableField.wc_id, baseNode.getWCId());
+        fieldsToValues.put(SVNDbTableField.local_relpath, baseNode.getLocalRelativePath());
+        if (baseNode.getReposId() > 0) {
+            fieldsToValues.put(SVNDbTableField.repos_id, baseNode.getReposId());
+            String reposPath = baseNode.getReposPath();
+            if (reposPath != null && reposPath.startsWith("/")) {
+                reposPath = reposPath.substring(1);
+            }
+            fieldsToValues.put(SVNDbTableField.repos_relpath, reposPath);
+        }
+        
+        if (baseNode.getParentRelPath() != null) {
+            fieldsToValues.put(SVNDbTableField.parent_relpath, baseNode.getParentRelPath());
+        }
+        
+        if (baseNode.getStatus() == SVNWCDbStatus.NOT_PRESENT || baseNode.getStatus() == SVNWCDbStatus.NORMAL || 
+                baseNode.getStatus() == SVNWCDbStatus.ABSENT || baseNode.getStatus() == SVNWCDbStatus.INCOMPLETE ||
+                baseNode.getStatus() == SVNWCDbStatus.EXCLUDED) {
+            fieldsToValues.put(SVNDbTableField.presence, baseNode.getStatus().toString());
+        }
+        
+        fieldsToValues.put(SVNDbTableField.revnum, baseNode.getRevision());
+        
+        if (baseNode.getNodeKind() == SVNNodeKind.DIR && !getThisDirName().equals(baseNode.getLocalRelativePath())) {
+            fieldsToValues.put(SVNDbTableField.kind, SVNWCDbKind.SUBDIR.toString());
+        } else {
+            fieldsToValues.put(SVNDbTableField.kind, baseNode.getNodeKind().toString());
+        }
+        
+        if (baseNode.getChecksum() != null) {
+            fieldsToValues.put(SVNDbTableField.checksum, baseNode.getChecksum().toString());
+        }
+        
+        if (baseNode.getTranslatedSize() != -1) {
+            fieldsToValues.put(SVNDbTableField.translated_size, baseNode.getTranslatedSize());
+        }
+        
+        if (SVNRevision.isValidRevisionNumber(baseNode.getChangedRevision())) {
+            fieldsToValues.put(SVNDbTableField.changed_rev, baseNode.getChangedRevision());
+        }
+        
+        if (baseNode.getChangedDate() != null) {
+            fieldsToValues.put(SVNDbTableField.changed_date, baseNode.getChangedDate().getTime());
+        }
+        
+        if (baseNode.getChangedAuthor() != null) {
+            fieldsToValues.put(SVNDbTableField.changed_author, baseNode.getChangedAuthor());
+        }
+        
+        fieldsToValues.put(SVNDbTableField.depth, baseNode.getDepth().toString());
+        fieldsToValues.put(SVNDbTableField.last_mod_time, baseNode.getLastModifiedTime().getTime());
+        if (baseNode.getProperties() != null) {
+            SVNSkel skel = SVNSkel.createPropList(baseNode.getProperties().asMap());
+            byte[] propBytes = skel.unparse();
+            fieldsToValues.put(SVNDbTableField.properties, propBytes);
+        }
+        myWCDb.runInsertByFieldNames(sdb, SVNDbTables.base_node, SqlJetConflictAction.REPLACE, 
+                myWCDb.getCommonDbStrategy(null, null, null), fieldsToValues);
+    }
 
+    private void insertWorkingNode(SqlJetDb sdb, SVNWorkingNode workingNode) throws SVNException {
+        Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+        fieldsToValues.put(SVNDbTableField.wc_id, workingNode.getWCId());
+        fieldsToValues.put(SVNDbTableField.local_relpath, workingNode.getLocalRelPath());
+        fieldsToValues.put(SVNDbTableField.parent_relpath, workingNode.getParentRelPath());
+        
+        if (workingNode.getStatus() == SVNWCDbStatus.NORMAL || workingNode.getStatus() == SVNWCDbStatus.NOT_PRESENT || 
+                workingNode.getStatus() == SVNWCDbStatus.BASE_DELETED || workingNode.getStatus() == SVNWCDbStatus.INCOMPLETE || 
+                workingNode.getStatus() == SVNWCDbStatus.EXCLUDED) {
+            fieldsToValues.put(SVNDbTableField.presence, workingNode.getStatus().toString());
+        }
+        
+        if (workingNode.getKind() == SVNNodeKind.DIR && !getThisDirName().equals(workingNode.getLocalRelPath())) {
+            fieldsToValues.put(SVNDbTableField.kind, SVNWCDbKind.SUBDIR.toString());
+        } else {
+            fieldsToValues.put(SVNDbTableField.kind, workingNode.getKind().toString());
+        }
+     
+        if (workingNode.getCopyFromReposPath() != null) {
+            fieldsToValues.put(SVNDbTableField.copyfrom_repos_id, workingNode.getCopyFromReposId());
+            fieldsToValues.put(SVNDbTableField.copyfrom_repos_path, workingNode.getCopyFromReposPath());
+            fieldsToValues.put(SVNDbTableField.copyfrom_revnum, workingNode.getCopyFromRevision());
+        }
+        
+        if (workingNode.isMovedHere()) {
+            fieldsToValues.put(SVNDbTableField.moved_here, 1);
+        }
+        
+        if (workingNode.getMovedTo() != null) {
+            fieldsToValues.put(SVNDbTableField.moved_to, workingNode.getMovedTo());
+        }
+        
+        if (workingNode.getChecksum() != null) {
+            fieldsToValues.put(SVNDbTableField.checksum, workingNode.getChecksum().toString());
+        }
+        
+        if (workingNode.getTranslatedSize() != -1) {
+            fieldsToValues.put(SVNDbTableField.translated_size, workingNode.getTranslatedSize());
+        }
+        
+        if (SVNRevision.isValidRevisionNumber(workingNode.getChangedRevision())) {
+            fieldsToValues.put(SVNDbTableField.changed_rev, workingNode.getChangedRevision());
+        }
+        
+        if (workingNode.getChangedDate() != null) {
+            fieldsToValues.put(SVNDbTableField.changed_date, workingNode.getChangedDate().getTime());
+        }
+        
+        if (workingNode.getChangedAuthor() != null) {
+            fieldsToValues.put(SVNDbTableField.changed_author, workingNode.getChangedAuthor());
+        }
+        
+        fieldsToValues.put(SVNDbTableField.depth, workingNode.getDepth().toString());
+        fieldsToValues.put(SVNDbTableField.last_mod_time, workingNode.getLastModifiedTime().getTime());
+        if (workingNode.getProperties() != null) {
+            SVNSkel skel = SVNSkel.createPropList(workingNode.getProperties().asMap());
+            byte[] propBytes = skel.unparse();
+            fieldsToValues.put(SVNDbTableField.properties, propBytes);
+        }
+        
+        fieldsToValues.put(SVNDbTableField.keep_local, workingNode.isKeepLocal() ? 1 : 0);
+        myWCDb.runInsertByFieldNames(sdb, SVNDbTables.working_node, SqlJetConflictAction.REPLACE, 
+                myWCDb.getCommonDbStrategy(null, null, null), fieldsToValues);
+    }
+    
+    private void insertActualNode(SqlJetDb sdb, SVNActualNode actualNode) throws SVNException {
+        Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+        fieldsToValues.put(SVNDbTableField.wc_id, actualNode.getWCId());
+        fieldsToValues.put(SVNDbTableField.local_relpath, actualNode.getLocalRelPath());
+        fieldsToValues.put(SVNDbTableField.parent_relpath, actualNode.getParentRelPath());
+        
+        if (actualNode.getProperties() != null) {
+            SVNSkel skel = SVNSkel.createPropList(actualNode.getProperties().asMap());
+            byte[] propBytes = skel.unparse();
+            fieldsToValues.put(SVNDbTableField.properties, propBytes);
+        }
+        
+        if (actualNode.getConflictOld() != null) {
+            fieldsToValues.put(SVNDbTableField.conflict_old, actualNode.getConflictOld());
+            fieldsToValues.put(SVNDbTableField.conflict_new, actualNode.getConflictNew());
+            fieldsToValues.put(SVNDbTableField.conflict_working, actualNode.getConflictWorking());
+        }
+        
+        if (actualNode.getPropReject() != null) {
+            fieldsToValues.put(SVNDbTableField.prop_reject, actualNode.getPropReject());
+        }
+        
+        if (actualNode.getChangeList() != null) {
+            fieldsToValues.put(SVNDbTableField.changelist, actualNode.getChangeList());
+        }
+        
+        if (actualNode.getTreeConflictData() != null) {
+            fieldsToValues.put(SVNDbTableField.tree_conflict_data, actualNode.getTreeConflictData());
+        }
+        
+        myWCDb.runInsertByFieldNames(sdb, SVNDbTables.actual_node, SqlJetConflictAction.REPLACE, 
+                myWCDb.getCommonDbStrategy(null, null, null), fieldsToValues);
+    }
 }
