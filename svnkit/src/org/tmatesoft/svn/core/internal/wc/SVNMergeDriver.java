@@ -1137,7 +1137,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
                     removeFirstRangeFromRemainingRanges(endRev, myChildrenWithMergeInfo);
                     nextEndRev = getMostInclusiveEndRevision(myChildrenWithMergeInfo, isRollBack);
                     if (SVNRevision.isValidRevisionNumber(nextEndRev) && myConflictedPaths != null && 
-                            !myConflictedPaths.isEmpty()) {
+                            !myConflictedPaths.isEmpty() && !myIsDryRun) {
                         SVNMergeRange conflictedRange = new SVNMergeRange(startRev, endRev, false);
                         err = makeMergeConflictError(myTarget, conflictedRange);
                         range.setEndRevision(endRev);
