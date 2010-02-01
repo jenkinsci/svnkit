@@ -2945,7 +2945,7 @@ public class SVNDiffClient extends SVNMergeDriver {
         repository2 = createRepository(url1, null, null, false); 
         File tmpFile = getDiffGenerator().createTempDirectory();
         try {
-            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, repository2, rev1, handler);
+            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, target1, repository2, rev1, handler);
             ISVNReporterBaton reporter = new ISVNReporterBaton() {
                 public void report(ISVNReporter reporter) throws SVNException {
                     //TODO(sd): dynamic depth here
