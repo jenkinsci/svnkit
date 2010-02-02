@@ -1214,7 +1214,9 @@ public class SVNLookClient extends SVNBasicClient {
                 do {
                     checkCancelled();
                     len = SVNFileUtil.readIntoBuffer(contents, buffer, 0, buffer.length);
-                    out.write(buffer, 0, len);
+                    if (len > 0) {
+                        out.write(buffer, 0, len);
+                    }
                 } while (len == SVNFileUtil.STREAM_CHUNK_SIZE);
             } catch (IOException ioe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, ioe.getLocalizedMessage());
