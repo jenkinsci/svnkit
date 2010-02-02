@@ -11,19 +11,6 @@
  */
 package org.tmatesoft.svn.core.internal.wc.admin;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -42,6 +29,22 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 
 /**
@@ -457,24 +460,69 @@ public class SVNTranslator {
         if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
+        Charset cs = Charset.forName(charset);
+        byte[] lf = SVNProperty.EOL_LF_BYTES;
         if (expand) {
-            out = new SVNCharsetOutputStream(out, UTF8_CHARSET, Charset.forName(charset));
+            byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
+            if (Arrays.equals(convertedEOL, lf)) {
+                out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
+                if (keywords != null) {
+                    out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
+                }
+                return out;
+            }
+            out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
+        byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
+        if (Arrays.equals(convertedEOL, lf)) {
+            if (keywords != null) {
+                out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
+            }
+            return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
+        }
         out = new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
-        return new SVNCharsetOutputStream(out, Charset.forName(charset), UTF8_CHARSET);
+        return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
     }
 
-    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
+    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) throws SVNException {
         if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
         }
+        final Charset cs = Charset.forName(charset);
+        byte[] lf = SVNProperty.EOL_LF_BYTES;
         if (expand) {
+            byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
+            if (Arrays.equals(eol, convertedEOL)) {
+                if (keywords != null) {
+                    in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
+                }
+                return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
+            }
             in = new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
-            return new SVNCharsetInputStream(in, UTF8_CHARSET, Charset.forName(charset));
+            return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
         }
-        in = new SVNCharsetInputStream(in, Charset.forName(charset), UTF8_CHARSET);
+        byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
+        if (Arrays.equals(lf, convertedEOL)) {
+            in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
+            if (keywords != null) {
+                in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
+            }
+            return in;
+        }
+        in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
         return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
+    }
+
+    private static byte[] convertEOL(byte[] eol, Charset from, Charset to) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(eol);
+        CharBuffer charBuffer = from.decode(byteBuffer);
+        charBuffer = charBuffer.compact();
+        ByteBuffer resultBuffer = to.encode(charBuffer);
+        resultBuffer.flip();
+        byte[] result = new byte[resultBuffer.limit()];
+        resultBuffer.get(result, 0, result.length);
+        return result;
     }
 
     public static Map computeKeywords(String keywords, String u, String a, String d, String r, ISVNOptions options) {
