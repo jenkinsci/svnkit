@@ -22,6 +22,7 @@ import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -634,12 +635,18 @@ public class SVNTranslator {
     }
 
     public static String getCharset(String charset, String path, ISVNOptions options) throws SVNException {
+        if (charset == null) {
+            charset = getGlobalCharset(options);
+        }
         if (SVNProperty.NATIVE.equals(charset)) {
             charset = options.getNativeCharset();
         }
-        boolean isSupported = true;
+        if (charset == null) {
+            return null;
+        }
+        boolean isSupported;
         try {
-            isSupported = charset == null || Charset.isSupported(charset);
+            isSupported = Charset.isSupported(charset);
         } catch (IllegalCharsetNameException e) {
             isSupported = false;
         }
@@ -649,5 +656,13 @@ public class SVNTranslator {
                     new Object[]{charset, path}), SVNLogType.DEFAULT);
         }
         return charset;
+    }
+
+    private static String getGlobalCharset(ISVNOptions options) {
+        if (options instanceof DefaultSVNOptions) {
+            DefaultSVNOptions defaults = (DefaultSVNOptions) options;
+            return defaults.getGlobalCharset();
+        }
+        return null;
     }
 }
