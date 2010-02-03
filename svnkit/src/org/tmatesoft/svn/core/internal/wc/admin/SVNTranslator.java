@@ -465,7 +465,7 @@ public class SVNTranslator {
         byte[] lf = SVNProperty.EOL_LF_BYTES;
         if (expand) {
             byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
-            if (Arrays.equals(convertedEOL, lf)) {
+            if (Arrays.equals(convertedEOL, eol)) {
                 out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
                 if (keywords != null) {
                     out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
