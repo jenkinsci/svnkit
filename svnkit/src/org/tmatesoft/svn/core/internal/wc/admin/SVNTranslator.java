@@ -518,9 +518,7 @@ public class SVNTranslator {
     private static byte[] convertEOL(byte[] eol, Charset from, Charset to) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(eol);
         CharBuffer charBuffer = from.decode(byteBuffer);
-        charBuffer = charBuffer.compact();
         ByteBuffer resultBuffer = to.encode(charBuffer);
-        resultBuffer.flip();
         byte[] result = new byte[resultBuffer.limit()];
         resultBuffer.get(result, 0, result.length);
         return result;
