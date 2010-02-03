@@ -464,23 +464,27 @@ public class SVNTranslator {
         Charset cs = Charset.forName(charset);
         byte[] lf = SVNProperty.EOL_LF_BYTES;
         if (expand) {
-            byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
-            if (Arrays.equals(convertedEOL, eol)) {
-                out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
-                if (keywords != null) {
-                    out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
+            if (eol != null) {
+                byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
+                if (Arrays.equals(convertedEOL, eol)) {
+                    out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
+                    if (keywords != null) {
+                        out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
+                    }
+                    return out;
                 }
-                return out;
             }
             out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
-        byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
-        if (Arrays.equals(convertedEOL, lf)) {
-            if (keywords != null) {
-                out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
+        if (eol != null) {
+            byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
+            if (Arrays.equals(convertedEOL, lf)) {
+                if (keywords != null) {
+                    out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
+                }
+                return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
             }
-            return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
         }
         out = new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
@@ -493,23 +497,27 @@ public class SVNTranslator {
         final Charset cs = Charset.forName(charset);
         byte[] lf = SVNProperty.EOL_LF_BYTES;
         if (expand) {
-            byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
-            if (Arrays.equals(eol, convertedEOL)) {
-                if (keywords != null) {
-                    in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
+            if (eol != null) {
+                byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
+                if (Arrays.equals(eol, convertedEOL)) {
+                    if (keywords != null) {
+                        in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
+                    }
+                    return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
                 }
-                return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
             }
             in = new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
             return new SVNCharsetInputStream(in, UTF8_CHARSET, cs);
         }
-        byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
-        if (Arrays.equals(lf, convertedEOL)) {
-            in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
-            if (keywords != null) {
-                in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
+        if (eol != null) {
+            byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
+            if (Arrays.equals(lf, convertedEOL)) {
+                in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
+                if (keywords != null) {
+                    in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
+                }
+                return in;
             }
-            return in;
         }
         in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
         return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
