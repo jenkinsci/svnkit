@@ -17,6 +17,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatch;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchFileStream;
@@ -41,15 +42,16 @@ public class SVNPatchClient extends SVNBasicClient {
 
         final SVNWCAccess wcAccess = createWCAccess();
         try {
-            wcAccess.open(targetPath.getAbsoluteFile(), true, SVNWCAccess.INFINITE_DEPTH);
-            applyPatches(patchPath, targetPath, dryRun, stripCount);
+            wcAccess.setEventHandler(this);
+            final SVNAdminArea wc = wcAccess.open(targetPath.getAbsoluteFile(), true, SVNWCAccess.INFINITE_DEPTH);
+            applyPatches(wc, patchPath, targetPath, dryRun, stripCount);
         } finally {
             wcAccess.close();
         }
 
     }
 
-    private void applyPatches(File patchPath, File targetPath, boolean dryRun, long stripCount) throws SVNException {
+    private void applyPatches(SVNAdminArea wc, File patchPath, File targetPath, boolean dryRun, long stripCount) throws SVNException {
 
         final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(patchPath);
 
@@ -59,7 +61,7 @@ public class SVNPatchClient extends SVNBasicClient {
                 checkCancelled();
                 patch = SVNPatch.parseNextPatch(patchFile);
                 if (patch != null) {
-                    patch.applyPatch(targetPath, dryRun, stripCount);
+                    patch.applyPatch(wc, targetPath, dryRun, stripCount);
                     patch.close();
                 }
             } while (patch != null);
