@@ -11,21 +11,10 @@
  */
 package org.tmatesoft.svn.core.wc;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.TreeMap;
-
+import de.regnis.q.sequence.line.diff.QDiffGenerator;
+import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
+import de.regnis.q.sequence.line.diff.QDiffManager;
+import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -42,10 +31,20 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import de.regnis.q.sequence.line.diff.QDiffGenerator;
-import de.regnis.q.sequence.line.diff.QDiffGeneratorFactory;
-import de.regnis.q.sequence.line.diff.QDiffManager;
-import de.regnis.q.sequence.line.diff.QDiffUniGenerator;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * <b>DefaultSVNDiffGenerator</b> is a default implementation of 
@@ -658,6 +657,20 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public boolean hasEncoding() {
         return myEncoding != null;
+    }
+
+    /**
+     * Returns the encoding specified by svnkit.global-charset option
+     * of the global configuration.
+     *
+     * @return global charset name 
+     */
+    public String getGlobalEncoding() {
+        if (getOptions() instanceof DefaultSVNOptions) {
+            DefaultSVNOptions defaultOptions = (DefaultSVNOptions) getOptions();
+            return defaultOptions.getGlobalCharset();
+        }
+        return null;
     }
 
     /**

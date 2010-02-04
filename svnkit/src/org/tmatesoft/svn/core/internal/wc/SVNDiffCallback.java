@@ -163,6 +163,13 @@ public class SVNDiffCallback extends AbstractDiffCallback {
                     defaultGenerator.setEncoding(changedEncoding);
                     return false;
                 }
+
+                String globalEncoding = defaultGenerator.getGlobalEncoding();
+                boolean globalEncodingSupported = globalEncoding != null && Charset.isSupported(globalEncoding);
+                if (globalEncodingSupported) {
+                    defaultGenerator.setEncoding(globalEncoding);
+                    return false;
+                }
             }
         }
         return true;
