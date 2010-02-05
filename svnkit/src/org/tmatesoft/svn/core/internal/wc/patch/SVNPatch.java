@@ -409,7 +409,8 @@ public class SVNPatch {
 
         /* Write out rejected hunks, if any. */
         if (!dryRun && !target.isSkipped() && target.isHadRejects()) {
-            SVNFileUtil.copyFile(target.getRejectPath(), new File(String.format("%s.svnpatch.rej", target.getPath().getPath())), true);
+            final String rej_path = target.getPath().getPath() + ".svnpatch.rej";
+            SVNFileUtil.copyFile(target.getRejectPath(), new File(rej_path), true);
             /* ### TODO mark file as conflicted. */
         }
 
