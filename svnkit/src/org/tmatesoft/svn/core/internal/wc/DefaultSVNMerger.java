@@ -135,13 +135,13 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             SVNStatusType newStatus = null;
             if (fromValue == null) {
                 newStatus = applySinglePropertyAdd(localPath, isDir, isNormal ? status : null, 
-                		workingProperties, propName, baseValue, toValue, workingValue, adminArea, log, conflict);
+                		workingProperties, propName, baseValue, toValue, workingValue, adminArea, log, conflict, dryRun);
             } else if (toValue == null) {
             	newStatus = applySinglePropertyDelete(localPath, isDir, isNormal ? status : null, 
-            			workingProperties, propName, baseValue, fromValue, workingValue, adminArea, log, conflict);
+            			workingProperties, propName, baseValue, fromValue, workingValue, adminArea, log, conflict, dryRun);
             } else {
             	newStatus = applySinglePropertyChange(localPath, isDir, status, workingProperties, propName, 
-            			baseValue, fromValue, toValue, workingValue, adminArea, log, conflict);
+            			baseValue, fromValue, toValue, workingValue, adminArea, log, conflict, dryRun);
             }
             if (isNormal) {
             	status = newStatus;
@@ -637,7 +637,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     private SVNStatusType applySinglePropertyAdd(String localPath, boolean isDir, SVNStatusType status, 
     		SVNProperties workingProps, String propName, SVNPropertyValue baseValue, 
     		SVNPropertyValue newValue, SVNPropertyValue workingValue, SVNAdminArea adminArea, 
-    		SVNLog log,	Collection conflicts) throws SVNException {
+    		SVNLog log,	Collection conflicts, boolean dryRun) throws SVNException {
         boolean gotConflict = false;
     	
         if (workingValue != null) {
@@ -653,7 +653,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                     status = getPropMergeStatus(status, SVNStatusType.MERGED);
                 } else {
                     gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, null, newValue, 
-                    		baseValue, workingValue,  adminArea, log, isDir);
+                    		baseValue, workingValue,  adminArea, log, isDir, dryRun);
                     if (gotConflict) {
                         conflicts.add(MessageFormat.format("Trying to add new property ''{0}'' with value ''{1}'',\n" +
                                 "but property already exists with value ''{2}''.",
@@ -665,7 +665,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
             }
     	} else if (baseValue != null) {
     		gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, null, newValue, baseValue, 
-    				null, adminArea, log, isDir);
+    				null, adminArea, log, isDir, dryRun);
     		if (gotConflict) {
                 conflicts.add(MessageFormat.format("Trying to create property ''{0}'' with value ''{1}'',\n" +
                         "but it has been locally deleted.",
@@ -688,19 +688,19 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     private SVNStatusType applySinglePropertyChange(String localPath, boolean isDir, SVNStatusType status, 
             SVNProperties workingProps, String propName, SVNPropertyValue baseValue, 
             SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue workingValue, 
-            SVNAdminArea adminArea, SVNLog log, Collection conflicts) throws SVNException {
+            SVNAdminArea adminArea, SVNLog log, Collection conflicts, boolean dryRun) throws SVNException {
         if (SVNProperty.MERGE_INFO.equals(propName)) {
             return applySingleMergeInfoPropertyChange(localPath, isDir, status, workingProps, propName, baseValue, oldValue, 
-                    newValue, workingValue, adminArea, log, conflicts);
+                    newValue, workingValue, adminArea, log, conflicts, dryRun);
         } 
         return applySingleGenericPropertyChange(localPath, isDir, status, workingProps, propName, baseValue, oldValue, newValue, 
-                workingValue, adminArea, log, conflicts);
+                workingValue, adminArea, log, conflicts, dryRun);
     }
 
     private SVNStatusType applySingleMergeInfoPropertyChange(String localPath, boolean isDir, SVNStatusType status, 
             SVNProperties workingProps, String propName, SVNPropertyValue baseValue, 
             SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue workingValue, 
-            SVNAdminArea adminArea, SVNLog log, Collection conflicts) throws SVNException {
+            SVNAdminArea adminArea, SVNLog log, Collection conflicts, boolean dryRun) throws SVNException {
         boolean gotConflict = false;
         
         if ((workingValue != null && baseValue == null) || 
@@ -717,7 +717,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
                 }
             } else {
                 gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, newValue, 
-                        baseValue, workingValue, adminArea, log, isDir);
+                        baseValue, workingValue, adminArea, log, isDir, dryRun);
                 if (gotConflict) {
                     conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
                             "but it has been locally deleted.", new Object[] { propName, SVNPropertyValue.getPropertyAsString(oldValue), 
@@ -745,14 +745,14 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     private SVNStatusType applySingleGenericPropertyChange(String localPath, boolean isDir, SVNStatusType status, 
     		SVNProperties workingProps, String propName, SVNPropertyValue baseValue, 
     		SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue workingValue, 
-    		SVNAdminArea adminArea, SVNLog log, Collection conflicts) throws SVNException {
+    		SVNAdminArea adminArea, SVNLog log, Collection conflicts, boolean dryRun) throws SVNException {
     	boolean gotConflict = false;
     	if ((workingValue == null && oldValue == null) || (workingValue != null && oldValue != null && 
     	        workingValue.equals(oldValue))) {
             changeProperty(workingProps, propName, newValue);
     	} else {
             gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, 
-                    newValue, baseValue, workingValue, adminArea, log, isDir);
+                    newValue, baseValue, workingValue, adminArea, log, isDir, dryRun);
             if (gotConflict) {
                 if (workingValue != null && baseValue != null && workingValue.equals(baseValue)) {
                     conflicts.add(MessageFormat.format("Trying to change property ''{0}'' from ''{1}'' to ''{2}'',\n" +
@@ -788,7 +788,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     private SVNStatusType applySinglePropertyDelete(String localPath, boolean isDir, SVNStatusType status, 
     		SVNProperties workingProps, String propName, SVNPropertyValue baseValue, 
     		SVNPropertyValue oldValue, SVNPropertyValue workingValue, SVNAdminArea adminArea, 
-    		SVNLog log,	Collection conflicts) throws SVNException {
+    		SVNLog log,	Collection conflicts, boolean dryRun) throws SVNException {
     	boolean gotConflict = false;
 
     	if (baseValue == null) {
@@ -802,7 +802,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     				changeProperty(workingProps, propName, (SVNPropertyValue) null);
     			} else {
     				gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, null, 
-    						baseValue, workingValue, adminArea, log, isDir);
+    						baseValue, workingValue, adminArea, log, isDir, dryRun);
     				if (gotConflict) {
                         conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' with value ''{1}''\n " +
                         		"but it has been modified from ''{2}'' to ''{3}''.",
@@ -816,7 +816,7 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
     		}
     	} else {
     		gotConflict = maybeGeneratePropConflict(localPath, propName, workingProps, oldValue, null, 
-    				baseValue, workingValue, adminArea, log, isDir);
+    				baseValue, workingValue, adminArea, log, isDir, dryRun);
     		if (gotConflict) {
                 conflicts.add(MessageFormat.format("Trying to delete property ''{0}'' with value ''{1}''\n " +
                         "but the local value is ''{2}''.",
@@ -843,9 +843,9 @@ public class DefaultSVNMerger extends AbstractSVNMerger implements ISVNMerger {
 
     private boolean maybeGeneratePropConflict(String localPath, String propName, SVNProperties workingProps, 
             SVNPropertyValue oldValue, SVNPropertyValue newValue, SVNPropertyValue baseValue, 
-            SVNPropertyValue workingValue, SVNAdminArea adminArea, SVNLog log, boolean isDir) throws SVNException {
+            SVNPropertyValue workingValue, SVNAdminArea adminArea, SVNLog log, boolean isDir, boolean dryRun) throws SVNException {
         boolean conflictRemains = true;
-        if (myConflictCallback == null) {
+        if (myConflictCallback == null || dryRun) {
             return conflictRemains;
         }
 
