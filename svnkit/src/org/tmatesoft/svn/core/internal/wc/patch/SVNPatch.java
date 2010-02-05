@@ -108,8 +108,9 @@ public class SVNPatch {
      * If no patch can be found, set PATCH to NULL.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public static SVNPatch parseNextPatch(SVNPatchFileStream patchFile) throws SVNException {
+    public static SVNPatch parseNextPatch(SVNPatchFileStream patchFile) throws SVNException, IOException {
 
         if (patchFile.isEOF()) {
             /* No more patches here. */
@@ -139,15 +140,7 @@ public class SVNPatch {
                  * of the line which we can discard.
                  */
                 final int tab = line.indexOf('\t');
-                File canonPath = new File(tab > 0 ? line.substring(0, tab) : line);
-                try {
-                    canonPath = canonPath.getCanonicalFile();
-                } catch (IOException ioe) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot canonicalize path ''{0}'': {1}", new Object[] {
-                            canonPath, ioe.getMessage()
-                    });
-                    SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
-                }
+                final File canonPath = new File(tab > 0 ? line.substring(0, tab) : line).getCanonicalFile();
 
                 if ((!in_header) && MINUS.equals(indicator)) {
                     /* First line of header contains old filename. */
@@ -197,8 +190,9 @@ public class SVNPatch {
      * be stripped from target paths in the patch.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public void applyPatch(File absWCPath, boolean dryRun, long stripCount, SVNAdminArea wc) throws SVNException {
+    public void applyPatch(File absWCPath, boolean dryRun, long stripCount, SVNAdminArea wc) throws SVNException, IOException {
 
         final SVMPatchTarget target = SVMPatchTarget.initPatchTarget(this, absWCPath, stripCount, wc);
 
@@ -244,7 +238,7 @@ public class SVNPatch {
         if (target.getKind() == SVNNodeKind.FILE) {
             /* Copy any remaining lines to target. */
             target.copyLinesToTarget(0);
-            if (!target.isEOF()) {
+            if (!target.isEof()) {
                 /*
                  * We could not copy the entire target file to the temporary
                  * file, and would truncate the target if we copied the

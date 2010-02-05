@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -65,6 +67,9 @@ public class SVNPatchClient extends SVNBasicClient {
                     patch.close();
                 }
             } while (patch != null);
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
         } finally {
             if (patchFile != null) {
                 patchFile.close();
