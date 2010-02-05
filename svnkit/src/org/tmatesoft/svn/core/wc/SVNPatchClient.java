@@ -33,7 +33,7 @@ public class SVNPatchClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
 
-    public void doPatch(File patchPath, File targetPath, boolean dryRun, long stripCount) throws SVNException {
+    public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, long stripCount) throws SVNException {
 
         if (stripCount < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "strip count must be positive");
@@ -43,17 +43,17 @@ public class SVNPatchClient extends SVNBasicClient {
         final SVNWCAccess wcAccess = createWCAccess();
         try {
             wcAccess.setEventHandler(this);
-            final SVNAdminArea wc = wcAccess.open(targetPath.getAbsoluteFile(), true, SVNWCAccess.INFINITE_DEPTH);
-            applyPatches(wc, patchPath, targetPath, dryRun, stripCount);
+            final SVNAdminArea wc = wcAccess.open(localAbsPath, true, SVNWCAccess.INFINITE_DEPTH);
+            applyPatches(absPatchPath, localAbsPath, dryRun, stripCount, wc);
         } finally {
             wcAccess.close();
         }
 
     }
 
-    private void applyPatches(SVNAdminArea wc, File patchPath, File targetPath, boolean dryRun, long stripCount) throws SVNException {
+    private void applyPatches(File absPatchPath, File absWCPath, boolean dryRun, long stripCount, SVNAdminArea wc) throws SVNException {
 
-        final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(patchPath);
+        final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(absPatchPath);
 
         try {
             SVNPatch patch;
@@ -61,7 +61,7 @@ public class SVNPatchClient extends SVNBasicClient {
                 checkCancelled();
                 patch = SVNPatch.parseNextPatch(patchFile);
                 if (patch != null) {
-                    patch.applyPatch(wc, targetPath, dryRun, stripCount);
+                    patch.applyPatch(absWCPath, dryRun, stripCount, wc);
                     patch.close();
                 }
             } while (patch != null);

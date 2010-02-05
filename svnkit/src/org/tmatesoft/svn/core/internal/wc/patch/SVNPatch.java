@@ -12,29 +12,29 @@
 package org.tmatesoft.svn.core.internal.wc.patch;
 
 import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.core.wc.SVNWCUtil;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Data type to manage parsing of patches.
@@ -106,8 +106,10 @@ public class SVNPatch {
      * Return the next PATCH in PATCH_FILE.
      * 
      * If no patch can be found, set PATCH to NULL.
+     * 
+     * @throws SVNException
      */
-    public static SVNPatch parseNextPatch(SVNPatchFileStream patchFile) {
+    public static SVNPatch parseNextPatch(SVNPatchFileStream patchFile) throws SVNException {
 
         if (patchFile.isEOF()) {
             /* No more patches here. */
@@ -137,16 +139,24 @@ public class SVNPatch {
                  * of the line which we can discard.
                  */
                 final int tab = line.indexOf('\t');
-                final File path = new File(tab > 0 ? line.substring(0, tab) : line);
+                File canonPath = new File(tab > 0 ? line.substring(0, tab) : line);
+                try {
+                    canonPath = canonPath.getCanonicalFile();
+                } catch (IOException ioe) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot canonicalize path ''{0}'': {1}", new Object[] {
+                            canonPath, ioe.getMessage()
+                    });
+                    SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+                }
 
                 if ((!in_header) && MINUS.equals(indicator)) {
                     /* First line of header contains old filename. */
-                    patch.oldFilename = path;
+                    patch.oldFilename = canonPath;
                     indicator = PLUS;
                     in_header = true;
                 } else if (in_header && PLUS.equals(indicator)) {
                     /* Second line of header contains new filename. */
-                    patch.newFilename = path;
+                    patch.newFilename = canonPath;
                     in_header = false;
                     break; /* All good! */
                 } else {
@@ -188,9 +198,9 @@ public class SVNPatch {
      * 
      * @throws SVNException
      */
-    public void applyPatch(SVNAdminArea wc, File targetPath, boolean dryRun, long stripCount) throws SVNException {
+    public void applyPatch(File absWCPath, boolean dryRun, long stripCount, SVNAdminArea wc) throws SVNException {
 
-        final SVMPatchTarget target = initPatchTarget(targetPath, stripCount);
+        final SVMPatchTarget target = SVMPatchTarget.initPatchTarget(this, absWCPath, stripCount, wc);
 
         if (target == null) {
             return;
@@ -262,7 +272,7 @@ public class SVNPatch {
          * file.
          */
         final long patchedFileSize = target.getPatchedPath().length();
-        final long workingFileSize = target.getKind() == SVNNodeKind.FILE ? target.getPath().length() : 0;
+        final long workingFileSize = target.getKind() == SVNNodeKind.FILE ? target.getAbsPath().length() : 0;
 
         if (patchedFileSize == 0 && workingFileSize > 0) {
             /*
@@ -282,15 +292,7 @@ public class SVNPatch {
                  * Schedule the target for deletion. Suppress notification,
                  * we'll do it manually in a minute.
                  */
-
-                // SVN_ERR(svn_wc_delete4(ctx->wc_ctx, target->abs_path,
-                // FALSE /* keep_local */, FALSE,
-                // ctx->cancel_func, ctx->cancel_baton,
-                // NULL, NULL, pool));
-
-                // TODO is this below a good replacement for that above?
-                wc.removeFromRevisionControl(target.getPath().getAbsolutePath(), false, false);
-
+                SVNWCManager.delete(wc.getWCAccess(), wc, target.getAbsPath(), true, true);
             }
         } else {
             if (workingFileSize == 0 && patchedFileSize == 0) {
@@ -312,14 +314,14 @@ public class SVNPatch {
                 if (target.isAdded() && !target.isParentDirExists()) {
 
                     /* Check if we can safely create the target's parent. */
-                    File abs_path = targetPath.getAbsoluteFile();
-                    String[] components = decomposePath(target.getPath());
+                    File absPath = absWCPath;
+                    String[] components = decomposePath(target.getRelPath());
                     int missing_components = 0;
                     for (int i = 0; i < components.length; i++) {
                         final String component = components[i];
-                        abs_path = new File(abs_path, component);
+                        absPath = new File(absPath, component);
 
-                        final SVNEntry entry = wc.getWCAccess().getEntry(abs_path, false);
+                        final SVNEntry entry = wc.getWCAccess().getEntry(absPath, false);
                         final SVNNodeKind kind = entry != null ? entry.getKind() : null;
 
                         if (kind == SVNNodeKind.FILE) {
@@ -344,13 +346,13 @@ public class SVNPatch {
                     }
 
                     if (!target.isSkipped()) {
-                        abs_path = targetPath;
+                        absPath = absWCPath;
                         for (int i = 0; i < missing_components; i++) {
                             final String component = components[i];
-                            abs_path = new File(abs_path, component);
+                            absPath = new File(absPath, component);
                             if (dryRun) {
                                 /* Just do notification. */
-                                SVNEvent mergeCompletedEvent = SVNEventFactory.createSVNEvent(abs_path, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE,
+                                SVNEvent mergeCompletedEvent = SVNEventFactory.createSVNEvent(absPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE,
                                         SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.ADD, null, null, null);
                                 wc.getWCAccess().handleEvent(mergeCompletedEvent);
                             } else {
@@ -358,23 +360,8 @@ public class SVNPatch {
                                  * Create the missing component and add it to
                                  * version control. Suppress cancellation.
                                  */
-
-                                // SVN_ERR(svn_io_dir_make(abs_path,
-                                // APR_OS_DEFAULT,
-                                // iterpool));
-                                //
-                                // SVN_ERR(svn_wc_add4(ctx->wc_ctx, abs_path,
-                                // svn_depth_infinity,
-                                // NULL, SVN_INVALID_REVNUM,
-                                // NULL, NULL,
-                                // ctx->notify_func2,
-                                // ctx->notify_baton2,
-                                // iterpool));
-
-                                // TODO is this below a good replacement for
-                                // that above?
-                                if (abs_path.mkdirs()) {
-                                    wc.createVersionedDirectory(abs_path, null, null, null, SVNRepository.INVALID_REVISION, true, SVNDepth.INFINITY);
+                                if (absPath.mkdirs()) {
+                                    SVNWCManager.add(absPath, wc, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
                                 }
                             }
                         }
@@ -383,25 +370,18 @@ public class SVNPatch {
 
                 if (!dryRun && !target.isSkipped()) {
                     /* Copy the patched file on top of the target file. */
-                    SVNFileUtil.copyFile(target.getPatchedPath(), target.getPath(), false);
+                    SVNFileUtil.copyFile(target.getPatchedPath(), target.getAbsPath(), false);
                     if (target.isAdded()) {
                         /*
                          * The target file didn't exist previously, so add it to
                          * version control. Suppress notification, we'll do that
                          * later. Also suppress cancellation.
                          */
-
-                        // SVN_ERR(svn_wc_add4(ctx->wc_ctx, target->abs_path,
-                        // svn_depth_infinity, NULL, SVN_INVALID_REVNUM, NULL,
-                        // NULL, NULL, NULL, pool));
-
-                        // TODO is this below a good replacement for
-                        // that above?
-                        SVNWCManager.add(target.getPath(), wc, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
+                        SVNWCManager.add(target.getAbsPath(), wc, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
                     }
 
                     /* Restore the target's executable bit if necessary. */
-                    SVNFileUtil.setExecutable(target.getPath(), target.isExecutable());
+                    SVNFileUtil.setExecutable(target.getAbsPath(), target.isExecutable());
                 }
             }
 
@@ -409,7 +389,7 @@ public class SVNPatch {
 
         /* Write out rejected hunks, if any. */
         if (!dryRun && !target.isSkipped() && target.isHadRejects()) {
-            final String rej_path = target.getPath().getPath() + ".svnpatch.rej";
+            final String rej_path = target.getAbsPath().getPath() + ".svnpatch.rej";
             SVNFileUtil.copyFile(target.getRejectPath(), new File(rej_path), true);
             /* ### TODO mark file as conflicted. */
         }
@@ -419,11 +399,7 @@ public class SVNPatch {
     }
 
     private String[] decomposePath(File path) {
-        return SVNAdminArea.fromString(path.getPath(), path.pathSeparator);
-    }
-
-    private SVMPatchTarget initPatchTarget(File targetPath, long stripCount) {
-        return null;
+        return SVNAdminArea.fromString(path.getPath(), File.pathSeparator);
     }
 
 }

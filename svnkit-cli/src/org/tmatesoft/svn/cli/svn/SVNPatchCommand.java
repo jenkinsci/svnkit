@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.cli.svn;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +20,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
 import org.tmatesoft.svn.core.wc.SVNPatchClient;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -53,21 +53,20 @@ public class SVNPatchCommand extends SVNCommand {
             SVNErrorManager.error(err, SVNLogType.CLIENT);
         }
 
-        final SVNPath patchPath = new SVNPath((String) targets.get(0));
-
-        final SVNPath targetPath = new SVNPath(targetsCount < 2 ? "" : (String) targets.get(1));
-        
         final SVNPatchClient client = getSVNEnvironment().getClientManager().getPatchClient();
         if (!getSVNEnvironment().isQuiet()) {
             client.setEventHandler(new SVNNotifyPrinter(getSVNEnvironment()));
         }
-        
+
+        final File patchPath = new File((String) targets.get(0));
+        final File targetPath = new File(targetsCount != 2 ? "." : (String) targets.get(1));
+
         try {
-            client.doPatch(patchPath.getFile(), targetPath.getFile(), getSVNEnvironment().isDryRun(), 
-                    getSVNEnvironment().getStripCount());
+            client.doPatch(patchPath.getAbsoluteFile(), targetPath.getAbsoluteFile(), getSVNEnvironment().isDryRun(), getSVNEnvironment().getStripCount());
         } catch (SVNException e) {
-            getSVNEnvironment().handleWarning(e.getErrorMessage(), 
-                    new SVNErrorCode[] {SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND}, getSVNEnvironment().isQuiet());
+            getSVNEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {
+                    SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND
+            }, getSVNEnvironment().isQuiet());
         }
     }
 

@@ -12,10 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc.patch;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 
 
 /**
@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  */
 public class SVMPatchTarget {
 
-    public SVMPatchTarget(SVNPatch svnPatch, File targetPath, long stripCount) {
+    public SVMPatchTarget() {
     }
 
     public boolean isSkipped() {
@@ -77,10 +77,6 @@ public class SVMPatchTarget {
         return null;
     }
 
-    public File getPath() {
-        return null;
-    }
-
     public void setDeleted(boolean b) {
     }
 
@@ -105,6 +101,18 @@ public class SVMPatchTarget {
     }
 
     public File getRejectPath() {
+        return null;
+    }
+
+    public File getAbsPath() {
+        return null;
+    }
+
+    public File getRelPath() {
+        return null;
+    }
+
+    public static SVMPatchTarget initPatchTarget(SVNPatch svnPatch, File targetPath, long stripCount, SVNAdminArea wc) {
         return null;
     }
 
