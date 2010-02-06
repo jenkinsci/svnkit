@@ -11,9 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.wc.patch;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -27,11 +32,15 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
+import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -59,76 +68,66 @@ public class SVMPatchTarget {
     private boolean added;
 
     private File absPath;
-    private String canonPathFromPatchfile;
+    private File relPath;
+    private File canonPathFromPatchfile;
+
     private RandomAccessFile file;
     private InputStream stream;
-    
+
     private File patchedPath;
     private OutputStream patchedRaw;
     private OutputStream patched;
     private File rejectPath;
     private OutputStream reject;
-
+    private boolean parentDirExists;
 
     private SVMPatchTarget() {
     }
 
-    
     public boolean isLocalMods() {
         return localMods;
     }
 
-    
     public String getEolStr() {
         return eolStr;
     }
 
-    
     public Map getKeywords() {
         return keywords;
     }
 
-    
     public String getEolStyle() {
         return eolStyle;
     }
 
-    
     public RandomAccessFile getFile() {
         return file;
     }
 
-    
     public OutputStream getPatchedRaw() {
         return patchedRaw;
     }
 
-    
-    public String getCanonPathFromPatchfile() {
+    public File getCanonPathFromPatchfile() {
         return canonPathFromPatchfile;
     }
 
-    
     public SVNPatch getPatch() {
         return patch;
     }
 
-    
     public int getCurrentLine() {
         return currentLine;
     }
 
-    
     public boolean isModified() {
         return modified;
     }
 
-    
     public boolean isEof() {
         return eof;
     }
 
-    
     public List getLines() {
         return lines;
     }
@@ -140,7 +139,6 @@ public class SVMPatchTarget {
     public List getHunks() {
         return hunks;
     }
-
 
     public SVNNodeKind getKind() {
         return kind;
@@ -187,18 +185,17 @@ public class SVMPatchTarget {
     }
 
     public File getRejectPath() {
-        return null;
+        return rejectPath;
     }
 
     public File getAbsPath() {
-        return null;
+        return absPath;
     }
 
     public File getRelPath() {
-        return null;
+        return relPath;
     }
 
-    
     public void setStream(InputStream stream) {
         this.stream = stream;
     }
@@ -207,6 +204,9 @@ public class SVMPatchTarget {
         return hadRejects;
     }
 
+    public boolean isParentDirExists() {
+        return parentDirExists;
+    }
 
     /**
      * Attempt to initialize a patch TARGET structure for a target file
@@ -216,7 +216,7 @@ public class SVMPatchTarget {
      * success, return the patch target structure. Else, return NULL.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     public static SVMPatchTarget initPatchTarget(SVNPatch patch, File baseDir, long stripCount, SVNAdminArea wc) throws SVNException, IOException {
 
@@ -234,9 +234,11 @@ public class SVMPatchTarget {
             new_target.eolStyle = null;
 
             if (new_target.kind == SVNNodeKind.FILE) {
-                
+
                 /* Open the file. */
                 new_target.file = SVNFileUtil.openRAFileForReading(new_target.absPath);
+                /* Create a stream to read from the target. */
+                new_target.stream = SVNFileUtil.openFileForReading(new_target.absPath);
 
                 /* Handle svn:keyword and svn:eol-style properties. */
                 SVNVersionedProperties props = wc.getProperties(new_target.absPath.getAbsolutePath());
@@ -269,9 +271,6 @@ public class SVMPatchTarget {
                     new_target.eolStr = nativeEOLMarker;
                     new_target.eolStyle = SVNProperty.EOL_STYLE_NATIVE;
                 }
-
-                /* Create a stream to read from the target. */
-                new_target.stream = SVNFileUtil.openFileForReading(new_target.absPath);
 
                 /* Also check the file for local mods and the Xbit. */
                 new_target.localMods = wc.hasTextModifications(new_target.absPath.getAbsolutePath(), false);
@@ -314,11 +313,173 @@ public class SVMPatchTarget {
 
     }
 
-    private static String detectFileEOL(RandomAccessFile file) {
+    /**
+     * Detect the EOL marker used in file and return it. If it cannot be
+     * detected, return NULL.
+     * 
+     * The file is searched starting at the current file cursor position. The
+     * first EOL marker found will be returnd. So if the file has inconsistent
+     * EOL markers, this won't be detected.
+     * 
+     * Upon return, the original file cursor position is always preserved, even
+     * if an error is thrown.
+     */
+    private static String detectFileEOL(RandomAccessFile file) throws IOException {
+        /* Remember original file offset. */
+        final long pos = file.getFilePointer();
+        try {
+            BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file.getFD()));
+            try {
+                StringBuffer buf = new StringBuffer();
+                int b1;
+                while ((b1 = stream.read()) > 0) {
+                    final char c1 = (char) b1;
+                    if (c1 == '\n' || c1 == '\r') {
+                        buf.append(c1);
+                        if (c1 == '\r') {
+                            final int b2 = stream.read();
+                            if (b2 > 0) {
+                                final char c2 = (char) b2;
+                                if (c2 == '\n') {
+                                    buf.append(c2);
+                                }
+                            }
+                        }
+                        return buf.toString();
+                    }
+                }
+            } finally {
+                stream.close();
+            }
+        } finally {
+            file.seek(pos);
+        }
         return null;
     }
 
-    private void resolveTargetPath(File newFilename, File baseDir, long stripCount, SVNAdminArea wc) {
+    /**
+     * Resolve the exact path for a patch TARGET at path PATH_FROM_PATCHFILE,
+     * which is the path of the target as it appeared in the patch file. Put a
+     * canonicalized version of PATH_FROM_PATCHFILE into
+     * TARGET->CANON_PATH_FROM_PATCHFILE. WC_CTX is a context for the working
+     * copy the patch is applied to. If possible, determine TARGET->WC_PATH,
+     * TARGET->ABS_PATH, TARGET->KIND, TARGET->ADDED, and
+     * TARGET->PARENT_DIR_EXISTS. Indicate in TARGET->SKIPPED whether the target
+     * should be skipped. STRIP_COUNT specifies the number of leading path
+     * components which should be stripped from target paths in the patch.
+     * 
+     * @throws SVNException
+     * @throws IOException
+     */
+    private void resolveTargetPath(File pathFromPatchfile, File absWCPath, long stripCount, SVNAdminArea wc) throws SVNException, IOException {
+
+        final SVMPatchTarget target = this;
+
+        target.canonPathFromPatchfile = pathFromPatchfile.getCanonicalFile();
+
+        if ("".equals(target.canonPathFromPatchfile.getPath())) {
+            /* An empty patch target path? What gives? Skip this. */
+            target.skipped = true;
+            target.kind = SVNNodeKind.FILE;
+            target.absPath = null;
+            target.relPath = null;
+            return;
+        }
+
+        File stripped_path;
+        if (stripCount > 0) {
+            stripped_path = stripPath(target.canonPathFromPatchfile, stripCount);
+        } else {
+            stripped_path = target.canonPathFromPatchfile;
+        }
+
+        if (stripped_path.isAbsolute()) {
+
+            target.relPath = getChildPath(absWCPath, stripped_path);
+
+            if (null == target.relPath) {
+                /*
+                 * The target path is either outside of the working copy or it
+                 * is the working copy itself. Skip it.
+                 */
+                target.skipped = true;
+                target.kind = SVNNodeKind.FILE;
+                target.absPath = null;
+                target.relPath = stripped_path;
+                return;
+            }
+        } else {
+            target.relPath = stripped_path;
+        }
+
+        /*
+         * Make sure the path is secure to use. We want the target to be inside
+         * of the working copy and not be fooled by symlinks it might contain.
+         */
+        if (null == (target.absPath = getPathUnderRoot(absWCPath, target.relPath))) {
+            /* The target path is outside of the working copy. Skip it. */
+            target.skipped = true;
+            target.kind = SVNNodeKind.FILE;
+            target.absPath = null;
+            return;
+        }
+
+        /* Skip things we should not be messing with. */
+
+        final SVNStatus status = SVNStatusUtil.getStatus(target.absPath, wc.getWCAccess());
+        final SVNStatusType contentsStatus = status.getContentsStatus();
+
+        if (contentsStatus == SVNStatusType.STATUS_UNVERSIONED || contentsStatus == SVNStatusType.STATUS_IGNORED || contentsStatus == SVNStatusType.STATUS_OBSTRUCTED) {
+            target.skipped = true;
+            target.kind = SVNFileType.getNodeKind(SVNFileType.getType(target.absPath));
+            return;
+        }
+
+        target.kind = status.getKind();
+
+        if (SVNNodeKind.FILE.equals(target.kind)) {
+            
+            target.added = false;
+            target.parentDirExists = true;
+            
+        } else if (SVNNodeKind.NONE.equals(target.kind) || SVNNodeKind.UNKNOWN.equals(target.kind)) {
+
+            /*
+             * The file is not there, that's fine. The patch might want to
+             * create it. Check if the containing directory of the target
+             * exists. We may need to create it later.
+             */
+            target.added = true;
+            File absDirname = target.absPath.getParentFile();
+
+            final SVNStatus status2 = SVNStatusUtil.getStatus(absDirname, wc.getWCAccess());
+            final SVNStatusType contentsStatus2 = status2.getContentsStatus();
+            SVNNodeKind kind = status2.getKind();
+            target.parentDirExists = (kind == SVNNodeKind.DIR && contentsStatus2 != SVNStatusType.STATUS_DELETED && contentsStatus2 != SVNStatusType.STATUS_MISSING);
+        
+        } else {
+            target.skipped = true;
+        }
+
+        return;
+    }
+
+    /**
+     * Check that when @a path is joined to @a base_path, the resulting path is
+     * still under BASE_PATH in the local filesystem. If not, return @c FALSE.
+     * If @c TRUE is returned, @a *full_path will be set to the absolute path of @a
+     * path, allocated in @a pool.
+     */
+    private File getPathUnderRoot(File absWCPath, File relPath2) {
+        return null;
+    }
+
+    private File getChildPath(File absWCPath, File strippedPath) {
+        return null;
+    }
+
+    private File stripPath(File canonPathFromPatchfile2, long stripCount) {
+        return null;
     }
 
     public void maybeSendPatchNotification() {
@@ -331,10 +492,6 @@ public class SVMPatchTarget {
     }
 
     public void copyLinesToTarget(long i) {
-    }
-
-    public boolean isParentDirExists() {
-        return false;
     }
 
 }
