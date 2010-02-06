@@ -144,6 +144,29 @@ public class SVNConfigFile {
         }
     }
 
+    public void deleteGroup(String groupName, boolean save) {
+        load();
+        boolean groupMatched = false;
+        for (int i = 0; i < myLines.length; i++) {
+            String line = myLines[i];
+            if (line == null) {
+                continue;
+            }
+            if (!groupMatched && matchGroup(line, groupName)) {
+                groupMatched = true;
+                myLines[i] = null;
+            } else if (groupMatched) {
+                if (matchGroup(line, null) /* or last line found*/) {
+                    break;
+                }
+                myLines[i] = null;
+            }
+        }
+        if (save) {
+            save();
+        }
+    }
+
     private static boolean matchGroup(String line, String name) {
         line = line.trim();
         if (line.startsWith("[") && line.endsWith("]")) {
