@@ -237,7 +237,7 @@ public class SVNCommandUtil {
                 }
                 result = SVNFileUtil.execCommand(command, env, false, callback);
             }
-        } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX){
+        } else if (SVNFileUtil.isLinux || SVNFileUtil.isBSD || SVNFileUtil.isOSX || SVNFileUtil.isSolaris){
             if (env == null) {
                 String shellCommand = SVNFileUtil.getEnvironmentVariable("SHELL");
                 if (shellCommand == null || "".equals(shellCommand.trim())) {
