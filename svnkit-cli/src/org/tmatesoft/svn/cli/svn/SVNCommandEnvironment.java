@@ -137,7 +137,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
     private Map myConfigOptions;
     private Map myServersOptions;
 
-    private long myStripCount;
+    private int myStripCount;
     
     public SVNCommandEnvironment(String programName, PrintStream out, PrintStream err, InputStream in) {
         super(programName, out, err, in);
@@ -566,7 +566,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         } else if(option == SVNOption.STRIP ) {
             final String value = optionValue.getValue();
             try {
-                myStripCount = Long.parseLong(optionValue.getValue());
+                myStripCount = Integer.parseInt(optionValue.getValue());
             } catch (NumberFormatException nfe) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_ARG_PARSING_ERROR, 
                         "Non-numeric change argument ({0}) given to -strip", value);
@@ -834,7 +834,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
         return myIsWithAllRevprops;
     }
     
-    public long getStripCount() {
+    public int getStripCount() {
         return myStripCount;
     }
     

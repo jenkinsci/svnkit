@@ -17,14 +17,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
@@ -34,7 +30,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Data type to manage parsing of patches.
@@ -127,11 +122,14 @@ public class SVNPatch {
 
         String indicator = MINUS;
         boolean eof = false, in_header = false;
+        final StringBuffer lineBuf = new StringBuffer();
         do {
+            
+            lineBuf.setLength(0);
 
             /* Read a line from the stream. */
-            final String line = patchFile.readLine();
-            eof = line != null;
+            eof = patchFile.readLine(lineBuf);
+            final String line = lineBuf.toString();
 
             /* See if we have a diff header. */
             if (!eof && line.length() > indicator.length() && line.startsWith(indicator)) {
@@ -192,7 +190,7 @@ public class SVNPatch {
      * @throws SVNException
      * @throws IOException 
      */
-    public void applyPatch(File absWCPath, boolean dryRun, long stripCount, SVNAdminArea wc) throws SVNException, IOException {
+    public void applyPatch(File absWCPath, boolean dryRun, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
 
         final SVMPatchTarget target = SVMPatchTarget.initPatchTarget(this, absWCPath, stripCount, wc);
 
@@ -201,7 +199,7 @@ public class SVNPatch {
         }
 
         if (target.isSkipped()) {
-            target.maybeSendPatchNotification();
+            target.sendPatchNotification();
             return;
         }
 
@@ -388,11 +386,11 @@ public class SVNPatch {
             /* ### TODO mark file as conflicted. */
         }
 
-        target.maybeSendPatchNotification();
+        target.sendPatchNotification();
 
     }
 
-    private String[] decomposePath(File path) {
+    public static String[] decomposePath(File path) {
         return SVNAdminArea.fromString(path.getPath(), File.pathSeparator);
     }
 

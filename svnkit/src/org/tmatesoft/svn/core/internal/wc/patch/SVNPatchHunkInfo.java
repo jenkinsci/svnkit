@@ -22,8 +22,22 @@ public class SVNPatchHunkInfo {
         return null;
     }
 
+    private SVNPatchHunk hunk;
+
     public boolean isRejected() {
         return false;
+    }
+    
+    public SVNPatchHunk getHunk() {
+        return hunk;
+    }
+
+    public int getMatchedLine() {
+        return 0;
+    }
+
+    public int getFuzz() {
+        return 0;
     }
 
 }

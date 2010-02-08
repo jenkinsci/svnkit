@@ -26,15 +26,15 @@ public class SVNPatchHunk {
 
     public static class SVNPatchHunkRange {
 
-        private long start;
+        private int start;
 
-        private long length;
+        private int length;
 
-        public long getStart() {
+        public int getStart() {
             return start;
         }
 
-        public long getLength() {
+        public int getLength() {
             return length;
         }
 
@@ -228,12 +228,15 @@ public class SVNPatchHunk {
         /* Get current seek position */
         pos = patch.getPatchFile().getSeekPosition();
 
+        final StringBuffer lineBuf = new StringBuffer();
         do {
 
             /* Remember the current line's offset, and read the line. */
             last_line = pos;
-            final String line = patch.getPatchFile().readLine();
-            eof = line != null;
+            
+            lineBuf.setLength(0);
+            eof = patch.getPatchFile().readLine(lineBuf);
+            final String line = lineBuf.toString();
 
             if (!eof) {
                 /* Update line offset for next iteration */
@@ -426,11 +429,11 @@ public class SVNPatchHunk {
             if ((comma + 1) < range.length()) {
 
                 /* Try to parse the length. */
-                final Long offset = parseOffset(range.substring(comma + 1));
+                final Integer offset = parseOffset(range.substring(comma + 1));
                 if (offset == null) {
                     return false;
                 }
-                hunkRange.length = offset.longValue();
+                hunkRange.length = offset.intValue();
 
                 /*
                  * Snip off the end of the string, so we can comfortably parse
@@ -445,11 +448,11 @@ public class SVNPatchHunk {
         }
 
         /* Try to parse the line number the hunk starts at. */
-        final Long offset = parseOffset(range.toString());
+        final Integer offset = parseOffset(range.toString());
         if (offset == null) {
             return false;
         }
-        hunkRange.start = offset.longValue();
+        hunkRange.start = offset.intValue();
         return true;
 
     }
@@ -459,10 +462,10 @@ public class SVNPatchHunk {
      * string NUMBER. Return parsed number in OFFSET, and return TRUE if parsing
      * was successful.
      */
-    private static Long parseOffset(String number) {
+    private static Integer parseOffset(String number) {
         if (number != null) {
             try {
-                return Long.valueOf(number);
+                return Integer.valueOf(number);
             } catch (NumberFormatException e) {
                 return null;
             }

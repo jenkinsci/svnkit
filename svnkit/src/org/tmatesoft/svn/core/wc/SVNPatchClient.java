@@ -35,7 +35,7 @@ public class SVNPatchClient extends SVNBasicClient {
         super(repositoryPool, options);
     }
 
-    public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, long stripCount) throws SVNException {
+    public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, int stripCount) throws SVNException {
 
         if (stripCount < 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "strip count must be positive");
@@ -53,7 +53,7 @@ public class SVNPatchClient extends SVNBasicClient {
 
     }
 
-    private void applyPatches(File absPatchPath, File absWCPath, boolean dryRun, long stripCount, SVNAdminArea wc) throws SVNException {
+    private void applyPatches(File absPatchPath, File absWCPath, boolean dryRun, int stripCount, SVNAdminArea wc) throws SVNException {
 
         final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(absPatchPath);
 

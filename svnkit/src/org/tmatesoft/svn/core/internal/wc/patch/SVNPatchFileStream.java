@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc.patch;
 
 import java.io.File;
+import java.io.OutputStream;
 
 /**
  * @version 1.3
@@ -35,6 +36,10 @@ public class SVNPatchFileStream {
         return null;
     }
 
+    public static SVNPatchFileStream openForWrite(File rejectPath) {
+        return null;
+    }
+    
     public void close() {
     }
 
@@ -52,10 +57,6 @@ public class SVNPatchFileStream {
 
     public void setSeekPosition(long pos) {
     }
-
-    public String readLine() {
-        return null;
-    }
     
     public void setLineFilter(SVNPatchFileLineFilter lineFilter) {
         
@@ -63,6 +64,37 @@ public class SVNPatchFileStream {
     
     public void setLineTransformer(SVNPatchFileLineTransformer lineTransfomer) {
         
+    }
+
+    public void write(String string) {
+    }
+
+    /* Attempt to write LEN bytes of DATA to STREAM, the underlying file
+     * of which is at ABSPATH. Fail if not all bytes could be written to
+     * the stream. Do temporary allocations in POOL. */
+    public void tryWrite(String string) {
+    }
+
+    public boolean readLineWithEol(StringBuffer line, StringBuffer eol) {
+        return false;
+    }
+
+    public void tryWrite(StringBuffer line) {
+    }
+
+    public void write(StringBuffer hunkHeader) {
+    }
+
+    public boolean readLine(StringBuffer lineBuf) {
+        return false;
+    }
+
+    public static SVNPatchFileStream wrapOutputStream(OutputStream outputStream) {
+        return null;
+    }
+
+    public boolean readLine(StringBuffer lineRaw, String eolStr) {
+        return false;
     }
 
 }
