@@ -20,16 +20,22 @@ import org.tmatesoft.svn.core.SVNNodeKind;
  */
 public class SVNWCDbKind {
 
-    public static final SVNWCDbKind DIR = new SVNWCDbKind("dir");
-    public static final SVNWCDbKind FILE = new SVNWCDbKind("file");
-    public static final SVNWCDbKind SYMLINK = new SVNWCDbKind("symlink");
-    public static final SVNWCDbKind UNKNOWN = new SVNWCDbKind("unknown");    
-    public static final SVNWCDbKind SUBDIR = new SVNWCDbKind("subdir");    
+    public static final SVNWCDbKind DIR = new SVNWCDbKind("dir", SVNNodeKind.DIR);
+    public static final SVNWCDbKind FILE = new SVNWCDbKind("file", SVNNodeKind.FILE);
+    public static final SVNWCDbKind SYMLINK = new SVNWCDbKind("symlink", SVNNodeKind.FILE);
+    public static final SVNWCDbKind UNKNOWN = new SVNWCDbKind("unknown", SVNNodeKind.UNKNOWN);    
+    public static final SVNWCDbKind SUBDIR = new SVNWCDbKind("subdir", SVNNodeKind.DIR);    
     
     private String myName;
+    private SVNNodeKind myNodeKind;
     
-    private SVNWCDbKind(String name) {
+    private SVNWCDbKind(String name, SVNNodeKind nodeKind) {
         myName = name;
+        myNodeKind = nodeKind;
+    }
+    
+    public SVNNodeKind toNodeKind() {
+        return myNodeKind;
     }
     
     public String toString() {

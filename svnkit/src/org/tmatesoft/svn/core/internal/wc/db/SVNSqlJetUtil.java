@@ -99,6 +99,7 @@ public class SVNSqlJetUtil {
         SVNDbTableField.repos_relpath, 
         SVNDbTableField.presence, 
         SVNDbTableField.kind, 
+        SVNDbTableField.revnum,
         SVNDbTableField.checksum, 
         SVNDbTableField.translated_size, 
         SVNDbTableField.changed_rev, 
@@ -196,4 +197,7 @@ public class SVNSqlJetUtil {
         SVNDbTableField.dav_cache
     };
 
+    public static final SVNDbTableField[] OUR_PROPERTIES_FIELD = {
+        SVNDbTableField.properties
+    };
 }

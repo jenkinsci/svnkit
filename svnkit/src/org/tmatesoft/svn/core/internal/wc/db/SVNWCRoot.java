@@ -39,6 +39,7 @@ public class SVNWCRoot {
         try {
             if (myStorage != null && myStorage.isOpen()) {
                 myStorage.close();
+                myStorage = null;
             }
         } catch (SqlJetException e) {
             SVNSqlJetUtil.convertException(e);

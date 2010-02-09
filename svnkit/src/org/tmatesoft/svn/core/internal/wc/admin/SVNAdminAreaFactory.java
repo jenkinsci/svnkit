@@ -126,8 +126,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
         int wcFormatVersion = -1;
         Collection enabledFactories = getSelector().getEnabledFactories(path, ourFactories, false);
         File adminDir = new File(path, SVNFileUtil.getAdminDirectoryName());
-        File entriesFile = new File(adminDir, "entries");
-        if (adminDir.isDirectory() && entriesFile.isFile()) {
+        if (adminDir.isDirectory()) {
             for (Iterator factories = enabledFactories.iterator(); factories.hasNext();) {
                 SVNAdminAreaFactory factory = (SVNAdminAreaFactory) factories.next();
                 try {
@@ -137,6 +136,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                                 "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
                                 path);
                         SVNErrorManager.error(err, SVNLogType.WC);
+    
                     } else if (wcFormatVersion < factory.getSupportedVersion()) {                        
                         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                                 "Working copy format of {0} is too old ({1}); please check out your working copy again",
@@ -151,7 +151,7 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                     }
                     continue;
                 }
-                
+    
                 SVNAdminArea adminArea = factory.doOpen(path, wcFormatVersion);
                 if (adminArea != null) {
                     adminArea.setWorkingCopyFormatVersion(wcFormatVersion);

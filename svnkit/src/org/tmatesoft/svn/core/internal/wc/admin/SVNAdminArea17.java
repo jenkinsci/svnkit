@@ -23,7 +23,6 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.ISqlJetDbHandle;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -38,9 +37,11 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.internal.wc.db.SVNActualNode;
 import org.tmatesoft.svn.core.internal.wc.db.SVNBaseNode;
 import org.tmatesoft.svn.core.internal.wc.db.SVNDbCommand;
@@ -58,6 +59,7 @@ import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingNode;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17.IsDirDeletedResult;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNPropertyConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTextConflictDescription;
@@ -70,6 +72,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea17 extends SVNAdminArea {
+    public static final int WC_FORMAT = SVNAdminArea17Factory.WC_FORMAT;
+
     private SVNWorkingCopyDB17 myWCDb;
     
     public SVNAdminArea17(File dir) {
@@ -340,7 +344,6 @@ public class SVNAdminArea17 extends SVNAdminArea {
         return entries;
     }
     
-    
     protected SVNEntryInfo getBaseInfoForDeleted(File path, SVNEntry entry, SVNEntry parentEntry) throws SVNException {
         SVNEntryInfo info = null;
         SVNWCDbKind kind = null;
@@ -426,19 +429,19 @@ public class SVNAdminArea17 extends SVNAdminArea {
     }
 
     public SVNVersionedProperties getBaseProperties(String name) throws SVNException {
-        return null;
+        return myWCDb.readPristineProperties(getFile(name));
     }
 
     public int getFormatVersion() {
-        return 0;
+        return WC_FORMAT;
     }
 
     public SVNVersionedProperties getProperties(String name) throws SVNException {
-        return null;
+        return myWCDb.readProperties(getFile(name));
     }
 
     public SVNVersionedProperties getRevertProperties(String name) throws SVNException {
-        return null;
+        return myWCDb.getBaseProperties(getFile(name));
     }
 
     public String getThisDirName() {
@@ -457,22 +460,90 @@ public class SVNAdminArea17 extends SVNAdminArea {
     }
 
     public boolean hasPropModifications(String entryName) throws SVNException {
-        return false;
+        File path = getFile(entryName);
+        try {
+            myWCDb.readInfo(path, false, true, false, false, false, false, false, false, false, false, false, false);
+        } catch (SVNException svne) {
+            if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                return false;
+            }
+            throw svne;
+        }
+        
+        SVNProperties workingProperties = loadProperties(path, false, true);
+        if (workingProperties == null) {
+            return false;
+        }
+        
+        boolean isReplaced = isReplaced(path);
+        if (isReplaced) {
+            return !workingProperties.isEmpty();
+        }
+        
+        SVNProperties baseProperties = loadProperties(path, true, false);
+        return !baseProperties.compareTo(workingProperties).isEmpty();
     }
 
+    private boolean isReplaced(File path) throws SVNException {
+        SVNEntryInfo info = myWCDb.readInfo(path, false, true, false, false, false, true, false, false, false, false, false, false);
+        boolean isBaseShadowed = info.isBaseShadowed();
+        SVNWCDbStatus status = info.getWCDBStatus();
+        SVNWCDbStatus baseStatus = null;
+        if (isBaseShadowed) {
+            SVNEntryInfo baseInfo = myWCDb.getBaseInfo(path, false);
+            baseStatus = baseInfo.getWCDBStatus();
+        }
+        
+        return (status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD) && isBaseShadowed && 
+               baseStatus != SVNWCDbStatus.NOT_PRESENT;
+    }
+    
+    private SVNProperties loadProperties(File path, boolean base, boolean working) throws SVNException {
+        SVNWCDbKind kind = myWCDb.readKind(path, false);
+        String relPath = null;
+        if (base) {
+            relPath = SVNAdminUtil.getPropBasePath(path.getName(), kind.toNodeKind(), false);
+        } else if (working) {
+            relPath = SVNAdminUtil.getPropPath(path.getName(), kind.toNodeKind(), false);
+        } else {
+            relPath = SVNAdminUtil.getPropRevertPath(path.getName(), kind.toNodeKind(), false);
+        }
+        
+        File propFile = getFile(relPath);
+        if (!propFile.exists()) {
+            if (working) {
+                return null;
+            }
+            return new SVNProperties();
+        }
+        return new SVNWCProperties(propFile, null).asMap();
+    }
+    
+    
     public boolean hasProperties(String entryName) throws SVNException {
-        return false;
+        return !getBaseProperties(entryName).isEmpty() || !getProperties(entryName).isEmpty();
     }
 
     public boolean hasTreeConflict(String name) throws SVNException {
-        return false;
+        HasConflicts hasConflicts = hasConflicts(getFile(name));
+        return hasConflicts.myHasTreeConflicts;
     }
 
+    public boolean hasTextConflict(String name) throws SVNException {
+        HasConflicts hasConflicts = hasConflicts(getFile(name));
+        return hasConflicts.myHasTextConflicts;
+    }
+    
+    public boolean hasPropConflict(String name) throws SVNException {
+        HasConflicts hasConflicts = hasConflicts(getFile(name));
+        return hasConflicts.myHasPropConflicts;
+    }
+    
     public void installProperties(String name, SVNProperties baseProps, SVNProperties workingProps, SVNLog log, boolean writeBaseProps, boolean close) throws SVNException {
     }
 
     protected boolean isEntryPropertyApplicable(String name) {
-        return false;
+        return name != null;
     }
 
     public boolean isLocked() throws SVNException {
@@ -495,6 +566,7 @@ public class SVNAdminArea17 extends SVNAdminArea {
     }
 
     public void saveEntries(boolean close) throws SVNException {
+        
     }
 
     public void saveVersionedProperties(SVNLog log, boolean close) throws SVNException {
@@ -513,6 +585,12 @@ public class SVNAdminArea17 extends SVNAdminArea {
     protected void writeEntries(Writer writer) throws IOException, SVNException {
     }
 
+    public void close() throws SVNException {
+        if (myWCDb != null) {
+            myWCDb.closeDB();
+        }
+    }
+    
     public void writeEntry(final File path, final SVNEntry thisDir, final SVNEntry thisEntry) throws SVNException {
         
         SVNDbCommand command = new SVNDbCommand() {
@@ -984,5 +1062,53 @@ public class SVNAdminArea17 extends SVNAdminArea {
         
         myWCDb.runInsertByFieldNames(sdb, SVNDbTables.actual_node, SqlJetConflictAction.REPLACE, 
                 myWCDb.getCommonDbStrategy(null, null, null), fieldsToValues);
+    }
+    
+    private HasConflicts hasConflicts(File path) throws SVNException {
+        SVNEntryInfo info = myWCDb.readInfo(path, false, false, true, false, false, false, true, false, false, false, false, false);
+        boolean textConflicted = false;
+        boolean propConflicted = false;
+        boolean treeConflicted = false;
+     
+        List<SVNConflictDescription> conflicts = myWCDb.readConflicts(path);
+        for (SVNConflictDescription conflictDescription : conflicts) {
+            if (conflictDescription.isTextConflict()) {
+                SVNMergeFileSet files = conflictDescription.getMergeFiles();
+                if (files.getBaseFile() != null) {
+                    textConflicted = files.getBaseFile().isFile();
+                    if (textConflicted) {
+                        break;
+                    }
+                }
+                if (files.getRepositoryFile() != null) {
+                    textConflicted = files.getRepositoryFile().isFile();
+                    if (textConflicted) {
+                        break;
+                    }
+                }
+                if (files.getLocalFile() != null) {
+                    textConflicted = files.getRepositoryFile().isFile();
+                }
+            } else if (conflictDescription.isPropertyConflict()) {
+                SVNMergeFileSet files = conflictDescription.getMergeFiles();
+                if (files.getRepositoryFile() != null) {
+                    propConflicted = files.getRepositoryFile().isFile();
+                }
+            } else if (conflictDescription.isTreeConflict()) {
+                treeConflicted = true;
+            }
+        }
+        
+        HasConflicts hasConflicts = new HasConflicts();
+        hasConflicts.myHasPropConflicts = propConflicted;
+        hasConflicts.myHasTextConflicts = textConflicted;
+        hasConflicts.myHasTreeConflicts = treeConflicted;
+        return hasConflicts;
+    }
+    
+    private static class HasConflicts {
+        private boolean myHasTreeConflicts;
+        private boolean myHasPropConflicts;
+        private boolean myHasTextConflicts;
     }
 }

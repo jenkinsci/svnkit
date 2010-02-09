@@ -444,6 +444,8 @@ public class SVNWCAccess implements ISVNEventHandler {
         if (!preserveLocks && adminArea.isLocked()) {
             adminArea.unlock();
         }
+        
+        adminArea.close();
     }
 
     public SVNAdminArea probeRetrieve(File path) throws SVNException {

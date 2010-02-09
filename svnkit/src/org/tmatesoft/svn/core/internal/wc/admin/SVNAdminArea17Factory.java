@@ -14,8 +14,12 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 import java.io.File;
 import java.util.logging.Level;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
+import org.tmatesoft.svn.core.internal.wc.db.SVNSqlJetUtil;
 
 
 /**
@@ -23,7 +27,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @author  TMate Software Ltd.
  */
 public class SVNAdminArea17Factory extends SVNAdminAreaFactory {
-    public static final int SVN_WC_VERSION = SVNAdminAreaFactory.WC_FORMAT_17;
+    public static final int WC_FORMAT = SVNAdminAreaFactory.WC_FORMAT_17;
 
     /**
      * @param area
@@ -41,7 +45,7 @@ public class SVNAdminArea17Factory extends SVNAdminAreaFactory {
      * @throws SVNException
      */
     protected int doCheckWC(File path, Level logLevel) throws SVNException {
-        return 0;
+        return getVersion(path);
     }
 
     /**
@@ -63,14 +67,17 @@ public class SVNAdminArea17Factory extends SVNAdminAreaFactory {
      * @throws SVNException
      */
     protected SVNAdminArea doOpen(File path, int version) throws SVNException {
-        return null;
+        if (version != getSupportedVersion()) {
+            return null;
+        }
+        return new SVNAdminArea17(path);
     }
 
     /**
      * @return
      */
     public int getSupportedVersion() {
-        return 0;
+        return WC_FORMAT;
     }
 
     /**
@@ -79,6 +86,22 @@ public class SVNAdminArea17Factory extends SVNAdminAreaFactory {
      * @throws SVNException
      */
     protected int getVersion(File path) throws SVNException {
+        File sdbFile = SVNAdminUtil.getSDBFile(path); 
+        SqlJetDb db = null;
+        try {
+            db = SqlJetDb.open(sdbFile, false);
+            return db.getOptions().getUserVersion();
+        } catch (SqlJetException e) {
+            SVNSqlJetUtil.convertException(e);
+        } finally {
+            if (db != null) {
+                try {
+                    db.close();
+                } catch (SqlJetException e) {
+                    SVNSqlJetUtil.convertException(e);
+                }
+            }
+        }
         return 0;
     }
 

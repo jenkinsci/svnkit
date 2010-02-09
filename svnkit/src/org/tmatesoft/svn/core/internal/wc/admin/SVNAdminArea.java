@@ -1102,6 +1102,10 @@ public abstract class SVNAdminArea {
         myWCFormatVersion = wcFormatVersion;
     }
     
+    public void close() throws SVNException {
+        
+    }
+    
     protected abstract void writeEntries(Writer writer) throws IOException, SVNException;
 
     protected abstract Map fetchEntries() throws SVNException;
