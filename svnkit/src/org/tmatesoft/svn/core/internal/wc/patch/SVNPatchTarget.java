@@ -20,10 +20,14 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusUtil;
@@ -33,12 +37,13 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.3
  * @author TMate Software Ltd.
  */
-public class SVMPatchTarget {
+public class SVNPatchTarget {
 
     private SVNPatch patch;
     private List lines = new ArrayList();
@@ -72,7 +77,7 @@ public class SVMPatchTarget {
     private SVNPatchFileStream reject;
     private boolean parentDirExists;
 
-    private SVMPatchTarget() {
+    private SVNPatchTarget() {
     }
 
     public boolean isLocalMods() {
@@ -205,9 +210,9 @@ public class SVMPatchTarget {
      * @throws SVNException
      * @throws IOException
      */
-    public static SVMPatchTarget initPatchTarget(SVNPatch patch, File baseDir, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
+    public static SVNPatchTarget initPatchTarget(SVNPatch patch, File baseDir, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
 
-        final SVMPatchTarget new_target = new SVMPatchTarget();
+        final SVNPatchTarget new_target = new SVNPatchTarget();
         new_target.resolveTargetPath(patch.getNewFilename(), baseDir, stripCount, wc);
 
         new_target.localMods = false;
@@ -361,7 +366,7 @@ public class SVMPatchTarget {
      */
     private void resolveTargetPath(File pathFromPatchfile, File absWCPath, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
 
-        final SVMPatchTarget target = this;
+        final SVNPatchTarget target = this;
 
         target.canonPathFromPatchfile = pathFromPatchfile.getCanonicalFile();
 
@@ -506,7 +511,7 @@ public class SVMPatchTarget {
      */
     public void rejectHunk(final SVNPatchHunkInfo hi) {
 
-        final SVMPatchTarget target = this;
+        final SVNPatchTarget target = this;
         final SVNPatchHunk hunk = hi.getHunk();
 
         final StringBuffer hunk_header = new StringBuffer();
@@ -548,7 +553,7 @@ public class SVMPatchTarget {
      */
     public void applyHunk(final SVNPatchHunkInfo hi) throws SVNException {
 
-        final SVMPatchTarget target = this;
+        final SVNPatchTarget target = this;
         final SVNPatchHunk hunk = hi.getHunk();
 
         if (target.kind == SVNNodeKind.FILE) {
@@ -602,9 +607,12 @@ public class SVMPatchTarget {
      */
     private void seekToLine(int line) throws SVNException {
 
-        assert (line > 0);
+        if (line <= 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "Line to seek must be more than zero");
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+        }
 
-        final SVMPatchTarget target = this;
+        final SVNPatchTarget target = this;
 
         if (line == target.currentLine) {
             return;
@@ -632,15 +640,19 @@ public class SVMPatchTarget {
      */
     private void readLine(final StringBuffer line) throws SVNException {
 
-        final SVMPatchTarget target = this;
+        final SVNPatchTarget target = this;
 
         if (target.eof) {
             return;
         }
 
-        assert (target.currentLine <= target.lines.size() + 1);
+        if (target.currentLine > target.lines.size() + 1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "Lines reading isn't sequenced");
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+        }
+
         if (target.currentLine == target.lines.size() + 1) {
-            final Long mark = target.stream.getSeekPosition();
+            final Long mark = new Long(target.stream.getSeekPosition());
             target.lines.add(mark);
         }
 
@@ -663,7 +675,7 @@ public class SVMPatchTarget {
      */
     public void copyLinesToTarget(int line) throws SVNException {
 
-        final SVMPatchTarget target = this;
+        final SVNPatchTarget target = this;
 
         while ((target.currentLine < line || line == 0) && !target.eof) {
             final StringBuffer target_line = new StringBuffer();
@@ -680,9 +692,9 @@ public class SVMPatchTarget {
     }
 
     public void sendPatchNotification() {
-        
+
         // TODO send notification
-        
+
     }
 
 }

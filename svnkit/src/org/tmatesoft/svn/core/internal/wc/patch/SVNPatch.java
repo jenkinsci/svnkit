@@ -192,7 +192,7 @@ public class SVNPatch {
      */
     public void applyPatch(File absWCPath, boolean dryRun, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
 
-        final SVMPatchTarget target = SVMPatchTarget.initPatchTarget(this, absWCPath, stripCount, wc);
+        final SVNPatchTarget target = SVNPatchTarget.initPatchTarget(this, absWCPath, stripCount, wc);
 
         if (target == null) {
             return;

@@ -18,7 +18,7 @@ package org.tmatesoft.svn.core.internal.wc.patch;
  */
 public class SVNPatchHunkInfo {
 
-    public static SVNPatchHunkInfo getHunkInfo(SVMPatchTarget target, SVNPatchHunk hunk, int fuzz) {
+    public static SVNPatchHunkInfo getHunkInfo(SVNPatchTarget target, SVNPatchHunk hunk, int fuzz) {
         return null;
     }
 
