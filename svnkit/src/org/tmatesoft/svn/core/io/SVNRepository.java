@@ -148,7 +148,7 @@ public abstract class SVNRepository {
     /**
      * Is used as an initialization value in cases, when revision is not defined, often represents HEAD revision
      */
-    public static final long INVALID_REVISION = -1;
+    public static final long INVALID_REVISION = -1L;
         
     protected String myRepositoryUUID;
     protected SVNURL myRepositoryRoot;
