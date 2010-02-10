@@ -70,6 +70,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         setLastError(null);
         myAuthenticationManager = repository.getAuthenticationManager();
         myAuthentication = null;
+        boolean isAnonymous = false;
         
         if (mechs.contains("EXTERNAL") && repository.getExternalUserName() != null) {
             mechs = new ArrayList();
@@ -77,8 +78,9 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         } else { 
             for (Iterator mech = mechs.iterator(); mech.hasNext();) {
                 String m = (String) mech.next();
-                if ("ANONYMOUS".equals(m) || "EXTERNAL".equals(m)) {
+                if ("ANONYMOUS".equals(m) || "EXTERNAL".equals(m) || "PLAIN".equals(m)) {
                     mechs = new ArrayList();
+                    isAnonymous = "ANONYMOUS".equals(m); 
                     mechs.add(m);
                     break;
                 }
@@ -93,7 +95,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     return;
                 }
                 try {
-                    if (tryAuthentication(repository)) {
+                    if (tryAuthentication(repository, getMechanismName(myClient, isAnonymous))) {
                         if (myAuthenticationManager != null && myAuthentication != null) {
                             String realmName = getFullRealmName(repository.getLocation(), realm);
                             myAuthenticationManager.acknowledgeAuthentication(true, myAuthentication.getKind(), realmName, null, myAuthentication);
@@ -105,7 +107,9 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     }
                     // some sort of authentication error.
                 } catch (SaslException e) {
-                    mechs.remove(getMechanismName(myClient));
+                    // it may be plain replaced with anonymous.
+                    String mechName = getMechanismName(myClient, isAnonymous);
+                    mechs.remove(mechName);
                 } 
                 if (myAuthenticationManager != null) {
                     SVNErrorMessage error = getLastError();
@@ -119,7 +123,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     } else {
                         // automatically generated authentication, do not try this mech again, will lead to the same error.
                         // 
-                        mechs.remove(getMechanismName(myClient));
+                        mechs.remove(getMechanismName(myClient, isAnonymous));
                     }
                 }
                 dispose();
@@ -149,10 +153,9 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         }
     }
     
-    protected boolean tryAuthentication(SVNRepositoryImpl repos) throws SaslException, SVNException {
+    protected boolean tryAuthentication(SVNRepositoryImpl repos, String mechName) throws SaslException, SVNException {
         String initialChallenge = null;
-        String mechName = getMechanismName(myClient);
-        boolean expectChallenge = !("ANONYMOUS".equals(mechName) || "EXTERNAL".equals(mechName));
+        boolean expectChallenge = !("ANONYMOUS".equals(mechName) || "EXTERNAL".equals(mechName) || "PLAIN".equals(mechName));
         if ("EXTERNAL".equals(mechName) && repos.getExternalUserName() != null) {
             initialChallenge = "";
         } else if (myClient.hasInitialResponse()) {
@@ -273,7 +276,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         for (int i = 0; i < mechsArray.length; i++) {
             String mech = mechsArray[i];
             try {
-                if ("ANONYMOUS".equals(mech) || "EXTERNAL".equals(mech)) {
+                if ("ANONYMOUS".equals(mech) || "EXTERNAL".equals(mech) || "PLAIN".equals(mech)) {
                     props.put(Sasl.POLICY_NOANONYMOUS, "false");
                 }
                 SaslClientFactory clientFactory = getSaslClientFactory(mech, props);
@@ -281,7 +284,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     continue;
                 }
                 SVNAuthentication auth = null;
-                if ("ANONYMOUS".equals(mech)) {
+                if ("ANONYMOUS".equals(mech) || "PLAIN".equals(mech)) {
                     auth = new SVNPasswordAuthentication("", "", false);
                 } else if ("EXTERNAL".equals(mech)) {
                     String name = repos.getExternalUserName();
@@ -309,10 +312,7 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
                     }
                     auth = myAuthentication;
                 }
-                if ("ANONYMOUS".equals(mech)) {
-                    mech = "PLAIN";
-                }
-                client = clientFactory.createSaslClient(new String[] {mech}, null, "svn", location.getHost(), props, new SVNCallbackHandler(realm, auth));
+                client = clientFactory.createSaslClient(new String[] {"ANONYMOUS".equals(mech) ? "PLAIN" : mech}, null, "svn", location.getHost(), props, new SVNCallbackHandler(realm, auth));
                 if (client != null) {
                     break;
                 }
@@ -367,15 +367,15 @@ public class SVNSaslAuthenticator extends SVNAuthenticator {
         return result;
     }
     
-    private static String getMechanismName(SaslClient client) {
+    private static String getMechanismName(SaslClient client, boolean isAnonymous) {
         if (client == null) {
             return null;
         }
-        String mech = client.getMechanismName();
-        if ("PLAIN".equals(mech)) {
-            return "ANONYMOUS";
+        String name = client.getMechanismName();
+        if ("PLAIN".equals(name) && isAnonymous) {
+            name = "ANONYMOUS";
         }
-        return mech;
+        return name;
     }
     
     private static SaslClientFactory getSaslClientFactory(String mechName, Map props) {

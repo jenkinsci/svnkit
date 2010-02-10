@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="org/tmatesoft/svn/core/internal/io/svn/sasl/**" kind="src" output="svnkit/bin" path="svnkit/src"/>
+	<classpathentry kind="src" output="svnkit/bin" path="svnkit/src"/>
 	<classpathentry kind="src" output="contrib/javahl/bin" path="contrib/javahl/tests"/>
 	<classpathentry kind="src" output="svnkit-cli/bin" path="svnkit-cli/src"/>
 	<classpathentry kind="src" output="svnkit-dav/bin" path="svnkit-dav/src"/>
