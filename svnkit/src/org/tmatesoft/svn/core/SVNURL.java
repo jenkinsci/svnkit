@@ -279,6 +279,11 @@ public class SVNURL {
                 return;
             }
             myHost = httpURL.getHost();
+            if ("".equals(myHost)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, "Malformed URL: ''{0}''", url);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+                return;
+            }
             String httpPath = norlmalizeURLPath(url, getPath(httpURL));
             if (uriEncoded) {
                 // autoencode it.
