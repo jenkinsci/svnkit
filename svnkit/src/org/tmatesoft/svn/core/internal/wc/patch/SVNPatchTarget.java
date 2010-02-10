@@ -18,23 +18,30 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNStatusUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNWCManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNEvent;
+import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -44,6 +51,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  */
 public class SVNPatchTarget {
+
+    private static final int MAX_FUZZ = 2;
 
     private SVNPatch patch;
     private List lines = new ArrayList();
@@ -140,14 +149,6 @@ public class SVNPatchTarget {
         return kind;
     }
 
-    public void setModified(boolean modified) {
-        this.modified = modified;
-    }
-
-    public void setSkipped(boolean skipped) {
-        this.skipped = skipped;
-    }
-
     public SVNPatchFileStream getStream() {
         return stream;
     }
@@ -162,10 +163,6 @@ public class SVNPatchTarget {
 
     public File getPatchedPath() {
         return patchedPath;
-    }
-
-    public void setDeleted(boolean deleted) {
-        this.deleted = deleted;
     }
 
     public boolean isAdded() {
@@ -490,7 +487,7 @@ public class SVNPatchTarget {
 
     private File stripPath(File path, int stripCount) {
         if (path != null && stripCount > 0) {
-            final String[] components = SVNPatch.decomposePath(path);
+            final String[] components = decomposePath(path);
             final StringBuffer buf = new StringBuffer();
             if (stripCount > components.length) {
                 for (int i = stripCount; i < components.length; i++) {
@@ -605,7 +602,7 @@ public class SVNPatchTarget {
      * 
      * @throws SVNException
      */
-    private void seekToLine(int line) throws SVNException {
+    public void seekToLine(int line) throws SVNException {
 
         if (line <= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "Line to seek must be more than zero");
@@ -638,7 +635,7 @@ public class SVNPatchTarget {
      * 
      * @throws SVNException
      */
-    private void readLine(final StringBuffer line) throws SVNException {
+    public void readLine(final StringBuffer line) throws SVNException {
 
         final SVNPatchTarget target = this;
 
@@ -691,7 +688,445 @@ public class SVNPatchTarget {
 
     }
 
-    public void sendPatchNotification() {
+    /**
+     * Install a patched TARGET into the working copy at ABS_WC_PATH. Use client
+     * context CTX to retrieve WC_CTX, and possibly doing notifications. If
+     * DRY_RUN is TRUE, don't modify the working copy.
+     * 
+     * @throws SVNException
+     */
+    public void installPatchedTarget(File absWCPath, boolean dryRun, SVNAdminArea wc) throws SVNException {
+
+        final SVNPatchTarget target = this;
+
+        if (target.deleted) {
+            if (!dryRun) {
+                /*
+                 * Schedule the target for deletion. Suppress notification,
+                 * we'll do it manually in a minute. Also suppress cancellation.
+                 */
+                SVNWCManager.delete(wc.getWCAccess(), wc, target.getAbsPath(), false, false);
+            }
+        } else {
+            /*
+             * If the target's parent directory does not yet exist we need to
+             * create it before we can copy the patched result in place.
+             */
+            if (target.isAdded() && !target.isParentDirExists()) {
+
+                /* Check if we can safely create the target's parent. */
+                File absPath = absWCPath;
+                String[] components = decomposePath(target.getRelPath());
+                int present_components = 0;
+                for (int i = 0; i < components.length - 1; i++) {
+                    final String component = components[i];
+                    absPath = new File(absPath, component);
+
+                    final SVNEntry entry = wc.getWCAccess().getEntry(absPath, false);
+                    final SVNNodeKind kind = entry != null ? entry.getKind() : null;
+
+                    if (kind == SVNNodeKind.FILE) {
+                        /* Obstructed. */
+                        target.skipped = true;
+                        break;
+                    } else if (kind == SVNNodeKind.DIR) {
+                        /*
+                         * ### wc-ng should eventually be able to replace
+                         * directories in-place, so this schedule conflict check
+                         * will go away. We could then also make the
+                         * svn_wc__node_get_kind() call above ignore hidden
+                         * nodes.
+                         */
+                        if (entry.isDeleted()) {
+                            target.skipped = true;
+                            break;
+                        }
+
+                        present_components++;
+                    } else {
+                        /*
+                         * The WC_DB doesn't know much about this node. Check
+                         * what's on disk.
+                         */
+                        final SVNFileType disk_kind = SVNFileType.getType(absPath);
+                        if (disk_kind != SVNFileType.NONE) {
+                            /* An unversioned item is in the way. */
+                            target.skipped = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!target.isSkipped()) {
+                    absPath = absWCPath;
+                    for (int i = 0; i < present_components; i++) {
+                        final String component = components[i];
+                        absPath = new File(absPath, component);
+                        if (dryRun) {
+                            /* Just do notification. */
+                            SVNEvent mergeCompletedEvent = SVNEventFactory.createSVNEvent(absPath, SVNNodeKind.NONE, null, SVNRepository.INVALID_REVISION, SVNStatusType.INAPPLICABLE,
+                                    SVNStatusType.INAPPLICABLE, SVNStatusType.LOCK_INAPPLICABLE, SVNEventAction.ADD, null, null, null);
+                            wc.getWCAccess().handleEvent(mergeCompletedEvent);
+                        } else {
+                            /*
+                             * Create the missing component and add it to
+                             * version control. Suppress cancellation.
+                             */
+                            if (absPath.mkdirs()) {
+                                SVNWCManager.add(absPath, wc, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!dryRun && !target.isSkipped()) {
+                /* Copy the patched file on top of the target file. */
+                SVNFileUtil.copyFile(target.getPatchedPath(), target.getAbsPath(), false);
+                if (target.isAdded()) {
+                    /*
+                     * The target file didn't exist previously, so add it to
+                     * version control. Suppress notification, we'll do that
+                     * later. Also suppress cancellation.
+                     */
+                    SVNWCManager.add(target.getAbsPath(), wc, null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
+                }
+
+                /* Restore the target's executable bit if necessary. */
+                SVNFileUtil.setExecutable(target.getAbsPath(), target.isExecutable());
+            }
+        }
+
+        /* Write out rejected hunks, if any. */
+        if (!dryRun && !target.skipped && target.hadRejects) {
+            final String rej_path = target.getAbsPath().getPath() + ".svnpatch.rej";
+            SVNFileUtil.copyFile(target.getRejectPath(), new File(rej_path), true);
+            /* ### TODO mark file as conflicted. */
+        }
+
+    }
+
+    public static String[] decomposePath(File path) {
+        return SVNAdminArea.fromString(path.getPath(), File.pathSeparator);
+    }
+
+    /**
+     * Apply a PATCH to a working copy at ABS_WC_PATH.
+     * 
+     * STRIP_COUNT specifies the number of leading path components which should
+     * be stripped from target paths in the patch.
+     * 
+     * @throws SVNException
+     * @throws IOException
+     */
+    public static SVNPatchTarget applyPatch(SVNPatch patch, File absWCPath, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
+
+        final SVNPatchTarget target = SVNPatchTarget.initPatchTarget(patch, absWCPath, stripCount, wc);
+
+        if (target.skipped) {
+            return target;
+        }
+
+        /* Match hunks. */
+        for (final Iterator i = patch.getHunks().iterator(); i.hasNext();) {
+            final SVNPatchHunk hunk = (SVNPatchHunk) i.next();
+
+            SVNPatchHunkInfo hi;
+            int fuzz = 0;
+
+            /*
+             * Determine the line the hunk should be applied at. If no match is
+             * found initially, try with fuzz.
+             */
+            do {
+                hi = target.getHunkInfo(hunk, fuzz);
+                fuzz++;
+            } while (hi.isRejected() && fuzz <= MAX_FUZZ);
+
+            target.hunks.add(hi);
+        }
+
+        /* Apply or reject hunks. */
+        for (final Iterator i = target.hunks.iterator(); i.hasNext();) {
+            final SVNPatchHunkInfo hi = (SVNPatchHunkInfo) i.next();
+
+            if (hi.isRejected()) {
+                target.rejectHunk(hi);
+            } else {
+                target.applyHunk(hi);
+            }
+        }
+
+        if (target.kind == SVNNodeKind.FILE) {
+            /* Copy any remaining lines to target. */
+            target.copyLinesToTarget(0);
+            if (!target.eof) {
+                /*
+                 * We could not copy the entire target file to the temporary
+                 * file, and would truncate the target if we copied the
+                 * temporary file on top of it. Cancel any modifications to the
+                 * target file and report is as skipped.
+                 */
+                target.skipped = true;
+            }
+        }
+
+        /*
+         * Close the streams of the target so that their content is flushed to
+         * disk. This will also close underlying streams.
+         */
+        if (target.getKind() == SVNNodeKind.FILE) {
+            target.stream.close();
+        }
+        target.patched.close();
+        target.reject.close();
+
+        if (!target.skipped) {
+
+            /*
+             * Get sizes of the patched temporary file and the working file.
+             * We'll need those to figure out whether we should add or delete
+             * the patched file.
+             */
+            final long patchedFileSize = target.patchedPath.length();
+            final long workingFileSize = target.kind == SVNNodeKind.FILE ? target.absPath.length() : 0;
+
+            if (patchedFileSize == 0 && workingFileSize > 0) {
+                /*
+                 * If a unidiff removes all lines from a file, that usually
+                 * means deletion, so we can confidently schedule the target for
+                 * deletion. In the rare case where the unidiff was really meant
+                 * to replace a file with an empty one, this may not be
+                 * desirable. But the deletion can easily be reverted and
+                 * creating an empty file manually is not exactly hard either.
+                 */
+                target.deleted = target.kind != SVNNodeKind.NONE;
+            } else if (workingFileSize == 0 && patchedFileSize == 0) {
+                /*
+                 * The target was empty or non-existent to begin with and
+                 * nothing has changed by patching. Report this as skipped if it
+                 * didn't exist.
+                 */
+                if (target.kind != SVNNodeKind.FILE)
+                    target.skipped = true;
+            } else if (target.kind != SVNNodeKind.FILE && patchedFileSize > 0) {
+                /* The patch has created a file. */
+                target.added = true;
+            }
+
+        }
+
+        return target;
+
+    }
+
+    /**
+     * Determine the line at which a HUNK applies to the TARGET file, and return
+     * an appropriate hunk_info object in *HI, allocated from RESULT_POOL. Use
+     * fuzz factor FUZZ. Set HI->FUZZ to FUZZ. If no correct line can be
+     * determined, set HI->REJECTED to TRUE. When this function returns, neither
+     * TARGET->CURRENT_LINE nor the file offset in the target file will have
+     * changed.
+     * 
+     * @throws SVNException
+     */
+    public SVNPatchHunkInfo getHunkInfo(final SVNPatchHunk hunk, final int fuzz) throws SVNException {
+
+        final SVNPatchTarget target = this;
+
+        int matchedLine;
+
+        /*
+         * An original offset of zero means that this hunk wants to create a new
+         * file. Don't bother matching hunks in that case, since the hunk
+         * applies at line 1. If the file already exists, the hunk is rejected.
+         */
+        if (hunk.getOriginal().getStart() == 0) {
+            if (target.getKind() == SVNNodeKind.FILE) {
+                matchedLine = 0;
+            } else {
+                matchedLine = 1;
+            }
+        } else if (hunk.getOriginal().getStart() > 0 && target.getKind() == SVNNodeKind.FILE) {
+
+            int savedLine = target.getCurrentLine();
+            boolean savedEof = target.isEof();
+
+            /*
+             * Scan for a match at the line where the hunk thinks it should be
+             * going.
+             */
+            target.seekToLine(hunk.getOriginal().getStart());
+            matchedLine = target.scanForMatch(hunk, true, hunk.getOriginal().getStart() + 1, fuzz);
+
+            if (matchedLine != hunk.getOriginal().getStart()) {
+
+                /* Scan the whole file again from the start. */
+                target.seekToLine(1);
+
+                /*
+                 * Scan forward towards the hunk's line and look for a line
+                 * where the hunk matches.
+                 */
+                matchedLine = target.scanForMatch(hunk, false, hunk.getOriginal().getStart(), fuzz);
+
+                /*
+                 * In tie-break situations, we arbitrarily prefer early matches
+                 * to save us from scanning the rest of the file.
+                 */
+                if (matchedLine == 0) {
+                    /*
+                     * Scan forward towards the end of the file and look for a
+                     * line where the hunk matches.
+                     */
+                    matchedLine = target.scanForMatch(hunk, true, 0, fuzz);
+
+                }
+            }
+
+            target.seekToLine(savedLine);
+            target.eof = savedEof;
+
+        } else {
+            /* The hunk wants to modify a file which doesn't exist. */
+            matchedLine = 0;
+        }
+
+        return new SVNPatchHunkInfo(hunk, matchedLine, (matchedLine == 0), fuzz);
+    }
+
+    /**
+     * Scan lines of TARGET for a match of the original text of HUNK, up to but
+     * not including the specified UPPER_LINE. Use fuzz factor FUZZ. If
+     * UPPER_LINE is zero scan until EOF occurs when reading from TARGET. Return
+     * the line at which HUNK was matched in *MATCHED_LINE. If the hunk did not
+     * match at all, set *MATCHED_LINE to zero. If the hunk matched multiple
+     * times, and MATCH_FIRST is TRUE, return the line number at which the first
+     * match occured in *MATCHED_LINE. If the hunk matched multiple times, and
+     * MATCH_FIRST is FALSE, return the line number at which the last match
+     * occured in *MATCHED_LINE.
+     * 
+     * @throws SVNException
+     */
+    public int scanForMatch(SVNPatchHunk hunk, boolean matchFirst, int upperLine, int fuzz) throws SVNException {
+
+        final SVNPatchTarget target = this;
+
+        int matched_line = 0;
+
+        while ((target.currentLine < upperLine || upperLine == 0) && !target.eof) {
+
+            boolean matched = target.matchHunk(hunk, fuzz);
+
+            if (matched) {
+                boolean taken = false;
+
+                /* Don't allow hunks to match at overlapping locations. */
+                for (Iterator i = target.hunks.iterator(); i.hasNext();) {
+                    final SVNPatchHunkInfo hi = (SVNPatchHunkInfo) i.next();
+                    taken = (!hi.isRejected() && target.currentLine >= hi.getMatchedLine() && target.currentLine < hi.getMatchedLine() + hi.getHunk().getOriginal().getLength());
+                    if (taken) {
+                        break;
+                    }
+                }
+
+                if (!taken) {
+                    matched_line = target.currentLine;
+                    if (matchFirst) {
+                        break;
+                    }
+                }
+            }
+
+            target.seekToLine(target.currentLine + 1);
+
+        }
+
+        return matched_line;
+
+    }
+
+    /**
+     * Indicate in *MATCHED whether the original text of HUNK matches the patch
+     * TARGET at its current line. Lines within FUZZ lines of the start or end
+     * of HUNK will always match. When this function returns, neither
+     * TARGET->CURRENT_LINE nor the file offset in the target file will have
+     * changed. HUNK->ORIGINAL_TEXT will be reset.
+     * 
+     * @throws SVNException
+     */
+    private boolean matchHunk(SVNPatchHunk hunk, int fuzz) throws SVNException {
+
+        final SVNPatchTarget target = this;
+
+        final StringBuffer hunkLine = new StringBuffer();
+        final StringBuffer targetLine = new StringBuffer();
+        final StringBuffer eol_str = new StringBuffer();
+
+        int linesRead;
+        int savedLine;
+        boolean hunkEof;
+        boolean linesMatched;
+
+        boolean matched = false;
+
+        if (target.eof) {
+            return matched;
+        }
+
+        savedLine = target.currentLine;
+        linesRead = 0;
+        linesMatched = false;
+        hunk.getOriginalText().reset();
+
+        do {
+            String hunk_line_translated;
+
+            hunkLine.setLength(0);
+            eol_str.setLength(0);
+
+            hunkEof = hunk.getOriginalText().readLineWithEol(hunkLine, eol_str);
+
+            /* Contract keywords, if any, before matching. */
+            final byte[] eol = eol_str.toString().getBytes();
+            hunk_line_translated = SVNTranslator.transalteString(hunkLine.toString(), eol, target.keywords, false, false);
+
+            linesRead++;
+            targetLine.setLength(0);
+            target.readLine(targetLine);
+
+            if (!hunkEof) {
+                if (linesRead <= fuzz && hunk.getLeadingContext() > fuzz) {
+                    linesMatched = true;
+                } else if (linesRead > hunk.getOriginal().getLength() - fuzz && hunk.getTrailingContext() > fuzz) {
+                    linesMatched = true;
+                } else {
+                    linesMatched = !hunk_line_translated.equals(targetLine.toString());
+                }
+            }
+        } while (linesMatched && !(hunkEof || target.eof));
+
+        if (hunkEof) {
+            matched = linesMatched;
+        } else if (target.eof) {
+            /*
+             * If the target has no newline at end-of-file, we get an EOF
+             * indication for the target earlier than we do get it for the hunk.
+             */
+            hunkEof = hunk.getOriginalText().readLineWithEol(hunkLine, null);
+            if (hunkLine.length() == 0 && hunkEof) {
+                matched = linesMatched;
+            } else {
+                matched = false;
+            }
+        }
+        target.seekToLine(savedLine);
+        target.eof = false;
+
+        return matched;
+    }
+
+    public void sendPatchNotification(SVNAdminArea wc) {
 
         // TODO send notification
 

@@ -97,4 +97,7 @@ public class SVNPatchFileStream {
         return false;
     }
 
+    public void reset() {
+    }
+
 }

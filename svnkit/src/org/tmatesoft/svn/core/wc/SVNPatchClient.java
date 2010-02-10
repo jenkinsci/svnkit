@@ -13,6 +13,9 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -23,6 +26,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatch;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchFileStream;
+import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchTarget;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -58,15 +62,30 @@ public class SVNPatchClient extends SVNBasicClient {
         final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(absPatchPath);
 
         try {
+
+            final List targets = new ArrayList();
+
             SVNPatch patch;
             do {
                 checkCancelled();
                 patch = SVNPatch.parseNextPatch(patchFile);
                 if (patch != null) {
-                    patch.applyPatch(absWCPath, dryRun, stripCount, wc);
-                    patch.close();
+                    final SVNPatchTarget target = SVNPatchTarget.applyPatch(patch, absWCPath, stripCount, wc);
+                    targets.add(target);
                 }
             } while (patch != null);
+
+            /* Install patched targets into the working copy. */
+            for (Iterator i = targets.iterator(); i.hasNext();) {
+                checkCancelled();
+                final SVNPatchTarget target = (SVNPatchTarget) i.next();
+                if (!target.isSkipped()) {
+                    target.installPatchedTarget(absWCPath, dryRun, wc);
+                }
+                target.sendPatchNotification(wc);
+                target.getPatch().close();
+            }
+
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
             SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);

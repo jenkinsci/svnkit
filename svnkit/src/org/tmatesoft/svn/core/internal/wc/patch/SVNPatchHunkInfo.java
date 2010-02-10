@@ -11,33 +11,38 @@
  */
 package org.tmatesoft.svn.core.internal.wc.patch;
 
-
 /**
  * @version 1.3
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNPatchHunkInfo {
 
-    public static SVNPatchHunkInfo getHunkInfo(SVNPatchTarget target, SVNPatchHunk hunk, int fuzz) {
-        return null;
-    }
-
     private SVNPatchHunk hunk;
+    private boolean rejected;
+    private int matchedLine;
+    private int fuzz;
+
+    public SVNPatchHunkInfo(SVNPatchHunk hunk, int matchedLine, boolean rejected, int fuzz) {
+        this.hunk = hunk;
+        this.matchedLine = matchedLine;
+        this.rejected = rejected;
+        this.fuzz = fuzz;
+    }
 
     public boolean isRejected() {
-        return false;
+        return rejected;
     }
-    
+
     public SVNPatchHunk getHunk() {
         return hunk;
     }
 
     public int getMatchedLine() {
-        return 0;
+        return matchedLine;
     }
 
     public int getFuzz() {
-        return 0;
+        return fuzz;
     }
 
 }
