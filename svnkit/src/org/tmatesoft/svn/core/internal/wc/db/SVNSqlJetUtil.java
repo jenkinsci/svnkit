@@ -40,7 +40,7 @@ public class SVNSqlJetUtil {
     public static SVNProperties getPropertiesFromBLOB(Object obj) throws SVNException {
         if (obj != null && obj instanceof ISqlJetMemoryPointer) {//check if it's a BLOB object and convert it to byte[] if it is
             byte[] bytes = SqlJetUtility.readByteBuffer((ISqlJetMemoryPointer) obj);
-            SVNSkel skel = SVNSkel.createAtom(bytes);
+            SVNSkel skel = SVNSkel.parse(bytes);
             Map propsMap = skel != null ? skel.parsePropList() : null;
             if (propsMap == null) {
                 return null;
@@ -51,17 +51,15 @@ public class SVNSqlJetUtil {
     }
     
     public static SqlJetDb openDB(File dbFile, ISqlJetTransaction sqlTransaction, SqlJetTransactionMode mode, int latestSchema) throws SVNException {
-        mode = mode == null ? SqlJetTransactionMode.WRITE : mode;
         SqlJetDb db = null;
         try {
-            db = SqlJetDb.open(dbFile, true);
+            db = SqlJetDb.open(dbFile, mode == SqlJetTransactionMode.WRITE ? true : false);
             checkFormat(db, sqlTransaction, latestSchema);
         } catch (SqlJetException e) {
             convertException(e);
         }
         return db;
     }
-
     
     public static void convertException(SqlJetException e) throws SVNException {
         SVNErrorManager.error(convertError(e), e, SVNLogType.WC);

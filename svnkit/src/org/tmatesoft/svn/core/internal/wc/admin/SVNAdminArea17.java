@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -95,251 +94,263 @@ public class SVNAdminArea17 extends SVNAdminArea {
     protected Map fetchEntries() throws SVNException {
         File path = getRoot();
         
-        SqlJetDb sdb = myWCDb.getDBTemp(path, false);
-        List childNames = myWCDb.gatherChildren(path, false);
-        childNames.add(getThisDirName());
+        SqlJetDb sdb = null;
+        SVNEntry parentEntry = null;
         Map<String, SVNEntry> entries = new HashMap<String, SVNEntry>();
-        for (ListIterator iterator = childNames.listIterator(childNames.size()); iterator.hasPrevious();) {
-            String name = (String) iterator.previous();
-            Map entryAttributes = new HashMap();
-            SVNEntry entry = new SVNEntry(entryAttributes, this, name);
-            entries.put(name, entry);
-            SVNEntry parentEntry = null;
-            if (entry.isThisDir()) {
-                parentEntry = entry;
-            }
-            
-            SVNEntryInfo info = myWCDb.readInfo(path, true, true, true, false, false, true, true, false, true, true, true, false);
-            entry.setRevision(info.getRevision());
-            entry.setRepositoryRoot(info.getReposRootURL());
-            entry.setUUID(info.getUUID());
-            entry.setCommittedRevision(info.getCommittedRevision());
-            entry.setAuthor(info.getCommittedAuthor());
-            entry.setTextTime(SVNDate.formatDate(info.getLastTextTime()));
-            entry.setDepth(info.getDepth());
-            entry.setChangelistName(info.getChangeList());
-            entry.setCopyFromRevision(info.getCopyFromRevision());
-            entry.setCommittedDate(SVNDate.formatDate(info.getCommittedDate()));
-            String originalReposPath = info.getOriginalReposPath();
-            String originalRootURL = info.getOriginalRootURL();
-            SVNChecksum checksum = info.getChecksum();
-            boolean conflicted = info.isConflicted();
-            SVNWCDbLock lock = info.getWCDBLock();
-            long translatedSize = info.getWorkingSize();
-            
-            if (getThisDirName().equals(name)) {
-                Map treeConflicts = null;
-                Collection conflictVictims = myWCDb.readConflictVictims(path);
-                for (Iterator conflictVictimsIter = conflictVictims.iterator(); conflictVictimsIter.hasNext();) {
-                    String childName = (String) conflictVictimsIter.next();
-                    File childFile = new File(path, childName);
-                    Collection childConflicts = myWCDb.readConflicts(childFile);
-                    for (Iterator childConflictsIter = childConflicts.iterator(); childConflictsIter.hasNext();) {
-                        SVNConflictDescription conflict = (SVNConflictDescription) childConflictsIter.next();
-                        if (conflict instanceof SVNTreeConflictDescription) {
-                            SVNTreeConflictDescription treeConflict = (SVNTreeConflictDescription) conflict;
-                            if (treeConflicts == null) {
-                                treeConflicts = new HashMap();
-                            }
-                            treeConflicts.put(childName, treeConflict);
-                        }
-                    }
-                }
-                
-                if (treeConflicts != null) {
-                    entry.setTreeConflicts(treeConflicts);
-                }
-            }
-            
-            SVNWCDbStatus status = info.getWCDBStatus();
-            SVNWCDbKind kind = info.getWCDBKind();
-            String reposPath = info.getReposPath();
-            if (status == SVNWCDbStatus.NORMAL || status == SVNWCDbStatus.INCOMPLETE) {
-                boolean notPresent = false;
-                if (kind == SVNWCDbKind.DIR) {
-                    notPresent = myWCDb.checkIfIsNotPresent(sdb, 1, name);
-                }
-                if (notPresent) {
-                    entry.setSchedule(null);
-                    entry.setDeleted(true);
-                } else {
-                    entry.setSchedule(null);
-                    if (reposPath == null) {
-                        SVNRepositoryScanResult reposScanResult = myWCDb.scanBaseRepos(path);
-                        SVNRepositoryInfo reposInfo = reposScanResult.getReposInfo();
-                        entry.setRepositoryRoot(reposInfo.getRootURL());
-                        entry.setUUID(reposInfo.getUUID());
-                    }
-                    entry.setIncomplete(true);
-                }
-            } else if (status == SVNWCDbStatus.DELETED || status == SVNWCDbStatus.OBSTRUCTED_DELETE) {
-                entry.scheduleForDeletion();
+
+        try {
+            sdb = myWCDb.getDBTemp(path, false);
+            List childNames = myWCDb.gatherChildren(path, false);
+            childNames.add(getThisDirName());
+            for (ListIterator iterator = childNames.listIterator(childNames.size()); iterator.hasPrevious();) {
+                String name = (String) iterator.previous();
+                Map entryAttributes = new HashMap();
+                SVNEntry entry = new SVNEntry(entryAttributes, this, name);
+                entries.put(name, entry);
                 if (entry.isThisDir()) {
-                    entry.setKeepLocal(myWCDb.determineKeepLocal(path));
+                    parentEntry = entry;
                 }
-            } else if (status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD) {
-                if (!entry.isThisDir()) {
-                    SVNErrorManager.assertionFailure(parentEntry != null, null, SVNLogType.WC);
-                    SVNErrorManager.assertionFailure(!SVNRevision.isValidRevisionNumber(entry.getRevision()), null, SVNLogType.WC);
-                    entry.setRevision(parentEntry.getRevision());
-                }
+                File entryPath = getFile(name);
+                SVNEntryInfo info = myWCDb.readInfo(entryPath, true, true, true, false, false, true, true, false, true, true, true, false);
+                entry.setRevision(info.getRevision());
+                entry.setRepositoryRoot(info.getReposRootURL());
+                entry.setUUID(info.getUUID());
+                entry.setCommittedRevision(info.getCommittedRevision());
+                entry.setAuthor(info.getCommittedAuthor());
+                entry.setTextTime(SVNDate.formatDate(info.getLastTextTime()));
+                entry.setDepth(info.getDepth());
+                entry.setChangelistName(info.getChangeList());
+                entry.setCopyFromRevision(info.getCopyFromRevision());
+                entry.setCommittedDate(SVNDate.formatDate(info.getCommittedDate()));
+                String originalReposPath = info.getOriginalReposPath();
+                String originalRootURL = info.getOriginalRootURL();
+                SVNChecksum checksum = info.getChecksum();
+                boolean conflicted = info.isConflicted();
+                SVNWCDbLock lock = info.getWCDBLock();
+                long translatedSize = info.getWorkingSize();
                 
-                if (info.isBaseShadowed()) {
-                    SVNEntryInfo baseInfo = myWCDb.getBaseInfo(path, false);
-                    entry.setRevision(baseInfo.getRevision());
-                    if (baseInfo.getWCDBStatus() == SVNWCDbStatus.NOT_PRESENT) {
-                        entry.setDeleted(true);
-                        entry.scheduleForAddition();
-                    } else {
-                        entry.scheduleForReplacement();
-                    }
-                } else {
-                    if (kind == SVNWCDbKind.DIR && !entry.isThisDir()) {
-                        IsDirDeletedResult isDirDeletedInfo = myWCDb.isDirDeleted(path);
-                        entry.setDeleted(isDirDeletedInfo.isDeleted());
-                        entry.setRevision(isDirDeletedInfo.getRevision());
-                    }
-                   
-                    if (entry.isDeleted()) {
-                        entry.scheduleForAddition();
-                    } else {
-                        if (!SVNRevision.isValidRevisionNumber(entry.getCopyFromRevision()) && 
-                                !SVNRevision.isValidRevisionNumber(entry.getCommittedRevision())) {
-                            entry.setRevision(0);
+                if (getThisDirName().equals(name)) {
+                    Map treeConflicts = null;
+                    Collection conflictVictims = myWCDb.readConflictVictims(path);
+                    for (Iterator conflictVictimsIter = conflictVictims.iterator(); conflictVictimsIter.hasNext();) {
+                        String childName = (String) conflictVictimsIter.next();
+                        File childFile = new File(path, childName);
+                        Collection childConflicts = myWCDb.readConflicts(childFile);
+                        for (Iterator childConflictsIter = childConflicts.iterator(); childConflictsIter.hasNext();) {
+                            SVNConflictDescription conflict = (SVNConflictDescription) childConflictsIter.next();
+                            if (conflict instanceof SVNTreeConflictDescription) {
+                                SVNTreeConflictDescription treeConflict = (SVNTreeConflictDescription) conflict;
+                                if (treeConflicts == null) {
+                                    treeConflicts = new HashMap();
+                                }
+                                treeConflicts.put(childName, treeConflict);
+                            }
                         }
-                        if (status == SVNWCDbStatus.OBSTRUCTED_ADD) {
-                            entry.setRevision(SVNRepository.INVALID_REVISION);
-                        }
-                        if (entry.isThisDir() && status == SVNWCDbStatus.OBSTRUCTED_ADD) {
-                            entry.unschedule();
-                        } else {
-                            entry.scheduleForAddition();
-                        }
-                    }
-                }
-                
-                SVNEntryInfo additionInfo = myWCDb.scanAddition(path, true, true, true, false, false, false, false, true, true);
-                SVNWCDbStatus workStatus = additionInfo.getWCDBStatus();
-                reposPath = additionInfo.getReposPath();
-                entry.setUUID(additionInfo.getUUID());
-                entry.setRepositoryRoot(additionInfo.getReposRootURL());
-                long originalRevision = additionInfo.getOriginalRevision();
-                
-                if (!SVNRevision.isValidRevisionNumber(entry.getCommittedRevision()) && originalReposPath == null) {
-                    //
-                } else if (workStatus == SVNWCDbStatus.COPIED) {
-                    entry.setCopied(true);
-                    if (originalReposPath == null) {
-                        entry.unschedule();
-                    }
-                    if (!SVNRevision.isValidRevisionNumber(entry.getRevision())) {
-                        entry.setRevision(originalRevision);
-                    }
-                }
-                
-                if (originalReposPath != null) {
-                    SVNErrorManager.assertionFailure(workStatus == SVNWCDbStatus.COPIED, null, SVNLogType.WC);
-                    boolean setCopyFrom = true;
-                    File parentPath = path.getParentFile();
-                    boolean wasError = false;
-                    SVNEntryInfo parentAdditionInfo = null;
-                    try {
-                        parentAdditionInfo = myWCDb.scanAddition(parentPath, false, false, false, true, true, true, false, false, false);
-                    } catch (SVNException svne) {
-                        SVNErrorMessage err = svne.getErrorMessage();
-                        if (err.getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
-                            throw svne;
-                        } 
-                        wasError = true;
                     }
                     
-                    if (!wasError) {
-                        String parentRootURL = parentAdditionInfo.getOriginalRootURL();
-                        String parentReposPath = parentAdditionInfo.getOriginalReposPath();
-                        File operationRootPath = parentAdditionInfo.getOperationRootPath();
-                        if (parentRootURL != null && parentRootURL.equals(originalRootURL)) {
-                            String relPathToEntry = SVNPathUtil.getPathAsChild(operationRootPath.getAbsolutePath(), path.getAbsolutePath());
-                            String entryReposPath = SVNPathUtil.append(parentReposPath, relPathToEntry);
-                            if (originalReposPath.equals(entryReposPath)) {
-                                setCopyFrom = false;
-                                entry.setCopyFromRevision(SVNRepository.INVALID_REVISION);
+                    if (treeConflicts != null) {
+                        entry.setTreeConflicts(treeConflicts);
+                    }
+                }
+                
+                SVNWCDbStatus status = info.getWCDBStatus();
+                SVNWCDbKind kind = info.getWCDBKind();
+                String reposPath = info.getReposPath();
+                if (status == SVNWCDbStatus.NORMAL || status == SVNWCDbStatus.INCOMPLETE) {
+                    boolean notPresent = false;
+                    if (kind == SVNWCDbKind.DIR) {
+                        notPresent = myWCDb.checkIfIsNotPresent(sdb, 1, name);
+                    }
+                    if (notPresent) {
+                        entry.setSchedule(null);
+                        entry.setDeleted(true);
+                    } else {
+                        entry.setSchedule(null);
+                        if (reposPath == null) {
+                            SVNRepositoryScanResult reposScanResult = myWCDb.scanBaseRepos(entryPath);
+                            SVNRepositoryInfo reposInfo = reposScanResult.getReposInfo();
+                            entry.setRepositoryRoot(reposInfo.getRootURL());
+                            entry.setUUID(reposInfo.getUUID());
+                        }
+                        entry.setIncomplete(status == SVNWCDbStatus.INCOMPLETE);
+                    }
+                } else if (status == SVNWCDbStatus.DELETED || status == SVNWCDbStatus.OBSTRUCTED_DELETE) {
+                    entry.scheduleForDeletion();
+                    if (entry.isThisDir()) {
+                        entry.setKeepLocal(myWCDb.determineKeepLocal(entryPath));
+                    }
+                } else if (status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD) {
+                    if (!entry.isThisDir()) {
+                        SVNErrorManager.assertionFailure(parentEntry != null, null, SVNLogType.WC);
+                        SVNErrorManager.assertionFailure(!SVNRevision.isValidRevisionNumber(entry.getRevision()), null, SVNLogType.WC);
+                        entry.setRevision(parentEntry.getRevision());
+                    }
+                    
+                    if (info.isBaseShadowed()) {
+                        SVNEntryInfo baseInfo = myWCDb.getBaseInfo(entryPath, false);
+                        entry.setRevision(baseInfo.getRevision());
+                        if (baseInfo.getWCDBStatus() == SVNWCDbStatus.NOT_PRESENT) {
+                            entry.setDeleted(true);
+                            entry.scheduleForAddition();
+                        } else {
+                            entry.scheduleForReplacement();
+                        }
+                    } else {
+                        if (kind == SVNWCDbKind.DIR && !entry.isThisDir()) {
+                            IsDirDeletedResult isDirDeletedInfo = myWCDb.isDirDeleted(entryPath);
+                            entry.setDeleted(isDirDeletedInfo.isDeleted());
+                            entry.setRevision(isDirDeletedInfo.getRevision());
+                        }
+                       
+                        if (entry.isDeleted()) {
+                            entry.scheduleForAddition();
+                        } else {
+                            if (!SVNRevision.isValidRevisionNumber(entry.getCopyFromRevision()) && 
+                                    !SVNRevision.isValidRevisionNumber(entry.getCommittedRevision())) {
+                                entry.setRevision(0);
+                            }
+                            if (status == SVNWCDbStatus.OBSTRUCTED_ADD) {
+                                entry.setRevision(SVNRepository.INVALID_REVISION);
+                            }
+                            if (entry.isThisDir() && status == SVNWCDbStatus.OBSTRUCTED_ADD) {
                                 entry.unschedule();
-                                entry.setRevision(originalRevision);
+                            } else {
+                                entry.scheduleForAddition();
                             }
                         }
                     }
-
-                    if (setCopyFrom) {
-                        entry.setCopyFromURL(SVNPathUtil.append(originalRootURL, SVNEncodingUtil.uriEncode(originalReposPath)));
+                    
+                    SVNEntryInfo additionInfo = myWCDb.scanAddition(entryPath, true, true, true, false, false, false, false, true, true);
+                    SVNWCDbStatus workStatus = additionInfo.getWCDBStatus();
+                    reposPath = additionInfo.getReposPath();
+                    entry.setUUID(additionInfo.getUUID());
+                    entry.setRepositoryRoot(additionInfo.getReposRootURL());
+                    long originalRevision = additionInfo.getOriginalRevision();
+                    
+                    if (!SVNRevision.isValidRevisionNumber(entry.getCommittedRevision()) && originalReposPath == null) {
+                        //
+                    } else if (workStatus == SVNWCDbStatus.COPIED) {
+                        entry.setCopied(true);
+                        if (originalReposPath == null) {
+                            entry.unschedule();
+                        }
+                        if (!SVNRevision.isValidRevisionNumber(entry.getRevision())) {
+                            entry.setRevision(originalRevision);
+                        }
+                    }
+                    
+                    if (originalReposPath != null) {
+                        SVNErrorManager.assertionFailure(workStatus == SVNWCDbStatus.COPIED, null, SVNLogType.WC);
+                        boolean setCopyFrom = true;
+                        File parentPath = entryPath.getParentFile();
+                        boolean wasError = false;
+                        SVNEntryInfo parentAdditionInfo = null;
+                        try {
+                            parentAdditionInfo = myWCDb.scanAddition(parentPath, false, false, false, true, true, true, false, false, false);
+                        } catch (SVNException svne) {
+                            SVNErrorMessage err = svne.getErrorMessage();
+                            if (err.getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                                throw svne;
+                            } 
+                            wasError = true;
+                        }
+                        
+                        if (!wasError) {
+                            String parentRootURL = parentAdditionInfo.getOriginalRootURL();
+                            String parentReposPath = parentAdditionInfo.getOriginalReposPath();
+                            File operationRootPath = parentAdditionInfo.getOperationRootPath();
+                            if (parentRootURL != null && parentRootURL.equals(originalRootURL)) {
+                                String relPathToEntry = SVNPathUtil.getPathAsChild(operationRootPath.getAbsolutePath(), entryPath.getAbsolutePath());
+                                String entryReposPath = SVNPathUtil.append(parentReposPath, relPathToEntry);
+                                if (originalReposPath.equals(entryReposPath)) {
+                                    setCopyFrom = false;
+                                    entry.setCopyFromRevision(SVNRepository.INVALID_REVISION);
+                                    entry.unschedule();
+                                    entry.setRevision(originalRevision);
+                                }
+                            }
+                        }
+    
+                        if (setCopyFrom) {
+                            entry.setCopyFromURL(SVNPathUtil.append(originalRootURL, SVNEncodingUtil.uriEncode(originalReposPath)));
+                        }
+                    }
+                } else if (status == SVNWCDbStatus.NOT_PRESENT) {
+                    entry.unschedule();
+                    entry.setDeleted(true);
+                } else if (status == SVNWCDbStatus.OBSTRUCTED) {
+                    entry.setRevision(SVNRepository.INVALID_REVISION);
+                } else if (status == SVNWCDbStatus.ABSENT) {
+                    entry.setAbsent(true);
+                } else if (status == SVNWCDbStatus.EXCLUDED) {
+                    entry.unschedule();
+                    entry.setDepth(SVNDepth.EXCLUDE);
+                } else {
+                    //TODO: may change later
+                    SVNErrorManager.assertionFailure(status == SVNWCDbStatus.EXCLUDED, null, SVNLogType.WC);
+                    continue;
+                }
+                
+                if (entry.isScheduledForDeletion()) {
+                    SVNEntryInfo baseDeletionInfo = getBaseInfoForDeleted(entryPath, entry, parentEntry);
+                    kind = baseDeletionInfo.getWCDBKind();
+                    reposPath = baseDeletionInfo.getReposPath();
+                    checksum = baseDeletionInfo.getChecksum();
+                }
+                
+                if (entry.getDepth() == SVNDepth.UNKNOWN) {
+                    entry.setDepth(SVNDepth.INFINITY);
+                }
+                
+                entry.setKind(SVNWCDbKind.convertWCDbKind(kind));
+                
+                SVNErrorManager.assertionFailure(reposPath != null || entry.isScheduledForDeletion() || status == SVNWCDbStatus.OBSTRUCTED || 
+                        status == SVNWCDbStatus.OBSTRUCTED_DELETE, null, SVNLogType.WC);
+                
+                if (reposPath != null) {
+                    entry.setURL(SVNPathUtil.append(entry.getRepositoryRoot(), SVNEncodingUtil.uriEncode(reposPath)));
+                }
+                
+                if (checksum != null) {
+                    entry.setChecksum(checksum.toString());
+                }
+                
+                if (conflicted) {
+                    Collection childConflicts = myWCDb.readConflicts(entryPath);
+                    for (Iterator childConflictsIter = childConflicts.iterator(); childConflictsIter.hasNext();) {
+                        SVNConflictDescription conflict = (SVNConflictDescription) childConflictsIter.next();
+                        if (conflict instanceof SVNTextConflictDescription) {
+                            entry.setConflictOld(conflict.getMergeFiles().getBasePath());
+                            entry.setConflictNew(conflict.getMergeFiles().getRepositoryPath());
+                            entry.setConflictWorking(conflict.getMergeFiles().getLocalPath());
+                            break;
+                        } else if (conflict instanceof SVNPropertyConflictDescription) {
+                            entry.setPropRejectFile(conflict.getMergeFiles().getRepositoryPath());
+                        }
                     }
                 }
-            } else if (status == SVNWCDbStatus.NOT_PRESENT) {
-                entry.unschedule();
-                entry.setDeleted(true);
-            } else if (status == SVNWCDbStatus.OBSTRUCTED) {
-                entry.setRevision(SVNRepository.INVALID_REVISION);
-            } else if (status == SVNWCDbStatus.ABSENT) {
-                entry.setAbsent(true);
-            } else if (status == SVNWCDbStatus.EXCLUDED) {
-                entry.unschedule();
-                entry.setDepth(SVNDepth.EXCLUDE);
-            } else {
-                //TODO: may change later
-                SVNErrorManager.assertionFailure(status == SVNWCDbStatus.EXCLUDED, null, SVNLogType.WC);
-                continue;
+                
+                if (lock != null) {
+                    entry.setLockToken(lock.getToken());
+                    entry.setLockOwner(lock.getOwner());
+                    entry.setLockComment(lock.getComment());
+                    entry.setLockCreationDate(SVNDate.formatDate(lock.getDate()));
+                }
+                
+                if (entry.isFile()) {
+                    myWCDb.checkFileExternal(entry, sdb);
+                }
+                
+                entry.setWorkingSize(translatedSize);
             }
-            
-            if (entry.isScheduledForDeletion()) {
-                SVNEntryInfo baseDeletionInfo = getBaseInfoForDeleted(path, entry, parentEntry);
-                kind = baseDeletionInfo.getWCDBKind();
-                reposPath = baseDeletionInfo.getReposPath();
-                checksum = baseDeletionInfo.getChecksum();
-            }
-            
-            if (entry.getDepth() == SVNDepth.UNKNOWN) {
-                entry.setDepth(SVNDepth.INFINITY);
-            }
-            
-            entry.setKind(SVNWCDbKind.convertWCDbKind(kind));
-            
-            SVNErrorManager.assertionFailure(reposPath != null || entry.isScheduledForDeletion() || status == SVNWCDbStatus.OBSTRUCTED || 
-                    status == SVNWCDbStatus.OBSTRUCTED_DELETE, null, SVNLogType.WC);
-            
-            if (reposPath != null) {
-                entry.setURL(SVNPathUtil.append(entry.getURL(), SVNEncodingUtil.uriEncode(reposPath)));
-            }
-            
-            if (checksum != null) {
-                entry.setChecksum(checksum.toString());
-            }
-            
-            if (conflicted) {
-                Collection childConflicts = myWCDb.readConflicts(path);
-                for (Iterator childConflictsIter = childConflicts.iterator(); childConflictsIter.hasNext();) {
-                    SVNConflictDescription conflict = (SVNConflictDescription) childConflictsIter.next();
-                    if (conflict instanceof SVNTextConflictDescription) {
-                        entry.setConflictOld(conflict.getMergeFiles().getBasePath());
-                        entry.setConflictNew(conflict.getMergeFiles().getRepositoryPath());
-                        entry.setConflictWorking(conflict.getMergeFiles().getLocalPath());
-                        break;
-                    } else if (conflict instanceof SVNPropertyConflictDescription) {
-                        entry.setPropRejectFile(conflict.getMergeFiles().getRepositoryPath());
-                    }
+        } finally {
+            if (sdb != null) {
+                try {
+                    sdb.close();
+                } catch (SqlJetException e) {
+                    SVNSqlJetUtil.convertException(e);
                 }
             }
-            
-            if (lock != null) {
-                entry.setLockToken(lock.getToken());
-                entry.setLockOwner(lock.getOwner());
-                entry.setLockComment(lock.getComment());
-                entry.setLockCreationDate(SVNDate.formatDate(lock.getDate()));
-            }
-            
-            if (entry.isFile()) {
-                myWCDb.checkFileExternal(entry, sdb);
-            }
-            
-            entry.setWorkingSize(translatedSize);
         }
         return entries;
     }

@@ -32,7 +32,6 @@ import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.sqljet.core.table.SqlJetDefaultBusyHandler;
@@ -1232,7 +1231,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         boolean isObstructionPossible = false;
         boolean movedUpwards = false;
         String buildRelPath = null;
-        String localRelPath = null;        
+                
         SVNFileType type = SVNFileType.getType(path);
         if (type != SVNFileType.DIRECTORY) {
             File parent = path.getParentFile();
@@ -1240,9 +1239,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             pristineDir = getPristineDirectory(parent);
             if (pristineDir != null && pristineDir.getWCRoot() != null) {
                 String dirRelPath = pristineDir.computeRelPath();
-                localRelPath = SVNPathUtil.append(dirRelPath, name);
+                result.myLocalRelativePath = SVNPathUtil.append(dirRelPath, name);
                 result.myPristineDirectory = pristineDir;
-                result.myLocalRelativePath = localRelPath;
                 return result;
             }
             
@@ -1324,7 +1322,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
             
         String dirRelPath = pristineDir.computeRelPath();
-        localRelPath = SVNPathUtil.append(dirRelPath, buildRelPath);
+        result.myLocalRelativePath = SVNPathUtil.append(dirRelPath, buildRelPath);
         
         if (isObstructionPossible) {
             SVNErrorManager.assertionFailure(!movedUpwards, null, SVNLogType.WC);
@@ -1364,8 +1362,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 pristineDir.setIsObstructedFile(isObstructedFile);
                 if (isObstructedFile) {
                     pristineDir = parentDir;
-                    localRelPath = lookForRelPath;
-                    result.myLocalRelativePath = localRelPath;
+                    result.myLocalRelativePath = lookForRelPath;
                     return result;
                 }
             }
@@ -1415,10 +1412,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot(); 
         SqlJetDb db = wcRoot.getStorage();
-        Collection childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.base_node, SVNDbIndexes.i_parent, wcRoot.getWCId(), localRelPath, db, null);
+        Collection childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.base_node, SVNDbIndexes.i_parent, wcRoot.getWCId(), 
+                localRelPath, db, null);
         if (!baseOnly) {
-            childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.working_node, SVNDbIndexes.i_working_parent, wcRoot.getWCId(), localRelPath, db, 
-                    childNames);
+            childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.working_node, SVNDbIndexes.i_working_parent, wcRoot.getWCId(), 
+                    localRelPath, db, childNames);
         }
         return new LinkedList(childNames);
     }
@@ -1932,6 +1930,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     private SqlJetDb openDB(File dirPath, SqlJetTransactionMode mode) throws SVNException {
         File sdbFile = SVNAdminUtil.getSDBFile(dirPath); 
+        if (!sdbFile.isFile()) {
+            //hack
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
 
         ISqlJetTransaction openTxn = new ISqlJetTransaction() {
           
