@@ -265,7 +265,9 @@ public class SVNExternal {
             }
             
             external.myRawValue = line;
-            
+            if (external.myURL != null && SVNPathUtil.isURL(external.myURL)) {
+                SVNURL.parseURIEncoded(external.myURL);
+            }
             externals.add(external);
         }
         return (SVNExternal[]) externals.toArray(new SVNExternal[externals.size()]);
