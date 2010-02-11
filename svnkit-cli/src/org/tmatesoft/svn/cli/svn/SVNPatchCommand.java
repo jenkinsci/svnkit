@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.cli.svn;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,6 +68,11 @@ public class SVNPatchCommand extends SVNCommand {
             getSVNEnvironment().handleWarning(e.getErrorMessage(), new SVNErrorCode[] {
                     SVNErrorCode.ENTRY_EXISTS, SVNErrorCode.WC_PATH_NOT_FOUND
             }, getSVNEnvironment().isQuiet());
+        } catch (IOException e) {
+            if (!getSVNEnvironment().isQuiet()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+            }
         }
     }
 

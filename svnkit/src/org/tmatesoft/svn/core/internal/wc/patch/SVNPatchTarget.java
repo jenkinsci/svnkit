@@ -81,7 +81,7 @@ public class SVNPatchTarget {
 
     private File patchedPath;
     private OutputStream patchedRaw;
-    private SVNPatchFileStream patched;
+    private OutputStream patched;
     private File rejectPath;
     private SVNPatchFileStream reject;
     private boolean parentDirExists;
@@ -153,7 +153,7 @@ public class SVNPatchTarget {
         return stream;
     }
 
-    public SVNPatchFileStream getPatched() {
+    public OutputStream getPatched() {
         return patched;
     }
 
@@ -273,8 +273,8 @@ public class SVNPatchTarget {
              */
             new_target.patchedPath = SVNFileUtil.createTempFile("", null);
             new_target.patchedRaw = SVNFileUtil.openFileForWriting(new_target.patchedPath);
-            new_target.patched = SVNPatchFileStream.wrapOutputStream(SVNTranslator.getTranslatingOutputStream(new_target.patchedRaw, null, new_target.eolStr.getBytes(), new_target.eolStyle != null,
-                    new_target.keywords, true));
+            new_target.patched = SVNTranslator.getTranslatingOutputStream(new_target.patchedRaw, null, new_target.eolStr.getBytes(), new_target.eolStyle != null,
+                    new_target.keywords, true);
 
             /*
              * We'll also need a stream to write rejected hunks to. We don't
@@ -505,8 +505,10 @@ public class SVNPatchTarget {
     /**
      * Write the diff text of the hunk described by HI to the reject stream of
      * TARGET, and mark TARGET as having had rejects.
+     * @throws IOException 
+     * @throws SVNException 
      */
-    public void rejectHunk(final SVNPatchHunkInfo hi) {
+    public void rejectHunk(final SVNPatchHunkInfo hi) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
         final SVNPatchHunk hunk = hi.getHunk();
@@ -547,8 +549,9 @@ public class SVNPatchTarget {
      * TARGET.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public void applyHunk(final SVNPatchHunkInfo hi) throws SVNException {
+    public void applyHunk(final SVNPatchHunkInfo hi) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
         final SVNPatchHunk hunk = hi.getHunk();
@@ -586,10 +589,10 @@ public class SVNPatchTarget {
 
             if (!eof && lines_read > hi.getFuzz() && lines_read <= hunk.getModified().getLength() - hi.getFuzz()) {
                 if (hunk_line.length() > 0) {
-                    target.getPatched().tryWrite(hunk_line);
+                    tryWrite(target.getPatched(), hunk_line);
                 }
                 if (eol_str.length() > 0) {
-                    target.getPatched().tryWrite(eol_str);
+                    tryWrite(target.getPatched(), eol_str);
                 }
             }
         } while (!eof);
@@ -601,8 +604,9 @@ public class SVNPatchTarget {
      * TARGET->LINES.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public void seekToLine(int line) throws SVNException {
+    public void seekToLine(int line) throws SVNException, IOException {
 
         if (line <= 0) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL, "Line to seek must be more than zero");
@@ -634,8 +638,9 @@ public class SVNPatchTarget {
      * line in TARGET->LINES.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public void readLine(final StringBuffer line) throws SVNException {
+    public void readLine(final StringBuffer line) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
 
@@ -669,8 +674,9 @@ public class SVNPatchTarget {
      * reached. Indicate in *EOF whether end-of-file was encountered while
      * reading from the target. If LINE is zero, copy lines until end-of-file
      * has been reached.
+     * @throws IOException 
      */
-    public void copyLinesToTarget(int line) throws SVNException {
+    public void copyLinesToTarget(int line) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
 
@@ -683,7 +689,7 @@ public class SVNPatchTarget {
                 target_line.append(target.eolStr);
             }
 
-            target.patched.tryWrite(target_line);
+            tryWrite(target.patched, target_line);
         }
 
     }
@@ -929,8 +935,9 @@ public class SVNPatchTarget {
      * changed.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public SVNPatchHunkInfo getHunkInfo(final SVNPatchHunk hunk, final int fuzz) throws SVNException {
+    public SVNPatchHunkInfo getHunkInfo(final SVNPatchHunk hunk, final int fuzz) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
 
@@ -1007,8 +1014,9 @@ public class SVNPatchTarget {
      * occured in *MATCHED_LINE.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    public int scanForMatch(SVNPatchHunk hunk, boolean matchFirst, int upperLine, int fuzz) throws SVNException {
+    public int scanForMatch(SVNPatchHunk hunk, boolean matchFirst, int upperLine, int fuzz) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
 
@@ -1054,8 +1062,9 @@ public class SVNPatchTarget {
      * changed. HUNK->ORIGINAL_TEXT will be reset.
      * 
      * @throws SVNException
+     * @throws IOException 
      */
-    private boolean matchHunk(SVNPatchHunk hunk, int fuzz) throws SVNException {
+    private boolean matchHunk(SVNPatchHunk hunk, int fuzz) throws SVNException, IOException {
 
         final SVNPatchTarget target = this;
 
@@ -1126,6 +1135,16 @@ public class SVNPatchTarget {
         return matched;
     }
 
+    /*
+     * Attempt to write LEN bytes of DATA to STREAM, the underlying file of
+     * which is at ABSPATH. Fail if not all bytes could be written to the
+     * stream.
+     */
+    private void tryWrite(OutputStream stream, StringBuffer buffer) throws IOException {
+        stream.write(buffer.toString().getBytes());
+    }
+
+    
     public void sendPatchNotification(SVNAdminArea wc) {
 
         // TODO send notification

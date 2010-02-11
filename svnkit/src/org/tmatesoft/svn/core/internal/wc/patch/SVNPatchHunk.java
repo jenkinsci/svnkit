@@ -11,8 +11,10 @@
  */
 package org.tmatesoft.svn.core.internal.wc.patch;
 
+import java.io.IOException;
 import java.util.Comparator;
 
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchFileStream.SVNPatchFileLineFilter;
 import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchFileStream.SVNPatchFileLineTransformer;
 
@@ -182,7 +184,7 @@ public class SVNPatchHunk {
         return trailingContext;
     }
 
-    public void close() {
+    public void close() throws IOException, SVNException {
         if (originalText != null) {
             originalText.close();
         }
@@ -197,8 +199,11 @@ public class SVNPatchHunk {
     /**
      * Return the next HUNK from a PATCH, using STREAM to read data from the
      * patch file. If no hunk can be found, set HUNK to NULL.
+     * 
+     * @throws IOException 
+     * @throws SVNException 
      */
-    public static SVNPatchHunk parseNextHunk(SVNPatch patch) {
+    public static SVNPatchHunk parseNextHunk(SVNPatch patch) throws IOException, SVNException {
 
         boolean eof, in_hunk, hunk_seen;
         long pos, last_line;
