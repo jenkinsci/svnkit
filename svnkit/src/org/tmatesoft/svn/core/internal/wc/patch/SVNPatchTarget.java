@@ -40,6 +40,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -273,8 +274,7 @@ public class SVNPatchTarget {
              */
             new_target.patchedPath = SVNFileUtil.createTempFile("", null);
             new_target.patchedRaw = SVNFileUtil.openFileForWriting(new_target.patchedPath);
-            new_target.patched = SVNTranslator.getTranslatingOutputStream(new_target.patchedRaw, null, new_target.eolStr.getBytes(), new_target.eolStyle != null,
-                    new_target.keywords, true);
+            new_target.patched = SVNTranslator.getTranslatingOutputStream(new_target.patchedRaw, null, new_target.eolStr.getBytes(), new_target.eolStyle != null, new_target.keywords, true);
 
             /*
              * We'll also need a stream to write rejected hunks to. We don't
@@ -505,8 +505,9 @@ public class SVNPatchTarget {
     /**
      * Write the diff text of the hunk described by HI to the reject stream of
      * TARGET, and mark TARGET as having had rejects.
-     * @throws IOException 
-     * @throws SVNException 
+     * 
+     * @throws IOException
+     * @throws SVNException
      */
     public void rejectHunk(final SVNPatchHunkInfo hi) throws SVNException, IOException {
 
@@ -549,7 +550,7 @@ public class SVNPatchTarget {
      * TARGET.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     public void applyHunk(final SVNPatchHunkInfo hi) throws SVNException, IOException {
 
@@ -604,7 +605,7 @@ public class SVNPatchTarget {
      * TARGET->LINES.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     public void seekToLine(int line) throws SVNException, IOException {
 
@@ -638,7 +639,7 @@ public class SVNPatchTarget {
      * line in TARGET->LINES.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     public void readLine(final StringBuffer line) throws SVNException, IOException {
 
@@ -674,7 +675,8 @@ public class SVNPatchTarget {
      * reached. Indicate in *EOF whether end-of-file was encountered while
      * reading from the target. If LINE is zero, copy lines until end-of-file
      * has been reached.
-     * @throws IOException 
+     * 
+     * @throws IOException
      */
     public void copyLinesToTarget(int line) throws SVNException, IOException {
 
@@ -935,7 +937,7 @@ public class SVNPatchTarget {
      * changed.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     public SVNPatchHunkInfo getHunkInfo(final SVNPatchHunk hunk, final int fuzz) throws SVNException, IOException {
 
@@ -1014,7 +1016,7 @@ public class SVNPatchTarget {
      * occured in *MATCHED_LINE.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     public int scanForMatch(SVNPatchHunk hunk, boolean matchFirst, int upperLine, int fuzz) throws SVNException, IOException {
 
@@ -1062,7 +1064,7 @@ public class SVNPatchTarget {
      * changed. HUNK->ORIGINAL_TEXT will be reset.
      * 
      * @throws SVNException
-     * @throws IOException 
+     * @throws IOException
      */
     private boolean matchHunk(SVNPatchHunk hunk, int fuzz) throws SVNException, IOException {
 
@@ -1135,7 +1137,7 @@ public class SVNPatchTarget {
         return matched;
     }
 
-    /*
+    /**
      * Attempt to write LEN bytes of DATA to STREAM, the underlying file of
      * which is at ABSPATH. Fail if not all bytes could be written to the
      * stream.
@@ -1144,10 +1146,76 @@ public class SVNPatchTarget {
         stream.write(buffer.toString().getBytes());
     }
 
-    
-    public void sendPatchNotification(SVNAdminArea wc) {
+    /**
+     * Use client context CTX to send a suitable notification for a patch
+     * TARGET.
+     * 
+     * @throws SVNException
+     */
+    public void sendPatchNotification(SVNAdminArea wc) throws SVNException {
 
-        // TODO send notification
+        final SVNPatchTarget target = this;
+
+        final ISVNEventHandler eventHandler = wc.getWCAccess().getEventHandler();
+
+        if (eventHandler == null) {
+            return;
+        }
+
+        SVNEventAction action;
+
+        if (target.skipped) {
+            action = SVNEventAction.SKIP;
+        } else if (target.deleted) {
+            action = SVNEventAction.DELETE;
+        } else if (target.added) {
+            action = SVNEventAction.ADD;
+        } else {
+            action = SVNEventAction.PATCH;
+        }
+
+        SVNStatusType contentState = SVNStatusType.INAPPLICABLE;
+
+        if (action == SVNEventAction.SKIP) {
+            if (target.parentDirExists && (target.kind == SVNNodeKind.NONE || target.kind == SVNNodeKind.UNKNOWN)) {
+                contentState = SVNStatusType.MISSING;
+            } else if (target.kind == SVNNodeKind.DIR) {
+                contentState = SVNStatusType.OBSTRUCTED;
+            } else {
+                contentState = SVNStatusType.UNKNOWN;
+            }
+        } else {
+            if (target.hadRejects) {
+                contentState = SVNStatusType.CONFLICTED;
+            } else if (target.localMods) {
+                contentState = SVNStatusType.MERGED;
+            } else {
+                contentState = SVNStatusType.CHANGED;
+            }
+        }
+
+        final SVNEvent notify = SVNEventFactory.createSVNEvent(target.absPath != null ? target.absPath : target.relPath, target.kind, null, 0, contentState, SVNStatusType.INAPPLICABLE,
+                SVNStatusType.LOCK_INAPPLICABLE, action, null, null, null);
+
+        eventHandler.handleEvent(notify, ISVNEventHandler.UNKNOWN);
+
+        if (action == SVNEventAction.PATCH) {
+
+            for (final Iterator i = target.hunks.iterator(); i.hasNext();) {
+                final SVNPatchHunkInfo hi = (SVNPatchHunkInfo) i.next();
+
+                if (hi.isRejected()) {
+                    action = SVNEventAction.PATCH_REJECTED_HUNK;
+                } else {
+                    action = SVNEventAction.PATCH_APPLIED_HUNK;
+                }
+
+                final SVNEvent notify2 = SVNEventFactory.createSVNEvent(target.absPath != null ? target.absPath : target.relPath, target.kind, null, 0, action, null, null, null);
+                notify2.setInfo(hi);
+
+                eventHandler.handleEvent(notify2, ISVNEventHandler.UNKNOWN);
+            }
+        }
 
     }
 

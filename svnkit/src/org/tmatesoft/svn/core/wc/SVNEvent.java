@@ -121,6 +121,7 @@ public class SVNEvent {
     private SVNEventAction myExpectedAction;
     private String myChangelistName;
     private SVNMergeRange myRange;
+    private Object info;
 
     /**
      * Constructs an <b>SVNEvent</b> object given
@@ -423,6 +424,18 @@ public class SVNEvent {
             sb.append(getURL().toString());
         }
         return sb.toString();
+    }
+
+
+    
+    public Object getInfo() {
+        return info;
+    }
+
+
+    
+    public void setInfo(Object info) {
+        this.info = info;
     }
 	
 	
