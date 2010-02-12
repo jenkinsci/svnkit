@@ -156,7 +156,7 @@ public class SVNPatchFileStream {
     private void checkPos(long pos) throws SVNException {
         if (!isPosValid(pos)) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Bad position for file ''{0}'': {1}. Range is {2}..{3}.", new Object[] {
-                    path, pos, start, end
+                    path, new Long(pos), new Long(start), new Long(end)
             });
             SVNErrorManager.error(err, Level.FINE, SVNLogType.DEFAULT);
         }
