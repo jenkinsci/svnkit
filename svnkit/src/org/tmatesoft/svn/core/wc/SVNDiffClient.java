@@ -12,12 +12,15 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -48,6 +51,9 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc.patch.SVNPatch;
+import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchFileStream;
+import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchTarget;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNCapability;
@@ -3088,6 +3094,67 @@ public class SVNDiffClient extends SVNMergeDriver {
         
         getLogsForMergeInfoRangeList(reposRoot[0], new String[] { logTarget }, rangeList, discoverChangedPaths, 
                 revisionProperties, handler);
+    }
+
+    private void applyPatches(File absPatchPath, File absWCPath, boolean dryRun, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
+    
+        final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(absPatchPath);
+    
+        try {
+    
+            final List targets = new ArrayList();
+    
+            SVNPatch patch;
+            do {
+                checkCancelled();
+                patch = SVNPatch.parseNextPatch(patchFile);
+                if (patch != null) {
+                    final SVNPatchTarget target = SVNPatchTarget.applyPatch(patch, absWCPath, stripCount, wc);
+                    targets.add(target);
+                }
+            } while (patch != null);
+    
+            /* Install patched targets into the working copy. */
+            for (Iterator i = targets.iterator(); i.hasNext();) {
+                checkCancelled();
+                final SVNPatchTarget target = (SVNPatchTarget) i.next();
+                if (!target.isSkipped()) {
+                    target.installPatchedTarget(absWCPath, dryRun, wc);
+                }
+                target.sendPatchNotification(wc);
+                target.getPatch().close();
+            }
+    
+        } catch (IOException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
+        } finally {
+            if (patchFile != null) {
+                patchFile.close();
+            }
+        }
+    
+    }
+
+    public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, int stripCount) throws SVNException {
+    
+        if (stripCount < 0) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "strip count must be positive");
+            SVNErrorManager.error(err, SVNLogType.CLIENT);
+        }
+    
+        final SVNWCAccess wcAccess = createWCAccess();
+        try {
+            wcAccess.setEventHandler(this);
+            final SVNAdminArea wc = wcAccess.open(localAbsPath, true, SVNWCAccess.INFINITE_DEPTH);
+            applyPatches(absPatchPath, localAbsPath, dryRun, stripCount, wc);
+        } catch (IOException e) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
+                SVNErrorManager.error(err, SVNLogType.CLIENT);
+        } finally {
+            wcAccess.close();
+        }
+    
     }
 
 }
