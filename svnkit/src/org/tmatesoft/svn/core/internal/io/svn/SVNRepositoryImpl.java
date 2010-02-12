@@ -938,7 +938,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     SVNErrorManager.error(err, SVNLogType.NETWORK);
                 }
                 SVNLock lock = SVNReader.getLock(item.getItems());
-                locks.add(lock);
+                if (lock != null) {
+                    locks.add(lock);
+                }
             }
             return (SVNLock[]) locks.toArray(new SVNLock[locks.size()]);
         } catch (SVNException e) {
@@ -995,6 +997,9 @@ public class SVNRepositoryImpl extends SVNRepository implements ISVNReporter {
                     List items = (List) values.get(1);
                     if ("success".equals(status)) {
                         lock = SVNReader.getLock(items);
+                        if (lock == null) {
+                            continue;
+                        }
                         path = lock.getPath();
                     } else if ("failure".equals(status)) {
                         SVNReader.handleFailureStatus(items);
