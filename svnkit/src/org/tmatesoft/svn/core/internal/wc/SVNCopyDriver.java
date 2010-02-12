@@ -63,6 +63,7 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -1130,10 +1131,16 @@ public class SVNCopyDriver extends SVNBasicClient {
     private void copyWCToWC(List copyPairs, boolean isMove, boolean makeParents) throws SVNException {
         for (Iterator pairs = copyPairs.iterator(); pairs.hasNext();) {
             CopyPair pair = (CopyPair) pairs.next();
-            SVNFileType srcFileType = SVNFileType.getType(new File(pair.mySource));
+            File source = new File(pair.mySource);
+            SVNFileType srcFileType = SVNFileType.getType(source);
             if (srcFileType == SVNFileType.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNKNOWN_KIND,
-                        "Path ''{0}'' does not exist", new File(pair.mySource));
+                        "Path ''{0}'' does not exist", source);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            if (isMove && SVNWCUtil.isWorkingCopyRoot(source)) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, 
+                        "Cannot move ''{0}'' as it is the root of the working copy", source);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             SVNFileType dstFileType = SVNFileType.getType(new File(pair.myDst));
