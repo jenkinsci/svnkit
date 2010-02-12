@@ -1340,6 +1340,9 @@ public class SVNCopyDriver extends SVNBasicClient {
                     if (srcType == SVNFileType.DIRECTORY &&
                             SVNPathUtil.isAncestor(srcParentPath, dstParentPath)) {
                         dstAccess = srcAccess;
+                        if (dstAccess.getAdminArea(dstParent) == null) {
+                            dstAccess.open(dstParent, true, 0);
+                        }
                     } else {
                         dstAccess = createWCAccess();
                         dstAccess.open(dstParent, true, 0);
@@ -1351,7 +1354,7 @@ public class SVNCopyDriver extends SVNBasicClient {
             } finally {
                 if (dstAccess != null && dstAccess != srcAccess) {
                     dstAccess.close();
-                }
+                } 
                 srcAccess.close();
             }
         }
