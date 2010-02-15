@@ -139,7 +139,7 @@ public class SVNPatchFileStream {
 
     public boolean isEOF() throws IOException, SVNException {
         final RandomAccessFile file = getFile();
-        return file.getFilePointer() <= file.length();
+        return file.getFilePointer() == file.length();
     }
 
     public long getSeekPosition() throws SVNException, IOException {
@@ -190,7 +190,8 @@ public class SVNPatchFileStream {
     }
 
     public boolean readLine(StringBuffer lineBuf, String eolStr) throws IOException {
-        return readLine(lineBuf, new StringBuffer(eolStr), false);
+        final StringBuffer eol = eolStr!=null ? new StringBuffer(eolStr) : null;
+        return readLine(lineBuf, eol, false);
     }
 
     private boolean readLine(StringBuffer input, StringBuffer eolStr, boolean detectEol) throws IOException {
