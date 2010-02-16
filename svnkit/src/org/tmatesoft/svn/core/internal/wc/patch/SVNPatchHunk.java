@@ -66,7 +66,7 @@ public class SVNPatchHunk {
     private static final SVNPatchFileLineFilter original_line_filter = new SVNPatchFileLineFilter() {
 
         public boolean lineFilter(String line) {
-            return (line.charAt(0) == '+' || line.charAt(0) == '\\');
+            return (getChar(line,0) == '+' || getChar(line,0) == '\\');
         }
     };
 
@@ -77,7 +77,7 @@ public class SVNPatchHunk {
     private static final SVNPatchFileLineFilter modified_line_filter = new SVNPatchFileLineFilter() {
 
         public boolean lineFilter(String line) {
-            return (line.charAt(0) == '-' || line.charAt(0) == '\\');
+            return (getChar(line,0) == '-' || getChar(line,0) == '\\');
         }
     };
 
@@ -85,7 +85,7 @@ public class SVNPatchHunk {
     private static final SVNPatchFileLineTransformer remove_leading_char_transformer = new SVNPatchFileLineTransformer() {
 
         public String lineTransformer(String line) {
-            if (line.charAt(0) == '+' || line.charAt(0) == '-' || line.charAt(0) == ' ') {
+            if (getChar(line,0) == '+' || getChar(line,0) == '-' || getChar(line,0) == ' ') {
                 return line.substring(1);
             }
             return line;
@@ -184,7 +184,7 @@ public class SVNPatchHunk {
         return trailingContext;
     }
 
-    public void close() throws IOException, SVNException {
+    public void close() throws IOException {
         if (originalText != null) {
             originalText.close();
         }
@@ -200,8 +200,8 @@ public class SVNPatchHunk {
      * Return the next HUNK from a PATCH, using STREAM to read data from the
      * patch file. If no hunk can be found, set HUNK to NULL.
      * 
-     * @throws IOException 
-     * @throws SVNException 
+     * @throws IOException
+     * @throws SVNException
      */
     public static SVNPatchHunk parseNextHunk(SVNPatch patch) throws IOException, SVNException {
 
@@ -238,9 +238,10 @@ public class SVNPatchHunk {
 
             /* Remember the current line's offset, and read the line. */
             last_line = pos;
-            
+
             lineBuf.setLength(0);
             eof = patch.getPatchFile().readLine(lineBuf);
+
             final String line = lineBuf.toString();
 
             if (!eof) {
@@ -252,7 +253,7 @@ public class SVNPatchHunk {
              * Lines starting with a backslash are comments, such as "\ No
              * newline at end of file".
              */
-            if (line.charAt(0) == '\\')
+            if (getChar(line, 0) == '\\')
                 continue;
 
             if (in_hunk) {
@@ -266,7 +267,7 @@ public class SVNPatchHunk {
                     start = last_line;
                 }
 
-                c = line.charAt(0);
+                c = getChar(line, 0);
                 /* Tolerate chopped leading spaces on empty lines. */
                 if (original_lines > 0 && (c == ' ' || (!eof && line.length() == 0))) {
                     hunk_seen = true;
@@ -314,13 +315,14 @@ public class SVNPatchHunk {
             }
         } while (!eof);
 
-        if (!eof)
+        if (!eof) {
             /*
              * Rewind to the start of the line just read, so subsequent calls to
              * this function or svn_diff__parse_next_patch() don't end up
              * skipping the line -- it may contain a patch or hunk header.
              */
             patch.getPatchFile().setSeekPosition(last_line);
+        }
 
         if (hunk_seen && start < end) {
 
@@ -344,12 +346,20 @@ public class SVNPatchHunk {
             hunk.modifiedText = modified_text;
             hunk.leadingContext = leading_context;
             hunk.trailingContext = trailing_context;
-        } else
+        } else {
             /* Something went wrong, just discard the result. */
             return null;
+        }
 
         return hunk;
 
+    }
+
+    private static char getChar(final String line, int i) {
+        if (line != null && line.length() > 0 && i < line.length()) {
+            return line.charAt(i);
+        }
+        return (char)0;
     }
 
     /**
