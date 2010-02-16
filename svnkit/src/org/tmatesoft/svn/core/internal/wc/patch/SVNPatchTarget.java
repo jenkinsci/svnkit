@@ -318,28 +318,24 @@ public class SVNPatchTarget {
         /* Remember original file offset. */
         final long pos = file.getFilePointer();
         try {
-            BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file.getFD()));
-            try {
-                StringBuffer buf = new StringBuffer();
-                int b1;
-                while ((b1 = stream.read()) > 0) {
-                    final char c1 = (char) b1;
-                    if (c1 == '\n' || c1 == '\r') {
-                        buf.append(c1);
-                        if (c1 == '\r') {
-                            final int b2 = stream.read();
-                            if (b2 > 0) {
-                                final char c2 = (char) b2;
-                                if (c2 == '\n') {
-                                    buf.append(c2);
-                                }
+            final BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file.getFD()));
+            final StringBuffer buf = new StringBuffer();
+            int b1;
+            while ((b1 = stream.read()) > 0) {
+                final char c1 = (char) b1;
+                if (c1 == '\n' || c1 == '\r') {
+                    buf.append(c1);
+                    if (c1 == '\r') {
+                        final int b2 = stream.read();
+                        if (b2 > 0) {
+                            final char c2 = (char) b2;
+                            if (c2 == '\n') {
+                                buf.append(c2);
                             }
                         }
-                        return buf.toString();
                     }
+                    return buf.toString();
                 }
-            } finally {
-                stream.close();
             }
         } finally {
             file.seek(pos);
@@ -365,7 +361,7 @@ public class SVNPatchTarget {
 
         final SVNPatchTarget target = this;
 
-        target.canonPathFromPatchfile = pathFromPatchfile.getCanonicalFile();
+        target.canonPathFromPatchfile = pathFromPatchfile;
 
         if ("".equals(target.canonPathFromPatchfile.getPath())) {
             /* An empty patch target path? What gives? Skip this. */
@@ -414,7 +410,7 @@ public class SVNPatchTarget {
             return;
         }
 
-        target.absPath = target.relPath.getAbsoluteFile();
+        target.absPath = new File(absWCPath, target.relPath.getPath());
 
         /* Skip things we should not be messing with. */
 
@@ -456,9 +452,12 @@ public class SVNPatchTarget {
         return;
     }
 
-    private boolean isChildPath(final File basePath, final File path) throws IOException {
-        if (null != path && basePath != null) {
-            return path.getCanonicalPath().startsWith(basePath.getCanonicalPath());
+    private boolean isChildPath(final File baseFile, final File file) throws IOException {
+        if (null != file && baseFile != null) {
+            final String basePath = baseFile.getCanonicalPath();
+            final File childFile = new File(basePath, file.getPath());
+            final String childPath = childFile.getCanonicalPath();
+            return childPath.startsWith(basePath) && childPath.length() > basePath.length();
         }
         return false;
     }

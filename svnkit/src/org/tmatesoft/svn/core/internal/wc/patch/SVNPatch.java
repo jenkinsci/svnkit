@@ -124,16 +124,16 @@ public class SVNPatch {
                  * of the line which we can discard.
                  */
                 final int tab = line.indexOf('\t');
-                final File canonPath = new File(tab > 0 ? line.substring(0, tab) : line).getCanonicalFile();
+                final File filePath = new File(line.substring(indicator.length(), tab > 0 ? tab : line.length()));
 
                 if ((!in_header) && MINUS.equals(indicator)) {
                     /* First line of header contains old filename. */
-                    patch.oldFilename = canonPath;
+                    patch.oldFilename = filePath;
                     indicator = PLUS;
                     in_header = true;
                 } else if (in_header && PLUS.equals(indicator)) {
                     /* Second line of header contains new filename. */
-                    patch.newFilename = canonPath;
+                    patch.newFilename = filePath;
                     in_header = false;
                     break; /* All good! */
                 } else {
