@@ -874,7 +874,7 @@ public class SVNXMLAdminArea extends SVNAdminArea {
         }
     }
 
-    public void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException {
+    public void postCommit(String fileName, long revisionNumber, boolean implicit, boolean rerun, SVNErrorCode errorCode) throws SVNException {
         SVNEntry entry = getEntry(fileName, true);
         if (entry == null || (!getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Log command for directory ''{0}'' is mislocated", getRoot()); 
@@ -886,6 +886,9 @@ public class SVNXMLAdminArea extends SVNAdminArea {
                 entry.setRevision(revisionNumber);
                 entry.setKind(SVNNodeKind.DIR);
                 File killMe = getAdminFile(ADM_KILLME);
+                if (rerun && killMe.isFile()) {
+                    return;
+                }
                 if (killMe.getParentFile().isDirectory()) {
                     try {
                         killMe.createNewFile();

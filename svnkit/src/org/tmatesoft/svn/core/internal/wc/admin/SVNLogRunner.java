@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,6 +48,11 @@ public class SVNLogRunner {
     private boolean myHasAddedTreeConflicts;
 
     private int myLogCount;
+    private boolean myIsRerun;
+    
+    public SVNLogRunner(boolean rerun) {
+        myIsRerun = rerun;
+    }
 
     private Map getTreeConflicts() {
         if (myTreeConflicts == null) {
@@ -157,14 +163,19 @@ public class SVNLogRunner {
                     force = SVNProperty.booleanValue(forceAttr);
                 }
                 
-                try {
-                    adminArea.modifyEntry(fileName, entryAttrs, false, force);
-                } catch (SVNException svne) {
-                    SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
-                    SVNErrorMessage err = SVNErrorMessage.create(code, "Error modifying entry for ''{0}''", fileName);
-                    SVNErrorManager.error(err, svne, SVNLogType.WC);
+                if (myIsRerun && adminArea.getEntry(fileName, true) == null) {
+                    // skip modification without an error.
+                } else {
+                    try {
+                        
+                        adminArea.modifyEntry(fileName, entryAttrs, false, force);
+                    } catch (SVNException svne) {
+                        SVNErrorCode code = count <= 1 ? SVNErrorCode.WC_BAD_ADM_LOG_START : SVNErrorCode.WC_BAD_ADM_LOG;
+                        SVNErrorMessage err = SVNErrorMessage.create(code, "Error modifying entry for ''{0}''", fileName);
+                        SVNErrorManager.error(err, svne, SVNLogType.WC);
+                    }
+                    setEntriesChanged(true);
                 }
-                setEntriesChanged(true);
             } catch (SVNException svne) {
                 error = svne;
             }
@@ -219,7 +230,9 @@ public class SVNLogRunner {
             try {
                 SVNFileUtil.rename(src, dst);
             } catch (SVNException svne) {
-                error = new SVNException(svne.getErrorMessage().wrap("Can't move source to dest"), svne);
+                if (!myIsRerun || src.exists()) {
+                    error = new SVNException(svne.getErrorMessage().wrap("Can't move source to dest"), svne);
+                }
             }
         } else if (SVNLog.APPEND.equals(name)) {
             File src = adminArea.getFile(fileName);
@@ -237,12 +250,12 @@ public class SVNLogRunner {
                     os.write(r);
                 }
             } catch (IOException e) {
-                if (src.exists()) {
+                if (!myIsRerun || !(e instanceof FileNotFoundException)) { 
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot write to ''{0}'': {1}", new Object[] {dst, e.getLocalizedMessage()});
                     error = new SVNException(err, e);
                 } 
             } catch (SVNException svne) {
-                if (src.exists()) {
+                if (!myIsRerun || src.exists()) {
                     error = svne;
                 }                
             } finally {
@@ -335,7 +348,7 @@ public class SVNLogRunner {
                 try {
                     SVNTranslator.translate(adminArea, versionedName, src, dst, null, true);
                 } catch (SVNException svne) {
-                    if (src.exists()) {
+                    if (!myIsRerun || src.exists()) {
                         throw svne;
                     }
                 }
@@ -426,6 +439,10 @@ public class SVNLogRunner {
                         mergeResult == SVNStatusType.CONFLICTED_UNRESOLVED);
             } catch (SVNException svne) {
                 error = svne;
+                if (myIsRerun && (svne.getCause() instanceof FileNotFoundException)) {
+                    error = null;
+                }
+                    
             }
         } else if (SVNLog.COMMIT.equals(name)) {
             try {
@@ -436,19 +453,23 @@ public class SVNLogRunner {
                 }
                 
                 SVNEntry entry = adminArea.getEntry(fileName, true);
-                if (entry == null || (!adminArea.getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
-                    SVNErrorMessage err = SVNErrorMessage.create(code, "Log command for directory ''{0}'' is mislocated", adminArea.getRoot()); 
-                    SVNErrorManager.error(err, SVNLogType.WC);
+                if (myIsRerun && (entry == null || (entry.isScheduledForDeletion() && entry.isDeleted()))) {
+                    // skip without an error
+                } else {
+                    if (entry == null || (!adminArea.getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
+                        SVNErrorMessage err = SVNErrorMessage.create(code, "Log command for directory ''{0}'' is mislocated", adminArea.getRoot()); 
+                        SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+                    boolean implicit = attributes.getStringValue("implicit") != null && entry.isCopied();
+                    setEntriesChanged(true);
+                    long revisionNumber = -1;
+                    try {
+                        revisionNumber = Long.parseLong(attributes.getStringValue(SVNLog.REVISION_ATTR));
+                    } catch (NumberFormatException nfe) {
+                        SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, nfe), SVNLogType.WC);
+                    }
+                    adminArea.postCommit(fileName, revisionNumber, implicit, myIsRerun, code);
                 }
-                boolean implicit = attributes.getStringValue("implicit") != null && entry.isCopied();
-                setEntriesChanged(true);
-                long revisionNumber = -1;
-                try {
-                    revisionNumber = Long.parseLong(attributes.getStringValue(SVNLog.REVISION_ATTR));
-                } catch (NumberFormatException nfe) {
-                    SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.WC_BAD_ADM_LOG, nfe), SVNLogType.WC);
-                }
-                adminArea.postCommit(fileName, revisionNumber, implicit, code);
             } catch (SVNException svne) {
                 error = svne;
             }

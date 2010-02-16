@@ -1647,7 +1647,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
         }
     }
 
-    public void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException {
+    public void postCommit(String fileName, long revisionNumber, boolean implicit, boolean rerun, SVNErrorCode errorCode) throws SVNException {
         SVNEntry entry = getEntry(fileName, true);
         if (entry == null || (!getThisDirName().equals(fileName) && entry.getKind() != SVNNodeKind.FILE)) {
             SVNErrorMessage err = SVNErrorMessage.create(errorCode, "Log command for directory ''{0}'' is mislocated", getRoot()); 
@@ -1658,6 +1658,12 @@ public class SVNAdminArea14 extends SVNAdminArea {
             if (getThisDirName().equals(fileName)) {
                 entry.setRevision(revisionNumber);
                 entry.setKind(SVNNodeKind.DIR);
+                if (rerun) {
+                    File killMe = getAdminFile(ADM_KILLME);
+                    if (killMe.isFile()) {
+                        return;
+                    }
+                }
                 makeKillMe(entry.isKeepLocal());
             } else {
                 removeFromRevisionControl(fileName, false, false);
