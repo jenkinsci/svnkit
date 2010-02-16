@@ -129,7 +129,7 @@ public abstract class SVNAdminArea {
 
     public abstract SVNAdminArea createVersionedDirectory(File dir, String url, String rootURL, String uuid, long revNumber, boolean createMyself, SVNDepth depth) throws SVNException;
 
-    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, SVNErrorCode errorCode) throws SVNException;
+    public abstract void postCommit(String fileName, long revisionNumber, boolean implicit, boolean rerun, SVNErrorCode errorCode) throws SVNException;
 
     public abstract void handleKillMe() throws SVNException;
 
@@ -606,7 +606,11 @@ public abstract class SVNAdminArea {
     }
 
     public void runLogs() throws SVNException {
-        SVNLogRunner runner = new SVNLogRunner();
+        runLogs(false);
+    }
+
+    public void runLogs(boolean rerun) throws SVNException {
+        SVNLogRunner runner = new SVNLogRunner(rerun);
         int index = 0;
         SVNLog log = null;
         runner.logStarted(this);
@@ -1012,7 +1016,7 @@ public abstract class SVNAdminArea {
         if (isKillMe()) {
             removeFromRevisionControl(getThisDirName(), true, false);
         } else {
-            runLogs();
+            runLogs(true);
         }
         SVNFileUtil.deleteAll(getAdminFile("tmp"), false);
     }
