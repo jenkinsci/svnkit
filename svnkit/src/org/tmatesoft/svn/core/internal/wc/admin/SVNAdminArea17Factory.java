@@ -35,7 +35,7 @@ public class SVNAdminArea17Factory extends SVNAdminAreaFactory {
      * @throws SVNException
      */
     protected SVNAdminArea doChangeWCFormat(SVNAdminArea area) throws SVNException {
-        return null;
+        return area;
     }
 
     /**

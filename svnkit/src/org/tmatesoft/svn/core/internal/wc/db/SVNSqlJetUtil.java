@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc.db;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetErrorCode;
@@ -37,6 +38,14 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNSqlJetUtil {
 
+    public static Map<SVNDbTableField, Object> bindProperties(SVNProperties props, Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
+        SVNSkel skel = SVNSkel.createPropList(props.asMap());
+        byte[] propBytes = skel.unparse();
+        fieldsToValues = fieldsToValues == null ? new HashMap<SVNDbTableField, Object>() : fieldsToValues;
+        fieldsToValues.put(SVNDbTableField.properties, propBytes);
+        return  fieldsToValues;
+    }
+    
     public static SVNProperties getPropertiesFromBLOB(Object obj) throws SVNException {
         if (obj != null && obj instanceof ISqlJetMemoryPointer) {//check if it's a BLOB object and convert it to byte[] if it is
             byte[] bytes = SqlJetUtility.readByteBuffer((ISqlJetMemoryPointer) obj);

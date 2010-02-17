@@ -263,6 +263,11 @@ public class SVNSkel {
         myList.add(0, child);
     }
 
+    public void prependString(String str) throws SVNException {
+        SVNSkel skel = SVNSkel.createAtom(str);
+        addChild(skel);
+    }
+    
     public int getListSize() {
         if (isAtom()) {
             return -1;

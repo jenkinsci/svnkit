@@ -28,7 +28,11 @@ public class SVNCommonDbStrategy extends SVNAbstractDbStrategy {
     private SVNDbTableField[] myFields;
     
     public SVNCommonDbStrategy(SVNDbIndexes index, Object[] lookUpObjects, SVNDbTableField[] fields) {
-        super();
+        this(index, lookUpObjects, fields, -1);
+    }
+
+    public SVNCommonDbStrategy(SVNDbIndexes index, Object[] lookUpObjects, SVNDbTableField[] fields, long limit) {
+        super(limit);
         myIndex = index;
         myLookUpObjects = lookUpObjects;
         myFields = fields;

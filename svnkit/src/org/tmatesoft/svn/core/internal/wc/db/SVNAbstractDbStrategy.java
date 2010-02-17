@@ -25,7 +25,23 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
  * @author  TMate Software Ltd.
  */
 public abstract class SVNAbstractDbStrategy {
+    private long myLimit;
+
     protected SVNAbstractDbStrategy() {
+        this(-1);
+    }
+
+    protected SVNAbstractDbStrategy(long limit) {
+        myLimit = limit;
+    }
+    
+    public long getCount(ISqlJetTable table) throws SqlJetException {
+        ISqlJetCursor cursor = getCursor(table);
+        try {
+            return cursor.getRowCount();
+        } finally {
+            cursor.close();
+        }
     }
     
     public Object runSelect(ISqlJetTable table) throws SqlJetException {
@@ -46,10 +62,15 @@ public abstract class SVNAbstractDbStrategy {
     public void runSelect(ISqlJetTable table, ISVNRecordHandler handler) throws SqlJetException {
         ISqlJetCursor cursor = getCursor(table);
         try {
-            if (!cursor.eof()) {
+            long count = 0;
+            if (!cursor.eof() && myLimit != 0) {
                 do {
                     if (handler != null) {
                         handler.handleRecord(cursor);
+                    }
+                    
+                    if (myLimit > 0 && ++count == myLimit) {
+                        break;
                     }
                 } while (cursor.next());
             } 
@@ -83,18 +104,21 @@ public abstract class SVNAbstractDbStrategy {
         return table.insertByFieldNamesOr(conflictAction, convertedFieldsToValues);
     }
 
-    public void runUpdate(ISqlJetTable table, Map<SVNDbTableField, Object> fieldsToValues) throws SqlJetException {
+    public long runUpdate(ISqlJetTable table, Map<SVNDbTableField, Object> fieldsToValues) throws SqlJetException {
+        long updatedRowsCount = 0;
         ISqlJetCursor cursor = getCursor(table);
         try {
             if (!cursor.eof()) {
                 Map<String, Object> convertedFieldsToValues = convertValuesMap(fieldsToValues);
                 do {
                     cursor.updateByFieldNames(convertedFieldsToValues);
+                    updatedRowsCount++;
                 } while (cursor.next());
             }
         } finally {
             cursor.close();
         }
+        return updatedRowsCount;
     }
     
     public long runInsert(ISqlJetTable table, SqlJetConflictAction conflictAction, Object... values) throws SqlJetException {

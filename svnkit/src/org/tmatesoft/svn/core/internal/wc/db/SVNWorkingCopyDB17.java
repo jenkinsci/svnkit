@@ -1122,16 +1122,17 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
     
     //TODO: temporary API
-    public SqlJetDb getDBTemp(File dirPath, boolean alwaysOpen) throws SVNException {
+    public DBResult getDBTemp(File dirPath, boolean alwaysOpen) throws SVNException {
         if (!alwaysOpen) {
             SVNPristineDirectory pristineDir = getOrCreatePristineDirectory(dirPath, false);
             if (pristineDir != null && pristineDir.getWCRoot() != null && pristineDir.getWCRoot().getStorage() != null && 
                     dirPath.equals(pristineDir.getWCRoot().getPath())) {
-                return pristineDir.getWCRoot().getStorage();
+                
+                return new DBResult(pristineDir.getWCRoot().getStorage(), false);
             }
         }
         
-        return openDB(dirPath, SqlJetTransactionMode.WRITE);
+        return new DBResult(openDB(dirPath, SqlJetTransactionMode.WRITE), true);
     }
     
     //TODO: temporary API
@@ -1588,6 +1589,74 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         //TODO: flush entries;
     }
     
+    public void installPristine(File tmpPath, SVNChecksum sha1Checksum, SVNChecksum md5Checksum) throws SVNException {
+        SVNErrorManager.assertionFailure(sha1Checksum != null, null, SVNLogType.WC);
+        SVNErrorManager.assertionFailure(md5Checksum != null, null, SVNLogType.WC);
+    }
+
+    public void addWorkQueue(File wriPath, SVNSkel workItem) throws SVNException {
+        SVNErrorManager.assertionFailure(workItem != null, null, SVNLogType.WC);
+        ParsedPristineDirectory parsedPD = parseLocalAbsPath(wriPath, SqlJetTransactionMode.WRITE);
+        SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
+        String localRelPath = parsedPD.getLocalRelativePath();
+        verifyPristineDirectoryIsUsable(pristineDir);
+        //TODO: remove later when a single db is left only cause this will always be the case for subdirs, if I'm not mistaken
+        if (!"".equals(localRelPath)) {
+            SVNWCDbKind kind = readKind(wriPath, true);
+            if (kind == SVNWCDbKind.DIR) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "There is no work queue for ''{0}''.", wriPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        
+        byte[] serializedItem = workItem.unparse();
+        Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+        fieldsToValues.put(SVNDbTableField.work, serializedItem);
+        runInsertByFieldNames(pristineDir.getWCRoot().getStorage(), SVNDbTables.work_queue, null, getCommonDbStrategy(null, null, null), 
+                fieldsToValues);
+
+    }
+    
+    public DBResult fetchWorkQueue(long id, File wriPath) throws SVNException {
+        ParsedPristineDirectory parsedPD = parseLocalAbsPath(wriPath, SqlJetTransactionMode.READ_ONLY);
+        String localRelPath = parsedPD.getLocalRelativePath();
+        SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
+        verifyPristineDirectoryIsUsable(pristineDir);
+        if (!"".equals(localRelPath)) {
+            SVNWCDbKind kind = readKind(wriPath, true);
+            if (kind == SVNWCDbKind.DIR) {
+                return new DBResult(null, 0);
+            }
+        }
+        //TODO: implement
+        return null;
+    }
+    
+    public void setProps(File path, SVNProperties props) throws SVNException {
+        ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
+        SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
+        verifyPristineDirectoryIsUsable(pristineDir);
+        SVNWCRoot wcRoot = pristineDir.getWCRoot();
+        String localRelPath = parsedPD.getLocalRelativePath();
+        Map<SVNDbTableField, Object> fieldsToValues = SVNSqlJetUtil.bindProperties(props, null);
+        SVNCommonDbStrategy strategy = getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, 
+                SVNSqlJetUtil.OUR_PROPERTIES_FIELD, null);
+        long affectedRowsConut = runUpdate(wcRoot.getStorage(), SVNDbTables.actual_node, strategy, fieldsToValues);
+        if (affectedRowsConut == 1) {
+            return;
+        }
+        
+        fieldsToValues.put(SVNDbTableField.wc_id, wcRoot.getWCId());
+        fieldsToValues.put(SVNDbTableField.local_relpath, localRelPath);
+        if (!"".equals(localRelPath)) {
+            String parentRelPath = SVNPathUtil.removeTail(localRelPath);
+            fieldsToValues.put(SVNDbTableField.parent_relpath, parentRelPath);
+        }
+        
+        strategy.reset(null, null, null);
+        runInsertByFieldNames(wcRoot.getStorage(), SVNDbTables.actual_node, null, strategy, fieldsToValues);
+    }
+    
     public SVNRepositoryInfo fetchRepositoryInfo(SqlJetDb sdb, long reposId) throws SVNException {
         Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.repository, 
                 getCommonDbStrategy(new Object[] { reposId }, SVNSqlJetUtil.OUR_SELECT_REPOSITORY_BY_ID_FIELDS, null));
@@ -1608,6 +1677,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         
         return SVNSqlJetUtil.getPropertiesFromBLOB(result.get(SVNDbTableField.dav_cache));
     }
+    
+    public void setBaseDAVCache(File path, SVNProperties props) throws SVNException {
+        Map<SVNDbTableField, Object> fieldsToValues = SVNSqlJetUtil.bindProperties(props, null);
+        runUpdateForPath(path, SVNDbTables.base_node, SVNSqlJetUtil.OUR_DAV_CACHE_FIELD, fieldsToValues);
+    }   
     
     public long ensureRepos(File path, String reposRootURL, String reposUUID) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
@@ -1666,6 +1740,27 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return (Map<SVNDbTableField, Object>)runSelect(wcRoot.getStorage(), table, 
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, fields, null));
     }
+
+    public long runUpdateForPath(File path, SVNDbTables table, SVNDbTableField[] fields, 
+            Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
+        ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
+        SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
+        String localRelPath = parsedPD.getLocalRelativePath();
+        verifyPristineDirectoryIsUsable(pristineDir);
+        SVNWCRoot wcRoot = pristineDir.getWCRoot();
+        return runUpdate(wcRoot.getStorage(), table, getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, fields, null), 
+                fieldsToValues);
+    }
+
+    public long countAllRows(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy) throws SVNException {
+        SVNDbCommand command = new SVNDbCommand() {
+            
+            protected Object execCommand() throws SqlJetException, SVNException {
+                return dbStrategy.getCount(getTable());
+            }
+        };
+        return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.READ_ONLY, false);
+    }
     
     public Object runSelect(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
@@ -1713,17 +1808,16 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
 
-    public void runUpdate(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, 
+    public long runUpdate(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, 
             final Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
             
             protected Object execCommand() throws SqlJetException, SVNException {
-                dbStrategy.runUpdate(getTable(), fieldsToValues);
-                return null;
+                return dbStrategy.runUpdate(getTable(), fieldsToValues);
             }
         };
         
-        command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
+        return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
     
     private long runInsert(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction, 
@@ -1760,6 +1854,14 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNErrorManager.assertionFailure(pristineDirectory != null && pristineDirectory.getWCRoot() != null && 
                 pristineDirectory.getWCRoot().getFormat() == SVNAdminArea17Factory.WC_FORMAT, "an unusable pristine directory object met", 
                 SVNLogType.WC);
+    }
+    
+    private void verifyChecksumKind(SVNChecksum checksum) throws SVNException {
+        if (checksum.getKind() != SVNChecksumKind.SHA1) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_CHECKSUM_KIND, 
+                    "Only SHA1 checksums can be used as keys in the pristine file storage.");
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
     }
     
     private boolean isObstructedFile(SVNWCRoot wcRoot, String localRelativePath) throws SVNException {
@@ -1900,7 +2002,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
     
     private void verifyThereIsNoWork(SqlJetDb db) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.work_queue, getCommonDbStrategy(null, SVNSqlJetUtil.OUR_ID_FIELD, null));
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.work_queue, 
+                getCommonDbStrategy(null, SVNSqlJetUtil.OUR_ID_FIELD, null, 1));
         
         if (!result.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CLEANUP_REQUIRED);
@@ -2018,7 +2121,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
 
     public SVNCommonDbStrategy getCommonDbStrategy(Object[] lookUpObjects, SVNDbTableField[] fields, SVNDbIndexes index) {
-        return new SVNCommonDbStrategy(index, lookUpObjects, fields);
+        return getCommonDbStrategy(lookUpObjects, fields, index, -1);
+    }
+
+    public SVNCommonDbStrategy getCommonDbStrategy(Object[] lookUpObjects, SVNDbTableField[] fields, SVNDbIndexes index, long limit) {
+        return new SVNCommonDbStrategy(index, lookUpObjects, fields, limit);
         /*if (myCommonDbStrategy == null) {
             myCommonDbStrategy = new SVNCommonDbStrategy(index, lookUpObjects, fields);
         } else {

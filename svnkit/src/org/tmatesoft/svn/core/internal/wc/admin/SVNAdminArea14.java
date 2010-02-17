@@ -302,19 +302,19 @@ public class SVNAdminArea14 extends SVNAdminArea {
         return wcPropsCache;
     }
     
-    private SVNProperties readBaseProperties(String name) throws SVNException {
+    protected SVNProperties readBaseProperties(String name) throws SVNException {
         File propertiesFile = getBasePropertiesFile(name, false);
         SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
 
-    private SVNProperties readRevertProperties(String name) throws SVNException {
+    protected SVNProperties readRevertProperties(String name) throws SVNException {
         File propertiesFile = getRevertPropertiesFile(name, false);
         SVNWCProperties props = new SVNWCProperties(propertiesFile, null);
         return props.asMap();
     }
     
-    private SVNProperties readProperties(String name) throws SVNException {
+    protected SVNProperties readProperties(String name) throws SVNException {
         if (hasPropModifications(name)) {
             File propertiesFile = getPropertiesFile(name, false);
             SVNWCProperties props = new SVNWCProperties(propertiesFile, null);

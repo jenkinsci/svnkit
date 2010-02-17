@@ -18,11 +18,13 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.schema.SqlJetConflictAction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -31,6 +33,7 @@ import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
@@ -40,7 +43,9 @@ import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
+import org.tmatesoft.svn.core.internal.wc.db.DBResult;
 import org.tmatesoft.svn.core.internal.wc.db.SVNActualNode;
 import org.tmatesoft.svn.core.internal.wc.db.SVNBaseNode;
 import org.tmatesoft.svn.core.internal.wc.db.SVNDbCommand;
@@ -70,7 +75,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class SVNAdminArea17 extends SVNAdminArea {
+public class SVNAdminArea17 extends SVNAdminArea14 {
     public static final int WC_FORMAT = SVNAdminArea17Factory.WC_FORMAT;
 
     private SVNWorkingCopyDB17 myWCDb;
@@ -95,11 +100,14 @@ public class SVNAdminArea17 extends SVNAdminArea {
         File path = getRoot();
         
         SqlJetDb sdb = null;
+        boolean needsClose = false;
         SVNEntry parentEntry = null;
         Map<String, SVNEntry> entries = new HashMap<String, SVNEntry>();
 
         try {
-            sdb = myWCDb.getDBTemp(path, false);
+            DBResult dbResult = myWCDb.getDBTemp(path, false);
+            sdb = (SqlJetDb) dbResult.getResultObjectAt(0);
+            needsClose = (Boolean) dbResult.getResultObjectAt(1);
             List childNames = myWCDb.gatherChildren(path, false);
             childNames.add(getThisDirName());
             for (ListIterator iterator = childNames.listIterator(childNames.size()); iterator.hasPrevious();) {
@@ -344,7 +352,7 @@ public class SVNAdminArea17 extends SVNAdminArea {
                 entry.setWorkingSize(translatedSize);
             }
         } finally {
-            if (sdb != null) {
+            if (sdb != null && needsClose) {
                 try {
                     sdb.close();
                 } catch (SqlJetException e) {
@@ -439,20 +447,27 @@ public class SVNAdminArea17 extends SVNAdminArea {
         return null;
     }
 
-    public SVNVersionedProperties getBaseProperties(String name) throws SVNException {
-        return myWCDb.readPristineProperties(getFile(name));
+    public SVNEntry modifyEntry(String name, Map attributes, boolean save, boolean force) throws SVNException {
+        return super.modifyEntry(name, attributes, save, force);
+    }
+    
+    protected SVNProperties readBaseProperties(String name) throws SVNException {
+        SVNVersionedProperties props = myWCDb.readPristineProperties(getFile(name));
+        return props != null ? props.asMap() : null;
     }
 
+    protected SVNProperties readRevertProperties(String name) throws SVNException {
+        SVNVersionedProperties props = myWCDb.getBaseProperties(getFile(name));
+        return props != null ? props.asMap() : null;
+    }
+    
+    protected SVNProperties readProperties(String name) throws SVNException {
+        SVNVersionedProperties props = myWCDb.readProperties(getFile(name));
+        return props != null ? props.asMap() : null;
+    }
+    
     public int getFormatVersion() {
         return WC_FORMAT;
-    }
-
-    public SVNVersionedProperties getProperties(String name) throws SVNException {
-        return myWCDb.readProperties(getFile(name));
-    }
-
-    public SVNVersionedProperties getRevertProperties(String name) throws SVNException {
-        return myWCDb.getBaseProperties(getFile(name));
     }
 
     public String getThisDirName() {
@@ -580,12 +595,9 @@ public class SVNAdminArea17 extends SVNAdminArea {
         
     }
 
-    public void saveVersionedProperties(SVNLog log, boolean close) throws SVNException {
-    }
-
     public void saveWCProperties(boolean close) throws SVNException {
     }
-
+    
     public void setFileExternalLocation(String name, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNURL reposRootURL) throws SVNException {
     }
 
@@ -594,6 +606,7 @@ public class SVNAdminArea17 extends SVNAdminArea {
     }
 
     protected void writeEntries(Writer writer) throws IOException, SVNException {
+    
     }
 
     public void close() throws SVNException {
@@ -603,20 +616,22 @@ public class SVNAdminArea17 extends SVNAdminArea {
     }
     
     public void writeEntry(final File path, final SVNEntry thisDir, final SVNEntry thisEntry) throws SVNException {
+        DBResult dbResult = myWCDb.getDBTemp(path, false);
+        final SqlJetDb sdb = (SqlJetDb) dbResult.getResultObjectAt(0);
+        boolean needsClose = (Boolean) dbResult.getResultObjectAt(1);
         
         SVNDbCommand command = new SVNDbCommand() {
             
             public Object execCommand() throws SqlJetException, SVNException {
-                final SqlJetDb sdb = myWCDb.getDBTemp(path, false);
                 File thisPath = new File(path, thisEntry.getName());
                 long reposId = 0;
                 String reposRootURL = null;
-                
+
                 if (thisDir.getUUID() != null) {
                     reposId = myWCDb.ensureRepos(path, thisDir.getRepositoryRoot(), thisDir.getUUID());
                     reposRootURL = thisDir.getRepositoryRoot();
                 }
-                
+
                 long wcId = myWCDb.fetchWCId(sdb);
                 SVNProperties davCache = null;
                 try {
@@ -627,7 +642,7 @@ public class SVNAdminArea17 extends SVNAdminArea {
                         throw svne;
                     }
                 }
-                
+
                 Object[] lookUpObjects = new Object[] { wcId, thisEntry.getName() };
                 Map<SVNDbTableField, Object> baseResult = (Map<SVNDbTableField, Object>) myWCDb.runSelect(sdb, SVNDbTables.base_node, 
                         myWCDb.getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_BASE_NODE_FIELDS, null));
@@ -635,30 +650,63 @@ public class SVNAdminArea17 extends SVNAdminArea {
                 if (!baseResult.isEmpty()) {
                     baseProps = baseResult.get(SVNDbTableField.properties);
                 }
-                
+
                 Map<SVNDbTableField, Object> workingResult = (Map<SVNDbTableField, Object>) myWCDb.runSelect(sdb, SVNDbTables.working_node, 
                         myWCDb.getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_WORKING_NODE_FIELDS, null));
                 Object workingProps = null;
                 if (!workingResult.isEmpty()) {
                     workingProps = workingResult.get(SVNDbTableField.properties);
                 }
-                
+
                 Map<SVNDbTableField, Object> actualResult = (Map<SVNDbTableField, Object>) myWCDb.runSelect(sdb, SVNDbTables.actual_node, 
                         myWCDb.getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_ACTUAL_NODE_FIELDS, null));
                 Object actualProps = null;
                 if (!actualResult.isEmpty()) {
                     actualProps = actualResult.get(SVNDbTableField.properties);
                 }
-                
+
                 myWCDb.runDelete(sdb, SVNDbTables.working_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), null);
                 myWCDb.runDelete(sdb, SVNDbTables.base_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), null);
                 myWCDb.runDelete(sdb, SVNDbTables.actual_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), null);
-                
+                writeEntry(sdb, wcId, reposId, reposRootURL, thisEntry, thisEntry.getName(), thisPath, thisDir, actualProps != null, false);
+
+                if (davCache != null) {
+                    myWCDb.setBaseDAVCache(thisPath, davCache);
+                }
+
+                if (baseProps != null) {
+                    Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+                    fieldsToValues.put(SVNDbTableField.properties, baseProps);
+                    myWCDb.runUpdate(sdb, SVNDbTables.base_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), fieldsToValues);
+                }
+
+                if (workingProps != null) {
+                    Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+                    fieldsToValues.put(SVNDbTableField.properties, workingProps);
+                    myWCDb.runUpdate(sdb, SVNDbTables.working_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), fieldsToValues);
+                }
+
+                if (actualProps != null) {
+                    Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
+                    fieldsToValues.put(SVNDbTableField.properties, actualProps);
+                    myWCDb.runUpdate(sdb, SVNDbTables.actual_node, myWCDb.getCommonDbStrategy(lookUpObjects, null, null), fieldsToValues);
+                }
                 return null;
             }
         };
         
-//        command.runDbCommand(sdb, null, SqlJetTransactionMode.WRITE, true);
+        try {
+            command.runDbCommand(sdb, null, SqlJetTransactionMode.WRITE, true);
+        } finally {
+            if (sdb != null && needsClose) {
+                try {
+                    sdb.close();
+                } catch (SqlJetException e) {
+                    SVNSqlJetUtil.convertException(e);
+                }
+            }
+            
+        }
     }
     
     private void writeEntry(SqlJetDb sdb, long wcId, long reposId, String reposRootURL, SVNEntry entry, 
