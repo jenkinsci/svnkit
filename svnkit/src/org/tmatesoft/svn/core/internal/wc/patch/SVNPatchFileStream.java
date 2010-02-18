@@ -55,7 +55,7 @@ public class SVNPatchFileStream {
             this.start = start;
             this.end = end;
         } else {
-            throw new IllegalArgumentException("Bad start and end");
+            throw new IllegalArgumentException("Bad start or end");
         }
     }
 
@@ -161,7 +161,7 @@ public class SVNPatchFileStream {
     }
 
     private boolean isPosValid(long pos) {
-        return start <= pos &&  (end > 0 ? pos <= end : true);
+        return start <= pos && (end > 0 ? pos <= end : true);
     }
 
     public void write(String str) throws SVNException, IOException {
@@ -194,50 +194,59 @@ public class SVNPatchFileStream {
 
     private boolean readLine(StringBuffer input, StringBuffer eolStr, boolean detectEol) throws IOException, SVNException {
 
-        input.setLength(0);
-        if (eolStr != null) {
-            eolStr.setLength(0);
-        }
+        int c;
+        boolean eol;
+        boolean filtered;
 
-        int c = -1;
-        boolean eol = false;
+        do {
 
-        while (!eol) {
-            switch (c = file.read()) {
-                case -1:
-                case '\n':
-                    if (detectEol && eolStr != null) {
-                        eolStr.append((char) c);
-                    }
-                    eol = true;
-                    break;
-                case '\r':
-                    if (detectEol && eolStr != null) {
-                        eolStr.append((char) c);
-                    }
-                    long cur = file.getFilePointer();
-                    final int c2 = file.read();
-                    if (c2 != '\n') {
-                        file.seek(cur);
-                    } else {
+            c = -1;
+            eol = false;
+            filtered = false;
+
+            input.setLength(0);
+            if (eolStr != null) {
+                eolStr.setLength(0);
+            }
+
+            while (!eol) {
+                switch (c = file.read()) {
+                    case -1:
+                    case '\n':
                         if (detectEol && eolStr != null) {
-                            eolStr.append((char) c2);
+                            eolStr.append((char) c);
                         }
-                    }
-                    eol = true;
-                    break;
-                default:
-                    input.append((char) c);
-                    break;
+                        eol = true;
+                        break;
+                    case '\r':
+                        if (detectEol && eolStr != null) {
+                            eolStr.append((char) c);
+                        }
+                        long cur = file.getFilePointer();
+                        final int c2 = file.read();
+                        if (c2 != '\n') {
+                            file.seek(cur);
+                        } else {
+                            if (detectEol && eolStr != null) {
+                                eolStr.append((char) c2);
+                            }
+                        }
+                        eol = true;
+                        break;
+                    default:
+                        input.append((char) c);
+                        break;
+                }
             }
-        }
 
-        if (lineFilter != null) {
-            if (lineFilter.lineFilter(input.toString())) {
-                input.setLength(0);
-                return isEOF();
+            if (lineFilter != null) {
+                filtered = lineFilter.lineFilter(input.toString());
+                if(filtered) {
+                    input.setLength(0);
+                }
             }
-        }
+
+        } while (filtered && !isEOF());
 
         if (lineTransformer != null) {
             final String line = lineTransformer.lineTransformer(input.toString());
@@ -245,7 +254,7 @@ public class SVNPatchFileStream {
             input.append(line);
         }
 
-        return isEOF();
+        return input.length() == 0 && isEOF();
     }
 
 }
