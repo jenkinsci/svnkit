@@ -1111,7 +1111,7 @@ public class SVNPatchTarget {
                 } else if (linesRead > hunk.getOriginal().getLength() - fuzz && hunk.getTrailingContext() > fuzz) {
                     linesMatched = true;
                 } else {
-                    linesMatched = !hunk_line_translated.equals(targetLine.toString());
+                    linesMatched = hunk_line_translated.equals(targetLine.toString());
                 }
             }
         } while (linesMatched && !(hunkEof || target.eof));

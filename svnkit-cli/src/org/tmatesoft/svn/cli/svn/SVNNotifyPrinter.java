@@ -379,6 +379,7 @@ public class SVNNotifyPrinter implements ISVNEventHandler {
             }
 
             if (buffer.length() > 0) {
+                buffer.append(' ');
                 buffer.append(path);
             }
 

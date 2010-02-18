@@ -39,12 +39,10 @@ public class SVNPatchFileStream {
         String lineTransformer(String line);
     }
 
-    private static final long INFINITY = Long.MAX_VALUE;
-
     private File path;
     private boolean write;
-    private long start;
-    private long end = INFINITY;
+    private long start = 0;
+    private long end = -1;
 
     private RandomAccessFile file;
 
@@ -139,7 +137,7 @@ public class SVNPatchFileStream {
 
     public boolean isEOF() throws IOException, SVNException {
         final RandomAccessFile file = getFile();
-        return file.getFilePointer() >= file.length();
+        return file.getFilePointer() >= (end > 0 ? end : file.length());
     }
 
     public long getSeekPosition() throws SVNException, IOException {
@@ -163,7 +161,7 @@ public class SVNPatchFileStream {
     }
 
     private boolean isPosValid(long pos) {
-        return start <= pos && pos <= end;
+        return start <= pos &&  (end > 0 ? pos <= end : true);
     }
 
     public void write(String str) throws SVNException, IOException {
@@ -237,7 +235,7 @@ public class SVNPatchFileStream {
         if (lineFilter != null) {
             if (lineFilter.lineFilter(input.toString())) {
                 input.setLength(0);
-                return false;
+                return isEOF();
             }
         }
 
@@ -247,7 +245,7 @@ public class SVNPatchFileStream {
             input.append(line);
         }
 
-        return c==-1;
+        return isEOF();
     }
 
 }
