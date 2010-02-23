@@ -404,7 +404,7 @@ public class SVNDiffClient extends SVNMergeDriver {
             try {
                 doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
             } catch (SVNException svne) {
-                dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage()));
+                dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage(), null));
             }
         }
     }
