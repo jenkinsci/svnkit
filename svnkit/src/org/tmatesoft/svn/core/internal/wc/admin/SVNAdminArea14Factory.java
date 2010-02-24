@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc.admin;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.logging.Level;
@@ -71,6 +72,9 @@ public class SVNAdminArea14Factory extends SVNAdminAreaFactory {
         try {
             reader = new BufferedReader(new InputStreamReader(SVNFileUtil.openFileForReading(entriesFile, logLevel, SVNLogType.WC), "UTF-8"));
             line = reader.readLine();
+        } catch (FileNotFoundException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
+            throw new SVNException(err);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot read entries file ''{0}'': {1}", new Object[] {entriesFile, e.getLocalizedMessage()});
             SVNErrorManager.error(err, e, SVNLogType.WC);
