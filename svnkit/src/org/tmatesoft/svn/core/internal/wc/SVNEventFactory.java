@@ -29,8 +29,9 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
  */
 public class SVNEventFactory {
 
-    public static SVNEvent createErrorEvent(SVNErrorMessage error){
-        return new SVNEvent(error);
+    public static SVNEvent createErrorEvent(SVNErrorMessage error, SVNEventAction expectedAction){
+        SVNEvent event = new SVNEvent(error, expectedAction);
+        return event;
     }
 
     public static SVNEvent createLockEvent(File file, SVNEventAction action, SVNLock lock, SVNErrorMessage error){

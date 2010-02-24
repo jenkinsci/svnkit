@@ -1084,7 +1084,7 @@ public class SVNCommitClient extends SVNBasicClient {
                 }
                 SVNErrorMessage err = e.getErrorMessage().wrap("Commit failed (details follow):");
                 infos.add(new SVNCommitInfo(-1, null, null, err));
-                dispatchEvent(SVNEventFactory.createErrorEvent(err), ISVNEventHandler.UNKNOWN);
+                dispatchEvent(SVNEventFactory.createErrorEvent(err, SVNEventAction.COMMIT_COMPLETED), ISVNEventHandler.UNKNOWN);
                 continue;
             } finally {
                 if (info == null && commitEditor != null) {

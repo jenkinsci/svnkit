@@ -32,7 +32,7 @@ public class SVNEventExt extends SVNEvent {
     private long myTotalItemsCount;
 
     public SVNEventExt(SVNErrorMessage errorMessage) {
-        super(errorMessage);
+        super(errorMessage, null);
     }
 
     public SVNEventExt(File file, SVNNodeKind kind, String mimetype, long revision, SVNStatusType cstatus, SVNStatusType pstatus, SVNStatusType lstatus, SVNLock lock, SVNEventAction action, SVNEventAction expected, SVNErrorMessage error, SVNMergeRange range, String changelistName, long processedItemsCount, long totalItemsCount) {
