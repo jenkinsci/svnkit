@@ -51,7 +51,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNClassLoader;
 public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
-    private static int ourSocketReceiveBufferSize = 32*1024;
+    private static int ourSocketReceiveBufferSize = 0; // default
     private static ISVNThreadPool ourThreadPool = SVNClassLoader.getThreadPool(); 
     
     
