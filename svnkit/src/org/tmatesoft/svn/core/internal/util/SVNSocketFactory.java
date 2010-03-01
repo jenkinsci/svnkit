@@ -49,7 +49,7 @@ import org.tmatesoft.svn.core.SVNCancelException;
 public class SVNSocketFactory {
 
     private static boolean ourIsSocketStaleCheck = false;
-    private static int ourSocketReceiveBufferSize = 32*1024;
+    private static int ourSocketReceiveBufferSize = 0; // default
 
     public static Socket createPlainSocket(String host, int port, int connectTimeout, int readTimeout, ISVNCanceller cancel) throws IOException, SVNCancelException {
         InetAddress address = createAddres(host);
