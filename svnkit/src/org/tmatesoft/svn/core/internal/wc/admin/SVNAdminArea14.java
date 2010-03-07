@@ -1907,7 +1907,9 @@ public class SVNAdminArea14 extends SVNAdminArea {
         for (int i = 0; logs != null && i < logs.length; i++) {
             File log = logs[i];
             if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
-                return false;
+                if (log.isFile() && log.exists()) {
+                    return false;
+                }
             }
         }
         boolean deleted = SVNFileUtil.deleteFile(myLockFile);
