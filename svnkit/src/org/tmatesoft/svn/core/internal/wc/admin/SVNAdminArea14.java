@@ -50,6 +50,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -1908,8 +1909,10 @@ public class SVNAdminArea14 extends SVNAdminArea {
             File log = logs[i];
             if ("log".equals(log.getName()) || log.getName().startsWith("log.")) {
                 if (log.isFile() && log.exists()) {
+                    SVNDebugLog.getDefaultLog().logFiner(SVNLogType.WC, "unlock: log file: '" + log.getName() + "', listed, and exists.");
                     return false;
                 }
+                SVNDebugLog.getDefaultLog().logFiner(SVNLogType.WC, "unlock: log file: '" + log.getName() + "', listed, but does not exist.");
             }
         }
         boolean deleted = SVNFileUtil.deleteFile(myLockFile);
