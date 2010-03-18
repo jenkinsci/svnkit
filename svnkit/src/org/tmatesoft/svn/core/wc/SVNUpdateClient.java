@@ -1352,7 +1352,8 @@ public class SVNUpdateClient extends SVNBasicClient {
         boolean executable = props.getPropertyValue(SVNProperty.EXECUTABLE) != null;
         String keywords = props.getStringPropertyValue(SVNProperty.KEYWORDS);
         String charsetProp = props.getStringPropertyValue(SVNProperty.CHARSET);
-        String charset = SVNTranslator.getCharset(charsetProp, adminArea.getFile(fileName).getPath(), getOptions());
+        String mimeType = props.getStringPropertyValue(SVNProperty.MIME_TYPE);
+        String charset = SVNTranslator.getCharset(charsetProp, mimeType, adminArea.getFile(fileName).getPath(), getOptions());
         byte[] eols = eol != null ? SVNTranslator.getEOL(eol, getOptions()) : null;
         if (eols == null) {
             eol = props.getStringPropertyValue(SVNProperty.EOL_STYLE);
@@ -1446,8 +1447,9 @@ public class SVNUpdateClient extends SVNBasicClient {
                 if (!isExportExpandsKeywords()) {
                     properties.put(SVNProperty.MIME_TYPE, "application/octet-stream");
                 }
-                boolean binary = SVNProperty.isBinaryMimeType(properties.getStringValue(SVNProperty.MIME_TYPE));
-                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), url, getOptions());
+                String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+                boolean binary = SVNProperty.isBinaryMimeType(mimeType);
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, url, getOptions());
                 Map keywords = SVNTranslator.computeKeywords(properties.getStringValue(SVNProperty.KEYWORDS), url,
                         properties.getStringValue(SVNProperty.LAST_AUTHOR),
                         properties.getStringValue(SVNProperty.COMMITTED_DATE),

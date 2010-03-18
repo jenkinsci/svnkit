@@ -616,8 +616,9 @@ public class SVNDiffEditor implements ISVNEditor {
         String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
         String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
         String charsetProp = properties.getStringPropertyValue(SVNProperty.CHARSET);
+        String mimeType = properties.getStringPropertyValue(SVNProperty.MIME_TYPE);
         ISVNOptions options = dir.getWCAccess().getOptions();
-        String charset = SVNTranslator.getCharset(charsetProp, dir.getFile(name).getPath(), options);
+        String charset = SVNTranslator.getCharset(charsetProp, mimeType, dir.getFile(name).getPath(), options);
         boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
         if (charset == null && keywords == null && eolStyle == null && (!special || !SVNFileUtil.symlinksSupported())) {
             return dir.getFile(name);

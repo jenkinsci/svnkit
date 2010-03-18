@@ -364,7 +364,8 @@ public class SVNWCClient extends SVNBasicClient {
 
                 String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
                 String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
-                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), path.getPath(), getOptions());
+                String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+                String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, path.getPath(), getOptions());
                 if (keywords != null || eol != null || charset != null) {
                     String cmtRev = properties.getStringValue(SVNProperty.COMMITTED_REVISION);
                     String cmtDate = properties.getStringValue(SVNProperty.COMMITTED_DATE);
@@ -435,7 +436,8 @@ public class SVNWCClient extends SVNBasicClient {
             SVNProperties properties = new SVNProperties();
             repos.getFile("", revNumber, properties, null);
             checkCancelled();
-            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), repos.getLocation().toDecodedString(), getOptions());
+            String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+            String charset = SVNTranslator.getCharset(properties.getStringValue(SVNProperty.CHARSET), mimeType, repos.getLocation().toDecodedString(), getOptions());
             String keywords = properties.getStringValue(SVNProperty.KEYWORDS);
             String eol = properties.getStringValue(SVNProperty.EOL_STYLE);
             if (charset != null || keywords != null || eol != null) {
@@ -3882,13 +3884,14 @@ public class SVNWCClient extends SVNBasicClient {
                 properties = area.getProperties(name);
             }
             String charsetProp = properties.getStringPropertyValue(SVNProperty.CHARSET);
+            String mimeType = properties.getStringPropertyValue(SVNProperty.MIME_TYPE);
             String eolStyle = properties.getStringPropertyValue(SVNProperty.EOL_STYLE);
             String keywords = properties.getStringPropertyValue(SVNProperty.KEYWORDS);
             boolean special = properties.getPropertyValue(SVNProperty.SPECIAL) != null;
             byte[] eols = null;
             Map keywordsMap = null;
             String time = null;
-            String charset = SVNTranslator.getCharset(charsetProp, path.getPath(), getOptions());
+            String charset = SVNTranslator.getCharset(charsetProp, mimeType, path.getPath(), getOptions());
             eols = SVNTranslator.getEOL(eolStyle, getOptions());
             if (hasMods && !special) {
                 time = SVNDate.formatDate(new Date(path.lastModified()));
