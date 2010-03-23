@@ -26,7 +26,7 @@ schedule ALL
 special ALL
 stat ALL
 svnadmin ALL -8 -9
-svnlook ALL
+svnlook ALL -11
 svnsync ALL
 svndumpfilter ALL
 svnversion ALL
