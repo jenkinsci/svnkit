@@ -1585,7 +1585,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         }
     }
     
-    private Map findUnmergedMergeInfo(boolean[] neverSynched, long[] youngestMergedRev, Map srcCatalog, Map targetSegments, 
+    private Map findUnmergedMergeInfo(boolean[] neverSynched, long[] youngestMergedRev, long[] ycAncestorRev, Map srcCatalog, Map targetSegments, 
             String sourceReposPath, String targetReposPath, long targetRev, long srcRev, SVNRepository repos) throws SVNException {
         neverSynched[0] = true;
         youngestMergedRev[0] = SVNRepository.INVALID_REVISION;
@@ -1605,7 +1605,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             }
             
             Map targetHistoryAsMergeInfo = getMergeInfoFromSegments(segments);
-            
+            targetHistoryAsMergeInfo = SVNMergeInfoUtil.filterCatalogByRanges(targetHistoryAsMergeInfo, srcRev, ycAncestorRev[0]);
             SVNMergeInfo sourceMergeInfoObject = (SVNMergeInfo) srcCatalog.get(srcPath);
             
             Map srcMergeInfo = sourceMergeInfoObject != null ? sourceMergeInfoObject.getMergeSourcesToMergeLists() : null;
@@ -1718,26 +1718,25 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         
         boolean[] neverSynched = new boolean[1];
         long[] youngestMergedRev = new long[1];
-        Map unmergedCatalog = findUnmergedMergeInfo(neverSynched, youngestMergedRev, mergeInfoCatalog, segmentsMap, sourceReposRelPath, 
+        SVNURL sourceURL = sourceReposRoot.appendPath(sourceReposRelPath.startsWith("/") ? 
+                sourceReposRelPath.substring(1) : sourceReposRelPath, false);
+        SVNURL targetURL = sourceReposRoot.appendPath(targetReposRelPath.startsWith("/") ? 
+                targetReposRelPath.substring(1) : targetReposRelPath, false);
+        SVNLocationEntry youngestLocation = getYoungestCommonAncestor(null, sourceURL, sourceRev, null, 
+                targetURL, targetRev);
+        String youngestCommonAncestorPath = youngestLocation.getPath();
+        leftRev[0] = youngestLocation.getRevision();
+        if (!(youngestCommonAncestorPath != null && SVNRevision.isValidRevisionNumber(leftRev[0]))) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
+                    "''{0}@{1}'' must be ancestrally related to ''{2}@{3}''", 
+                    new Object[] { sourceURL, new Long(sourceRev), targetURL, new Long(targetRev) });
+            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        }
+        Map unmergedCatalog = findUnmergedMergeInfo(neverSynched, youngestMergedRev, leftRev, mergeInfoCatalog, segmentsMap, sourceReposRelPath, 
                 targetReposRelPath, targetRev, sourceRev, repository); 
         unmergedCatalog = SVNMergeInfoUtil.elideMergeInfoCatalog(unmergedCatalog);
         
         if (neverSynched[0]) {
-            SVNURL sourceURL = sourceReposRoot.appendPath(sourceReposRelPath.startsWith("/") ? 
-                    sourceReposRelPath.substring(1) : sourceReposRelPath, false);
-            SVNURL targetURL = sourceReposRoot.appendPath(targetReposRelPath.startsWith("/") ? 
-                    targetReposRelPath.substring(1) : targetReposRelPath, false);
-            SVNLocationEntry youngestLocation = getYoungestCommonAncestor(null, sourceURL, sourceRev, null, 
-                    targetURL, targetRev);
-            String youngestCommonAncestorPath = youngestLocation.getPath();
-            leftRev[0] = youngestLocation.getRevision();
-            if (!(youngestCommonAncestorPath != null && SVNRevision.isValidRevisionNumber(leftRev[0]))) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_NOT_READY_TO_MERGE, 
-                        "''{0}@{1}'' must be ancestrally related to ''{2}@{3}''", 
-                        new Object[] { sourceURL, new Long(sourceRev), targetURL, new Long(targetRev) });
-                SVNErrorManager.error(err, SVNLogType.DEFAULT);
-            }
-            
             leftURL[0] = sourceReposRoot.appendPath(youngestCommonAncestorPath.startsWith("/") ? 
                     youngestCommonAncestorPath.substring(1) : youngestCommonAncestorPath, false);
         } else {
