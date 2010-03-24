@@ -1605,7 +1605,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
             }
             
             Map targetHistoryAsMergeInfo = getMergeInfoFromSegments(segments);
-            targetHistoryAsMergeInfo = SVNMergeInfoUtil.filterCatalogByRanges(targetHistoryAsMergeInfo, srcRev, ycAncestorRev[0]);
+            targetHistoryAsMergeInfo = SVNMergeInfoUtil.filterMergeInfoByRanges(targetHistoryAsMergeInfo, srcRev, ycAncestorRev[0]);
             SVNMergeInfo sourceMergeInfoObject = (SVNMergeInfo) srcCatalog.get(srcPath);
             
             Map srcMergeInfo = sourceMergeInfoObject != null ? sourceMergeInfoObject.getMergeSourcesToMergeLists() : null;
