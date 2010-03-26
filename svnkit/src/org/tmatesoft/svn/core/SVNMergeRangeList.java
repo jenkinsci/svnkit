@@ -86,6 +86,14 @@ public class SVNMergeRangeList {
         myRanges = ranges;
     }
     
+    public void setInheritable(boolean inheritable) {
+        if (myRanges != null) {
+            for (int i = 0; i < myRanges.length; i++) {
+                myRanges[i].setInheritable(inheritable);                
+            }
+        }
+    }
+    
     /**
      * Returns an array of {@link SVNMergeRange} ranges backed by this merge range list object.
      * 
