@@ -702,9 +702,12 @@ public class SVNLogClient extends SVNBasicClient {
         if (targets.isEmpty()) {
             targets.add("");
         }
+        if (!pegRevision.isValid()) {
+            pegRevision = SVNRevision.WORKING;
+        }
         
         SVNRepository repos = null;
-        if (rootWCPath != null && needsWC(pegRevision)) {
+        if (rootWCPath != null && needsWC(pegRevision)) {            
             // open and use wc to create repository.
             File root = new File(rootWCPath);
             SVNAdminArea area = wcAccess.probeOpen(root, false, 0);
