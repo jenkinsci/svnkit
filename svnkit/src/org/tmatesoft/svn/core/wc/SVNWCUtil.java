@@ -59,7 +59,7 @@ public class SVNWCUtil {
      *         run-time configuration area location
      */
     public static File getDefaultConfigurationDirectory() {
-        if (SVNFileUtil.isWindows) {
+        if (SVNFileUtil.isWindows && !SVNFileUtil.isOS2) {
             return new File(SVNFileUtil.getApplicationDataPath(), "Subversion");
         } else if (SVNFileUtil.isOpenVMS) {
             return new File("/sys$login", ".subversion").getAbsoluteFile();
