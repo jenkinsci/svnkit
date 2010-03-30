@@ -30,8 +30,11 @@ args+=' \n\n'
 
 # check input
 if [ ! -t 0 ]
-   then
-    args+=`cat<&0`
+    while read -r line
+    do
+      args+=$line
+      args+='\n'
+    done
 fi
 args+='\n\0'
 
