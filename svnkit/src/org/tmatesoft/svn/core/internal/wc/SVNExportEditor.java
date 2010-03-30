@@ -96,8 +96,15 @@ public class SVNExportEditor implements ISVNEditor {
                 SVNFileUtil.deleteAll(myCurrentDirectory, myEventDispatcher);
             }
         } else if (dirType == SVNFileType.DIRECTORY && !myIsForce) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists", myCurrentDirectory);
-            SVNErrorManager.error(err, SVNLogType.WC);
+            if (!"".equals(path)) {
+                SVNErrorMessage err =  SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists", myCurrentDirectory);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            File[] children = SVNFileListUtil.listFiles(myCurrentDirectory);
+            if (children != null && children.length > 0) {
+                SVNErrorMessage err =  SVNErrorMessage.create(SVNErrorCode.WC_OBSTRUCTED_UPDATE, "''{0}'' already exists", myCurrentDirectory);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
         } else if (dirType == SVNFileType.NONE) {        
             if (!myCurrentDirectory.mkdirs()) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Cannot create directory ''{0}''", myCurrentDirectory);
