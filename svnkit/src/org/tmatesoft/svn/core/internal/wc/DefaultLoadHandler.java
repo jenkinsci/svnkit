@@ -70,9 +70,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private SVNDeltaGenerator myDeltaGenerator;
     private ISVNAdminEventHandler myProgressHandler;
     
-    private long myOldestOldRevion;
-    private long myYoungestOldRevision;
-    
     public DefaultLoadHandler(boolean usePreCommitHook, boolean usePostCommitHook, SVNUUIDAction uuidAction, 
             String parentDir, ISVNAdminEventHandler progressHandler) {
         myProgressHandler = progressHandler;
@@ -81,7 +78,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
         myUUIDAction = uuidAction;
         myParentDir = SVNPathUtil.canonicalizePath(parentDir);
         myRevisionsMap = new SVNHashMap();
-        myOldestOldRevion = myYoungestOldRevision = -1;
     }
     
     public void setFSFS(FSFS fsfs) {
@@ -110,12 +106,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                     //
                 }
                 throw svne;
-            }
-            
-            if (SVNRevision.isValidRevisionNumber(myYoungestOldRevision)) {
-                myYoungestOldRevision = oldRevision;
-            } else {
-                myOldestOldRevion = myYoungestOldRevision = oldRevision;
             }
             
             if (baton.myDatestamp == null) {
@@ -274,11 +264,7 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 if (!isDelta) {
                     // 
                     InputStream tgt = new FixedSizeInputStream(dumpStream, contentLength);
-                    try {
-                        checksum = getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, tgt, fsConsumer, true);
-                    } finally {
-                        SVNFileUtil.closeFile(tgt);
-                    }
+                    checksum = getDeltaGenerator().sendDelta(myCurrentNodeBaton.myPath, tgt, fsConsumer, true);
                 } else {
                     buffer = new byte[SVNFileUtil.STREAM_CHUNK_SIZE];
                     SVNDeltaReader deltaReader = null;
@@ -370,17 +356,12 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     
     public void setNodeProperty(String propertyName, SVNPropertyValue propertyValue) throws SVNException {
         if (SVNProperty.MERGE_INFO.equals(propertyName)) {
-            Map mergeInfo = null;
-            if (myRevisionsMap.isEmpty()) {
-                propertyValue = null;
-            } else {
-                mergeInfo = renumberMergeInfoRevisions(propertyValue);
-                if (myParentDir != null) {
-                    mergeInfo = prefixMergeInfoPaths(mergeInfo);
-                }
-                String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null);
-                propertyValue = SVNPropertyValue.create(mergeInfoString);
+            Map mergeInfo = renumberMergeInfoRevisions(propertyValue);
+            if (myParentDir != null) {
+                mergeInfo = prefixMergeInfoPaths(mergeInfo);
             }
+            String mergeInfoString = SVNMergeInfoUtil.formatMergeInfoToString(mergeInfo, null);
+            propertyValue = SVNPropertyValue.create(mergeInfoString);
         }
         myCurrentRevisionBaton.getCommitter().changeNodeProperty(myCurrentNodeBaton.myPath, propertyName, 
                 propertyValue);
@@ -510,9 +491,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
     private Map renumberMergeInfoRevisions(SVNPropertyValue mergeInfoProp) throws SVNException {
         String mergeInfoString = SVNPropertyValue.getPropertyAsString(mergeInfoProp);
         Map mergeInfo = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(mergeInfoString), null);
-        
-        mergeInfo = SVNMergeInfoUtil.filterMergeInfoByRanges(mergeInfo, myYoungestOldRevision, myOldestOldRevion - 1);
-        
         for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
             String mergeSource = (String) mergeInfoIter.next();
             SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSource);
@@ -522,11 +500,6 @@ public class DefaultLoadHandler implements ISVNLoadHandler {
                 Long revFromMap = (Long) myRevisionsMap.get(new Long(range.getStartRevision()));
                 if (revFromMap != null && SVNRevision.isValidRevisionNumber(revFromMap.longValue())) {
                     range.setStartRevision(revFromMap.longValue());
-                } else if (range.getStartRevision() == myOldestOldRevion - 1) {
-                    revFromMap = (Long) myRevisionsMap.get(new Long(myOldestOldRevion));
-                    if (revFromMap != null && SVNRevision.isValidRevisionNumber(revFromMap.longValue())) {
-                        range.setStartRevision(revFromMap.longValue() - 1);
-                    }
                 }
                 revFromMap = (Long) myRevisionsMap.get(new Long(range.getEndRevision()));
                 if (revFromMap != null && SVNRevision.isValidRevisionNumber(revFromMap.longValue())) {
