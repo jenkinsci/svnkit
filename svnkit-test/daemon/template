@@ -49,6 +49,8 @@ else
    data=$(cat <&3)
 fi
 
+rm "$filename"
+
 # process data with simple regexps
 
 ERR_START="svnkit_err"
