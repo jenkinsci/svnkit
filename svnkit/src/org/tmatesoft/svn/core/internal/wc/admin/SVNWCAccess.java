@@ -412,21 +412,24 @@ public class SVNWCAccess implements ISVNEventHandler {
     
     private void doClose(Map adminAreas, boolean preserveLocks) throws SVNException {
         Set closedAreas = new SVNHashSet();
-        try {
-            for (Iterator paths = adminAreas.keySet().iterator(); paths.hasNext();) {
-                File path = (File) paths.next();
-                SVNAdminArea adminArea = (SVNAdminArea) adminAreas.get(path);
-                if (adminArea == null) {
+        while(!adminAreas.isEmpty()) {
+            Map copy = new SVNHashMap(adminAreas);
+            try {
+                for (Iterator paths = copy.keySet().iterator(); paths.hasNext();) {
+                    File path = (File) paths.next();
+                    SVNAdminArea adminArea = (SVNAdminArea) copy.get(path);
+                    if (adminArea == null) {
+                        closedAreas.add(path);
+                        continue;
+                    }
+                    doClose(adminArea, preserveLocks);
                     closedAreas.add(path);
-                    continue;
                 }
-                doClose(adminArea, preserveLocks);
-                closedAreas.add(path);
-            }
-        } finally {
-            for (Iterator paths = closedAreas.iterator(); paths.hasNext();) {
-                File path = (File) paths.next();
-                adminAreas.remove(path);
+            } finally {
+                for (Iterator paths = closedAreas.iterator(); paths.hasNext();) {
+                    File path = (File) paths.next();
+                    adminAreas.remove(path);
+                }
             }
         }
     }
