@@ -2,6 +2,7 @@
 
 # collect arguments,
 # prepend them with command name and current directory
+filename="x-$$.txt"
 
 args='dir='
 args+=`pwd`
@@ -27,21 +28,21 @@ args+=$SVN_CURRENT_TEST
 
 # add empty line
 args+=' \n\n'
-printf "%b" "$args" > x.txt
+printf "%b" "$args" > "$filename"
 
 # check input
 if [ ! -t 0 ]
 then
-    tee -a x.txt <&0 > /dev/null
+    tee -a $filename <&0 > /dev/null
 fi
-printf "%b" "\0" >> x.txt
+printf "%b" "\0" >> "$filename"
 
 # now send all that to the server
 # use netcat when available
 nc=`which nc`
 if [ -x $nc ]
    then
-    data=`$nc localhost %port% < x.txt`
+    data=`$nc localhost %port% < $filename`
 else
    exec 3<>/dev/tcp/localhost/%port%
    echo -e -n "$args">&3
