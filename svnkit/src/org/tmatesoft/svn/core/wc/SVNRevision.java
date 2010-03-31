@@ -368,6 +368,7 @@ public class SVNRevision {
                                 zoneOffsetInMillis = zoneOffsetInMillis * ((hoursOffset*3600 + 
                                                      minutesOffset*60)*1000);
                                 date.set(Calendar.ZONE_OFFSET, zoneOffsetInMillis);
+                                date.set(Calendar.DST_OFFSET, 0);
                             } else if (pattern == SVN_LOG_DATE_FORMAT_PATTERN && matcher.group(10) != null) {
                                 int zoneOffsetInMillis = "+".equals(matcher.group(11)) ? +1 : -1;
                                 int hoursOffset = Integer.parseInt(matcher.group(12));
@@ -376,6 +377,7 @@ public class SVNRevision {
                                 zoneOffsetInMillis = zoneOffsetInMillis * ((hoursOffset*3600 + 
                                                      minutesOffset*60)*1000);
                                 date.set(Calendar.ZONE_OFFSET, zoneOffsetInMillis);
+                                date.set(Calendar.DST_OFFSET, 0);
                             } else if (((pattern == ISO_8601_EXTENDED_UTC_PATTERN) || (pattern == ISO_8601_BASIC_UTC_PATTERN))
                             		&& "Z".equals(matcher.group(10))) {
                                 date.set(Calendar.ZONE_OFFSET, 0);
