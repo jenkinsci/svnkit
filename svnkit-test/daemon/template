@@ -2,7 +2,7 @@
 
 # collect arguments,
 # prepend them with command name and current directory
-filename="x-$$.txt"
+filename="/tmp/x-$$.txt"
 
 args='dir='
 args+=`pwd`
