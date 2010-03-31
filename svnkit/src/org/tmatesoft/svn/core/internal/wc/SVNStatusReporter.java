@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNURL;
@@ -24,6 +25,7 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -111,6 +113,12 @@ public class SVNStatusReporter implements ISVNReporterBaton, ISVNReporter {
 
     public void linkPath(SVNURL url, String path, String lockToken, long revision, SVNDepth depth, boolean startEmpty) throws SVNException {
         SVNURL rootURL = SVNURLUtil.getCommonURLAncestor(url, myRepositoryLocation);
+        if (rootURL == null) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_URL, 
+                    "Can not determine common ancestor of ''{0}'' and ''{1}'';\nprobably these entries belong to different repositories.", 
+                    new Object[] {url, myRepositoryLocation});
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
         if (SVNPathUtil.getPathAsChild(rootURL.getPath(), myRepositoryLocation.getPath()) != null) {
             myRepositoryLocation = rootURL;
         }
