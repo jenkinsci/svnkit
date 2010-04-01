@@ -258,7 +258,13 @@ public class SVNExternal {
             
             external.myPath = SVNPathUtil.canonicalizePath(external.myPath.replace(File.separatorChar, '/'));
             
-            if (external.myPath.length() == 0 || external.myPath.startsWith("/") || external.myPath.indexOf("/../") > 0 || external.myPath.endsWith("/..")) {
+            if (external.myPath.length() == 0 || 
+                    external.myPath.equals(".") || 
+                    external.myPath.equals("..") || 
+                    external.myPath.startsWith("../") || 
+                    external.myPath.startsWith("/") || 
+                    external.myPath.indexOf("/../") > 0 || 
+                    external.myPath.endsWith("/..")) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                         "Invalid {0} property on ''{1}'': target ''{2}'' is an absolute path or involves ''..''", new Object[] {SVNProperty.EXTERNALS, owner, external.myPath});
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
