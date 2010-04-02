@@ -75,9 +75,12 @@ public class SVNXMLAdminAreaFactory extends SVNAdminAreaFactory {
             SVNErrorManager.error(err, e, SVNLogType.WC);
         } catch (SVNException svne) {
             SVNFileType type = SVNFileType.getType(path);
-            if (type != SVNFileType.DIRECTORY || !formatFile.exists()) { 
+            if (type != SVNFileType.DIRECTORY || !formatFile.isFile()) { 
                 if (type == SVNFileType.NONE) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "''{0}'' does not exist", path);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                } else if (!formatFile.isFile() && adminDir.isDirectory()) { 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_VERSION_FILE_FORMAT, "File ''{0}'' does not exist", formatFile);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
                 return 0;

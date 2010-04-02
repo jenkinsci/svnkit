@@ -94,7 +94,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 
                 if (version > factory.getSupportedVersion()) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                            "This client is too old to work with working copy ''{0}''; please get a newer Subversion client", 
+                            "The path ''{0}'' appears to be part of a Subversion 1.7 or greater\n" +
+                            "working copy.  Please upgrade your Subversion client to use this\n" +
+                            "working copy.", 
                             path);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 } else if (version < factory.getSupportedVersion()) {
@@ -118,6 +120,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 checkWCNG(path.getAbsoluteFile(), path);
             }
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        }
+        if (error.getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+            error.setChildErrorMessage(null);
         }
         SVNErrorManager.error(error, logLevel, SVNLogType.WC);
         return 0;
@@ -152,8 +157,10 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 try {
                     wcFormatVersion = factory.getVersion(path);
                     if (wcFormatVersion > factory.getSupportedVersion()) {                        
-                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
-                                "This client is too old to work with working copy ''{0}''; please get a newer Subversion client",
+                        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                                "The path ''{0}'' appears to be part of a Subversion 1.7 or greater\n" +
+                                "working copy.  Please upgrade your Subversion client to use this\n" +
+                                "working copy.", 
                                 path);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     } else if (wcFormatVersion < factory.getSupportedVersion()) {                        
@@ -183,6 +190,9 @@ public abstract class SVNAdminAreaFactory implements Comparable {
                 checkWCNG(path.getAbsoluteFile(), path);
             }
             error = SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "''{0}'' is not a working copy", path);
+        }
+        if (error.getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+            error.setChildErrorMessage(null);
         }
         SVNErrorManager.error(error, logLevel, SVNLogType.WC);
         return null;
