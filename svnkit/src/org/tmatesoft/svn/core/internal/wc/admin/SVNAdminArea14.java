@@ -1216,7 +1216,7 @@ public class SVNAdminArea14 extends SVNAdminArea {
             url = (String)entry.get(SVNProperty.URL);
         } else if (!isSubDir) {
             url = (String)entry.get(SVNProperty.URL);
-            String expectedURL = SVNPathUtil.append((String)rootEntry.get(SVNProperty.URL), name);
+            String expectedURL = SVNPathUtil.append((String)rootEntry.get(SVNProperty.URL), SVNEncodingUtil.uriEncode(name));
             if (url != null && url.equals(expectedURL)) {
                 url = null;
             }
