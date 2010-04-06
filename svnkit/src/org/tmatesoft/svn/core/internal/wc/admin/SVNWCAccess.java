@@ -30,21 +30,21 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
+import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.ISVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.ISVNFileFetcher;
-import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor15;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeCallback15;
 import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor;
+import org.tmatesoft.svn.core.internal.wc.SVNUpdateEditor15;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -404,6 +404,31 @@ public class SVNWCAccess implements ISVNEventHandler {
                     }
                     // only for missing!
                     tmp.put(childPath, null);
+                }
+                
+                SVNAdminArea childArea = (SVNAdminArea) tmp.get(childPath);                
+                if (childArea != null) {
+                    SVNEntry childRootEntry = childArea.getEntry(childArea.getThisDirName(), false);
+                    SVNEntry thisRootEntry = area.getEntry(childArea.getThisDirName(), false);
+                    
+                    String childRoot = childRootEntry.getRepositoryRoot();
+                    String expectedRoot = thisRootEntry.getRepositoryRoot();
+                    
+                    if (childRoot != null && !childRoot.equals(expectedRoot)) {
+                        Map toClose = new SVNHashMap();
+                        toClose.put(childPath, childArea);
+                        String childPathAbs = childPath.getAbsolutePath().replace(File.separatorChar, '/');
+                        for (Iterator paths = tmp.keySet().iterator(); paths.hasNext();) {
+                            File p = (File) paths.next();
+                            String pAbs = p.getAbsolutePath().replace(File.separatorChar, '/');
+                            if (SVNPathUtil.isAncestor(childPathAbs, pAbs)) {
+                                toClose.put(p, tmp.get(p));
+                                paths.remove();
+                            }
+                        }
+                        tmp.put(childPath, null);
+                        doClose(toClose, false);
+                    }
                 }
             }
         }
