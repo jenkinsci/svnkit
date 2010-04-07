@@ -398,6 +398,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public void displayFileDiff(String path, File file1, File file2,
             String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
+        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: display diff to stream " + result, Level.FINEST);
         path = getDisplayPath(path);
         // if anchor1 is the same as anchor2 just use path.        
         // if anchor1 differs from anchor2 =>
@@ -618,7 +619,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
             }
             QDiffGenerator generator = new QDiffUniGenerator(properties, header);
-            Writer writer = new OutputStreamWriter(result, getEncoding());
+            OutputStreamWriter writer = new OutputStreamWriter(result, getEncoding());
+            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: generate text diff: writer=" + writer + " writer.encoding=" + writer.getEncoding() + " writer.out=" + result, Level.FINEST);
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();
         } catch (IOException e) {
