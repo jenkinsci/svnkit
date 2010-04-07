@@ -38,7 +38,6 @@ import java.util.logging.Logger;
 import org.tmatesoft.svn.core.internal.util.DefaultSVNDebugFormatter;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.test.daemon.SVNCommandDaemon;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.3
@@ -215,10 +214,6 @@ public class PythonTests {
     private static Loggers setupLogging() {
         Loggers loggers = new Loggers();
         loggers.myPythonLogger = setupLogger("python", Level.INFO);
-        loggers.myDefaultLogger = setupLogger(SVNLogType.DEFAULT.getName(), Level.ALL);
-        loggers.myClientLogger = setupLogger(SVNLogType.CLIENT.getName(), Level.ALL);
-        loggers.myNetworkLogger = setupLogger(SVNLogType.NETWORK.getName(), Level.ALL);
-        loggers.myWCLogger = setupLogger(SVNLogType.WC.getName(), Level.ALL);
         return loggers;
     }
 
@@ -253,9 +248,6 @@ public class PythonTests {
 			
 			final String testFile = suiteName + "_tests.py";
 			tokens = tokens.subList(1, tokens.size());
-			if (ourDaemon != null) {
-			    ourDaemon.setTestsType(type);
-			}
 			
 			Handler logHandler = createLogHandler(type + "_" + suiteName + "_python");
 			pythonLogger.addHandler(logHandler);
@@ -767,9 +759,5 @@ public class PythonTests {
     
     private static class Loggers {
         private Logger myPythonLogger;
-        private Logger myWCLogger;
-        private Logger myNetworkLogger;
-        private Logger myClientLogger;
-        private Logger myDefaultLogger; 
     }
 }

@@ -36,7 +36,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNCommandDaemon implements Runnable {
 
-    private String myCurrentTestsType;
     private int myPort;
     private SecurityManager myDefaultSecurityManager;
     
@@ -168,7 +167,7 @@ public class SVNCommandDaemon implements Runnable {
         }
         buffer.close();
         // now parse.
-        SVNCommandDaemonEnvironment environment = new SVNCommandDaemonEnvironment(getTestsType());
+        SVNCommandDaemonEnvironment environment = new SVNCommandDaemonEnvironment();
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buffer.toByteArray()), "UTF-8"));
         while(true) {
             String line = inputReader.readLine();
@@ -192,14 +191,6 @@ public class SVNCommandDaemon implements Runnable {
         buffer.close();
         environment.setStdIn(buffer.toByteArray());
         return environment;
-    }
-    
-    public void setTestsType(String type) {
-        myCurrentTestsType = type;
-    }
-    
-    private String getTestsType() {
-        return myCurrentTestsType;
     }
     
     private byte[] escape(byte[] src) throws IOException {

@@ -11,13 +11,19 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.util.Map;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -29,6 +35,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
 
     private Map myLoggers;
+    private Handler myTestHandler;
 
     public DefaultSVNDebugLogger() {
         myLoggers = new SVNHashMap();
@@ -77,6 +84,21 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
         Logger logger = (Logger) myLoggers.get(logType);
         if (logger == null) {
             logger = Logger.getLogger(logType.getName());
+            String testName = SVNFileUtil.getEnvironmentVariable("SVN_CURRENT_TEST");
+            if (testName != null) {
+                if (myTestHandler == null) {
+                    try {
+                        myTestHandler = createTestLogger(testName);
+                    } catch (IOException e) {}
+                }
+                if (myTestHandler != null) {
+                    Handler[] existingHandlers = logger.getHandlers();
+                    for (int i = 0; i < existingHandlers.length; i++) {
+                        logger.removeHandler(existingHandlers[i]);
+                    }
+                    logger.addHandler(myTestHandler);
+                }
+            }
             myLoggers.put(logType, logger);
         }
         return logger;
@@ -86,4 +108,14 @@ public class DefaultSVNDebugLogger extends SVNDebugLogAdapter {
         return logType.getShortName() + ": " + originalMessage;
     }
 
+    private static Handler createTestLogger(String testName) throws IOException {
+        URL mySource = DefaultSVNDebugLogger.class.getProtectionDomain().getCodeSource().getLocation();
+        File programDir = new File(mySource.getPath()).getParentFile();
+        
+        File logFile = new File(programDir, "../logs/" + testName.trim() + ".log");
+        FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
+        fileHandler.setLevel(Level.FINEST);
+        fileHandler.setFormatter(new DefaultSVNDebugFormatter());
+        return fileHandler;
+    }
 }

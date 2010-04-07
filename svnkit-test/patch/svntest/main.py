@@ -1220,7 +1220,12 @@ class TestRunner:
       # Set this SVNKit specific variable to the current test (test name plus
       # its index) being run so that SVNKit daemon could use this test name
       # for its separate log file
-     os.environ['SVN_CURRENT_TEST'] = os.path.basename(sys.argv[0]) + "_" + \
+      test_name_prefix = "fsfs_"
+      if is_ra_type_svn():
+        test_name_prefix = "svn_"
+      if is_ra_type_dav():
+        test_name_prefix = "dav_"
+      os.environ['SVN_CURRENT_TEST'] = test_name_prefix + os.path.basename(sys.argv[0]) + "_" + \
                                       str(self.index)
 
     actions.no_sleep_for_timestamps()

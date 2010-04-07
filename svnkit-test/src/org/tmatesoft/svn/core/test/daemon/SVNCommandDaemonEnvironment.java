@@ -46,10 +46,8 @@ public class SVNCommandDaemonEnvironment {
     
     private ByteArrayOutputStream myCommandOutput = new ByteArrayOutputStream();
     private ByteArrayOutputStream myCommandError = new ByteArrayOutputStream();
-    private String myTestType;
     
-    public SVNCommandDaemonEnvironment(String testType) {
-        myTestType = testType;
+    public SVNCommandDaemonEnvironment() {
     }
 
     public void addArgumentLine(String line) {
@@ -164,6 +162,6 @@ public class SVNCommandDaemonEnvironment {
     }
 
     private String getPathFromTestName(String prefix, String testName) {
-        return (prefix != null ? prefix : "") + "build/logs/" + (myTestType != null ? myTestType : "") + "_" + testName.trim() + ".log"; 
+        return (prefix != null ? prefix : "") + "build/logs/" + testName.trim() + ".log"; 
     }
 }
