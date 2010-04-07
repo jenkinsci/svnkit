@@ -1459,6 +1459,10 @@ public class SVNFileUtil {
         }
         try {
             return new BufferedInputStream(createFileInputStream(file));
+        } catch (FileNotFoundException nfe) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
+                    "Cannot read from ''{0}'': {1}", new Object[] { file, nfe.getMessage() });
+            SVNErrorManager.error(err, logLevel, logType);
         } catch (IOException e) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, 
                     "Cannot read from ''{0}'': {1}", new Object[] { file, e.getMessage() });
