@@ -29,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.ByteArrayOutputStream;
@@ -45,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 
 /**
  * <b>DefaultSVNDiffGenerator</b> is a default implementation of 
@@ -633,6 +635,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      * @param encoding  charset name 
      */
     public void setEncoding(String encoding) {
+        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: set encoding " + encoding, Level.FINEST);
         myEncoding = encoding;
     }
 
@@ -643,8 +646,10 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public String getEncoding() {
         if (hasEncoding()) {
+            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: get preset encoding " + myEncoding, Level.FINEST);
             return myEncoding;
         }
+        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: get default encoding " + getOptions().getNativeCharset(), Level.FINEST);
         return getOptions().getNativeCharset();
     }
 
@@ -824,6 +829,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             os.write(getEOL());
             return true;
         }
+        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: display header", Level.FINEST);
         os.write("Index: ".getBytes(getEncoding()));
         os.write(path.getBytes(getEncoding()));
         os.write(getEOL());
@@ -833,6 +839,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
     
     protected void displayHeaderFields(OutputStream os, String label1, String label2) throws IOException {
+        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: display header files", Level.FINEST);
         os.write("--- ".getBytes(getEncoding()));
         os.write(label1.getBytes(getEncoding()));
         os.write(getEOL());
