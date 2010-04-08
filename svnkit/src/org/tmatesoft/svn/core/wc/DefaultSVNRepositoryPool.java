@@ -149,7 +149,7 @@ public class DefaultSVNRepositoryPool implements ISVNRepositoryPool, ISVNSession
                 myTimer = ourTimer;
                 try {
                     myTimer.schedule(new TimeoutTask(), 10000);
-                } catch (IllegalArgumentException e) {
+                } catch (IllegalStateException e) {
                     // Timer already cancelled error.
                     SVNDebugLog.getDefaultLog().logError(SVNLogType.DEFAULT, e);
                     
