@@ -150,9 +150,8 @@ public class SVNCharsetConvertor {
         }
     }
 
-    @Override
     public String toString() {
-        final StringBuilder buffer = new StringBuilder();
+        final StringBuffer buffer = new StringBuffer();
         buffer.append("SVNCharsetConvertor");
         buffer.append("[from=").append(myDecoder.charset().displayName());
         buffer.append(", to=").append(myEncoder.charset().displayName());
