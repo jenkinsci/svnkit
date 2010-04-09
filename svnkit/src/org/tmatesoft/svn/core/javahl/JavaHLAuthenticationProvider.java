@@ -14,6 +14,9 @@ package org.tmatesoft.svn.core.javahl;
 import java.io.File;
 import java.security.cert.X509Certificate;
 
+import org.tigris.subversion.javahl.PromptUserPassword;
+import org.tigris.subversion.javahl.PromptUserPassword2;
+import org.tigris.subversion.javahl.PromptUserPassword3;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -25,20 +28,16 @@ import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 
-import org.tigris.subversion.javahl.PromptUserPassword;
-import org.tigris.subversion.javahl.PromptUserPassword2;
-import org.tigris.subversion.javahl.PromptUserPassword3;
-
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
 class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
-    
-    private static final String ADAPTER_DEFAULT_PROMPT_CLASS = 
+
+    private static final String ADAPTER_DEFAULT_PROMPT_CLASS =
         "org.tigris.subversion.svnclientadapter.javahl.AbstractJhlClientAdapter$DefaultPromptUserPassword";
     private PromptUserPassword myPrompt;
-    
+
     public JavaHLAuthenticationProvider(PromptUserPassword prompt){
         myPrompt = prompt;
     }
@@ -70,7 +69,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                     return new SVNSSHAuthentication(userName, password, port, save, url, false);
                 }
             }
-            return null;                        
+            return null;
         } else if (ISVNAuthenticationManager.SSL.equals(kind) && myPrompt instanceof PromptUserPasswordSSL) {
             PromptUserPasswordSSL prompt4 = (PromptUserPasswordSSL) myPrompt;
             if (prompt4.promptSSL(realm, authMayBeStored)) {
@@ -81,10 +80,16 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                         password = null;
                     }
                     boolean save = prompt4.userAllowedSave();
-                    return new SVNSSLAuthentication(new File(cert), password, save, url, false);
+                    if (cert.startsWith(SVNSSLAuthentication.MSCAPI)) {
+                        String alias = null;
+                        if (cert.lastIndexOf(';') > 0) {
+                            alias = cert.substring(cert.lastIndexOf(';') + 1);
+                        }
+                        return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, save, url, false);
+                  }
                 }
             }
-            return null;                        
+            return null;
         }
         if (ISVNAuthenticationManager.SSH.equals(kind) && previousAuth == null) {
             // use configuration file here? but it was already used once...
@@ -113,7 +118,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                     return new SVNUserNameAuthentication(prompt3.getUsername(), prompt3.userAllowedSave(), url, false);
                 }
                 return getDefaultUserNameCredentials(userName);
-            } 
+            }
             if (myPrompt.prompt(realm, userName)) {
                 return new SVNUserNameAuthentication(myPrompt.getUsername(), false, url, false);
             }
@@ -129,14 +134,14 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                     // use default port number from configuration file (should be in previous auth).
                     int portNumber = (previousAuth instanceof SVNSSHAuthentication) ? ((SVNSSHAuthentication) previousAuth).getPortNumber() : -1;
                     return new SVNSSHAuthentication(prompt3.getUsername(), prompt3.getPassword(), portNumber, prompt3.userAllowedSave(), url, false);
-                } 
+                }
                 return new SVNPasswordAuthentication(prompt3.getUsername(), prompt3.getPassword(), prompt3.userAllowedSave(), url, false);
             }
         }else{
             if(myPrompt.prompt(realm, userName)){
                 if (ISVNAuthenticationManager.SSH.equals(kind)) {
                     return new SVNSSHAuthentication(userName, myPrompt.getPassword(), -1, true, url, false);
-                } 
+                }
                 return new SVNPasswordAuthentication(myPrompt.getUsername(), myPrompt.getPassword(), true, url, false);
             }
         }
@@ -154,7 +159,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     public int acceptServerAuthentication(SVNURL url, String realm, Object serverAuth,  boolean resultMayBeStored) {
         if (serverAuth != null && myPrompt instanceof PromptUserPassword2) {
             PromptUserPassword2 sslPrompt = (PromptUserPassword2) myPrompt;
-            serverAuth = serverAuth instanceof X509Certificate ? 
+            serverAuth = serverAuth instanceof X509Certificate ?
                     SVNSSLUtil.getServerCertificatePrompt((X509Certificate) serverAuth, realm, url.getHost()) : serverAuth;
             if (serverAuth == null) {
                 serverAuth = "Unsupported certificate type '" + (serverAuth != null ? serverAuth.getClass().getName() : "null") + "'";
@@ -163,7 +168,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         }
         return ACCEPTED;
     }
-    
+
     private static String getUserName(String userName, SVNURL url) {
         if (userName == null || "".equals(userName.trim())) {
             userName = url != null ? url.getUserInfo() : null;

@@ -59,7 +59,7 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
             }
         };
     }
-    
+
     static class KeyringAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
 
         public SVNAuthentication requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage, SVNAuthentication previousAuth, boolean authMayBeStored) {
@@ -68,8 +68,13 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
             Map info = Platform.getAuthorizationInfo(DEFAULT_URL, realm, kind);
             // convert info to SVNAuthentication.
             if (info != null && ISVNAuthenticationManager.SSL.equals(kind)) {
-                String path = (String) info.get("cert");
+                String sslKind = (String) info.get("ssl-kind");
+                if (sslKind != null && SVNSSLAuthentication.MSCAPI.equals(sslKind)) {
+                    String alias = (String) info.get("alias");
+                    return new SVNSSLAuthentication(sslKind, alias, authMayBeStored, url, false);
+                }
                 String password = (String) info.get("password");
+                String path = (String) info.get("cert");
                 if (path != null) {
                     return new SVNSSLAuthentication(new File(path), password, authMayBeStored, url, false);
                 }
@@ -127,13 +132,18 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
                 }
             } else if (auth instanceof SVNSSLAuthentication) {
                 SVNSSLAuthentication sslAuth = (SVNSSLAuthentication) auth;
-                File path = sslAuth.getCertificateFile();
-                String password = sslAuth.getPassword();
-                if (path != null) {
-                    info.put("cert", path.getAbsolutePath());
-                    if (password != null && !"".equals(password)) {
-                        info.put("password", password);
+                String password = sslAuth.getPassword();                
+                if (password != null && !"".equals(password)) {
+                    info.put("password", password);
+                }
+                if (SVNSSLAuthentication.SSL.equals(sslAuth.getSSLKind())) {
+                    File path = sslAuth.getCertificateFile();
+                    if (path != null) {
+                        info.put("cert", path.getAbsolutePath());
                     }
+                } else if (SVNSSLAuthentication.MSCAPI.equals(sslAuth.getSSLKind())) {
+                    info.put("ssl-kind", sslAuth.getSSLKind());
+                    info.put("alias", sslAuth.getAlias());
                 }
             }
             try {

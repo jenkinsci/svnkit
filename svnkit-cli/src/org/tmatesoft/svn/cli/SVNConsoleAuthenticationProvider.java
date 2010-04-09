@@ -308,21 +308,35 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
             }            
             return new SVNUserNameAuthentication(name, authMayBeStored, url, false);
         } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
+            boolean isMSCAPI = false;
             printRealm(realm);
             String path = null;
             while(path == null) {
-                path = prompt("Client certificate filename");
+                path = prompt("Client certificate filename or 'MSCAPI'");
                 if ("".equals(path)) {
                     continue;
                 }
                 if (path == null) {
                     return null;
                 }
-                File file = new File(path);
-                if (!file.isFile() || !file.canRead()) {
-                    path = null;
-                    continue;
+                if (path.startsWith(SVNSSLAuthentication.MSCAPI)) {
+                    isMSCAPI = true;
+                } else {
+                    File file = new File(path);
+                    if (!file.isFile() || !file.canRead()) {
+                        path = null;
+                        continue;
+                    }
                 }
+            }
+            if (isMSCAPI) {
+                String alias = promptPassword("MSCAPI certificate alias");
+                if (alias == null) {
+                    return null;
+                } else if ("".equals(alias)) {
+                    alias = null;
+                }
+                return new SVNSSLAuthentication(SVNSSLAuthentication.MSCAPI, alias, authMayBeStored, url, false);
             }
             String password = promptPassword("Passphrase for '" + realm + "'");
             if (password == null) {
