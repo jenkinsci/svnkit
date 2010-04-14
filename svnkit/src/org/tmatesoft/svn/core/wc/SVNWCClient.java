@@ -3250,8 +3250,8 @@ public class SVNWCClient extends SVNBasicClient {
                 if (!stealLock && entry.getLockToken() == null) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MISSING_LOCK_TOKEN, "''{0}'' is not locked in this working copy", file);
                     SVNErrorManager.error(err, SVNLogType.WC);
-                }
-                lockInfo.put(entry.getSVNURL(), new LockInfo(file, entry.getLockToken()));
+                }                
+                lockInfo.put(entry.getSVNURL(), new LockInfo(file, stealLock ? null : entry.getLockToken()));
             }
         }
         checkCancelled();
