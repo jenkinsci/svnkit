@@ -1,4 +1,11 @@
 /*.iws
+.idea/compiler.xml
+.idea/copyright
+.idea/dictionaries
+.idea/inspectionProfiles
+.idea/projectCodeStyle.xml
+.idea/uiDesigner.xml
+.idea/workspace.xml
 /bin
 /build
 contrib/javahl/bin
