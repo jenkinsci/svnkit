@@ -663,7 +663,7 @@ public class SVNPatchTarget {
 
         /* Contract keywords. */
         final byte[] eol = target.eolStr.getBytes(); // TODO EOL bytes
-        line.append(SVNTranslator.transalteString(line_raw.toString(), eol, target.keywords, false, false));
+        line.append(SVNTranslator.translateString(line_raw.toString(), eol, target.keywords, false, false));
 
         target.currentLine++;
 
@@ -1099,7 +1099,7 @@ public class SVNPatchTarget {
 
             /* Contract keywords, if any, before matching. */
             final byte[] eol = eol_str.toString().getBytes();
-            hunk_line_translated = SVNTranslator.transalteString(hunkLine.toString(), eol, target.keywords, false, false);
+            hunk_line_translated = SVNTranslator.translateString(hunkLine.toString(), eol, target.keywords, false, false);
 
             linesRead++;
             targetLine.setLength(0);

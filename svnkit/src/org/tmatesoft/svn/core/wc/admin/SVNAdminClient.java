@@ -1694,7 +1694,7 @@ public class SVNAdminClient extends SVNBasicClient {
 
     public static String normalizeString(String string) throws SVNException {
         if (string != null && string.indexOf(SVNProperty.EOL_CR_BYTES[0]) != -1) {
-            return SVNTranslator.transalteString(string, SVNProperty.EOL_LF_BYTES, null, true, false);
+            return SVNTranslator.translateString(string, SVNProperty.EOL_LF_BYTES, null, true, false);
         }
         return null;
     }

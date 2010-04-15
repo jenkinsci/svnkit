@@ -56,7 +56,7 @@ public class SVNTranslator {
 
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    public static String transalteString(String str, byte[] eol, Map keywords, boolean repair, boolean expand) throws SVNException {
+    public static String translateString(String str, byte[] eol, Map keywords, boolean repair, boolean expand) throws SVNException {
         ByteArrayOutputStream bufferOS = new ByteArrayOutputStream();
         OutputStream resultOS = null;
         try {
