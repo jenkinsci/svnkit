@@ -538,13 +538,19 @@ public class SVNUpdateClient extends SVNBasicClient {
             
             String target = "".equals(adminInfo.getTargetName()) ? null : adminInfo.getTargetName();
             long revNumber = getRevisionNumber(revision, repos, path);
-            SVNURL reposRoot = repos.getRepositoryRoot(true);
+            final SVNURL reposRoot = repos.getRepositoryRoot(true);
             wcAccess.setRepositoryRoot(path, reposRoot);
             
-            final SVNRepository repos2 = createRepository(reposRoot, null, null, false);
+            final SVNRepository[] repos2 = new SVNRepository[1];
             ISVNFileFetcher fileFetcher = new ISVNFileFetcher() {
                 public long fetchFile(String path, long revision, OutputStream os, SVNProperties properties) throws SVNException {
-                    return repos2.getFile(path, revision, properties, os);
+                    SVNURL url = reposRoot.appendPath(SVNPathUtil.removeTail(path), false);
+                    if (repos2[0] == null) {
+                        repos2[0] = createRepository(url, null, null, false);
+                    } else {
+                        repos2[0].setLocation(url, false);
+                    }
+                    return repos2[0].getFile(SVNPathUtil.tail(path), revision, properties, os);
                 }
             };
             
@@ -556,7 +562,9 @@ public class SVNUpdateClient extends SVNBasicClient {
             try {
                 repos.update(revNumber, target, depth, sendCopyFrom, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
             } finally {
-                repos2.closeSession();
+                if (repos2[0] != null) {
+                    repos2[0].closeSession();
+                }
             }
 
             long targetRevision = editor.getTargetRevision();
