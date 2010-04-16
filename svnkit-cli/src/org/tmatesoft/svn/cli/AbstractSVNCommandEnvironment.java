@@ -276,7 +276,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         if (hasRelativeURLs) {
             if (rootURL == null) {
                 SVNWCClient wcClient = getClientManager().getWCClient();
-                rootURL = wcClient.getReposRoot(new File("").getAbsoluteFile(), null, SVNRevision.BASE, null, null);
+                rootURL = wcClient.getReposRoot(new File("").getAbsoluteFile(), null, SVNRevision.BASE);
             }
             for (Iterator targetsIter = targets.iterator(); targetsIter.hasNext();) {
                 String target = (String) targetsIter.next();
@@ -473,7 +473,7 @@ public abstract class AbstractSVNCommandEnvironment implements ISVNCanceller {
         SVNURL url = svnPath.isURL() ? svnPath.getURL() : null;
         SVNURL tmpRootURL = null;
         try {
-            tmpRootURL = client.getReposRoot(path, url, svnPath.getPegRevision(), null, null); 
+            tmpRootURL = client.getReposRoot(path, url, svnPath.getPegRevision()); 
         } catch (SVNException svne) {
             SVNErrorMessage err = svne.getErrorMessage();
             if (err.getErrorCode() == SVNErrorCode.ENTRY_NOT_FOUND || err.getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {

@@ -17,18 +17,14 @@ import java.util.Collection;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNCopyDriver;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNPath;
+import org.tmatesoft.svn.core.internal.wc16.SVNCopyClient16;
+import org.tmatesoft.svn.core.internal.wc17.SVNCopyClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNCopyClient</b> provides methods to perform any kinds of copying and moving that SVN
@@ -76,12 +72,16 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since   1.2
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
-public class SVNCopyClient extends SVNCopyDriver {
+public class SVNCopyClient extends SVNBasicClient {
 
 
-    protected ISVNCommitHandler myCommitHandler;
-    protected ISVNCommitParameters myCommitParameters;
-    protected ISVNExternalsHandler myExternalsHandler;    
+    private SVNCopyClient16 getSVNCopyClient16() {
+        return (SVNCopyClient16) getDelegate16();
+    }
+
+    private SVNCopyClient17 getSVNCopyClient17() {
+        return (SVNCopyClient17) getDelegate17();
+    }
 
     /**
      * Constructs and initializes an <b>SVNCopyClient</b> object
@@ -107,7 +107,12 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @param options     a run-time configuration options driver     
      */
     public SVNCopyClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(authManager, options);
+        super(new SVNCopyClient16(authManager, options), new SVNCopyClient17(authManager, options));
+        setCommitParameters(null);
+        setCommitHandler(null);
+        setExternalsHandler(null);
+                
+        setOptions(options);
     }
 
     /**
@@ -129,7 +134,12 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @param options          a run-time configuration options driver
      */
     public SVNCopyClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(repositoryPool, options);
+        super(new SVNCopyClient16(repositoryPool, options), new SVNCopyClient17(repositoryPool, options));
+        setCommitParameters(null);
+        setCommitHandler(null);
+        setExternalsHandler(null);
+                
+        setOptions(options);
     }
 
     /**
@@ -150,7 +160,11 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @see   SVNCommitItem
      */
     public void setCommitHandler(ISVNCommitHandler handler) {
-        myCommitHandler = handler;
+        if (handler == null) {
+            handler = new DefaultSVNCommitHandler();
+        }
+        getSVNCopyClient16().setCommitHandler(handler);
+        getSVNCopyClient17().setCommitHandler(handler);
     }
 
     /**
@@ -164,10 +178,7 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @see     DefaultSVNCommitHandler
      */
     public ISVNCommitHandler getCommitHandler() {
-        if (myCommitHandler == null) {
-            myCommitHandler = new DefaultSVNCommitHandler();
-        }
-        return myCommitHandler;
+        return getSVNCopyClient16().getCommitHandler();
     }
 
     /**
@@ -181,7 +192,11 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @see              #getCommitParameters()
      */
     public void setCommitParameters(ISVNCommitParameters parameters) {
-        myCommitParameters = parameters;
+        if (parameters == null) {
+            parameters = new DefaultSVNCommitParameters();
+        }
+        getSVNCopyClient16().setCommitParameters(parameters);
+        getSVNCopyClient17().setCommitParameters(parameters);
     }
 
     /**
@@ -195,10 +210,7 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @see    #setCommitParameters(ISVNCommitParameters)
      */
     public ISVNCommitParameters getCommitParameters() {
-        if (myCommitParameters == null) {
-            myCommitParameters = new DefaultSVNCommitParameters();
-        }
-       return myCommitParameters;
+        return getSVNCopyClient16().getCommitParameters();
     }
 
     /**
@@ -209,7 +221,11 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @since 1.2
      */
     public void setExternalsHandler(ISVNExternalsHandler externalsHandler) {
-        myExternalsHandler = externalsHandler;
+        if (externalsHandler == null) {
+            externalsHandler = ISVNExternalsHandler.DEFAULT;
+        }
+        getSVNCopyClient16().setExternalsHandler(externalsHandler);
+        getSVNCopyClient17().setExternalsHandler(externalsHandler);
     }
 
     /**
@@ -228,10 +244,7 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @since            1.2
      */
     public ISVNExternalsHandler getExternalsHandler() {
-        if (myExternalsHandler == null) {
-            myExternalsHandler = ISVNExternalsHandler.DEFAULT;
-        }
-        return myExternalsHandler;
+        return getSVNCopyClient16().getExternalsHandler();
     }
 
     /** 
@@ -295,30 +308,11 @@ public class SVNCopyClient extends SVNCopyDriver {
      */
     public void doCopy(SVNCopySource[] sources, File dst, boolean isMove, boolean makeParents, 
             boolean failWhenDstExists) throws SVNException {
-        if (sources.length > 1 && failWhenDstExists) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        sources = expandCopySources(sources);
-        if (sources.length == 0) {
-            return;
-        }
         try {
-            setupCopy(sources, new SVNPath(dst.getAbsolutePath()), isMove, makeParents, null, null, getCommitHandler(), getCommitParameters(), getExternalsHandler());
+            getSVNCopyClient17().doCopy(sources, dst, isMove, makeParents, failWhenDstExists);
         } catch (SVNException e) {
-            SVNErrorCode err = e.getErrorMessage().getErrorCode();
-            if (!failWhenDstExists && sources.length == 1 && (err == SVNErrorCode.ENTRY_EXISTS || err == SVNErrorCode.FS_ALREADY_EXISTS)) {
-                SVNCopySource source = sources[0];
-                String baseName = source.getName();
-                if (source.isURL()) {
-                    baseName = SVNEncodingUtil.uriDecode(baseName);
-                }
-                try {
-                    setupCopy(sources, new SVNPath(new File(dst, baseName).getAbsolutePath()), isMove, 
-                            makeParents, null, null, getCommitHandler(), getCommitParameters(), getExternalsHandler());
-                } catch (SVNException second) {
-                    throw second;
-                }
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNCopyClient16().doCopy(sources, dst, isMove, makeParents, failWhenDstExists);
                 return;
             }
             throw e;
@@ -414,31 +408,11 @@ public class SVNCopyClient extends SVNCopyDriver {
     */
     public SVNCommitInfo doCopy(SVNCopySource[] sources, SVNURL dst, boolean isMove, boolean makeParents, 
             boolean failWhenDstExists, String commitMessage, SVNProperties revisionProperties) throws SVNException {
-        if (sources.length > 1 && failWhenDstExists) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_MULTIPLE_SOURCES_DISALLOWED);
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        sources = expandCopySources(sources);
-        if (sources.length == 0) {
-            return SVNCommitInfo.NULL;
-        }
         try {
-            return setupCopy(sources, new SVNPath(dst.toString()), isMove, makeParents, commitMessage, 
-                    revisionProperties, getCommitHandler(), getCommitParameters(), getExternalsHandler());
+            return getSVNCopyClient17().doCopy(sources, dst, isMove, makeParents, failWhenDstExists, commitMessage, revisionProperties);
         } catch (SVNException e) {
-            SVNErrorCode err = e.getErrorMessage().getErrorCode();
-            if (!failWhenDstExists && sources.length == 1 && (err == SVNErrorCode.ENTRY_EXISTS || err == SVNErrorCode.FS_ALREADY_EXISTS)) {
-                SVNCopySource source = sources[0];
-                String baseName = source.getName();
-                if (!source.isURL()) {
-                    baseName = SVNEncodingUtil.uriEncode(baseName);
-                }
-                try {
-                    return setupCopy(sources, new SVNPath(dst.appendPath(baseName, true).toString()), isMove, 
-                            makeParents, commitMessage, revisionProperties, getCommitHandler(), getCommitParameters(), getExternalsHandler());
-                } catch (SVNException second) {
-                    throw second;
-                }
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNCopyClient16().doCopy(sources, dst, isMove, makeParents, failWhenDstExists, commitMessage, revisionProperties);
             }
             throw e;
         }
@@ -473,6 +447,14 @@ public class SVNCopyClient extends SVNCopyDriver {
      * @since                1.2.0 
      */
     public void doCopy(File nestedWC) throws SVNException {
-        copyDisjointWCToWC(nestedWC);
+        try {
+            getSVNCopyClient17().doCopy(nestedWC);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNCopyClient16().doCopy(nestedWC);
+                return;
+            }
+            throw e;
+        }
     }
 }

@@ -12,55 +12,21 @@
 package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNMergeRange;
 import org.tmatesoft.svn.core.SVNMergeRangeList;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.AbstractDiffCallback;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffCallback;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNDiffStatusEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNRemoteDiffEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNAmbientDepthFilterEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNMergeDriver;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.patch.SVNPatch;
-import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchFileStream;
-import org.tmatesoft.svn.core.internal.wc.patch.SVNPatchTarget;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
-import org.tmatesoft.svn.core.io.SVNCapability;
-import org.tmatesoft.svn.core.io.SVNLocationEntry;
+import org.tmatesoft.svn.core.internal.wc16.SVNDiffClient16;
+import org.tmatesoft.svn.core.internal.wc17.SVNDiffClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNDiffClient</b> class provides methods allowing to get differences
@@ -98,10 +64,15 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since 1.2
  * @author TMate Software Ltd.
  */
-public class SVNDiffClient extends SVNMergeDriver {
+public class SVNDiffClient extends SVNBasicClient {
 
-    private ISVNDiffGenerator myDiffGenerator;
-    private SVNDiffOptions myDiffOptions;
+    private SVNDiffClient16 getSVNDiffClient16() {
+        return (SVNDiffClient16) getDelegate16();
+    }
+
+    private SVNDiffClient17 getSVNDiffClient17() {
+        return (SVNDiffClient17) getDelegate17();
+    }
 
     /**
      * Constructs and initializes an <b>SVNDiffClient</b> object with the
@@ -128,7 +99,11 @@ public class SVNDiffClient extends SVNMergeDriver {
      *            a run-time configuration options driver
      */
     public SVNDiffClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(authManager, options);
+        super(new SVNDiffClient16(authManager, options), new SVNDiffClient17(authManager, options));
+        setDiffGenerator(null);
+        setMergeOptions(null);
+        
+        setOptions(options);
     }
 
     /**
@@ -153,7 +128,12 @@ public class SVNDiffClient extends SVNMergeDriver {
      *            a run-time configuration options driver
      */
     public SVNDiffClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(repositoryPool, options);
+        super(new SVNDiffClient16(repositoryPool, options), new SVNDiffClient17(repositoryPool, options));
+        setDiffGenerator(null);
+        setMergeOptions(null);
+        
+        
+        setOptions(options);
     }
 
     /**
@@ -169,7 +149,11 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @see #getDiffGenerator()
      */
     public void setDiffGenerator(ISVNDiffGenerator diffGenerator) {
-        myDiffGenerator = diffGenerator;
+        if (diffGenerator == null) {
+            diffGenerator = new DefaultSVNDiffGenerator();
+        }
+        getSVNDiffClient16().setDiffGenerator(diffGenerator);
+        getSVNDiffClient17().setDiffGenerator(diffGenerator);
     }
 
     /**
@@ -183,12 +167,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @see #setDiffGenerator(ISVNDiffGenerator)
      */
     public ISVNDiffGenerator getDiffGenerator() {
-        if (myDiffGenerator == null) {
-            DefaultSVNDiffGenerator defaultDiffGenerator = new DefaultSVNDiffGenerator();
-            defaultDiffGenerator.setOptions(getOptions());
-            myDiffGenerator = defaultDiffGenerator;
-        }
-        return myDiffGenerator;
+        return getSVNDiffClient16().getDiffGenerator();
     }
 
     /**
@@ -198,7 +177,11 @@ public class SVNDiffClient extends SVNMergeDriver {
      *            diff options object
      */
     public void setMergeOptions(SVNDiffOptions diffOptions) {
-        myDiffOptions = diffOptions;
+        if (diffOptions == null) {
+            diffOptions = new SVNDiffOptions();
+        }
+        getSVNDiffClient16().setMergeOptions(diffOptions);
+        getSVNDiffClient17().setMergeOptions(diffOptions);
     }
 
     /**
@@ -209,10 +192,7 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @return diff options
      */
     public SVNDiffOptions getMergeOptions() {
-        if (myDiffOptions == null) {
-            myDiffOptions = new SVNDiffOptions();
-        }
-        return myDiffOptions;
+        return getSVNDiffClient16().getMergeOptions();
     }
 
     /**
@@ -254,7 +234,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        doDiff(url, pegRevision, rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
+        try {
+            getSVNDiffClient17().doDiff(url, pegRevision, rN, rM, recursive, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(url, pegRevision, rN, rM, recursive, useAncestry, result);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -304,16 +292,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(SVNURL url, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        try {
+            getSVNDiffClient17().doDiff(url, pegRevision, rN, rM, depth, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(url, pegRevision, rN, rM, depth, useAncestry, result);
+                return;
+            }
+            throw e;
         }
-        if (rN.isLocal() || rM.isLocal()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions must be non-local for a pegged diff of an URL");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        getDiffGenerator().init(url.toString(), url.toString());
-        doDiffURLURL(url, null, rN, url, null, rM, pegRevision, depth, useAncestry, result);
     }
 
     /**
@@ -363,7 +350,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        doDiff(path, pegRevision, rN, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
+        try {
+            getSVNDiffClient17().doDiff(path, pegRevision, rN, rM, recursive, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(path, pegRevision, rN, rM, recursive, useAncestry, result);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -395,17 +390,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File[] paths, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        if (paths == null) {
-            return;
-        }
-
-        for (int i = 0; i < paths.length; i++) {
-            File path = paths[i];
-            try {
-                doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
-            } catch (SVNException svne) {
-                dispatchEvent(SVNEventFactory.createErrorEvent(svne.getErrorMessage(), null));
+        try {
+            getSVNDiffClient17().doDiff(paths, rN, rM, pegRevision, depth, useAncestry, result, changeLists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(paths, rN, rM, pegRevision, depth, useAncestry, result, changeLists);
+                return;
             }
+            throw e;
         }
     }
 
@@ -468,27 +460,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File path, SVNRevision pegRevision, SVNRevision rN, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        boolean rNisLocal = rN == SVNRevision.BASE || rN == SVNRevision.WORKING;
-        boolean rMisLocal = rM == SVNRevision.BASE || rM == SVNRevision.WORKING;
-        if (rNisLocal && rMisLocal) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "At least one revision must be non-local for a pegged diff");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        path = path.getAbsoluteFile();
-        getDiffGenerator().init(path.getAbsolutePath(), path.getAbsolutePath());
-        if (!(rM == SVNRevision.BASE || rM == SVNRevision.WORKING || rM == SVNRevision.COMMITTED)) {
-            if ((rN == SVNRevision.BASE || rN == SVNRevision.WORKING || rN == SVNRevision.COMMITTED)) {
-                doDiffURLWC(path, rM, pegRevision, path, rN, true, depth, useAncestry, result, changeLists);
-            } else {
-                doDiffURLURL(null, path, rN, null, path, rM, pegRevision, depth, useAncestry, result);
+        try {
+            getSVNDiffClient17().doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(path, pegRevision, rN, rM, depth, useAncestry, result, changeLists);
+                return;
             }
-        } else {
-            // head, prev,date,number will go here.
-            doDiffURLWC(path, rN, pegRevision, path, rM, false, depth, useAncestry, result, changeLists);
+            throw e;
         }
     }
 
@@ -529,7 +508,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        doDiff(url1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result);
+        try {
+            getSVNDiffClient17().doDiff(url1, rN, url2, rM, recursive, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(url1, rN, url2, rM, recursive, useAncestry, result);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -617,12 +604,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result) throws SVNException {
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
+        try {
+            getSVNDiffClient17().doDiff(url1, rN, url2, rM, depth, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(url1, rN, url2, rM, depth, useAncestry, result);
+                return;
+            }
+            throw e;
         }
-        getDiffGenerator().init(url1.toString(), url2.toString());
-        doDiffURLURL(url1, null, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, result);
     }
 
     /**
@@ -672,7 +662,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        doDiff(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
+        try {
+            getSVNDiffClient17().doDiff(path1, rN, url2, rM, recursive, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(path1, rN, url2, rM, recursive, useAncestry, result);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -780,15 +778,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        getDiffGenerator().init(path1.getAbsolutePath(), url2.toString());
-        if (rN == SVNRevision.BASE || rN == SVNRevision.WORKING) {
-            doDiffURLWC(url2, rM, SVNRevision.UNDEFINED, path1, rN, true, depth, useAncestry, result, changeLists);
-        } else {
-            doDiffURLURL(null, path1, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, result);
+        try {
+            getSVNDiffClient17().doDiff(path1, rN, url2, rM, depth, useAncestry, result, changeLists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(path1, rN, url2, rM, depth, useAncestry, result, changeLists);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -839,7 +836,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * 
      */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        doDiff(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
+        try {
+            getSVNDiffClient17().doDiff(url1, rN, path2, rM, recursive, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(url1, rN, path2, rM, recursive, useAncestry, result);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -946,15 +951,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        getDiffGenerator().init(url1.toString(), path2.getAbsolutePath());
-        if (rM == SVNRevision.BASE || rM == SVNRevision.WORKING) {
-            doDiffURLWC(url1, rN, SVNRevision.UNDEFINED, path2, rM, false, depth, useAncestry, result, changeLists);
-        } else {
-            doDiffURLURL(url1, null, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, result);
+        try {
+            getSVNDiffClient17().doDiff(url1, rN, path2, rM, depth, useAncestry, result, changeLists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(url1, rN, path2, rM, depth, useAncestry, result, changeLists);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -1024,7 +1028,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, OutputStream result) throws SVNException {
-        doDiff(path1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, result, null);
+        try {
+            getSVNDiffClient17().doDiff(path1, rN, path2, rM, recursive, useAncestry, result);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(path1, rN, path2, rM, recursive, useAncestry, result);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1134,22 +1146,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiff(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-
-        boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE;
-        boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
-        getDiffGenerator().init(path1.getAbsolutePath(), path2.getAbsolutePath());
-        if (isPath1Local && isPath2Local) {
-            doDiffWCWC(path1, rN, path2, rM, depth, useAncestry, result, changeLists);
-        } else if (isPath1Local) {
-            doDiffURLWC(path2, rM, SVNRevision.UNDEFINED, path1, rN, true, depth, useAncestry, result, changeLists);
-        } else if (isPath2Local) {
-            doDiffURLWC(path1, rN, SVNRevision.UNDEFINED, path2, rM, false, depth, useAncestry, result, changeLists);
-        } else {
-            doDiffURLURL(null, path1, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, result);
+        try {
+            getSVNDiffClient17().doDiff(path1, rN, path2, rM, depth, useAncestry, result, changeLists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiff(path1, rN, path2, rM, depth, useAncestry, result, changeLists);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -1181,7 +1185,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(path1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
+        try {
+            getSVNDiffClient17().doDiffStatus(path1, rN, path2, rM, recursive, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(path1, rN, path2, rM, recursive, useAncestry, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1232,26 +1244,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(File path, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        if (handler == null) {
-            return;
+        try {
+            getSVNDiffClient17().doDiffStatus(path, rN, rM, pegRevision, depth, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(path, rN, rM, pegRevision, depth, useAncestry, handler);
+                return;
+            }
+            throw e;
         }
-
-        if (pegRevision == null) {
-            pegRevision = SVNRevision.UNDEFINED;
-        }
-
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-
-        boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE;
-        boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
-        if (isPath1Local || isPath2Local) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        doDiffURLURL(null, path, rN, null, path, rM, pegRevision, depth, useAncestry, handler);
     }
 
     /**
@@ -1302,21 +1303,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(File path1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        if (handler == null) {
-            return;
+        try {
+            getSVNDiffClient17().doDiffStatus(path1, rN, path2, rM, depth, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(path1, rN, path2, rM, depth, useAncestry, handler);
+                return;
+            }
+            throw e;
         }
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-
-        boolean isPath1Local = rN == SVNRevision.WORKING || rN == SVNRevision.BASE;
-        boolean isPath2Local = rM == SVNRevision.WORKING || rM == SVNRevision.BASE;
-        if (isPath1Local || isPath2Local) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        doDiffURLURL(null, path1, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
     }
 
     /**
@@ -1347,7 +1342,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(path1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
+        try {
+            getSVNDiffClient17().doDiffStatus(path1, rN, url2, rM, recursive, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(path1, rN, url2, rM, recursive, useAncestry, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1398,18 +1401,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(File path1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        if (handler == null) {
-            return;
-        }
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Not all required revisions are specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        if (rN == SVNRevision.BASE || rN == SVNRevision.WORKING) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        } else {
-            doDiffURLURL(null, path1, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
+        try {
+            getSVNDiffClient17().doDiffStatus(path1, rN, url2, rM, depth, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(path1, rN, url2, rM, depth, useAncestry, handler);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -1441,7 +1440,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(url1, rN, path2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
+        try {
+            getSVNDiffClient17().doDiffStatus(url1, rN, path2, rM, recursive, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(url1, rN, path2, rM, recursive, useAncestry, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1492,18 +1499,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, File path2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        if (handler == null) {
-            return;
-        }
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        if (rM == SVNRevision.BASE || rM == SVNRevision.WORKING) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Summarizing diff can only compare repository to repository");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        } else {
-            doDiffURLURL(url1, null, rN, null, path2, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
+        try {
+            getSVNDiffClient17().doDiffStatus(url1, rN, path2, rM, depth, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(url1, rN, path2, rM, depth, useAncestry, handler);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -1535,7 +1538,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, boolean recursive, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        doDiffStatus(url1, rN, url2, rM, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, handler);
+        try {
+            getSVNDiffClient17().doDiffStatus(url1, rN, url2, rM, recursive, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(url1, rN, url2, rM, recursive, useAncestry, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1586,19 +1597,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(SVNURL url, SVNRevision rN, SVNRevision rM, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        if (handler == null) {
-            return;
+        try {
+            getSVNDiffClient17().doDiffStatus(url, rN, rM, pegRevision, depth, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(url, rN, rM, pegRevision, depth, useAncestry, handler);
+                return;
+            }
+            throw e;
         }
-
-        if (pegRevision == null) {
-            pegRevision = SVNRevision.UNDEFINED;
-        }
-
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        doDiffURLURL(url, null, rN, url, null, rM, pegRevision, depth, useAncestry, handler);
     }
 
     /**
@@ -1640,14 +1647,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doDiffStatus(SVNURL url1, SVNRevision rN, SVNURL url2, SVNRevision rM, SVNDepth depth, boolean useAncestry, ISVNDiffStatusHandler handler) throws SVNException {
-        if (handler == null) {
-            return;
+        try {
+            getSVNDiffClient17().doDiffStatus(url1, rN, url2, rM, depth, useAncestry, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doDiffStatus(url1, rN, url2, rM, depth, useAncestry, handler);
+                return;
+            }
+            throw e;
         }
-        if (!rN.isValid() || !rM.isValid()) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Both rN and rM revisions should be specified");
-            SVNErrorManager.error(err, SVNLogType.DEFAULT);
-        }
-        doDiffURLURL(url1, null, rN, url2, null, rM, SVNRevision.UNDEFINED, depth, useAncestry, handler);
     }
 
     /**
@@ -1704,7 +1712,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        doMerge(path1, revision1, path2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, force, dryRun, false);
+        try {
+            getSVNDiffClient17().doMerge(path1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(path1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1808,25 +1824,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        path1 = path1.getAbsoluteFile();
-        path2 = path2.getAbsoluteFile();
-        dstPath = dstPath.getAbsoluteFile();
-        /*
-         * Same as 2. merge sourceWCPATH1@N sourceWCPATH2@M [WCPATH] or 3. merge
-         * -r N:M SOURCE[@REV] [WCPATH] where SOURCE is a path and path1 and
-         * path2 are the same.
-         */
-        SVNURL url1 = getURL(path1);
-        if (url1 == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
-            SVNErrorManager.error(err, SVNLogType.WC);
+        try {
+            getSVNDiffClient17().doMerge(path1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(path1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+                return;
+            }
+            throw e;
         }
-        SVNURL url2 = getURL(path2);
-        if (url2 == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
 
     /**
@@ -1880,7 +1886,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        doMerge(path1, revision1, url2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, force, dryRun, false);
+        try {
+            getSVNDiffClient17().doMerge(path1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(path1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -1984,14 +1998,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        path1 = path1.getAbsoluteFile();
-        dstPath = dstPath.getAbsoluteFile();
-        SVNURL url1 = getURL(path1);
-        if (url1 == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path1);
-            SVNErrorManager.error(err, SVNLogType.WC);
+        try {
+            getSVNDiffClient17().doMerge(path1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(path1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+                return;
+            }
+            throw e;
         }
-        runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
 
     /**
@@ -2044,7 +2059,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      *             instead
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun) throws SVNException {
-        doMerge(url1, revision1, path2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, force, dryRun, false);
+        try {
+            getSVNDiffClient17().doMerge(url1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(url1, revision1, path2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2148,14 +2171,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, File path2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        path2 = path2.getAbsoluteFile();
-        dstPath = dstPath.getAbsoluteFile();
-        SVNURL url2 = getURL(path2);
-        if (url2 == null) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", path2);
-            SVNErrorManager.error(err, SVNLogType.WC);
+        try {
+            getSVNDiffClient17().doMerge(url1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(url1, revision1, path2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+                return;
+            }
+            throw e;
         }
-        runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
 
     /**
@@ -2211,7 +2235,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun)
             throws SVNException {
-        doMerge(url1, revision1, url2, revision2, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, force, dryRun, false);
+        try {
+            getSVNDiffClient17().doMerge(url1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(url1, revision1, url2, revision2, dstPath, recursive, useAncestry, force, dryRun);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2312,7 +2344,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision revision1, SVNURL url2, SVNRevision revision2, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        runMerge(url1, revision1, url2, revision2, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
+        try {
+            getSVNDiffClient17().doMerge(url1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(url1, revision1, url2, revision2, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2368,10 +2408,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun)
             throws SVNException {
-        SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
-        List rangesToMerge = new LinkedList();
-        rangesToMerge.add(range);
-        doMerge(url1, pegRevision, rangesToMerge, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, force, dryRun, false);
+        try {
+            getSVNDiffClient17().doMerge(url1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(url1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2425,10 +2470,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(SVNURL url1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.HEAD;
+        try {
+            getSVNDiffClient17().doMerge(url1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(url1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+                return;
+            }
+            throw e;
         }
-        runPeggedMerge(url1, null, rangesToMerge, pegRevision, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
 
     /**
@@ -2488,10 +2538,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision pegRevision, SVNRevision revision1, SVNRevision revision2, File dstPath, boolean recursive, boolean useAncestry, boolean force, boolean dryRun)
             throws SVNException {
-        SVNRevisionRange range = new SVNRevisionRange(revision1, revision2);
-        List rangesToMerge = new LinkedList();
-        rangesToMerge.add(range);
-        doMerge(path1, pegRevision, rangesToMerge, dstPath, SVNDepth.getInfinityOrFilesDepth(recursive), useAncestry, force, dryRun, false);
+        try {
+            getSVNDiffClient17().doMerge(path1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(path1, pegRevision, revision1, revision2, dstPath, recursive, useAncestry, force, dryRun);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2545,14 +2600,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doMerge(File path1, SVNRevision pegRevision, Collection rangesToMerge, File dstPath, SVNDepth depth, boolean useAncestry, boolean force, boolean dryRun, boolean recordOnly)
             throws SVNException {
-        /*
-         * Equivalent of 3. merge -r N:M SOURCE[@REV] [WCPATH] where SOURCE is a
-         * wc path.
-         */
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.WORKING;
+        try {
+            getSVNDiffClient17().doMerge(path1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMerge(path1, pegRevision, rangesToMerge, dstPath, depth, useAncestry, force, dryRun, recordOnly);
+                return;
+            }
+            throw e;
         }
-        runPeggedMerge(null, path1, rangesToMerge, pegRevision, dstPath, depth, dryRun, force, !useAncestry, recordOnly);
     }
 
     /**
@@ -2598,10 +2654,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doMergeReIntegrate(File srcPath, SVNRevision pegRevision, File dstPath, boolean dryRun) throws SVNException {
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.WORKING;
+        try {
+            getSVNDiffClient17().doMergeReIntegrate(srcPath, pegRevision, dstPath, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMergeReIntegrate(srcPath, pegRevision, dstPath, dryRun);
+                return;
+            }
+            throw e;
         }
-        runMergeReintegrate(null, srcPath, pegRevision, dstPath, dryRun);
     }
 
     /**
@@ -2647,10 +2708,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public void doMergeReIntegrate(SVNURL srcURL, SVNRevision pegRevision, File dstPath, boolean dryRun) throws SVNException {
-        if (pegRevision == null || !pegRevision.isValid()) {
-            pegRevision = SVNRevision.HEAD;
+        try {
+            getSVNDiffClient17().doMergeReIntegrate(srcURL, pegRevision, dstPath, dryRun);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doMergeReIntegrate(srcURL, pegRevision, dstPath, dryRun);
+                return;
+            }
+            throw e;
         }
-        runMergeReintegrate(srcURL, null, pegRevision, dstPath, dryRun);
     }
 
     /**
@@ -2695,7 +2761,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogMergedMergeInfoImpl(path, null, pegRevision, mergeSrcURL, null, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2740,7 +2814,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogMergedMergeInfoImpl(null, url, pegRevision, mergeSrcURL, null, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2785,7 +2867,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogMergedMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogMergedMergeInfoImpl(path, null, pegRevision, null, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2830,7 +2920,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogMergedMergeInfoImpl(null, url, pegRevision, null, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2875,7 +2973,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogEligibleMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogEligibleMergeInfoImpl(path, null, pegRevision, mergeSrcURL, null, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2920,7 +3026,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogEligibleMergeInfoImpl(null, url, pegRevision, mergeSrcURL, null, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -2965,7 +3079,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogEligibleMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogEligibleMergeInfoImpl(path, null, pegRevision, null, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -3010,7 +3132,15 @@ public class SVNDiffClient extends SVNMergeDriver {
      */
     public void doGetLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties,
             ISVNLogEntryHandler handler) throws SVNException {
-        getLogEligibleMergeInfoImpl(null, url, pegRevision, null, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        try {
+            getSVNDiffClient17().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -3044,23 +3174,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public Map doGetMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
-        SVNURL reposRoot[] = new SVNURL[1];
-        Map mergeInfo = getMergeInfo(path, pegRevision, reposRoot);
-        SVNURL repositoryRoot = reposRoot[0];
-        if (mergeInfo != null) {
-            Map fullPathMergeInfo = new SVNHashMap();
-            for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
-                String mergeSrcPath = (String) paths.next();
-                SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
-                if (mergeSrcPath.startsWith("/")) {
-                    mergeSrcPath = mergeSrcPath.substring(1);
-                }
-                SVNURL url = repositoryRoot.appendPath(mergeSrcPath, false);
-                fullPathMergeInfo.put(url, rangeList);
+        try {
+            return getSVNDiffClient17().doGetMergedMergeInfo(path, pegRevision);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNDiffClient16().doGetMergedMergeInfo(path, pegRevision);
             }
-            mergeInfo = fullPathMergeInfo;
+            throw e;
         }
-        return mergeInfo;
     }
 
     /**
@@ -3094,23 +3215,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public Map doGetMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        SVNURL reposRoot[] = new SVNURL[1];
-        Map mergeInfo = getMergeInfo(url, pegRevision, reposRoot);
-        SVNURL repositoryRoot = reposRoot[0];
-        if (mergeInfo != null) {
-            Map fullPathMergeInfo = new SVNHashMap();
-            for (Iterator paths = mergeInfo.keySet().iterator(); paths.hasNext();) {
-                String mergeSrcPath = (String) paths.next();
-                SVNMergeRangeList rangeList = (SVNMergeRangeList) mergeInfo.get(mergeSrcPath);
-                if (mergeSrcPath.startsWith("/")) {
-                    mergeSrcPath = mergeSrcPath.substring(1);
-                }
-                SVNURL nextURL = repositoryRoot.appendPath(mergeSrcPath, false);
-                fullPathMergeInfo.put(nextURL, rangeList);
+        try {
+            return getSVNDiffClient17().doGetMergedMergeInfo(url, pegRevision);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNDiffClient16().doGetMergedMergeInfo(url, pegRevision);
             }
-            mergeInfo = fullPathMergeInfo;
+            throw e;
         }
-        return mergeInfo;
     }
 
     /**
@@ -3127,27 +3239,14 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public Collection doSuggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
-        LinkedList suggestions = new LinkedList();
-        SVNURL reposRoot = getReposRoot(path, null, pegRevision, null, null);
-        SVNLocationEntry copyFromInfo = getCopySource(path, null, pegRevision);
-        String copyFromPath = copyFromInfo.getPath();
-        SVNURL copyFromURL = null;
-        if (copyFromPath != null) {
-            String relCopyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath;
-            copyFromURL = reposRoot.appendPath(relCopyFromPath, false);
-            suggestions.add(copyFromURL);
-        }
-
-        Map mergeInfo = doGetMergedMergeInfo(path, pegRevision);
-        if (mergeInfo != null) {
-            for (Iterator mergeSrcURLs = mergeInfo.keySet().iterator(); mergeSrcURLs.hasNext();) {
-                SVNURL mergeSrcURL = (SVNURL) mergeSrcURLs.next();
-                if (copyFromURL == null || !copyFromURL.equals(mergeSrcURL)) {
-                    suggestions.add(mergeSrcURL);
-                }
+        try {
+            return getSVNDiffClient17().doSuggestMergeSources(path, pegRevision);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNDiffClient16().doSuggestMergeSources(path, pegRevision);
             }
+            throw e;
         }
-        return suggestions;
     }
 
     /**
@@ -3164,485 +3263,26 @@ public class SVNDiffClient extends SVNMergeDriver {
      * @since 1.2, SVN 1.5
      */
     public Collection doSuggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        LinkedList suggestions = new LinkedList();
-        SVNURL reposRoot = getReposRoot(null, url, pegRevision, null, null);
-        SVNLocationEntry copyFromInfo = getCopySource(null, url, pegRevision);
-        String copyFromPath = copyFromInfo.getPath();
-
-        SVNURL copyFromURL = null;
-        if (copyFromPath != null) {
-            String relCopyFromPath = copyFromPath.startsWith("/") ? copyFromPath.substring(1) : copyFromPath;
-            copyFromURL = reposRoot.appendPath(relCopyFromPath, false);
-            suggestions.add(copyFromURL);
-        }
-
-        Map mergeInfo = doGetMergedMergeInfo(url, pegRevision);
-        if (mergeInfo != null) {
-            for (Iterator mergeSrcURLs = mergeInfo.keySet().iterator(); mergeSrcURLs.hasNext();) {
-                SVNURL mergeSrcURL = (SVNURL) mergeSrcURLs.next();
-                if (copyFromURL == null || !copyFromURL.equals(mergeSrcURL)) {
-                    suggestions.add(mergeSrcURL);
-                }
-            }
-        }
-        return suggestions;
-    }
-
-    private void doDiffURLWC(SVNURL url1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result,
-            Collection changeLists) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
         try {
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, SVNDepth.recurseFromDepth(depth) ? SVNWCAccess.INFINITE_DEPTH : 0);
-            File anchorPath = info.getAnchor().getRoot();
-            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-
-            SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
-            if (anchorEntry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err, SVNLogType.WC);
+            return getSVNDiffClient17().doSuggestMergeSources(url, pegRevision);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNDiffClient16().doSuggestMergeSources(url, pegRevision);
             }
-            SVNURL anchorURL = anchorEntry.getSVNURL();
-            if (pegRevision.isValid()) {
-                SVNRepositoryLocation[] locations = getLocations(url1, null, null, pegRevision, revision1, SVNRevision.UNDEFINED);
-                url1 = locations[0].getURL();
-                String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
-                getDiffGenerator().init(url1.toString(), anchorPath2);
-            }
-            SVNRepository repository = createRepository(anchorURL, null, null, true);
-            long revNumber = getRevisionNumber(revision1, repository, null);
-            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), getDiffGenerator(), reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /*
-                                                                                                                                                                                        * compare
-                                                                                                                                                                                        * to
-                                                                                                                                                                                        * base
-                                                                                                                                                                                        */, depth,
-                    changeLists);
-            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, !serverSupportsDepth, depth, false, false, true, getDebugLog());
-
-            long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
-            try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-            } finally {
-                editor.cleanup();
-            }
-        } finally {
-            wcAccess.close();
+            throw e;
         }
-    }
-
-    private void doDiffURLWC(File path1, SVNRevision revision1, SVNRevision pegRevision, File path2, SVNRevision revision2, boolean reverse, SVNDepth depth, boolean useAncestry, OutputStream result,
-            Collection changeLists) throws SVNException {
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            int admDepth = getAdminDepth(depth);
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path2, false, admDepth);
-            File anchorPath = info.getAnchor().getRoot();
-            String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-
-            SVNEntry anchorEntry = info.getAnchor().getVersionedEntry("", false);
-            if (anchorEntry.getURL() == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "''{0}'' has no URL", anchorPath);
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            SVNURL url1;
-            SVNURL anchorURL = anchorEntry.getSVNURL();
-            if (pegRevision.isValid()) {
-                SVNRepositoryLocation[] locations = getLocations(null, path1, null, pegRevision, revision1, SVNRevision.UNDEFINED);
-                url1 = locations[0].getURL();
-                String anchorPath2 = SVNPathUtil.append(anchorURL.toString(), target == null ? "" : target);
-                if (!reverse) {
-                    getDiffGenerator().init(url1.toString(), anchorPath2);
-                } else {
-                    getDiffGenerator().init(anchorPath2, url1.toString());
-                }
-            } else {
-                url1 = getURL(path1);
-            }
-            SVNRepository repository = createRepository(anchorURL, null, null, true);
-            long revNumber = getRevisionNumber(revision1, repository, path1);
-            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), getDiffGenerator(), reverse ? -1 : revNumber, reverse ? revNumber : -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, reverse /* reverse */, revision2 == SVNRevision.BASE || revision2 == SVNRevision.COMMITTED /*
-                                                                                                                                                                                        * compare
-                                                                                                                                                                                        * to
-                                                                                                                                                                                        * base
-                                                                                                                                                                                        */, depth,
-                    changeLists);
-            ISVNEditor filterEditor = SVNAmbientDepthFilterEditor.wrap(editor, info, false);
-            boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-            SVNReporter reporter = new SVNReporter(info, info.getAnchor().getFile(info.getTargetName()), false, !serverSupportsDepth, depth, false, false, true, getDebugLog());
-
-            // this should be rev2.
-            long pegRevisionNumber = getRevisionNumber(revision2, repository, path2);
-            try {
-                repository.diff(url1, revNumber, pegRevisionNumber, target, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(filterEditor, this, getDebugLog()));
-            } finally {
-                editor.cleanup();
-            }
-        } finally {
-            wcAccess.close();
-        }
-    }
-
-    private void doDiffWCWC(File path1, SVNRevision revision1, File path2, SVNRevision revision2, SVNDepth depth, boolean useAncestry, OutputStream result, Collection changeLists) throws SVNException {
-        if (!path1.equals(path2) || !(revision1 == SVNRevision.BASE && revision2 == SVNRevision.WORKING)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, "Only diffs between a path's text-base and its working files are supported at this time (-rBASE:WORKING)");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-
-        SVNWCAccess wcAccess = createWCAccess();
-        try {
-            int admDepth = getAdminDepth(depth);
-            SVNAdminAreaInfo info = wcAccess.openAnchor(path1, false, admDepth);
-            wcAccess.getVersionedEntry(path1, false);
-            long rev = getRevisionNumber(revision1, null, path1);
-            AbstractDiffCallback callback = new SVNDiffCallback(info.getAnchor(), getDiffGenerator(), rev, -1, result);
-            SVNDiffEditor editor = new SVNDiffEditor(wcAccess, info, callback, useAncestry, false, false, depth, changeLists);
-            try {
-                editor.closeEdit();
-            } finally {
-                editor.cleanup();
-            }
-        } finally {
-            wcAccess.close();
-        }
-    }
-
-    private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
-            OutputStream result) throws SVNException {
-        File basePath = null;
-        if (path1 != null) {
-            basePath = path1;
-        }
-        if (path2 != null) {
-            basePath = path2;
-        }
-        if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
-            url1 = locations[0].getURL();
-            url2 = locations[1].getURL();
-
-            getDiffGenerator().init(url1.toString(), url2.toString());
-        } else {
-            url1 = url1 == null ? getURL(path1) : url1;
-            url2 = url2 == null ? getURL(path2) : url2;
-        }
-        SVNRepository repository1 = createRepository(url1, null, null, true);
-        SVNRepository repository2 = createRepository(url2, null, null, false);
-
-        final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = -1;
-        String target1 = null;
-        SVNNodeKind kind1 = null;
-        SVNNodeKind kind2 = null;
-        try {
-            rev2 = getRevisionNumber(revision2, repository2, path2);
-            kind1 = repository1.checkPath("", rev1);
-            kind2 = repository2.checkPath("", rev2);
-            if (kind1 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}", new Object[] {
-                        url1, new Long(rev1)
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            } else if (kind2 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}", new Object[] {
-                        url2, new Long(rev2)
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-        } finally {
-            repository2.closeSession();
-        }
-        if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
-            target1 = SVNPathUtil.tail(url1.getPath());
-            if (basePath != null) {
-                basePath = basePath.getParentFile();
-            }
-            url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-            repository1 = createRepository(url1, null, null, true);
-        }
-        repository2 = createRepository(url1, null, null, false);
-        SVNRemoteDiffEditor editor = null;
-        try {
-            SVNDiffCallback callback = new SVNDiffCallback(null, getDiffGenerator(), rev1, rev2, result);
-            callback.setBasePath(basePath);
-            editor = new SVNRemoteDiffEditor(null, null, callback, repository2, rev1, rev2, false, null, this);
-            editor.setUseGlobalTmp(true);
-            ISVNReporterBaton reporter = new ISVNReporterBaton() {
-
-                public void report(ISVNReporter reporter) throws SVNException {
-                    // TODO(sd): dynamic depth here
-                    reporter.setPath("", null, rev1, SVNDepth.INFINITY, false);
-                    reporter.finishReport();
-                }
-            };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, depth, true, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-        } finally {
-            if (editor != null) {
-                editor.cleanup();
-            }
-            repository2.closeSession();
-        }
-    }
-
-    private void doDiffURLURL(SVNURL url1, File path1, SVNRevision revision1, SVNURL url2, File path2, SVNRevision revision2, SVNRevision pegRevision, SVNDepth depth, boolean useAncestry,
-            ISVNDiffStatusHandler handler) throws SVNException {
-        File basePath = null;
-        if (path1 != null) {
-            basePath = path1;
-        }
-        if (path2 != null) {
-            basePath = path2;
-        }
-        if (pegRevision.isValid()) {
-            SVNRepositoryLocation[] locations = getLocations(url2, path2, null, pegRevision, revision1, revision2);
-            url1 = locations[0].getURL();
-            url2 = locations[1].getURL();
-
-            getDiffGenerator().init(url1.toString(), url2.toString());
-        } else {
-            url1 = url1 == null ? getURL(path1) : url1;
-            url2 = url2 == null ? getURL(path2) : url2;
-        }
-        SVNRepository repository1 = createRepository(url1, null, null, true);
-        SVNRepository repository2 = createRepository(url2, null, null, false);
-
-        final long rev1 = getRevisionNumber(revision1, repository1, path1);
-        long rev2 = -1;
-        SVNNodeKind kind1 = null;
-        SVNNodeKind kind2 = null;
-        String target1 = null;
-
-        try {
-            rev2 = getRevisionNumber(revision2, repository2, path2);
-
-            kind1 = repository1.checkPath("", rev1);
-            kind2 = repository2.checkPath("", rev2);
-            if (kind1 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}", new Object[] {
-                        url1, new Long(rev1)
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            } else if (kind2 == SVNNodeKind.NONE) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "''{0}'' was not found in the repository at revision {1}", new Object[] {
-                        url2, new Long(rev2)
-                });
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            if (kind1 == SVNNodeKind.FILE || kind2 == SVNNodeKind.FILE) {
-                target1 = SVNPathUtil.tail(url1.getPath());
-                if (basePath != null) {
-                    basePath = basePath.getParentFile();
-                }
-                url1 = SVNURL.parseURIEncoded(SVNPathUtil.removeTail(url1.toString()));
-                repository1 = createRepository(url1, null, null, true);
-            }
-        } finally {
-            repository2.closeSession();
-        }
-        repository2 = createRepository(url1, null, null, false);
-        File tmpFile = getDiffGenerator().createTempDirectory();
-        try {
-            SVNDiffStatusEditor editor = new SVNDiffStatusEditor(basePath, target1, repository2, rev1, handler);
-            ISVNReporterBaton reporter = new ISVNReporterBaton() {
-
-                public void report(ISVNReporter reporter) throws SVNException {
-                    // TODO(sd): dynamic depth here
-                    reporter.setPath("", null, rev1, SVNDepth.INFINITY, false);
-                    reporter.finishReport();
-                }
-            };
-            repository1.diff(url2, rev2, rev1, target1, !useAncestry, depth, false, reporter, SVNCancellableEditor.newInstance(editor, this, getDebugLog()));
-        } finally {
-            if (tmpFile != null) {
-                SVNFileUtil.deleteAll(tmpFile, true, null);
-            }
-            repository2.closeSession();
-        }
-    }
-
-    private int getAdminDepth(SVNDepth depth) {
-        int admDepth = SVNWCAccess.INFINITE_DEPTH;
-        if (depth == SVNDepth.IMMEDIATES) {
-            admDepth = 1;
-        } else if (depth == SVNDepth.EMPTY || depth == SVNDepth.FILES) {
-            admDepth = 0;
-        }
-        return admDepth;
-    }
-
-    private Object[] getLocationFromPathAndRevision(File path, SVNURL url, SVNRevision pegRevision) throws SVNException {
-        SVNWCAccess wcAccess = null;
-        SVNRepository repos = null;
-        SVNAdminArea adminArea = null;
-        try {
-            if (path != null && (pegRevision == SVNRevision.BASE || pegRevision == SVNRevision.WORKING || pegRevision == SVNRevision.COMMITTED || pegRevision == SVNRevision.UNDEFINED)) {
-                int admLockLevel = getLevelsToLockFromDepth(SVNDepth.EMPTY);
-                wcAccess = createWCAccess();
-                wcAccess.probeOpen(path, false, admLockLevel);
-            }
-            long[] rev = {
-                SVNRepository.INVALID_REVISION
-            };
-            repos = createRepository(url, path, adminArea, pegRevision, pegRevision, rev);
-            return new Object[] {
-                    repos.getLocation(), SVNRevision.create(rev[0])
-            };
-        } finally {
-            if (wcAccess != null) {
-                wcAccess.close();
-            }
-            if (repos != null) {
-                repos.closeSession();
-            }
-        }
-    }
-
-    private void getLogMergedMergeInfoImpl(File path, SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths,
-            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        SVNURL reposRoot[] = new SVNURL[1];
-
-        Object[] location = getLocationFromPathAndRevision(mergeSrcPath, mergeSrcURL, srcPegRevision);
-        SVNURL realMergeSrcURL = (SVNURL) location[0];
-        SVNRevision realSrcPegRevision = (SVNRevision) location[1];
-
-        Map targetMergeInfo = path != null ? getMergeInfo(path, pegRevision, reposRoot) : getMergeInfo(url, pegRevision, reposRoot);
-        if (targetMergeInfo == null) {
-            return;
-        }
-
-        Map srcHistory = getHistoryAsMergeInfo(realMergeSrcURL, null, realSrcPegRevision, SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, null, null);
-        Map mergeInfo = SVNMergeInfoUtil.intersectMergeInfo(targetMergeInfo, srcHistory, false);
-        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
-        long youngestRev = SVNRepository.INVALID_REVISION;
-        String logTarget = null;
-        for (Iterator mergeInfoIter = mergeInfo.keySet().iterator(); mergeInfoIter.hasNext();) {
-            String mergeSrc = (String) mergeInfoIter.next();
-            SVNMergeRangeList list = (SVNMergeRangeList) mergeInfo.get(mergeSrc);
-            SVNMergeRange[] listRanges = list.getRanges();
-            SVNMergeRange range = listRanges[listRanges.length - 1];
-            if (!SVNRevision.isValidRevisionNumber(youngestRev) || range.getEndRevision() > youngestRev) {
-                youngestRev = range.getEndRevision();
-                logTarget = mergeSrc;
-            }
-            rangeList = rangeList.merge(list);
-        }
-        if (rangeList.isEmpty()) {
-            return;
-        }
-        getLogsForMergeInfoRangeList(reposRoot[0], new String[] {
-            logTarget
-        }, rangeList, discoverChangedPaths, revisionProperties, handler);
-    }
-
-    private void getLogEligibleMergeInfoImpl(File path, SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths,
-            String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        SVNURL reposRoot[] = new SVNURL[1];
-
-        Object[] location = getLocationFromPathAndRevision(mergeSrcPath, mergeSrcURL, srcPegRevision);
-        SVNURL realMergeSrcURL = (SVNURL) location[0];
-        SVNRevision realSrcPegRevision = (SVNRevision) location[1];
-
-        Map mergeInfo = path != null ? getMergeInfo(path, pegRevision, reposRoot) : getMergeInfo(url, pegRevision, reposRoot);
-        Map history = getHistoryAsMergeInfo(url, path, pegRevision, SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, null, null);
-
-        if (mergeInfo == null) {
-            mergeInfo = history;
-        } else {
-            mergeInfo = SVNMergeInfoUtil.mergeMergeInfos(mergeInfo, history);
-        }
-
-        SVNRepository repos = null;
-        Map sourceHistory = null;
-        try {
-            repos = createRepository(realMergeSrcURL, null, null, true);
-            sourceHistory = getHistoryAsMergeInfo(realMergeSrcURL, null, realSrcPegRevision, SVNRepository.INVALID_REVISION, SVNRepository.INVALID_REVISION, repos, null);
-        } finally {
-            repos.closeSession();
-        }
-
-        Map availableMergeInfo = SVNMergeInfoUtil.removeMergeInfo(mergeInfo, sourceHistory, false);
-        SVNMergeRangeList rangeList = new SVNMergeRangeList(new SVNMergeRange[0]);
-        long youngestRev = SVNRepository.INVALID_REVISION;
-        String logTarget = null;
-        for (Iterator availableIter = availableMergeInfo.keySet().iterator(); availableIter.hasNext();) {
-            String mergeSrc = (String) availableIter.next();
-            SVNMergeRangeList availableRangeList = (SVNMergeRangeList) availableMergeInfo.get(mergeSrc);
-            SVNMergeRange[] ranges = availableRangeList.getRanges();
-            SVNMergeRange range = ranges[ranges.length - 1];
-            if (!SVNRevision.isValidRevisionNumber(youngestRev) || range.getEndRevision() > youngestRev) {
-                youngestRev = range.getEndRevision();
-                logTarget = mergeSrc;
-            }
-            rangeList = rangeList.merge(availableRangeList);
-        }
-
-        if (rangeList.isEmpty()) {
-            return;
-        }
-
-        getLogsForMergeInfoRangeList(reposRoot[0], new String[] {
-            logTarget
-        }, rangeList, discoverChangedPaths, revisionProperties, handler);
-    }
-
-    private void applyPatches(File absPatchPath, File absWCPath, boolean dryRun, int stripCount, SVNAdminArea wc) throws SVNException, IOException {
-
-        final SVNPatchFileStream patchFile = SVNPatchFileStream.openReadOnly(absPatchPath);
-
-        try {
-
-            final List targets = new ArrayList();
-
-            SVNPatch patch;
-            do {
-                checkCancelled();
-                patch = SVNPatch.parseNextPatch(patchFile);
-                if (patch != null) {
-                    final SVNPatchTarget target = SVNPatchTarget.applyPatch(patch, absWCPath, stripCount, wc);
-                    targets.add(target);
-                }
-            } while (patch != null);
-
-            /* Install patched targets into the working copy. */
-            for (Iterator i = targets.iterator(); i.hasNext();) {
-                checkCancelled();
-                final SVNPatchTarget target = (SVNPatchTarget) i.next();
-                if (!target.isSkipped()) {
-                    target.installPatchedTarget(absWCPath, dryRun, wc);
-                }
-                target.sendPatchNotification(wc);
-                target.getPatch().close();
-            }
-
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage(), null, 0, e);
-            SVNErrorManager.error(err, Level.FINE, SVNLogType.WC);
-        } finally {
-            if (patchFile != null) {
-                patchFile.close();
-            }
-        }
-
     }
 
     public void doPatch(File absPatchPath, File localAbsPath, boolean dryRun, int stripCount) throws SVNException {
 
-        if (stripCount < 0) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "strip count must be positive");
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        }
-
-        final SVNWCAccess wcAccess = createWCAccess();
         try {
-            wcAccess.setEventHandler(this);
-            final SVNAdminArea wc = wcAccess.open(localAbsPath, true, SVNWCAccess.INFINITE_DEPTH);
-            applyPatches(absPatchPath, localAbsPath, dryRun, stripCount, wc);
-        } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-            SVNErrorManager.error(err, SVNLogType.CLIENT);
-        } finally {
-            wcAccess.close();
+            getSVNDiffClient17().doPatch(absPatchPath, localAbsPath, dryRun, stripCount);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNDiffClient16().doPatch(absPatchPath, localAbsPath, dryRun, stripCount);
+                return;
+            }
+            throw e;
         }
 
     }

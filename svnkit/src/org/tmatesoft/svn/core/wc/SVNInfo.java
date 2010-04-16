@@ -103,7 +103,7 @@ public class SVNInfo {
     private long myRepositorySize;
     private SVNTreeConflictDescription myTreeConflict;
     
-    static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
+    public static SVNInfo createInfo(File file, SVNEntry entry) throws SVNException {
         if (entry == null) {
             return null;
         }
@@ -124,7 +124,7 @@ public class SVNInfo {
                 lock, entry.getDepth(), entry.getChangelistName(), entry.getWorkingSize(), tc);
     }
 
-    static SVNInfo createInfo(File file, SVNTreeConflictDescription tc) {
+    public static SVNInfo createInfo(File file, SVNTreeConflictDescription tc) {
         return new SVNInfo(file, null, null, 
                 -1, SVNNodeKind.NONE, null, -1,
                 null, null, null, 
@@ -133,7 +133,7 @@ public class SVNInfo {
                 null, SVNDepth.UNKNOWN, null, -1, tc);
     }
 
-    static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
+    public static SVNInfo createInfo(String path, SVNURL reposRootURL, String uuid,
             SVNURL url, SVNRevision revision, SVNDirEntry dirEntry, SVNLock lock) {
         if (dirEntry == null) {
             return null;

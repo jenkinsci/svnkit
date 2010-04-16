@@ -269,11 +269,11 @@ public class SVNCommitItem {
         return myOutgoingProperties;
     }
     
-    void setWCAccess(SVNWCAccess wcAccess) {
+    public void setWCAccess(SVNWCAccess wcAccess) {
         myWCAccess = wcAccess;
     }
     
-    void setProperty(String propertyName, SVNPropertyValue propertyValue) {
+    public void setProperty(String propertyName, SVNPropertyValue propertyValue) {
         myIsPropertiesModified = true;
         Map props = getProperties();
         props.put(propertyName, propertyValue);
@@ -286,11 +286,11 @@ public class SVNCommitItem {
         return myOutgoingProperties;
     }
 
-    void setContentsModified(boolean modified) {
+    public void setContentsModified(boolean modified) {
         myIsContentsModified = modified;
     }
 
-    void setPropertiesModified(boolean modified) {
+    public void setPropertiesModified(boolean modified) {
         myIsPropertiesModified = modified;
     }
 }

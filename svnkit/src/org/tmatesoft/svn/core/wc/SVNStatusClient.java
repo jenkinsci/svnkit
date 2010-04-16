@@ -13,36 +13,14 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
 
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.SVNExternal;
-import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNRemoteStatusEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNStatusEditor;
-import org.tmatesoft.svn.core.internal.wc.SVNStatusReporter;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.SVNCapability;
+import org.tmatesoft.svn.core.internal.wc16.SVNStatusClient16;
+import org.tmatesoft.svn.core.internal.wc17.SVNStatusClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNStatusClient</b> class provides methods for obtaining information on the 
@@ -77,7 +55,13 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @see     <a target="_top" href="http://svnkit.com/kb/examples/">Examples</a>
  */
 public class SVNStatusClient extends SVNBasicClient {
-    private ISVNStatusFileProvider myFilesProvider;
+    private SVNStatusClient16 getSVNStatusClient16() {
+        return (SVNStatusClient16) getDelegate16();
+    }
+
+    private SVNStatusClient17 getSVNStatusClient17() {
+        return (SVNStatusClient17) getDelegate17();
+    }
 
     /**
      * Constructs and initializes an <b>SVNStatusClient</b> object
@@ -103,7 +87,10 @@ public class SVNStatusClient extends SVNBasicClient {
      * @param options     a run-time configuration options driver     
      */
     public SVNStatusClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(authManager, options);
+        super(new SVNStatusClient16(authManager, options), new SVNStatusClient17(authManager, options));
+        setFilesProvider(null);
+                
+        setOptions(options);
     }
 
     /**
@@ -126,7 +113,10 @@ public class SVNStatusClient extends SVNBasicClient {
      */
     
     public SVNStatusClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(repositoryPool, options);
+        super(new SVNStatusClient16(repositoryPool, options), new SVNStatusClient17(repositoryPool, options));
+        setFilesProvider(null);
+                
+        setOptions(options);
     }
     
     /**
@@ -159,8 +149,14 @@ public class SVNStatusClient extends SVNBasicClient {
      */
     public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, 
             boolean includeIgnored, ISVNStatusHandler handler) throws SVNException {
-        return doStatus(path, SVNRevision.HEAD, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
-                false, handler, null);
+        try {
+            return getSVNStatusClient17().doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNStatusClient16().doStatus(path, recursive, remote, reportAll, includeIgnored, handler);
+            }
+            throw e;
+        }
     }
     
     /**
@@ -198,8 +194,14 @@ public class SVNStatusClient extends SVNBasicClient {
      *                                      instead
      */
     public long doStatus(File path, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
-        return doStatus(path, SVNRevision.HEAD, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
-                collectParentExternals, handler, null);
+        try {
+            return getSVNStatusClient17().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNStatusClient16().doStatus(path, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+            }
+            throw e;
+        }
 
     }
     
@@ -236,8 +238,14 @@ public class SVNStatusClient extends SVNBasicClient {
      *                                      instead
      */
     public long doStatus(File path, SVNRevision revision, boolean recursive, boolean remote, boolean reportAll, boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler) throws SVNException {
-        return doStatus(path, revision, SVNDepth.fromRecurse(recursive), remote, reportAll, includeIgnored, 
-                collectParentExternals, handler, null);
+        try {
+            return getSVNStatusClient17().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNStatusClient16().doStatus(path, revision, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler);
+            }
+            throw e;
+        }
     }
 
     /**
@@ -292,137 +300,14 @@ public class SVNStatusClient extends SVNBasicClient {
     public long doStatus(File path, SVNRevision revision, SVNDepth depth, boolean remote, boolean reportAll, 
             boolean includeIgnored, boolean collectParentExternals, final ISVNStatusHandler handler, 
             final Collection changeLists) throws SVNException {
-        if (handler == null) {
-            return -1;
-        }
-
-        depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        SVNWCAccess wcAccess = createWCAccess();
-        SVNStatusEditor editor = null;
-        final boolean[] deletedInRepository = new boolean[] {false};
-        ISVNStatusHandler realHandler = new ISVNStatusHandler() {
-            public void handleStatus(SVNStatus status) throws SVNException {
-                if (deletedInRepository[0] && status.getEntry() != null) {
-                    status.setRemoteStatus(SVNStatusType.STATUS_DELETED, null, null, null);
-                } 
-                if (!SVNWCAccess.matchesChangeList(changeLists, status.getEntry())) {
-                    return;
-                }
-                handler.handleStatus(status);
-            }
-        };
         try {
-            SVNAdminAreaInfo info = null;
-            try {
-                SVNAdminArea anchor = wcAccess.open(path, false, SVNDepth.recurseFromDepth(depth) ? -1 : 1);
-                info = new SVNAdminAreaInfo(wcAccess, anchor, anchor, "");
-            } catch (SVNException svne) {
-                if (svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-                    info = wcAccess.openAnchor(path, false, SVNDepth.recurseFromDepth(depth) ? -1 : 1);
-                    if (depth == SVNDepth.EMPTY) {
-                        depth = SVNDepth.IMMEDIATES;
-                    }
-                } else {
-                    throw svne;
-                }
+            return getSVNStatusClient17().doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNStatusClient16().doStatus(path, revision, depth, remote, reportAll, includeIgnored, collectParentExternals, handler, changeLists);
             }
-            SVNEntry entry = null;
-            if (remote) {
-                SVNAdminArea anchor = info.getAnchor();
-                entry = wcAccess.getVersionedEntry(anchor.getRoot(), false);
-                if (entry.getURL() == null) {
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getAnchor().getRoot());
-                    SVNErrorManager.error(error, SVNLogType.WC);
-                }
-                SVNURL url = entry.getSVNURL();
-                SVNRepository repository = createRepository(url, anchor.getRoot(), wcAccess, true);
-                long rev;
-                if (revision == SVNRevision.HEAD) {
-                    rev = -1;
-                } else {
-                    rev = getRevisionNumber(revision, repository, path);
-                }
-                SVNNodeKind kind = repository.checkPath("", rev);
-                checkCancelled();
-                SVNReporter reporter = null;
-                if (kind == SVNNodeKind.NONE) {
-                    if (!entry.isScheduledForAddition()) {
-                        deletedInRepository[0] = true;
-                    }
-                    editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, 
-                            realHandler);
-                    checkCancelled();
-                    editor.closeEdit();
-                } else {
-                    editor = new SVNRemoteStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, 
-                            depth, realHandler);
-                    // session is closed in SVNStatusReporter.
-                    SVNRepository locksRepos = createRepository(url, anchor.getRoot(), wcAccess, false);                    
-                    checkCancelled();
-                    boolean serverSupportsDepth = repository.hasCapability(SVNCapability.DEPTH);
-                    reporter = new SVNReporter(info, path, false, !serverSupportsDepth, depth, false, true, true, 
-                            getDebugLog());
-                    SVNStatusReporter statusReporter = new SVNStatusReporter(locksRepos, reporter, editor);
-                    String target = "".equals(info.getTargetName()) ? null : info.getTargetName();
-                    repository.status(rev, target, depth, statusReporter, SVNCancellableEditor.newInstance((ISVNEditor) editor, getEventDispatcher(), getDebugLog()));
-                }
-                if (getEventDispatcher() != null) {
-                    long reportedFiles = reporter != null ? reporter.getReportedFilesCount() : 0;
-                    long totalFiles = reporter != null ? reporter.getTotalFilesCount() : 0;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getAnchor().getFile(info.getTargetName()), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null, reportedFiles, totalFiles);
-                    getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
-                }
-            } else {
-                editor = new SVNStatusEditor(getOptions(), wcAccess, info, includeIgnored, reportAll, depth, handler);
-                if (myFilesProvider != null) {
-                    editor.setFileProvider(myFilesProvider);
-                }
-                editor.closeEdit();
-            }         
-            if (!isIgnoreExternals() && (depth == SVNDepth.INFINITY || depth == SVNDepth.UNKNOWN)) {
-                // iterate over externals that were collected in SVNAdminAreaInfo.
-                Map externalsMap = info.getNewExternals();
-                for (Iterator paths = externalsMap.keySet().iterator(); paths.hasNext();) {
-                    String ownerPath = (String) paths.next();
-                    String externalValue = (String) externalsMap.get(ownerPath);
-                    SVNExternal[] externals = SVNExternal.parseExternals(ownerPath, externalValue);
-                    
-                    for (int i = 0; i < externals.length; i++) {
-                        SVNExternal external = externals[i];
-                        String externalPath = SVNPathUtil.append(ownerPath, external.getPath());
-                        File externalFile = info.getAnchor().getFile(externalPath);
-                        if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
-                            continue;
-                        }
-                        try {
-                            int format = SVNAdminAreaFactory.checkWC(externalFile, true);
-                            if (format == 0) {
-                                // something unversioned instead of external.
-                                continue;
-                            }
-                        } catch (SVNException e) {
-                            continue;
-                        }
-                        handleEvent(SVNEventFactory.createSVNEvent(externalFile, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.STATUS_EXTERNAL, null, null, null), 
-                                    ISVNEventHandler.UNKNOWN);
-                        setEventPathPrefix(externalPath);
-                        try {
-                            doStatus(externalFile, SVNRevision.HEAD, depth, remote, reportAll, includeIgnored, 
-                                    false, handler, null);
-                        } catch (SVNException e) {
-                            if (e instanceof SVNCancelException) {
-                                throw e;
-                            }
-                        } finally {
-                            setEventPathPrefix(null);
-                        }
-                    }
-                }
-            }
-        } finally {
-            wcAccess.close();
-        }
-        return editor.getTargetRevision();        
+            throw e;
+        }        
     }
     
     /**
@@ -438,7 +323,14 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public SVNStatus doStatus(final File path, boolean remote) throws SVNException {
-        return doStatus(path, remote, false);
+        try {
+            return getSVNStatusClient17().doStatus(path, remote);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNStatusClient16().doStatus(path, remote);
+            }
+            throw e;
+        }
     }
     
     /**
@@ -457,27 +349,18 @@ public class SVNStatusClient extends SVNBasicClient {
      * @throws SVNException
      */
     public SVNStatus doStatus(File path, boolean remote, boolean collectParentExternals) throws SVNException {
-        final SVNStatus[] result = new SVNStatus[] { null };
-        final File absPath = path.getAbsoluteFile();
-        ISVNStatusHandler handler = new ISVNStatusHandler() {
-            public void handleStatus(SVNStatus status) {
-                if (absPath.equals(status.getFile())) {
-                    if (result[0] != null
-                        && result[0].getContentsStatus() == SVNStatusType.STATUS_EXTERNAL
-                        && absPath.isDirectory()) {
-                        result[0] = status;
-                        result[0].markExternal();
-                    } else if (result[0] == null) {
-                        result[0] = status;
-                    }
-                }
+        try {
+            return getSVNStatusClient17().doStatus(path, remote, collectParentExternals);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                return getSVNStatusClient16().doStatus(path, remote, collectParentExternals);
             }
-        };
-        doStatus(absPath, SVNRevision.HEAD, SVNDepth.EMPTY, remote, true, true, collectParentExternals, handler, null);
-        return result[0];
+            throw e;
+        }
     }
 
     public void setFilesProvider(ISVNStatusFileProvider filesProvider) {
-        myFilesProvider = filesProvider;
+        getSVNStatusClient16().setFilesProvider(filesProvider);
+        getSVNStatusClient17().setFilesProvider(filesProvider);
     }
 }

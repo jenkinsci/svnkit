@@ -62,14 +62,11 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
-import org.tmatesoft.svn.core.wc.SVNBasicClient;
 import org.tmatesoft.svn.core.wc.SVNConflictAction;
 import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNRevisionRange;
@@ -78,13 +75,14 @@ import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.core.internal.wc16.*;
 
 
 /**
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMergeStrategy {
+public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMergeStrategy {
 
     protected boolean myAreSourcesAncestral;
     protected boolean myIsSameRepository;
@@ -113,7 +111,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     protected SVNWCAccess myWCAccess;
     protected SVNRepository myRepository1;
     protected SVNRepository myRepository2;
-    private SVNLogClient myLogClient;
+    private SVNLogClient16 myLogClient;
     private List myPathsWithNewMergeInfo;
     private LinkedList myPathsWithDeletedMergeInfo;
     private MergeSource myCurrentMergeSource;
@@ -144,8 +142,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, SVNURL mergeSrcURL, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
 
@@ -167,8 +165,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, SVNURL mergeSrcURL, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -189,8 +187,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(File path, SVNRevision pegRevision, File mergeSrcPath, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -211,8 +209,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogMergedMergeInfo(SVNURL url, SVNRevision pegRevision, File mergeSrcPath, 
             SVNRevision srcPegRevision, boolean discoverChangedPaths, String[] revisionProperties, 
             ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogMergedMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -233,8 +231,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
             SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcURL, srcPegRevision, discoverChangedPaths, revisionProperties, handler);
         }
     }
@@ -254,8 +252,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
             SVNURL mergeSrcURL, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcURL, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -276,8 +274,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(File path, SVNRevision pegRevision, 
             File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(path, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -298,8 +296,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
     public void getLogEligibleMergeInfo(SVNURL url, SVNRevision pegRevision, 
             File mergeSrcPath, SVNRevision srcPegRevision, boolean discoverChangedPaths, 
             String[] revisionProperties, ISVNLogEntryHandler handler) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             diffClient.doGetLogEligibleMergeInfo(url, pegRevision, mergeSrcPath, srcPegRevision, 
                     discoverChangedPaths, revisionProperties, handler);
         }
@@ -314,8 +312,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                        instead
      */
     public Map getMergedMergeInfo(File path, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doGetMergedMergeInfo(path, pegRevision);
         }
         return null;
@@ -330,8 +328,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                           instead
      */
     public Map getMergedMergeInfo(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doGetMergedMergeInfo(url, pegRevision);
         }
         return null;
@@ -346,8 +344,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                        instead
      */
     public Collection suggestMergeSources(File path, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doSuggestMergeSources(path, pegRevision);
         }
         return null;
@@ -362,8 +360,8 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
      *                        instead
      */
     public Collection suggestMergeSources(SVNURL url, SVNRevision pegRevision) throws SVNException {
-        if (this instanceof SVNDiffClient) {
-            SVNDiffClient diffClient = (SVNDiffClient) this;
+        if (this instanceof SVNDiffClient16) {
+            SVNDiffClient16 diffClient = (SVNDiffClient16) this;
             return diffClient.doSuggestMergeSources(url, pegRevision);
         }
         return null;
@@ -481,7 +479,7 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         SVNRevision oldestRev = SVNRevision.create(oldestRange.getStartRevision()); 
             
         LogHandlerFilter filterHandler = new LogHandlerFilter(handler, rangeList);
-        SVNLogClient logClient = getLogClient();
+        SVNLogClient16 logClient = getLogClient();
         logClient.doLog(reposRootURL, paths, youngestRev, oldestRev, youngestRev, false, discoverChangedPaths, 
                 false, 0, revProps, filterHandler);
         checkCancelled();
@@ -1425,9 +1423,9 @@ public abstract class SVNMergeDriver extends SVNBasicClient implements ISVNMerge
         return adjustedProperties;
     }
 
-    protected SVNLogClient getLogClient() {
+    protected SVNLogClient16 getLogClient() {
         if (myLogClient == null) {
-            myLogClient = new SVNLogClient(getRepositoryPool(), getOptions());
+            myLogClient = new SVNLogClient16(getRepositoryPool(), getOptions());
         }
         return myLogClient;
     }

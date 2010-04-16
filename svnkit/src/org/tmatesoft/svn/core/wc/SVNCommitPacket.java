@@ -45,7 +45,7 @@ public class SVNCommitPacket {
     private boolean[] myIsSkipped;
     private boolean myIsDisposed;
 
-    SVNCommitPacket(SVNWCAccess wcAccess, SVNCommitItem[] items, Map lockTokens) {
+    public SVNCommitPacket(SVNWCAccess wcAccess, SVNCommitItem[] items, Map lockTokens) {
         myCommitItems = items;
         myLockTokens = lockTokens;
         myIsSkipped = new boolean[items == null ? 0 : items.length];
@@ -145,11 +145,11 @@ public class SVNCommitPacket {
         return -1;
     }
 
-    Map getLockTokens() {
+    public Map getLockTokens() {
         return myLockTokens;
     }
 
-    SVNCommitPacket removeSkippedItems() {
+    public SVNCommitPacket removeSkippedItems() {
         if (this == EMPTY) {
             return EMPTY;
         }

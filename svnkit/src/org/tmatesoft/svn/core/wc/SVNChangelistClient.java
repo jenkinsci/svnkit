@@ -13,27 +13,14 @@ package org.tmatesoft.svn.core.wc;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNHashMap;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
-import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.internal.wc16.SVNChangelistClient16;
+import org.tmatesoft.svn.core.internal.wc17.SVNChangelistClient17;
 import org.tmatesoft.svn.core.io.SVNRepository;
-import org.tmatesoft.svn.util.SVNLogType;
 
 
 /**
@@ -62,6 +49,15 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @since   1.2
  */
 public class SVNChangelistClient extends SVNBasicClient {
+    
+    private SVNChangelistClient16 getSVNChangelistClient16() {
+        return (SVNChangelistClient16) getDelegate16();
+    }
+
+    private SVNChangelistClient17 getSVNChangelistClient17() {
+        return (SVNChangelistClient17) getDelegate17();
+    }
+
     /**
      * Constructs and initializes an <b>SVNChangelistClient</b> object
      * with the specified run-time configuration and authentication
@@ -86,7 +82,9 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @param options     a run-time configuration options driver
      */
     public SVNChangelistClient(ISVNAuthenticationManager authManager, ISVNOptions options) {
-        super(authManager, options);
+        super(new SVNChangelistClient16(authManager, options), new SVNChangelistClient17(authManager, options));
+        
+        setOptions(options);
     }
 
     /**
@@ -108,7 +106,9 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @param options          a run-time configuration options driver
      */
     public SVNChangelistClient(ISVNRepositoryPool repositoryPool, ISVNOptions options) {
-        super(repositoryPool, options);
+        super(new SVNChangelistClient16(repositoryPool, options), new SVNChangelistClient17(repositoryPool, options));
+        
+        setOptions(options);
     }
 
     /**
@@ -122,7 +122,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      */
     public void getChangeLists(File path, final Collection changeLists, SVNDepth depth, 
             final ISVNChangelistHandler handler) throws SVNException {
-        doGetChangeLists(path, changeLists, depth, handler);
+        try {
+            getSVNChangelistClient17().getChangeLists(path, changeLists, depth, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().getChangeLists(path, changeLists, depth, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -136,7 +144,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      */
     public void getChangeListPaths(Collection changeLists, Collection targets, SVNDepth depth, 
             ISVNChangelistHandler handler) throws SVNException {
-        doGetChangeListPaths(changeLists, targets, depth, handler);
+        try {
+            getSVNChangelistClient17().getChangeListPaths(changeLists, targets, depth, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().getChangeListPaths(changeLists, targets, depth, handler);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -148,7 +164,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @deprecated           use {@link #doAddToChangelist(File[], SVNDepth, String, String[])} instead
      */
     public void addToChangelist(File[] paths, SVNDepth depth, String changelist, String[] changelists) throws SVNException {
-        doAddToChangelist(paths, depth, changelist, changelists);
+        try {
+            getSVNChangelistClient17().addToChangelist(paths, depth, changelist, changelists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().addToChangelist(paths, depth, changelist, changelists);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -159,7 +183,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @deprecated           use {@link #doRemoveFromChangelist(File[], SVNDepth, String[])} instead
      */
     public void removeFromChangelist(File[] paths, SVNDepth depth, String[] changelists) throws SVNException {
-        doRemoveFromChangelist(paths, depth, changelists);
+        try {
+            getSVNChangelistClient17().removeFromChangelist(paths, depth, changelists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().removeFromChangelist(paths, depth, changelists);
+                return;
+            }
+            throw e;
+        }
     }
     
     /**
@@ -189,7 +221,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since                  1.2.0, New in SVN 1.5.0
      */
     public void doAddToChangelist(File[] paths, SVNDepth depth, String changelist, String[] changelists) throws SVNException {
-        setChangelist(paths, changelist, changelists, depth);
+        try {
+            getSVNChangelistClient17().doAddToChangelist(paths, depth, changelist, changelists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().doAddToChangelist(paths, depth, changelist, changelists);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -217,7 +257,15 @@ public class SVNChangelistClient extends SVNBasicClient {
      * @since                  1.2.0, New in SVN 1.5.0
      */
     public void doRemoveFromChangelist(File[] paths, SVNDepth depth, String[] changelists) throws SVNException {
-        setChangelist(paths, null, changelists, depth);
+        try {
+            getSVNChangelistClient17().doRemoveFromChangelist(paths, depth, changelists);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().doRemoveFromChangelist(paths, depth, changelists);
+                return;
+            }
+            throw e;
+        }
     }
 
     /**
@@ -238,14 +286,14 @@ public class SVNChangelistClient extends SVNBasicClient {
      */
     public void doGetChangeListPaths(Collection changeLists, Collection targets, SVNDepth depth, 
             ISVNChangelistHandler handler) throws SVNException {
-        if (changeLists == null || changeLists.isEmpty()) {
-            return;
-        }
-        
-        targets = targets == null ? Collections.EMPTY_LIST : targets;
-        for (Iterator targetsIter = targets.iterator(); targetsIter.hasNext();) {
-            File target = (File) targetsIter.next();
-            doGetChangeLists(target, changeLists, depth, handler);
+        try {
+            getSVNChangelistClient17().doGetChangeListPaths(changeLists, targets, depth, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().doGetChangeListPaths(changeLists, targets, depth, handler);
+                return;
+            }
+            throw e;
         }
     }
 
@@ -275,115 +323,14 @@ public class SVNChangelistClient extends SVNBasicClient {
      */
     public void doGetChangeLists(File path, final Collection changeLists, SVNDepth depth, 
             final ISVNChangelistHandler handler) throws SVNException {
-        path = path.getAbsoluteFile();
-        SVNWCAccess wcAccess = createWCAccess();
         try {
-            wcAccess.probeOpen(path, false, SVNWCAccess.INFINITE_DEPTH);
-            
-            ISVNEntryHandler entryHandler = new ISVNEntryHandler() {
-                
-                public void handleEntry(File path, SVNEntry entry) throws SVNException {
-                    if (SVNWCAccess.matchesChangeList(changeLists, entry) && 
-                            (entry.isFile() || (entry.isDirectory() && 
-                                    entry.getName().equals(entry.getAdminArea().getThisDirName())))) {
-                        if (handler != null) {
-                            handler.handle(path, entry.getChangelistName());
-                        }
-                    }
-                }
-            
-                public void handleError(File path, SVNErrorMessage error) throws SVNException {
-                    SVNErrorManager.error(error, SVNLogType.WC);
-                }
-            };
-            
-            wcAccess.walkEntries(path, entryHandler, false, depth);
-        } finally {
-            wcAccess.close();
-        }
-    }
-
-    private void setChangelist(File[] paths, String changelistName, String[] changelists, SVNDepth depth) throws SVNException {
-        if ("".equals(changelistName)) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "Changelist names must not be empty");
-            SVNErrorManager.error(err, SVNLogType.WC);
-        }
-        
-        SVNWCAccess wcAccess = createWCAccess();
-        for (int i = 0; i < paths.length; i++) {
-            checkCancelled();
-            File path = paths[i].getAbsoluteFile();
-            Collection changelistsSet = null;
-            if (changelists != null && changelists.length > 0) {
-                changelistsSet = new SVNHashSet();
-                for (int j = 0; j < changelists.length; j++) {
-                    changelistsSet.add(changelists[j]);
-                }
-            } 
-            try {
-                wcAccess.probeOpen(path, true, -1);
-                wcAccess.walkEntries(path, new SVNChangeListWalker(wcAccess, changelistName, changelistsSet), false, depth);
-            } finally {
-                wcAccess.close();
-            }
-        }
-    }
-    
-    private class SVNChangeListWalker implements ISVNEntryHandler {
-        
-        private String myChangelist;
-        private Collection myChangelists;
-        private SVNWCAccess myWCAccess;
-
-        public SVNChangeListWalker(SVNWCAccess wcAccess, String changelistName, Collection changelists) {
-            myChangelist = changelistName;
-            myChangelists = changelists;
-            myWCAccess = wcAccess;
-        }
-        
-        public void handleEntry(File path, SVNEntry entry) throws SVNException {
-            if (!SVNWCAccess.matchesChangeList(myChangelists, entry)) {
+            getSVNChangelistClient17().doGetChangeLists(path, changeLists, depth, handler);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_UNSUPPORTED_FORMAT) {
+                getSVNChangelistClient16().doGetChangeLists(path, changeLists, depth, handler);
                 return;
             }
-            
-            if (!entry.isFile()) {
-                if (entry.isThisDir()) {
-                    SVNEventAction action = myChangelist != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.DIR, null, SVNRepository.INVALID_REVISION, SVNEventAction.SKIP, action, null, null);
-                    SVNChangelistClient.this.dispatchEvent(event);
-                }
-                return;
-                
-            }
-            
-            if (entry.getChangelistName() == null && myChangelist == null) {
-                return;
-            }
-            
-            if (entry.getChangelistName() != null && entry.getChangelistName().equals(myChangelist)) {
-                return;
-            }
-            
-            if (myChangelist != null && entry.getChangelistName() != null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CHANGELIST_MOVE, "Removing ''{0}'' from changelist ''{1}''.", new Object[] {path, entry.getChangelistName()});
-                SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.FILE, null, SVNRepository.INVALID_REVISION, SVNEventAction.CHANGELIST_MOVED, SVNEventAction.CHANGELIST_MOVED, err, null);
-                SVNChangelistClient.this.dispatchEvent(event);
-            }
-            
-            Map attributes = new SVNHashMap();
-            attributes.put(SVNProperty.CHANGELIST, myChangelist);
-            SVNAdminArea area = myWCAccess.retrieve(path.getParentFile());
-            entry = area.modifyEntry(entry.getName(), attributes, true, false);
-
-            SVNEvent event = SVNEventFactory.createSVNEvent(path, SVNNodeKind.UNKNOWN, null, SVNRepository.INVALID_REVISION,
-                    null, null, null, myChangelist != null ? SVNEventAction.CHANGELIST_SET :SVNEventAction.CHANGELIST_CLEAR,
-                    null, null, null, myChangelist);
-
-            SVNChangelistClient.this.dispatchEvent(event);
-        }
-
-        public void handleError(File path, SVNErrorMessage error) throws SVNException {
-            SVNErrorManager.error(error, SVNLogType.WC);
+            throw e;
         }
     }
 

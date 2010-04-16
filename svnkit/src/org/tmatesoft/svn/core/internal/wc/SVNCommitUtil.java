@@ -48,11 +48,11 @@ import org.tmatesoft.svn.core.wc.SVNCommitItem;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 import org.tmatesoft.svn.util.SVNLogType;
+import org.tmatesoft.svn.core.internal.wc16.*;
 
 
 /**
@@ -152,7 +152,7 @@ public class SVNCommitUtil {
     }
 
     public static SVNWCAccess createCommitWCAccess(File[] paths, SVNDepth depth, boolean force, 
-                                                   Collection relativePaths, final SVNStatusClient statusClient) throws SVNException {
+                                                   Collection relativePaths, final SVNStatusClient16 statusClient) throws SVNException {
         String[] validatedPaths = new String[paths.length];
         for (int i = 0; i < paths.length; i++) {
             statusClient.checkCancelled();
@@ -344,7 +344,7 @@ public class SVNCommitUtil {
     }
 
     public static SVNWCAccess[] createCommitWCAccess2(File[] paths, SVNDepth depth, boolean force, 
-                                                      Map relativePathsMap, SVNStatusClient statusClient) throws SVNException {
+                                                      Map relativePathsMap, SVNStatusClient16 statusClient) throws SVNException {
         Map rootsMap = new SVNHashMap(); // wc root file -> paths to be committed (paths).
         Map localRootsCache = new SVNHashMap();
         for (int i = 0; i < paths.length; i++) {
