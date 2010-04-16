@@ -62,8 +62,8 @@ import java.util.logging.Level;
  */
 public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
 
-    protected static final byte[] PROPERTIES_SEPARATOR = "___________________________________________________________________".getBytes();
-    protected static final byte[] HEADER_SEPARATOR = "===================================================================".getBytes();
+    protected static final String PROPERTIES_SEPARATOR = "___________________________________________________________________";
+    protected static final String HEADER_SEPARATOR = "===================================================================";
     protected static final String WC_REVISION_LABEL = "(working copy)";
     protected static final InputStream EMPTY_FILE_IS = SVNFileUtil.DUMMY_IN;
 
@@ -313,7 +313,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             bos.write(getEOL());
             bos.write(("Property changes on: " + (useLocalFileSeparatorChar() ? path.replace('/', File.separatorChar) : path)).getBytes(getEncoding()));
             bos.write(getEOL());
-            bos.write(PROPERTIES_SEPARATOR);
+            bos.write(PROPERTIES_SEPARATOR.getBytes(getEncoding()));
             bos.write(getEOL());
             for (Iterator changedPropNames = diff.nameSet().iterator(); changedPropNames.hasNext();) {
                 String name = (String) changedPropNames.next();
@@ -827,7 +827,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             os.write(path.getBytes(getEncoding()));
             os.write(" (deleted)".getBytes(getEncoding()));
             os.write(getEOL());
-            os.write(HEADER_SEPARATOR);
+            os.write(HEADER_SEPARATOR.getBytes(getEncoding()));
             os.write(getEOL());
             return true;
         }
@@ -835,7 +835,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         os.write("Index: ".getBytes(getEncoding()));
         os.write(path.getBytes(getEncoding()));
         os.write(getEOL());
-        os.write(HEADER_SEPARATOR);
+        os.write(HEADER_SEPARATOR.getBytes(getEncoding()));
         os.write(getEOL());
         return false;
     }
