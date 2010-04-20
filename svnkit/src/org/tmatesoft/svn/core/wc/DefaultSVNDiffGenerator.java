@@ -598,7 +598,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
         String header;
         try {
             bos.close();
-            header = bos.toString();            
+            header = bos.toString(getEncoding());            
         } catch (IOException inner) {
             header = "";
         }
