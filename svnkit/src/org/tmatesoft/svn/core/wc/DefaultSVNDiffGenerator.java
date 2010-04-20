@@ -667,6 +667,17 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
 
     /**
+     * Says whether this generator is using any special (non-native)
+     * EOL bytes for outputting diffs.
+     *
+     * @return <span class="javakeyword">true</span> if yes;
+     *         otherwise <span class="javakeyword">false</span>
+     */
+    public boolean hasEOL() {
+        return myEOL != null;
+    }
+
+    /**
      * Returns the encoding specified by svnkit.global-charset option
      * of the global configuration.
      *

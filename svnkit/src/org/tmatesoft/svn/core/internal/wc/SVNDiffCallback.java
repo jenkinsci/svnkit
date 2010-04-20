@@ -27,6 +27,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 
@@ -118,9 +119,8 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             if (conversionEncoding != null) {
                 SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: using conversion encoding " + conversionEncoding
                         + " derived from svnkit:charset property or from global.charset option", Level.FINEST);
-                myGenerator.setEncoding("UTF-8");
+                resetEncoding = adjustDiffGenerator("UTF-8");
                 result = new SVNCharsetOutputStream(result, Charset.forName("UTF-8"), Charset.forName(conversionEncoding));
-                resetEncoding = true;
             }
         }
         try {
@@ -129,6 +129,7 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             if (resetEncoding) {
                 SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: encoding reset", Level.FINEST);
                 myGenerator.setEncoding(null);
+                myGenerator.setEOL(null);
             }
             if (result instanceof SVNCharsetOutputStream) {
                 try {
@@ -138,6 +139,29 @@ public class SVNDiffCallback extends AbstractDiffCallback {
                 }
             }
         }
+    }
+
+    private boolean adjustDiffGenerator(String charset) {
+        if (myGenerator instanceof DefaultSVNDiffGenerator) {
+            DefaultSVNDiffGenerator generator = (DefaultSVNDiffGenerator) myGenerator;
+            boolean encodingAdjusted = false;
+            if (!generator.hasEncoding()) {
+                generator.setEncoding(charset);
+                encodingAdjusted = true;
+            }
+            if (!generator.hasEOL()) {
+                byte[] eol;
+                String eolString = System.getProperty("line.separator");
+                try {
+                    eol = eolString.getBytes(charset);
+                } catch (UnsupportedEncodingException e) {
+                    eol = eolString.getBytes();
+                }
+                generator.setEOL(eol);
+            }
+            return encodingAdjusted;
+        }
+        return false;
     }
 
     public SVNStatusType propertiesChanged(String path, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
