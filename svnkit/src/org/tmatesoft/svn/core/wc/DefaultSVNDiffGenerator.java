@@ -29,7 +29,6 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.ISVNReturnValueCallback;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.ByteArrayOutputStream;
@@ -46,7 +45,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
 
 /**
  * <b>DefaultSVNDiffGenerator</b> is a default implementation of 
@@ -398,7 +396,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public void displayFileDiff(String path, File file1, File file2,
             String rev1, String rev2, String mimeType1, String mimeType2, OutputStream result) throws SVNException {
-        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: display diff to stream " + result, Level.FINEST);
         path = getDisplayPath(path);
         // if anchor1 is the same as anchor2 just use path.        
         // if anchor1 differs from anchor2 =>
@@ -619,8 +616,7 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
                 properties.put(QDiffGeneratorFactory.IGNORE_SPACE_PROPERTY, QDiffGeneratorFactory.IGNORE_SPACE_CHANGE);
             }
             QDiffGenerator generator = new QDiffUniGenerator(properties, header);
-            OutputStreamWriter writer = new OutputStreamWriter(result, getEncoding());
-            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: generate text diff: writer=" + writer + " writer.encoding=" + writer.getEncoding() + " writer.out=" + result, Level.FINEST);
+            Writer writer = new OutputStreamWriter(result, getEncoding());
             QDiffManager.generateTextDiff(is1, is2, getEncoding(), writer, generator);
             writer.flush();
         } catch (IOException e) {
@@ -637,7 +633,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      * @param encoding  charset name 
      */
     public void setEncoding(String encoding) {
-        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: set encoding " + encoding, Level.FINEST);
         myEncoding = encoding;
     }
 
@@ -648,10 +643,8 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
      */
     public String getEncoding() {
         if (hasEncoding()) {
-            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: get preset encoding " + myEncoding, Level.FINEST);
             return myEncoding;
         }
-        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: get default encoding " + getOptions().getNativeCharset(), Level.FINEST);
         return getOptions().getNativeCharset();
     }
 
@@ -842,7 +835,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
             os.write(getEOL());
             return true;
         }
-        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: display header", Level.FINEST);
         os.write("Index: ".getBytes(getEncoding()));
         os.write(path.getBytes(getEncoding()));
         os.write(getEOL());
@@ -852,7 +844,6 @@ public class DefaultSVNDiffGenerator implements ISVNDiffGenerator {
     }
     
     protected void displayHeaderFields(OutputStream os, String label1, String label2) throws IOException {
-        SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: display header files", Level.FINEST);
         os.write("--- ".getBytes(getEncoding()));
         os.write(label1.getBytes(getEncoding()));
         os.write(getEOL());

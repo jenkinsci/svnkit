@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.wc.DefaultSVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.ISVNDiffGenerator;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
-import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import java.io.File;
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
 
 
 /**
@@ -111,14 +109,11 @@ public class SVNDiffCallback extends AbstractDiffCallback {
         OutputStream result = myResult;
         String encoding = defineEncoding(originalProperties, diff);
         if (encoding != null) {
-            SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: using encoding " + encoding + " derived from svn:mime-type property", Level.FINEST);
             myGenerator.setEncoding(encoding);
             resetEncoding = true;
         } else {
             String conversionEncoding = defineConversionEncoding(originalProperties, diff);
             if (conversionEncoding != null) {
-                SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: using conversion encoding " + conversionEncoding
-                        + " derived from svnkit:charset property or from global.charset option", Level.FINEST);
                 resetEncoding = adjustDiffGenerator("UTF-8");
                 result = new SVNCharsetOutputStream(result, Charset.forName("UTF-8"), Charset.forName(conversionEncoding));
             }
@@ -127,7 +122,6 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             myGenerator.displayFileDiff(getDisplayPath(path), file1, file2, getRevision(revision1), getRevision(revision2), mimeType1, mimeType2, result);
         } finally {
             if (resetEncoding) {
-                SVNDebugLog.getDefaultLog().log(SVNLogType.DEFAULT, "Diff: encoding reset", Level.FINEST);
                 myGenerator.setEncoding(null);
                 myGenerator.setEOL(null);
             }
