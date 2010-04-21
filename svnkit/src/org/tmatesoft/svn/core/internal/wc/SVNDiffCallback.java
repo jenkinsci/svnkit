@@ -190,17 +190,13 @@ public class SVNDiffCallback extends AbstractDiffCallback {
                 return null;
             }
 
-            String originalMimeType = properties == null ? null : properties.getStringValue(SVNProperty.MIME_TYPE);
-            String originalEncoding = SVNPropertiesManager.determineEncodingByMimeType(originalMimeType);
-            boolean originalEncodingSupported = originalEncoding != null && Charset.isSupported(originalEncoding);
-            if (originalEncodingSupported) {
+            String originalEncoding = getCharsetByMimeType(properties, defaultGenerator);
+            if (originalEncoding != null) {
                 return originalEncoding;
             }
 
-            String changedMimeType = diff == null ? null : diff.getStringValue(SVNProperty.MIME_TYPE);
-            String changedEncoding = SVNPropertiesManager.determineEncodingByMimeType(changedMimeType);
-            boolean changedEncodingSupported = changedEncoding != null && Charset.isSupported(changedEncoding);
-            if (changedEncodingSupported) {
+            String changedEncoding = getCharsetByMimeType(diff, defaultGenerator);
+            if (changedEncoding != null) {
                 return changedEncoding;
             }
         }
@@ -213,23 +209,50 @@ public class SVNDiffCallback extends AbstractDiffCallback {
             if (defaultGenerator.hasEncoding()) {
                 return null;
             }
-            String originalCharset = properties == null ? null : properties.getStringValue(SVNProperty.CHARSET);
-            boolean originalCharsetSupported = originalCharset != null && Charset.isSupported(originalCharset);
-            if (originalCharsetSupported) {
+            String originalCharset = getCharset(properties, defaultGenerator);
+            if (originalCharset != null) {
                 return originalCharset;
             }
 
-            String changedCharset = diff == null ? null : diff.getStringValue(SVNProperty.CHARSET);
-            boolean changedCharsetSupported = changedCharset != null && Charset.isSupported(changedCharset);
-            if (changedCharsetSupported) {
+            String changedCharset = getCharset(diff, defaultGenerator);
+            if (changedCharset != null) {
                 return changedCharset;
             }
 
-            String globalEncoding = defaultGenerator.getGlobalEncoding();
-            boolean globalEncodingSupported = globalEncoding != null && Charset.isSupported(globalEncoding);
-            if (globalEncodingSupported) {
+            String globalEncoding = getCharset(defaultGenerator.getGlobalEncoding(), defaultGenerator, false);
+            if (globalEncoding != null) {
                 return globalEncoding;
             }
+        }
+        return null;
+    }
+
+    private String getCharsetByMimeType(SVNProperties properties, DefaultSVNDiffGenerator generator) {
+        if (properties == null) {
+            return null;
+        }
+        String mimeType = properties.getStringValue(SVNProperty.MIME_TYPE);
+        String charset = SVNPropertiesManager.determineEncodingByMimeType(mimeType);
+        return getCharset(charset, generator, false);
+    }
+
+    private String getCharset(SVNProperties properties, DefaultSVNDiffGenerator generator) {
+        if (properties == null) {
+            return null;
+        }
+        String charset = properties.getStringValue(SVNProperty.CHARSET);
+        return getCharset(charset, generator, true);
+    }
+
+    private String getCharset(String charset, DefaultSVNDiffGenerator generator, boolean allowNative) {
+        if (charset == null) {
+            return null;
+        }
+        if (allowNative && SVNProperty.NATIVE.equals(charset)) {
+            return generator.getEncoding();
+        }
+        if (Charset.isSupported(charset)) {
+            return charset;
         }
         return null;
     }
