@@ -1781,7 +1781,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         if (newURL != null) {
             long[] rev = { SVNRepository.INVALID_REVISION };
             repository = createRepository(newURL, null, null, externalPegRevision, externalRevision, rev);
-            reposRootURL = repository.getRepositoryRoot(false);
+            reposRootURL = repository.getRepositoryRoot(true);
             kind = repository.checkPath("", rev[0]);
             if (kind == SVNNodeKind.NONE) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.RA_ILLEGAL_URL, "URL ''{0}'' at revision {1} doesn''t exist", 
