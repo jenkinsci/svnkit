@@ -1853,7 +1853,7 @@ public class SVNUpdateClient16 extends SVNBasicDelegate {
 			long[] rev = { SVNRepository.INVALID_REVISION };
 			repository = createRepository(newURL, null, null,
 					externalPegRevision, externalRevision, rev);
-			reposRootURL = repository.getRepositoryRoot(false);
+			reposRootURL = repository.getRepositoryRoot(true);
 			kind = repository.checkPath("", rev[0]);
 			if (kind == SVNNodeKind.NONE) {
 				SVNErrorMessage err = SVNErrorMessage.create(
