@@ -12,9 +12,6 @@
 
 package org.tmatesoft.svn.core.internal.io.dav;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -24,12 +21,17 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVPropertiesHandler;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPHeader;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNEditor;
 import org.tmatesoft.svn.util.SVNLogType;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @version 1.3
@@ -243,23 +245,36 @@ public class DAVUtil {
 
     public static SVNProperties filterProperties(DAVProperties source, SVNProperties target) {
         target = target == null ? new SVNProperties() : target;
-        for (Iterator props = source.getProperties().keySet().iterator(); props.hasNext();) {
-            DAVElement property = (DAVElement) props.next();
-            String namespace = property.getNamespace();
-            if (namespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
-                String name = property.getName();
-                // hack!
-                if (name.startsWith("svk_")) {
-                    name = name.substring(0, "svk".length()) + ":" + name.substring("svk".length() + 1);
-                }
-                target.put(name, source.getPropertyValue(property));
-            } else if (namespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
-                target.put("svn:" + property.getName(), source.getPropertyValue(property));
-            } else if (property == DAVElement.CHECKED_IN) {
-                target.put("svn:wc:ra_dav:version-url", source.getPropertyValue(property));
+        for (Iterator props = source.getProperties().entrySet().iterator(); props.hasNext();) {
+            Map.Entry entry = (Map.Entry) props.next();
+            DAVElement element = (DAVElement) entry.getKey();
+            SVNPropertyValue value = (SVNPropertyValue) entry.getValue();
+            String propertyName = getPropertyNameByElement(element);
+            if (propertyName != null) {
+                target.put(propertyName, value);
             }
         }
         return target;
+    }
+
+    public static String getPropertyNameByElement(DAVElement element) {
+        if (element == null) {
+            return null;
+        }
+        String namespace = element.getNamespace();
+        String name = element.getName();
+        if (namespace.equals(DAVElement.SVN_CUSTOM_PROPERTY_NAMESPACE)) {
+            // hack!
+            if (name.startsWith("svk_")) {
+                name = name.substring(0, "svk".length()) + ":" + name.substring("svk".length() + 1);
+            }
+            return name;
+        } else if (namespace.equals(DAVElement.SVN_SVN_PROPERTY_NAMESPACE)) {
+            return "svn:" + name;
+        } else if (element == DAVElement.CHECKED_IN) {
+            return "svn:wc:ra_dav:version-url";
+        }
+        return null;
     }
 
     public static void setSpecialWCProperties(SVNProperties props, DAVElement property, SVNPropertyValue propValue) {

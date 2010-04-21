@@ -12,21 +12,21 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.text.ParseException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
 import org.tmatesoft.svn.core.internal.io.dav.DAVProperties;
+import org.tmatesoft.svn.core.internal.io.dav.DAVUtil;
 import org.tmatesoft.svn.core.internal.io.dav.http.HTTPStatus;
-import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.xml.sax.Attributes;
+
+import java.text.ParseException;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -163,16 +163,8 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
                 return;
             }
             name = element;
-            if (myEncoding == null) {
-                value = SVNPropertyValue.create(cdata.toString());
-            } else if ("base64".equals(myEncoding)) {
-                StringBuffer sb = SVNBase64.normalizeBase64(cdata);
-                byte[] buffer = allocateBuffer(sb.length());
-                int length = SVNBase64.base64ToByteArray(sb, buffer);
-                value = SVNPropertyValue.create(null, buffer, 0, length);
-            } else {
-                invalidXML();
-            }
+            String propertyName = DAVUtil.getPropertyNameByElement(name);
+            value = createPropertyValue(propertyName, cdata, myEncoding);
             myEncoding = null;
         }
         if (name != null && value != null) {

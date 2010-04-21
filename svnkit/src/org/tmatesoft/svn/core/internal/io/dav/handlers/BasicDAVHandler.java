@@ -12,16 +12,13 @@
 
 package org.tmatesoft.svn.core.internal.io.dav.handlers;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNProperty;
+import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
+import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.util.SVNDebugLog;
@@ -29,6 +26,13 @@ import org.tmatesoft.svn.util.SVNLogType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 
 /**
@@ -167,6 +171,37 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         }
         return DAVElement.getElement(prefix, qName);
     }
+
+    protected SVNPropertyValue createPropertyValue(String propertyName, StringBuffer cdata, String encoding) throws SVNException {
+        if (SVNProperty.isSVNProperty(propertyName) && encoding == null) {
+            return SVNPropertyValue.create(cdata.toString());
+        }
+        
+        if (encoding == null || encoding.length() == 0) {
+            byte[] rawValue;
+            try {
+                rawValue = cdata.toString().getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                rawValue = cdata.toString().getBytes();
+            }
+            return SVNPropertyValue.create(propertyName, rawValue);
+        }
+        if ("base64".equals(encoding)) {
+            createPropertyValueFromBase64(propertyName, cdata);
+        }
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING,
+                "Unknown XML encoding: ''{0}''", encoding);
+        SVNErrorManager.error(err, SVNLogType.NETWORK);
+        return null;
+    }
+
+    protected SVNPropertyValue createPropertyValueFromBase64(String propertyName, StringBuffer cdata) {
+        StringBuffer sb = SVNBase64.normalizeBase64(cdata);
+        byte[] buffer = allocateBuffer(sb.length());
+        int length = SVNBase64.base64ToByteArray(sb, buffer);
+        return SVNPropertyValue.create(propertyName, buffer, 0, length);
+    }
+    
 
     protected byte[] allocateBuffer(int length) {
         if (myDeltaBuffer == null || myDeltaBuffer.length < length) {

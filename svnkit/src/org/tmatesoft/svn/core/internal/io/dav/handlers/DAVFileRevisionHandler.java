@@ -18,14 +18,12 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.io.dav.DAVElement;
-import org.tmatesoft.svn.core.internal.util.SVNBase64;
 import org.tmatesoft.svn.core.internal.util.SVNXMLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.io.ISVNDeltaConsumer;
 import org.tmatesoft.svn.core.io.ISVNFileRevisionHandler;
 import org.tmatesoft.svn.core.io.SVNFileRevision;
 import org.tmatesoft.svn.util.SVNLogType;
-
 import org.xml.sax.Attributes;
 
 
@@ -167,15 +165,8 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 myPropertiesDelta = new SVNProperties();
             }
             if (myPropertyName != null) {
-                if ("base64".equals(myPropertyEncoding)) {
-                    StringBuffer sb = SVNBase64.normalizeBase64(cdata);
-                    byte[] buffer = allocateBuffer(sb.length());
-                    int length = SVNBase64.base64ToByteArray(sb, buffer);
-                    SVNPropertyValue value = SVNPropertyValue.create(myPropertyName, buffer, 0, length);
-                    myPropertiesDelta.put(myPropertyName, value);
-                } else {
-                    myPropertiesDelta.put(myPropertyName, cdata.toString());
-                }
+                SVNPropertyValue propertyValue = createPropertyValue(myPropertyName, cdata, myPropertyEncoding);
+                myPropertiesDelta.put(myPropertyName, propertyValue);
             }
             myPropertyName = null;
             myPropertyEncoding = null;
