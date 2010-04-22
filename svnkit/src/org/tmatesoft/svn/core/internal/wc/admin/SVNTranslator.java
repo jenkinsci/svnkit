@@ -137,9 +137,12 @@ public class SVNTranslator {
 
         if (expand && charset != null && safelyEncode) {
             File tmp = SVNAdminUtil.createTmpFile(adminArea, name, ".tmp", true);
-            translate(src, tmp, charset, eols, keywordsMap, special, false);
-            translate(tmp, dst, charset, eols, keywordsMap, special, true);
-            SVNFileUtil.deleteFile(tmp);
+            try {
+                translate(src, tmp, charset, eols, keywordsMap, special, false);
+                translate(tmp, dst, charset, eols, keywordsMap, special, true);
+            } finally {
+                SVNFileUtil.deleteFile(tmp);
+            }
         } else {
             translate(src, dst, charset, eols, keywordsMap, special, expand);
         }
