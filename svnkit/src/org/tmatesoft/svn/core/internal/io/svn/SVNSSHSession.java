@@ -94,12 +94,18 @@ public class SVNSSHSession {
             if (credentials.getPrivateKeyFile() != null) {
                 key += ":" + credentials.getPrivateKeyFile().getAbsolutePath();
             }
+            String debugKey = key;
             if (credentials.getPassphrase() != null) {
                 key += ":" + credentials.getPassphrase();
+                debugKey += ":passphrase";
             }
             if (credentials.getPassword() != null) {
                 key += ":" + credentials.getPassword();
+                debugKey += ":password";
             }
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, 
+                    ourRequestor + ": FETCHING CONNECTION FOR KEY: " + debugKey);
+            
             SSHConnectionInfo connectionInfo = null;
             LinkedList connectionsList = (LinkedList) ourConnectionsPool.get(key);
             if (connectionsList == null) {
@@ -308,6 +314,7 @@ public class SVNSSHSession {
 
     private static char[] readPrivateKey(File privateKey) {
         if (privateKey == null || !privateKey.exists() || !privateKey.isFile() || !privateKey.canRead()) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, "Can not read private key from '" + privateKey + "'");
             return null;
         }
         Reader reader = null;
@@ -323,6 +330,7 @@ public class SVNSSHSession {
                 buffer.write(ch);
             }
         } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             return null;
         } finally {
             SVNFileUtil.closeFile(reader);
@@ -334,6 +342,7 @@ public class SVNSSHSession {
         try {
             PEMDecoder.decode(privateKey, passphrase);
         } catch (IOException e) {
+            SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, e);
             return false;
         }        
         return true;
