@@ -172,36 +172,51 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         return DAVElement.getElement(prefix, qName);
     }
 
-    protected SVNPropertyValue createPropertyValue(String propertyName, StringBuffer cdata, String encoding) throws SVNException {
-        if (SVNProperty.isSVNProperty(propertyName) && encoding == null) {
-            return SVNPropertyValue.create(cdata.toString());
+    protected SVNPropertyValue createPropertyValue(DAVElement element, String propertyName, StringBuffer cdata, String encoding) throws SVNException {
+        if ("base64".equalsIgnoreCase(encoding)) {
+            return createPropertyValueFromBase64(element, propertyName, cdata);
+        }
+        if (encoding != null && !"".equals(encoding)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING,
+                    "Unknown XML encoding: ''{0}''", encoding);
+            SVNErrorManager.error(err, SVNLogType.NETWORK);
         }
         
-        if (encoding == null || encoding.length() == 0) {
-            byte[] rawValue;
-            try {
-                rawValue = cdata.toString().getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                rawValue = cdata.toString().getBytes();
-            }
-            return SVNPropertyValue.create(propertyName, rawValue);
+        if (useStringProperty(element, propertyName)) {
+            return SVNPropertyValue.create(cdata.toString());
         }
-        if ("base64".equals(encoding)) {
-            createPropertyValueFromBase64(propertyName, cdata);
+
+        byte[] rawValue;
+        try {
+            rawValue = cdata.toString().getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            rawValue = cdata.toString().getBytes();
         }
-        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.XML_UNKNOWN_ENCODING,
-                "Unknown XML encoding: ''{0}''", encoding);
-        SVNErrorManager.error(err, SVNLogType.NETWORK);
-        return null;
+        return SVNPropertyValue.create(propertyName, rawValue);
     }
 
-    protected SVNPropertyValue createPropertyValueFromBase64(String propertyName, StringBuffer cdata) {
+    protected SVNPropertyValue createPropertyValueFromBase64(DAVElement element, String propertyName, StringBuffer cdata) {
         StringBuffer sb = SVNBase64.normalizeBase64(cdata);
         byte[] buffer = allocateBuffer(sb.length());
         int length = SVNBase64.base64ToByteArray(sb, buffer);
+        if (useStringProperty(element, propertyName)) {
+            String str;
+            try {
+                str = new String(buffer, 0, length, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                str = new String(buffer, 0, length);
+            }
+            return SVNPropertyValue.create(str);
+        }
         return SVNPropertyValue.create(propertyName, buffer, 0, length);
     }
-    
+
+    private boolean useStringProperty(DAVElement element, String propertyName) {
+        String namespace = element == null ? null : element.getNamespace();
+        return SVNProperty.isSVNProperty(propertyName) ||
+                DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(namespace) ||
+                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace);
+    }
 
     protected byte[] allocateBuffer(int length) {
         if (myDeltaBuffer == null || myDeltaBuffer.length < length) {

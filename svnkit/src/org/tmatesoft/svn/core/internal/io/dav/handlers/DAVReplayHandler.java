@@ -227,7 +227,7 @@ public class DAVReplayHandler extends DAVEditorHandler {
                 SVNErrorManager.error(err, SVNLogType.NETWORK);
             }
             if (myPropertyName != null) {
-                SVNPropertyValue propertyValue = createPropertyValueFromBase64(myPropertyName, cdata);
+                SVNPropertyValue propertyValue = createPropertyValueFromBase64(null, myPropertyName, cdata);
                 if (element == CHANGE_FILE_PROPERTY) {
                     myEditor.changeFileProperty(myPath, myPropertyName, propertyValue);
                 } else {

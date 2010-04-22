@@ -530,7 +530,7 @@ public class DAVEditorHandler extends BasicDAVDeltaHandler {
             if (myPropertyName == null) {
                 myPropertyName = computeWCPropertyName(element);
             }
-            SVNPropertyValue value = createPropertyValue(myPropertyName, cdata, myEncoding);
+            SVNPropertyValue value = createPropertyValue(null, myPropertyName, cdata, myEncoding);
             
             if (myIsDirectory) {
                 myEditor.changeDirProperty(myPropertyName, value);

@@ -165,7 +165,7 @@ public class DAVFileRevisionHandler extends BasicDAVDeltaHandler {
                 myPropertiesDelta = new SVNProperties();
             }
             if (myPropertyName != null) {
-                SVNPropertyValue propertyValue = createPropertyValue(myPropertyName, cdata, myPropertyEncoding);
+                SVNPropertyValue propertyValue = createPropertyValue(null, myPropertyName, cdata, myPropertyEncoding);
                 myPropertiesDelta.put(myPropertyName, propertyValue);
             }
             myPropertyName = null;

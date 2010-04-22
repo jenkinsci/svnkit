@@ -164,7 +164,7 @@ public class DAVPropertiesHandler extends BasicDAVHandler {
             }
             name = element;
             String propertyName = DAVUtil.getPropertyNameByElement(name);
-            value = createPropertyValue(propertyName, cdata, myEncoding);
+            value = createPropertyValue(name, propertyName, cdata, myEncoding);
             myEncoding = null;
         }
         if (name != null && value != null) {
