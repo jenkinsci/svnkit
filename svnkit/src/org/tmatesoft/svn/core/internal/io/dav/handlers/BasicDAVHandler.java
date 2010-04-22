@@ -215,7 +215,9 @@ public abstract class BasicDAVHandler extends DefaultHandler {
         String namespace = element == null ? null : element.getNamespace();
         return SVNProperty.isSVNProperty(propertyName) ||
                 DAVElement.SVN_DAV_PROPERTY_NAMESPACE.equals(namespace) ||
-                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace);
+                DAVElement.SVN_SVN_PROPERTY_NAMESPACE.equals(namespace) ||
+                DAVElement.SVN_NAMESPACE.equals(namespace) ||
+                DAVElement.DAV_NAMESPACE.equals(namespace);
     }
 
     protected byte[] allocateBuffer(int length) {
