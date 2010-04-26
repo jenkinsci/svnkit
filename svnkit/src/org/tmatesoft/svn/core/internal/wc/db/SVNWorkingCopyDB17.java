@@ -52,7 +52,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea17Factory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNSimpleVersionedPropertiesImpl;
@@ -74,6 +73,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
+    
+    public static final int WC_FORMAT_17 = 16;
     
     private static final int FORMAT_FROM_SDB = -1;
     private static final long UNKNOWN_WC_ID = -1;
@@ -1852,7 +1853,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     private void verifyPristineDirectoryIsUsable(SVNPristineDirectory pristineDirectory) throws SVNException {
         SVNErrorManager.assertionFailure(pristineDirectory != null && pristineDirectory.getWCRoot() != null && 
-                pristineDirectory.getWCRoot().getFormat() == SVNAdminArea17Factory.WC_FORMAT, "an unusable pristine directory object met", 
+                pristineDirectory.getWCRoot().getFormat() == WC_FORMAT_17, "an unusable pristine directory object met", 
                 SVNLogType.WC);
     }
     
@@ -1909,13 +1910,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                         "Working copy format of ''{0}'' is too old ({1}); please check out your working copy again", new Object[] { wcRoot, String.valueOf(format) });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            if (format > SVNAdminAreaFactory.SVN_WC_VERSION) {
+            if (format > WC_FORMAT_17) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
                         "This client is too old to work with the working copy at\n''{0}'' (format {1}).\nYou need to get a newer Subversion client.", 
                         new Object[] { wcRoot, String.valueOf(format) });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            if (format < SVNAdminAreaFactory.SVN_WC_VERSION && autoUpgrade) {
+            if (format < WC_FORMAT_17 && autoUpgrade) {
                 //TODO: this feature will come here later..
             }
             if (format >= SVNAdminAreaFactory.SVN_WC__HAS_WORK_QUEUE && enforceEmptyWorkQueue) {
@@ -2044,7 +2045,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             public Object run(SqlJetDb db) throws SqlJetException {
                 
                 int version = db.getOptions().getUserVersion();
-                if (version < SVNAdminAreaFactory.SVN_WC_VERSION) {
+                if (version < WC_FORMAT_17) {
                     db.getOptions().setAutovacuum(true);
                     db.runWriteTransaction(new ISqlJetTransaction() {
                         public Object run(SqlJetDb db) throws SqlJetException {
@@ -2052,7 +2053,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                             SqlJetDefaultBusyHandler busyHandler = new SqlJetDefaultBusyHandler(10, 1000);
                             db.setBusyHandler(busyHandler);
                             
-                            db.getOptions().setUserVersion(SVNAdminAreaFactory.SVN_WC_VERSION);
+                            db.getOptions().setUserVersion(WC_FORMAT_17);
                             InputStream commandsStream = null;
                             try {
                                 commandsStream = SVNWorkingCopyDB17.class.getClassLoader().getResourceAsStream("wc-metadata.sql");
@@ -2080,14 +2081,14 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                             return null;
                         }
                     });
-                } else if (version > SVNAdminAreaFactory.SVN_WC_VERSION) {
+                } else if (version > WC_FORMAT_17) {
                     throw new SqlJetException("Schema format " + version + " not recognized");   
                 }
                 return null;
             }
         };
 
-        return SVNSqlJetUtil.openDB(sdbFile, openTxn, mode, SVNAdminAreaFactory.SVN_WC_VERSION);
+        return SVNSqlJetUtil.openDB(sdbFile, openTxn, mode, WC_FORMAT_17);
     }
     
     private SVNPristineDirectory getPristineDirectory(File path) {
