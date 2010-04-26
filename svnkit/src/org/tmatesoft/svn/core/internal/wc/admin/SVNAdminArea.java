@@ -1436,11 +1436,13 @@ public abstract class SVNAdminArea {
                         baseStream = checksumStream;
                     }
                 }
+                File pathToTranslate = text;
                 if (compareTextBase && needsTranslation) {
                     if (!special) {
                         Map keywordsMap = SVNTranslator.computeKeywords(keywords, null, entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                         byte[] eols = SVNTranslator.getBaseEOL(eolStyle);
                         textStream = SVNTranslator.getTranslatingInputStream(textStream, charset, eols, true, keywordsMap, false);
+                        pathToTranslate = text;
                     } else {
                         String linkPath = SVNFileUtil.getSymlinkName(text);
                         if (linkPath == null) {
@@ -1454,6 +1456,7 @@ public abstract class SVNAdminArea {
                     Map keywordsMap = SVNTranslator.computeKeywords(keywords, entry.getURL(), entry.getAuthor(), entry.getCommittedDate(), entry.getRevision() + "", getWCAccess().getOptions());
                     byte[] eols = SVNTranslator.getEOL(eolStyle, getWCAccess().getOptions());
                     baseStream = SVNTranslator.getTranslatingInputStream(baseStream, charset, eols, false, keywordsMap, true);
+                    pathToTranslate = baseFile;
                 }
                 byte[] buffer1 = new byte[8192];
                 byte[] buffer2 = new byte[8192];
@@ -1475,8 +1478,7 @@ public abstract class SVNAdminArea {
                         }
                     }
                 } catch (IOException e) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage());
-                    SVNErrorManager.error(err, SVNLogType.WC);
+                    SVNTranslator.translationError(pathToTranslate, e);
                 }
             } finally {
                 SVNFileUtil.closeFile(baseStream);

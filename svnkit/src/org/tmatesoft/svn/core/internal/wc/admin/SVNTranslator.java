@@ -63,8 +63,7 @@ public class SVNTranslator {
             resultOS = getTranslatingOutputStream(bufferOS, null, eol, repair, keywords, expand);
             resultOS.write(str.getBytes());
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "error while translating a string");
-            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
+            translationError(null, e);
         } finally {
             SVNFileUtil.closeFile(resultOS);
         }
@@ -181,8 +180,7 @@ public class SVNTranslator {
         try {
             copy(is, tos);
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
+            translationError(dst, e);
         } finally {
             SVNFileUtil.closeFile(tos);
             SVNFileUtil.closeFile(os);
@@ -404,8 +402,7 @@ public class SVNTranslator {
             }
             throw ew.getOriginalException();
         } catch (IOException e) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getLocalizedMessage());
-            SVNErrorManager.error(err, e, SVNLogType.DEFAULT);
+            translationError(destination, e);
         } finally {
             if (dst != null) {
                 try {
@@ -682,5 +679,25 @@ public class SVNTranslator {
             return defaults.getGlobalCharset();
         }
         return null;
+    }
+
+
+    public static void translationError(File path, IOException e) throws SVNException {
+        SVNErrorMessage error;
+        if (path != null) {
+            error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Failed to translate ''{0}''", new Object[]{path});
+        } else {
+            error = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Translation failed");
+        }
+        Throwable cause = e;
+        if (e instanceof IOExceptionWrapper) {
+            IOExceptionWrapper wrapper = (IOExceptionWrapper) e;
+            SVNException wrappedException = wrapper.getOriginalException();
+            if (wrappedException != null) {
+                error.setChildErrorMessage(wrappedException.getErrorMessage());
+                cause = wrappedException;
+            }
+        }
+        SVNErrorManager.error(error, cause, SVNLogType.DEFAULT);
     }
 }

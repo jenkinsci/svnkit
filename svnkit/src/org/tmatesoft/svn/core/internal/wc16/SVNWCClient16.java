@@ -3991,7 +3991,7 @@ public class SVNWCClient16 extends SVNBasicDelegate {
                 if (e instanceof SVNCancellableOutputStream.IOCancelException) {
                     SVNErrorManager.cancel(e.getMessage(), SVNLogType.NETWORK);
                 }
-                SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.WC);
+                SVNTranslator.translationError(path, e);
             }
         } finally {
             SVNFileUtil.closeFile(input);
