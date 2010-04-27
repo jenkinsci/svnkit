@@ -52,15 +52,15 @@ public class HTTPNegotiateAuthentication extends HTTPAuthentication {
     }
     
     private static Oid getDefaultOID() {
-        String defaultOid = System.getProperty(NEGOTIATE_TYPE_PROPERTY, NEGOTIATE_TYPE_SPNEGO);
+        String defaultOid = System.getProperty(NEGOTIATE_TYPE_PROPERTY, NEGOTIATE_TYPE_KERBEROS);
         if (defaultOid == null || "".equals(defaultOid)) {
-            defaultOid = NEGOTIATE_TYPE_SPNEGO;
+            defaultOid = NEGOTIATE_TYPE_KERBEROS;
         }
         Oid oid = (Oid) ourOids.get(defaultOid);
         if (oid != null) {
             return oid;
         }
-        return (Oid) ourOids.get(NEGOTIATE_TYPE_SPNEGO);
+        return (Oid) ourOids.get(NEGOTIATE_TYPE_KERBEROS);
     }
 
     private class SVNKitCallbackHandler implements CallbackHandler {
