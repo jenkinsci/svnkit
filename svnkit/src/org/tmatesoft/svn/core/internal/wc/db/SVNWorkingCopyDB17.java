@@ -42,7 +42,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNDate;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
@@ -52,7 +51,6 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNSimpleVersionedPropertiesImpl;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
@@ -75,6 +73,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     
     public static final int WC_FORMAT_17 = 16;
+    public static final int SVN_WC__HAS_WORK_QUEUE = 13;
     
     private static final int FORMAT_FROM_SDB = -1;
     private static final long UNKNOWN_WC_ID = -1;
@@ -1919,7 +1918,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (format < WC_FORMAT_17 && autoUpgrade) {
                 //TODO: this feature will come here later..
             }
-            if (format >= SVNAdminAreaFactory.SVN_WC__HAS_WORK_QUEUE && enforceEmptyWorkQueue) {
+            if (format >= SVN_WC__HAS_WORK_QUEUE && enforceEmptyWorkQueue) {
                 verifyThereIsNoWork(db);
             }
             
