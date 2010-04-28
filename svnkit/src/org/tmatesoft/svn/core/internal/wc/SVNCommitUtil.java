@@ -398,7 +398,6 @@ public class SVNCommitUtil {
             baseAccess.checkCancelled();
             // get entry for target
             File targetFile = new File(baseAccess.getAnchor(), target);
-            String targetName = "".equals(target) ? "" : SVNPathUtil.tail(target);
             String parentPath = SVNPathUtil.removeTail(target);
             SVNAdminArea dir = baseAccess.probeRetrieve(targetFile);
             SVNEntry entry = null;
@@ -481,15 +480,14 @@ public class SVNCommitUtil {
                 }
             } else if (entry.isScheduledForDeletion() && force && depth != SVNDepth.INFINITY) {
                 // if parent is also deleted -> skip this entry
-                if (!"".equals(targetName)) {
-                    parentEntry = dir.getEntry("", false);
-                } else {
-                    File parentFile = targetFile.getParentFile();
+                File parentFile = targetFile.getParentFile();
+                parentEntry = baseAccess.getEntry(parentFile, false);
+                if (parentEntry == null) {
                     try {
                         baseAccess.retrieve(parentFile);
                     } catch (SVNException e) {
                         if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_LOCKED) {
-                            baseAccess.open(targetFile.getParentFile(), true, 0);
+                            baseAccess.open(parentFile, true, 0);
                         } else {
                             throw e;
                         }
