@@ -121,7 +121,7 @@ public class SVNWCClient extends SVNBasicClient {
         return (SVNWCClient16) getDelegate16();
     }
 
-    private SVNWCClient17 getSVNWCClient17() {
+    private SVNWCClient17 getSVNWCClient17() throws SVNException {
         return (SVNWCClient17) getDelegate17();
     }
 
@@ -212,7 +212,10 @@ public class SVNWCClient extends SVNBasicClient {
             addParameters = DEFAULT_ADD_PARAMETERS;
         }
         getSVNWCClient16().setAddParameters(addParameters);
-        getSVNWCClient17().setAddParameters(addParameters);
+        try {
+            getSVNWCClient17().setAddParameters(addParameters);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -251,12 +254,18 @@ public class SVNWCClient extends SVNBasicClient {
             handler = new DefaultSVNCommitHandler();
         }
         getSVNWCClient16().setCommitHandler(handler);
-        getSVNWCClient17().setCommitHandler(handler);
+        try {
+            getSVNWCClient17().setCommitHandler(handler);
+        } catch (SVNException e) {
+        }
     }
 
     public void setRevertMissingDirectories(boolean revertMissing) {
         getSVNWCClient16().setRevertMissingDirectories(revertMissing);
-        getSVNWCClient17().setRevertMissingDirectories(revertMissing);
+        try {
+            getSVNWCClient17().setRevertMissingDirectories(revertMissing);
+        } catch (SVNException e) {
+        }
     }
 
     public boolean isRevertMissingDirectories() {

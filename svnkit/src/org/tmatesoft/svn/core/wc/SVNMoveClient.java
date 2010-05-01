@@ -53,7 +53,7 @@ public class SVNMoveClient extends SVNBasicClient {
         return (SVNMoveClient16) getDelegate16();
     }
 
-    private SVNMoveClient17 getSVNMoveClient17() {
+    private SVNMoveClient17 getSVNMoveClient17() throws SVNException {
         return (SVNMoveClient17) getDelegate17();
     }
 
@@ -122,17 +122,26 @@ public class SVNMoveClient extends SVNBasicClient {
 
     public void setEventHandler(ISVNEventHandler dispatcher) {
         getSVNMoveClient16().setEventHandler(dispatcher);
-        getSVNMoveClient17().setEventHandler(dispatcher);
+        try {
+            getSVNMoveClient17().setEventHandler(dispatcher);
+        } catch (SVNException e) {
+        }
     }
 
     public void setDebugLog(ISVNDebugLog log) {
         getSVNMoveClient16().setDebugLog(log);
-        getSVNMoveClient17().setDebugLog(log);
+        try {
+            getSVNMoveClient17().setDebugLog(log);
+        } catch (SVNException e) {
+        }
     }
 
     public void setOptions(ISVNOptions options) {
         getSVNMoveClient16().setOptions(options);
-        getSVNMoveClient17().setOptions(options);
+        try {
+            getSVNMoveClient17().setOptions(options);
+        } catch (SVNException e) {
+        }
     }
 
     /**

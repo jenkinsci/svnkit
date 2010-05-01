@@ -70,7 +70,7 @@ public class SVNDiffClient extends SVNBasicClient {
         return (SVNDiffClient16) getDelegate16();
     }
 
-    private SVNDiffClient17 getSVNDiffClient17() {
+    private SVNDiffClient17 getSVNDiffClient17() throws SVNException {
         return (SVNDiffClient17) getDelegate17();
     }
 
@@ -152,7 +152,10 @@ public class SVNDiffClient extends SVNBasicClient {
             diffGenerator = new DefaultSVNDiffGenerator();
         }
         getSVNDiffClient16().setDiffGenerator(diffGenerator);
-        getSVNDiffClient17().setDiffGenerator(diffGenerator);
+        try {
+            getSVNDiffClient17().setDiffGenerator(diffGenerator);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -180,7 +183,10 @@ public class SVNDiffClient extends SVNBasicClient {
             diffOptions = new SVNDiffOptions();
         }
         getSVNDiffClient16().setMergeOptions(diffOptions);
-        getSVNDiffClient17().setMergeOptions(diffOptions);
+        try {
+            getSVNDiffClient17().setMergeOptions(diffOptions);
+        } catch (SVNException e) {
+        }
     }
 
     /**

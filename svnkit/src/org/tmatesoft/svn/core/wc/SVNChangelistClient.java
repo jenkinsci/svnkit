@@ -54,7 +54,7 @@ public class SVNChangelistClient extends SVNBasicClient {
         return (SVNChangelistClient16) getDelegate16();
     }
 
-    private SVNChangelistClient17 getSVNChangelistClient17() {
+    private SVNChangelistClient17 getSVNChangelistClient17() throws SVNException {
         return (SVNChangelistClient17) getDelegate17();
     }
 

@@ -69,7 +69,7 @@ public class SVNUpdateClient extends SVNBasicClient {
         return (SVNUpdateClient16) getDelegate16();
     }
 
-    private SVNUpdateClient17 getSVNUpdateClient17() {
+    private SVNUpdateClient17 getSVNUpdateClient17() throws SVNException {
         return (SVNUpdateClient17) getDelegate17();
     }
 
@@ -145,7 +145,10 @@ public class SVNUpdateClient extends SVNBasicClient {
             externalsHandler = ISVNExternalsHandler.DEFAULT;
         }
         getSVNUpdateClient16().setExternalsHandler(externalsHandler);
-        getSVNUpdateClient17().setExternalsHandler(externalsHandler);
+        try {
+            getSVNUpdateClient17().setExternalsHandler(externalsHandler);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -417,7 +420,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public void setUpdateLocksOnDemand(boolean locksOnDemand) {
         getSVNUpdateClient16().setUpdateLocksOnDemand(locksOnDemand);
-        getSVNUpdateClient17().setUpdateLocksOnDemand(locksOnDemand);
+        try {
+            getSVNUpdateClient17().setUpdateLocksOnDemand(locksOnDemand);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -1155,7 +1161,10 @@ public class SVNUpdateClient extends SVNBasicClient {
      */
     public void setExportExpandsKeywords(boolean expand) {
         getSVNUpdateClient16().setExportExpandsKeywords(expand);
-        getSVNUpdateClient17().setExportExpandsKeywords(expand);
+        try {
+            getSVNUpdateClient17().setExportExpandsKeywords(expand);
+        } catch (SVNException e) {
+        }
     }
 
     /**

@@ -59,7 +59,7 @@ public class SVNStatusClient extends SVNBasicClient {
         return (SVNStatusClient16) getDelegate16();
     }
 
-    private SVNStatusClient17 getSVNStatusClient17() {
+    private SVNStatusClient17 getSVNStatusClient17() throws SVNException {
         return (SVNStatusClient17) getDelegate17();
     }
 
@@ -435,6 +435,9 @@ public class SVNStatusClient extends SVNBasicClient {
 
     public void setFilesProvider(ISVNStatusFileProvider filesProvider) {
         getSVNStatusClient16().setFilesProvider(filesProvider);
-        getSVNStatusClient17().setFilesProvider(filesProvider);
+        try {
+            getSVNStatusClient17().setFilesProvider(filesProvider);
+        } catch (SVNException e) {
+        }
     }
 }

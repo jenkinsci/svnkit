@@ -84,7 +84,7 @@ public class SVNCopyClient extends SVNBasicClient {
         return (SVNCopyClient16) getDelegate16();
     }
 
-    private SVNCopyClient17 getSVNCopyClient17() {
+    private SVNCopyClient17 getSVNCopyClient17() throws SVNException {
         return (SVNCopyClient17) getDelegate17();
     }
 
@@ -174,7 +174,10 @@ public class SVNCopyClient extends SVNBasicClient {
             handler = new DefaultSVNCommitHandler();
         }
         getSVNCopyClient16().setCommitHandler(handler);
-        getSVNCopyClient17().setCommitHandler(handler);
+        try {
+            getSVNCopyClient17().setCommitHandler(handler);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -206,7 +209,10 @@ public class SVNCopyClient extends SVNBasicClient {
             parameters = new DefaultSVNCommitParameters();
         }
         getSVNCopyClient16().setCommitParameters(parameters);
-        getSVNCopyClient17().setCommitParameters(parameters);
+        try {
+            getSVNCopyClient17().setCommitParameters(parameters);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -236,7 +242,10 @@ public class SVNCopyClient extends SVNBasicClient {
             externalsHandler = ISVNExternalsHandler.DEFAULT;
         }
         getSVNCopyClient16().setExternalsHandler(externalsHandler);
-        getSVNCopyClient17().setExternalsHandler(externalsHandler);
+        try {
+            getSVNCopyClient17().setExternalsHandler(externalsHandler);
+        } catch (SVNException e) {
+        }
     }
 
     /**

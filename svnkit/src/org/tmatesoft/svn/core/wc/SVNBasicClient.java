@@ -14,13 +14,16 @@ package org.tmatesoft.svn.core.wc;
 import java.io.File;
 
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * The <b>SVNBasicClient</b> is the base class of all <b>SVN</b>*<b>Client</b>
@@ -40,6 +43,10 @@ import org.tmatesoft.svn.util.SVNDebugLog;
  */
 public class SVNBasicClient {
 
+    private static final String SVNKIT_WC_17_PROPERTY = "svnkit.wc.17";
+    private static final String SVNKIT_WC_17_DEFAULT = "false";
+    private static final String SVNKIT_WC_17_EXPECTED = "true";
+    
     private SVNBasicDelegate delegate16;
     private SVNBasicDelegate delegate17;
 
@@ -53,8 +60,22 @@ public class SVNBasicClient {
         setEventHandler(null);
     }
 
-    protected SVNBasicDelegate getDelegate17() {
-        return this.delegate17;
+    protected static boolean isWC17Supported() {
+        return SVNKIT_WC_17_EXPECTED.equalsIgnoreCase(System.getProperty(SVNKIT_WC_17_PROPERTY, SVNKIT_WC_17_DEFAULT));
+    }
+    
+    protected static SVNBasicDelegate dontWC17Support() throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT);
+        SVNErrorManager.error(err, SVNLogType.CLIENT);
+        return null;
+    }
+    
+    protected SVNBasicDelegate getDelegate17() throws SVNException {
+        if(isWC17Supported()) {
+            return this.delegate17;
+        } else {
+            return dontWC17Support();
+        }
     }
 
     protected SVNBasicDelegate getDelegate16() {
@@ -81,7 +102,10 @@ public class SVNBasicClient {
             options = SVNWCUtil.createDefaultOptions(true);
         }
         getDelegate16().setOptions(options);
-        getDelegate17().setOptions(options);
+        try {
+            getDelegate17().setOptions(options);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -98,7 +122,10 @@ public class SVNBasicClient {
      */
     public void setIgnoreExternals(boolean ignore) {
         getDelegate16().setIgnoreExternals(ignore);
-        getDelegate17().setIgnoreExternals(ignore);
+        try {
+            getDelegate17().setIgnoreExternals(ignore);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -159,7 +186,10 @@ public class SVNBasicClient {
      */
     public void setLeaveConflictsUnresolved(boolean leave) {
         getDelegate16().setLeaveConflictsUnresolved(leave);
-        getDelegate17().setLeaveConflictsUnresolved(leave);
+        try {
+            getDelegate17().setLeaveConflictsUnresolved(leave);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -187,7 +217,10 @@ public class SVNBasicClient {
      */
     public void setEventHandler(ISVNEventHandler dispatcher) {
         getDelegate16().setEventHandler(dispatcher);
-        getDelegate17().setEventHandler(dispatcher);
+        try {
+            getDelegate17().setEventHandler(dispatcher);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -199,7 +232,10 @@ public class SVNBasicClient {
      */
     public void setPathListHandler(ISVNPathListHandler handler) {
         getDelegate16().setPathListHandler(handler);
-        getDelegate17().setPathListHandler(handler);
+        try {
+            getDelegate17().setPathListHandler(handler);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -213,7 +249,10 @@ public class SVNBasicClient {
             log = SVNDebugLog.getDefaultLog();
         }
         getDelegate16().setDebugLog(log);
-        getDelegate17().setDebugLog(log);
+        try {
+            getDelegate17().setDebugLog(log);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -327,7 +366,10 @@ public class SVNBasicClient {
      */
     public void setEventPathPrefix(String prefix) {
         getDelegate16().setEventPathPrefix(prefix);
-        getDelegate17().setEventPathPrefix(prefix);
+        try {
+            getDelegate17().setEventPathPrefix(prefix);
+        } catch (SVNException e) {
+        }
     }
 
 }

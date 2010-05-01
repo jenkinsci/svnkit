@@ -70,7 +70,7 @@ public class SVNCommitClient extends SVNBasicClient {
         return (SVNCommitClient16) getDelegate16();
     }
 
-    private SVNCommitClient17 getSVNCommitClient17() {
+    private SVNCommitClient17 getSVNCommitClient17() throws SVNException {
         return (SVNCommitClient17) getDelegate17();
     }
 
@@ -146,7 +146,10 @@ public class SVNCommitClient extends SVNBasicClient {
             handler = new DefaultSVNCommitHandler();
         }
         getSVNCommitClient16().setCommitHander(handler);
-        getSVNCommitClient17().setCommitHander(handler);
+        try {
+            getSVNCommitClient17().setCommitHander(handler);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -172,7 +175,10 @@ public class SVNCommitClient extends SVNBasicClient {
             handler = new DefaultSVNCommitHandler();
         }
         getSVNCommitClient16().setCommitHandler(handler);
-        getSVNCommitClient17().setCommitHandler(handler);
+        try {
+            getSVNCommitClient17().setCommitHandler(handler);
+        } catch (SVNException e) {
+        }
     }
 
     /**
@@ -205,7 +211,10 @@ public class SVNCommitClient extends SVNBasicClient {
             parameters = new DefaultSVNCommitParameters();
         }
         getSVNCommitClient16().setCommitParameters(parameters);
-        getSVNCommitClient17().setCommitParameters(parameters);
+        try {
+            getSVNCommitClient17().setCommitParameters(parameters);
+        } catch (SVNException e) {
+        }
     }
 
     /**

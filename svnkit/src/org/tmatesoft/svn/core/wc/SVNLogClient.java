@@ -64,7 +64,7 @@ public class SVNLogClient extends SVNBasicClient {
         return (SVNLogClient16) getDelegate16();
     }
 
-    private SVNLogClient17 getSVNLogClient17() {
+    private SVNLogClient17 getSVNLogClient17() throws SVNException {
         return (SVNLogClient17) getDelegate17();
     }
 
@@ -138,7 +138,10 @@ public class SVNLogClient extends SVNBasicClient {
             diffOptions = new SVNDiffOptions();
         }
         getSVNLogClient16().setDiffOptions(diffOptions);
-        getSVNLogClient17().setDiffOptions(diffOptions);
+        try {
+            getSVNLogClient17().setDiffOptions(diffOptions);
+        } catch (SVNException e) {
+        }
     }
 
     /**
