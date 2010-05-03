@@ -34,7 +34,7 @@ if $cygwin ; then
   SVNKIT_CP=`cygpath --windows --path "$SVNKIT_CP"`
 fi
 
-SVNKIT_VM_OPTIONS="-Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$SVNKIT_HOME/logging.properties"
+SVNKIT_OPTIONS="$SVNKIT_OPTIONS -Dsun.io.useCanonCaches=false -Djava.util.logging.config.file=$SVNKIT_HOME/logging.properties"
 
 SVNKIT_MAINCLASS=org.tmatesoft.svn.cli.svnsync.SVNSync
-"$JAVA_HOME/bin/java" $SVNKIT_VM_OPTIONS -cp $SVNKIT_CP $SVNKIT_MAINCLASS "$@"
+"$JAVA_HOME/bin/java" $SVNKIT_OPTIONS -cp $SVNKIT_CP $SVNKIT_MAINCLASS "$@"
