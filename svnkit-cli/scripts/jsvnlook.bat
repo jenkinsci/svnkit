@@ -6,6 +6,6 @@ if "%SVNKIT_HOME%"=="" set SVNKIT_HOME=%DEFAULT_SVNKIT_HOME%
 
 set SVNKIT_CLASSPATH= "%SVNKIT_HOME%svnkit.jar";"%SVNKIT_HOME%svnkit-cli.jar";"%SVNKIT_HOME%trilead.jar";"%SVNKIT_HOME%jna.jar";"%SVNKIT_HOME%sqljet.%sqljet.version%.jar";"%SVNKIT_HOME%antlr-runtime-%antlr.version%.jar"
 set SVNKIT_MAINCLASS=org.tmatesoft.svn.cli.svnlook.SVNLook
-set SVNKIT_OPTIONS=-Djava.util.logging.config.file="%SVNKIT_HOME%/logging.properties"
+set SVNKIT_OPTIONS=%SVNKIT_OPTIONS% -Djava.util.logging.config.file="%SVNKIT_HOME%/logging.properties"
 
 "%JAVA_HOME%\bin\java" %SVNKIT_OPTIONS% -cp %SVNKIT_CLASSPATH% %SVNKIT_MAINCLASS% %*
