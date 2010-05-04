@@ -53,9 +53,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class FSRepositoryUtil {
-    public static final int MAX_KEY_SIZE = 200;
 
-    private static final byte[] ourCopyBuffer = new byte[1024*16];
+    public static final int MAX_KEY_SIZE = 200;
 
     public static String generateLockToken() throws SVNException {
         String uuid = SVNUUIDGenerator.formatUUID(SVNUUIDGenerator.generateUUID());
@@ -107,15 +106,16 @@ public class FSRepositoryUtil {
         SVNCommitUtil.driveCommitEditor(handler, interestingPaths, editor, -1);
     }
     
-    public synchronized static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
+    public static void copy(InputStream src, OutputStream dst, ISVNCanceller canceller) throws SVNException {
+        byte[] copyBuffer = new byte[1024*16];
         try {
             while (true) {
                 if (canceller != null) {
                     canceller.checkCancelled();
                 }
-                int length = src.read(ourCopyBuffer);
+                int length = src.read(copyBuffer);
                 if (length > 0) {
-                    dst.write(ourCopyBuffer, 0, length);
+                    dst.write(copyBuffer, 0, length);
                 }
                 if (length < 0) {
                     break;
