@@ -211,11 +211,12 @@ public class SVNDiffEditor implements ISVNEditor {
         }
         if (!entry.isScheduledForDeletion()) {
             if (getDiffCallback().isDiffCopiedAsAdded() && entry.isCopied()) {
+                baseProps = new SVNProperties();
                 propDiff = dir.getProperties(fileName).asMap();
             } else {
+                baseProps = dir.getBaseProperties(fileName).asMap();
                 boolean modified = dir.hasPropModifications(fileName);
                 if (modified) {
-                    baseProps = dir.getBaseProperties(fileName).asMap();
                     propDiff = computePropsDiff(baseProps, dir.getProperties(fileName).asMap());
                 } else {
                     propDiff = new SVNProperties();
