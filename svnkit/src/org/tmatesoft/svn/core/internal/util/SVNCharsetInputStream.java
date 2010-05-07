@@ -95,7 +95,7 @@ public class SVNCharsetInputStream extends FilterInputStream {
     }
 
     public String toString() {
-        final StringBuilder buffer = new StringBuilder();
+        final StringBuffer buffer = new StringBuffer();
         buffer.append("SVNCharsetInputStream");
         buffer.append("[").append(myCharsetConvertor);
         buffer.append(']');

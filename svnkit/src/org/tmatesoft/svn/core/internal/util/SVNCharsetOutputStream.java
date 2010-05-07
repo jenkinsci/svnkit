@@ -79,7 +79,7 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
     }
 
     public String toString() {
-        final StringBuilder buffer = new StringBuilder();
+        final StringBuffer buffer = new StringBuffer();
         buffer.append("SVNCharsetOutputStream");
         buffer.append("[").append(myCharsetConvertor);
         buffer.append(']');
