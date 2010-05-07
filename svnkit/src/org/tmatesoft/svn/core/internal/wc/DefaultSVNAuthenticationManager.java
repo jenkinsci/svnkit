@@ -29,14 +29,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
-import org.tmatesoft.svn.core.auth.ISVNProxyManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-import org.tmatesoft.svn.core.auth.SVNUserNameAuthentication;
+import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
@@ -64,7 +57,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     private ISVNAuthStoreHandler myAuthStoreHandler;
     private Map myServersOptions;
     private Map myConfigOptions;
-    
+    private ISVNAuthenticationOutcomeListener outcomeListener;
+
     public DefaultSVNAuthenticationManager(File configDirectory, boolean storeAuth, String userName, String password) {
         this(configDirectory, storeAuth, userName, password, null, null);
     }
@@ -98,7 +92,11 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
 
     public void setAuthenticationProvider(ISVNAuthenticationProvider provider) {
         // add provider to list
-        myProviders[3] = provider; 
+        myProviders[3] = provider;
+
+        // this hack makes it easier for ISVNAuthenticationProvider to get notified of the outcome.
+        if (provider instanceof ISVNAuthenticationOutcomeListener)
+            setAuthenticationOutcomeListener((ISVNAuthenticationOutcomeListener) provider);
     }
 
     public Collection getAuthTypes(SVNURL url) {
@@ -254,6 +252,8 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
     }
 
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
+        if (outcomeListener!=null)
+            outcomeListener.acknowledgeAuthentication(accepted,kind,realm,errorMessage,authentication);
         if (!accepted) {
             myPreviousErrorMessage = errorMessage;
             myPreviousAuthentication = authentication;
@@ -271,6 +271,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             // do not cache explicit credentials in runtime cache?
             ((CacheAuthenticationProvider) myProviders[1]).saveAuthentication(authentication, realm);
         }
+    }
+
+    public void setAuthenticationOutcomeListener(ISVNAuthenticationOutcomeListener listener) {
+        this.outcomeListener = listener;
     }
 
 	public void acknowledgeTrustManager(TrustManager manager) {

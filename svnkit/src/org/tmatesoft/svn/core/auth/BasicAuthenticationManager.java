@@ -63,7 +63,8 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
     private String myProxyUserName;
     private String myProxyPassword;
     private boolean myIsAuthenticationForced;
-    
+    private ISVNAuthenticationOutcomeListener outcomeListener;
+
     /**
      * Creates an auth manager given a user credential - a username 
      * and password. 
@@ -256,7 +257,13 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
      * @param errorMessage
      * @param authentication
      */
-    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) {
+    public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException {
+        if (outcomeListener!=null)
+            outcomeListener.acknowledgeAuthentication(accepted,kind,realm,errorMessage,authentication);
+    }
+
+    public void setAuthenticationOutcomeListener(ISVNAuthenticationOutcomeListener listener) {
+        this.outcomeListener = listener;
     }
 
     /**

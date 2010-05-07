@@ -30,6 +30,7 @@
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
+  <component name="IdProvider" IDEtalkID="3E664F729BF81FD170EA9F4913C17F6C" />
   <component name="InspectionProjectProfileManager">
     <profiles>
       <profile version="1.0" is_locked="false">
@@ -73,10 +74,7 @@
           <option name="IGNORE_DUPLICATED_THROWS" value="false" />
           <option name="myAdditionalJavadocTags" value="" />
         </inspection_tool>
-        <inspection_tool class="Since15" enabled="true" level="WARNING" enabled_by_default="true">
-          <option name="FORBID_15_API" value="false" />
-          <option name="FORBID_16_API" value="true" />
-        </inspection_tool>
+        <inspection_tool class="Since15" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="StringBufferReplaceableByStringBuilder" enabled="true" level="WARNING" enabled_by_default="true" />
         <inspection_tool class="SynchronizationOnLocalVariableOrMethodParameter" enabled="false" level="WARNING" enabled_by_default="false">
           <option name="reportLocalVariables" value="true" />

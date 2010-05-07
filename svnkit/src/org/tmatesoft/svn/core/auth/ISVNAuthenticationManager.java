@@ -233,6 +233,12 @@ public interface ISVNAuthenticationManager {
     public void acknowledgeAuthentication(boolean accepted, String kind, String realm, SVNErrorMessage errorMessage, SVNAuthentication authentication) throws SVNException;
 
     /**
+     * Sets the listener that gets invoked every time {@link #acknowledgeAuthentication(boolean, String, String, SVNErrorMessage, SVNAuthentication)}
+     * is called.
+     */
+    public void setAuthenticationOutcomeListener(ISVNAuthenticationOutcomeListener listener);
+
+    /**
      * Acknowledges the specified trust manager. This method is called only when a secure connection is 
      * successfully established with the specified <code>manager</code>. 
      * 
