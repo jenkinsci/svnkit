@@ -11,14 +11,14 @@
  */
 package org.tmatesoft.svn.core.internal.util;
 
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
+
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.IOExceptionWrapper;
 
 
 /**
@@ -76,5 +76,13 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
     public void close() throws IOException {
         flush();
         out.close();
+    }
+
+    public String toString() {
+        final StringBuilder buffer = new StringBuilder();
+        buffer.append("SVNCharsetOutputStream");
+        buffer.append("[").append(myCharsetConvertor);
+        buffer.append(']');
+        return buffer.toString();
     }
 }
