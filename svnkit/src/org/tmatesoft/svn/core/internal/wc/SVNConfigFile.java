@@ -83,7 +83,22 @@ public class SVNConfigFile {
                 if (matchGroup(line, null)) {
                     return null;
                 } else if (matchProperty(line, propertyName)) {
-                    return getPropertyValue(line);
+                    String firstLine = getPropertyValue(line);
+                    
+                    if (firstLine != null) {
+                        int j = i + 1;
+                        while(j < myLines.length && myLines[j] != null) {
+                            String nextLine = myLines[j++];
+                            if (!matchGroup(nextLine, null) && !matchProperty(nextLine, null)) {
+                                if (nextLine.length() > 0 && Character.isWhitespace(nextLine.charAt(0))) {
+                                    firstLine += nextLine;
+                                    continue;
+                                } 
+                            } 
+                            break;
+                        }
+                    }
+                    return firstLine;
                 }
             }
         }
