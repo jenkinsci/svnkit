@@ -40,6 +40,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -476,14 +477,14 @@ public class SVNTranslator {
             if (eol != null) {
                 byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
                 if (Arrays.equals(convertedEOL, eol)) {
-                    out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
+                    out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
                     if (keywords != null) {
                         out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
                     }
                     return out;
                 }
             }
-            out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
+            out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
             return new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
         }
         if (eol != null) {
@@ -492,11 +493,11 @@ public class SVNTranslator {
                 if (keywords != null) {
                     out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
                 }
-                return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
+                return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
             }
         }
         out = new SVNTranslatorOutputStream(out, eol, repair, keywords, expand);
-        return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
+        return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET, CodingErrorAction.REPORT, CodingErrorAction.REPORT);
     }
 
     public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) throws SVNException {

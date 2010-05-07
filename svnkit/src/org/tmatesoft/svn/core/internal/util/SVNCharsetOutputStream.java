@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 
 
 /**
@@ -33,9 +36,18 @@ public class SVNCharsetOutputStream extends FilterOutputStream {
     private ByteBuffer myOutputBuffer;
     private boolean myFlushed;
 
-    public SVNCharsetOutputStream(OutputStream out, Charset inputCharset, Charset outputCharset) {
+    public SVNCharsetOutputStream(OutputStream out, Charset inputCharset, Charset outputCharset,
+                                  CodingErrorAction malformedInputAction, CodingErrorAction unmappableCharAction) {
         super(out);
-        myCharsetConvertor = new SVNCharsetConvertor(inputCharset.newDecoder(), outputCharset.newEncoder());
+        CharsetDecoder decoder = inputCharset.newDecoder();
+        decoder.onMalformedInput(malformedInputAction);
+        decoder.onUnmappableCharacter(unmappableCharAction);
+
+        CharsetEncoder encoder = outputCharset.newEncoder();
+        encoder.onMalformedInput(malformedInputAction);
+        encoder.onUnmappableCharacter(unmappableCharAction);
+        
+        myCharsetConvertor = new SVNCharsetConvertor(decoder, encoder);
         myFlushed = false;
     }
 
