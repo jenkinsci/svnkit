@@ -490,4 +490,14 @@ public class SVNPathUtil {
         }
         return false;
     }
+
+    public static String getDirName(String targetAbsPath) {
+        // TODO
+        return null;
+    }
+
+    public static String getBaseName(String targetAbsPath) {
+        // TODO
+        return null;
+    }
 }
