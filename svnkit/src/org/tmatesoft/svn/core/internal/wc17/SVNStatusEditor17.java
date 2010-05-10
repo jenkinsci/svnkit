@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
  */
 public class SVNStatusEditor17 {
 
-    public SVNStatusEditor17(ISVNOptions options, SVNWCContext wcContext, SVNAdminAreaInfo17 info, boolean includeIgnored, boolean reportAll, SVNDepth depth, ISVNStatusHandler realHandler) {
+    public SVNStatusEditor17(ISVNOptions options, SVNWCContext wcContext, SVNWCContextInfo info, boolean includeIgnored, boolean reportAll, SVNDepth depth, ISVNStatusHandler handler) {
     }
 
     public SVNCommitInfo closeEdit() {

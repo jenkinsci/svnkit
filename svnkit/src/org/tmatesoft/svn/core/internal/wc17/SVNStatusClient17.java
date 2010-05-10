@@ -351,7 +351,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             return -1;
         }
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        SVNWCContext wcContext = new SVNWCContext();
+        final SVNWCContext wcContext = new SVNWCContext();
         SVNStatusEditor17 editor = null;
         final boolean[] deletedInRepository = new boolean[] {
             false
@@ -371,30 +371,24 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
         try {
             
-            final String targetAbsPath = SVNPathUtil.canonicalizeAbsolutePath(path.getPath());
-            final File targetAbsFile = new File(targetAbsPath);
-
-            String dirAbsPath;
-            String targetBaseName;
-            String dir;
-            
-            SVNAdminAreaInfo17 info = new SVNAdminAreaInfo17();
+            final SVNWCContextInfo info = new SVNWCContextInfo();
+            info.setTargetAbsPath( SVNPathUtil.canonicalizeAbsolutePath(path.getPath()) );
 
             {
-                SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(targetAbsFile));                
-                SVNNodeKind kind = wcContext.getNodeKind(targetAbsPath,false);
+                SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(info.getTargetAbsFile()));                
+                SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsPath(),false);
 
                 /* Dir must be an existing directory or the status editor fails */
                 if (kind == SVNNodeKind.DIR && diskKind == SVNNodeKind.DIR) {
-                    dirAbsPath = targetAbsPath;
-                    targetBaseName = "";
-                    dir = path.getPath();
+                    info.setDirAbsPath(info.getTargetAbsPath());
+                    info.setTargetBaseName("");
+                    info.setDir(path.getPath());
                 } else {                    
-                    dirAbsPath = SVNPathUtil.getDirName(targetAbsPath);
-                    targetBaseName = SVNPathUtil.getBaseName(targetAbsPath);
-                    dir = SVNPathUtil.getDirName(path.getPath());                    
+                    info.setDirAbsPath(SVNPathUtil.getDirName(info.getTargetAbsPath()));
+                    info.setTargetBaseName( SVNPathUtil.getBaseName(info.getTargetAbsPath()));
+                    info.setDir(SVNPathUtil.getDirName(path.getPath()));                    
                     if (kind != SVNNodeKind.FILE) {
-                        kind = wcContext.getNodeKind(dirAbsPath, false);                        
+                        kind = wcContext.getNodeKind(info.getDirAbsPath(), false);                        
                         /* Check for issue #1617 and stat_tests.py 14
                         "status on '..' where '..' is not versioned". */
                         if ( kind != SVNNodeKind.DIR || "..".equals(path.getPath())) {
@@ -406,17 +400,15 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 }
             }
 
-            String anchorAbsPath = null;
-            String anchorRelPath = null;
-            if (!SVNPathUtil.isAbsolute(dir)) {
-                anchorAbsPath = dirAbsPath;
-                anchorAbsPath = dir;
+            if (!SVNPathUtil.isAbsolute(info.getDir())) {
+                info.setAnchorAbsPath(info.getDirAbsPath());
+                info.setAnchorRelPath(info.getDir());
             }
 
             if (remote) {                
-                SVNURL url = wcContext.getUrlFromPath(dirAbsPath);
+                SVNURL url = wcContext.getUrlFromPath(info.getDirAbsPath());
                 if(url==null){
-                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", dir);
+                    SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getDir());
                     SVNErrorManager.error(error, SVNLogType.WC);                    
                 }                
                 SVNRepository repository = createRepository(url, true);
@@ -430,9 +422,9 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 checkCancelled();
                 SVNReporter17 reporter = null;
                 if (kind == SVNNodeKind.NONE) {                    
-                    boolean added = wcContext.isNodeAdded(dirAbsPath);
+                    boolean added = wcContext.isNodeAdded(info.getDirAbsPath());
                     if(added){
-                        boolean replaced = wcContext.isNodeReplaced(dirAbsPath);
+                        boolean replaced = wcContext.isNodeReplaced(info.getDirAbsPath());
                         if (replaced) {
                             added = false;
                         }
@@ -456,7 +448,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 if (getEventDispatcher() != null) {
                     long reportedFiles = reporter != null ? reporter.getReportedFilesCount() : 0;
                     long totalFiles = reporter != null ? reporter.getTotalFilesCount() : 0;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(targetAbsFile, SVNNodeKind.NONE, null, editor.getTargetRevision(),
+                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getTargetAbsFile(), SVNNodeKind.NONE, null, editor.getTargetRevision(),
                             SVNEventAction.STATUS_COMPLETED, null, null, null, reportedFiles, totalFiles);
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
@@ -476,7 +468,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal external = externals[i];
                         String externalPath = SVNPathUtil.append(ownerPath, external.getPath());
-                        File externalFile = new File(SVNPathUtil.append(dirAbsPath,externalPath));
+                        File externalFile = new File(SVNPathUtil.append(info.getDirAbsPath(),externalPath));
                         if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
                             continue;
                         }

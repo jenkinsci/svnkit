@@ -30,7 +30,7 @@ import org.tmatesoft.svn.core.wc.SVNStatus;
  */
 public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEditor, ISVNStatusHandler {
 
-    public SVNRemoteStatusEditor17(ISVNOptions options, SVNWCContext wcContext, SVNAdminAreaInfo17 info, boolean includeIgnored, boolean reportAll, SVNDepth depth, ISVNStatusHandler realHandler) {
+    public SVNRemoteStatusEditor17(ISVNOptions options, SVNWCContext wcContext, SVNWCContextInfo info, boolean includeIgnored, boolean reportAll, SVNDepth depth, ISVNStatusHandler realHandler) {
         super(options,wcContext,info,includeIgnored,reportAll,depth,realHandler);
     }
 

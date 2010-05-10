@@ -15,7 +15,6 @@ import java.io.File;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporter;
 import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.util.ISVNDebugLog;
@@ -27,7 +26,9 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
  */
 public class SVNReporter17 implements ISVNReporterBaton {
 
-    public SVNReporter17(SVNAdminAreaInfo17 info, File path, boolean b, boolean c, SVNDepth depth, boolean d, boolean e, boolean f, ISVNDebugLog debugLog) {
+    public SVNReporter17(SVNWCContextInfo info, File file, boolean restoreFiles, 
+            boolean useDepthCompatibilityTrick, SVNDepth depth, boolean lockOnDemand, 
+            boolean isStatus, boolean isHonorDepthExclude, ISVNDebugLog log) {
     }
 
     public void report(ISVNReporter reporter) throws SVNException {
