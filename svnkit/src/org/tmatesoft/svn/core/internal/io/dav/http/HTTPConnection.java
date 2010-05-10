@@ -40,8 +40,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.tmatesoft.svn.core.ISVNCanceller;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -53,8 +51,6 @@ import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.internal.io.dav.handlers.DAVErrorHandler;
 import org.tmatesoft.svn.core.internal.util.ChunkedInputStream;
 import org.tmatesoft.svn.core.internal.util.FixedSizeInputStream;
-import org.tmatesoft.svn.core.internal.util.ISVNTask;
-import org.tmatesoft.svn.core.internal.util.ISVNThreadPool;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSocketFactory;
@@ -493,7 +489,7 @@ class HTTPConnection implements IHTTPConnection {
                     break;
                 }
 
-                myChallengeCredentials.setChallengeParameter("methodname", method);
+                myChallengeCredentials.setChallengeParameter("method", method);
                 myChallengeCredentials.setChallengeParameter("uri", HTTPParser.getCanonicalPath(path, null).toString());
                 
                 if (skip) {
@@ -983,152 +979,4 @@ class HTTPConnection implements IHTTPConnection {
         myIsSpoolResponse = spoolResponse;
     }
 
-    private class CancellableSocketInputStream extends InputStream {
-        private InputStream mySocketIS;
-        private ISVNCanceller myCanceller;
-        private SVNSocketReadTask myTaskHolder;
-        
-        public CancellableSocketInputStream(InputStream socketIS, ISVNCanceller canceller) {
-            mySocketIS = socketIS;
-            myCanceller = canceller;
-        }
-        
-        public int read() throws IOException {
-            SVNSocketReadTask socketReadTask = getTaskHolder();
-            return runReadTask(socketReadTask);
-        }
-        
-        public int read(byte[] b) throws IOException {
-            SVNSocketReadTask socketReadTask = getTaskHolder(b);
-            return runReadTask(socketReadTask);
-        }
-        
-        public int read(byte[] b, int off, int len) throws IOException {
-            SVNSocketReadTask socketReadTask = getTaskHolder(b, off, len);
-            return runReadTask(socketReadTask);
-        }
-        
-        public void close() throws IOException {
-            mySocket.close();
-        }
-        
-        private SVNSocketReadTask getTaskHolder() {
-            if (myTaskHolder == null) {
-                myTaskHolder = new SVNSocketReadTask();
-            }
-            myTaskHolder.reset(mySocketIS, null, 0, 0, 1);
-            return myTaskHolder;
-        }
-
-        private SVNSocketReadTask getTaskHolder(byte[] b) {
-            if (myTaskHolder == null) {
-                myTaskHolder = new SVNSocketReadTask();
-            }
-            myTaskHolder.reset(mySocketIS, b, 0, 0, 2);
-            return myTaskHolder;
-        }
-
-        private SVNSocketReadTask getTaskHolder(byte[] b, int off, int len) {
-            if (myTaskHolder == null) {
-                myTaskHolder = new SVNSocketReadTask();
-            }
-            myTaskHolder.reset(mySocketIS, b, off, len, 3);
-            return myTaskHolder;
-        }
-
-        private int runReadTask(SVNSocketReadTask socketReadTask) throws IOException {
-            ISVNThreadPool threadPool = SVNSocketFactory.getThreadPool();
-            ISVNTask task = null;
-            try {
-                task = threadPool.run(socketReadTask, true);
-            } catch (SVNException e) {
-                throw new IOException(e.getMessage());
-            }
-
-            while (!socketReadTask.isDone()) {
-                try {
-                    myCanceller.checkCancelled();
-                } catch (SVNCancelException e) {
-                    task.cancel(true);
-                    throw new IOExceptionWrapper(e);
-                }
-            }
-
-            if (socketReadTask.getError() != null) {
-                throw socketReadTask.getError();
-            }
-            return socketReadTask.getReturnedValue();
-        }
-    }
-    
-    private static class SVNSocketReadTask implements Runnable {
-        private IOException myError;
-        private volatile boolean myIsDone;
-        private InputStream mySocketIS;
-        private int myReadMethod;
-        private byte[] myBuffer;
-        private int myOff;
-        private int myLen;
-        private int myReturnedValue;
-        
-        public void reset(InputStream socketIS, byte[] buffer, int off, int len, int readMethod) {
-            mySocketIS = socketIS;
-            myIsDone = false;
-            myBuffer = buffer;
-            myOff = off;
-            myLen = len;
-            myReadMethod = readMethod;
-        }
-        
-        public IOException getError() {
-            return myError;
-        }
-
-        public boolean isDone() {
-            synchronized (this) {
-                if (!myIsDone) {
-                    try {
-                        wait(100);
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-            return myIsDone;
-        }
-
-        public void run() {
-            try {
-                switch (myReadMethod) {
-                    case 1:
-                        myReturnedValue = mySocketIS.read();
-                        break;
-                    case 2:
-                        myReturnedValue = mySocketIS.read(myBuffer);
-                        break;
-                    case 3:
-                        myReturnedValue = mySocketIS.read(myBuffer, myOff, myLen);
-                        break;
-                }
-            } catch (IOException e) {
-                myError = e;
-            } finally {
-                synchronized (this) {
-                    myIsDone = true;
-                    notify();
-                }
-            }
-        }
-        
-        public int getReturnedValue() {
-            return myReturnedValue;
-        }
-    }
-
-    /**
-     * @return
-     * @throws IOException
-     */
-    public int read() throws IOException {
-        return 0;
-    }
 }
