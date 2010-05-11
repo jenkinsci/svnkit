@@ -490,7 +490,7 @@ class HTTPConnection implements IHTTPConnection {
                     break;
                 }
 
-                myChallengeCredentials.setChallengeParameter("methodname", method);
+                myChallengeCredentials.setChallengeParameter("method", method);
                 myChallengeCredentials.setChallengeParameter("uri", HTTPParser.getCanonicalPath(path, null).toString());
                 
                 if (skip) {

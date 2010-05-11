@@ -31,12 +31,14 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
         'e', 'f'
     };
-    private static final String NC = "00000001";
 
     private String myCnonce;
     private String myQop;
+    private String myLastNonce;
+    private int myNC;
 
     protected HTTPDigestAuthentication () {
+        myNC = 0;
     }
 
     public void init() throws SVNException {
@@ -65,11 +67,16 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         }
         
         String uname = getUserName();
+        String nonce = getParameter("nonce");
+        if (nonce == null || !nonce.equals(myLastNonce)) {
+            myNC = 0;
+        } 
+        myNC++;
+        myLastNonce = nonce;
         String digest = createDigest(uname, getPassword(), "US-ASCII");
 
         String uri = getParameter("uri");
         String realm = getParameter("realm");
-        String nonce = getParameter("nonce");
         String opaque = getParameter("opaque");
         String algorithm = getParameter("algorithm", "MD5");
 
@@ -81,9 +88,11 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
           .append(", realm=\"" + realm + "\"")
           .append(", nonce=\"" + nonce + "\"").append(", uri=\"" + uri + "\"")
           .append(", response=\"" + digest + "\"");
+        
+        String nc = formatNC(myNC);        
         if (myQop != null) {
             sb.append(", qop=\"" + myQop + "\"")
-              .append(", nc="+ NC)
+              .append(", nc="+ nc)
               .append(", cnonce=\"" + myCnonce + "\"");
         }
         if (algorithm != null) {
@@ -105,7 +114,7 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         String uri = getParameter("uri");
         String realm = getParameter("realm");
         String nonce = getParameter("nonce");
-        String method = getParameter("methodname");
+        String method = getParameter("method");
         String algorithm = getParameter("algorithm", "MD5");
 
         MessageDigest md5Helper;
@@ -148,13 +157,14 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
             tmp2.append(md5a2);
         } else {
             String qopOption = "auth";
+            String nc = formatNC(myNC);
             tmp2 = new StringBuffer(md5a1.length() + nonce.length()
-                    + NC.length() + myCnonce.length() + qopOption.length() + md5a2.length() + 5);
+                    + nc.length() + myCnonce.length() + qopOption.length() + md5a2.length() + 5);
             tmp2.append(md5a1);
             tmp2.append(':');
             tmp2.append(nonce);
             tmp2.append(':');
-            tmp2.append(NC);
+            tmp2.append(nc);
             tmp2.append(':');
             tmp2.append(myCnonce);
             tmp2.append(':');
@@ -207,6 +217,15 @@ class HTTPDigestAuthentication extends HTTPAuthentication {
         }
 
         return new String(buffer);
+    }
+    
+    private static String formatNC(int nc) {
+        String value = Integer.toHexString(nc);
+        int count = 8 - value.length();
+        for(int i = 0; i < count; i++) {
+            value = '0' + value;
+        }
+        return value;
     }
 
 }
