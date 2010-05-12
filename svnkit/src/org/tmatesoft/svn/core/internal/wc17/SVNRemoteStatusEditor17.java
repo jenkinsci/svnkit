@@ -89,7 +89,7 @@ public class SVNRemoteStatusEditor17 extends SVNStatusEditor17 implements ISVNEd
     public void handleStatus(SVNStatus status) throws SVNException {
     }
     
-    public SVNCommitInfo closeEdit() {
+    public SVNCommitInfo closeEdit() throws SVNException {
         return super.closeEdit();
     }
 
