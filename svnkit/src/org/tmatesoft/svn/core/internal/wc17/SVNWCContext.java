@@ -12,12 +12,17 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 
@@ -72,6 +77,48 @@ public class SVNWCContext {
 
     public long getRevisionNumber(SVNRevision revision, SVNRepository repository, File path) {
         return 0;
+    }
+
+
+    public void checkCancelled() {
+    }
+
+
+    public List getChildNodes(String localAbsPath) {
+        return null;
+    }
+
+
+    public SVNEntryInfo getEntry(String localAbsPath, boolean allow_unversioned, SVNNodeKind kind, 
+            boolean need_parent_stub) throws SVNException {
+        return null;
+    }
+
+
+    public List readConfilctVictims(String localAbsPath) {
+        return null;
+    }
+
+
+    public SVNConflictDescription readTreeConflict(String localAbsPath) {
+        return null;
+    }
+
+
+    public boolean isNodeHidden(String localAbsPath) {
+        return false;
+    }
+
+
+    public List collectIgnorePatterns(String localAbsPath, Collection ignorePatterns) {
+        return null;
+    }
+
+
+    public boolean isAdminDirectory(String name) {
+            return name != null && (SVNFileUtil.isWindows) ?
+                    SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) :
+                    SVNFileUtil.getAdminDirectoryName().equals(name);
     }
 
 }
