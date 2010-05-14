@@ -24,11 +24,13 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -373,8 +375,27 @@ public class SVNStatusEditor17 {
         }
     }
 
-    private void handleExternals(String localAbsPath, SVNDepth depth) {
-        // TODO
+    private void handleExternals(String localAbsPath, SVNDepth depth) throws SVNException {
+        String externals = myWCContext.getProperty(localAbsPath, SVNProperty.EXTERNALS);
+        if (externals != null) {
+            if (SVNPathUtil.isAncestor(myContextInfo.getTargetAbsPath(), localAbsPath)) {
+                storeExternals(localAbsPath, externals, externals, depth);
+            }
+            /*
+             * Now, parse the thing, and copy the parsed results into our
+             * "global" externals hash.
+             */
+            SVNExternal[] externalsInfo = SVNExternal.parseExternals(localAbsPath, externals);
+            for (int i = 0; i < externalsInfo.length; i++) {
+                SVNExternal external = externalsInfo[i];
+                myExternalsMap.put(SVNPathUtil.append(localAbsPath, external.getPath()), external);
+            }
+        }
+    }
+
+    private void storeExternals(String localAbsPath, String oldValue, String newValue, SVNDepth depth) {
+        myContextInfo.addExternal(localAbsPath, oldValue, newValue);
+        myContextInfo.addDepth(localAbsPath, depth);
     }
 
     private SVNStatus assembleStatus(String localAbsPath, Object object, Object object2, SVNNodeKind pathKind, boolean pathSpecial, boolean b, boolean ignore) {

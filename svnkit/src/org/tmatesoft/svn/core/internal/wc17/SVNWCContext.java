@@ -121,4 +121,9 @@ public class SVNWCContext {
                     SVNFileUtil.getAdminDirectoryName().equals(name);
     }
 
+
+    public String getProperty(String localAbsPath, String propertyName) {
+        return null;
+    }
+
 }

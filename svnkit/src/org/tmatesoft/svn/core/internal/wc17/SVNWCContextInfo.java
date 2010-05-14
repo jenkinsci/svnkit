@@ -12,17 +12,19 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Map;
 
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 
 /**
  * @version 1.3
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNWCContextInfo {
 
     private String targetName;
-    private Map newExternals;
     private String anchorAbsPath;
     private String dirAbsPath;
     private String targetBaseName;
@@ -30,6 +32,10 @@ public class SVNWCContextInfo {
     private String targetAbsPath;
     private File targetAbsFile;
     private String anchorRelPath;
+
+    private Map newExternals;
+    private Map oldExternals;
+    private Map depths;
 
     public String getAnchorAbsPath() {
         return anchorAbsPath;
@@ -47,10 +53,6 @@ public class SVNWCContextInfo {
         return dirAbsPath;
     }
 
-    public Map getNewExternals() {
-        return newExternals;
-    }
-
     public File getTargetAbsFile() {
         return targetAbsFile;
     }
@@ -66,21 +68,21 @@ public class SVNWCContextInfo {
     public String getTargetName() {
         return targetName;
     }
-    
+
     public void setAnchorAbsPath(String anchorAbsPath) {
         this.anchorAbsPath = anchorAbsPath;
     }
-    
+
     public void setAnchorRelPath(String anchorRelPath) {
         this.anchorRelPath = anchorRelPath;
     }
-    
+
     public void setDir(String dir) {
         this.dir = dir;
     }
 
     public void setDirAbsPath(String dirAbsPath) {
-        this.dirAbsPath = dirAbsPath;        
+        this.dirAbsPath = dirAbsPath;
     }
 
     public void setTargetAbsPath(String targetAbsPath) {
@@ -90,6 +92,59 @@ public class SVNWCContextInfo {
 
     public void setTargetBaseName(String targetBaseName) {
         this.targetBaseName = targetBaseName;
+    }
+
+    public void addOldExternal(String path, String oldValue) {
+        if (oldExternals == null) {
+            oldExternals = new SVNHashMap();
+        }
+        oldExternals.put(path, oldValue);
+    }
+
+    public void addNewExternal(String path, String newValue) {
+        if (newExternals == null) {
+            newExternals = new SVNHashMap();
+        }
+        newExternals.put(path, newValue);
+    }
+
+    public void addExternal(String path, String oldValue, String newValue) {
+        addNewExternal(path, newValue);
+        addOldExternal(path, oldValue);
+    }
+
+    public void addDepth(String path, SVNDepth depth) {
+        if (depths == null) {
+            depths = new SVNHashMap();
+        }
+        depths.put(path, depth);
+    }
+
+    public void removeDepth(String path) {
+        if (depths != null) {
+            depths.remove(path);
+        }
+    }
+
+    public void removeExternal(String path) {
+        if (newExternals != null) {
+            newExternals.remove(path);
+        }
+        if (oldExternals != null) {
+            oldExternals.remove(path);
+        }
+    }
+
+    public Map getNewExternals() {
+        return newExternals == null ? Collections.EMPTY_MAP : newExternals;
+    }
+
+    public Map getOldExternals() {
+        return oldExternals == null ? Collections.EMPTY_MAP : oldExternals;
+    }
+
+    public Map getDepths() {
+        return depths == null ? Collections.EMPTY_MAP : depths;
     }
 
 }
