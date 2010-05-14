@@ -15,6 +15,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -36,6 +38,7 @@ import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNStatus;
+import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 /**
  * @version 1.3
@@ -287,17 +290,96 @@ public class SVNStatusEditor17 {
 
     }
 
-    private void sendUnversionedItem(String nodeAbsPath, SVNNodeKind svnNodeKind, boolean b, List patterns, boolean noIgnore, ISVNStatusHandler handler) {
+    private void sendStatusStructure(String localAbsPath, SVNEntryInfo entry, SVNEntryInfo parentEntry, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, boolean isIgnored,
+            ISVNStatusHandler handler) throws SVNException {
+        SVNStatus status = assembleStatus(localAbsPath, entry, parentEntry, pathKind, pathSpecial, getAll, isIgnored);
+        if (status != null && handler != null) {
+            handler.handleStatus(status);
+        }
     }
 
-    private void handleDirEntry(String nodeAbsPath, SVNEntryInfo dirEntry, SVNEntryInfo entry, SVNNodeKind svnNodeKind, boolean b, Collection ignorePatterns, SVNDepth svnDepth, boolean getAll,
-            boolean noIgnore, boolean getExcluded, ISVNStatusHandler handler) {
+    private void sendUnversionedItem(String localAbsPath, SVNNodeKind pathKind, boolean pathSpecial, List patterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
+        boolean isIgnored = isIgnored(SVNPathUtil.getBaseName(localAbsPath), patterns);
+        boolean isExternal = isExternal(localAbsPath);
+        SVNStatus status = assembleStatus(localAbsPath, null, null, pathKind, pathSpecial, false, isIgnored);
+        if (status != null) {
+            if (isExternal) {
+                status.setContentsStatus(SVNStatusType.STATUS_EXTERNAL);
+            }
+            /*
+             * We can have a tree conflict on an unversioned path, i.e. an
+             * incoming delete on a locally deleted path during an update. Don't
+             * ever ignore those!
+             */
+            if (status.isConflicted()) {
+                isIgnored = false;
+            }
+            if (handler != null && (noIgnore || !isIgnored || isExternal || status.getRemoteLock() != null)) {
+                handler.handleStatus(status);
+            }
+        }
+
     }
 
-    private void sendStatusStructure(String localAbsPath, SVNEntryInfo dirEntry, SVNEntryInfo parentEntry, SVNNodeKind dir, boolean b, boolean getAll, boolean c, ISVNStatusHandler handler) {
+    private boolean isExternal(String path) {
+        if (!myExternalsMap.containsKey(path)) {
+            // check if path is external parent.
+            for (Iterator paths = myExternalsMap.keySet().iterator(); paths.hasNext();) {
+                String externalPath = (String) paths.next();
+                if (externalPath.startsWith(path + "/")) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isIgnored(String name, List patterns) {
+        for (Iterator ps = patterns.iterator(); ps.hasNext();) {
+            String pattern = (String) ps.next();
+            if (DefaultSVNOptions.matches(pattern, name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void handleDirEntry(String localAbsPath, SVNEntryInfo dirEntry, SVNEntryInfo entry, SVNNodeKind pathKind, boolean pathSpecial, Collection ignores, SVNDepth depth, boolean getAll,
+            boolean noIgnore, boolean getExcluded, ISVNStatusHandler handler) throws SVNException {
+
+        assert (dirEntry != null);
+        assert (entry != null);
+
+        /* We are looking at a directory on-disk. */
+        if (pathKind == SVNNodeKind.DIR) {
+            /*
+             * Descend only if the subdirectory is a working copy directory
+             * (which we've discovered because we got a THIS_DIR entry. And only
+             * descend if DEPTH permits it, of course.
+             */
+            if (entry.getName() == "" && (depth == SVNDepth.UNKNOWN || depth == SVNDepth.IMMEDIATES || depth == SVNDepth.INFINITY)) {
+                getDirStatus(dirEntry, localAbsPath, null, ignores, depth, getAll, noIgnore, false, getExcluded, handler);
+            } else {
+                /*
+                 * ENTRY is a child entry (file or parent stub). Or we have a
+                 * directory entry but DEPTH is limiting our recursion.
+                 */
+                sendStatusStructure(localAbsPath, entry, dirEntry, pathKind, pathSpecial, getAll, false, handler);
+            }
+        } else {
+            /* This is a file/symlink on-disk. */
+            sendStatusStructure(localAbsPath, entry, dirEntry, pathKind, pathSpecial, getAll, false, handler);
+        }
     }
 
     private void handleExternals(String localAbsPath, SVNDepth depth) {
+        // TODO
+    }
+
+    private SVNStatus assembleStatus(String localAbsPath, Object object, Object object2, SVNNodeKind pathKind, boolean pathSpecial, boolean b, boolean ignore) {
+        // TODO
+        return null;
     }
 
 }

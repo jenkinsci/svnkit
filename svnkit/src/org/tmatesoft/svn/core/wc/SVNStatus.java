@@ -132,6 +132,8 @@ public class SVNStatus {
     private int myWorkingCopyFormat;
     private SVNTreeConflictDescription myTreeConflict;
     
+    private boolean myIsConflicted;
+    
     /**
      * Constructs an <b>SVNStatus</b> object filling it with status information
      * details.  
@@ -689,5 +691,13 @@ public class SVNStatus {
      */
     public int getWorkingCopyFormat() {
         return myWorkingCopyFormat;
+    }
+    
+    public void setConflicted(boolean isConflicted) {
+        myIsConflicted = isConflicted;
+    }
+    
+    public boolean isConflicted() {
+        return myIsConflicted;
     }
 }
