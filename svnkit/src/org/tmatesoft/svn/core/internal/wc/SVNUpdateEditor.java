@@ -1012,6 +1012,8 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         myCurrentDirectory.runLogs();
         maybeBumpDirInfo(myCurrentDirectory);
 
+        handleDuplicateEntries();
+
         if (!myCurrentDirectory.isSkipped && (myCurrentDirectory.isAddExisted || !myCurrentDirectory.IsAdded) && !inDeletedTree(fullPath, true)) {
             if (!(adminArea == myAdminInfo.getAnchor() && !"".equals(myAdminInfo.getTargetName()))) {
                 // skip event for anchor when there is a target.
@@ -1025,7 +1027,6 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 myWCAccess.handleEvent(event);
             }
         }
-        handleDuplicateEntries();
         myCurrentDirectory = myCurrentDirectory.Parent;
     }
     
@@ -1063,10 +1064,10 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             if (entry == null || entry.getKind() != SVNNodeKind.FILE || entry.isHidden()) {
                 continue;
             }
-            if (entryNames.contains(entry.getName().toLowerCase())) {
+            if (entryNames.contains(name.toLowerCase())) {
                 SVNProperties command = new SVNProperties();
                 
-                command.put(SVNLog.NAME_ATTR, entry.getName());
+                command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.TRUE.toString());
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);                
                 command.clear();
@@ -1086,7 +1087,9 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropRevertPath(name, SVNNodeKind.FILE, false));
                 log.addCommand(SVNLog.DELETE, command, false);
                 command.clear();
-               
+                
+                SVNEvent event = SVNEventFactory.createSVNEvent(area.getFile(name), SVNNodeKind.FILE, null, myTargetRevision, SVNEventAction.UPDATE_DELETE, null, null, null);
+                myWCAccess.handleEvent(event);
             }
         }
         myCurrentDirectory.flushLog();
