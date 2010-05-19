@@ -1031,7 +1031,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
     }
     
     private void handleDuplicateEntries() throws SVNException {
-        if (!SVNFileUtil.isWindows) {
+        if (!SVNFileUtil.isCaseInsensitiveFS()) {
             return;
         }        
         

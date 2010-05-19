@@ -179,6 +179,10 @@ public class SVNFileUtil {
         } catch (NoSuchMethodException e) {
         }
     }
+    
+    public static boolean isCaseInsensitiveFS() {
+        return isWindows || isOS2;
+    }
 
     public static synchronized boolean useUnsafeCopyOnly() {
         return ourUseUnsafeCopyOnly;
