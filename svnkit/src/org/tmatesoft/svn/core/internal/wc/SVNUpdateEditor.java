@@ -1033,7 +1033,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
     private void handleDuplicateEntries() throws SVNException {
         if (!SVNFileUtil.isWindows) {
             return;
-        }
+        }        
         
         SVNAdminArea area = myCurrentDirectory.getAdminArea();
         Map entries = area.getEntries();
@@ -1069,6 +1069,7 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
                 
                 command.put(SVNLog.NAME_ATTR, name);
                 command.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.TRUE.toString());
+                command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), "nameconflict");
                 log.addCommand(SVNLog.MODIFY_ENTRY, command, false);                
                 command.clear();
                 

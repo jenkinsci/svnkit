@@ -18,6 +18,7 @@ import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -28,6 +29,7 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -188,7 +190,20 @@ public class SVNStatusEditor {
         childrenFiles = new TreeMap(childrenFiles);
         for (Iterator files = childrenFiles.keySet().iterator(); files.hasNext();) {
             String fileName = (String) files.next();
-            if (dir.getEntry(fileName, false) != null || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {
+            SVNEntry entry = dir.getEntry(fileName, true);
+            if (isNameConflict(entry)) {
+                SVNStatus status = new SVNStatus(entry.getSVNURL(), dir.getFile(fileName), entry.getKind(),
+                        SVNRevision.create(entry.getRevision()), SVNRevision.create(entry.getCommittedRevision()),
+                        SVNDate.parseDate(entry.getCommittedDate()), entry.getAuthor(),
+                        SVNStatusType.STATUS_NAME_CONFLICT,  SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, 
+                        false, entry.isCopied(), false, false, null, null, null, null, 
+                        entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
+                        null, null, entry.asMap(), entry.getChangelistName(), dir.getFormatVersion(), null);                
+                status.setEntry(entry);
+                handler.handleStatus(status);                
+                continue;
+            }
+            if ((entry != null && !entry.isHidden()) || SVNFileUtil.getAdminDirectoryName().equals(fileName)) {
                 continue;
             }
 
@@ -235,6 +250,10 @@ public class SVNStatusEditor {
                     fileKind, special, depth == SVNDepth.INFINITY ? depth : SVNDepth.EMPTY, 
                             getAll, noIgnore, handler);
         }
+    }
+
+    private boolean isNameConflict(SVNEntry entry) {        
+        return entry != null && entry.isAbsent() && "nameconflict".equals(entry.getChecksum());
     }
 
     protected void cleanup() {
