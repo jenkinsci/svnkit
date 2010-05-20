@@ -252,7 +252,7 @@ public class SVNStatusEditor {
         }
     }
 
-    private boolean isNameConflict(SVNEntry entry) {        
+    public static boolean isNameConflict(SVNEntry entry) {        
         return entry != null && entry.isAbsent() && "nameconflict".equals(entry.getChecksum());
     }
 

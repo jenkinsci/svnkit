@@ -2149,7 +2149,7 @@ public abstract class SVNMergeDriver extends SVNBasicDelegate implements ISVNMer
         return ancestorIndex;
     }
     
-    protected Map getHistoryAsMergeInfo(SVNURL url, File path, SVNRevision pegRevision, long rangeYoungest, 
+    public Map getHistoryAsMergeInfo(SVNURL url, File path, SVNRevision pegRevision, long rangeYoungest, 
             long rangeOldest, SVNRepository repos, SVNWCAccess access) throws SVNException {
         long[] pegRevNum = new long[1];
         pegRevNum[0] = SVNRepository.INVALID_REVISION;
