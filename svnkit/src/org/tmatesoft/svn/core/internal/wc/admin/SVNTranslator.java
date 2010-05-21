@@ -499,7 +499,7 @@ public class SVNTranslator {
         return new SVNCharsetOutputStream(out, cs, UTF8_CHARSET);
     }
 
-    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) throws SVNException {
+    public static InputStream getTranslatingInputStream(InputStream in, String charset, byte[] eol, boolean repair, Map keywords, boolean expand) {
         if (charset == null || SVNProperty.isUTF8(charset)) {
             return new SVNTranslatorInputStream(in, eol, repair, keywords, expand);
         }
@@ -649,7 +649,7 @@ public class SVNTranslator {
         return null;
     }
 
-    public static String getCharset(String charset, String mimeType, String path, ISVNOptions options) throws SVNException {
+    public static String getCharset(String charset, String mimeType, Object path, ISVNOptions options) throws SVNException {
         if (charset == null) {
             charset = getGlobalCharset(options, mimeType);
         }

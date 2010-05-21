@@ -179,7 +179,7 @@ public class SVNExternal {
         return value;
     }
 
-    public static SVNExternal[] parseExternals(String owner, String description) throws SVNException {
+    public static SVNExternal[] parseExternals(Object owner, String description) throws SVNException {
         List lines = new ArrayList();
         for(StringTokenizer tokenizer = new StringTokenizer(description, "\r\n"); tokenizer.hasMoreTokens();) {
             lines.add(tokenizer.nextToken());
@@ -288,7 +288,7 @@ public class SVNExternal {
         return path;
     }
     
-    private static int fetchRevision(SVNExternal external, String owner, String line, List tokens) throws SVNException {
+    private static int fetchRevision(SVNExternal external, Object owner, String line, List tokens) throws SVNException {
         for (int i = 0; i < tokens.size() && i < 2; i++) {
             String token = (String) tokens.get(i);
             String revisionStr = null;
@@ -328,7 +328,7 @@ public class SVNExternal {
         return -1;
     }
     
-    private static void reportParsingError(String owner, String line) throws SVNException {
+    private static void reportParsingError(Object owner, String line) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_INVALID_EXTERNALS_DESCRIPTION,
                 "Error parsing {0} property on ''{1}'': ''{2}''", new Object[] {SVNProperty.EXTERNALS, owner, line});
         SVNErrorManager.error(err, SVNLogType.DEFAULT);
