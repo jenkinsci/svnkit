@@ -71,153 +71,153 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author  TMate Software Ltd.
  */
 public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
-    
+
     public static final int WC_FORMAT_17 = 16;
     public static final int SVN_WC__HAS_WORK_QUEUE = 13;
-    
+
     private static final int FORMAT_FROM_SDB = -1;
     private static final long UNKNOWN_WC_ID = -1;
-    
-    private static final String[] WC_METADATA_SQL_12 = { 
-        "CREATE TABLE REPOSITORY ( id INTEGER PRIMARY KEY AUTOINCREMENT, " + 
-                                  "root TEXT UNIQUE NOT NULL, " + 
-                                  "uuid TEXT NOT NULL );", 
-        "CREATE INDEX I_UUID ON REPOSITORY (uuid);", 
-                                  
-        "CREATE INDEX I_ROOT ON REPOSITORY (root);", 
-        
-        "CREATE TABLE WCROOT ( id INTEGER PRIMARY KEY AUTOINCREMENT, " + 
+
+    private static final String[] WC_METADATA_SQL_12 = {
+        "CREATE TABLE REPOSITORY ( id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                                  "root TEXT UNIQUE NOT NULL, " +
+                                  "uuid TEXT NOT NULL );",
+        "CREATE INDEX I_UUID ON REPOSITORY (uuid);",
+
+        "CREATE INDEX I_ROOT ON REPOSITORY (root);",
+
+        "CREATE TABLE WCROOT ( id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                               "local_abspath TEXT UNIQUE );",
         "CREATE UNIQUE INDEX I_LOCAL_ABSPATH ON WCROOT (local_abspath);",
 
         "CREATE TABLE BASE_NODE ( wc_id INTEGER NOT NULL, " +
-                                 "local_relpath TEXT NOT NULL, " + 
-                                 "repos_id INTEGER, " + 
-                                 "repos_relpath TEXT, " + 
-                                 "parent_relpath TEXT, " + 
+                                 "local_relpath TEXT NOT NULL, " +
+                                 "repos_id INTEGER, " +
+                                 "repos_relpath TEXT, " +
+                                 "parent_relpath TEXT, " +
                                  "presence TEXT NOT NULL, " +
-                                 "kind TEXT NOT NULL, " + 
-                                 "revnum INTEGER, " + 
-                                 "checksum TEXT, " + 
-                                 "translated_size INTEGER, " + 
-                                 "changed_rev INTEGER, " + 
-                                 "changed_date  INTEGER, " + 
-                                 "changed_author TEXT, " + 
-                                 "depth TEXT, " + 
-                                 "symlink_target TEXT, " + 
-                                 "last_mod_time INTEGER, " + 
-                                 "last_mod_time INTEGER, " + 
-                                 "dav_cache BLOB, " + 
-                                 "incomplete_children INTEGER, " + 
-                                 "file_external TEXT, " + 
+                                 "kind TEXT NOT NULL, " +
+                                 "revnum INTEGER, " +
+                                 "checksum TEXT, " +
+                                 "translated_size INTEGER, " +
+                                 "changed_rev INTEGER, " +
+                                 "changed_date  INTEGER, " +
+                                 "changed_author TEXT, " +
+                                 "depth TEXT, " +
+                                 "symlink_target TEXT, " +
+                                 "last_mod_time INTEGER, " +
+                                 "last_mod_time INTEGER, " +
+                                 "dav_cache BLOB, " +
+                                 "incomplete_children INTEGER, " +
+                                 "file_external TEXT, " +
                                  "PRIMARY KEY (wc_id, local_relpath) );",
 
-        "CREATE INDEX I_PARENT ON BASE_NODE (wc_id, parent_relpath);", 
-        
-        "CREATE TABLE PRISTINE ( checksum TEXT NOT NULL PRIMARY KEY, " + 
-                                "compression INTEGER, " + 
-                                "size INTEGER, " + 
+        "CREATE INDEX I_PARENT ON BASE_NODE (wc_id, parent_relpath);",
+
+        "CREATE TABLE PRISTINE ( checksum TEXT NOT NULL PRIMARY KEY, " +
+                                "compression INTEGER, " +
+                                "size INTEGER, " +
                                 "refcount INTEGER NOT NULL ); ",
 
         "CREATE TABLE WORKING_NODE ( wc_id INTEGER NOT NULL, " +
                                     "local_relpath TEXT NOT NULL, " +
                                     "parent_relpath TEXT, " +
                                     "presence TEXT NOT NULL, " +
-                                    "kind TEXT NOT NULL, " + 
+                                    "kind TEXT NOT NULL, " +
                                     "checksum TEXT, " +
                                     "translated_size INTEGER, " +
-                                    "changed_rev INTEGER, " + 
-                                    "changed_date INTEGER, " + 
+                                    "changed_rev INTEGER, " +
+                                    "changed_date INTEGER, " +
                                     "changed_author TEXT, " +
-                                    "depth TEXT, " + 
+                                    "depth TEXT, " +
                                     "symlink_target TEXT, " +
                                     "copyfrom_repos_id INTEGER, " +
                                     "copyfrom_repos_path TEXT, " +
-                                    "copyfrom_revnum INTEGER, " + 
+                                    "copyfrom_revnum INTEGER, " +
                                     "moved_here INTEGER, " +
-                                    "moved_to TEXT, " + 
-                                    "last_mod_time  INTEGER, " + 
-                                    "properties BLOB, " + 
-                                    "keep_local INTEGER, " + 
+                                    "moved_to TEXT, " +
+                                    "last_mod_time  INTEGER, " +
+                                    "properties BLOB, " +
+                                    "keep_local INTEGER, " +
                                     "PRIMARY KEY (wc_id, local_relpath) );",
 
         "CREATE INDEX I_WORKING_PARENT ON WORKING_NODE (wc_id, parent_relpath);",
-        
+
         "CREATE TABLE ACTUAL_NODE ( wc_id INTEGER NOT NULL, " +
                                    "local_relpath  TEXT NOT NULL, " +
-                                   "parent_relpath  TEXT, " + 
-                                   "properties BLOB, " + 
-                                   "conflict_old TEXT, " + 
+                                   "parent_relpath  TEXT, " +
+                                   "properties BLOB, " +
+                                   "conflict_old TEXT, " +
                                    "conflict_new TEXT, " +
-                                   "conflict_working TEXT, " + 
-                                   "prop_reject TEXT, " + 
-                                   "changelist TEXT, " + 
-                                   "text_mod TEXT, " + 
-                                   "tree_conflict_data TEXT, " + 
+                                   "conflict_working TEXT, " +
+                                   "prop_reject TEXT, " +
+                                   "changelist TEXT, " +
+                                   "text_mod TEXT, " +
+                                   "tree_conflict_data TEXT, " +
                                    "PRIMARY KEY (wc_id, local_relpath) );",
 
         "CREATE INDEX I_ACTUAL_PARENT ON ACTUAL_NODE (wc_id, parent_relpath);",
-        
+
         "CREATE INDEX I_ACTUAL_CHANGELIST ON ACTUAL_NODE (changelist);",
-        
+
         "CREATE TABLE LOCK ( repos_id INTEGER NOT NULL, " +
-                            "repos_relpath TEXT NOT NULL, " + 
+                            "repos_relpath TEXT NOT NULL, " +
                             "lock_token TEXT NOT NULL, " +
                             "lock_owner TEXT, " +
-                            "lock_comment TEXT, " + 
+                            "lock_comment TEXT, " +
                             "lock_date INTEGER, " +
-                            "PRIMARY KEY (repos_id, repos_relpath) );" 
+                            "PRIMARY KEY (repos_id, repos_relpath) );"
     };
-    
+
     private static final String[] WC_METADATA_SQL_13 = {
         "CREATE TABLE WORK_QUEUE ( id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                                    "work BLOB NOT NULL );",
-        
+
         "UPDATE BASE_NODE SET incomplete_children=null, dav_cache=null;"
     };
-    
+
     private static final String[] WC_METADATA_SQL_14 = {
         "CREATE TABLE WC_LOCK ( wc_id INTEGER NOT NULL, " +
                                "local_dir_relpath TEXT NOT NULL, " +
                                "PRIMARY KEY (wc_id, local_dir_relpath) );",
-        
+
         "ALTER TABLE ACTUAL_NODE ADD COLUMN conflict_data  BLOB;",
-        
+
         "ALTER TABLE ACTUAL_NODE ADD COLUMN older_checksum TEXT;",
-        
+
         "ALTER TABLE ACTUAL_NODE ADD COLUMN left_checksum TEXT;",
-        
+
         "ALTER TABLE ACTUAL_NODE ADD COLUMN right_checksum TEXT;"
-    };    
-    
+    };
+
     private static final String[] WC_METADATA_SQL_15 = {
         "UPDATE base_node SET presence = 'excluded', " +
-                             "checksum = NULL, " + 
-                             "translated_size = NULL, " + 
+                             "checksum = NULL, " +
+                             "translated_size = NULL, " +
                              "changed_rev = NULL, " +
-                             "changed_date = NULL, " + 
-                             "changed_author = NULL, " + 
+                             "changed_date = NULL, " +
+                             "changed_author = NULL, " +
                              "depth = NULL, " +
-                             "symlink_target = NULL, " + 
-                             "last_mod_time = NULL, " + 
+                             "symlink_target = NULL, " +
+                             "last_mod_time = NULL, " +
                              "properties = NULL, " +
-                             "incomplete_children = NULL, " + 
-                             "file_external = NULL WHERE depth = 'exclude';", 
+                             "incomplete_children = NULL, " +
+                             "file_external = NULL WHERE depth = 'exclude';",
         "UPDATE working_node SET presence = 'excluded', " +
-                                "checksum = NULL, " + 
-                                "translated_size = NULL, " + 
-                                "changed_rev = NULL, " + 
-                                "changed_date = NULL, " + 
-                                "changed_author = NULL, " + 
+                                "checksum = NULL, " +
+                                "translated_size = NULL, " +
+                                "changed_rev = NULL, " +
+                                "changed_date = NULL, " +
+                                "changed_author = NULL, " +
                                 "depth = NULL, " +
-                                "symlink_target = NULL, " + 
-                                "copyfrom_repos_id = NULL, " + 
+                                "symlink_target = NULL, " +
+                                "copyfrom_repos_id = NULL, " +
                                 "copyfrom_repos_path = NULL, " +
                                 "copyfrom_revnum = NULL, " +
-                                "moved_here = NULL, " + 
-                                "moved_to = NULL, " + 
-                                "last_mod_time = NULL, " + 
-                                "properties = NULL, " + 
+                                "moved_here = NULL, " +
+                                "moved_to = NULL, " +
+                                "last_mod_time = NULL, " +
+                                "properties = NULL, " +
                                 "keep_local = NULL WHERE depth = 'exclude';"
     };
 
@@ -229,41 +229,41 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     //and must be used to pass values between internal methods only
     private long myCurrentReposId;
     private long myCurrentWCId;
-    
+
     private SVNCommonDbStrategy myCommonDbStrategy;
     private SVNSelectActualConflictVictimsStrategy mySelectActualConflictVictimsStrategy;
-    
+
     public SVNWorkingCopyDB17() {
     }
-    
-    public SVNEntryInfo readInfo(File path, boolean fetchLock, boolean fetchStatus, boolean fetchKind, boolean fetchIsText, 
-            boolean fetchIsProp, boolean fetchIsBaseShadowed, boolean fetchIsConflicted, boolean fetchOriginalUUID, 
+
+    public SVNEntryInfo readInfo(File path, boolean fetchLock, boolean fetchStatus, boolean fetchKind, boolean fetchIsText,
+            boolean fetchIsProp, boolean fetchIsBaseShadowed, boolean fetchIsConflicted, boolean fetchOriginalUUID,
             boolean fetchOriginalRevision, boolean fetchOriginalRootURL, boolean fetchOriginalReposPath, boolean fetchTarget) throws SVNException {
         ParsedPristineDirectory parsedPristineDir = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPristineDir.myLocalRelativePath;
         SVNPristineDirectory pristineDir = parsedPristineDir.myPristineDirectory;
-        
+
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
         SqlJetDb sdb = wcRoot.getStorage();
-        Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node, 
+        Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath}, SVNSqlJetUtil.OUR_BASE_NODE_FIELDS, null));
         if (!baseNodeResult.isEmpty() && fetchLock) {
-            Long reposId = (Long) baseNodeResult.get(SVNDbTableField.repos_id); 
+            Long reposId = (Long) baseNodeResult.get(SVNDbTableField.repos_id);
             String reposPath = (String) baseNodeResult.get(SVNDbTableField.repos_relpath);
-            baseNodeResult.putAll((Map<SVNDbTableField, Object>)runSelect(sdb, SVNDbTables.lock, 
+            baseNodeResult.putAll((Map<SVNDbTableField, Object>)runSelect(sdb, SVNDbTables.lock,
                     getCommonDbStrategy(new Object[] { reposId, reposPath }, SVNSqlJetUtil.OUR_LOCK_FIELDS, null)));
         }
 
-        Map<SVNDbTableField, Object> workingNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.working_node, 
+        Map<SVNDbTableField, Object> workingNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.working_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_WORKING_NODE_FIELDS, null));
-        Map<SVNDbTableField, Object> actualNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.actual_node, 
+        Map<SVNDbTableField, Object> actualNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.actual_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath}, SVNSqlJetUtil.OUR_ACTUAL_NODE_FIELDS, null));
 
         boolean haveBase = !baseNodeResult.isEmpty();
         boolean haveWorking = !workingNodeResult.isEmpty();
         boolean haveActual = !actualNodeResult.isEmpty();
-        
+
         String reposRootURL = null;
         String reposUUID = null;
         Long revision = SVNRepository.INVALID_REVISION;
@@ -296,24 +296,24 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             } else {
                 kindStr = (String) baseNodeResult.get(SVNDbTableField.kind);
             }
-            
+
             nodeKind = SVNWCDbKind.parseKind(kindStr);
             if (fetchStatus) {
                 if (haveBase) {
                     String statusStr = (String) baseNodeResult.get(SVNDbTableField.presence);
                     status = SVNWCDbStatus.parseStatus(statusStr);
-                    
+
                     SVNErrorManager.assertionFailure((status != SVNWCDbStatus.ABSENT && status != SVNWCDbStatus.EXCLUDED) || !haveWorking, null, SVNLogType.WC);
-                    
+
                     if (nodeKind == SVNWCDbKind.SUBDIR && status == SVNWCDbStatus.NORMAL) {
                         status = SVNWCDbStatus.OBSTRUCTED;
                     }
                 }
-                
+
                 if (haveWorking) {
                     String statusStr = (String) workingNodeResult.get(SVNDbTableField.presence);
                     SVNWCDbStatus workStatus = SVNWCDbStatus.parseStatus(statusStr);
-                    if (workStatus != SVNWCDbStatus.NORMAL && workStatus != SVNWCDbStatus.NOT_PRESENT && workStatus != SVNWCDbStatus.BASE_DELETED && 
+                    if (workStatus != SVNWCDbStatus.NORMAL && workStatus != SVNWCDbStatus.NOT_PRESENT && workStatus != SVNWCDbStatus.BASE_DELETED &&
                             workStatus != SVNWCDbStatus.INCOMPLETE) {
                         if (workStatus == SVNWCDbStatus.INCOMPLETE) {
                             status = SVNWCDbStatus.INCOMPLETE;
@@ -333,7 +333,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     }
                 }
             }
-            
+
             if (fetchKind) {
                 if (nodeKind == SVNWCDbKind.SUBDIR) {
                     kind = SVNWCDbKind.DIR;
@@ -341,17 +341,17 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     kind = nodeKind;
                 }
             }
-            
+
             //repository root url, repository uuid
             Long reposId = (Long) baseNodeResult.get(SVNDbTableField.repos_id);
 
             if (!haveWorking) {
                 //revision
                 revision = (Long) baseNodeResult.get(SVNDbTableField.revnum);
-            
+
                 //repository relative path
                 reposPath = (String) baseNodeResult.get(SVNDbTableField.repos_relpath);
-                
+
                 if (reposId != null) {
                     SVNRepositoryInfo reposInfo = fetchRepositoryInfo(sdb, reposId);
                     reposRootURL = reposInfo.getRootURL();
@@ -380,7 +380,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     originalRevision = (Long) workingNodeResult.get(SVNDbTableField.copyfrom_revnum);
                 }
             }
-            
+
             if (nodeKind != SVNWCDbKind.DIR && nodeKind != SVNWCDbKind.SUBDIR) {
                 depth = SVNDepth.UNKNOWN;
             } else {
@@ -390,14 +390,14 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 } else {
                     depthStr = (String) baseNodeResult.get(SVNDbTableField.depth);
                 }
-                
+
                 if (depthStr == null) {
                     depth = SVNDepth.UNKNOWN;
                 } else {
                     depth = SVNDepth.fromString(depthStr);
                 }
             }
-            
+
             if (nodeKind == SVNWCDbKind.FILE) {
                 String checksumStr = null;
                 if (haveWorking) {
@@ -405,18 +405,18 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 } else {
                     checksumStr = (String) baseNodeResult.get(SVNDbTableField.checksum);
                 }
-                
+
                 if (checksumStr != null) {
                     try {
                         checksum = SVNChecksum.deserializeChecksum(checksumStr);
                     } catch (SVNException svne) {
-                        SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), 
+                        SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(),
                                 "The node ''{0}'' has a corrupt checksum value.", path);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }
             }
-            
+
             Long translatedSizeObj = null;
             if (haveWorking) {
                 translatedSizeObj = (Long) workingNodeResult.get(SVNDbTableField.translated_size);
@@ -437,33 +437,33 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     target = (String) baseNodeResult.get(SVNDbTableField.symlink_target);
                 }
             }
-            
+
             if (haveActual) {
                 changeList = (String) actualNodeResult.get(SVNDbTableField.changelist);
-            } 
-            
+            }
+
             if (fetchIsText) {
                 isTextMode = false;
             }
-            
+
             if (fetchIsProp) {
                 isPropsMode = haveActual && actualNodeResult.get(SVNDbTableField.properties) != null;
             }
-            
+
             if (fetchIsBaseShadowed) {
                 isBaseShadowed = haveBase && haveWorking;
             }
-            
+
             if (fetchIsConflicted) {
                 if (haveActual) {
-                    isConflicted = actualNodeResult.get(SVNDbTableField.conflict_old) != null || 
-                    actualNodeResult.get(SVNDbTableField.conflict_new) != null || actualNodeResult.get(SVNDbTableField.conflict_working) != null || 
+                    isConflicted = actualNodeResult.get(SVNDbTableField.conflict_old) != null ||
+                    actualNodeResult.get(SVNDbTableField.conflict_new) != null || actualNodeResult.get(SVNDbTableField.conflict_working) != null ||
                     actualNodeResult.get(SVNDbTableField.prop_reject) != null;
                 } else {
                     isConflicted = false;
                 }
             }
-            
+
             if (fetchLock) {
                 String lockToken = (String) baseNodeResult.get(SVNDbTableField.lock_token);
                 if (lockToken == null) {
@@ -482,12 +482,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
+
         if (fetchIsConflicted && !isConflicted) {
             SVNTreeConflictDescription treeConflict = readTreeConflict(path);
             isConflicted = treeConflict != null;
         }
-        
+
         SVNEntryInfo info = new SVNEntryInfo();
         info.setRevision(revision != null ? revision : SVNRepository.INVALID_REVISION);
         info.setReposRootURL(reposRootURL);
@@ -515,7 +515,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         info.setReposPath(reposPath);
         return info;
     }
-    
+
     public SVNVersionedProperties readProperties(File path) throws SVNException {
         Map<SVNDbTableField, Object> actualResult = runSelectForPath(path, SVNDbTables.actual_node, SVNSqlJetUtil.OUR_PROPERTIES_FIELD);
         if (!actualResult.isEmpty() && actualResult.get(SVNDbTableField.properties) != null) {
@@ -523,13 +523,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         return readPristineProperties(path);
     }
-    
+
     public SVNVersionedProperties readPristineProperties(File path) throws SVNException {
         Map<SVNDbTableField, Object> workingResult = runSelectForPath(path, SVNDbTables.working_node, SVNSqlJetUtil.OUR_PROPERTIES_FIELD);
         if (!workingResult.isEmpty() && workingResult.get(SVNDbTableField.properties) != null) {
             return new SVNSimpleVersionedPropertiesImpl(SVNSqlJetUtil.getPropertiesFromBLOB(workingResult.get(SVNDbTableField.properties)));
         }
-        
+
         SVNVersionedProperties props = null;
         try {
             props = getBaseProperties(path);
@@ -550,24 +550,24 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNProperties props = SVNSqlJetUtil.getPropertiesFromBLOB(baseResult.get(SVNDbTableField.properties));
         return new SVNSimpleVersionedPropertiesImpl(props);
     }
-    
+
     public SVNEntryInfo getBaseInfo(File path, boolean fetchLock) throws SVNException {
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPristineDirectory.myLocalRelativePath;
         SVNPristineDirectory pristineDirectory = parsedPristineDirectory.getPristineDirectory();
         SVNWCRoot wcRoot = pristineDirectory.getWCRoot();
-        SqlJetDb sdb = wcRoot.getStorage(); 
+        SqlJetDb sdb = wcRoot.getStorage();
         verifyPristineDirectoryIsUsable(pristineDirectory);
-        
-        Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node, 
+
+        Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_BASE_NODE_FIELDS, null));
         if (!baseNodeResult.isEmpty() && fetchLock) {
-            long reposId = (Long) baseNodeResult.get(SVNDbTableField.repos_id); 
+            long reposId = (Long) baseNodeResult.get(SVNDbTableField.repos_id);
             String reposPath = (String) baseNodeResult.get(SVNDbTableField.repos_relpath);
-            baseNodeResult.putAll((Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.lock, 
+            baseNodeResult.putAll((Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.lock,
                     getCommonDbStrategy(new Object[] { reposId, reposPath }, SVNSqlJetUtil.OUR_LOCK_FIELDS, null)));
         }
-        
+
         SVNWCDbKind kind = null;
         SVNWCDbStatus status = null;
         Long revision = SVNRepository.INVALID_REVISION;
@@ -583,7 +583,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         String target = null;
         SVNDepth depth = null;
         SVNChecksum checksum = null;
-        
+
         if (!baseNodeResult.isEmpty()) {
             String kindStr = (String) baseNodeResult.get(SVNDbTableField.kind);
             SVNWCDbKind nodeKind = SVNWCDbKind.parseKind(kindStr);
@@ -599,7 +599,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (nodeKind == SVNWCDbKind.SUBDIR && status == SVNWCDbStatus.NORMAL) {
                 status = SVNWCDbStatus.OBSTRUCTED;
             }
-            
+
             revision = (Long) baseNodeResult.get(SVNDbTableField.revnum);
             reposPath = (String) baseNodeResult.get(SVNDbTableField.repos_relpath);
             if (fetchLock) {
@@ -620,7 +620,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 reposRootURL = reposInfo.getRootURL();
                 reposUUID = reposInfo.getUUID();
             }
-            
+
             changedRevision = (Long) baseNodeResult.get(SVNDbTableField.changed_rev);
             changedDateMillis = (Long) baseNodeResult.get(SVNDbTableField.changed_date);
             changedAuthor = (String) baseNodeResult.get(SVNDbTableField.changed_author);
@@ -643,13 +643,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     try {
                         checksum = SVNChecksum.deserializeChecksum(checksumStr);
                     } catch (SVNException svne) {
-                        SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.", 
+                        SVNErrorMessage err = SVNErrorMessage.create(svne.getErrorMessage().getErrorCode(), "The node ''{0}'' has a corrupt checksum value.",
                                 path);
                         SVNErrorManager.error(err, SVNLogType.WC);
                     }
                 }
             }
-            
+
             Long translatedSizeObj = null;
             translatedSizeObj = (Long) baseNodeResult.get(SVNDbTableField.translated_size);
             if (translatedSizeObj == null) {
@@ -657,7 +657,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             } else {
                 translatedSize = translatedSizeObj.longValue();
             }
-            
+
             if (nodeKind == SVNWCDbKind.SYMLINK) {
                 target = (String) baseNodeResult.get(SVNDbTableField.symlink_target);
             }
@@ -665,8 +665,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
-        
+
+
         SVNEntryInfo info = new SVNEntryInfo();
         info.setWCDBKind(kind);
         info.setWCDBStatus(status);
@@ -687,7 +687,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         info.setWCDBStatus(status);
         return info;
     }
-    
+
     public void addLock(File path, SVNWCDbLock lock) throws SVNException {
         SVNErrorManager.assertionFailure(lock != null, null, SVNLogType.WC);
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
@@ -705,20 +705,20 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         if (lock.getOwner() != null) {
             fieldsToValues.put(SVNDbTableField.lock_owner, lock.getOwner());
         }
-        
+
         if (lock.getComment() != null) {
             fieldsToValues.put(SVNDbTableField.lock_comment, lock.getComment());
         }
-        
+
         if (lock.getDate() != null) {
             fieldsToValues.put(SVNDbTableField.lock_date, lock.getDate().getTime());
         }
-        
-        runInsertByFieldNames(wcRoot.getStorage(), SVNDbTables.lock, SqlJetConflictAction.REPLACE, 
+
+        runInsertByFieldNames(wcRoot.getStorage(), SVNDbTables.lock, SqlJetConflictAction.REPLACE,
                 getCommonDbStrategy(null, null, null), fieldsToValues);
         //TODO: flush entries
     }
-    
+
     public void removeLock(File path) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
@@ -731,40 +731,40 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         runDelete(wcRoot.getStorage(), SVNDbTables.lock, getCommonDbStrategy(new Object[] { reposId, reposPath }, null, null), null);
         //TODO: flush entries
     }
-    
+
     public boolean isNodeHidden(File path) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
         String localRelPath = parsedPD.getLocalRelativePath();
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
-        
-        Map<SVNDbTableField, Object> workingResult = (Map<SVNDbTableField, Object>) runSelect(wcRoot.getStorage(), SVNDbTables.working_node, 
+
+        Map<SVNDbTableField, Object> workingResult = (Map<SVNDbTableField, Object>) runSelect(wcRoot.getStorage(), SVNDbTables.working_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_WORKING_NODE_FIELDS, null));
         if (workingResult.isEmpty()) {
             return false;
         }
-        
+
         SVNEntryInfo info = getBaseInfo(path, false);
         SVNWCDbStatus baseStatus = info.getWCDBStatus();
         return baseStatus == SVNWCDbStatus.ABSENT || baseStatus == SVNWCDbStatus.NOT_PRESENT || baseStatus == SVNWCDbStatus.EXCLUDED;
     }
-    
+
     public Collection readConflictVictims(File path) throws SVNException {
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY); 
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPristineDirectory.myLocalRelativePath;
         SVNPristineDirectory pristineDirectory = parsedPristineDirectory.myPristineDirectory;
         verifyPristineDirectoryIsUsable(pristineDirectory);
         SVNWCRoot wcRoot = pristineDirectory.getWCRoot();
         SqlJetDb sdb = wcRoot.getStorage();
-        
+
         String treeConflictData = null;
-        Map<String, String> foundVictims = (Map<String, String>) runSelect(sdb, SVNDbTables.actual_node, 
+        Map<String, String> foundVictims = (Map<String, String>) runSelect(sdb, SVNDbTables.actual_node,
                 getSelectActualConflictVictimsStrategy(wcRoot.getWCId(), localRelPath));
-        Map<SVNDbTableField, Object> actualTreeConflictResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.actual_node, 
+        Map<SVNDbTableField, Object> actualTreeConflictResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.actual_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_ACTUAL_TREE_CONFLICT_FIELDS, null));
         treeConflictData = (String) actualTreeConflictResult.get(SVNDbTableField.tree_conflict_data);
-        
+
         if (treeConflictData != null) {
             Map treeConflicts = SVNTreeConflictUtil.readTreeConflicts(path, treeConflictData);
             for (Iterator treeConflictsIter = treeConflicts.keySet().iterator(); treeConflictsIter.hasNext();) {
@@ -774,8 +774,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         return foundVictims.keySet();
     }
-    
-    public SVNEntryInfo scanDeletion(File path, boolean fetchDeletedBasePath, boolean fetchIsBaseReplaced, boolean fetchMovedToPath, 
+
+    public SVNEntryInfo scanDeletion(File path, boolean fetchDeletedBasePath, boolean fetchIsBaseReplaced, boolean fetchMovedToPath,
             boolean fetchDeletedWorkPath) throws SVNException {
         boolean childHasBase = false;
         boolean foundMovedTo = false;
@@ -792,11 +792,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         verifyPristineDirectoryIsUsable(pristineDir);
         while (true) {
             Object[] lookUpObjects = new Object[] { pristineDir.getWCRoot().getWCId(), currentRelPath };
-            Map<SVNDbTableField, Object> workingNodeResult = (Map<SVNDbTableField, Object>) runSelect(pristineDir.getWCRoot().getStorage(), 
+            Map<SVNDbTableField, Object> workingNodeResult = (Map<SVNDbTableField, Object>) runSelect(pristineDir.getWCRoot().getStorage(),
                     SVNDbTables.working_node, getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_DELETION_INFO_FIELDS, null));
             Map<SVNDbTableField, Object> baseNodeResult = Collections.EMPTY_MAP;
             if (!workingNodeResult.isEmpty()) {
-                baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(pristineDir.getWCRoot().getStorage(), SVNDbTables.base_node, 
+                baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(pristineDir.getWCRoot().getStorage(), SVNDbTables.base_node,
                         getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_PRESENCE_FIELD, null));
             }
 
@@ -805,38 +805,38 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", path);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
-            
+
                 if (fetchDeletedWorkPath && childPresence == SVNWCDbStatus.NOT_PRESENT && deletedWorkingPath == null) {
                     deletedWorkingPath = childPath;
                 }
-                
+
                 if (fetchDeletedBasePath && childHasBase && deletedBasePath == null) {
                     deletedBasePath = childPath;
                 }
-                
+
                 break;
             }
-            
+
             SVNWCDbStatus workPresence = SVNWCDbStatus.parseStatus((String) workingNodeResult.get(SVNDbTableField.presence));
             if (currentPath.equals(path) && workPresence != SVNWCDbStatus.NOT_PRESENT && workPresence != SVNWCDbStatus.BASE_DELETED) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.", 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be deleted.",
                         path);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            
-            SVNErrorManager.assertionFailure(workPresence == SVNWCDbStatus.NORMAL || workPresence == SVNWCDbStatus.NOT_PRESENT || 
+
+            SVNErrorManager.assertionFailure(workPresence == SVNWCDbStatus.NORMAL || workPresence == SVNWCDbStatus.NOT_PRESENT ||
                     workPresence == SVNWCDbStatus.BASE_DELETED, null, SVNLogType.WC);
-            
+
             boolean haveBase = !baseNodeResult.isEmpty();
             if (haveBase) {
                 SVNWCDbStatus basePresence = SVNWCDbStatus.parseStatus((String) baseNodeResult.get(SVNDbTableField.presence));
-                SVNErrorManager.assertionFailure(basePresence == SVNWCDbStatus.NORMAL || basePresence == SVNWCDbStatus.NOT_PRESENT, 
+                SVNErrorManager.assertionFailure(basePresence == SVNWCDbStatus.NORMAL || basePresence == SVNWCDbStatus.NOT_PRESENT,
                         null, SVNLogType.WC);
                 if (fetchIsBaseReplaced && basePresence == SVNWCDbStatus.NORMAL && workPresence != SVNWCDbStatus.BASE_DELETED) {
                     baseIsReplaced = true;
                 }
             }
-            
+
             if (!foundMovedTo && (fetchMovedToPath || fetchDeletedBasePath) && workingNodeResult.get(SVNDbTableField.moved_to) != null) {
                 SVNErrorManager.assertionFailure(haveBase, null, SVNLogType.WC);
                 foundMovedTo = true;
@@ -847,22 +847,22 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     movedToPath = new File(pristineDir.getWCRoot().getPath(), (String) workingNodeResult.get(SVNDbTableField.moved_to));
                 }
             }
-            
+
             if (fetchDeletedWorkPath && workPresence == SVNWCDbStatus.NORMAL && childPresence == SVNWCDbStatus.NOT_PRESENT) {
                 deletedWorkingPath = childPath;
             }
-            
+
             childPath = currentPath;
             childPresence = workPresence;
             childHasBase = haveBase;
             if (currentPath.equals(pristineDir.getPath())) {
                 pristineDir = navigateToParent(pristineDir, SqlJetTransactionMode.READ_ONLY);
             }
-            
+
             currentPath = pristineDir.getPath();
             currentRelPath = pristineDir.computeRelPath();
         }
-        
+
         SVNEntryInfo info = new SVNEntryInfo();
         info.setDeletedBasePath(deletedBasePath);
         info.setIsBaseReplaced(baseIsReplaced);
@@ -870,9 +870,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         info.setDeletedWorkingPath(deletedWorkingPath);
         return info;
     }
-    
+
     public void checkFileExternal(SVNEntry entry, SqlJetDb sdb) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node,
                 getCommonDbStrategy(new Object[] { 1, entry.getName() }, SVNSqlJetUtil.OUR_FILE_EXTERNAL_FIELD, null));
         if (!result.isEmpty()) {
             String fileExternalData = (String) result.get(SVNDbTableField.file_external);
@@ -880,8 +880,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
     }
 
-    public SVNEntryInfo scanAddition(File path, boolean fetchReposPath, boolean fetchReposRootURL, boolean fetchReposUUID, 
-            boolean fetchOperationRoot, boolean fetchOriginalReposPath, boolean fetchOriginalRootURL, boolean fetchOriginalUUID, 
+    public SVNEntryInfo scanAddition(File path, boolean fetchReposPath, boolean fetchReposRootURL, boolean fetchReposUUID,
+            boolean fetchOperationRoot, boolean fetchOriginalReposPath, boolean fetchOriginalRootURL, boolean fetchOriginalUUID,
             boolean fetchOriginalRevision, boolean fetchStatus) throws SVNException {
         File currentPath = path;
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(currentPath, SqlJetTransactionMode.READ_ONLY);
@@ -902,7 +902,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         String reposUUID = null;
         String buildRelPath = "";
         while (true) {
-            Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(pristineDir.getWCRoot().getStorage(), SVNDbTables.working_node, 
+            Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(pristineDir.getWCRoot().getStorage(), SVNDbTables.working_node,
                     getCommonDbStrategy(new Object[] { pristineDir.getWCRoot().getWCId(), currentRelPath }, SVNSqlJetUtil.OUR_WORKING_NODE_FIELDS, null));
             if (!result.isEmpty()) {
                 if (path.equals(currentPath)) {
@@ -915,45 +915,45 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 }
                 break;
             }
-            
+
             SVNWCDbStatus presence = SVNWCDbStatus.parseStatus((String) result.get(SVNDbTableField.presence));
             if (path.equals(currentPath)) {
                 if (presence != SVNWCDbStatus.NORMAL) {
-                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.", 
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_UNEXPECTED_STATUS, "Expected node ''{0}'' to be added.",
                             path);
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
-                
+
                 if (fetchStatus) {
                     status = SVNWCDbStatus.ADDED;
                 }
             }
-            
+
             if (!foundInfo && presence == SVNWCDbStatus.NORMAL && result.get(SVNDbTableField.copyfrom_repos_id) != null) {
                 if (fetchStatus) {
                     boolean movedHere = (Boolean) result.get(SVNDbTableField.moved_here);
                     status = movedHere ? SVNWCDbStatus.MOVED_HERE : SVNWCDbStatus.COPIED;
                 }
-                
+
                 if (fetchOperationRoot) {
                     operationRootPath = currentPath;
                 }
-                
+
                 if (fetchOriginalReposPath) {
                     originalReposPath = (String) result.get(SVNDbTableField.copyfrom_repos_path);
                 }
-                
+
                 if (fetchOriginalRootURL || fetchOriginalUUID) {
-                    SVNRepositoryInfo reposInfo = fetchRepositoryInfo(pristineDir.getWCRoot().getStorage(), 
+                    SVNRepositoryInfo reposInfo = fetchRepositoryInfo(pristineDir.getWCRoot().getStorage(),
                             (Long) result.get(SVNDbTableField.copyfrom_repos_id));
                     originalRootURL = reposInfo.getRootURL();
                     originalUUID = reposInfo.getUUID();
                 }
-                
+
                 if (fetchOriginalRevision) {
                     originalRevision = (Long) result.get(SVNDbTableField.copyfrom_revnum);
                 }
-                
+
                 if (reposPath == null && reposRootURL == null && reposUUID == null) {
                     SVNEntryInfo info = new SVNEntryInfo();
                     info.setOperationRootPath(operationRootPath);
@@ -967,23 +967,23 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     info.setWCDBStatus(status);
                     return info;
                 }
-                
+
                 foundInfo = true;
             }
-            
+
             if (fetchReposPath) {
                 buildRelPath = SVNPathUtil.append(currentPath.getName(), buildRelPath);
             }
-            
+
             childPath = currentPath;
             if (currentPath.equals(pristineDir.getPath())) {
                 pristineDir = navigateToParent(pristineDir, SqlJetTransactionMode.READ_ONLY);
             }
-            
+
             currentPath = pristineDir.getPath();
             currentRelPath = pristineDir.computeRelPath();
         }
-    
+
         if (fetchReposPath || fetchReposRootURL || fetchReposUUID) {
             SVNRepositoryScanResult scanResult = scanBaseRepos(currentPath);
             String baseRelPath = scanResult.getReposPath();
@@ -1007,9 +1007,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         info.setWCDBStatus(status);
         return info;
     }
-    
+
     public SVNRepositoryScanResult scanBaseRepos(File path) throws SVNException {
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY); 
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPristineDirectory.myLocalRelativePath;
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
@@ -1018,7 +1018,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNRepositoryInfo reposInfo = fetchRepositoryInfo(wcRoot.getStorage(), reposIdObj.getReposId());
         return new SVNRepositoryScanResult(reposInfo, reposIdObj.getReposPath());
     }
-    
+
     public boolean determineKeepLocal(File path) throws SVNException {
         Map<SVNDbTableField, Object> result = runSelectForPath(path, SVNDbTables.working_node, SVNSqlJetUtil.OUR_KEEP_LOCAL_FIELD);
         if (!result.isEmpty()) {
@@ -1026,43 +1026,43 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         return false;
     }
-    
+
     public boolean checkIfIsNotPresent(SqlJetDb sdb, long wcId, String localRelPath) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node,
                 getCommonDbStrategy(new Object[] { wcId, localRelPath }, SVNSqlJetUtil.OUR_PRESENCE_FIELD, null));
         String presence = (String) result.get(SVNDbTableField.presence);
-        return "not-present".equalsIgnoreCase(presence); 
+        return "not-present".equalsIgnoreCase(presence);
     }
-    
+
     public List<SVNConflictDescription> readConflicts(File path) throws SVNException {
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
-        String localRelPath = parsedPristineDirectory.getLocalRelativePath(); 
+        String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.myPristineDirectory;
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
-        
+
         List<SVNConflictDescription> conflicts = new LinkedList<SVNConflictDescription>();
         SqlJetDb sdb = wcRoot.getStorage();
 
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.actual_node, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.actual_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_CONFLICT_DETAILS_FIELDS, null));
         if (!result.isEmpty()) {
             String propRejectFile = (String) result.get(SVNDbTableField.prop_reject);
             if (propRejectFile != null) {
                 SVNMergeFileSet fileSet = new SVNMergeFileSet(null, null, null, path, null, new File(propRejectFile), null, null, null);
-                SVNPropertyConflictDescription propConflictDescr = new SVNPropertyConflictDescription(fileSet, SVNNodeKind.UNKNOWN, "", 
+                SVNPropertyConflictDescription propConflictDescr = new SVNPropertyConflictDescription(fileSet, SVNNodeKind.UNKNOWN, "",
                         null, null);
                 conflicts.add(propConflictDescr);
             }
-            
+
             String conflictOld = (String) result.get(SVNDbTableField.conflict_old);
             String conflictNew = (String) result.get(SVNDbTableField.conflict_new);
             String conflictWrk = (String) result.get(SVNDbTableField.conflict_working);
-            
+
             if (conflictOld != null || conflictNew != null || conflictWrk != null) {
-                SVNMergeFileSet fileSet = new SVNMergeFileSet(null, null, new File(conflictOld), new File(conflictWrk), null, 
+                SVNMergeFileSet fileSet = new SVNMergeFileSet(null, null, new File(conflictOld), new File(conflictWrk), null,
                         new File(conflictNew), path, null, null);
-                SVNTextConflictDescription textConflictDescr = new SVNTextConflictDescription(fileSet, SVNNodeKind.FILE, 
+                SVNTextConflictDescription textConflictDescr = new SVNTextConflictDescription(fileSet, SVNNodeKind.FILE,
                         SVNConflictAction.EDIT, SVNConflictReason.EDITED);
                 conflicts.add(textConflictDescr);
             }
@@ -1074,7 +1074,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         return conflicts;
     }
-    
+
     public SVNWCDbKind readKind(File path, boolean allowMissing) throws SVNException {
         SVNEntryInfo info = null;
         try {
@@ -1084,10 +1084,10 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (allowMissing && svne.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 return SVNWCDbKind.UNKNOWN;
             }
-            throw svne; 
+            throw svne;
         }
     }
-    
+
     public SVNTreeConflictDescription readTreeConflict(File path) throws SVNException {
         File parent = path.getParentFile();
         String localRelPath = null;
@@ -1103,38 +1103,38 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             }
             throw svne;
         }
-        
+
         verifyPristineDirectoryIsUsable(pristineDirectory);
-        SVNWCRoot wcRoot = pristineDirectory.getWCRoot(); 
-        Map<SVNDbTableField, Object> actualNodeResult = (Map<SVNDbTableField, Object>) runSelect(wcRoot.getStorage(), SVNDbTables.actual_node, 
+        SVNWCRoot wcRoot = pristineDirectory.getWCRoot();
+        Map<SVNDbTableField, Object> actualNodeResult = (Map<SVNDbTableField, Object>) runSelect(wcRoot.getStorage(), SVNDbTables.actual_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_ACTUAL_NODE_FIELDS, null));
         if (actualNodeResult.isEmpty()) {
             return null;
         }
-        
+
         String treeConflictData = (String) actualNodeResult.get(SVNDbTableField.tree_conflict_data);
         if (treeConflictData == null) {
             return null;
         }
-        
+
         Map treeConflicts = SVNTreeConflictUtil.readTreeConflicts(parent, treeConflictData);
         return (SVNTreeConflictDescription) treeConflicts.get(path.getName());
     }
-    
+
     //TODO: temporary API
     public DBResult getDBTemp(File dirPath, boolean alwaysOpen) throws SVNException {
         if (!alwaysOpen) {
             SVNPristineDirectory pristineDir = getOrCreatePristineDirectory(dirPath, false);
-            if (pristineDir != null && pristineDir.getWCRoot() != null && pristineDir.getWCRoot().getStorage() != null && 
+            if (pristineDir != null && pristineDir.getWCRoot() != null && pristineDir.getWCRoot().getStorage() != null &&
                     dirPath.equals(pristineDir.getWCRoot().getPath())) {
-                
+
                 return new DBResult(pristineDir.getWCRoot().getStorage(), false);
             }
         }
-        
+
         return new DBResult(openDB(dirPath, SqlJetTransactionMode.WRITE), true);
     }
-    
+
     //TODO: temporary API
     public IsDirDeletedResult isDirDeleted(File dirPath) throws SVNException {
         File parentPath = dirPath.getParentFile();
@@ -1142,13 +1142,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         ParsedPristineDirectory parsedPristineDir = parseLocalAbsPath(parentPath, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPristineDir.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDir.getPristineDirectory();
-        
+
         verifyPristineDirectoryIsUsable(pristineDir);
-        
+
         localRelPath = SVNPathUtil.append(localRelPath, baseName);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
-        
-        Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(wcRoot.getStorage(), SVNDbTables.base_node, 
+
+        Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(wcRoot.getStorage(), SVNDbTables.base_node,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, SVNSqlJetUtil.OUR_PARENT_STUB_INFO_FIELDS, null));
         String presence = (String) baseNodeResult.get(SVNDbTableField.presence);
         SVNWCDbStatus status = SVNWCDbStatus.parseStatus(presence);
@@ -1157,10 +1157,10 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         if (isNotPresent) {
             baseRevision = (Long) baseNodeResult.get(SVNDbTableField.revnum);
         }
-            
+
         return new IsDirDeletedResult(isNotPresent, baseRevision);
     }
-    
+
     public SVNPristineDirectory getOrCreatePristineDirectory(File path, boolean create) {
         SVNPristineDirectory pristineDir = getPristineDirectory(path);
         if (pristineDir == null && create) {
@@ -1169,7 +1169,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         return pristineDir;
     }
-    
+
     public void closeDB() throws SVNException {
         if (myPathsToPristineDirs != null) {
             for (File path : myPathsToPristineDirs.keySet()) {
@@ -1181,28 +1181,28 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             myPathsToPristineDirs.clear();
         }
     }
-    
+
     public void initDB(File path, String reposRoot, String reposPath, String reposUUID, long initialRevision, SVNDepth depth) throws SVNException {
         if (depth == null || depth == SVNDepth.UNKNOWN) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.INCORRECT_PARAMS, "depth must be a valid value");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
+
         SqlJetDb db = createDB(path, reposRoot, reposUUID);
         long wcId = myCurrentWCId;
         long reposId = myCurrentReposId;
         SVNWCRoot wcRoot = createWCRoot(path, db, FORMAT_FROM_SDB, wcId, false, false);
-        
+
         SVNPristineDirectory pDir = new SVNPristineDirectory(wcRoot, null, false, false, path);
         Map dirData = getPathsToPristineDirs();
         dirData.put(path, pDir);
-        
+
         SVNWCDbStatus status = SVNWCDbStatus.NORMAL;
-        
+
         if (initialRevision > 0) {
             status = SVNWCDbStatus.INCOMPLETE;
         }
-        
+
         SVNBaseNode baseNode = new SVNBaseNode();
         baseNode.setStatus(status);
         baseNode.setWCDbKind(SVNWCDbKind.DIR);
@@ -1215,10 +1215,10 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         baseNode.setDepth(depth);
         insertBaseNode(baseNode, db);
     }
-    
+
     public ParsedPristineDirectory parseLocalAbsPath(File path, SqlJetTransactionMode mode) throws SVNException {
         mode = SqlJetTransactionMode.WRITE;
-        
+
         ParsedPristineDirectory result = new ParsedPristineDirectory();
         SVNPristineDirectory pristineDir = getPristineDirectory(path);
         if (pristineDir != null && pristineDir.getWCRoot() != null) {
@@ -1227,12 +1227,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             result.myLocalRelativePath = relPath;
             return result;
         }
-        
+
         boolean alwaysCheck = false;
         boolean isObstructionPossible = false;
         boolean movedUpwards = false;
         String buildRelPath = null;
-                
+
         SVNFileType type = SVNFileType.getType(path);
         if (type != SVNFileType.DIRECTORY) {
             File parent = path.getParentFile();
@@ -1244,7 +1244,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 result.myPristineDirectory = pristineDir;
                 return result;
             }
-            
+
             if (type == SVNFileType.NONE) {
                 alwaysCheck = true;
             }
@@ -1252,7 +1252,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             buildRelPath = "";
             isObstructionPossible = true;
         }
-        
+
         if (pristineDir == null) {
             pristineDir = new SVNPristineDirectory(null, null, false, false, path);
         } else {
@@ -1275,19 +1275,19 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     throw svne;
                 }
             }
-            
+
             if (!movedUpwards || alwaysCheck) {
                 wcFormat = SVNAdminUtil.getVersion(path);
                 if (wcFormat != 0) {
                     break;
                 }
             }
-            
+
             if (path.getParentFile() == null) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", originalPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            
+
             path = path.getParentFile();
             movedUpwards = true;
             isObstructionPossible = false;
@@ -1299,7 +1299,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 foundDir = null;
             }
         }
-         
+
         if (foundDir != null) {
             pristineDir.setWCRoot(foundDir.getWCRoot());
         } else if (wcFormat == 0) {
@@ -1321,13 +1321,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             pristineDir.setWCRoot(wcRoot);
             isObstructionPossible = false;
         }
-            
+
         String dirRelPath = pristineDir.computeRelPath();
         result.myLocalRelativePath = SVNPathUtil.append(dirRelPath, buildRelPath);
-        
+
         if (isObstructionPossible) {
             SVNErrorManager.assertionFailure(!movedUpwards, null, SVNLogType.WC);
-            
+
             File parentPath = path.getParentFile();
             SVNPristineDirectory parentDir = getPristineDirectory(parentPath);
             if (parentDir == null || parentDir.getWCRoot() == null) {
@@ -1342,21 +1342,21 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                     parentDir = null;
                     errorOccured = true;
                 }
-                
+
                 if (!errorOccured) {
                     if (parentDir == null) {
                         parentDir = new SVNPristineDirectory(null, null, false, false, parentPath);
                     } else {
                         SVNErrorManager.assertionFailure(parentPath.equals(parentDir.getPath()), null, SVNLogType.WC);
                     }
-                    
+
                     SVNWCRoot wcRoot = createWCRoot(parentDir.getPath(), sdb, 1, FORMAT_FROM_SDB, myIsAutoUpgrade, myIsEnforceEmptyWorkQueue);
                     parentDir.setWCRoot(wcRoot);
                     setPristineDir(parentDir.getPath(), parentDir);
                     pristineDir.setParentDirectory(parentDir);
                 }
             }
-            
+
             if (parentDir != null) {
                 String lookForRelPath = path.getName();
                 boolean isObstructedFile = isObstructedFile(parentDir.getWCRoot(), lookForRelPath);
@@ -1368,12 +1368,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 }
             }
         }
-        
+
         setPristineDir(pristineDir.getPath(), pristineDir);
         if (!movedUpwards) {
             return result;
         }
-        
+
         SVNPristineDirectory childDir = pristineDir;
         do {
             File parentPath = childDir.getPath().getParentFile();
@@ -1384,46 +1384,46 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             } else if (parentDir.getWCRoot() == null) {
                 parentDir.setWCRoot(pristineDir.getWCRoot());
             }
-            
+
             childDir.setParentDirectory(parentDir);
             childDir = parentDir;
         } while (childDir != foundDir && !childDir.getPath().equals(path));
-            
+
         return result;
     }
-    
+
     public SVNPristineDirectory navigateToParent(SVNPristineDirectory child, SqlJetTransactionMode mode) throws SVNException {
         SVNPristineDirectory parentDir = child.getParentDirectory() ;
         if (parentDir != null && parentDir.getWCRoot() != null) {
             return parentDir;
         }
         File parentPath = child.getPath().getParentFile();
-        
+
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(parentPath, mode);
         parentDir = parsedPristineDirectory.myPristineDirectory;
         verifyPristineDirectoryIsUsable(parentDir);
         child.setParentDirectory(parentDir);
         return parentDir;
     }
-    
+
     public List gatherChildren(File path, boolean baseOnly) throws SVNException {
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY); 
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.myPristineDirectory;
         verifyPristineDirectoryIsUsable(pristineDir);
-        SVNWCRoot wcRoot = pristineDir.getWCRoot(); 
+        SVNWCRoot wcRoot = pristineDir.getWCRoot();
         SqlJetDb db = wcRoot.getStorage();
-        Collection childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.base_node, SVNDbIndexes.i_parent, wcRoot.getWCId(), 
+        Collection childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.base_node, SVNDbIndexes.i_parent, wcRoot.getWCId(),
                 localRelPath, db, null);
         if (!baseOnly) {
-            childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.working_node, SVNDbIndexes.i_working_parent, wcRoot.getWCId(), 
+            childNames = selectChildrenUsingWCIdAndParentRelPath(SVNDbTables.working_node, SVNDbIndexes.i_working_parent, wcRoot.getWCId(),
                     localRelPath, db, childNames);
         }
         return new LinkedList(childNames);
     }
-    
-    public void addBaseDirectory(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, 
-            long changedRevision, Date changedDate, String changedAuthor, List children, SVNDepth depth) throws SVNException {        
+
+    public void addBaseDirectory(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNProperties props,
+            long changedRevision, Date changedDate, String changedAuthor, List children, SVNDepth depth) throws SVNException {
 
         SVNErrorManager.assertionFailure(reposPath != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
@@ -1431,12 +1431,12 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(changedRevision), null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(props != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(children != null, null, SVNLogType.WC);
-        
+
         ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         verifyPristineDirectoryIsUsable(pristineDir);
-        SVNWCRoot wcRoot = pristineDir.getWCRoot(); 
+        SVNWCRoot wcRoot = pristineDir.getWCRoot();
         long reposId = createReposId(wcRoot.getStorage(), reposRootURL, reposUUID);
         SVNBaseNode baseNode = new SVNBaseNode();
         baseNode.setStatus(SVNWCDbStatus.NORMAL);
@@ -1452,11 +1452,11 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         baseNode.setChangedAuthor(changedAuthor);
         baseNode.setDepth(depth);
         baseNode.setChildren(children);
-        
+
         insertBaseNode(baseNode, wcRoot.getStorage());
     }
-    
-    public void addBaseFile(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, 
+
+    public void addBaseFile(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNProperties props,
             long changedRevision, Date changedDate, String changedAuthor, SVNChecksum checksum, long translatedSize) throws SVNException {
         SVNErrorManager.assertionFailure(reposPath != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
@@ -1464,8 +1464,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(changedRevision), null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(checksum != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(props != null, null, SVNLogType.WC);
-        
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
+
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
@@ -1487,8 +1487,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         baseNode.setTranslatedSize(translatedSize);
         insertBaseNode(baseNode, wcRoot.getStorage());
     }
-    
-    public void addBaseSymlink(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNProperties props, 
+
+    public void addBaseSymlink(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNProperties props,
             long changedRevision, Date changedDate, String changedAuthor, String target) throws SVNException {
         SVNErrorManager.assertionFailure(reposPath != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
@@ -1496,8 +1496,8 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(changedRevision), null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(props != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(target != null, null, SVNLogType.WC);
-        
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
+
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
@@ -1518,23 +1518,23 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         baseNode.setTarget(target);
         insertBaseNode(baseNode, wcRoot.getStorage());
     }
-    
-    public void addBaseAbsentNode(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNWCDbKind kind, 
+
+    public void addBaseAbsentNode(File path, String reposPath, String reposRootURL, String reposUUID, long revision, SVNWCDbKind kind,
             SVNWCDbStatus status) throws SVNException {
         SVNErrorManager.assertionFailure(reposPath != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
-        SVNErrorManager.assertionFailure(status == SVNWCDbStatus.ABSENT || status == SVNWCDbStatus.EXCLUDED || 
+        SVNErrorManager.assertionFailure(status == SVNWCDbStatus.ABSENT || status == SVNWCDbStatus.EXCLUDED ||
                 status == SVNWCDbStatus.NOT_PRESENT, null, SVNLogType.WC);
 
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
 
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
         long reposId = createReposId(wcRoot.getStorage(), reposRootURL, reposUUID);
-        
+
         SVNBaseNode baseNode = new SVNBaseNode();
         baseNode.setStatus(status);
         baseNode.setWCDbKind(kind);
@@ -1549,13 +1549,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
 
     //TODO: this must be removed by the release
-    public void addTmpBaseSubDirectory(File path, String reposPath, String reposRootURL, String reposUUID, long revision, 
+    public void addTmpBaseSubDirectory(File path, String reposPath, String reposRootURL, String reposUUID, long revision,
             long changedRevision, Date changedDate, String changedAuthor, SVNDepth depth) throws SVNException {
         SVNErrorManager.assertionFailure(reposPath != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(reposUUID != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(SVNRevision.isValidRevisionNumber(revision), null, SVNLogType.WC);
-        
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
+
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
@@ -1574,21 +1574,21 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         baseNode.setChangedDate(changedDate);
         baseNode.setChangedAuthor(changedAuthor);
         baseNode.setDepth(depth);
-        
+
         insertBaseNode(baseNode, wcRoot.getStorage());
     }
-    
+
     public void removeFromBase(File path) throws SVNException {
-        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE); 
-        String localRelPath = parsedPristineDirectory.getLocalRelativePath(); 
+        ParsedPristineDirectory parsedPristineDirectory = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
+        String localRelPath = parsedPristineDirectory.getLocalRelativePath();
         SVNPristineDirectory pristineDir = parsedPristineDirectory.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
-        SVNWCRoot wcRoot = pristineDir.getWCRoot(); 
+        SVNWCRoot wcRoot = pristineDir.getWCRoot();
         SqlJetDb db = wcRoot.getStorage();
         runDelete(db, SVNDbTables.base_node, getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, null, null), null);
         //TODO: flush entries;
     }
-    
+
     public void installPristine(File tmpPath, SVNChecksum sha1Checksum, SVNChecksum md5Checksum) throws SVNException {
         SVNErrorManager.assertionFailure(sha1Checksum != null, null, SVNLogType.WC);
         SVNErrorManager.assertionFailure(md5Checksum != null, null, SVNLogType.WC);
@@ -1608,15 +1608,15 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
         }
-        
+
         byte[] serializedItem = workItem.unparse();
         Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
         fieldsToValues.put(SVNDbTableField.work, serializedItem);
-        runInsertByFieldNames(pristineDir.getWCRoot().getStorage(), SVNDbTables.work_queue, null, getCommonDbStrategy(null, null, null), 
+        runInsertByFieldNames(pristineDir.getWCRoot().getStorage(), SVNDbTables.work_queue, null, getCommonDbStrategy(null, null, null),
                 fieldsToValues);
 
     }
-    
+
     public DBResult fetchWorkQueue(long id, File wriPath) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(wriPath, SqlJetTransactionMode.READ_ONLY);
         String localRelPath = parsedPD.getLocalRelativePath();
@@ -1631,7 +1631,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         //TODO: implement
         return null;
     }
-    
+
     public void setProps(File path, SVNProperties props) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
@@ -1639,65 +1639,65 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
         String localRelPath = parsedPD.getLocalRelativePath();
         Map<SVNDbTableField, Object> fieldsToValues = SVNSqlJetUtil.bindProperties(props, null);
-        SVNCommonDbStrategy strategy = getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, 
+        SVNCommonDbStrategy strategy = getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath },
                 SVNSqlJetUtil.OUR_PROPERTIES_FIELD, null);
         long affectedRowsConut = runUpdate(wcRoot.getStorage(), SVNDbTables.actual_node, strategy, fieldsToValues);
         if (affectedRowsConut == 1) {
             return;
         }
-        
+
         fieldsToValues.put(SVNDbTableField.wc_id, wcRoot.getWCId());
         fieldsToValues.put(SVNDbTableField.local_relpath, localRelPath);
         if (!"".equals(localRelPath)) {
             String parentRelPath = SVNPathUtil.removeTail(localRelPath);
             fieldsToValues.put(SVNDbTableField.parent_relpath, parentRelPath);
         }
-        
+
         strategy.reset(null, null, null);
         runInsertByFieldNames(wcRoot.getStorage(), SVNDbTables.actual_node, null, strategy, fieldsToValues);
     }
-    
+
     public SVNRepositoryInfo fetchRepositoryInfo(SqlJetDb sdb, long reposId) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.repository, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.repository,
                 getCommonDbStrategy(new Object[] { reposId }, SVNSqlJetUtil.OUR_SELECT_REPOSITORY_BY_ID_FIELDS, null));
         if (!result.isEmpty()) {
             String root = (String) result.get(SVNDbTableField.root);
             String uuid = (String) result.get(SVNDbTableField.uuid);
-            return new SVNRepositoryInfo(root, uuid); 
+            return new SVNRepositoryInfo(root, uuid);
         }
         return null;
     }
-    
+
     public SVNProperties getBaseDAVCache(File path) throws SVNException {
         Map<SVNDbTableField, Object> result = runSelectForPath(path, SVNDbTables.base_node, SVNSqlJetUtil.OUR_DAV_CACHE_FIELD);
         if (!result.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}'' was not found.", path);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
-        
+
         return SVNSqlJetUtil.getPropertiesFromBLOB(result.get(SVNDbTableField.dav_cache));
     }
-    
+
     public void setBaseDAVCache(File path, SVNProperties props) throws SVNException {
         Map<SVNDbTableField, Object> fieldsToValues = SVNSqlJetUtil.bindProperties(props, null);
         runUpdateForPath(path, SVNDbTables.base_node, SVNSqlJetUtil.OUR_DAV_CACHE_FIELD, fieldsToValues);
-    }   
-    
+    }
+
     public long ensureRepos(File path, String reposRootURL, String reposUUID) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
         verifyPristineDirectoryIsUsable(pristineDir);
         return createReposId(pristineDir.getWCRoot().getStorage(), reposRootURL, reposUUID);
     }
-    
+
     private RepositoryId scanUpwardsForRepository(SVNWCRoot wcRoot, String localRelPath) throws SVNException {
-        SqlJetDb sdb = wcRoot.getStorage(); 
+        SqlJetDb sdb = wcRoot.getStorage();
         SVNErrorManager.assertionFailure(sdb != null && wcRoot.getWCId() >= 0, null, SVNLogType.WC);
 
         String relPathSuffix = "";
         String currentRelPath = localRelPath;
         while ( true ) {
-            Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node, 
+            Map<SVNDbTableField, Object> baseNodeResult = (Map<SVNDbTableField, Object>) runSelect(sdb, SVNDbTables.base_node,
                     getCommonDbStrategy(new Object[] { wcRoot.getWCId(), currentRelPath } , SVNSqlJetUtil.OUR_BASE_NODE_FIELDS, null));
             if (baseNodeResult.isEmpty()) {
                 SVNErrorMessage err = null;
@@ -1709,73 +1709,73 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 }
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            
-            Long reposIdObj = (Long) baseNodeResult.get("repos_id"); 
+
+            Long reposIdObj = (Long) baseNodeResult.get("repos_id");
             if (reposIdObj != null) {
                 long reposId = reposIdObj.longValue();
                 String reposPath = (String) baseNodeResult.get("repos_relpath");
                 SVNErrorManager.assertionFailure(reposPath != null, null, SVNLogType.WC);
-                
+
                 reposPath = SVNPathUtil.append(reposPath, relPathSuffix);
                 return new RepositoryId(reposId, reposPath);
             }
-            
+
             if ("".equals(currentRelPath)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Parent(s) of ''{0}'' should have repository information.", localRelPath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            
+
             String currentPathName = SVNPathUtil.tail(currentRelPath);
             currentRelPath = SVNPathUtil.removeTail(currentRelPath);
             relPathSuffix = SVNPathUtil.append(currentPathName, relPathSuffix);
         }
     }
-    
+
     public Map<SVNDbTableField, Object> runSelectForPath(File path, SVNDbTables table, SVNDbTableField[] fields) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
         String localRelPath = parsedPD.getLocalRelativePath();
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
-        return (Map<SVNDbTableField, Object>)runSelect(wcRoot.getStorage(), table, 
+        return (Map<SVNDbTableField, Object>)runSelect(wcRoot.getStorage(), table,
                 getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, fields, null));
     }
 
-    public long runUpdateForPath(File path, SVNDbTables table, SVNDbTableField[] fields, 
+    public long runUpdateForPath(File path, SVNDbTables table, SVNDbTableField[] fields,
             Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
         ParsedPristineDirectory parsedPD = parseLocalAbsPath(path, SqlJetTransactionMode.WRITE);
         SVNPristineDirectory pristineDir = parsedPD.getPristineDirectory();
         String localRelPath = parsedPD.getLocalRelativePath();
         verifyPristineDirectoryIsUsable(pristineDir);
         SVNWCRoot wcRoot = pristineDir.getWCRoot();
-        return runUpdate(wcRoot.getStorage(), table, getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, fields, null), 
+        return runUpdate(wcRoot.getStorage(), table, getCommonDbStrategy(new Object[] { wcRoot.getWCId(), localRelPath }, fields, null),
                 fieldsToValues);
     }
 
     public long countAllRows(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
-            
+
             protected Object execCommand() throws SqlJetException, SVNException {
                 return dbStrategy.getCount(getTable());
             }
         };
         return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.READ_ONLY, false);
     }
-    
+
     public Object runSelect(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
-            
+
             public Object execCommand() throws SqlJetException, SVNException {
                 return dbStrategy.runSelect(getTable());
             }
         };
-        
+
         return command.runDbCommand(sdb, tableName, SqlJetTransactionMode.READ_ONLY, false);
     }
 
     public void runSelect(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, final ISVNRecordHandler handler) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
-            
+
             public Object execCommand() throws SqlJetException, SVNException {
                 dbStrategy.runSelect(getTable(), handler);
                 return null;
@@ -1785,9 +1785,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     }
 
     public void runDelete(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, final ISVNRecordHandler handler) throws SVNException {
-        
+
         SVNDbCommand command = new SVNDbCommand() {
-        
+
             public Object execCommand() throws SqlJetException, SVNException {
                 dbStrategy.runDelete(getTable(), handler);
                 return null;
@@ -1795,89 +1795,89 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         };
         command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
-    
-    public long runInsertByFieldNames(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction, 
+
+    public long runInsertByFieldNames(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction,
             final SVNAbstractDbStrategy dbStrategy, final Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
-        
+
             public Object execCommand() throws SqlJetException, SVNException {
                 return dbStrategy.runInsertByFieldNames(getTable(), conflictAction, fieldsToValues);
             }
         };
-        
+
         return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
 
-    public long runUpdate(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy, 
+    public long runUpdate(SqlJetDb sdb, SVNDbTables tableName, final SVNAbstractDbStrategy dbStrategy,
             final Map<SVNDbTableField, Object> fieldsToValues) throws SVNException {
         SVNDbCommand command = new SVNDbCommand() {
-            
+
             protected Object execCommand() throws SqlJetException, SVNException {
                 return dbStrategy.runUpdate(getTable(), fieldsToValues);
             }
         };
-        
+
         return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
-    
-    private long runInsert(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction, 
+
+    private long runInsert(SqlJetDb sdb, SVNDbTables tableName, final SqlJetConflictAction conflictAction,
             final SVNAbstractDbStrategy dbStrategy, final Object... values) throws SVNException {
 
         SVNDbCommand command = new SVNDbCommand() {
-            
+
             public Object execCommand() throws SqlJetException, SVNException {
                 return dbStrategy.runInsert(getTable(), conflictAction, values);
             }
         };
-        
+
         return (Long) command.runDbCommand(sdb, tableName, SqlJetTransactionMode.WRITE, true);
     }
 
-    private Collection selectChildrenUsingWCIdAndParentRelPath(SVNDbTables table, SVNDbIndexes index, long wcId, String parentRelPath, 
+    private Collection selectChildrenUsingWCIdAndParentRelPath(SVNDbTables table, SVNDbIndexes index, long wcId, String parentRelPath,
             SqlJetDb db, Collection childNames) throws SVNException {
         childNames = childNames == null ? new HashSet() : childNames;
         final Collection finalChildNames = childNames;
-        
+
         runSelect(db, table, getCommonDbStrategy(new Object[] { wcId, parentRelPath }, null, index), new ISVNRecordHandler() {
-            
+
             public void handleRecord(ISqlJetCursor recordCursor) throws SqlJetException {
                 String childRelPath = recordCursor.getString(SVNDbTableField.local_relpath.toString());
-                String childName = SVNPathUtil.tail(childRelPath); 
+                String childName = SVNPathUtil.tail(childRelPath);
                 finalChildNames.add(childName);
             }
         });
-        
+
         return childNames;
     }
-    
+
     private void verifyPristineDirectoryIsUsable(SVNPristineDirectory pristineDirectory) throws SVNException {
-        SVNErrorManager.assertionFailure(pristineDirectory != null && pristineDirectory.getWCRoot() != null && 
-                pristineDirectory.getWCRoot().getFormat() == WC_FORMAT_17, "an unusable pristine directory object met", 
+        SVNErrorManager.assertionFailure(pristineDirectory != null && pristineDirectory.getWCRoot() != null &&
+                pristineDirectory.getWCRoot().getFormat() == WC_FORMAT_17, "an unusable pristine directory object met",
                 SVNLogType.WC);
     }
-    
+
     private void verifyChecksumKind(SVNChecksum checksum) throws SVNException {
         if (checksum.getKind() != SVNChecksumKind.SHA1) {
-            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_CHECKSUM_KIND, 
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.BAD_CHECKSUM_KIND,
                     "Only SHA1 checksums can be used as keys in the pristine file storage.");
             SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
-    
+
     private boolean isObstructedFile(SVNWCRoot wcRoot, String localRelativePath) throws SVNException {
-        SVNErrorManager.assertionFailure(wcRoot != null && wcRoot.getStorage() != null && wcRoot.getFormat() != FORMAT_FROM_SDB, null, 
+        SVNErrorManager.assertionFailure(wcRoot != null && wcRoot.getStorage() != null && wcRoot.getFormat() != FORMAT_FROM_SDB, null,
                 SVNLogType.WC);
-        
+
         SqlJetDb db = wcRoot.getStorage();
         Object[] lookUpObjects = new Object[] { wcRoot.getWCId(), localRelativePath };
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.working_node, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.working_node,
                 getCommonDbStrategy(lookUpObjects, SVNSqlJetUtil.OUR_KIND_FIELD, null));
         if (!result.isEmpty()) {
             String kindStr = (String) result.get(SVNDbTableField.kind);
             return SVNWCDbKind.parseKind(kindStr) == SVNWCDbKind.FILE;
         }
-        
-        result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.base_node, getCommonDbStrategy(lookUpObjects, 
+
+        result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.base_node, getCommonDbStrategy(lookUpObjects,
                 SVNSqlJetUtil.OUR_KIND_FIELD, null));
 
         if (!result.isEmpty()) {
@@ -1886,9 +1886,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
         return false;
     }
-    
+
     public long fetchWCId(SqlJetDb db) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.wcroot, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.wcroot,
                 getCommonDbStrategy(new Object[] { null }, SVNSqlJetUtil.OUR_ID_FIELD, SVNDbIndexes.i_local_abspath));
         if (!result.isEmpty()) {
             return (Long) result.get(SVNDbTableField.id);
@@ -1897,7 +1897,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         SVNErrorManager.error(err, SVNLogType.WC);
         return -1;
     }
-    
+
     private SVNWCRoot createWCRoot(File wcRoot, SqlJetDb db, int format, long wcId, boolean autoUpgrade, boolean enforceEmptyWorkQueue) throws SVNException {
         try {
             if (db != null) {
@@ -1905,13 +1905,13 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             }
             SVNErrorManager.assertionFailure(format >= 1, "wc format could not be less than 1", SVNLogType.WC);
             if (format < 4) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
                         "Working copy format of ''{0}'' is too old ({1}); please check out your working copy again", new Object[] { wcRoot, String.valueOf(format) });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             if (format > WC_FORMAT_17) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, 
-                        "This client is too old to work with the working copy at\n''{0}'' (format {1}).\nYou need to get a newer Subversion client.", 
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT,
+                        "This client is too old to work with the working copy at\n''{0}'' (format {1}).\nYou need to get a newer Subversion client.",
                         new Object[] { wcRoot, String.valueOf(format) });
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
@@ -1921,22 +1921,22 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
             if (format >= SVN_WC__HAS_WORK_QUEUE && enforceEmptyWorkQueue) {
                 verifyThereIsNoWork(db);
             }
-            
-            return new SVNWCRoot(format, db, wcRoot, wcId); 
+
+            return new SVNWCRoot(format, db, wcRoot, wcId);
         } catch (SqlJetException e) {
             SVNSqlJetUtil.convertException(e);
         }
         return null;
     }
-    
+
     public void insertActualNode() {
-        
+
     }
-    
+
     public void insertBaseNode(SVNBaseNode node, SqlJetDb db) throws SVNException {
         Map<SVNDbTableField, Object> fieldsToValues = new HashMap<SVNDbTableField, Object>();
         String localRelativePath = node.getLocalRelativePath();
-                
+
         fieldsToValues.put(SVNDbTableField.wc_id, node.getWCId());
         fieldsToValues.put(SVNDbTableField.local_relpath, localRelativePath);
         fieldsToValues.put(SVNDbTableField.repos_id, node.getReposId());
@@ -1945,18 +1945,18 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         if (localRelativePath != null && !"".equals(localRelativePath)) {
             fieldsToValues.put(SVNDbTableField.parent_relpath, SVNPathUtil.removeTail(localRelativePath));
         }
-                
+
         fieldsToValues.put(SVNDbTableField.presence, node.getStatus().toString());
         fieldsToValues.put(SVNDbTableField.kind, node.getWCDbKind().toString());
         fieldsToValues.put(SVNDbTableField.revnum, node.getRevision());
-                
+
         SVNProperties props = node.getProperties();
         byte[] propsBlob = null;
         if (props != null) {
             SVNSkel skel = SVNSkel.createPropList(props.asMap());
             propsBlob = skel.unparse();
         }
-                
+
         fieldsToValues.put(SVNDbTableField.properties, propsBlob);
         if (SVNRevision.isValidRevisionNumber(node.getChangedRevision())) {
             fieldsToValues.put(SVNDbTableField.changed_rev, node.getChangedRevision());
@@ -1967,7 +1967,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
 
         fieldsToValues.put(SVNDbTableField.changed_author, node.getChangedAuthor());
-                
+
         if (node.getWCDbKind() == SVNWCDbKind.DIR) {
             fieldsToValues.put(SVNDbTableField.depth, SVNDepth.asString(node.getDepth()));
         } else if (node.getWCDbKind() == SVNWCDbKind.FILE) {
@@ -1994,23 +1994,23 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                 fieldsToValues.put(SVNDbTableField.kind, "unknown");
                 fieldsToValues.put(SVNDbTableField.revnum, node.getRevision());
                 fieldsToValues.put(SVNDbTableField.parent_relpath, node.getLocalRelativePath());
-                
-                runInsertByFieldNames(db, SVNDbTables.base_node, SqlJetConflictAction.IGNORE, getCommonDbStrategy(null, null, null), 
+
+                runInsertByFieldNames(db, SVNDbTables.base_node, SqlJetConflictAction.IGNORE, getCommonDbStrategy(null, null, null),
                         fieldsToValues);
             }
         }
     }
-    
+
     private void verifyThereIsNoWork(SqlJetDb db) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.work_queue, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.work_queue,
                 getCommonDbStrategy(null, SVNSqlJetUtil.OUR_ID_FIELD, null, 1));
-        
+
         if (!result.isEmpty()) {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CLEANUP_REQUIRED);
             SVNErrorManager.error(err, SVNLogType.WC);
         }
     }
-    
+
     private SqlJetDb createDB(File dirPath, String reposRoot, String reposUUID) throws SVNException {
         SqlJetDb db = openDB(dirPath, SqlJetTransactionMode.WRITE);
         myCurrentReposId = createReposId(db, reposRoot, reposUUID);
@@ -2021,18 +2021,18 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         myCurrentWCId = runInsertByFieldNames(db, SVNDbTables.wcroot, null, getCommonDbStrategy(null, null, null), fieldsToValues);
         return db;
     }
-    
+
     private long createReposId(SqlJetDb db, String reposRoot, String reposUUID) throws SVNException {
-        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.repository, 
+        Map<SVNDbTableField, Object> result = (Map<SVNDbTableField, Object>) runSelect(db, SVNDbTables.repository,
                 getCommonDbStrategy(new Object[] { reposRoot }, SVNSqlJetUtil.OUR_ID_FIELD, SVNDbIndexes.i_root));
         if (!result.isEmpty()) {
             return (Long) result.get(SVNDbTableField.id);
         }
         return runInsert(db, SVNDbTables.repository, null, getCommonDbStrategy(null, null, null), reposRoot, reposUUID);
     }
-    
+
     private SqlJetDb openDB(File dirPath, SqlJetTransactionMode mode) throws SVNException {
-        File sdbFile = SVNAdminUtil.getSDBFile(dirPath); 
+        File sdbFile = SVNAdminUtil.getSDBFile(dirPath);
         if (!sdbFile.isFile()) {
             //hack
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR);
@@ -2040,9 +2040,9 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         }
 
         ISqlJetTransaction openTxn = new ISqlJetTransaction() {
-          
+
             public Object run(SqlJetDb db) throws SqlJetException {
-                
+
                 int version = db.getOptions().getUserVersion();
                 if (version < WC_FORMAT_17) {
                     db.getOptions().setAutovacuum(true);
@@ -2051,7 +2051,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                             //TODO: correct this later when SQLJet dependency gets updated.
                             SqlJetDefaultBusyHandler busyHandler = new SqlJetDefaultBusyHandler(10, 1000);
                             db.setBusyHandler(busyHandler);
-                            
+
                             db.getOptions().setUserVersion(WC_FORMAT_17);
                             InputStream commandsStream = null;
                             try {
@@ -2064,7 +2064,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                                         if (line.length() == 0) {
                                             continue;
                                         }
-                                        
+
                                         if (line.startsWith("CREATE TABLE")) {
                                             db.createTable(line);
                                         } else if (line.startsWith("CREATE INDEX")) {
@@ -2081,7 +2081,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
                         }
                     });
                 } else if (version > WC_FORMAT_17) {
-                    throw new SqlJetException("Schema format " + version + " not recognized");   
+                    throw new SqlJetException("Schema format " + version + " not recognized");
                 }
                 return null;
             }
@@ -2089,7 +2089,7 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
 
         return SVNSqlJetUtil.openDB(sdbFile, openTxn, mode, WC_FORMAT_17);
     }
-    
+
     private SVNPristineDirectory getPristineDirectory(File path) {
         if (myPathsToPristineDirs != null) {
             return myPathsToPristineDirs.get(path);
@@ -2143,35 +2143,35 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
     public static class IsDirDeletedResult {
         private boolean myIsDeleted;
         private long myRevision;
-        
+
         public IsDirDeletedResult(boolean isDeleted, long revision) {
             myIsDeleted = isDeleted;
             myRevision = revision;
         }
-        
+
         public boolean isDeleted() {
             return myIsDeleted;
         }
-        
+
         public long getRevision() {
             return myRevision;
         }
-        
+
     }
-    
+
     static class ParsedPristineDirectory {
         private SVNPristineDirectory myPristineDirectory;
         private String myLocalRelativePath;
-        
+
         public SVNPristineDirectory getPristineDirectory() {
             return myPristineDirectory;
         }
-        
+
         public String getLocalRelativePath() {
             return myLocalRelativePath;
         }
     }
-    
+
     static class RepositoryId {
         private long myReposId;
         private String myReposPath;
@@ -2184,10 +2184,15 @@ public class SVNWorkingCopyDB17 implements ISVNWorkingCopyDB {
         public long getReposId() {
             return myReposId;
         }
-        
+
         public String getReposPath() {
             return myReposPath;
         }
-        
+
+    }
+
+    public boolean isWCLocked(File path) {
+        // TODO
+        return false;
     }
 }

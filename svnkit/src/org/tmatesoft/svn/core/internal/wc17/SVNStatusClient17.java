@@ -2,7 +2,6 @@ package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -14,7 +13,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNCancellableEditor;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -63,7 +61,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * obtaining status information for all child entries, the second variant just
  * the reverse - methods are called non-recursively and allow to get status info
  * on a single item.
- * 
+ *
  * @version 1.3
  * @author TMate Software Ltd.
  * @since 1.2
@@ -91,7 +89,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
      * {@link SVNWCUtil#createDefaultAuthenticationManager()}) which uses
      * server-side settings and auth storage from the default SVN's run-time
      * configuration area (or system properties if that area is not found).
-     * 
+     *
      * @param authManager
      *            an authentication and network layers driver
      * @param options
@@ -114,7 +112,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
      * If <code>repositoryPool</code> is <span class="javakeyword">null</span>,
      * then {@link org.tmatesoft.svn.core.io.SVNRepositoryFactory} will be used
      * to create {@link SVNRepository repository access objects}.
-     * 
+     *
      * @param repositoryPool
      *            a repository pool object
      * @param options
@@ -127,7 +125,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
     /**
      * Collects status information on Working Copy items and passes it to a
      * <code>handler</code>.
-     * 
+     *
      * @param path
      *            local item's path
      * @param recursive
@@ -172,9 +170,9 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
      * <code>handler</code>.
      * <p>
      * Calling this method is equivalent to
-     * 
+     *
      * <code>doStatus(path, SVNRevision.HEAD, recursive, remote, reportAll, includeIgnored, collectParentExternals, handler)</code>.
-     * 
+     *
      * @param path
      *            local item's path
      * @param recursive
@@ -221,7 +219,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
     /**
      * Collects status information on Working Copy items and passes it to a
      * <code>handler</code>.
-     * 
+     *
      * @param path
      *            local item's path
      * @param revision
@@ -299,7 +297,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
      * member of one of those changelists. If <code>changeLists</code> is empty
      * (or <span class="javakeyword">null</span>), no changelist filtering
      * occurs.
-     * 
+     *
      * @param path
      *            working copy path
      * @param revision
@@ -364,12 +362,12 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
         };
 
         try {
-            
+
             final SVNWCContextInfo info = new SVNWCContextInfo();
             info.setTargetAbsPath( SVNPathUtil.canonicalizeAbsolutePath(path.getPath()) );
 
             {
-                SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(info.getTargetAbsFile()));                
+                SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(info.getTargetAbsFile()));
                 SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsPath(),false);
 
                 /* Dir must be an existing directory or the status editor fails */
@@ -377,16 +375,16 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     info.setDirAbsPath(info.getTargetAbsPath());
                     info.setTargetBaseName("");
                     info.setDir(path.getPath());
-                } else {                    
+                } else {
                     info.setDirAbsPath(SVNPathUtil.getDirName(info.getTargetAbsPath()));
                     info.setTargetBaseName( SVNPathUtil.getBaseName(info.getTargetAbsPath()));
-                    info.setDir(SVNPathUtil.getDirName(path.getPath()));                    
+                    info.setDir(SVNPathUtil.getDirName(path.getPath()));
                     if (kind != SVNNodeKind.FILE) {
-                        kind = wcContext.getNodeKind(info.getDirAbsPath(), false);                        
+                        kind = wcContext.getNodeKind(info.getDirAbsPath(), false);
                         /* Check for issue #1617 and stat_tests.py 14
                         "status on '..' where '..' is not versioned". */
                         if ( kind != SVNNodeKind.DIR || "..".equals(path.getPath())) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, 
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY,
                                     "'%s' is not a working copy", path.getPath());
                             SVNErrorManager.error(err, SVNLogType.CLIENT);
                         }
@@ -399,12 +397,12 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 info.setAnchorRelPath(info.getDir());
             }
 
-            if (remote) {                
-                SVNURL url = wcContext.getUrlFromPath(info.getDirAbsPath());
+            if (remote) {
+                SVNURL url = SVNURL.fromFile(new File(info.getDirAbsPath()));
                 if(url==null){
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getDir());
-                    SVNErrorManager.error(error, SVNLogType.WC);                    
-                }                
+                    SVNErrorManager.error(error, SVNLogType.WC);
+                }
                 SVNRepository repository = createRepository(url, true);
                 long rev;
                 if (revision == SVNRevision.HEAD) {
@@ -415,20 +413,20 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 SVNNodeKind kind = repository.checkPath("", -1);
                 checkCancelled();
                 SVNReporter17 reporter = null;
-                if (kind == SVNNodeKind.NONE) {                    
+                if (kind == SVNNodeKind.NONE) {
                     boolean added = wcContext.isNodeAdded(info.getDirAbsPath());
                     if(added){
                         boolean replaced = wcContext.isNodeReplaced(info.getDirAbsPath());
                         if (replaced) {
                             added = false;
                         }
-                    }                    
+                    }
                     if (!added) {
                         deletedInRepository[0] = true;
                     }
                     editor = new SVNStatusEditor17(getOptions(), wcContext, info, includeIgnored, reportAll, depth, realHandler);
                     checkCancelled();
-                    editor.closeEdit();                    
+                    editor.closeEdit();
                 } else {
                     editor = new SVNRemoteStatusEditor17(getOptions(), wcContext, info, includeIgnored, reportAll, depth, realHandler);
                     SVNRepository locksRepos = createRepository(url, false);
@@ -510,7 +508,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
     /**
      * Collects status information on a single Working Copy item.
-     * 
+     *
      * @param path
      *            local item's path
      * @param remote
@@ -529,7 +527,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
     /**
      * Collects status information on a single Working Copy item.
-     * 
+     *
      * @param path
      *            local item's path
      * @param remote

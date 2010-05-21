@@ -23,17 +23,19 @@ import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNStatusUtil;
 import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -267,7 +269,7 @@ public class SVNStatusEditor17 {
                 if (ignorePatterns != null && patterns == null) {
                     patterns = myWCContext.collectIgnorePatterns(localAbsPath, ignorePatterns);
                 }
-                sendUnversionedItem(nodeAbsPath, direntNodeKind, direntIsSpecial, patterns, noIgnore, handler);
+                sendUnversionedItem(nodeAbsPath, direntNodeKind, patterns, noIgnore, handler);
                 continue;
             }
 
@@ -287,23 +289,39 @@ public class SVNStatusEditor17 {
             if (ignorePatterns != null && patterns == null)
                 myWCContext.collectIgnorePatterns(localAbsPath, ignorePatterns);
 
-            sendUnversionedItem(nodeAbsPath, direntNodeKind, direntIsSpecial, patterns, noIgnore || selected != null, handler);
+            sendUnversionedItem(nodeAbsPath, direntNodeKind, patterns, noIgnore || selected != null, handler);
         }
 
     }
 
     private void sendStatusStructure(String localAbsPath, SVNEntryInfo entry, SVNEntryInfo parentEntry, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, boolean isIgnored,
             ISVNStatusHandler handler) throws SVNException {
-        SVNStatus status = assembleStatus(localAbsPath, entry, parentEntry, pathKind, pathSpecial, getAll, isIgnored);
+
+        /* Check for a repository lock. */
+        SVNLock repositoryLock = null;
+        if (myRepositoryLocks != null) {
+            SVNURL url = null;
+            if (entry != null && entry.getURL() != null) {
+                url = SVNURL.parseURIDecoded(entry.getURL());
+            } else if (parentEntry != null && parentEntry.getURL() != null) {
+                url = SVNURL.parseURIDecoded(parentEntry.getURL()).appendPath(
+                        SVNPathUtil.getBaseName(localAbsPath), false);
+            }
+            if (url != null) {
+               repositoryLock = SVNStatusUtil.getLock(myRepositoryLocks, url, myRepositoryRoot);
+            }
+        }
+
+        SVNStatus status = myWCContext.assembleStatus(new File(localAbsPath), entry, parentEntry, pathKind, pathSpecial, getAll, isIgnored, repositoryLock, myRepositoryRoot, myWCContext);
         if (status != null && handler != null) {
             handler.handleStatus(status);
         }
     }
 
-    private void sendUnversionedItem(String localAbsPath, SVNNodeKind pathKind, boolean pathSpecial, List patterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
+    private void sendUnversionedItem(String localAbsPath, SVNNodeKind pathKind, List patterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
         boolean isIgnored = isIgnored(SVNPathUtil.getBaseName(localAbsPath), patterns);
         boolean isExternal = isExternal(localAbsPath);
-        SVNStatus status = assembleStatus(localAbsPath, null, null, pathKind, pathSpecial, false, isIgnored);
+        SVNStatus status = myWCContext.assembleUnversioned(localAbsPath, pathKind, isIgnored);
         if (status != null) {
             if (isExternal) {
                 status.setContentsStatus(SVNStatusType.STATUS_EXTERNAL);
@@ -376,7 +394,7 @@ public class SVNStatusEditor17 {
     }
 
     private void handleExternals(String localAbsPath, SVNDepth depth) throws SVNException {
-        String externals = myWCContext.getProperty(localAbsPath, SVNProperty.EXTERNALS);
+        String externals = myWCContext.getProperty(new File(localAbsPath), SVNProperty.EXTERNALS);
         if (externals != null) {
             if (SVNPathUtil.isAncestor(myContextInfo.getTargetAbsPath(), localAbsPath)) {
                 storeExternals(localAbsPath, externals, externals, depth);
@@ -396,11 +414,6 @@ public class SVNStatusEditor17 {
     private void storeExternals(String localAbsPath, String oldValue, String newValue, SVNDepth depth) {
         myContextInfo.addExternal(localAbsPath, oldValue, newValue);
         myContextInfo.addDepth(localAbsPath, depth);
-    }
-
-    private SVNStatus assembleStatus(String localAbsPath, Object object, Object object2, SVNNodeKind pathKind, boolean pathSpecial, boolean b, boolean ignore) {
-        // TODO
-        return null;
     }
 
 }
