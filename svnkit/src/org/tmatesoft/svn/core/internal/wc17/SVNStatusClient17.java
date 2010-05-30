@@ -368,7 +368,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
             {
                 SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(info.getTargetAbsFile()));
-                SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsPath(),false);
+                SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsFile(),false);
 
                 /* Dir must be an existing directory or the status editor fails */
                 if (kind == SVNNodeKind.DIR && diskKind == SVNNodeKind.DIR) {
@@ -380,7 +380,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     info.setTargetBaseName( SVNPathUtil.getBaseName(info.getTargetAbsPath()));
                     info.setDir(SVNPathUtil.getDirName(path.getPath()));
                     if (kind != SVNNodeKind.FILE) {
-                        kind = wcContext.getNodeKind(info.getDirAbsPath(), false);
+                        kind = wcContext.getNodeKind(info.getDirAbsFile(), false);
                         /* Check for issue #1617 and stat_tests.py 14
                         "status on '..' where '..' is not versioned". */
                         if ( kind != SVNNodeKind.DIR || "..".equals(path.getPath())) {
@@ -408,15 +408,15 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 if (revision == SVNRevision.HEAD) {
                     rev = -1;
                 } else {
-                    rev = wcContext.getRevisionNumber(revision, repository, path);
+                    rev = wcContext.getRevisionNumber(revision, null, repository, path);
                 }
                 SVNNodeKind kind = repository.checkPath("", -1);
                 checkCancelled();
                 SVNReporter17 reporter = null;
                 if (kind == SVNNodeKind.NONE) {
-                    boolean added = wcContext.isNodeAdded(info.getDirAbsPath());
+                    boolean added = wcContext.isNodeAdded(info.getDirAbsFile());
                     if(added){
-                        boolean replaced = wcContext.isNodeReplaced(info.getDirAbsPath());
+                        boolean replaced = wcContext.isNodeReplaced(info.getDirAbsFile());
                         if (replaced) {
                             added = false;
                         }

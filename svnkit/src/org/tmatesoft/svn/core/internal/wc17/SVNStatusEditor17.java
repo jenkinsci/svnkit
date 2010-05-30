@@ -91,7 +91,7 @@ public class SVNStatusEditor17 {
     public SVNCommitInfo closeEdit() throws SVNException {
 
         final SVNNodeKind localKind = SVNFileType.getNodeKind(SVNFileType.getType(myContextInfo.getTargetAbsFile()));
-        final SVNNodeKind kind = myWCContext.getNodeKind(myContextInfo.getTargetAbsPath(), false);
+        final SVNNodeKind kind = myWCContext.getNodeKind(myContextInfo.getTargetAbsFile(), false);
 
         if (kind == SVNNodeKind.FILE && localKind == SVNNodeKind.FILE) {
             getDirStatus(null, SVNPathUtil.getDirName(myContextInfo.getTargetAbsPath()), SVNPathUtil.getBaseName(myContextInfo.getTargetAbsPath()), myGlobalIgnores, myDepth, myIsReportAll, true,

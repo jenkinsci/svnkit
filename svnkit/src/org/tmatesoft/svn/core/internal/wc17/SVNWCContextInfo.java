@@ -36,6 +36,7 @@ public class SVNWCContextInfo {
     private Map newExternals;
     private Map oldExternals;
     private Map depths;
+    private File dirAbsFile;
 
     public String getAnchorAbsPath() {
         return anchorAbsPath;
@@ -83,6 +84,11 @@ public class SVNWCContextInfo {
 
     public void setDirAbsPath(String dirAbsPath) {
         this.dirAbsPath = dirAbsPath;
+        this.dirAbsFile = new File(dirAbsPath);
+    }
+
+    public File getDirAbsFile() {
+        return dirAbsFile;
     }
 
     public void setTargetAbsPath(String targetAbsPath) {
