@@ -343,7 +343,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
             return -1;
         }
         depth = depth == null ? SVNDepth.UNKNOWN : depth;
-        final SVNWCContext wcContext = new SVNWCContext();
+        final SVNWCContext wcContext = new SVNWCContext(this.getOptions(), getEventDispatcher());
         SVNStatusEditor17 editor = null;
         final boolean[] deletedInRepository = new boolean[] {
             false
@@ -364,11 +364,11 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
         try {
 
             final SVNWCContextInfo info = new SVNWCContextInfo();
-            info.setTargetAbsPath( SVNPathUtil.canonicalizeAbsolutePath(path.getPath()) );
+            info.setTargetAbsPath(SVNPathUtil.canonicalizeAbsolutePath(path.getPath()));
 
             {
                 SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(info.getTargetAbsFile()));
-                SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsFile(),false);
+                SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsFile(), false);
 
                 /* Dir must be an existing directory or the status editor fails */
                 if (kind == SVNNodeKind.DIR && diskKind == SVNNodeKind.DIR) {
@@ -377,15 +377,16 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     info.setDir(path.getPath());
                 } else {
                     info.setDirAbsPath(SVNPathUtil.getDirName(info.getTargetAbsPath()));
-                    info.setTargetBaseName( SVNPathUtil.getBaseName(info.getTargetAbsPath()));
+                    info.setTargetBaseName(SVNPathUtil.getBaseName(info.getTargetAbsPath()));
                     info.setDir(SVNPathUtil.getDirName(path.getPath()));
                     if (kind != SVNNodeKind.FILE) {
                         kind = wcContext.getNodeKind(info.getDirAbsFile(), false);
-                        /* Check for issue #1617 and stat_tests.py 14
-                        "status on '..' where '..' is not versioned". */
-                        if ( kind != SVNNodeKind.DIR || "..".equals(path.getPath())) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY,
-                                    "'%s' is not a working copy", path.getPath());
+                        /*
+                         * Check for issue #1617 and stat_tests.py 14
+                         * "status on '..' where '..' is not versioned".
+                         */
+                        if (kind != SVNNodeKind.DIR || "..".equals(path.getPath())) {
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "'%s' is not a working copy", path.getPath());
                             SVNErrorManager.error(err, SVNLogType.CLIENT);
                         }
                     }
@@ -399,7 +400,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
 
             if (remote) {
                 SVNURL url = SVNURL.fromFile(new File(info.getDirAbsPath()));
-                if(url==null){
+                if (url == null) {
                     SVNErrorMessage error = SVNErrorMessage.create(SVNErrorCode.ENTRY_MISSING_URL, "Entry ''{0}'' has no URL", info.getDir());
                     SVNErrorManager.error(error, SVNLogType.WC);
                 }
@@ -415,7 +416,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 SVNReporter17 reporter = null;
                 if (kind == SVNNodeKind.NONE) {
                     boolean added = wcContext.isNodeAdded(info.getDirAbsFile());
-                    if(added){
+                    if (added) {
                         boolean replaced = wcContext.isNodeReplaced(info.getDirAbsFile());
                         if (replaced) {
                             added = false;
@@ -440,8 +441,8 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                 if (getEventDispatcher() != null) {
                     long reportedFiles = reporter != null ? reporter.getReportedFilesCount() : 0;
                     long totalFiles = reporter != null ? reporter.getTotalFilesCount() : 0;
-                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getTargetAbsFile(), SVNNodeKind.NONE, null, editor.getTargetRevision(),
-                            SVNEventAction.STATUS_COMPLETED, null, null, null, reportedFiles, totalFiles);
+                    SVNEvent event = SVNEventFactory.createSVNEvent(info.getTargetAbsFile(), SVNNodeKind.NONE, null, editor.getTargetRevision(), SVNEventAction.STATUS_COMPLETED, null, null, null,
+                            reportedFiles, totalFiles);
                     getEventDispatcher().handleEvent(event, ISVNEventHandler.UNKNOWN);
                 }
             } else {
@@ -460,7 +461,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal external = externals[i];
                         String externalPath = SVNPathUtil.append(ownerPath, external.getPath());
-                        File externalFile = new File(SVNPathUtil.append(info.getDirAbsPath(),externalPath));
+                        File externalFile = new File(SVNPathUtil.append(info.getDirAbsPath(), externalPath));
                         if (SVNFileType.getType(externalFile) != SVNFileType.DIRECTORY) {
                             continue;
                         }

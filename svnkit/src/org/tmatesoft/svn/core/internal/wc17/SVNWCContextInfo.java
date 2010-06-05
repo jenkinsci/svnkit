@@ -100,30 +100,30 @@ public class SVNWCContextInfo {
         this.targetBaseName = targetBaseName;
     }
 
-    public void addOldExternal(String path, String oldValue) {
+    public void addOldExternal(File path, String oldValue) {
         if (oldExternals == null) {
             oldExternals = new SVNHashMap();
         }
         oldExternals.put(path, oldValue);
     }
 
-    public void addNewExternal(String path, String newValue) {
+    public void addNewExternal(File path, String newValue) {
         if (newExternals == null) {
             newExternals = new SVNHashMap();
         }
         newExternals.put(path, newValue);
     }
 
-    public void addExternal(String path, String oldValue, String newValue) {
+    public void addExternal(File path, String oldValue, String newValue) {
         addNewExternal(path, newValue);
         addOldExternal(path, oldValue);
     }
 
-    public void addDepth(String path, SVNDepth depth) {
+    public void addDepth(File localAbsPath, SVNDepth depth) {
         if (depths == null) {
             depths = new SVNHashMap();
         }
-        depths.put(path, depth);
+        depths.put(localAbsPath, depth);
     }
 
     public void removeDepth(String path) {

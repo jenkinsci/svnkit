@@ -19,18 +19,22 @@ import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * Working copy administrative database layer.
@@ -78,13 +82,13 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
  *
  * </ul>
  *
- *
- *
  * @author TMate Software Ltd.
  */
 public interface ISVNWCDb {
 
     long INVALID_FILESIZE = 1;
+    int WC_FORMAT_17 = 16;
+    int SVN_WC__HAS_WORK_QUEUE = 13;
 
     /** Enumerated constants for how to open a WC datastore. */
     enum WCDbOpenMode {
@@ -124,7 +128,23 @@ public interface ISVNWCDb {
          * <p>
          * ### only used with per-dir .svn subdirectories.
          */
-        Subdir
+        Subdir;
+
+        public SVNNodeKind toNodeKind() throws SVNException {
+            switch (this) {
+                case Dir:
+                    return SVNNodeKind.DIR;
+                case File:
+                case Symlink:
+                    return SVNNodeKind.FILE;
+                case Unknown:
+                    return SVNNodeKind.UNKNOWN;
+                default:
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.ASSERTION_FAIL);
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                    return null;
+            }
+        }
 
     }
 
@@ -347,7 +367,7 @@ public interface ISVNWCDb {
      *            queue is being processed (via 'svn cleanup') and all
      *            operations should be allowed.
      */
-    void open(WCDbOpenMode mode, SVNConfigFile config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException;
+    void open(WCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException;
 
     /** Close DB. */
     void close() throws SVNException;
@@ -1064,8 +1084,7 @@ public interface ISVNWCDb {
      * <li>
      * {@link WCDbStatus#Incomplete}
      * <p>
-     * The BASE or WORKING node is incomplete due to an interrupted operation.
-     * </li>
+     * The BASE or WORKING node is incomplete due to an interrupted operation.</li>
      * </ul>
      * <p>
      * If REVISION is requested, it will be set to the revision of the
@@ -1093,15 +1112,15 @@ public interface ISVNWCDb {
     class WCDbInfo {
 
         public enum InfoField {
-            status, kind, revision, reposRelpath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, baseShadowed, conflicted, lock;
+            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, baseShadowed, conflicted, lock;
         }
 
         /* ### derived */
         public WCDbStatus status;
         public WCDbKind kind;
         public long revision;
-        public String reposRelpath;
-        public String reposRootUrl;
+        public File reposRelPath;
+        public SVNURL reposRootUrl;
         public String reposUuid;
         public long changedRev;
         public Date changedDate;
@@ -1116,8 +1135,8 @@ public interface ISVNWCDb {
         public String changelist;
 
         /* ### the following fields if copied/moved (history) */
-        public String originalReposRelpath;
-        public String originalRootUrl;
+        public File originalReposRelpath;
+        public SVNURL originalRootUrl;
         public String originalUuid;
         public long originalRevision;
 
@@ -1144,7 +1163,7 @@ public interface ISVNWCDb {
      * <p>
      * If the node is not present, throw an error.
      */
-    String readProp(File localAbsPath, String propname) throws SVNException;
+    String readProperty(File localAbsPath, String propname) throws SVNException;
 
     /**
      * Return the properties of the node LOCAL_ABSPATH in the ACTUAL tree
@@ -1154,7 +1173,7 @@ public interface ISVNWCDb {
      * <p>
      * If the node is not present, throw an error.
      */
-    SVNProperties readProps(File localAbsPath) throws SVNException;
+    SVNProperties readProperties(File localAbsPath) throws SVNException;
 
     /**
      * Return the properties of the node LOCAL_ABSPATH in the WORKING tree
@@ -1164,7 +1183,7 @@ public interface ISVNWCDb {
      * <p>
      * If the node is not present, throw an error.
      */
-    SVNProperties readPristineProps(File localAbspath) throws SVNException;
+    SVNProperties readPristineProperties(File localAbspath) throws SVNException;
 
     /**
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB.

@@ -15,23 +15,38 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLock;
 import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
-import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
-import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbKind;
-import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbLock;
-import org.tmatesoft.svn.core.internal.wc.db.SVNWCDbStatus;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCSchedule;
-import org.tmatesoft.svn.core.internal.wc.db.SVNWorkingCopyDB17;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbKind;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbLock;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbOpenMode;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbStatus;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.DeletionInfoField;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -44,38 +59,53 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNWCContext {
 
-    private SVNWorkingCopyDB17 db;
+    private ISVNWCDb db;
     private boolean closeDb;
+    private ISVNEventHandler eventHandler;
+
+    public SVNWCContext(ISVNOptions config, ISVNEventHandler eventHandler) throws SVNException {
+        this(WCDbOpenMode.ReadWrite, config, true, true, eventHandler);
+    }
+
+    public SVNWCContext(WCDbOpenMode mode, ISVNOptions config, boolean autoUpgrade, boolean enforceEmptyWQ, ISVNEventHandler eventHandler) throws SVNException {
+        this.db = new SVNWCDb();
+        this.db.open(mode, config, autoUpgrade, enforceEmptyWQ);
+        this.closeDb = true;
+        this.eventHandler = eventHandler;
+    }
+
+    public SVNWCContext(ISVNWCDb db, ISVNEventHandler eventHandler) {
+        this.db = db;
+        this.closeDb = false;
+        this.eventHandler = eventHandler;
+    }
 
     public void close() throws SVNException {
         if (closeDb) {
-            db.closeDB();
+            db.close();
         }
     }
 
-    public SVNWCContext() {
-        this.db = new SVNWorkingCopyDB17();
-        this.closeDb = true;
+    public ISVNWCDb getDb() {
+        return db;
     }
 
-    public SVNWCContext(SVNWorkingCopyDB17 db) {
-        this.db = db;
-        this.closeDb = false;
-    }
-
-    public void checkCancelled() {
+    public void checkCancelled() throws SVNCancelException {
+        if (eventHandler != null) {
+            eventHandler.checkCancelled();
+        }
     }
 
     public SVNNodeKind getNodeKind(File path, boolean showHidden) throws SVNException {
         try {
-            /* Make sure hidden nodes return svn_node_none. */
+            /* Make sure hidden nodes return SVNNodeKind.NONE. */
             if (!showHidden) {
                 final boolean hidden = db.isNodeHidden(path);
                 if (hidden) {
                     return SVNNodeKind.NONE;
                 }
             }
-            final SVNWCDbKind kind = db.readKind(path, false);
+            final WCDbKind kind = db.readKind(path, false);
             if (kind == null) {
                 return SVNNodeKind.NONE;
             }
@@ -89,24 +119,22 @@ public class SVNWCContext {
     }
 
     public boolean isNodeAdded(File path) throws SVNException {
-        final SVNEntryInfo info = db.readInfo(path, false, true, false, false, false, false, false, false, false, false, false, false);
-        final SVNWCDbStatus status = info.getWCDBStatus();
-        return status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD;
+        final WCDbInfo info = db.readInfo(path, InfoField.status);
+        final WCDbStatus status = info.status;
+        return status == WCDbStatus.Added || status == WCDbStatus.ObstructedAdd;
     }
 
     /** Equivalent to the old notion of "entry->schedule == schedule_replace" */
     public boolean isNodeReplaced(File path) throws SVNException {
-        SVNWCDbStatus status = null;
-        boolean base_shadowed = false;
-        SVNWCDbStatus base_status = null;
-        final SVNEntryInfo info = db.readInfo(path, false, true, false, false, false, true, false, false, false, false, false, false);
-        status = info.getWCDBStatus();
-        base_shadowed = info.isBaseShadowed();
-        if (base_shadowed) {
-            final SVNEntryInfo baseInfo = db.getBaseInfo(path, false);
-            base_status = baseInfo.getWCDBStatus();
+        final WCDbInfo info = db.readInfo(path, InfoField.status, InfoField.baseShadowed);
+        final WCDbStatus status = info.status;
+        final boolean baseShadowed = info.baseShadowed;
+        WCDbStatus baseStatus = null;
+        if (baseShadowed) {
+            final WCDbBaseInfo baseInfo = db.getBaseInfo(path, BaseInfoField.status);
+            baseStatus = baseInfo.status;
         }
-        return ((status == SVNWCDbStatus.ADDED || status == SVNWCDbStatus.OBSTRUCTED_ADD) && base_shadowed && base_status != SVNWCDbStatus.NOT_PRESENT);
+        return ((status == WCDbStatus.Added || status == WCDbStatus.ObstructedAdd) && baseShadowed && baseStatus != WCDbStatus.NotPresent);
     }
 
     public long getRevisionNumber(SVNRevision revision, long[] latestRevisionNumber, SVNRepository repository, File path) throws SVNException {
@@ -160,13 +188,13 @@ public class SVNWCContext {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_VERSIONED_PATH_REQUIRED);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
-            final SVNEntryInfo info = db.readInfo(path, false, false, false, false, false, false, false, false, false, false, false, false);
-            if (!SVNRevision.isValidRevisionNumber(info.getCommittedRevision())) {
+            final WCDbInfo info = getNodeChangedInfo(path);
+            if (!SVNRevision.isValidRevisionNumber(info.changedRev)) {
                 SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Path ''{0}'' has no committed revision", path);
                 SVNErrorManager.error(err, SVNLogType.WC);
 
             }
-            return revision == SVNRevision.PREVIOUS ? info.getCommittedRevision() - 1 : info.getCommittedRevision();
+            return revision == SVNRevision.PREVIOUS ? info.changedRev - 1 : info.changedRev;
         } else {
             SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CLIENT_BAD_REVISION, "Unrecognized revision type requested for ''{0}''", path != null ? path : (Object) repository.getLocation());
             SVNErrorManager.error(err, SVNLogType.WC);
@@ -174,95 +202,79 @@ public class SVNWCContext {
         return -1;
     }
 
+    private WCDbInfo getNodeChangedInfo(File path) throws SVNException {
+        return db.readInfo(path, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
+    }
+
     private long getNodeCommitBaseRev(File local_abspath) throws SVNException {
-        SVNEntryInfo info = db.readInfo(local_abspath, false, true, false, false, false, true, false, false, false, false, false, false);
+        final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.baseShadowed);
         /*
          * If this returned a valid revnum, there is no WORKING node. The node
          * is cleanly checked out, no modifications, copies or replaces.
          */
-        long commit_base_revision = info.getCommittedRevision();
-        if (SVNRevision.isValidRevisionNumber(commit_base_revision)) {
-            return commit_base_revision;
+        long commitBaseRevision = info.revision;
+        if (SVNRevision.isValidRevisionNumber(commitBaseRevision)) {
+            return commitBaseRevision;
         }
-        SVNWCDbStatus status = info.getWCDBStatus();
-        boolean base_shadowed = info.isBaseShadowed();
-        if (status == SVNWCDbStatus.ADDED) {
+        final WCDbStatus status = info.status;
+        final boolean baseShadowed = info.baseShadowed;
+        if (status == WCDbStatus.Added) {
             /*
              * If the node was copied/moved-here, return the copy/move source
              * revision (not this node's base revision). If it's just added,
-             * return SVN_INVALID_REVNUM.
+             * return INVALID_REVNUM.
              */
-            info = db.scanAddition(local_abspath, false, false, false, false, false, false, false, false, false);
-            commit_base_revision = info.getCommittedRevision();
-            if (!SVNRevision.isValidRevisionNumber(commit_base_revision) && base_shadowed) {
+            final WCDbAdditionInfo addInfo = db.scanAddition(local_abspath, AdditionInfoField.originalRevision);
+            commitBaseRevision = addInfo.originalRevision;
+            if (!SVNRevision.isValidRevisionNumber(commitBaseRevision) && baseShadowed) {
                 /*
                  * It is a replace that does not feature a copy/move-here.
                  * Return the revert-base revision.
                  */
-                commit_base_revision = getNodeBaseRev(local_abspath);
+                commitBaseRevision = getNodeBaseRev(local_abspath);
             }
-        } else if (status == SVNWCDbStatus.DELETED) {
-            info = db.scanDeletion(local_abspath, false, false, false, true);
-            File work_del_abspath = info.getDeletedWorkingPath();
-            if (work_del_abspath != null) {
+        } else if (status == WCDbStatus.Deleted) {
+            final WCDbDeletionInfo delInfo = db.scanDeletion(local_abspath, DeletionInfoField.workDelAbsPath);
+            final File workDelAbspath = delInfo.workDelAbsPath;
+            if (workDelAbspath != null) {
                 /*
                  * This is a deletion within a copied subtree. Get the
                  * copied-from revision.
                  */
-                File parent_abspath = work_del_abspath.getParentFile();
-                info = db.readInfo(parent_abspath, false, true, false, false, false, false, false, false, false, false, false, false);
-                SVNWCDbStatus parent_status = info.getWCDBStatus();
-                assert (parent_status == SVNWCDbStatus.ADDED || parent_status == SVNWCDbStatus.OBSTRUCTED_ADD);
-                info = db.scanAddition(parent_abspath, false, false, false, false, false, false, false, false, false);
-                commit_base_revision = info.getCommittedRevision();
+                final File parentAbspath = workDelAbspath.getParentFile();
+                final WCDbInfo parentInfo = db.readInfo(parentAbspath, InfoField.status);
+                final WCDbStatus parentStatus = parentInfo.status;
+                assert (parentStatus == WCDbStatus.Added || parentStatus == WCDbStatus.ObstructedAdd);
+                final WCDbAdditionInfo parentAddInfo = db.scanAddition(parentAbspath, AdditionInfoField.originalRevision);
+                commitBaseRevision = parentAddInfo.originalRevision;
             } else
                 /* This is a normal delete. Get the base revision. */
-                commit_base_revision = getNodeBaseRev(local_abspath);
+                commitBaseRevision = getNodeBaseRev(local_abspath);
         }
-        return commit_base_revision;
+        return commitBaseRevision;
     }
 
     private long getNodeBaseRev(File local_abspath) throws SVNException {
-        SVNEntryInfo info = db.readInfo(local_abspath, false, true, false, false, false, true, false, false, false, false, false, false);
-        long base_revision = info.getRevision();
-        if (SVNRevision.isValidRevisionNumber(base_revision)) {
-            return base_revision;
+        final WCDbInfo info = db.readInfo(local_abspath, InfoField.status, InfoField.revision, InfoField.baseShadowed);
+        long baseRevision = info.revision;
+        if (SVNRevision.isValidRevisionNumber(baseRevision)) {
+            return baseRevision;
         }
-        boolean base_shadowed = info.isBaseShadowed();
-        if (base_shadowed) {
+        final boolean baseShadowed = info.baseShadowed;
+        if (baseShadowed) {
             /* The node was replaced with something else. Look at the base. */
-            info = db.getBaseInfo(local_abspath, false);
-            base_revision = info.getRevision();
+            final WCDbBaseInfo baseInfo = db.getBaseInfo(local_abspath, BaseInfoField.revision);
+            baseRevision = baseInfo.revision;
         }
-        return base_revision;
-    }
-
-    public List getChildNodes(String localAbsPath) {
-        return null;
-    }
-
-    public SVNEntryInfo getEntry(String localAbsPath, boolean allow_unversioned, SVNNodeKind kind, boolean need_parent_stub) throws SVNException {
-        return null;
-    }
-
-    public List readConfilctVictims(String localAbsPath) {
-        return null;
-    }
-
-    public SVNTreeConflictDescription readTreeConflict(String localAbsPath) {
-        return null;
-    }
-
-    public boolean isNodeHidden(String localAbsPath) {
-        return false;
+        return baseRevision;
     }
 
     public List collectIgnorePatterns(String localAbsPath, Collection ignorePatterns) {
         return null;
     }
 
-    public SVNStatus assembleStatus(File path, SVNEntryInfo entry, SVNEntryInfo parentEntry, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, boolean isIgnored, SVNLock repositoryLock,
-            SVNURL repositoryRoot, SVNWCContext wCContext) throws SVNException {
+    public SVNStatus assembleStatus(File path, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, boolean isIgnored,
+            SVNLock repositoryLock, SVNURL repositoryRoot, SVNWCContext wCContext) throws SVNException {
 
         boolean locked_p = false;
 
@@ -273,14 +285,15 @@ public class SVNWCContext {
         SVNStatusType pristine_text_status = SVNStatusType.STATUS_NONE;
         SVNStatusType pristine_prop_status = SVNStatusType.STATUS_NONE;
 
-        assert (entry != null);
+        SVNEntry entry = getEntry(path, false, SVNNodeKind.UNKNOWN, false);
 
         /*
          * Find out whether the path is a tree conflict victim. This function
          * will set tree_conflict to NULL if the path is not a victim.
          */
-        SVNTreeConflictDescription tree_conflict = db.readTreeConflict(path);
-        SVNEntryInfo info = db.readInfo(path, true, true, true, false, false, true, true, false, true, true, true, false);
+        SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(path);
+        WCDbInfo info = db.readInfo(path, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev, InfoField.changedDate,
+                InfoField.changedAuthor, InfoField.changelist, InfoField.baseShadowed, InfoField.conflicted, InfoField.lock);
 
         SVNURL url = getNodeUrl(path);
         boolean file_external_p = isFileExternal(path);
@@ -310,17 +323,17 @@ public class SVNWCContext {
          *
          * ### note that most obstruction concepts disappear in single-db mode
          */
-        if (info.getWCDBKind() == SVNWCDbKind.DIR) {
-            if (info.getWCDBStatus() == SVNWCDbStatus.INCOMPLETE) {
+        if (info.kind == WCDbKind.Dir) {
+            if (info.status == WCDbStatus.Incomplete) {
                 /* Highest precedence. */
                 final_text_status = SVNStatusType.STATUS_INCOMPLETE;
-            } else if (info.getWCDBStatus() == SVNWCDbStatus.OBSTRUCTED_DELETE) {
+            } else if (info.status == WCDbStatus.ObstructedDelete) {
                 /* Deleted directories are never reported as missing. */
                 if (pathKind == SVNNodeKind.NONE)
                     final_text_status = SVNStatusType.STATUS_DELETED;
                 else
                     final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
-            } else if (info.getWCDBStatus() == SVNWCDbStatus.OBSTRUCTED || info.getWCDBStatus() == SVNWCDbStatus.OBSTRUCTED_ADD) {
+            } else if (info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd) {
                 /*
                  * A present or added directory should be on disk, so it is
                  * reported missing or obstructed.
@@ -340,8 +353,8 @@ public class SVNWCContext {
          * missing/obstructed. It means that no further information is
          * available, and we should skip all this work.
          */
-        SVNVersionedProperties pristineProperties = null;
-        SVNVersionedProperties actualProperties = null;
+        SVNProperties pristineProperties = null;
+        SVNProperties actualProperties = null;
         if (final_text_status == SVNStatusType.STATUS_NORMAL) {
             boolean has_props;
             boolean prop_modified_p = false;
@@ -379,7 +392,7 @@ public class SVNWCContext {
             }
 
             /* If the entry is a file, check for textual modifications */
-            if ((info.getWCDBKind() == SVNWCDbKind.FILE) && (wc_special == pathSpecial)) {
+            if ((info.kind == WCDbKind.File) && (wc_special == pathSpecial)) {
 
                 text_modified_p = isTextModified(path, false, true);
                 /* Record actual text status */
@@ -392,7 +405,7 @@ public class SVNWCContext {
             if (prop_modified_p)
                 final_prop_status = SVNStatusType.STATUS_MODIFIED;
 
-            if (entry.getPropertyRejectFilePath() != null || entry.getConflictOld() != null || entry.getConflictNew() != null || entry.getConflictWorking() != null) {
+            if (entry.getPropRejectFile() != null || entry.getConflictOld() != null || entry.getConflictNew() != null || entry.getConflictWorking() != null) {
                 boolean[] text_conflict_p = {
                     false
                 };
@@ -426,17 +439,17 @@ public class SVNWCContext {
              * fully replace entry->schedule here.
              */
 
-            if (entry.getSchedule() == SVNWCSchedule.ADD && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
+            if (SVNWCSchedule.ADD.name().equalsIgnoreCase(entry.getSchedule()) && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
                 final_text_status = SVNStatusType.STATUS_ADDED;
                 final_prop_status = SVNStatusType.STATUS_NONE;
             }
 
-            else if (entry.getSchedule() == SVNWCSchedule.REPLACE && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
+            else if (SVNWCSchedule.REPLACE.name().equalsIgnoreCase(entry.getSchedule()) && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
                 final_text_status = SVNStatusType.STATUS_REPLACED;
                 final_prop_status = SVNStatusType.STATUS_NONE;
             }
 
-            else if (entry.getSchedule() == SVNWCSchedule.DELETE && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
+            else if (SVNWCSchedule.DELETE.name().equalsIgnoreCase(entry.getSchedule()) && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
                 final_text_status = SVNStatusType.STATUS_DELETED;
                 final_prop_status = SVNStatusType.STATUS_NONE;
             }
@@ -466,7 +479,7 @@ public class SVNWCContext {
              * cases where db_kind would have been unknown are treated as
              * unversioned paths and thus have already returned.
              */
-            else if (pathKind != (info.getWCDBKind() == SVNWCDbKind.DIR ? SVNNodeKind.DIR : SVNNodeKind.FILE)) {
+            else if (pathKind != (info.kind == WCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE)) {
                 final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
             }
 
@@ -474,7 +487,7 @@ public class SVNWCContext {
                 final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
             }
 
-            if (pathKind == SVNNodeKind.DIR && info.getWCDBKind() == SVNWCDbKind.DIR) {
+            if (pathKind == SVNNodeKind.DIR && info.kind == WCDbKind.Dir) {
                 locked_p = db.isWCLocked(path);
             }
         }
@@ -487,23 +500,23 @@ public class SVNWCContext {
         if (!getAll)
             if (((final_text_status == SVNStatusType.STATUS_NONE) || (final_text_status == SVNStatusType.STATUS_NORMAL))
                     && ((final_prop_status == SVNStatusType.STATUS_NONE) || (final_prop_status == SVNStatusType.STATUS_NORMAL)) && (!locked_p) && (!switched_p) && (!file_external_p)
-                    && (info.getWCDBLock() == null) && (repositoryLock == null) && (info.getChangeList() == null) && (tree_conflict == null)) {
+                    && (info.lock == null) && (repositoryLock == null) && (info.changelist == null) && (tree_conflict == null)) {
                 return null;
             }
 
         /* 6. Build and return a status structure. */
 
         SVNLock lock = null;
-        if (info.getWCDBLock() != null) {
-            final SVNWCDbLock wcdbLock = info.getWCDBLock();
-            lock = new SVNLock(path.toString(), wcdbLock.getToken(), wcdbLock.getOwner(), wcdbLock.getComment(), wcdbLock.getDate(), null);
+        if (info.lock != null) {
+            final WCDbLock wcdbLock = info.lock;
+            lock = new SVNLock(path.toString(), wcdbLock.token, wcdbLock.owner, wcdbLock.comment, wcdbLock.date, null);
         }
 
-        SVNStatus status = new SVNStatus(url, path, info.getNodeKind(), SVNRevision.create(info.getRevision()), SVNRevision.create(info.getCommittedRevision()), info.getCommittedDate(), info
-                .getCommittedAuthor(), final_text_status, final_prop_status, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p, entry.isCopied(), switched_p, file_external_p, new File(
-                info.getConflictNew()), new File(info.getConflictOld()), new File(info.getConflictWorking()), new File(info.getPropertyRejectFilePath()), info.getCopyFromURL(), SVNRevision
-                .create(info.getCopyFromRevision()), repositoryLock, lock, actualProperties.asMap().asMap(), info.getChangeList(), db.WC_FORMAT_17, tree_conflict);
-        status.setEntry(new SVNEntry17(entry));
+        SVNStatus status = new SVNStatus(url, path, info.kind.toNodeKind(), SVNRevision.create(info.revision), SVNRevision.create(info.changedRev), info.changedDate, info.changedAuthor,
+                final_text_status, final_prop_status, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p, entry.isCopied(), switched_p, file_external_p, new File(entry.getConflictNew()),
+                new File(entry.getConflictOld()), new File(entry.getConflictWorking()), new File(entry.getPropRejectFile()), entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
+                repositoryLock, lock, actualProperties.asMap(), info.changelist, db.WC_FORMAT_17, tree_conflict);
+        status.setEntry(entry);
 
         return status;
 
@@ -517,14 +530,14 @@ public class SVNWCContext {
         return property != null;
     }
 
-    private boolean isPropertiesDiff(SVNVersionedProperties pristine, SVNVersionedProperties actual) throws SVNException {
-        if (pristine == null && actual == null) {
+    private boolean isPropertiesDiff(SVNProperties pristineProperties, SVNProperties actualProperties) throws SVNException {
+        if (pristineProperties == null && actualProperties == null) {
             return false;
         }
-        if (pristine == null || actual == null) {
+        if (pristineProperties == null || actualProperties == null) {
             return true;
         }
-        final SVNVersionedProperties diff = actual.compareTo(pristine);
+        final SVNProperties diff = actualProperties.compareTo(pristineProperties);
         return diff != null && !diff.isEmpty();
     }
 
@@ -554,7 +567,11 @@ public class SVNWCContext {
         return null;
     }
 
-    public SVNStatus assembleUnversioned(String localAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
+    public SVNStatus assembleUnversioned(File nodeAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
+        return null;
+    }
+
+    public SVNEntry getEntry(File nodeAbsPath, boolean b, SVNNodeKind unknown, boolean c) throws SVNException {
         return null;
     }
 
