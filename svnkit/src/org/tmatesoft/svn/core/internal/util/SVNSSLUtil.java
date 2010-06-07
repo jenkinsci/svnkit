@@ -51,10 +51,18 @@ public class SVNSSLUtil {
     }
     
     private static String getFingerprint(X509Certificate cert) {
+        try  {
+           return getFingerprint(cert.getEncoded());
+        } catch (Exception e)  {
+        } 
+        return null;
+    }
+
+    public static String getFingerprint(byte[] key) {
         StringBuffer s = new StringBuffer();
         try  {
            MessageDigest md = MessageDigest.getInstance("SHA1");
-           md.update(cert.getEncoded());
+           md.update(key);
            byte[] digest = md.digest();
            for (int i= 0; i < digest.length; i++)  {
               if (i != 0) {
@@ -70,7 +78,7 @@ public class SVNSSLUtil {
         } catch (Exception e)  {
         } 
         return s.toString();
-     }
+    }
 
   private static void getServerCertificateInfo(X509Certificate cert, StringBuffer info) {
       info.append("Certificate information:");

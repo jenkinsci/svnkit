@@ -69,6 +69,8 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
                                                              "of the ''store-plaintext-passwords'' option to either ''yes'' or ''no'' in\n" +
                                                              "''{1}''.\n" +
                                                              "-----------------------------------------------------------------------\n";
+
+    private static final String OUR_HOST_KEY_PROMPT_TEXT =   "The ''{0}'' server''s key fingerprint is:\n{1}\n";
     
     private static final String OUR_PASSWORD_PROMPT_STRING = "Store password unencrypted (yes/no)? ";
     private static final String OUR_PASSPHRASE_PROMPT_STRING = "Store passphrase unencrypted (yes/no)? ";
@@ -81,6 +83,40 @@ public class SVNConsoleAuthenticationProvider implements ISVNAuthenticationProvi
     }
     
     public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
+        
+        if (certificate instanceof byte[]) {
+            StringBuffer prompt = new StringBuffer(OUR_HOST_KEY_PROMPT_TEXT);
+            if (resultMayBeStored) {
+                prompt.append("If you trust this host, enter ''p'' to add the key to the SVN cache and carry on connecting.\n");
+                prompt.append("If you want to carry on connecting just once, without adding the key to the cache, type ''t''.");
+                prompt.append("If you do not trust this host, type ''R'' to abandon the connection.");
+                prompt.append("\n(R)eject, accept (t)emporarily or accept (p)ermanently? "); 
+            } else {
+                prompt.append("If you want to carry on connecting just once, without adding the key to the cache, type ''t''.");
+                prompt.append("If you do not trust this host, type ''R'' to abandon the connection.");
+                prompt.append("\n(R)eject or accept (t)emporarily? "); 
+            }
+            System.err.print(MessageFormat.format(prompt.toString(), new Object[] {url.getHost(), SVNSSLUtil.getFingerprint((byte[]) certificate)}));
+            System.err.flush();
+            while(true) {
+                String line = readLine();
+                if (line == null) {
+                    return ISVNAuthenticationProvider.REJECTED;
+                }
+                if (line.length() < 1) {
+                    continue;
+                }
+                char ch = line.charAt(0);
+                if (ch == 'R' || ch == 'r') {
+                    return ISVNAuthenticationProvider.REJECTED;
+                } else if (ch == 't' || ch == 'T') {
+                    return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
+                } else if (resultMayBeStored && (ch == 'p' || ch == 'P')) {
+                    return ISVNAuthenticationProvider.ACCEPTED;
+                }
+            }
+        }
+        
         if (myIsTrustServerCertificate) {
             return ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
         }

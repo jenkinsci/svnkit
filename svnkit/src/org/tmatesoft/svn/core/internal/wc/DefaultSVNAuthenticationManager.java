@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 
 import javax.net.ssl.TrustManager;
 
+import org.tmatesoft.svn.core.SVNAuthenticationException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 import org.tmatesoft.svn.core.auth.ISVNProxyManager;
+import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
@@ -45,7 +47,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @version 1.3
  * @author  TMate Software Ltd.
  */
-public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager {
+public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManager, ISVNSSHHostVerifier {
 
     private boolean myIsStoreAuth;
     private ISVNAuthenticationProvider[] myProviders;
@@ -616,7 +618,10 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
      * @author  TMate Software Ltd.
      */
     public interface IPersistentAuthenticationProvider {
-        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException;        
+        public void saveAuthentication(SVNAuthentication auth, String kind, String realm) throws SVNException;
+
+        public void saveFingerprints(String realm, byte[] fingerprints);
+        public byte[] loadFingerprints(String realm);
     }
 
     private class PersistentAuthenticationProvider implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
@@ -898,6 +903,45 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             }
 
         }
+
+        public byte[] loadFingerprints(String realm) {
+            File dir = new File(myDirectory, "svn.ssh.server");
+            if (!dir.isDirectory()) {
+                return null;
+            }
+            File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+            if (!file.isFile()) {
+                return null;
+            }
+            SVNWCProperties props = new SVNWCProperties(file, "");
+            SVNProperties values;
+            try {
+                values = props.asMap();
+                String storedRealm = values.getStringValue("svn:realmstring");
+                if (!realm.equals(storedRealm)) {
+                    return null;
+                }
+                return values.getBinaryValue("hostkey");
+            } catch (SVNException e) {
+                return null;
+            }
+        }
+
+        public void saveFingerprints(String realm, byte[] fingerprints) {
+            File dir = new File(myDirectory, "svn.ssh.server");
+            if (!dir.isDirectory()) {
+                dir.mkdirs();
+            }
+            File file = new File(dir, SVNFileUtil.computeChecksum(realm));
+
+            SVNProperties values = new SVNProperties();
+            values.put("svn:realmstring", realm);
+            values.put("hostkey", fingerprints);
+            try {
+                SVNWCProperties.setProperties(values, file, null, SVNWCProperties.SVN_HASH_TERMINATOR);
+            } catch (SVNException e) {
+            }
+        }
     }
     
     private static final class SimpleProxyManager implements ISVNProxyManager {
@@ -979,5 +1023,50 @@ public class DefaultSVNAuthenticationManager implements ISVNAuthenticationManage
             return 60*1000;
         }
         return 0; 
+    }
+
+    public void verifyHostKey(String hostName, int port, String keyAlgorithm, byte[] hostKey) throws SVNException {
+        String realm = hostName + ":" + port + " <" + keyAlgorithm + ">";
+        
+        byte[] existingFingerprints = (byte[]) getRuntimeAuthStorage().getData("svn.ssh.server", realm);
+        if (existingFingerprints == null && myProviders[2] instanceof IPersistentAuthenticationProvider) {
+            existingFingerprints = ((IPersistentAuthenticationProvider) myProviders[2]).loadFingerprints(realm);
+        }
+
+        if (existingFingerprints == null || !equals(existingFingerprints, hostKey)) {
+            SVNURL url = SVNURL.create("svn+ssh", null, hostName, port, "", true);
+            boolean storageEnabled = isAuthStorageEnabled(url);
+            if (getAuthenticationProvider() != null) {
+                int accepted = getAuthenticationProvider().acceptServerAuthentication(url, realm, hostKey, isAuthStorageEnabled(url));
+                if (accepted == ISVNAuthenticationProvider.ACCEPTED && isAuthStorageEnabled(url)) {
+                    if (storageEnabled && hostKey != null && myProviders[2] instanceof IPersistentAuthenticationProvider) {
+                        ((IPersistentAuthenticationProvider) myProviders[2]).saveFingerprints(realm, hostKey);
+                    }
+                } else if (accepted == ISVNAuthenticationProvider.REJECTED) {
+                    throw new SVNAuthenticationException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_NOT_SAVED, "Host key ('" + realm + "') can not be verified."));
+                }
+                if (hostKey != null) {
+                    getRuntimeAuthStorage().putData("svn.ssh.server", realm, hostKey);
+                }
+            }
+        }
+    }
+    
+    private static boolean equals(byte[] b1, byte[] b2) {
+        if (b1 == null && b2 == b1) {
+            return true;
+        }
+        if (b1 == null || b2 == null) {
+            return false;
+        }
+        if (b1.length != b2.length) {
+            return false;
+        }
+        for (int i = 0; i < b2.length; i++) {
+            if (b1[i] != b2[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -158,7 +158,7 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
     }
 
     public int acceptServerAuthentication(SVNURL url, String realm, Object serverAuth,  boolean resultMayBeStored) {
-        if (serverAuth != null && myPrompt instanceof PromptUserPassword2) {
+        if (myPrompt instanceof PromptUserPassword2 && serverAuth instanceof X509Certificate) {
             PromptUserPassword2 sslPrompt = (PromptUserPassword2) myPrompt;
             serverAuth = serverAuth instanceof X509Certificate ?
                     SVNSSLUtil.getServerCertificatePrompt((X509Certificate) serverAuth, realm, url.getHost()) : serverAuth;
@@ -166,6 +166,13 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
                 serverAuth = "Unsupported certificate type '" + (serverAuth != null ? serverAuth.getClass().getName() : "null") + "'";
             }
             return sslPrompt.askTrustSSLServer(serverAuth.toString(), resultMayBeStored);
+        } else if (myPrompt != null && serverAuth instanceof byte[]) {
+            String prompt = "The ''{0}'' server''s key fingerprint is:\n{1}\n" +
+            		"If you trust this host, select ''Yes'' to add the key to the SVN cache and carry on connecting.\n" +
+            		"If you do not trust this host, select ''No'' to abandon the connection.";            
+            if (!myPrompt.askYesNo(realm, prompt, false)) {
+                return REJECTED;
+            }                
         }
         return ACCEPTED;
     }
@@ -179,5 +186,4 @@ class JavaHLAuthenticationProvider implements ISVNAuthenticationProvider {
         }
         return userName;
     }
-
 }

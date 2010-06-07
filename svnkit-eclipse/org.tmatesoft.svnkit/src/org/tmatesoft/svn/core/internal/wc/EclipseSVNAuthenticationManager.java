@@ -151,6 +151,24 @@ public class EclipseSVNAuthenticationManager extends DefaultSVNAuthenticationMan
             } catch (CoreException e) {
             }
         }
+
+        public byte[] loadFingerprints(String realm) {
+            Map info = Platform.getAuthorizationInfo(DEFAULT_URL, realm, "svn.ssh.server");
+            if (info != null && realm.equals(info.get("svn:realmstring"))) {
+                return (byte[]) info.get("hostkey");
+            }
+            return null;
+        }
+
+        public void saveFingerprints(String realm, byte[] fingerprints) {
+            Map info = new SVNHashMap();
+            info.put("svn:realmstring", realm);
+            info.put("hostkey", fingerprints);
+            try {
+                Platform.addAuthorizationInfo(DEFAULT_URL, realm, "svn.ssh.server", info);
+            } catch (CoreException e) {
+            }
+        }
     
     }
 

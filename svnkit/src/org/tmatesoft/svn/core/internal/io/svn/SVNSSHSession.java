@@ -30,6 +30,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNSSHHostVerifier;
 import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -39,6 +40,7 @@ import org.tmatesoft.svn.util.SVNLogType;
 import com.trilead.ssh2.ChannelCondition;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.InteractiveCallback;
+import com.trilead.ssh2.ServerHostKeyVerifier;
 import com.trilead.ssh2.Session;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.transport.ClientServerHello;
@@ -74,7 +76,7 @@ public class SVNSSHSession {
         ourTimeout = value;
     }
 
-    public static SSHConnectionInfo getConnection(SVNURL location, SVNSSHAuthentication credentials, int connectTimeout, boolean useConnectionPing) throws SVNException {
+    public static SSHConnectionInfo getConnection(SVNURL location, ISVNSSHHostVerifier verifier, SVNSSHAuthentication credentials, int connectTimeout, boolean useConnectionPing) throws SVNException {
         lock(Thread.currentThread());
         try {
             if ("".equals(credentials.getUserName()) || credentials.getUserName() == null) {
@@ -86,7 +88,7 @@ public class SVNSSHSession {
                 port = 22;
             }
             if (!isUsePersistentConnection()) {
-                Connection connection = openConnection(location, credentials, port, connectTimeout);
+                Connection connection = openConnection(location, verifier, credentials, port, connectTimeout);
                 return new SSHConnectionInfo(null, "unpersistent", connection, false);
             }
             String key = credentials.getUserName() + ":" + location.getHost() + ":" + port;
@@ -148,7 +150,7 @@ public class SVNSSHSession {
                 }
             }
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": OPENING NEW CONNECTION");
-            Connection connection = openConnection(location, credentials, port, connectTimeout);
+            Connection connection = openConnection(location, verifier, credentials, port, connectTimeout);
             connectionInfo = new SSHConnectionInfo(key, id, connection, true);
             connectionsList.add(connectionInfo);
             SVNDebugLog.getDefaultLog().logFine(SVNLogType.NETWORK, ourRequestor + ": NEW CONNECTION OPENED, " +
@@ -239,7 +241,7 @@ public class SVNSSHSession {
         }
     }
 
-    private static Connection openConnection(SVNURL location, SVNSSHAuthentication credentials, int port, int connectTimeout) throws SVNException {
+    private static Connection openConnection(final SVNURL location, final ISVNSSHHostVerifier hostVerifier, SVNSSHAuthentication credentials, int port, int connectTimeout) throws SVNException {
         // open and add to the list.
         File privateKeyFile = credentials.getPrivateKeyFile();
         char[] privateKey = credentials.getPrivateKey();
@@ -267,7 +269,21 @@ public class SVNSSHSession {
         
         Connection connection = new Connection(location.getHost(), port);
         try {
-            connection.connect(null, connectTimeout, connectTimeout);
+            try {
+                connection.connect(new ServerHostKeyVerifier() {
+                    public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) throws Exception {
+                        if (hostVerifier != null) {
+                            hostVerifier.verifyHostKey(hostname, port, serverHostKeyAlgorithm, serverHostKey);
+                        }                    
+                        return true;
+                    }
+                }, connectTimeout, connectTimeout);
+            } catch (IOException e) {
+                if (e.getCause() instanceof SVNException) {
+                    throw (SVNException) e.getCause();
+                }
+                throw e;
+            }
             boolean authenticated = false;
             if (privateKey != null) {
                 authenticated = connection.authenticateWithPublicKey(userName, privateKey, passphrase);
