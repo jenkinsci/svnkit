@@ -80,7 +80,7 @@ public class SVNCommitCommand extends SVNCommand {
             SVNPath target = new SVNPath(targetName);
             if (target.isFile()) {
                 filesList.add(target.getFile());
-            } else {
+            } else if (targetName != null) {
                 getSVNEnvironment().getOut().println("Skipped '" + targetName + "'");
             }
         }
