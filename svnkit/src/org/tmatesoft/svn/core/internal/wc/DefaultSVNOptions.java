@@ -66,6 +66,7 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
     private static final String DIFF_CMD = "diff-cmd";
     private static final String MERGE_TOOL_CMD = "merge-tool-cmd";
     private static final String NO_UNLOCK = "no-unlock";
+    private static final String LOG_ENCODING = "log-encoding";
     private static final String PRESERVED_CONFLICT_FILE_EXTENSIONS = "preserved-conflict-file-exts";
     private static final String INTERACTIVE_COFLICTS = "interactive-conflicts";
     private static final String MIME_TYPES_FILE = "mime-types-file";
@@ -614,6 +615,10 @@ public class DefaultSVNOptions implements ISVNOptions, ISVNMergerFactory {
 
     public boolean isAllowAllForwardMergesFromSelf() {
         return false;
+    }
+
+    public String getLogEncoding() {
+        return getConfigFile().getPropertyValue(MISCELLANY_GROUP, LOG_ENCODING);
     }
 
     public String getGlobalCharset() {

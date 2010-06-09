@@ -879,7 +879,13 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                     SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.CL_BAD_LOG_MESSAGE, "Log message contains a zero byte"), SVNLogType.CLIENT);
                 }
             }
-            String charset = getEncoding() != null ? getEncoding() : "UTF-8";
+            String charset = getEncoding();
+            if (charset == null) {
+                charset = getOptions().getLogEncoding();
+            }
+            if (charset == null) {
+                charset = "UTF-8";
+            }
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             OutputStream os = SVNTranslator.getTranslatingOutputStream(bos, charset, new byte[] {'\n'}, false, null, false); 
             try {
