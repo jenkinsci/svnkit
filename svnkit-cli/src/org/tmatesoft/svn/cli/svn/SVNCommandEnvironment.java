@@ -886,7 +886,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 os.write(getFileData());
                 os.close();
                 os = null;
-                return new String(bos.toByteArray(), charset);
+                return new String(bos.toByteArray(), "UTF-8");
             } catch (UnsupportedEncodingException e) {
                 SVNErrorManager.error(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e.getMessage()), SVNLogType.CLIENT);
             } catch (IOException e) {
