@@ -868,7 +868,7 @@ public class SVNCommandEnvironment extends AbstractSVNCommandEnvironment impleme
                 charset = getOptions().getLogEncoding();
             }
             if (charset == null) {
-                charset = "UTF-8";
+                charset = getOptions().getNativeCharset();
             }
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             OutputStream os = SVNTranslator.getTranslatingOutputStream(bos, charset, new byte[] {'\n'}, false, null, false); 
