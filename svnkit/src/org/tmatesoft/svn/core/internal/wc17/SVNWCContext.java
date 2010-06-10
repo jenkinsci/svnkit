@@ -12,6 +12,7 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.io.InputStream;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -533,7 +534,192 @@ public class SVNWCContext {
         return diff != null && !diff.isEmpty();
     }
 
-    private boolean isTextModified(File path, boolean force_comparison, boolean compare_textbases) throws SVNException {
+    private boolean isTextModified(File local_abspath, boolean force_comparison, boolean compare_textbases) throws SVNException {
+
+        /* No matter which way you look at it, the file needs to exist. */
+        if (!local_abspath.exists() || !local_abspath.isFile()) {
+            /*
+             * There is no entity, or, the entity is not a regular file or link.
+             * So, it can't be modified.
+             */
+            return false;
+        }
+
+        if (!force_comparison) {
+
+            /*
+             * We're allowed to use a heuristic to determine whether files may
+             * have changed. The heuristic has these steps:
+             *
+             *
+             * 1. Compare the working file's size with the size cached in the
+             * entries file 2. If they differ, do a full file compare 3. Compare
+             * the working file's timestamp with the timestamp cached in the
+             * entries file 4. If they differ, do a full file compare 5.
+             * Otherwise, return indicating an unchanged file.
+             *
+             * There are 2 problematic situations which may occur:
+             *
+             * 1. The cached working size is missing --> In this case, we forget
+             * we ever tried to compare and skip to the timestamp comparison.
+             * This is because old working copies do not contain cached sizes
+             *
+             * 2. The cached timestamp is missing --> In this case, we forget we
+             * ever tried to compare and skip to full file comparison. This is
+             * because the timestamp will be removed when the library updates a
+             * locally changed file. (ie, this only happens when the file was
+             * locally modified.)
+             */
+
+            boolean compare_them = false;
+
+            /* Read the relevant info */
+            WCDbInfo readInfo = null;
+            try {
+                readInfo = db.readInfo(local_abspath, InfoField.lastModTime, InfoField.translatedSize);
+            } catch (SVNException e) {
+                compare_them = true;
+            }
+
+            if (!compare_them) {
+                /* Compare the sizes, if applicable */
+                if (readInfo.translatedSize != db.ENTRY_WORKING_SIZE_UNKNOWN && local_abspath.length() != readInfo.translatedSize) {
+                    compare_them = true;
+                }
+            }
+
+            if (!compare_them) {
+                /*
+                 * Compare the timestamps
+                 *
+                 * Note: text_time == 0 means absent from entries, which also
+                 * means the timestamps won't be equal, so there's no need to
+                 * explicitly check the 'absent' value.
+                 */
+                if (readInfo.lastModTime != local_abspath.lastModified()) {
+                    compare_them = true;
+                }
+            }
+
+            if (!compare_them) {
+                return false;
+            }
+        }
+
+        // compare_them:
+        /*
+         * If there's no text-base file, we have to assume the working file is
+         * modified. For example, a file scheduled for addition but not yet
+         * committed.
+         */
+        /*
+         * We used to stat for the working base here, but we just give
+         * compare_and_verify a try; we'll check for errors afterwards
+         */
+        InputStream pristine_stream;
+        try {
+            pristine_stream = getPristineContents(local_abspath);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
+                return true;
+            }
+            throw e;
+        }
+
+        if (pristine_stream == null) {
+            return true;
+        }
+
+        /* Check all bytes, and verify checksum if requested. */
+        return compareAndVerify(local_abspath, pristine_stream, compare_textbases, force_comparison);
+    }
+
+    private InputStream getPristineContents(File localAbspath) throws SVNException
+    {
+
+      final WCDbInfo readInfo = db.readInfo(localAbspath, InfoField.status,
+              InfoField.kind, InfoField.checksum);
+
+      /* Sanity */
+      if (readInfo.kind != WCDbKind.File) {
+          SVNErrorMessage err = SVNErrorMessage.create(
+                  SVNErrorCode.NODE_UNEXPECTED_KIND,
+                  "Can only get the pristine contents of files;"+
+                  "  '{0}' is not a file",
+                  localAbspath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+      }
+
+      if (readInfo.status == WCDbStatus.Added)
+        {
+          /* For an added node, we return "no stream". Make sure this is not
+             copied-here or moved-here, in which case we return the copy/move
+             source's contents.  */
+          final WCDbAdditionInfo scanAddition = db.scanAddition(localAbspath, AdditionInfoField.status);
+
+          if (scanAddition.status == WCDbStatus.Added)
+            {
+              /* Simply added. The pristine base does not exist. */
+              return null;
+            }
+        }
+      else if (readInfo.status == WCDbStatus.NotPresent) {
+        /* We know that the delete of this node has been committed.
+           This should be the same as if called on an unknown path. */
+          SVNErrorMessage err = SVNErrorMessage.create(
+                  SVNErrorCode.WC_PATH_NOT_FOUND,
+                  "Cannot get the pristine contents of '{0}' "+
+                  "because its delete is already committed",
+                  localAbspath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+      }
+      else if (readInfo.status == WCDbStatus.Absent
+          || readInfo.status == WCDbStatus.Excluded
+          || readInfo.status == WCDbStatus.Incomplete) {
+          SVNErrorMessage err = SVNErrorMessage.create(
+                  SVNErrorCode.WC_PATH_UNEXPECTED_STATUS,
+                  "Cannot get the pristine contents of '{0}' "+
+                  "because it has an unexpected status",
+                  localAbspath);
+          SVNErrorManager.error(err, SVNLogType.WC);
+      }
+      else {
+        /* We know that it is a file, so we can't hit the _obstructed stati.
+           Also, we should never see _base_deleted here. */
+          SVNErrorManager.assertionFailure(readInfo.status != WCDbStatus.Obstructed
+                  && readInfo.status != WCDbStatus.ObstructedAdd
+                  && readInfo.status != WCDbStatus.ObstructedDelete
+                  && readInfo.status != WCDbStatus.BaseDeleted, null, SVNLogType.WC);
+      }
+
+      if (readInfo.checksum==null) {
+          return null;
+      }
+
+      return db.readPristine(localAbspath, readInfo.checksum);
+    }
+
+    /** Return TRUE if (after translation) VERSIONED_FILE_ABSPATH
+     * differs from PRISTINE_STREAM, else to FALSE if not.  Also verify that
+     * PRISTINE_STREAM matches the stored checksum for VERSIONED_FILE_ABSPATH,
+     * if verify_checksum is TRUE. If checksum does not match, throw the error
+     * SVN_ERR_WC_CORRUPT_TEXT_BASE.
+     * <p>
+     * If COMPARE_TEXTBASES is true, translate VERSIONED_FILE_ABSPATH's EOL
+     * style and keywords to repository-normal form according to its properties,
+     * and compare the result with PRISTINE_STREAM.  If COMPARE_TEXTBASES is
+     * false, translate PRISTINE_STREAM's EOL style and keywords to working-copy
+     * form according to VERSIONED_FILE_ABSPATH's properties, and compare the
+     * result with VERSIONED_FILE_ABSPATH.
+     * <p>
+     * PRISTINE_STREAM will be closed before a successful return.
+     *
+     */
+    private boolean compareAndVerify(File versioned_file_abspath,
+                       InputStream pristine_stream, boolean compare_textbases,
+                       boolean verify_checksum) throws SVNException
+    {
+        // TODO
         return false;
     }
 
