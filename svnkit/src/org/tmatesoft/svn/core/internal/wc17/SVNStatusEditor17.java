@@ -12,12 +12,14 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -206,7 +208,7 @@ public class SVNStatusEditor17 {
 
         final Map<String, File> allChildren = new HashMap();
         final Map<String, File> conflicts = new HashMap();
-        List patterns = null;
+        Collection<String> patterns = null;
 
         if (selected == null) {
             /* Create a hash containing all children */
@@ -359,7 +361,7 @@ public class SVNStatusEditor17 {
 
     }
 
-    private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, List patterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
+    private void sendUnversionedItem(File nodeAbsPath, SVNNodeKind pathKind, Collection<String> patterns, boolean noIgnore, ISVNStatusHandler handler) throws SVNException {
         boolean isIgnored = isIgnored(nodeAbsPath.getName(), patterns);
         boolean isExternal = isExternal(nodeAbsPath);
         SVNStatus status = myWCContext.assembleUnversioned(nodeAbsPath, pathKind, isIgnored);
@@ -396,7 +398,7 @@ public class SVNStatusEditor17 {
         return true;
     }
 
-    private boolean isIgnored(String name, List patterns) {
+    private boolean isIgnored(String name, Collection<String> patterns) {
         for (Iterator ps = patterns.iterator(); ps.hasNext();) {
             String pattern = (String) ps.next();
             if (DefaultSVNOptions.matches(pattern, name)) {
@@ -456,8 +458,22 @@ public class SVNStatusEditor17 {
         myContextInfo.addDepth(localAbsPath, depth);
     }
 
-    private List collectIgnorePatterns(File localAbsPath, Collection ignorePatterns) {
-        return null;
+    private Collection<String> collectIgnorePatterns(File localAbsPath, Collection<String> ignores) {
+        /* ### assert we are passed a directory? */
+        /* Then add any svn:ignore globs to the PATTERNS array. */
+        final String localIgnores = myWCContext.getProperty(localAbsPath, SVNProperty.IGNORE);
+        if (localIgnores != null) {
+            final List<String> patterns = new ArrayList<String>();
+            patterns.addAll(ignores);
+            for (StringTokenizer tokens = new StringTokenizer(localIgnores, "\r\n"); tokens.hasMoreTokens();) {
+                String token = tokens.nextToken().trim();
+                if (token.length() > 0) {
+                    patterns.add(token);
+                }
+            }
+            return patterns;
+        }
+        return ignores;
     }
 
 }
