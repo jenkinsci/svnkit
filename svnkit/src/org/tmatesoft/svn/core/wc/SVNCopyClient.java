@@ -248,6 +248,15 @@ public class SVNCopyClient extends SVNBasicClient {
         }
     }
 
+    public void setDisableLocalModificationCopying(boolean disable) {
+        getSVNCopyClient16().setDisableLocalModificationCopying(disable);
+        try {
+            getSVNCopyClient17().setDisableLocalModificationCopying(disable);
+        } catch (SVNException e) {
+        }
+        
+    }
+    
     /**
      * Returns an externals handler used by this update client.
      * 
