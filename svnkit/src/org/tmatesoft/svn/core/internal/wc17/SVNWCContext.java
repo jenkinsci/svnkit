@@ -11,8 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -23,9 +27,13 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
+import org.tmatesoft.svn.core.internal.wc.admin.SVNTranslator;
 import org.tmatesoft.svn.core.internal.wc.db.SVNWCSchedule;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
@@ -55,6 +63,23 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  */
 public class SVNWCContext {
+
+    public static class SVNEolStyleInfo {
+        public static final byte[] NATIVE_EOL_STR = "\n".getBytes();
+        public SVNEolStyle eolStyle;
+        public byte[] eolStr;
+    }
+
+    public enum SVNEolStyle {
+        /** An unrecognized style */
+        Unknown,
+        /** EOL translation is "off" or ignored value */
+        None,
+        /** Translation is set to client's native eol */
+        Native,
+        /** Translation is set to one of LF, CR, CRLF */
+        Fixed
+    }
 
     private ISVNWCDb db;
     private boolean closeDb;
@@ -719,8 +744,186 @@ public class SVNWCContext {
                        InputStream pristine_stream, boolean compare_textbases,
                        boolean verify_checksum) throws SVNException
     {
+        boolean same = false;
+
+        assert(versioned_file_abspath!=null && versioned_file_abspath.isAbsolute());
+
+        final SVNEolStyleInfo eolStyle = getEolStyle(versioned_file_abspath);
+        final Map keywords = getKeyWords(versioned_file_abspath, null);
+        final boolean special = isSpecial(versioned_file_abspath);
+        final boolean need_translation = isTranslationRequired(
+                eolStyle.eolStyle, eolStyle.eolStr , keywords, special, true);
+
+        if (verify_checksum || need_translation)
+          {
+            /* Reading files is necessary. */
+            SVNChecksum checksum = null;
+            InputStream v_stream = null;  /* versioned_file */
+            SVNChecksum node_checksum = null;
+
+            try{
+            if (verify_checksum)
+              {
+                /* Need checksum verification, so read checksum from entries file
+                 * and setup checksummed stream for base file. */
+                final WCDbInfo nodeInfo = db.readInfo(versioned_file_abspath, InfoField.checksum);
+                /* SVN_EXPERIMENTAL_PRISTINE:
+                   node_checksum is originally MD-5 but will later be SHA-1.  To
+                   allow for this, we calculate CHECKSUM as the same kind so that
+                   we can compare them. */
+                if (nodeInfo.checksum!=null) {
+                  pristine_stream = new SVNChecksumInputStream(
+                          pristine_stream, nodeInfo.checksum.getKind().toString() );
+                }
+              }
+
+            if (special)
+              {
+                v_stream = readSpecialFile(versioned_file_abspath);
+              }
+            else
+              {
+                v_stream = SVNFileUtil.openFileForReading(versioned_file_abspath);
+
+                if (compare_textbases && need_translation)
+                  {
+                    if (eolStyle.eolStyle == SVNEolStyle.Native)
+                        eolStyle.eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
+                    else if (eolStyle.eolStyle != SVNEolStyle.Fixed
+                             && eolStyle.eolStyle != SVNEolStyle.None) {
+                      SVNErrorMessage err = SVNErrorMessage.create( SVNErrorCode.IO_UNKNOWN_EOL );
+                      SVNErrorManager.error(err, SVNLogType.WC);
+                    }
+
+                    /* Wrap file stream to detranslate into normal form,
+                     * "repairing" the EOL style if it is inconsistent. */
+                    v_stream = SVNTranslator.getTranslatingInputStream(v_stream, null, 
+                            eolStyle.eolStr, true, keywords, false);
+                  }
+                else if (need_translation)
+                  {
+                    /* Wrap base stream to translate into working copy form, and
+                     * arrange to throw an error if its EOL style is inconsistent. */
+                    pristine_stream = SVNTranslator.getTranslatingInputStream(pristine_stream, null, 
+                            eolStyle.eolStr, false, keywords, true);
+                  }
+              }
+
+            try {
+                same = isSameContents(pristine_stream, v_stream);
+            } catch (IOException e) {
+                SVNTranslator.translationError(versioned_file_abspath, e);
+            }
+
+          } finally {
+              SVNFileUtil.closeFile(pristine_stream);
+              SVNFileUtil.closeFile(v_stream);
+          }
+
+            if (verify_checksum && node_checksum!=null)
+              {
+                if (checksum!=null && !isChecksumMatch(checksum, node_checksum))
+                  {
+                    SVNErrorMessage err = SVNErrorMessage.create( 
+                            SVNErrorCode.WC_CORRUPT_TEXT_BASE, 
+                            "Checksum mismatch indicates corrupt text base for file: " +
+                            "'{0}':\n   expected:  {1}\n     actual:  {2}\n", 
+                            new Object[] { versioned_file_abspath,  node_checksum, checksum } );
+                    SVNErrorManager.error(err, SVNLogType.WC);
+                  }
+              }
+          }
+        else
+          {
+            /* Translation would be a no-op, so compare the original file. */
+            InputStream v_stream;  /* versioned_file */
+
+            v_stream = SVNFileUtil.openFileForReading(versioned_file_abspath);
+            try {
+                same = isSameContents(v_stream, pristine_stream);
+            } catch (IOException e) {
+                SVNTranslator.translationError(versioned_file_abspath, e);
+            }
+            
+         }
+
+        return(! same);
+
+    }
+
+    private boolean isChecksumMatch(SVNChecksum checksum1, SVNChecksum checksum2) {
+        if (checksum1 == null || checksum2 == null)
+            return true;
+          if (checksum1.getKind() != checksum2.getKind())
+            return false;
+          return checksum1.getDigest()==null || 
+              checksum2.getDigest()==null ||
+              checksum1.getDigest()==checksum2.getDigest();
+    }
+
+    private boolean isSameContents(InputStream stream1, InputStream stream2) throws IOException {
+        byte[] buffer1 = new byte[8192];
+        byte[] buffer2 = new byte[8192];
+            while(true) {
+                int r1 = SVNFileUtil.readIntoBuffer(stream1, buffer1, 0, buffer1.length);
+                int r2 = SVNFileUtil.readIntoBuffer(stream2, buffer2, 0, buffer2.length);
+                r1 = r1 == -1 ? 0 : r1;
+                r2 = r2 == -1 ? 0 : r2;
+                if (r1 != r2) {
+                    return true;
+                } else if (r1 == 0) {
+                    return false;
+                }
+                for(int i = 0; i < r1; i++) {
+                    if (buffer1[i] != buffer2[i]) {
+                        return true;
+                    }
+                }
+            }
+    }
+
+    private InputStream readSpecialFile(File path) throws SVNException {
+        /* First determine what type of special file we are
+           detranslating. */
+        final SVNFileType filetype = SVNFileType.getType(path);        
+        if( SVNFileType.FILE == filetype) {
+            /* Nothing special to do here, just create stream from the original
+            file's contents. */
+            return SVNFileUtil.openFileForReading(path, SVNLogType.WC);
+        } else if( SVNFileType.SYMLINK == filetype ) {
+            /* Determine the destination of the link. */
+            String linkPath = SVNFileUtil.getSymlinkName(path);
+            if (linkPath == null) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", path);
+                SVNErrorManager.error(err, SVNLogType.DEFAULT);
+            }
+            String symlinkContents = "link " + linkPath;
+            return new ByteArrayInputStream(symlinkContents.getBytes());
+        } else {
+            SVNErrorManager.assertionFailure(false, "ERR_MALFUNCTION", SVNLogType.WC);
+        }
+        return null;
+    }
+
+    private boolean isTranslationRequired(SVNEolStyle style, byte[] eol, Map keywords, 
+            boolean special, boolean force_eol_check) {
+        return (special || keywords!=null
+                || (style != SVNEolStyle.None && force_eol_check)
+                //|| (style == SVNEolStyle.Native &&
+                //    strcmp(APR_EOL_STR, SVN_SUBST_NATIVE_EOL_STR) != 0)
+                || (style == SVNEolStyle.Fixed && Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol))
+           );
+
+    }
+
+    private Map getKeyWords(File versionedFileAbspath, String force_list) {
         // TODO
-        return false;
+        return null;
+    }
+
+    private SVNEolStyleInfo getEolStyle(File versionedFileAbspath) {
+        // TODO
+        return null;
     }
 
     private boolean isSwitched(File path) {
@@ -734,6 +937,7 @@ public class SVNWCContext {
     }
 
     private SVNURL getNodeUrl(File path) {
+        // TODO
         return null;
     }
 
@@ -742,6 +946,7 @@ public class SVNWCContext {
     }
 
     public String getProperty(File path, String propertyName) {
+        // TODO
         return null;
     }
 
