@@ -1605,4 +1605,10 @@ public interface ISVNWCDb {
     /** temp function. return the FORMAT for the directory LOCAL_ABSPATH. */
     int getFormatTemp(File localDirAbsPath) throws SVNException;
 
+    /** Return the serialized file external info (from BASE) for LOCAL_ABSPATH.
+    Stores NULL into SERIALIZED_FILE_EXTERNAL if this node is NOT a file
+    external. If a BASE node does not exist: SVN_ERR_WC_PATH_NOT_FOUND.  */
+
+    String getFileExternalTemp(File path);
+
 }

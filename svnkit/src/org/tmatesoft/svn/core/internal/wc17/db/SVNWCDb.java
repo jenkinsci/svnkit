@@ -298,4 +298,8 @@ public class SVNWCDb implements ISVNWCDb {
         return null;
     }
 
+    public String getFileExternalTemp(File path) {
+        return null;
+    }
+
 }
