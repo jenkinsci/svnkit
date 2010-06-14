@@ -32,14 +32,11 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNHashSet;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
-import org.tmatesoft.svn.core.internal.wc.SVNStatusUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo;
@@ -458,7 +455,7 @@ public class SVNStatusEditor17 {
         myContextInfo.addDepth(localAbsPath, depth);
     }
 
-    private Collection<String> collectIgnorePatterns(File localAbsPath, Collection<String> ignores) {
+    private Collection<String> collectIgnorePatterns(File localAbsPath, Collection<String> ignores) throws SVNException {
         /* ### assert we are passed a directory? */
         /* Then add any svn:ignore globs to the PATTERNS array. */
         final String localIgnores = myWCContext.getProperty(localAbsPath, SVNProperty.IGNORE);
