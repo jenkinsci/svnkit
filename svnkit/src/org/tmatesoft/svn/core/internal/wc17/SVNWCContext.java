@@ -16,8 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +29,6 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -59,7 +56,6 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
@@ -72,6 +68,10 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  */
 public class SVNWCContext {
+
+    public static boolean isAdminDirectory(String name) {
+        return name != null && (SVNFileUtil.isWindows) ? SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) : SVNFileUtil.getAdminDirectoryName().equals(name);
+    }
 
     public static class SVNEolStyleInfo {
 
@@ -608,7 +608,7 @@ public class SVNWCContext {
 
     }
 
-    private boolean isSpecial(File path) {
+    private boolean isSpecial(File path) throws SVNException {
         final String property = getProperty(path, SVNProperty.SPECIAL);
         return property != null;
     }
@@ -951,7 +951,7 @@ public class SVNWCContext {
 
     }
 
-    private SVNEolStyleInfo getEolStyle(File localAbsPath) {
+    private SVNEolStyleInfo getEolStyle(File localAbsPath) throws SVNException {
         assert (isAbsolute(localAbsPath));
 
         /* Get the property value. */
@@ -1028,7 +1028,6 @@ public class SVNWCContext {
     }
 
     private ConflictedInfo getIsConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
-
         final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
         final ConflictedInfo info = new ConflictedInfo();
         if (!readInfo.conflicted) {
@@ -1036,10 +1035,9 @@ public class SVNWCContext {
         }
         final File dir_path = (readInfo.kind == WCDbKind.Dir) ? localAbsPath : localAbsPath.getParentFile();
         final List<SVNTreeConflictDescription> conflicts = db.readConflicts(localAbsPath);
-
         for (final SVNTreeConflictDescription cd : conflicts) {
             final SVNMergeFileSet cdf = cd.getMergeFiles();
-            if (cd.isTextConflict()) {
+            if (isTextNeed && cd.isTextConflict()) {
                 /*
                  * Look for any text conflict, exercising only as much effort as
                  * necessary to obtain a definitive answer. This only applies to
@@ -1048,8 +1046,6 @@ public class SVNWCContext {
                  * directory anyway. A conflict file entry notation only counts
                  * if the conflict file still exists on disk.
                  */
-                if (!isTextNeed)
-                    continue;
                 if (cdf.getBasePath() != null) {
                     final File path = new File(dir_path, cdf.getBasePath());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
@@ -1069,37 +1065,82 @@ public class SVNWCContext {
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     info.textConflicted = (kind == SVNNodeKind.FILE);
                 }
-            } else if (cd.isPropertyConflict()) {
-                if (!isPropNeed)
-                    continue;
+            } else if (isPropNeed && cd.isPropertyConflict()) {
                 if (cdf.getRepositoryPath() != null) {
                     final File path = new File(dir_path, cdf.getRepositoryPath());
                     final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
                     info.propConflicted = (kind == SVNNodeKind.FILE);
                 }
-            } else if (cd.isTreeConflict()) {
-                if (isTreeNeed) {
-                    info.treeConflicted = true;
-                }
+            } else if (isTreeNeed && cd.isTreeConflict()) {
+                info.treeConflicted = true;
             }
         }
         return info;
     }
 
-    public boolean isAdminDirectory(String name) {
-        return name != null && (SVNFileUtil.isWindows) ? SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) : SVNFileUtil.getAdminDirectoryName().equals(name);
+    public String getProperty(File localAbsPath, String name) throws SVNException {
+
+        assert(isAbsolute(localAbsPath));
+        assert(!SVNProperty.isEntryProperty(name));
+
+        SVNProperties prophash = null;
+
+        final WCDbKind wcKind = db.readKind(localAbsPath, true);
+
+        if (wcKind == WCDbKind.Unknown)
+          {
+            /* The node is not present, or not really "here". Therefore, the
+               property is not present.  */
+            return null;
+          }
+
+        final boolean hidden = db.isNodeHidden(localAbsPath);
+        if (hidden)
+          {
+            /* The node is not present, or not really "here". Therefore, the
+               property is not present.  */
+            return null;
+          }
+
+        if (SVNProperty.isWorkingCopyProperty(name))
+          {
+            /* If no dav cache can be found, just set VALUE to NULL (for
+               compatibility with pre-WC-NG code). */
+            try{
+                prophash = db.getBaseDavCache(localAbsPath);
+            } catch(SVNException e) {
+                if(e.getErrorMessage().getErrorCode()==SVNErrorCode.WC_PATH_NOT_FOUND) {
+                    return null;
+                }
+                throw e;
+            }
+          }
+        else
+          {
+            /* regular prop */
+            prophash = getActialProperties(localAbsPath);
+          }
+
+        if (prophash!=null){
+            return prophash.getStringValue(name);
+        }
+
+        return null;
+        
     }
 
-    public String getProperty(File path, String propertyName) {
+    private SVNProperties getActialProperties(File localAbsPath) {
         // TODO
         return null;
     }
 
     public SVNStatus assembleUnversioned(File nodeAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
+        // TODO
         return null;
     }
 
     public SVNEntry getEntry(File nodeAbsPath, boolean b, SVNNodeKind unknown, boolean c) throws SVNException {
+        // TODO
         return null;
     }
 

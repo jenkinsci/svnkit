@@ -309,7 +309,7 @@ public class SVNStatusEditor17 {
                 continue;
             }
 
-            if (myWCContext.isAdminDirectory(key)) {
+            if (SVNWCContext.isAdminDirectory(key)) {
                 continue;
             }
 
