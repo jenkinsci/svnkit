@@ -624,10 +624,10 @@ public class SVNWCContext {
         return diff != null && !diff.isEmpty();
     }
 
-    private boolean isTextModified(File local_abspath, boolean force_comparison, boolean compare_textbases) throws SVNException {
+    private boolean isTextModified(File localAbsPath, boolean forceComparison, boolean compareTextBases) throws SVNException {
 
         /* No matter which way you look at it, the file needs to exist. */
-        if (!local_abspath.exists() || !local_abspath.isFile()) {
+        if (!localAbsPath.exists() || !localAbsPath.isFile()) {
             /*
              * There is no entity, or, the entity is not a regular file or link.
              * So, it can't be modified.
@@ -635,7 +635,7 @@ public class SVNWCContext {
             return false;
         }
 
-        if (!force_comparison) {
+        if (!forceComparison) {
 
             /*
              * We're allowed to use a heuristic to determine whether files may
@@ -661,24 +661,24 @@ public class SVNWCContext {
              * locally modified.)
              */
 
-            boolean compare_them = false;
+            boolean compareThem = false;
 
             /* Read the relevant info */
             WCDbInfo readInfo = null;
             try {
-                readInfo = db.readInfo(local_abspath, InfoField.lastModTime, InfoField.translatedSize);
+                readInfo = db.readInfo(localAbsPath, InfoField.lastModTime, InfoField.translatedSize);
             } catch (SVNException e) {
-                compare_them = true;
+                compareThem = true;
             }
 
-            if (!compare_them) {
+            if (!compareThem) {
                 /* Compare the sizes, if applicable */
-                if (readInfo.translatedSize != ISVNWCDb.ENTRY_WORKING_SIZE_UNKNOWN && local_abspath.length() != readInfo.translatedSize) {
-                    compare_them = true;
+                if (readInfo.translatedSize != ISVNWCDb.ENTRY_WORKING_SIZE_UNKNOWN && localAbsPath.length() != readInfo.translatedSize) {
+                    compareThem = true;
                 }
             }
 
-            if (!compare_them) {
+            if (!compareThem) {
                 /*
                  * Compare the timestamps
                  * 
@@ -686,12 +686,12 @@ public class SVNWCContext {
                  * means the timestamps won't be equal, so there's no need to
                  * explicitly check the 'absent' value.
                  */
-                if (readInfo.lastModTime != local_abspath.lastModified()) {
-                    compare_them = true;
+                if (readInfo.lastModTime != localAbsPath.lastModified()) {
+                    compareThem = true;
                 }
             }
 
-            if (!compare_them) {
+            if (!compareThem) {
                 return false;
             }
         }
@@ -706,9 +706,9 @@ public class SVNWCContext {
          * We used to stat for the working base here, but we just give
          * compare_and_verify a try; we'll check for errors afterwards
          */
-        InputStream pristine_stream;
+        InputStream pristineStream;
         try {
-            pristine_stream = getPristineContents(local_abspath);
+            pristineStream = getPristineContents(localAbsPath);
         } catch (SVNException e) {
             if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                 return true;
@@ -716,12 +716,12 @@ public class SVNWCContext {
             throw e;
         }
 
-        if (pristine_stream == null) {
+        if (pristineStream == null) {
             return true;
         }
 
         /* Check all bytes, and verify checksum if requested. */
-        return compareAndVerify(local_abspath, pristine_stream, compare_textbases, force_comparison);
+        return compareAndVerify(localAbsPath, pristineStream, compareTextBases, forceComparison);
     }
 
     private InputStream getPristineContents(File localAbspath) throws SVNException {
@@ -789,29 +789,29 @@ public class SVNWCContext {
      * PRISTINE_STREAM will be closed before a successful return.
      * 
      */
-    private boolean compareAndVerify(File versioned_file_abspath, InputStream pristine_stream, boolean compare_textbases, boolean verify_checksum) throws SVNException {
+    private boolean compareAndVerify(File versionedFileAbsPath, InputStream pristineStream, boolean compareTextBases, boolean verifyChecksum) throws SVNException {
         boolean same = false;
 
-        assert (versioned_file_abspath != null && versioned_file_abspath.isAbsolute());
+        assert (versionedFileAbsPath != null && versionedFileAbsPath.isAbsolute());
 
-        final SVNEolStyleInfo eolStyle = getEolStyle(versioned_file_abspath);
-        final Map keywords = getKeyWords(versioned_file_abspath, null);
-        final boolean special = isSpecial(versioned_file_abspath);
-        final boolean need_translation = isTranslationRequired(eolStyle.eolStyle, eolStyle.eolStr, keywords, special, true);
+        final SVNEolStyleInfo eolStyle = getEolStyle(versionedFileAbsPath);
+        final Map keywords = getKeyWords(versionedFileAbsPath, null);
+        final boolean special = isSpecial(versionedFileAbsPath);
+        final boolean needTranslation = isTranslationRequired(eolStyle.eolStyle, eolStyle.eolStr, keywords, special, true);
 
-        if (verify_checksum || need_translation) {
+        if (verifyChecksum || needTranslation) {
             /* Reading files is necessary. */
             SVNChecksum checksum = null;
-            InputStream v_stream = null; /* versioned_file */
-            SVNChecksum node_checksum = null;
+            InputStream vStream = null; /* versioned_file */
+            SVNChecksum nodeChecksum = null;
 
             try {
-                if (verify_checksum) {
+                if (verifyChecksum) {
                     /*
                      * Need checksum verification, so read checksum from entries
                      * file and setup checksummed stream for base file.
                      */
-                    final WCDbInfo nodeInfo = db.readInfo(versioned_file_abspath, InfoField.checksum);
+                    final WCDbInfo nodeInfo = db.readInfo(versionedFileAbsPath, InfoField.checksum);
                     /*
                      * SVN_EXPERIMENTAL_PRISTINE: node_checksum is originally
                      * MD-5 but will later be SHA-1. To allow for this, we
@@ -819,16 +819,16 @@ public class SVNWCContext {
                      * compare them.
                      */
                     if (nodeInfo.checksum != null) {
-                        pristine_stream = new SVNChecksumInputStream(pristine_stream, nodeInfo.checksum.getKind().toString());
+                        pristineStream = new SVNChecksumInputStream(pristineStream, nodeInfo.checksum.getKind().toString());
                     }
                 }
 
                 if (special) {
-                    v_stream = readSpecialFile(versioned_file_abspath);
+                    vStream = readSpecialFile(versionedFileAbsPath);
                 } else {
-                    v_stream = SVNFileUtil.openFileForReading(versioned_file_abspath);
+                    vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
 
-                    if (compare_textbases && need_translation) {
+                    if (compareTextBases && needTranslation) {
                         if (eolStyle.eolStyle == SVNEolStyle.Native)
                             eolStyle.eolStr = SVNEolStyleInfo.NATIVE_EOL_STR;
                         else if (eolStyle.eolStyle != SVNEolStyle.Fixed && eolStyle.eolStyle != SVNEolStyle.None) {
@@ -840,46 +840,46 @@ public class SVNWCContext {
                          * Wrap file stream to detranslate into normal form,
                          * "repairing" the EOL style if it is inconsistent.
                          */
-                        v_stream = SVNTranslator.getTranslatingInputStream(v_stream, null, eolStyle.eolStr, true, keywords, false);
-                    } else if (need_translation) {
+                        vStream = SVNTranslator.getTranslatingInputStream(vStream, null, eolStyle.eolStr, true, keywords, false);
+                    } else if (needTranslation) {
                         /*
                          * Wrap base stream to translate into working copy form,
                          * and arrange to throw an error if its EOL style is
                          * inconsistent.
                          */
-                        pristine_stream = SVNTranslator.getTranslatingInputStream(pristine_stream, null, eolStyle.eolStr, false, keywords, true);
+                        pristineStream = SVNTranslator.getTranslatingInputStream(pristineStream, null, eolStyle.eolStr, false, keywords, true);
                     }
                 }
 
                 try {
-                    same = isSameContents(pristine_stream, v_stream);
+                    same = isSameContents(pristineStream, vStream);
                 } catch (IOException e) {
-                    SVNTranslator.translationError(versioned_file_abspath, e);
+                    SVNTranslator.translationError(versionedFileAbsPath, e);
                 }
 
             } finally {
-                SVNFileUtil.closeFile(pristine_stream);
-                SVNFileUtil.closeFile(v_stream);
+                SVNFileUtil.closeFile(pristineStream);
+                SVNFileUtil.closeFile(vStream);
             }
 
-            if (verify_checksum && node_checksum != null) {
-                if (checksum != null && !isChecksumMatch(checksum, node_checksum)) {
+            if (verifyChecksum && nodeChecksum != null) {
+                if (checksum != null && !isChecksumMatch(checksum, nodeChecksum)) {
                     SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT_TEXT_BASE, "Checksum mismatch indicates corrupt text base for file: "
                             + "'{0}':\n   expected:  {1}\n     actual:  {2}\n", new Object[] {
-                            versioned_file_abspath, node_checksum, checksum
+                            versionedFileAbsPath, nodeChecksum, checksum
                     });
                     SVNErrorManager.error(err, SVNLogType.WC);
                 }
             }
         } else {
             /* Translation would be a no-op, so compare the original file. */
-            InputStream v_stream; /* versioned_file */
+            InputStream vStream; /* versioned_file */
 
-            v_stream = SVNFileUtil.openFileForReading(versioned_file_abspath);
+            vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
             try {
-                same = isSameContents(v_stream, pristine_stream);
+                same = isSameContents(vStream, pristineStream);
             } catch (IOException e) {
-                SVNTranslator.translationError(versioned_file_abspath, e);
+                SVNTranslator.translationError(versionedFileAbsPath, e);
             }
 
         }
@@ -917,22 +917,22 @@ public class SVNWCContext {
         }
     }
 
-    private InputStream readSpecialFile(File path) throws SVNException {
+    private InputStream readSpecialFile(File localAbsPath) throws SVNException {
         /*
          * First determine what type of special file we are detranslating.
          */
-        final SVNFileType filetype = SVNFileType.getType(path);
+        final SVNFileType filetype = SVNFileType.getType(localAbsPath);
         if (SVNFileType.FILE == filetype) {
             /*
              * Nothing special to do here, just create stream from the original
              * file's contents.
              */
-            return SVNFileUtil.openFileForReading(path, SVNLogType.WC);
+            return SVNFileUtil.openFileForReading(localAbsPath, SVNLogType.WC);
         } else if (SVNFileType.SYMLINK == filetype) {
             /* Determine the destination of the link. */
-            String linkPath = SVNFileUtil.getSymlinkName(path);
+            String linkPath = SVNFileUtil.getSymlinkName(localAbsPath);
             if (linkPath == null) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", path);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Cannot detranslate symbolic link ''{0}''; file does not exist or not a symbolic link", localAbsPath);
                 SVNErrorManager.error(err, SVNLogType.DEFAULT);
             }
             String symlinkContents = "link " + linkPath;
@@ -961,17 +961,16 @@ public class SVNWCContext {
         return SVNEolStyleInfo.fromValue(propVal);
     }
 
-    private Map getKeyWords(File local_abspath, String force_list) throws SVNException {
-        assert (isAbsolute(local_abspath));
+    private Map getKeyWords(File localAbsPath, String forceList) throws SVNException {
+        assert (isAbsolute(localAbsPath));
 
         String list;
-
         /*
          * Choose a property list to parse: either the one that came into this
          * function, or the one attached to PATH.
          */
-        if (force_list == null) {
-            list = getProperty(local_abspath, SVNProperty.KEYWORDS);
+        if (forceList == null) {
+            list = getProperty(localAbsPath, SVNProperty.KEYWORDS);
 
             /* The easy answer. */
             if (list == null) {
@@ -979,10 +978,10 @@ public class SVNWCContext {
             }
 
         } else
-            list = force_list;
+            list = forceList;
 
-        final SVNURL url = getNodeUrl(local_abspath);
-        final WCDbInfo readInfo = db.readInfo(local_abspath, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
+        final SVNURL url = getNodeUrl(localAbsPath);
+        final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.changedRev, InfoField.changedDate, InfoField.changedAuthor);
         return SVNTranslator.computeKeywords(list, url.toString(), Long.toString(readInfo.changedRev), readInfo.changedDate.toString(), readInfo.changedAuthor, getOptions());
     }
 
@@ -1079,59 +1078,63 @@ public class SVNWCContext {
     }
 
     public String getProperty(File localAbsPath, String name) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+        assert (!SVNProperty.isEntryProperty(name));
 
-        assert(isAbsolute(localAbsPath));
-        assert(!SVNProperty.isEntryProperty(name));
-
-        SVNProperties prophash = null;
+        SVNProperties properties = null;
 
         final WCDbKind wcKind = db.readKind(localAbsPath, true);
 
-        if (wcKind == WCDbKind.Unknown)
-          {
-            /* The node is not present, or not really "here". Therefore, the
-               property is not present.  */
+        if (wcKind == WCDbKind.Unknown) {
+            /*
+             * The node is not present, or not really "here". Therefore, the
+             * property is not present.
+             */
             return null;
-          }
+        }
 
         final boolean hidden = db.isNodeHidden(localAbsPath);
-        if (hidden)
-          {
-            /* The node is not present, or not really "here". Therefore, the
-               property is not present.  */
+        if (hidden) {
+            /*
+             * The node is not present, or not really "here". Therefore, the
+             * property is not present.
+             */
             return null;
-          }
+        }
 
-        if (SVNProperty.isWorkingCopyProperty(name))
-          {
-            /* If no dav cache can be found, just set VALUE to NULL (for
-               compatibility with pre-WC-NG code). */
-            try{
-                prophash = db.getBaseDavCache(localAbsPath);
-            } catch(SVNException e) {
-                if(e.getErrorMessage().getErrorCode()==SVNErrorCode.WC_PATH_NOT_FOUND) {
+        if (SVNProperty.isWorkingCopyProperty(name)) {
+            /*
+             * If no dav cache can be found, just set VALUE to NULL (for
+             * compatibility with pre-WC-NG code).
+             */
+            try {
+                properties = db.getBaseDavCache(localAbsPath);
+            } catch (SVNException e) {
+                if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_PATH_NOT_FOUND) {
                     return null;
                 }
                 throw e;
             }
-          }
-        else
-          {
+        } else {
             /* regular prop */
-            prophash = getActialProperties(localAbsPath);
-          }
+            properties = getActialProperties(localAbsPath);
+        }
 
-        if (prophash!=null){
-            return prophash.getStringValue(name);
+        if (properties != null) {
+            return properties.getStringValue(name);
         }
 
         return null;
-        
+
     }
 
-    private SVNProperties getActialProperties(File localAbsPath) {
-        // TODO
-        return null;
+    private SVNProperties getActialProperties(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+        /*
+         * ### perform some state checking. for example, locally-deleted nodes
+         * ### should not have any ACTUAL props.
+         */
+        return db.readProperties(localAbsPath);
     }
 
     public SVNStatus assembleUnversioned(File nodeAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
