@@ -373,6 +373,8 @@ public interface ISVNWCDb {
     /** Close DB. */
     void close() throws SVNException;
 
+    ISVNOptions getConfig();
+    
     /**
      * Initialize the SqlDB for LOCAL_ABSPATH, which should be a working copy
      * path.

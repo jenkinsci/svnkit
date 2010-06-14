@@ -294,4 +294,8 @@ public class SVNWCDb implements ISVNWCDb {
         return null;
     }
 
+    public ISVNOptions getConfig() {
+        return null;
+    }
+
 }

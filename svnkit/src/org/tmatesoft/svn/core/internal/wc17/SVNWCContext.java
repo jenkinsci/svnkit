@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -65,9 +66,37 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SVNWCContext {
 
     public static class SVNEolStyleInfo {
-        public static final byte[] NATIVE_EOL_STR = "\n".getBytes();
+
+        public static final byte[] NATIVE_EOL_STR = System.getProperty("line.separator").getBytes();
+        public static final byte[] LF_EOL_STR = {'\n'};
+        public static final byte[] CR_EOL_STR = {'\r'};
+        public static final byte[] CRLF_EOL_STR = {'\r', '\n'};
+
         public SVNEolStyle eolStyle;
         public byte[] eolStr;
+
+        public SVNEolStyleInfo(SVNEolStyle style, byte[] str) {
+            this.eolStyle = style;
+            this.eolStr = str;
+        }
+
+        public static SVNEolStyleInfo fromValue(String value) {
+            if (value == null) {
+                /* property doesn't exist. */
+                return new SVNEolStyleInfo(SVNEolStyle.None, null);
+            } else if ("native".equals(value)) {
+                return new SVNEolStyleInfo(SVNEolStyle.Native, NATIVE_EOL_STR);
+            } else if ("LF".equals(value)) {
+                return new SVNEolStyleInfo(SVNEolStyle.Fixed, LF_EOL_STR);
+            } else if ("CR".equals(value)) {
+                return new SVNEolStyleInfo(SVNEolStyle.Fixed, CR_EOL_STR);
+            } else if ("CRLF".equals(value)) {
+                return new SVNEolStyleInfo(SVNEolStyle.Fixed, CRLF_EOL_STR);
+            } else {
+                return new SVNEolStyleInfo(SVNEolStyle.Unknown, null);
+            }
+        }
+
     }
 
     public enum SVNEolStyle {
@@ -116,6 +145,14 @@ public class SVNWCContext {
         if (eventHandler != null) {
             eventHandler.checkCancelled();
         }
+    }
+
+    private boolean isAbsolute(File localAbsPath) {
+        return localAbsPath!=null && localAbsPath.isAbsolute();
+    }
+    
+    private ISVNOptions getOptions() {
+        return db.getConfig();
     }
 
     public SVNNodeKind getNodeKind(File path, boolean showHidden) throws SVNException {
@@ -909,21 +946,56 @@ public class SVNWCContext {
             boolean special, boolean force_eol_check) {
         return (special || keywords!=null
                 || (style != SVNEolStyle.None && force_eol_check)
-                //|| (style == SVNEolStyle.Native &&
-                //    strcmp(APR_EOL_STR, SVN_SUBST_NATIVE_EOL_STR) != 0)
-                || (style == SVNEolStyle.Fixed && Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol))
+           //   || (style == SVNEolStyle.Native && strcmp(APR_EOL_STR, SVN_SUBST_NATIVE_EOL_STR) != 0)
+                || (style == SVNEolStyle.Fixed && !Arrays.equals(SVNEolStyleInfo.NATIVE_EOL_STR, eol))
            );
 
     }
 
-    private Map getKeyWords(File versionedFileAbspath, String force_list) {
-        // TODO
-        return null;
+    private SVNEolStyleInfo getEolStyle(File localAbsPath) {
+        assert(isAbsolute(localAbsPath));
+        
+        /* Get the property value. */
+        final String propVal = getProperty(localAbsPath, SVNProperty.EOL_STYLE);
+        
+        /* Convert it. */
+        return SVNEolStyleInfo.fromValue(propVal);
     }
 
-    private SVNEolStyleInfo getEolStyle(File versionedFileAbspath) {
-        // TODO
-        return null;
+    private Map getKeyWords(File local_abspath, String force_list) throws SVNException {
+        assert(isAbsolute(local_abspath));
+
+        String list;
+        
+        /* Choose a property list to parse:  either the one that came into
+           this function, or the one attached to PATH. */
+        if (force_list == null)
+          {
+            list = getProperty(local_abspath, SVNProperty.KEYWORDS);
+
+            /* The easy answer. */
+            if (list == null)
+              {
+                return null;
+              }
+
+          }
+        else
+          list = force_list;
+
+        final WCDbInfo readInfo = db.readInfo(local_abspath, 
+                InfoField.changedRev, 
+                InfoField.changedDate, 
+                InfoField.changedAuthor);
+        
+        final SVNURL url = getNodeUrl(local_abspath);
+        return SVNTranslator.computeKeywords(list,
+                url.toString(),
+                Long.toString(readInfo.changedRev),
+                readInfo.changedDate.toString(),
+                readInfo.changedAuthor, 
+                getOptions());
+
     }
 
     private boolean isSwitched(File path) {
