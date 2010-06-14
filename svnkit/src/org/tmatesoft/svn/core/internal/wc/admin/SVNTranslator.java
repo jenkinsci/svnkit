@@ -475,7 +475,8 @@ public class SVNTranslator {
         if (expand) {
             if (eol != null) {
                 byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
-                if (Arrays.equals(convertedEOL, eol)) {
+                boolean encodingConvertsEOL = !Arrays.equals(lf, convertedEOL);
+                if (Arrays.equals(convertedEOL, eol) && encodingConvertsEOL) {
                     out = new SVNCharsetOutputStream(out, UTF8_CHARSET, cs);
                     if (keywords != null) {
                         out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
@@ -488,7 +489,8 @@ public class SVNTranslator {
         }
         if (eol != null) {
             byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
-            if (Arrays.equals(convertedEOL, lf)) {
+            boolean encodingConvertsEOL = !Arrays.equals(eol, convertedEOL);
+            if (Arrays.equals(convertedEOL, lf) && encodingConvertsEOL) {
                 if (keywords != null) {
                     out = new SVNTranslatorOutputStream(out, null, false, keywords, expand);
                 }
@@ -508,7 +510,8 @@ public class SVNTranslator {
         if (expand) {
             if (eol != null) {
                 byte[] convertedEOL = convertEOL(lf, UTF8_CHARSET, cs);
-                if (Arrays.equals(eol, convertedEOL)) {
+                boolean encodingConvertsEOL = !Arrays.equals(convertedEOL, lf);
+                if (Arrays.equals(eol, convertedEOL) && encodingConvertsEOL) {
                     if (keywords != null) {
                         in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
                     }
@@ -520,7 +523,8 @@ public class SVNTranslator {
         }
         if (eol != null) {
             byte[] convertedEOL = convertEOL(eol, cs, UTF8_CHARSET);
-            if (Arrays.equals(lf, convertedEOL)) {
+            boolean charsetConvertsEOL = !Arrays.equals(convertedEOL, eol);
+            if (Arrays.equals(lf, convertedEOL) && charsetConvertsEOL) {
                 in = new SVNCharsetInputStream(in, cs, UTF8_CHARSET);
                 if (keywords != null) {
                     in = new SVNTranslatorInputStream(in, null, false, keywords, expand);
