@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -57,6 +59,8 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.Repos
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
+import org.tmatesoft.svn.core.wc.SVNMergeFileSet;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -501,11 +505,10 @@ public class SVNWCContext {
                  * marked it as resolved by deleting the artifact files, so
                  * check for that.
                  */
-                getIsConflicted(path, text_conflict_p, prop_conflict_p, null);
-
-                if (text_conflict_p[0])
+                final ConflictedInfo isConflicted = getIsConflicted(path, true, true, false);
+                if (isConflicted.textConflicted)
                     final_text_status = SVNStatusType.STATUS_CONFLICTED;
-                if (prop_conflict_p[0])
+                if (isConflicted.propConflicted)
                     final_prop_status = SVNStatusType.STATUS_CONFLICTED;
             }
 
@@ -1017,8 +1020,70 @@ public class SVNWCContext {
         return SVNURL.parseURIDecoded(SVNPathUtil.append(readInfo.reposRootUrl.toDecodedString(), readInfo.reposRelPath.toString()));
     }
 
-    private void getIsConflicted(File path, boolean[] textConflictP, boolean[] propConflictP, Object object) {
-        // TODO
+    private static class ConflictedInfo {
+
+        public boolean textConflicted;
+        public boolean propConflicted;
+        public boolean treeConflicted;
+    }
+
+    private ConflictedInfo getIsConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
+
+        final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
+        final ConflictedInfo info = new ConflictedInfo();
+        if (!readInfo.conflicted) {
+            return info;
+        }
+        final File dir_path = (readInfo.kind == WCDbKind.Dir) ? localAbsPath : localAbsPath.getParentFile();
+        final List<SVNTreeConflictDescription> conflicts = db.readConflicts(localAbsPath);
+
+        for (final SVNTreeConflictDescription cd : conflicts) {
+            final SVNMergeFileSet cdf = cd.getMergeFiles();
+            if (cd.isTextConflict()) {
+                /*
+                 * Look for any text conflict, exercising only as much effort as
+                 * necessary to obtain a definitive answer. This only applies to
+                 * files, but we don't have to explicitly check that entry is a
+                 * file, since these attributes would never be set on a
+                 * directory anyway. A conflict file entry notation only counts
+                 * if the conflict file still exists on disk.
+                 */
+                if (!isTextNeed)
+                    continue;
+                if (cdf.getBasePath() != null) {
+                    final File path = new File(dir_path, cdf.getBasePath());
+                    final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
+                    info.textConflicted = (kind == SVNNodeKind.FILE);
+                    if (info.textConflicted)
+                        continue;
+                }
+                if (cdf.getRepositoryPath() != null) {
+                    final File path = new File(dir_path, cdf.getRepositoryPath());
+                    final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
+                    info.textConflicted = (kind == SVNNodeKind.FILE);
+                    if (info.textConflicted)
+                        continue;
+                }
+                if (cdf.getLocalPath() != null) {
+                    final File path = new File(dir_path, cdf.getLocalPath());
+                    final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
+                    info.textConflicted = (kind == SVNNodeKind.FILE);
+                }
+            } else if (cd.isPropertyConflict()) {
+                if (!isPropNeed)
+                    continue;
+                if (cdf.getRepositoryPath() != null) {
+                    final File path = new File(dir_path, cdf.getRepositoryPath());
+                    final SVNNodeKind kind = SVNFileType.getNodeKind(SVNFileType.getType(path));
+                    info.propConflicted = (kind == SVNNodeKind.FILE);
+                }
+            } else if (cd.isTreeConflict()) {
+                if (isTreeNeed) {
+                    info.treeConflicted = true;
+                }
+            }
+        }
+        return info;
     }
 
     public boolean isAdminDirectory(String name) {
