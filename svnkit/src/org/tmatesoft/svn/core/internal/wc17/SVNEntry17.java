@@ -19,24 +19,73 @@ import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.db.SVNEntryInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-
 
 /**
  * @version 1.3
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNEntry17 extends SVNEntry {
 
-    private SVNEntryInfo myEntryInfo;
+    private String author;
+    private String[] cachableProperties;
+    private String changelistName;
+    private String checksum;
+    private String committedDate;
+    private long committedRevision;
+    private String conflictNew;
+    private String conflictOld;
+    private String conflictWorking;
+    private long copyFromRevision;
+    private SVNURL copyFromSVNURL;
+    private String copyFromURL;
+    private SVNDepth depth;
+    private String externalFilePath;
+    private SVNRevision externalFilePegRevision;
+    private SVNRevision externalFileRevision;
+    private SVNNodeKind kind;
+    private String lockComment;
+    private String lockCreationDate;
+    private String lockOwner;
+    private String lockToken;
+    private String name;
+    private String[] presentProperties;
+    private String propRejectFile;
+    private String propTime;
+    private String repositoryRoot;
+    private SVNURL repositoryRootURL;
+    private long revision;
+    private SVNURL svnUrl;
+    private String schedule;
+    private String textTime;
+    private String treeConflictData;
+    private Map treeConflicts;
+    private String url;
+    private String uuid;
+    private long workingSize;
+    private boolean absent;
+    private boolean copied;
+    private boolean deleted;
+    private boolean directory;
+    private boolean file;
+    private boolean hidden;
+    private boolean incomplete;
+    private boolean keepLocal;
+    private boolean scheduledForAddition;
+    private boolean scheduledForDeletion;
+    private boolean scheduledForReplacement;
+    private boolean thisDir;
 
-    public SVNEntry17(SVNEntryInfo entryInfo) {
-        this.myEntryInfo = entryInfo;
+    public SVNEntry17() {
     }
 
     public Map asMap() {
+        // TODO
         return null;
+    }
+
+    public void loadProperties(Map entryProps) {
+        // TODO
     }
 
     public SVNAdminArea getAdminArea() {
@@ -44,321 +93,387 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public String getAuthor() {
-        return myEntryInfo.getCommittedAuthor();
+        return author;
     }
 
     public String[] getCachableProperties() {
-        return null;
+        return cachableProperties;
     }
 
     public String getChangelistName() {
-        return null;
+        return changelistName;
     }
 
     public String getChecksum() {
-        return null;
+        return checksum;
     }
 
     public String getCommittedDate() {
-        return null;
+        return committedDate;
     }
 
     public long getCommittedRevision() {
-        return 0;
+        return committedRevision;
     }
 
     public String getConflictNew() {
-        return null;
+        return conflictNew;
     }
 
     public String getConflictOld() {
-        return null;
+        return conflictOld;
     }
 
     public String getConflictWorking() {
-        return null;
+        return conflictWorking;
     }
 
     public long getCopyFromRevision() {
-        return 0;
+        return copyFromRevision;
     }
 
     public SVNURL getCopyFromSVNURL() throws SVNException {
-        return null;
+        return copyFromSVNURL;
     }
 
     public String getCopyFromURL() {
-        return null;
+        return copyFromURL;
     }
 
     public SVNDepth getDepth() {
-        return null;
+        return depth;
     }
 
     public String getExternalFilePath() {
-        return null;
+        return externalFilePath;
     }
 
     public SVNRevision getExternalFilePegRevision() {
-        return null;
+        return externalFilePegRevision;
     }
 
     public SVNRevision getExternalFileRevision() {
-        return null;
+        return externalFileRevision;
     }
 
     public SVNNodeKind getKind() {
-        return null;
+        return kind;
     }
 
     public String getLockComment() {
-        return null;
+        return lockComment;
     }
 
     public String getLockCreationDate() {
-        return null;
+        return lockCreationDate;
     }
 
     public String getLockOwner() {
-        return null;
+        return lockOwner;
     }
 
     public String getLockToken() {
-        return null;
+        return lockToken;
     }
 
     public String getName() {
-        return null;
+        return name;
     }
 
     public String[] getPresentProperties() {
-        return null;
+        return presentProperties;
     }
 
     public String getPropRejectFile() {
-        return null;
+        return propRejectFile;
     }
 
     public String getPropTime() {
-        return null;
+        return propTime;
     }
 
     public String getRepositoryRoot() {
-        return null;
+        return repositoryRoot;
     }
 
     public SVNURL getRepositoryRootURL() throws SVNException {
-        return null;
+        return repositoryRootURL;
     }
 
     public long getRevision() {
-        return 0;
+        return revision;
     }
 
     public SVNURL getSVNURL() throws SVNException {
-        return null;
+        return svnUrl;
     }
 
     public String getSchedule() {
-        return null;
+        return schedule;
     }
 
     public String getTextTime() {
-        return null;
+        return textTime;
     }
 
     public String getTreeConflictData() {
-        return null;
+        return treeConflictData;
     }
 
     public Map getTreeConflicts() throws SVNException {
-        return null;
+        return treeConflicts;
     }
 
     public String getURL() {
-        return null;
+        return url;
     }
 
     public String getUUID() {
-        return null;
+        return uuid;
     }
 
     public long getWorkingSize() {
-        return 0;
+        return workingSize;
     }
 
     public boolean isAbsent() {
-        return false;
+        return absent;
     }
 
     public boolean isCopied() {
-        return false;
+        return copied;
     }
 
     public boolean isDeleted() {
-        return false;
+        return deleted;
     }
 
     public boolean isDirectory() {
-        return false;
+        return directory;
     }
 
     public boolean isFile() {
-        return false;
+        return file;
     }
 
     public boolean isHidden() {
-        return false;
+        return hidden;
     }
 
     public boolean isIncomplete() {
-        return false;
+        return incomplete;
     }
 
     public boolean isKeepLocal() {
-        return false;
+        return keepLocal;
     }
 
     public boolean isScheduledForAddition() {
-        return false;
+        return scheduledForAddition;
     }
 
     public boolean isScheduledForDeletion() {
-        return false;
+        return scheduledForDeletion;
     }
 
     public boolean isScheduledForReplacement() {
-        return false;
+        return scheduledForReplacement;
     }
 
     public boolean isThisDir() {
-        return false;
-    }
-
-    public void loadProperties(Map entryProps) {
+        return thisDir;
     }
 
     public void scheduleForAddition() {
+        scheduledForAddition = true;
     }
 
     public void scheduleForDeletion() {
+        scheduledForDeletion = true;
     }
 
     public void scheduleForReplacement() {
+        scheduledForReplacement = true;
     }
 
     public void setAbsent(boolean absent) {
+        this.absent = absent;
     }
 
     public boolean setAuthor(String cmtAuthor) {
+        if (isChangedValue(this.author, cmtAuthor)) {
+            this.author = cmtAuthor;
+            return true;
+        }
         return false;
     }
 
     public void setCachableProperties(String[] cachableProps) {
+        this.cachableProperties = cachableProps;
     }
 
     public boolean setChangelistName(String changelistName) {
+        if (isChangedValue(this.changelistName, changelistName)) {
+            this.changelistName = changelistName;
+            return true;
+        }
         return false;
     }
 
     public void setChecksum(String checksum) {
+        this.checksum = checksum;
     }
 
     public void setCommittedDate(String date) {
+        this.committedDate = date;
     }
 
     public boolean setCommittedRevision(long cmtRevision) {
+        if (this.committedRevision != cmtRevision) {
+            this.committedRevision = cmtRevision;
+            return true;
+        }
         return false;
     }
 
     public void setConflictNew(String name) {
+        this.conflictNew = name;
     }
 
     public void setConflictOld(String name) {
+        this.conflictOld = name;
     }
 
     public void setConflictWorking(String name) {
+        this.conflictWorking = name;
     }
 
     public void setCopied(boolean copied) {
+        this.copied = copied;
     }
 
     public void setCopyFromRevision(long revision) {
+        this.revision = revision;
     }
 
     public boolean setCopyFromURL(String url) {
+        if (isChangedValue(this.copyFromURL, url)) {
+            this.copyFromURL = url;
+            return true;
+        }
         return false;
     }
 
     public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     public void setDepth(SVNDepth depth) {
+        this.depth = depth;
     }
 
     public void setIncomplete(boolean incomplete) {
+        this.incomplete = incomplete;
     }
 
     public void setKeepLocal(boolean keepLocal) {
+        this.keepLocal = keepLocal;
     }
 
     public void setKind(SVNNodeKind kind) {
+        this.kind = kind;
     }
 
     public void setLockComment(String comment) {
+        this.lockComment = comment;
     }
 
     public void setLockCreationDate(String date) {
+        this.lockCreationDate = date;
     }
 
     public void setLockOwner(String owner) {
+        this.lockOwner = owner;
     }
 
     public void setLockToken(String token) {
+        this.lockToken = token;
     }
 
     public void setPropRejectFile(String name) {
+        this.propRejectFile = name;
     }
 
     public void setPropTime(String time) {
+        this.propTime = time;
     }
 
     public boolean setRepositoryRoot(String url) {
+        if (isChangedValue(this.repositoryRoot, url)) {
+            this.repositoryRoot = url;
+            return true;
+        }
         return false;
     }
 
     public boolean setRepositoryRootURL(SVNURL url) {
+        if (isChangedValue(this.repositoryRootURL, url)) {
+            this.repositoryRootURL = url;
+            return true;
+        }
         return false;
     }
 
     public boolean setRevision(long revision) {
+        if (this.revision != revision) {
+            this.revision = revision;
+            return true;
+        }
         return false;
     }
 
     public void setSchedule(String schedule) {
+        this.schedule = schedule;
     }
 
     public void setTextTime(String time) {
+        this.textTime = time;
     }
 
     public void setTreeConflictData(String conflictData) {
+        this.treeConflictData = conflictData;
     }
 
     public void setTreeConflicts(Map treeConflicts) throws SVNException {
+        this.treeConflicts = treeConflicts;
     }
 
     public boolean setURL(String url) {
+        if (isChangedValue(this.url, url)) {
+            this.url = url;
+            return true;
+        }
         return false;
     }
 
     public void setUUID(String uuid) {
+        this.uuid = uuid;
     }
 
     public boolean setWorkingSize(long size) {
+        if (this.workingSize != size) {
+            this.workingSize = size;
+            return true;
+        }
         return false;
     }
 
     public void unschedule() {
+        this.schedule = null;
+    }
+
+    private boolean isChangedValue(Object oldValue, Object newValue) {
+        return (oldValue == null && newValue != null) || (oldValue != null && newValue == null) || (!oldValue.equals(newValue));
     }
 
 }
