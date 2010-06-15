@@ -133,6 +133,9 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public SVNURL getCopyFromSVNURL() throws SVNException {
+        if(copyFromSVNURL==null && copyFromURL!=null){
+            copyFromSVNURL = SVNURL.parseURIEncoded(copyFromURL);
+        }
         return copyFromSVNURL;
     }
 
@@ -197,6 +200,9 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public SVNURL getRepositoryRootURL() throws SVNException {
+        if(repositoryRootURL==null && repositoryRoot!=null){
+            repositoryRootURL = SVNURL.parseURIEncoded(repositoryRoot);
+        }
         return repositoryRootURL;
     }
 
@@ -205,6 +211,9 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public SVNURL getSVNURL() throws SVNException {
+        if(svnUrl==null && url!=null){
+            svnUrl = SVNURL.parseURIEncoded(url);
+        }
         return svnUrl;
     }
 
@@ -359,6 +368,7 @@ public class SVNEntry17 extends SVNEntry {
     public boolean setCopyFromURL(String url) {
         if (isChangedValue(this.copyFromURL, url)) {
             this.copyFromURL = url;
+            this.copyFromSVNURL = null;
             return true;
         }
         return false;
@@ -411,15 +421,18 @@ public class SVNEntry17 extends SVNEntry {
     public boolean setRepositoryRoot(String url) {
         if (isChangedValue(this.repositoryRoot, url)) {
             this.repositoryRoot = url;
+            this.repositoryRootURL = null;
             return true;
         }
         return false;
     }
 
     public boolean setRepositoryRootURL(SVNURL url) {
-        if (isChangedValue(this.repositoryRootURL, url)) {
-            this.repositoryRootURL = url;
-            return true;
+        if(url==null){
+            this.repositoryRoot = null;
+            this.repositoryRootURL = null;            
+        } else {
+            return setRepositoryRoot(url.toString());
         }
         return false;
     }
@@ -451,6 +464,7 @@ public class SVNEntry17 extends SVNEntry {
     public boolean setURL(String url) {
         if (isChangedValue(this.url, url)) {
             this.url = url;
+            this.svnUrl = null;
             return true;
         }
         return false;
@@ -474,6 +488,10 @@ public class SVNEntry17 extends SVNEntry {
 
     private boolean isChangedValue(Object oldValue, Object newValue) {
         return (oldValue == null && newValue != null) || (oldValue != null && newValue == null) || (!oldValue.equals(newValue));
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
 }
