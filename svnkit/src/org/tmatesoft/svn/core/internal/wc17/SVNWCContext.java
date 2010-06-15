@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -340,6 +341,53 @@ public class SVNWCContext {
             baseRevision = baseInfo.revision;
         }
         return baseRevision;
+    }
+
+    public SVNStatus assembleUnversioned(File localAbspath, SVNNodeKind pathKind, boolean isIgnored) throws SVNException {
+        
+        /* Find out whether the path is a tree conflict victim.
+           This function will set tree_conflict to NULL if the path
+           is not a victim. */
+        SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbspath);
+
+        SVNNodeKind kind = SVNNodeKind.UNKNOWN; /* not versioned */
+        SVNStatusType text_status = SVNStatusType.STATUS_NONE;
+        SVNStatusType prop_status = SVNStatusType.STATUS_NONE;
+        SVNStatusType repos_text_status = SVNStatusType.STATUS_NONE;
+        SVNStatusType repos_prop_status = SVNStatusType.STATUS_NONE;
+
+        /* If this path has no entry, but IS present on disk, it's
+           unversioned.  If this file is being explicitly ignored (due
+           to matching an ignore-pattern), the text_status is set to
+           svn_wc_status_ignored.  Otherwise the text_status is set to
+           svn_wc_status_unversioned. */
+        if (pathKind != SVNNodeKind.NONE )
+          {
+            if (isIgnored) 
+                text_status = SVNStatusType.STATUS_IGNORED;
+            else
+                text_status = SVNStatusType.STATUS_UNVERSIONED;
+          }
+        else if (tree_conflict != null)
+          {
+            /* If this path has no entry, is NOT present on disk, and IS a
+               tree conflict victim, count it as missing. */
+            text_status = SVNStatusType.STATUS_MISSING;
+          }
+
+        SVNRevision revision = SVNRevision.UNDEFINED;
+        SVNRevision changed_rev = SVNRevision.UNDEFINED;
+
+        /* For the case of an incoming delete to a locally deleted path during
+           an update, we get a tree conflict. */
+        
+        SVNStatus status = new SVNStatus(null, localAbspath, kind,
+                revision, changed_rev, null, null, text_status, 
+                prop_status, repos_text_status, repos_prop_status, false,
+                false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, null, null, 
+                null, null, -1, tree_conflict);
+
+        return status;
     }
 
     public SVNStatus assembleStatus(File path, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, boolean isIgnored,
@@ -1388,11 +1436,6 @@ public class SVNWCContext {
     }
 
     private SVNEntry readOneEntry(long wcId, File dirAbspath, String name, SVNEntry object) throws SVNException {
-        // TODO
-        return null;
-    }
-
-    public SVNStatus assembleUnversioned(File nodeAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
         // TODO
         return null;
     }
