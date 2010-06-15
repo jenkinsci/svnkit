@@ -1137,12 +1137,262 @@ public class SVNWCContext {
         return db.readProperties(localAbsPath);
     }
 
-    public SVNStatus assembleUnversioned(File nodeAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
+    public SVNEntry getEntry(File localAbsPath, boolean allowUnversioned, SVNNodeKind kind, boolean needParentStub) throws SVNException {
+
+        /* Can't ask for the parent stub if the node is a file. */
+        assert (!needParentStub || kind != SVNNodeKind.FILE);
+
+        final EntryAccessInfo entryAccessInfo = getEntryAccessInfo(localAbsPath, kind, needParentStub);
+
+        /*
+         * NOTE: if KIND is UNKNOWN and we decided to examine the *parent*
+         * directory, then it is possible we moved out of the working copy. If
+         * the on-disk node is a DIR, and we asked for a stub, then we obviously
+         * can't provide that (parent has no info). If the on-disk node is a
+         * FILE/NONE/UNKNOWN, then it is obstructing the real LOCAL_ABSPATH (or
+         * it was never a versioned item). In all these cases, the
+         * read_entries() will (properly) throw an error.
+         * 
+         * NOTE: if KIND is a DIR and we asked for the real data, but it is
+         * obstructed on-disk by some other node kind (NONE, FILE, UNKNOWN),
+         * then this will throw an error.
+         */
+
+        SVNEntry entry = null;
+
+        try {
+            EntryPair entryPair = readEntryPair(entryAccessInfo.dirAbspath, entryAccessInfo.entryName);
+            entry = entryPair.entry;
+        } catch (SVNException e) {
+
+            if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_MISSING || kind != SVNNodeKind.UNKNOWN || !"".equals(entryAccessInfo.entryName)) {
+                throw e;
+            }
+
+            /*
+             * The caller didn't know the node type, we saw a directory there,
+             * we attempted to read IN that directory, and then wc_db reports
+             * that it is NOT a working copy directory. It is possible that one
+             * of two things has happened:
+             * 
+             * 1) a directory is obstructing a file in the parent 2) the
+             * (versioned) directory's contents have been removed
+             * 
+             * Let's assume situation (1); if that is true, then we can just
+             * return the newly-found data.
+             * 
+             * If we assumed (2), then a valid result still won't help us since
+             * the caller asked for the actual contents, not the stub (which is
+             * why we read *into* the directory). However, if we assume (1) and
+             * get back a stub, then we have verified a missing, versioned
+             * directory, and can return an error describing that.
+             * 
+             * Redo the fetch, but "insist" we are trying to find a file. This
+             * will read from the parent directory of the "file".
+             */
+
+            try {
+                entry = getEntry(localAbsPath, allowUnversioned, SVNNodeKind.FILE, false);
+                return entry;
+            } catch (SVNException e1) {
+                if (e1.getErrorMessage().getErrorCode() != SVNErrorCode.NODE_UNEXPECTED_KIND) {
+                    throw e;
+                }
+
+                /*
+                 * We asked for a FILE, but the node found is a DIR. Thus, we
+                 * are looking at a stub. Originally, we tried to read into the
+                 * subdir because NEED_PARENT_STUB is FALSE. The stub we just
+                 * read is not going to work for the caller, so inform them of
+                 * the missing subdirectory.
+                 */
+                // assert (entry != null && entry.getKind() == SVNNodeKind.DIR);
+
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "Admin area of '{0}' is missing", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+        }
+
+        if (entry == null) {
+            if (allowUnversioned)
+                return null;
+
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "'{0}' is not under version control", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+
+        }
+
+        /* The caller had the wrong information. */
+        if ((kind == SVNNodeKind.FILE && entry.getKind() != SVNNodeKind.FILE) || (kind == SVNNodeKind.DIR && entry.getKind() != SVNNodeKind.DIR)) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "'{0}' is not of the right kind", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        if (kind == SVNNodeKind.UNKNOWN) {
+            /* They wanted a (directory) stub, but this isn't a directory. */
+            if (needParentStub && entry.getKind() != SVNNodeKind.DIR) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "'{0}' is not of the right kind", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            /* The actual (directory) information was wanted, but we got a stub. */
+            if (!needParentStub && entry.getKind() == SVNNodeKind.DIR && !"".equals(entry.getName())) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.NODE_UNEXPECTED_KIND, "'{0}' is not of the right kind", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+
+        return entry;
+    }
+
+    private class EntryAccessInfo {
+
+        public File dirAbspath;
+        public String entryName;
+    }
+
+    private EntryAccessInfo getEntryAccessInfo(File localAbsPath, SVNNodeKind kind, boolean needParentStub) {
+        boolean read_from_subdir = false;
+        EntryAccessInfo info = new EntryAccessInfo();
+
+        /* Can't ask for the parent stub if the node is a file. */
+        assert (!needParentStub || kind != SVNNodeKind.FILE);
+
+        /*
+         * If the caller didn't know the node kind, then stat the path. Maybe it
+         * is really there, and we can speed up the steps below.
+         */
+        if (kind == SVNNodeKind.UNKNOWN) {
+            /* What's on disk? */
+            SVNNodeKind on_disk = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+
+            if (on_disk != SVNNodeKind.DIR) {
+                /*
+                 * If this is *anything* besides a directory (FILE, NONE, or
+                 * UNKNOWN), then we cannot treat it as a versioned directory
+                 * containing entries to read. Leave READ_FROM_SUBDIR as FALSE,
+                 * so that the parent will be examined.
+                 * 
+                 * For NONE and UNKNOWN, it may be that metadata exists for the
+                 * node, even though on-disk is unhelpful.
+                 * 
+                 * If NEED_PARENT_STUB is TRUE, and the entry is not a
+                 * DIRECTORY, then we'll error.
+                 * 
+                 * If NEED_PARENT_STUB if FALSE, and we successfully read a
+                 * stub, then this on-disk node is obstructing the read.
+                 */
+            } else {
+                /*
+                 * We found a directory for this UNKNOWN node. Determine whether
+                 * we need to read inside it.
+                 */
+                read_from_subdir = !needParentStub;
+            }
+        } else if (kind == SVNNodeKind.DIR && !needParentStub) {
+            read_from_subdir = true;
+        }
+
+        if (read_from_subdir) {
+            /*
+             * KIND must be a DIR or UNKNOWN (and we found a subdir). We want
+             * the "real" data, so treat LOCAL_ABSPATH as a versioned directory.
+             */
+            info.dirAbspath = localAbsPath;
+            info.entryName = "";
+        } else {
+            /*
+             * FILE node needs to read the parent directory. Or a DIR node needs
+             * to read from the parent to get at the stub entry. Or this is an
+             * UNKNOWN node, and we need to examine the parent.
+             */
+            info.dirAbspath = SVNFileUtil.getParentFile(localAbsPath);
+            info.entryName = SVNFileUtil.getBasePath(localAbsPath);
+        }
+        return info;
+    }
+
+    private static class EntryPair {
+
+        public SVNEntry parentEntry;
+        public SVNEntry entry;
+    }
+
+    private EntryPair readEntryPair(File dirAbspath, String name) throws SVNException {
+
+        long wc_id = 1; /* ### hacky. should remove. */
+
+        EntryPair pair = new EntryPair();
+
+        pair.parentEntry = readOneEntry(wc_id, dirAbspath, "" /* name */, null /* parent_entry */);
+
+        /*
+         * If we need the entry for "this dir", then return the parent_entry in
+         * both outputs. Otherwise, read the child node.
+         */
+        if ("".equals(name)) {
+            /*
+             * If the retrieved node is a FILE, then we have a problem. We asked
+             * for a directory. This implies there is an obstructing,
+             * unversioned directory where a FILE should be. We navigated from
+             * the obstructing subdir up to the parent dir, then returned the
+             * FILE found there.
+             * 
+             * Let's return WC_MISSING cuz the caller thought we had a dir, but
+             * that (versioned subdir) isn't there.
+             */
+            if (pair.parentEntry.getKind() == SVNNodeKind.FILE) {
+                pair.parentEntry = null;
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_MISSING, "'{0}' is not a versioned working copy", dirAbspath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            pair.entry = pair.parentEntry;
+        } else {
+            /* Default to not finding the child. */
+            pair.entry = null;
+
+            /*
+             * Determine whether the parent KNOWS about this child. If it does
+             * not, then we should not attempt to look for it.
+             * 
+             * For example: the parent doesn't "know" about the child, but the
+             * versioned directory *does* exist on disk. We don't want to look
+             * into that subdir.
+             */
+            for (File child : db.readChildren(dirAbspath)) {
+                if (name.equals(child)) {
+                    try {
+                        pair.entry = readOneEntry(wc_id, dirAbspath, name, pair.parentEntry);
+                        /* Found it. No need to keep searching. */
+                        break;
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                            throw e;
+                        }
+                        /*
+                         * No problem. Clear the error and leave the default
+                         * value of "missing".
+                         */
+                    }
+                }
+            }
+            /*
+             * if the loop ends without finding a child, then we have the
+             * default ENTRY value of NULL.
+             */
+        }
+
+        return pair;
+    }
+
+    private SVNEntry readOneEntry(long wcId, File dirAbspath, String name, SVNEntry object) throws SVNException {
         // TODO
         return null;
     }
 
-    public SVNEntry getEntry(File nodeAbsPath, boolean b, SVNNodeKind unknown, boolean c) throws SVNException {
+    public SVNStatus assembleUnversioned(File nodeAbsPath, SVNNodeKind pathKind, boolean isIgnored) {
         // TODO
         return null;
     }
