@@ -11,12 +11,15 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
 import java.util.Map;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -66,17 +69,17 @@ public class SVNEntry17 extends SVNEntry {
     private boolean absent;
     private boolean copied;
     private boolean deleted;
-    private boolean directory;
-    private boolean file;
     private boolean hidden;
     private boolean incomplete;
     private boolean keepLocal;
     private boolean scheduledForAddition;
     private boolean scheduledForDeletion;
     private boolean scheduledForReplacement;
-    private boolean thisDir;
 
-    public SVNEntry17() {
+    private File path;
+
+    public SVNEntry17(File path) {
+        this.path = path;
     }
 
     public Map asMap() {
@@ -133,7 +136,7 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public SVNURL getCopyFromSVNURL() throws SVNException {
-        if(copyFromSVNURL==null && copyFromURL!=null){
+        if (copyFromSVNURL == null && copyFromURL != null) {
             copyFromSVNURL = SVNURL.parseURIEncoded(copyFromURL);
         }
         return copyFromSVNURL;
@@ -200,7 +203,7 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public SVNURL getRepositoryRootURL() throws SVNException {
-        if(repositoryRootURL==null && repositoryRoot!=null){
+        if (repositoryRootURL == null && repositoryRoot != null) {
             repositoryRootURL = SVNURL.parseURIEncoded(repositoryRoot);
         }
         return repositoryRootURL;
@@ -211,7 +214,7 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public SVNURL getSVNURL() throws SVNException {
-        if(svnUrl==null && url!=null){
+        if (svnUrl == null && url != null) {
             svnUrl = SVNURL.parseURIEncoded(url);
         }
         return svnUrl;
@@ -230,6 +233,9 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public Map getTreeConflicts() throws SVNException {
+        if (treeConflicts == null && treeConflictData != null) {
+            treeConflicts = SVNTreeConflictUtil.readTreeConflicts(getRoot(), treeConflictData);
+        }
         return treeConflicts;
     }
 
@@ -258,11 +264,11 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public boolean isDirectory() {
-        return directory;
+        return SVNNodeKind.DIR == this.kind;
     }
 
     public boolean isFile() {
-        return file;
+        return SVNNodeKind.FILE == this.kind;
     }
 
     public boolean isHidden() {
@@ -290,7 +296,7 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public boolean isThisDir() {
-        return thisDir;
+        return "".equals(getName());
     }
 
     public void scheduleForAddition() {
@@ -428,9 +434,9 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public boolean setRepositoryRootURL(SVNURL url) {
-        if(url==null){
+        if (url == null) {
             this.repositoryRoot = null;
-            this.repositoryRootURL = null;            
+            this.repositoryRootURL = null;
         } else {
             return setRepositoryRoot(url.toString());
         }
@@ -455,9 +461,12 @@ public class SVNEntry17 extends SVNEntry {
 
     public void setTreeConflictData(String conflictData) {
         this.treeConflictData = conflictData;
+        this.treeConflicts = null;
     }
 
     public void setTreeConflicts(Map treeConflicts) throws SVNException {
+        String conflictData = SVNTreeConflictUtil.getTreeConflictData(treeConflicts);
+        setTreeConflictData(conflictData);
         this.treeConflicts = treeConflicts;
     }
 
@@ -492,6 +501,25 @@ public class SVNEntry17 extends SVNEntry {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public File getPath() {
+        return path;
+    }
+
+    public void setPath(File path) {
+        this.path = path;
+    }
+
+    private File getRoot() {
+        if (path == null) {
+            return null;
+        }
+        if (isDirectory() && path.isDirectory()) {
+            return path;
+        } else {
+            return SVNFileUtil.getParentFile(path);
+        }
     }
 
 }

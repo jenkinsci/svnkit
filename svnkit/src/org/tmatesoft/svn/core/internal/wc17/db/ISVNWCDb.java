@@ -1609,6 +1609,15 @@ public interface ISVNWCDb {
     Stores NULL into SERIALIZED_FILE_EXTERNAL if this node is NOT a file
     external. If a BASE node does not exist: SVN_ERR_WC_PATH_NOT_FOUND.  */
 
-    String getFileExternalTemp(File path);
+    String getFileExternalTemp(File path) throws SVNException;
+
+    boolean determineKeepLocalTemp(File localAbsPath) throws SVNException;
+
+    WCDbDirDeletedInfo isDirDeletedTem(File entryAbspath) throws SVNException;
+
+    public static class WCDbDirDeletedInfo {
+        public boolean notPresent;
+        public long baseRevision;
+    }
 
 }

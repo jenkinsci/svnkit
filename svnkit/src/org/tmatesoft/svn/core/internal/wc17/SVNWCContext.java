@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -43,6 +45,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDirDeletedInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbLock;
@@ -69,6 +72,8 @@ import org.tmatesoft.svn.util.SVNLogType;
  * @author TMate Software Ltd.
  */
 public class SVNWCContext {
+
+    private static final long INVALID_REVNUM = -1;
 
     public static boolean isAdminDirectory(String name) {
         return name != null && (SVNFileUtil.isWindows) ? SVNFileUtil.getAdminDirectoryName().equalsIgnoreCase(name) : SVNFileUtil.getAdminDirectoryName().equals(name);
@@ -344,10 +349,11 @@ public class SVNWCContext {
     }
 
     public SVNStatus assembleUnversioned(File localAbspath, SVNNodeKind pathKind, boolean isIgnored) throws SVNException {
-        
-        /* Find out whether the path is a tree conflict victim.
-           This function will set tree_conflict to NULL if the path
-           is not a victim. */
+
+        /*
+         * Find out whether the path is a tree conflict victim. This function
+         * will set tree_conflict to NULL if the path is not a victim.
+         */
         SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbspath);
 
         SVNNodeKind kind = SVNNodeKind.UNKNOWN; /* not versioned */
@@ -356,36 +362,35 @@ public class SVNWCContext {
         SVNStatusType repos_text_status = SVNStatusType.STATUS_NONE;
         SVNStatusType repos_prop_status = SVNStatusType.STATUS_NONE;
 
-        /* If this path has no entry, but IS present on disk, it's
-           unversioned.  If this file is being explicitly ignored (due
-           to matching an ignore-pattern), the text_status is set to
-           svn_wc_status_ignored.  Otherwise the text_status is set to
-           svn_wc_status_unversioned. */
-        if (pathKind != SVNNodeKind.NONE )
-          {
-            if (isIgnored) 
+        /*
+         * If this path has no entry, but IS present on disk, it's unversioned.
+         * If this file is being explicitly ignored (due to matching an
+         * ignore-pattern), the text_status is set to svn_wc_status_ignored.
+         * Otherwise the text_status is set to svn_wc_status_unversioned.
+         */
+        if (pathKind != SVNNodeKind.NONE) {
+            if (isIgnored)
                 text_status = SVNStatusType.STATUS_IGNORED;
             else
                 text_status = SVNStatusType.STATUS_UNVERSIONED;
-          }
-        else if (tree_conflict != null)
-          {
-            /* If this path has no entry, is NOT present on disk, and IS a
-               tree conflict victim, count it as missing. */
+        } else if (tree_conflict != null) {
+            /*
+             * If this path has no entry, is NOT present on disk, and IS a tree
+             * conflict victim, count it as missing.
+             */
             text_status = SVNStatusType.STATUS_MISSING;
-          }
+        }
 
         SVNRevision revision = SVNRevision.UNDEFINED;
         SVNRevision changed_rev = SVNRevision.UNDEFINED;
 
-        /* For the case of an incoming delete to a locally deleted path during
-           an update, we get a tree conflict. */
-        
-        SVNStatus status = new SVNStatus(null, localAbspath, kind,
-                revision, changed_rev, null, null, text_status, 
-                prop_status, repos_text_status, repos_prop_status, false,
-                false, false, false, null, null, null, null, null, SVNRevision.UNDEFINED, null, null, 
-                null, null, -1, tree_conflict);
+        /*
+         * For the case of an incoming delete to a locally deleted path during
+         * an update, we get a tree conflict.
+         */
+
+        SVNStatus status = new SVNStatus(null, localAbspath, kind, revision, changed_rev, null, null, text_status, prop_status, repos_text_status, repos_prop_status, false, false, false, false, null,
+                null, null, null, null, SVNRevision.UNDEFINED, null, null, null, null, -1, tree_conflict);
 
         return status;
     }
@@ -1033,7 +1038,7 @@ public class SVNWCContext {
         return SVNTranslator.computeKeywords(list, url.toString(), Long.toString(readInfo.changedRev), readInfo.changedDate.toString(), readInfo.changedAuthor, getOptions());
     }
 
-    private boolean isFileExternal(File path) {
+    private boolean isFileExternal(File path) throws SVNException {
         final String serialized = db.getFileExternalTemp(path);
         return serialized != null;
     }
@@ -1435,9 +1440,518 @@ public class SVNWCContext {
         return pair;
     }
 
-    private SVNEntry readOneEntry(long wcId, File dirAbspath, String name, SVNEntry object) throws SVNException {
+    private SVNEntry readOneEntry(long wcId, File dirAbsPath, String name, SVNEntry parentEntry) throws SVNException {
+
+        final File entry_abspath = (name != null && !"".equals(name)) ? new File(dirAbsPath, name) : dirAbsPath;
+
+        final WCDbInfo info = db.readInfo(entry_abspath, InfoField.values());
+
+        final SVNEntry17 entry = new SVNEntry17(entry_abspath);
+        entry.setName(name);
+        entry.setRevision(info.revision);
+        entry.setRepositoryRootURL(info.reposRootUrl);
+        entry.setUUID(info.reposUuid);
+        entry.setCommittedRevision(info.changedRev);
+        entry.setCommittedDate(info.changedDate != null ? info.changedDate.toString() : null);
+        entry.setAuthor(info.changedAuthor);
+        entry.setTextTime(Long.toString(info.lastModTime));
+        entry.setDepth(info.depth);
+        entry.setChangelistName(info.changelist);
+        entry.setCopyFromRevision(info.originalRevision);
+
+        if (entry.isThisDir()) {
+            /* get the tree conflict data. */
+            Map<File, SVNTreeConflictDescription> tree_conflicts = null;
+
+            final List<File> conflict_victims = db.readConflictVictims(dirAbsPath);
+
+            for (File child_name : conflict_victims) {
+
+                File child_abspath = new File(dirAbsPath, child_name.toString());
+
+                final List<SVNTreeConflictDescription> child_conflicts = db.readConflicts(child_abspath);
+
+                for (SVNTreeConflictDescription conflict : child_conflicts) {
+                    if (conflict.isTreeConflict()) {
+                        if (tree_conflicts == null) {
+                            tree_conflicts = new HashMap<File, SVNTreeConflictDescription>();
+                        }
+                        tree_conflicts.put(child_name, conflict);
+                    }
+                }
+            }
+
+            if (tree_conflicts != null) {
+                entry.setTreeConflicts(tree_conflicts);
+            }
+        }
+
+        if (info.status == WCDbStatus.Normal || info.status == WCDbStatus.Incomplete) {
+            boolean have_row = false;
+
+            /*
+             * Ugh. During a checkout, it is possible that we are constructing a
+             * subdirectory "over" a not-present directory. The read_info() will
+             * return information out of the wc.db in the subdir. We need to
+             * detect this situation and create a DELETED entry instead.
+             */
+            if (info.kind == WCDbKind.Dir) {
+                // TODO
+                /*
+                 * svn_sqlite__db_t *sdb; svn_sqlite__stmt_t *stmt;
+                 * 
+                 * SVN_ERR(svn_wc__db_temp_borrow_sdb( &sdb, db, dir_abspath,
+                 * svn_wc__db_openmode_readonly, scratch_pool));
+                 * 
+                 * SVN_ERR(svn_sqlite__get_statement(&stmt, sdb,
+                 * STMT_SELECT_NOT_PRESENT)); SVN_ERR(svn_sqlite__bindf(stmt,
+                 * "is", wc_id, entry->name));
+                 * SVN_ERR(svn_sqlite__step(&have_row, stmt));
+                 * SVN_ERR(svn_sqlite__reset(stmt));
+                 */
+            }
+
+            if (have_row) {
+                /*
+                 * Just like a normal "not-present" node: schedule=normal and
+                 * DELETED.
+                 */
+                entry.setSchedule(null);
+                entry.setDeleted(true);
+            } else {
+                /* Plain old BASE node. */
+                entry.setSchedule(null);
+
+                /* Grab inherited repository information, if necessary. */
+                if (info.reposRelPath == null) {
+                    final WCDbRepositoryInfo baseRepos = db.scanBaseRepository(entry_abspath, RepositoryInfoField.values());
+                    info.reposRelPath = baseRepos.relPath;
+                    entry.setRepositoryRootURL(baseRepos.rootUrl);
+                    entry.setUUID(baseRepos.uuid);
+                }
+
+                entry.setIncomplete(info.status == WCDbStatus.Incomplete);
+            }
+        } else if (info.status == WCDbStatus.Deleted || info.status == WCDbStatus.ObstructedDelete) {
+            /* ### we don't have to worry about moves, so this is a delete. */
+            entry.scheduleForDeletion();
+
+            /* ### keep_local ... ugh. hacky. */
+            /*
+             * We only read keep_local in the directory itself, because we can't
+             * rely on the actual record being available in the parent stub when
+             * the directory is recorded as deleted in the directory itself.
+             * (This last value is the status that brought us in this if block).
+             * 
+             * This is safe because we will only write this flag in the
+             * directory itself (see mark_deleted() in adm_ops.c), and also
+             * because we will never use keep_local in the final version of
+             * WC-NG. With a central db and central pristine store we can remove
+             * working copy directories directly. So any left over directories
+             * after the delete operation are always kept locally.
+             */
+            if ("".equals(entry.getName())) {
+                entry.setKeepLocal(db.determineKeepLocalTemp(entry_abspath));
+            }
+        } else if (info.status == WCDbStatus.Added || info.status == WCDbStatus.ObstructedAdd) {
+            WCDbStatus work_status;
+            File op_root_abspath = null;
+            File scanned_original_relpath;
+            long original_revision = INVALID_REVNUM;
+
+            /* For child nodes, pick up the parent's revision. */
+            if (!"".equals(entry.getName())) {
+                assert (parentEntry != null);
+                assert (!SVNRevision.isValidRevisionNumber(entry.getRevision()));
+
+                entry.setRevision(parentEntry.getRevision());
+            }
+
+            if (info.baseShadowed) {
+                WCDbStatus base_status;
+
+                /*
+                 * ENTRY->REVISION is overloaded. When a node is schedule-add or
+                 * -replace, then REVISION refers to the BASE node's revision
+                 * that is being overwritten. We need to fetch it now.
+                 */
+
+                WCDbBaseInfo baseInfo = db.getBaseInfo(entry_abspath, BaseInfoField.status, BaseInfoField.revision);
+                base_status = baseInfo.status;
+                entry.setRevision(baseInfo.revision);
+
+                if (base_status == WCDbStatus.NotPresent) {
+                    /* The underlying node is DELETED in this revision. */
+                    entry.setDeleted(true);
+
+                    /* This is an add since there isn't a node to replace. */
+                    entry.scheduleForAddition();
+                } else {
+                    entry.scheduleForReplacement();
+                }
+            } else {
+                /*
+                 * If we are reading child directories, then we need to
+                 * correctly populate the DELETED flag. WC_DB normally wants to
+                 * provide all of a directory's metadata from its own area. But
+                 * this information is stored only in the parent directory, so
+                 * we need to call a custom API to fetch this value.
+                 * 
+                 * ### we should start generating BASE_NODE rows for THIS_DIR
+                 * ### in the subdir. future step because it is harder.
+                 */
+                if (info.kind == WCDbKind.Dir && !"".equals(entry.getName())) {
+                    WCDbDirDeletedInfo deletedInfo = db.isDirDeletedTem(entry_abspath);
+                    entry.setDeleted(deletedInfo.notPresent);
+                    entry.setRevision(deletedInfo.baseRevision);
+                }
+                if (entry.isDeleted()) {
+                    /*
+                     * There was a DELETED marker in the parent, meaning that we
+                     * truly are shadowing a base node. It isn't called a
+                     * 'replace' though (the BASE is pretending not to exist).
+                     */
+                    entry.scheduleForAddition();
+                } else {
+                    /*
+                     * There was NOT a 'not-present' BASE_NODE in the parent
+                     * directory. And there is no BASE_NODE in this directory.
+                     * Therefore, we are looking at some kind of add/copy rather
+                     * than a replace.
+                     */
+
+                    /* ### if this looks like a plain old add, then rev=0. */
+                    if (!SVNRevision.isValidRevisionNumber(entry.getCopyFromRevision()) && !SVNRevision.isValidRevisionNumber(entry.getCommittedRevision())) {
+                        entry.setRevision(0);
+                    }
+
+                    if (info.status == WCDbStatus.ObstructedAdd) {
+                        entry.setRevision(INVALID_REVNUM);
+                    }
+
+                    /*
+                     * ### when we're reading a directory that is not present,
+                     * ### then it must be "normal" rather than "add".
+                     */
+                    if ("".equals(entry.getName()) && info.status == WCDbStatus.ObstructedAdd) {
+                        entry.unschedule();
+                    } else {
+                        entry.scheduleForAddition();
+                    }
+                }
+            }
+
+            /*
+             * If we don't have "real" data from the entry (obstruction), then
+             * we cannot begin a scan for data. The original node may have
+             * important data. Set up stuff to kill that idea off, and finish up
+             * this entry.
+             */
+            if (info.status == WCDbStatus.ObstructedAdd) {
+                entry.setCommittedRevision(INVALID_REVNUM);
+                work_status = WCDbStatus.Normal;
+                scanned_original_relpath = null;
+            } else {
+                final WCDbAdditionInfo additionInfo = db.scanAddition(entry_abspath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath,
+                        AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid, AdditionInfoField.originalReposRelPath, AdditionInfoField.originalRevision);
+                work_status = additionInfo.status;
+                op_root_abspath = additionInfo.opRootAbsPath;
+                info.reposRelPath = additionInfo.reposRelPath;
+                entry.setRepositoryRootURL(additionInfo.reposRootUrl);
+                entry.setUUID(additionInfo.reposUuid);
+                scanned_original_relpath = additionInfo.originalReposRelPath;
+                original_revision = additionInfo.originalRevision;
+
+                /*
+                 * In wc.db we want to keep the valid revision of the
+                 * not-present BASE_REV, but when we used entries we set the
+                 * revision to 0 when adding a new node over a not present base
+                 * node.
+                 */
+                if (work_status == WCDbStatus.Added && entry.isDeleted()) {
+                    entry.setRevision(0);
+                }
+            }
+
+            if (!SVNRevision.isValidRevisionNumber(entry.getCommittedRevision()) && scanned_original_relpath == null) {
+                /*
+                 * There is NOT a last-changed revision (last-changed date and
+                 * author may be unknown, but we can always check the rev). The
+                 * absence of a revision implies this node was added WITHOUT any
+                 * history. Avoid the COPIED checks in the else block.
+                 */
+                /*
+                 * ### scan_addition may need to be updated to avoid returning
+                 * ### status_copied in this case.
+                 */
+            } else if (work_status == WCDbStatus.Copied) {
+                entry.setCopied(true);
+
+                /*
+                 * If this is a child of a copied subtree, then it should be
+                 * schedule_normal.
+                 */
+                if (info.originalReposRelpath == null) {
+                    /* ### what if there is a BASE node under there? */
+                    entry.unschedule();
+                }
+
+                /*
+                 * Copied nodes need to mirror their copyfrom_rev, if they don't
+                 * have a revision of their own already.
+                 */
+                if (!SVNRevision.isValidRevisionNumber(entry.getRevision()) || entry.getRevision() == 0 /* added */)
+                    entry.setRevision(original_revision);
+            }
+
+            /* Does this node have copyfrom_* information? */
+            if (scanned_original_relpath != null) {
+                boolean is_copied_child;
+                boolean is_mixed_rev = false;
+
+                assert (work_status == WCDbStatus.Copied);
+
+                /*
+                 * If this node inherits copyfrom information from an ancestor
+                 * node, then it must be a copied child.
+                 */
+                is_copied_child = (info.originalReposRelpath == null);
+
+                /*
+                 * If this node has copyfrom information on it, then it may be
+                 * an actual copy-root, or it could be participating in a
+                 * mixed-revision copied tree. So if we don't already know this
+                 * is a copied child, then we need to look for this
+                 * mixed-revision situation.
+                 */
+                if (!is_copied_child) {
+                    File parent_abspath;
+                    File parent_repos_relpath;
+                    SVNURL parent_root_url;
+
+                    /*
+                     * When we insert entries into the database, we will
+                     * construct additional copyfrom records for mixed-revision
+                     * copies. The old entries would simply record the different
+                     * revision in the entry->revision field. That is not
+                     * available within wc-ng, so additional copies are made
+                     * (see the logic inside write_entry()). However, when
+                     * reading these back *out* of the database, the additional
+                     * copies look like new "Added" nodes rather than a simple
+                     * mixed-rev working copy.
+                     * 
+                     * That would be a behavior change if we did not compensate.
+                     * If there is copyfrom information for this node, then the
+                     * code below looks at the parent to detect if it *also* has
+                     * copyfrom information, and if the copyfrom_url would align
+                     * properly. If it *does*, then we omit storing copyfrom_url
+                     * and copyfrom_rev (ie. inherit the copyfrom info like a
+                     * normal child), and update entry->revision with the
+                     * copyfrom_rev in order to (re)create the mixed-rev copied
+                     * subtree that was originally presented for storage.
+                     */
+
+                    /*
+                     * Get the copyfrom information from our parent.
+                     * 
+                     * Note that the parent could be added/copied/moved-here.
+                     * There is no way for it to be deleted/moved-away and have
+                     * *this* node appear as copied.
+                     */
+                    parent_abspath = SVNFileUtil.getParentFile(entry_abspath);
+
+                    try {
+
+                        final WCDbAdditionInfo additionInfo = db.scanAddition(parent_abspath, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
+
+                        op_root_abspath = additionInfo.opRootAbsPath;
+                        parent_repos_relpath = additionInfo.originalReposRelPath;
+                        parent_root_url = additionInfo.originalRootUrl;
+
+                        if (parent_root_url != null && info.originalRootUrl.equals(parent_root_url)) {
+                            String relpath_to_entry = SVNPathUtil.getRelativePath(op_root_abspath.toString(), entry_abspath.toString());
+                            String entry_repos_relpath = SVNPathUtil.append(parent_repos_relpath.toString(), relpath_to_entry);
+
+                            /*
+                             * The copyfrom repos roots matched.
+                             * 
+                             * Now we look to see if the copyfrom path of the
+                             * parent would align with our own path. If so, then
+                             * it means this copyfrom was spontaneously created
+                             * and inserted for mixed-rev purposes and can be
+                             * eliminated without changing the semantics of a
+                             * mixed-rev copied subtree.
+                             * 
+                             * See notes/api-errata/wc003.txt for some
+                             * additional detail, and potential issues.
+                             */
+                            if (entry_repos_relpath.equals(info.originalReposRelpath.toString())) {
+                                is_copied_child = true;
+                                is_mixed_rev = true;
+                            }
+                        }
+
+                    } catch (SVNException e) {
+                        if (e.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                            throw e;
+                        }
+                    }
+
+                }
+
+                if (is_copied_child) {
+                    /*
+                     * We won't be settig the copyfrom_url, yet need to clear
+                     * out the copyfrom_rev. Thus, this node becomes a child of
+                     * a copied subtree (rather than its own root).
+                     */
+                    entry.setCopyFromRevision(INVALID_REVNUM);
+
+                    /*
+                     * Children in a copied subtree are schedule normal since we
+                     * don't plan to actually *do* anything with them. Their
+                     * operation is implied by ancestors.
+                     */
+                    entry.unschedule();
+
+                    /*
+                     * And *finally* we turn this entry into the mixed revision
+                     * node that it was intended to be. This node's revision is
+                     * taken from the copyfrom record that we spontaneously
+                     * constructed.
+                     */
+                    if (is_mixed_rev)
+                        entry.setRevision(original_revision);
+                } else if (info.originalReposRelpath != null) {
+                    entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), info.originalReposRelpath.toString()));
+                } else {
+                    /*
+                     * NOTE: if original_repos_relpath == NULL, then the second
+                     * call to scan_addition() will not have occurred. Thus,
+                     * this use of OP_ROOT_ABSPATH still contains the original
+                     * value where we fetched a value for SCANNED_REPOS_RELPATH.
+                     */
+                    String relpath_to_entry = SVNPathUtil.getRelativePath(op_root_abspath.toString(), entry_abspath.toString());
+                    String entry_repos_relpath = SVNPathUtil.append(scanned_original_relpath.toString(), relpath_to_entry);
+                    entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), entry_repos_relpath));
+                }
+            }
+        } else if (info.status == WCDbStatus.NotPresent) {
+            /*
+             * ### buh. 'deleted' nodes are actually supposed to be ### schedule
+             * "normal" since we aren't going to actually *do* ### anything to
+             * this node at commit time.
+             */
+            entry.unschedule();
+            entry.setDeleted(true);
+        } else if (info.status == WCDbStatus.Obstructed) {
+            /*
+             * ### set some values that should (hopefully) let this directory
+             * ### be usable.
+             */
+            entry.setRevision(INVALID_REVNUM);
+        } else if (info.status == WCDbStatus.Absent) {
+            entry.setAbsent(true);
+        } else if (info.status == WCDbStatus.Excluded) {
+            entry.unschedule();
+            entry.setDepth(SVNDepth.EXCLUDE);
+        } else {
+            /* ### we should have handled all possible status values. */
+            SVNErrorManager.assertionFailure(false, "MALFUNCTION", SVNLogType.WC);
+        }
+
+        /*
+         * ### higher levels want repos information about deleted nodes, even
+         * ### tho they are not "part of" a repository any more.
+         */
+        if (entry.isScheduledForDeletion()) {
+            getBaseInfoForDeleted(entry, info.kind, info.reposRelPath, info.checksum, entry_abspath, parentEntry);
+        }
+
+        /* ### default to the infinite depth if we don't know it. */
+        if (entry.getDepth() == SVNDepth.UNKNOWN) {
+            entry.setDepth(SVNDepth.INFINITY);
+        }
+
+        if (info.kind == WCDbKind.Dir) {
+            entry.setKind(SVNNodeKind.DIR);
+        } else if (info.kind == WCDbKind.File) {
+            entry.setKind(SVNNodeKind.FILE);
+        } else if (info.kind == WCDbKind.Symlink) {
+            entry.setKind(SVNNodeKind.FILE); /* ### no symlink kind */
+        } else {
+            entry.setKind(SVNNodeKind.UNKNOWN);
+        }
+
+        /*
+         * We should always have a REPOS_RELPATH, except for: - deleted nodes -
+         * certain obstructed nodes - not-present nodes - absent nodes -
+         * excluded nodes
+         * 
+         * ### the last three should probably have an "implied" REPOS_RELPATH
+         */
+        assert (info.reposRelPath != null || entry.isScheduledForDeletion() || info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd
+                || info.status == WCDbStatus.ObstructedDelete || info.status == WCDbStatus.NotPresent || info.status == WCDbStatus.Absent || info.status == WCDbStatus.Excluded);
+        if (info.reposRelPath != null)
+            entry.setURL(SVNPathUtil.append(entry.getRepositoryRoot(), info.reposRelPath.toString()));
+
+        if (info.checksum != null) {
+            /*
+             * SVN_EXPERIMENTAL_PRISTINE: If we got a SHA-1, get the
+             * corresponding MD-5.
+             */
+            if (info.checksum.getKind() != SVNChecksumKind.MD5) {
+                info.checksum = db.getPristineMD5(entry_abspath, info.checksum);
+            }
+
+            assert (info.checksum.getKind() == SVNChecksumKind.MD5);
+            entry.setChecksum(info.checksum.toString());
+        }
+
+        if (info.conflicted) {
+
+            final List<SVNTreeConflictDescription> conflicts = db.readConflicts(entry_abspath);
+
+            for (SVNTreeConflictDescription cd : conflicts) {
+
+                final SVNMergeFileSet cdf = cd.getMergeFiles();
+                if (cd.isTextConflict()) {
+                    entry.setConflictOld(cdf.getBasePath());
+                    entry.setConflictNew(cdf.getRepositoryPath());
+                    entry.setConflictWorking(cdf.getLocalPath());
+                } else if (cd.isPropertyConflict()) {
+                    entry.setPropRejectFile(cdf.getRepositoryPath());
+                }
+            }
+        }
+
+        if (info.lock != null) {
+            entry.setLockToken(info.lock.token);
+            entry.setLockOwner(info.lock.owner);
+            entry.setLockComment(info.lock.comment);
+            entry.setLockCreationDate(info.lock.date != null ? info.lock.date.toString() : null);
+        }
+
+        /*
+         * Let's check for a file external. ### right now this is ugly, since we
+         * have no good way querying ### for a file external OR retrieving
+         * properties. ugh.
+         */
+        if (entry.getKind() == SVNNodeKind.FILE)
+            checkFileExternal(entry, entry_abspath);
+
+        entry.setWorkingSize(info.translatedSize);
+
+        return entry;
+
+    }
+
+    private void checkFileExternal(SVNEntry17 entry, File entryAbspath) {
         // TODO
-        return null;
+    }
+
+    private void getBaseInfoForDeleted(SVNEntry17 entry, WCDbKind kind, File reposRelPath, SVNChecksum checksum, File entryAbspath, SVNEntry parentEntry) {
+        // TODO
     }
 
 }

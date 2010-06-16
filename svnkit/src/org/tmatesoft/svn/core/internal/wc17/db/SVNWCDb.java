@@ -294,11 +294,19 @@ public class SVNWCDb implements ISVNWCDb {
         return null;
     }
 
-    public ISVNOptions getConfig() {
+    public ISVNOptions getConfig(){
         return null;
     }
 
-    public String getFileExternalTemp(File path) {
+    public String getFileExternalTemp(File path) throws SVNException {
+        return null;
+    }
+
+    public boolean determineKeepLocalTemp(File localAbsPath) throws SVNException {
+        return false;
+    }
+
+    public WCDbDirDeletedInfo isDirDeletedTem(File entryAbspath) throws SVNException {
         return null;
     }
 
