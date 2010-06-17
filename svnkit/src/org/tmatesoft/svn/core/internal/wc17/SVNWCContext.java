@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNAdminUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
@@ -1946,8 +1947,32 @@ public class SVNWCContext {
 
     }
 
-    private void checkFileExternal(SVNEntry17 entry, File entryAbspath) {
-        // TODO
+    private void checkFileExternal(SVNEntry17 entry, File localAbsPath) throws SVNException {
+        final String serialized = db.getFileExternalTemp(localAbsPath);
+        if (serialized != null) {
+            final UnserializedFileExternalInfo info = unserializeFileExternal(serialized);
+            entry.setExternalFilePath(info.path);
+            entry.setExternalFilePegRevision(info.pegRevision);
+            entry.setExternalFileRevision(info.revision);
+        }
+    }
+
+    private UnserializedFileExternalInfo unserializeFileExternal(String str) throws SVNException {
+        final UnserializedFileExternalInfo info = new UnserializedFileExternalInfo();
+        if (str != null) {
+            StringBuffer buffer = new StringBuffer(str);
+            info.pegRevision = SVNAdminUtil.parseRevision(buffer);
+            info.revision = SVNAdminUtil.parseRevision(buffer);
+            info.path = buffer.toString();
+        }
+        return info;
+    }
+
+    private class UnserializedFileExternalInfo {
+
+        public String path = null;
+        public SVNRevision pegRevision = SVNRevision.UNDEFINED;
+        public SVNRevision revision = SVNRevision.UNDEFINED;
     }
 
     private void getBaseInfoForDeleted(SVNEntry17 entry, WCDbKind kind, File reposRelPath, SVNChecksum checksum, File entryAbspath, SVNEntry parentEntry) {

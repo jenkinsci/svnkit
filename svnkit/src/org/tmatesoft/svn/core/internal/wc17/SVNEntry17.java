@@ -517,9 +517,20 @@ public class SVNEntry17 extends SVNEntry {
         }
         if (isDirectory() && path.isDirectory()) {
             return path;
-        } else {
-            return SVNFileUtil.getParentFile(path);
         }
+        return SVNFileUtil.getParentFile(path);
+    }
+
+    public void setExternalFilePath(String path) {
+        externalFilePath = path;
+    }
+
+    public void setExternalFilePegRevision(SVNRevision pegRevision) {
+        externalFilePegRevision = pegRevision;
+    }
+
+    public void setExternalFileRevision(SVNRevision revision) {
+        externalFileRevision = revision;
     }
 
 }
