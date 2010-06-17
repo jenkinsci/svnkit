@@ -1458,7 +1458,13 @@ public class SVNCopyDriver extends SVNBasicDelegate {
 
     private void copyAddedFileAdm(File src, SVNWCAccess srcAccess, SVNWCAccess dstAccess, File dstParent, String dstName, boolean isAdded) throws SVNException {
         File dst = new File(dstParent, dstName);
-        SVNFileUtil.copyFile(src, dst, false);
+        SVNFileType srcType = SVNFileType.getType(src);
+        if (srcType == SVNFileType.SYMLINK) {
+            String linkName = SVNFileUtil.getSymlinkName(src);
+            SVNFileUtil.createSymlink(dst, linkName);
+        } else {
+            SVNFileUtil.copyFile(src, dst, false);
+        }
         if (isAdded) {
             SVNWCManager.add(dst, dstAccess.getAdminArea(dstParent), null, SVNRepository.INVALID_REVISION, SVNDepth.INFINITY);
             copyProps(src, dst, srcAccess, dstAccess);
