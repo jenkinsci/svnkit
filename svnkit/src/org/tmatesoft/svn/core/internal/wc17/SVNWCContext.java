@@ -1375,11 +1375,9 @@ public class SVNWCContext {
 
     private EntryPair readEntryPair(File dirAbspath, String name) throws SVNException {
 
-        long wc_id = 1; /* ### hacky. should remove. */
-
         EntryPair pair = new EntryPair();
 
-        pair.parentEntry = readOneEntry(wc_id, dirAbspath, "" /* name */, null /* parent_entry */);
+        pair.parentEntry = readOneEntry(dirAbspath, "" /* name */, null /* parent_entry */);
 
         /*
          * If we need the entry for "this dir", then return the parent_entry in
@@ -1418,7 +1416,7 @@ public class SVNWCContext {
             for (File child : db.readChildren(dirAbspath)) {
                 if (name.equals(child)) {
                     try {
-                        pair.entry = readOneEntry(wc_id, dirAbspath, name, pair.parentEntry);
+                        pair.entry = readOneEntry(dirAbspath, name, pair.parentEntry);
                         /* Found it. No need to keep searching. */
                         break;
                     } catch (SVNException e) {
@@ -1441,7 +1439,7 @@ public class SVNWCContext {
         return pair;
     }
 
-    private SVNEntry readOneEntry(long wcId, File dirAbsPath, String name, SVNEntry parentEntry) throws SVNException {
+    private SVNEntry readOneEntry(File dirAbsPath, String name, SVNEntry parentEntry) throws SVNException {
 
         final File entry_abspath = (name != null && !"".equals(name)) ? new File(dirAbsPath, name) : dirAbsPath;
 
@@ -1866,7 +1864,10 @@ public class SVNWCContext {
          * ### tho they are not "part of" a repository any more.
          */
         if (entry.isScheduledForDeletion()) {
-            getBaseInfoForDeleted(entry, info.kind, info.reposRelPath, info.checksum, entry_abspath, parentEntry);
+            final DeletedBaseInfo deletedBaseInfo = getBaseInfoForDeleted(entry, entry_abspath, parentEntry);
+            info.kind = deletedBaseInfo.kind;
+            info.reposRelPath = deletedBaseInfo.reposRelPath;
+            info.checksum = deletedBaseInfo.checksum;
         }
 
         /* ### default to the infinite depth if we don't know it. */
@@ -1975,8 +1976,234 @@ public class SVNWCContext {
         public SVNRevision revision = SVNRevision.UNDEFINED;
     }
 
-    private void getBaseInfoForDeleted(SVNEntry17 entry, WCDbKind kind, File reposRelPath, SVNChecksum checksum, File entryAbspath, SVNEntry parentEntry) {
-        // TODO
+    private class DeletedBaseInfo {
+
+        public WCDbKind kind;
+        public File reposRelPath;
+        public SVNChecksum checksum;
+    }
+
+    private DeletedBaseInfo getBaseInfoForDeleted(SVNEntry17 entry, File entryAbsPath, SVNEntry parentEntry) throws SVNException {
+
+        DeletedBaseInfo resInfo = new DeletedBaseInfo();
+
+        SVNException err = null;
+
+        try {
+
+            /* Get the information from the underlying BASE node. */
+
+            final WCDbBaseInfo baseInfo = db.getBaseInfo(entryAbsPath, BaseInfoField.kind, BaseInfoField.revision, BaseInfoField.changedRev, BaseInfoField.changedDate, BaseInfoField.changedAuthor,
+                    BaseInfoField.lastModTime, BaseInfoField.depth, BaseInfoField.checksum, BaseInfoField.translatedSize);
+
+            resInfo.kind = baseInfo.kind;
+            resInfo.checksum = baseInfo.checksum;
+            entry.setRevision(baseInfo.revision);
+            entry.setCommittedRevision(baseInfo.changedRev);
+            entry.setCommittedDate(baseInfo.changedDate == null ? null : baseInfo.changedDate.toString());
+            entry.setAuthor(baseInfo.changedAuthor);
+            entry.setTextTime(baseInfo.lastModTime == null ? null : baseInfo.lastModTime.toString());
+            entry.setDepth(baseInfo.depth);
+            entry.setWorkingSize(baseInfo.translatedSize);
+
+        } catch (SVNException e) {
+            err = e;
+        }
+
+        /*
+         * SVN_EXPERIMENTAL_PRISTINE:checksum is originally MD-5 but will later
+         * be SHA-1. That's OK here - we are just returning what is stored.
+         */
+
+        if (err != null) {
+            if (err.getErrorMessage().getErrorCode() != SVNErrorCode.WC_PATH_NOT_FOUND) {
+                throw err;
+            }
+
+            /*
+             * No base node? This is a deleted child of a copy/move-here, so we
+             * need to scan up the WORKING tree to find the root of the
+             * deletion. Then examine its parent to discover its future location
+             * in the repository.
+             */
+
+            final WCDbDeletionInfo deletionInfo = db.scanDeletion(entryAbsPath, DeletionInfoField.workDelAbsPath);
+
+            assert (deletionInfo.workDelAbsPath != null);
+            final File parent_abspath = SVNFileUtil.getParentFile(deletionInfo.workDelAbsPath);
+
+            /*
+             * During post-commit the parent that was previously added may have
+             * been moved from the WORKING tree to the BASE tree.
+             */
+
+            final WCDbInfo parentInfo = db.readInfo(parent_abspath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
+            File parent_repos_relpath = parentInfo.reposRelPath;
+            entry.setRepositoryRootURL(parentInfo.reposRootUrl);
+            entry.setUUID(parentInfo.reposUuid);
+
+            if (parentInfo.status == WCDbStatus.Added || parentInfo.status == WCDbStatus.ObstructedAdd) {
+                final WCDbAdditionInfo additionInfo = db.scanAddition(parent_abspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
+                parent_repos_relpath = additionInfo.reposRelPath;
+                entry.setRepositoryRootURL(additionInfo.reposRootUrl);
+                entry.setUUID(additionInfo.reposUuid);
+            }
+
+            /* Now glue it all together */
+            resInfo.reposRelPath = new File(parent_repos_relpath, SVNPathUtil.getRelativePath(parent_abspath.toString(), entryAbsPath.toString()));
+        } else {
+            final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(entryAbsPath, RepositoryInfoField.values());
+            resInfo.reposRelPath = baseReposInfo.relPath;
+            entry.setRepositoryRootURL(baseReposInfo.rootUrl);
+            entry.setUUID(baseReposInfo.uuid);
+        }
+
+        /* Do some extra work for the child nodes. */
+        if (parentEntry != null) {
+            /*
+             * For child nodes without a revision, pick up the parent's
+             * revision.
+             */
+            if (!SVNRevision.isValidRevisionNumber(entry.getRevision()))
+                entry.setRevision(parentEntry.getRevision());
+        }
+
+        /*
+         * For deleted nodes, our COPIED flag has a rather complex meaning.
+         * 
+         * In general, COPIED means "an operation on an ancestor took care of
+         * me." This typically refers to a copy of an ancestor (and this node
+         * just came along for the ride). However, in certain situations the
+         * COPIED flag is set for deleted nodes.
+         * 
+         * First off, COPIED will *never* be set for nodes/subtrees that are
+         * simply deleted. The deleted node/subtree *must* be under an ancestor
+         * that has been copied. Plain additions do not count; only copies
+         * (add-with-history).
+         * 
+         * The basic algorithm to determine whether we live within a copied
+         * subtree is as follows:
+         * 
+         * 1) find the root of the deletion operation that affected us (we may
+         * be that root, or an ancestor was deleted and took us with it)
+         * 
+         * 2) look at the root's *parent* and determine whether that was a copy
+         * or a simple add.
+         * 
+         * It would appear that we would be done at this point. Once we
+         * determine that the parent was copied, then we could just set the
+         * COPIED flag.
+         * 
+         * Not so fast. Back to the general concept of "an ancestor operation
+         * took care of me." Further consider two possibilities:
+         * 
+         * 1) this node is scheduled for deletion from the copied subtree, so at
+         * commit time, we copy then delete
+         * 
+         * 2) this node is scheduled for deletion because a subtree was deleted
+         * and then a copied subtree was added (causing a replacement). at
+         * commit time, we delete a subtree, and then copy a subtree. we do not
+         * need to specifically touch this node -- all operations occur on
+         * ancestors.
+         * 
+         * Given the "ancestor operation" concept, then in case (1) we must
+         * *clear* the COPIED flag since we'll have more work to do. In case
+         * (2), we *set* the COPIED flag to indicate that no real work is going
+         * to happen on this node.
+         * 
+         * Great fun. And just maybe the code reading the entries has no bugs in
+         * interpreting that gobbledygook... but that *is* the expectation of
+         * the code. Sigh.
+         * 
+         * We can get a little bit of shortcut here if THIS_DIR is also schduled
+         * for deletion.
+         */
+        if (parentEntry != null && parentEntry.isScheduledForDeletion()) {
+            /*
+             * ### not entirely sure that we can rely on the parent. for ###
+             * example, what if we are a deletion of a BASE node, but ### the
+             * parent is a deletion of a copied subtree? sigh.
+             */
+
+            /* Child nodes simply inherit the parent's COPIED flag. */
+            entry.setCopied(parentEntry.isCopied());
+        } else {
+
+            /* Find out details of our deletion. */
+            final WCDbDeletionInfo deletionInfo = db.scanDeletion(entryAbsPath, DeletionInfoField.baseReplaced, DeletionInfoField.workDelAbsPath);
+
+            /*
+             * If there is no deletion in the WORKING tree, then the node is a
+             * child of a simple explicit deletion of the BASE tree. It
+             * certainly isn't copied. If we *do* find a deletion in the WORKING
+             * tree, then we need to discover information about the parent.
+             */
+            if (deletionInfo.workDelAbsPath != null) {
+                File parent_abspath;
+                WCDbStatus parent_status;
+
+                /*
+                 * The parent is in WORKING except during post-commit when it
+                 * may have been moved from the WORKING tree to the BASE tree.
+                 */
+                parent_abspath = SVNFileUtil.getParentFile(deletionInfo.workDelAbsPath);
+                parent_status = db.readInfo(parent_abspath, InfoField.status).status;
+
+                if (parent_status == WCDbStatus.Added || parent_status == WCDbStatus.ObstructedAdd) {
+                    parent_status = db.scanAddition(parent_abspath, AdditionInfoField.status).status;
+
+                }
+                if (parent_status == WCDbStatus.Copied || parent_status == WCDbStatus.MovedHere || parent_status == WCDbStatus.Normal) {
+                    /*
+                     * The parent is copied/moved here, so WORK_DEL_ABSPATH is
+                     * the root of a deleted subtree. Our COPIED status is now
+                     * dependent upon whether the copied root is replacing a
+                     * BASE tree or not.
+                     * 
+                     * But: if we are schedule-delete as a result of being a
+                     * copied DELETED node, then *always* mark COPIED. Normal
+                     * copies have cmt_* data; copied DELETED nodes are missing
+                     * this info.
+                     * 
+                     * Note: MOVED_HERE is a concept foreign to this old
+                     * interface, but it is best represented as if a copy had
+                     * occurred, so we'll model it that way to old clients.
+                     * 
+                     * Note: svn_wc__db_status_normal corresponds to the
+                     * post-commit parent that was copied or moved in WORKING
+                     * but has now been converted to BASE.
+                     */
+                    if (SVNRevision.isValidRevisionNumber(entry.getCommittedRevision())) {
+                        /*
+                         * The scan_deletion call will tell us if there was an
+                         * explicit move-away of an ancestor (which also means a
+                         * replacement has occurred since there is a WORKING
+                         * tree that isn't simply BASE deletions). The call will
+                         * also tell us if there was an implicit deletion caused
+                         * by a replacement. All stored in BASE_REPLACED.
+                         */
+                        entry.setCopied(deletionInfo.baseReplaced);
+                    } else {
+                        entry.setCopied(true);
+                    }
+                } else {
+                    assert (parent_status == WCDbStatus.Added);
+
+                    /*
+                     * Whoops. WORK_DEL_ABSPATH is scheduled for deletion, yet
+                     * the parent is scheduled for a plain addition. This can
+                     * occur when a subtree is deleted, and then nodes are added
+                     * *later*. Since the parent is a simple add, then nothing
+                     * has been copied. Nothing more to do.
+                     * 
+                     * Note: if a subtree is added, *then* deletions are made,
+                     * the nodes should simply be removed from version control.
+                     */
+                }
+            }
+        }
+
+        return resInfo;
     }
 
 }
