@@ -107,7 +107,6 @@ public class SVNCommandDaemon implements Runnable {
                 synchronized (SVNCommandDaemon.class) {
                     rc = myLastExitCode;
                 }
-                log.logSevere(SVNLogType.DEFAULT, "command exit code: " + rc);
                 // send back
                 try {
                     os.write(escape(environment.getStdOut()));
