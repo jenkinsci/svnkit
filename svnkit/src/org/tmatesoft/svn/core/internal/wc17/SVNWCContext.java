@@ -1307,7 +1307,7 @@ public class SVNWCContext {
     }
 
     private EntryAccessInfo getEntryAccessInfo(File localAbsPath, SVNNodeKind kind, boolean needParentStub) {
-        boolean read_from_subdir = false;
+        boolean readFromSubdir = false;
         EntryAccessInfo info = new EntryAccessInfo();
 
         /* Can't ask for the parent stub if the node is a file. */
@@ -1319,9 +1319,9 @@ public class SVNWCContext {
          */
         if (kind == SVNNodeKind.UNKNOWN) {
             /* What's on disk? */
-            SVNNodeKind on_disk = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
+            SVNNodeKind onDisk = SVNFileType.getNodeKind(SVNFileType.getType(localAbsPath));
 
-            if (on_disk != SVNNodeKind.DIR) {
+            if (onDisk != SVNNodeKind.DIR) {
                 /*
                  * If this is *anything* besides a directory (FILE, NONE, or
                  * UNKNOWN), then we cannot treat it as a versioned directory
@@ -1342,13 +1342,13 @@ public class SVNWCContext {
                  * We found a directory for this UNKNOWN node. Determine whether
                  * we need to read inside it.
                  */
-                read_from_subdir = !needParentStub;
+                readFromSubdir = !needParentStub;
             }
         } else if (kind == SVNNodeKind.DIR && !needParentStub) {
-            read_from_subdir = true;
+            readFromSubdir = true;
         }
 
-        if (read_from_subdir) {
+        if (readFromSubdir) {
             /*
              * KIND must be a DIR or UNKNOWN (and we found a subdir). We want
              * the "real" data, so treat LOCAL_ABSPATH as a versioned directory.
@@ -1441,11 +1441,11 @@ public class SVNWCContext {
 
     private SVNEntry readOneEntry(File dirAbsPath, String name, SVNEntry parentEntry) throws SVNException {
 
-        final File entry_abspath = (name != null && !"".equals(name)) ? new File(dirAbsPath, name) : dirAbsPath;
+        final File entryAbsPath = (name != null && !"".equals(name)) ? new File(dirAbsPath, name) : dirAbsPath;
 
-        final WCDbInfo info = db.readInfo(entry_abspath, InfoField.values());
+        final WCDbInfo info = db.readInfo(entryAbsPath, InfoField.values());
 
-        final SVNEntry17 entry = new SVNEntry17(entry_abspath);
+        final SVNEntry17 entry = new SVNEntry17(entryAbsPath);
         entry.setName(name);
         entry.setRevision(info.revision);
         entry.setRepositoryRootURL(info.reposRootUrl);
@@ -1486,7 +1486,7 @@ public class SVNWCContext {
         }
 
         if (info.status == WCDbStatus.Normal || info.status == WCDbStatus.Incomplete) {
-            boolean have_row = false;
+            boolean haveRow = false;
 
             /*
              * Ugh. During a checkout, it is possible that we are constructing a
@@ -1510,7 +1510,7 @@ public class SVNWCContext {
                  */
             }
 
-            if (have_row) {
+            if (haveRow) {
                 /*
                  * Just like a normal "not-present" node: schedule=normal and
                  * DELETED.
@@ -1523,7 +1523,7 @@ public class SVNWCContext {
 
                 /* Grab inherited repository information, if necessary. */
                 if (info.reposRelPath == null) {
-                    final WCDbRepositoryInfo baseRepos = db.scanBaseRepository(entry_abspath, RepositoryInfoField.values());
+                    final WCDbRepositoryInfo baseRepos = db.scanBaseRepository(entryAbsPath, RepositoryInfoField.values());
                     info.reposRelPath = baseRepos.relPath;
                     entry.setRepositoryRootURL(baseRepos.rootUrl);
                     entry.setUUID(baseRepos.uuid);
@@ -1550,13 +1550,13 @@ public class SVNWCContext {
              * after the delete operation are always kept locally.
              */
             if ("".equals(entry.getName())) {
-                entry.setKeepLocal(db.determineKeepLocalTemp(entry_abspath));
+                entry.setKeepLocal(db.determineKeepLocalTemp(entryAbsPath));
             }
         } else if (info.status == WCDbStatus.Added || info.status == WCDbStatus.ObstructedAdd) {
-            WCDbStatus work_status;
-            File op_root_abspath = null;
-            File scanned_original_relpath;
-            long original_revision = INVALID_REVNUM;
+            WCDbStatus workStatus;
+            File opRootAbsPath = null;
+            File scannedOriginalRelPath;
+            long originalRevision = INVALID_REVNUM;
 
             /* For child nodes, pick up the parent's revision. */
             if (!"".equals(entry.getName())) {
@@ -1567,7 +1567,7 @@ public class SVNWCContext {
             }
 
             if (info.baseShadowed) {
-                WCDbStatus base_status;
+                WCDbStatus baseStatus;
 
                 /*
                  * ENTRY->REVISION is overloaded. When a node is schedule-add or
@@ -1575,11 +1575,11 @@ public class SVNWCContext {
                  * that is being overwritten. We need to fetch it now.
                  */
 
-                WCDbBaseInfo baseInfo = db.getBaseInfo(entry_abspath, BaseInfoField.status, BaseInfoField.revision);
-                base_status = baseInfo.status;
+                WCDbBaseInfo baseInfo = db.getBaseInfo(entryAbsPath, BaseInfoField.status, BaseInfoField.revision);
+                baseStatus = baseInfo.status;
                 entry.setRevision(baseInfo.revision);
 
-                if (base_status == WCDbStatus.NotPresent) {
+                if (baseStatus == WCDbStatus.NotPresent) {
                     /* The underlying node is DELETED in this revision. */
                     entry.setDeleted(true);
 
@@ -1600,7 +1600,7 @@ public class SVNWCContext {
                  * ### in the subdir. future step because it is harder.
                  */
                 if (info.kind == WCDbKind.Dir && !"".equals(entry.getName())) {
-                    WCDbDirDeletedInfo deletedInfo = db.isDirDeletedTem(entry_abspath);
+                    WCDbDirDeletedInfo deletedInfo = db.isDirDeletedTem(entryAbsPath);
                     entry.setDeleted(deletedInfo.notPresent);
                     entry.setRevision(deletedInfo.baseRevision);
                 }
@@ -1648,18 +1648,18 @@ public class SVNWCContext {
              */
             if (info.status == WCDbStatus.ObstructedAdd) {
                 entry.setCommittedRevision(INVALID_REVNUM);
-                work_status = WCDbStatus.Normal;
-                scanned_original_relpath = null;
+                workStatus = WCDbStatus.Normal;
+                scannedOriginalRelPath = null;
             } else {
-                final WCDbAdditionInfo additionInfo = db.scanAddition(entry_abspath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath,
+                final WCDbAdditionInfo additionInfo = db.scanAddition(entryAbsPath, AdditionInfoField.status, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath,
                         AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid, AdditionInfoField.originalReposRelPath, AdditionInfoField.originalRevision);
-                work_status = additionInfo.status;
-                op_root_abspath = additionInfo.opRootAbsPath;
+                workStatus = additionInfo.status;
+                opRootAbsPath = additionInfo.opRootAbsPath;
                 info.reposRelPath = additionInfo.reposRelPath;
                 entry.setRepositoryRootURL(additionInfo.reposRootUrl);
                 entry.setUUID(additionInfo.reposUuid);
-                scanned_original_relpath = additionInfo.originalReposRelPath;
-                original_revision = additionInfo.originalRevision;
+                scannedOriginalRelPath = additionInfo.originalReposRelPath;
+                originalRevision = additionInfo.originalRevision;
 
                 /*
                  * In wc.db we want to keep the valid revision of the
@@ -1667,12 +1667,12 @@ public class SVNWCContext {
                  * revision to 0 when adding a new node over a not present base
                  * node.
                  */
-                if (work_status == WCDbStatus.Added && entry.isDeleted()) {
+                if (workStatus == WCDbStatus.Added && entry.isDeleted()) {
                     entry.setRevision(0);
                 }
             }
 
-            if (!SVNRevision.isValidRevisionNumber(entry.getCommittedRevision()) && scanned_original_relpath == null) {
+            if (!SVNRevision.isValidRevisionNumber(entry.getCommittedRevision()) && scannedOriginalRelPath == null) {
                 /*
                  * There is NOT a last-changed revision (last-changed date and
                  * author may be unknown, but we can always check the rev). The
@@ -1683,7 +1683,7 @@ public class SVNWCContext {
                  * ### scan_addition may need to be updated to avoid returning
                  * ### status_copied in this case.
                  */
-            } else if (work_status == WCDbStatus.Copied) {
+            } else if (workStatus == WCDbStatus.Copied) {
                 entry.setCopied(true);
 
                 /*
@@ -1700,21 +1700,21 @@ public class SVNWCContext {
                  * have a revision of their own already.
                  */
                 if (!SVNRevision.isValidRevisionNumber(entry.getRevision()) || entry.getRevision() == 0 /* added */)
-                    entry.setRevision(original_revision);
+                    entry.setRevision(originalRevision);
             }
 
             /* Does this node have copyfrom_* information? */
-            if (scanned_original_relpath != null) {
-                boolean is_copied_child;
-                boolean is_mixed_rev = false;
+            if (scannedOriginalRelPath != null) {
+                boolean isCopiedChild;
+                boolean isMixedRev = false;
 
-                assert (work_status == WCDbStatus.Copied);
+                assert (workStatus == WCDbStatus.Copied);
 
                 /*
                  * If this node inherits copyfrom information from an ancestor
                  * node, then it must be a copied child.
                  */
-                is_copied_child = (info.originalReposRelpath == null);
+                isCopiedChild = (info.originalReposRelpath == null);
 
                 /*
                  * If this node has copyfrom information on it, then it may be
@@ -1723,10 +1723,10 @@ public class SVNWCContext {
                  * is a copied child, then we need to look for this
                  * mixed-revision situation.
                  */
-                if (!is_copied_child) {
-                    File parent_abspath;
-                    File parent_repos_relpath;
-                    SVNURL parent_root_url;
+                if (!isCopiedChild) {
+                    File parentAbsPath;
+                    File parentReposRelPath;
+                    SVNURL parentRootUrl;
 
                     /*
                      * When we insert entries into the database, we will
@@ -1757,19 +1757,19 @@ public class SVNWCContext {
                      * There is no way for it to be deleted/moved-away and have
                      * *this* node appear as copied.
                      */
-                    parent_abspath = SVNFileUtil.getParentFile(entry_abspath);
+                    parentAbsPath = SVNFileUtil.getParentFile(entryAbsPath);
 
                     try {
 
-                        final WCDbAdditionInfo additionInfo = db.scanAddition(parent_abspath, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
+                        final WCDbAdditionInfo additionInfo = db.scanAddition(parentAbsPath, AdditionInfoField.opRootAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
 
-                        op_root_abspath = additionInfo.opRootAbsPath;
-                        parent_repos_relpath = additionInfo.originalReposRelPath;
-                        parent_root_url = additionInfo.originalRootUrl;
+                        opRootAbsPath = additionInfo.opRootAbsPath;
+                        parentReposRelPath = additionInfo.originalReposRelPath;
+                        parentRootUrl = additionInfo.originalRootUrl;
 
-                        if (parent_root_url != null && info.originalRootUrl.equals(parent_root_url)) {
-                            String relpath_to_entry = SVNPathUtil.getRelativePath(op_root_abspath.toString(), entry_abspath.toString());
-                            String entry_repos_relpath = SVNPathUtil.append(parent_repos_relpath.toString(), relpath_to_entry);
+                        if (parentRootUrl != null && info.originalRootUrl.equals(parentRootUrl)) {
+                            String relpath_to_entry = SVNPathUtil.getRelativePath(opRootAbsPath.toString(), entryAbsPath.toString());
+                            String entry_repos_relpath = SVNPathUtil.append(parentReposRelPath.toString(), relpath_to_entry);
 
                             /*
                              * The copyfrom repos roots matched.
@@ -1785,8 +1785,8 @@ public class SVNWCContext {
                              * additional detail, and potential issues.
                              */
                             if (entry_repos_relpath.equals(info.originalReposRelpath.toString())) {
-                                is_copied_child = true;
-                                is_mixed_rev = true;
+                                isCopiedChild = true;
+                                isMixedRev = true;
                             }
                         }
 
@@ -1798,7 +1798,7 @@ public class SVNWCContext {
 
                 }
 
-                if (is_copied_child) {
+                if (isCopiedChild) {
                     /*
                      * We won't be settig the copyfrom_url, yet need to clear
                      * out the copyfrom_rev. Thus, this node becomes a child of
@@ -1819,8 +1819,8 @@ public class SVNWCContext {
                      * taken from the copyfrom record that we spontaneously
                      * constructed.
                      */
-                    if (is_mixed_rev)
-                        entry.setRevision(original_revision);
+                    if (isMixedRev)
+                        entry.setRevision(originalRevision);
                 } else if (info.originalReposRelpath != null) {
                     entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), info.originalReposRelpath.toString()));
                 } else {
@@ -1830,9 +1830,9 @@ public class SVNWCContext {
                      * this use of OP_ROOT_ABSPATH still contains the original
                      * value where we fetched a value for SCANNED_REPOS_RELPATH.
                      */
-                    String relpath_to_entry = SVNPathUtil.getRelativePath(op_root_abspath.toString(), entry_abspath.toString());
-                    String entry_repos_relpath = SVNPathUtil.append(scanned_original_relpath.toString(), relpath_to_entry);
-                    entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), entry_repos_relpath));
+                    String relPathToEntry = SVNPathUtil.getRelativePath(opRootAbsPath.toString(), entryAbsPath.toString());
+                    String entryReposRelPath = SVNPathUtil.append(scannedOriginalRelPath.toString(), relPathToEntry);
+                    entry.setCopyFromURL(SVNPathUtil.append(info.originalRootUrl.toString(), entryReposRelPath));
                 }
             }
         } else if (info.status == WCDbStatus.NotPresent) {
@@ -1864,7 +1864,7 @@ public class SVNWCContext {
          * ### tho they are not "part of" a repository any more.
          */
         if (entry.isScheduledForDeletion()) {
-            final DeletedBaseInfo deletedBaseInfo = getBaseInfoForDeleted(entry, entry_abspath, parentEntry);
+            final DeletedBaseInfo deletedBaseInfo = getBaseInfoForDeleted(entry, entryAbsPath, parentEntry);
             info.kind = deletedBaseInfo.kind;
             info.reposRelPath = deletedBaseInfo.reposRelPath;
             info.checksum = deletedBaseInfo.checksum;
@@ -1903,7 +1903,7 @@ public class SVNWCContext {
              * corresponding MD-5.
              */
             if (info.checksum.getKind() != SVNChecksumKind.MD5) {
-                info.checksum = db.getPristineMD5(entry_abspath, info.checksum);
+                info.checksum = db.getPristineMD5(entryAbsPath, info.checksum);
             }
 
             assert (info.checksum.getKind() == SVNChecksumKind.MD5);
@@ -1912,7 +1912,7 @@ public class SVNWCContext {
 
         if (info.conflicted) {
 
-            final List<SVNTreeConflictDescription> conflicts = db.readConflicts(entry_abspath);
+            final List<SVNTreeConflictDescription> conflicts = db.readConflicts(entryAbsPath);
 
             for (SVNTreeConflictDescription cd : conflicts) {
 
@@ -1940,7 +1940,7 @@ public class SVNWCContext {
          * properties. ugh.
          */
         if (entry.getKind() == SVNNodeKind.FILE)
-            checkFileExternal(entry, entry_abspath);
+            checkFileExternal(entry, entryAbsPath);
 
         entry.setWorkingSize(info.translatedSize);
 
@@ -2038,19 +2038,19 @@ public class SVNWCContext {
              */
 
             final WCDbInfo parentInfo = db.readInfo(parent_abspath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.reposUuid);
-            File parent_repos_relpath = parentInfo.reposRelPath;
+            File parentReposRelPath = parentInfo.reposRelPath;
             entry.setRepositoryRootURL(parentInfo.reposRootUrl);
             entry.setUUID(parentInfo.reposUuid);
 
             if (parentInfo.status == WCDbStatus.Added || parentInfo.status == WCDbStatus.ObstructedAdd) {
                 final WCDbAdditionInfo additionInfo = db.scanAddition(parent_abspath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl, AdditionInfoField.reposUuid);
-                parent_repos_relpath = additionInfo.reposRelPath;
+                parentReposRelPath = additionInfo.reposRelPath;
                 entry.setRepositoryRootURL(additionInfo.reposRootUrl);
                 entry.setUUID(additionInfo.reposUuid);
             }
 
             /* Now glue it all together */
-            resInfo.reposRelPath = new File(parent_repos_relpath, SVNPathUtil.getRelativePath(parent_abspath.toString(), entryAbsPath.toString()));
+            resInfo.reposRelPath = new File(parentReposRelPath, SVNPathUtil.getRelativePath(parent_abspath.toString(), entryAbsPath.toString()));
         } else {
             final WCDbRepositoryInfo baseReposInfo = db.scanBaseRepository(entryAbsPath, RepositoryInfoField.values());
             resInfo.reposRelPath = baseReposInfo.relPath;
@@ -2139,21 +2139,21 @@ public class SVNWCContext {
              * tree, then we need to discover information about the parent.
              */
             if (deletionInfo.workDelAbsPath != null) {
-                File parent_abspath;
-                WCDbStatus parent_status;
+                File parentAbsPath;
+                WCDbStatus parentStatus;
 
                 /*
                  * The parent is in WORKING except during post-commit when it
                  * may have been moved from the WORKING tree to the BASE tree.
                  */
-                parent_abspath = SVNFileUtil.getParentFile(deletionInfo.workDelAbsPath);
-                parent_status = db.readInfo(parent_abspath, InfoField.status).status;
+                parentAbsPath = SVNFileUtil.getParentFile(deletionInfo.workDelAbsPath);
+                parentStatus = db.readInfo(parentAbsPath, InfoField.status).status;
 
-                if (parent_status == WCDbStatus.Added || parent_status == WCDbStatus.ObstructedAdd) {
-                    parent_status = db.scanAddition(parent_abspath, AdditionInfoField.status).status;
+                if (parentStatus == WCDbStatus.Added || parentStatus == WCDbStatus.ObstructedAdd) {
+                    parentStatus = db.scanAddition(parentAbsPath, AdditionInfoField.status).status;
 
                 }
-                if (parent_status == WCDbStatus.Copied || parent_status == WCDbStatus.MovedHere || parent_status == WCDbStatus.Normal) {
+                if (parentStatus == WCDbStatus.Copied || parentStatus == WCDbStatus.MovedHere || parentStatus == WCDbStatus.Normal) {
                     /*
                      * The parent is copied/moved here, so WORK_DEL_ABSPATH is
                      * the root of a deleted subtree. Our COPIED status is now
@@ -2187,7 +2187,7 @@ public class SVNWCContext {
                         entry.setCopied(true);
                     }
                 } else {
-                    assert (parent_status == WCDbStatus.Added);
+                    assert (parentStatus == WCDbStatus.Added);
 
                     /*
                      * Whoops. WORK_DEL_ABSPATH is scheduled for deletion, yet
