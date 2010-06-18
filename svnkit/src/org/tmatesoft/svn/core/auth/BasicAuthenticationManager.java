@@ -46,7 +46,7 @@ import org.tmatesoft.svn.core.io.SVNRepository;
  * @since   1.2
  * @see     ISVNAuthenticationProvider
  */
-public class BasicAuthenticationManager implements ISVNAuthenticationManager, ISVNProxyManager {
+public class BasicAuthenticationManager implements ISVNAuthenticationManager, ISVNProxyManager, ISVNSSHHostVerifier {
     
     private List myPasswordAuthentications;
     private List mySSHAuthentications;
@@ -375,6 +375,9 @@ public class BasicAuthenticationManager implements ISVNAuthenticationManager, IS
             return 60*1000;
         }
         return 0; 
+    }
+
+    public void verifyHostKey(String hostName, int port, String keyAlgorithm, byte[] hostKey) throws SVNException {
     }
 
 }
