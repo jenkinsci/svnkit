@@ -46,10 +46,8 @@ public class SVNCommandDaemonEnvironment {
     
     private ByteArrayOutputStream myCommandOutput = new ByteArrayOutputStream();
     private ByteArrayOutputStream myCommandError = new ByteArrayOutputStream();
-    private String myTestType;
     
-    public SVNCommandDaemonEnvironment(String testType) {
-        myTestType = testType;
+    public SVNCommandDaemonEnvironment() {
     }
 
     public void addArgumentLine(String line) {
@@ -76,6 +74,11 @@ public class SVNCommandDaemonEnvironment {
         myStdIn = stdin;
     }
     
+    private void setupLogger(Logger logger) {
+        logger.setLevel(Level.ALL);
+        logger.setUseParentHandlers(false);
+    }
+    
     public int run() {
         String testName = (String) myVariables.get("SVN_CURRENT_TEST");
         String doNotSleep = (String) myVariables.get("SVN_I_LOVE_CORRUPTED_WORKING_COPIES_SO_DISABLE_SLEEP_FOR_TIMESTAMPS");
@@ -94,12 +97,18 @@ public class SVNCommandDaemonEnvironment {
         Handler logHandler = null;
         int rc = 0;
         try {
+            setupLogger(Logger.getLogger(SVNLogType.DEFAULT.getName()));
+            setupLogger(Logger.getLogger(SVNLogType.NETWORK.getName()));
+            setupLogger(Logger.getLogger(SVNLogType.WC.getName()));
+            setupLogger(Logger.getLogger(SVNLogType.CLIENT.getName()));
+            setupLogger(Logger.getLogger(SVNLogType.FSFS.getName()));
             if (testName != null) {
                 logHandler = createTestLogger(testName);
                 Logger.getLogger(SVNLogType.DEFAULT.getName()).addHandler(logHandler);
                 Logger.getLogger(SVNLogType.NETWORK.getName()).addHandler(logHandler);
                 Logger.getLogger(SVNLogType.WC.getName()).addHandler(logHandler);
                 Logger.getLogger(SVNLogType.CLIENT.getName()).addHandler(logHandler);
+                Logger.getLogger(SVNLogType.FSFS.getName()).addHandler(logHandler);
             }
             SVNFileUtil.setTestEnvironment(editor, mergeTool, testFunction);
             SVNFileUtil.setSleepForTimestamp(doNotSleep == null || !"yes".equals(doNotSleep));
@@ -132,6 +141,7 @@ public class SVNCommandDaemonEnvironment {
                 Logger.getLogger(SVNLogType.NETWORK.getName()).removeHandler(logHandler);
                 Logger.getLogger(SVNLogType.WC.getName()).removeHandler(logHandler);
                 Logger.getLogger(SVNLogType.CLIENT.getName()).removeHandler(logHandler);
+                Logger.getLogger(SVNLogType.FSFS.getName()).removeHandler(logHandler);
             }
             SVNFileUtil.setTestEnvironment(null, null, null);
             SVNFileUtil.setSleepForTimestamp(true);
@@ -160,10 +170,11 @@ public class SVNCommandDaemonEnvironment {
         FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), 0, 1, true);
         fileHandler.setLevel(Level.FINEST);
         fileHandler.setFormatter(new DefaultSVNDebugFormatter());
+        
         return fileHandler;
     }
 
     private String getPathFromTestName(String prefix, String testName) {
-        return (prefix != null ? prefix : "") + "build/logs/" + (myTestType != null ? myTestType : "") + "_" + testName.trim() + ".log"; 
+        return (prefix != null ? prefix : "") + "build/logs/" + testName.trim() + ".log"; 
     }
 }
