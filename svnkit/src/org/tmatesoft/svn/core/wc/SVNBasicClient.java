@@ -806,7 +806,7 @@ public class SVNBasicClient implements ISVNEventHandler {
         return absPath;
     }
 
-    protected String getPathRelativeToSession(SVNURL url, SVNURL sessionURL, SVNRepository repos) throws SVNException {
+    protected String getPathRelativeToSession(SVNURL url, SVNURL sessionURL, SVNRepository repos) {
         if (sessionURL == null) {
             sessionURL = repos.getLocation();
         }
