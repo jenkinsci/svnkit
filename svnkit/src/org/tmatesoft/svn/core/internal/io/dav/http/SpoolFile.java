@@ -11,6 +11,7 @@
  */
 package org.tmatesoft.svn.core.internal.io.dav.http;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,13 +32,16 @@ import org.tmatesoft.svn.util.SVNLogType;
 public class SpoolFile {
 
     private static final long LIMIT = 1024*1024*512; // 512MB
+    private static final long MEMORY_TRESHOLD = 1024*100; // 100KB
     
     private File myDirectory;
     private LinkedList myFiles;
+    private ByteArrayOutputStream myBuffer;
 
     public SpoolFile(File directory) {
         myDirectory = directory;
         myFiles = new LinkedList();
+        myBuffer = new ByteArrayOutputStream();
     }
     
     public OutputStream openForWriting() {
@@ -53,12 +57,14 @@ public class SpoolFile {
             File file = (File) files.next();
             SVNFileUtil.deleteFile(file);
         }
+        myBuffer = null;
     }
     
     private class SpoolInputStream extends InputStream {
         
         private File myCurrentFile;
         private long myCurrentSize;
+        private int myBufferOffset;
         private InputStream myCurrentInput;
 
         public int read() throws IOException {
@@ -75,6 +81,19 @@ public class SpoolFile {
         }
 
         public int read(byte[] b, int off, int len) throws IOException {
+            if (myBuffer != null) {
+                int bufferSize = myBuffer.size() - myBufferOffset;
+                if (bufferSize <= 0) {
+                    return -1;
+                }
+                int toRead = Math.min(bufferSize, len);
+                
+                byte[] buffer = myBuffer.toByteArray();
+                System.arraycopy(buffer, myBufferOffset, b, off, toRead);
+                myBufferOffset += toRead;
+                return toRead;
+            }
+            
             int read = 0;
             while(len - read > 0) {
                 if (myCurrentFile == null) {
@@ -118,6 +137,16 @@ public class SpoolFile {
         }
 
         public long skip(long n) throws IOException {
+            if (myBuffer != null) {
+                int bufferSize = myBuffer.size() - myBufferOffset;
+                if (bufferSize <= 0) {
+                    return 0;
+                }
+
+                long toSkip = Math.min(bufferSize, n);
+                myBufferOffset += (int) toSkip;
+                return toSkip;
+            }
             int skipped = 0;
             while(n - skipped > 0) {
                 if (myCurrentFile == null) {
@@ -157,6 +186,8 @@ public class SpoolFile {
             if (myCurrentFile != null) {
                 closeCurrentFile();
             }
+            myBuffer = null;
+            myBufferOffset = 0;
         }
     }
     
@@ -175,6 +206,12 @@ public class SpoolFile {
         }
 
         public void write(byte[] b, int off, int len) throws IOException {
+            if (myBuffer != null) {
+                myBuffer.write(b, off, len);
+                if (myBuffer.size() < MEMORY_TRESHOLD) {
+                    return;
+                }
+            }
             if (myCurrentOutput == null) {
                 // open first file.
                 File file = createNextFile();
@@ -188,9 +225,17 @@ public class SpoolFile {
                     }
                     throw new IOException(e.getMessage());
                 }
+            } 
+
+            if (myBuffer != null) {
+                myBuffer.close();
+                myBuffer.writeTo(myCurrentOutput);
+                myCurrentSize += myBuffer.size();
+                myBuffer = null;
+            } else {
+                myCurrentOutput.write(b, off, len);
+                myCurrentSize += len;
             }
-            myCurrentOutput.write(b, off, len);
-            myCurrentSize += len;
             if (myCurrentSize >= LIMIT) {
                 close();
             }
