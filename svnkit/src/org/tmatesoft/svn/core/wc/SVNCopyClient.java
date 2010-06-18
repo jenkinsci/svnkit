@@ -304,7 +304,7 @@ public class SVNCopyClient extends SVNCopyDriver {
             return;
         }
         try {
-            setupCopy(sources, new SVNPath(dst.getAbsolutePath()), isMove, makeParents, null, null, getCommitHandler(), getCommitParameters(), getExternalsHandler());
+            setupCopy(sources, new SVNPath(dst.getAbsolutePath(), false, false), isMove, makeParents, null, null, getCommitHandler(), getCommitParameters(), getExternalsHandler());
         } catch (SVNException e) {
             SVNErrorCode err = e.getErrorMessage().getErrorCode();
             if (!failWhenDstExists && sources.length == 1 && (err == SVNErrorCode.ENTRY_EXISTS || err == SVNErrorCode.FS_ALREADY_EXISTS)) {
@@ -314,7 +314,7 @@ public class SVNCopyClient extends SVNCopyDriver {
                     baseName = SVNEncodingUtil.uriDecode(baseName);
                 }
                 try {
-                    setupCopy(sources, new SVNPath(new File(dst, baseName).getAbsolutePath()), isMove, 
+                    setupCopy(sources, new SVNPath(new File(dst, baseName).getAbsolutePath(), false, false), isMove, 
                             makeParents, null, null, getCommitHandler(), getCommitParameters(), getExternalsHandler());
                 } catch (SVNException second) {
                     throw second;
@@ -423,7 +423,7 @@ public class SVNCopyClient extends SVNCopyDriver {
             return SVNCommitInfo.NULL;
         }
         try {
-            return setupCopy(sources, new SVNPath(dst.toString()), isMove, makeParents, commitMessage, 
+            return setupCopy(sources, new SVNPath(dst.toString(), false, false), isMove, makeParents, commitMessage, 
                     revisionProperties, getCommitHandler(), getCommitParameters(), getExternalsHandler());
         } catch (SVNException e) {
             SVNErrorCode err = e.getErrorMessage().getErrorCode();
@@ -434,7 +434,7 @@ public class SVNCopyClient extends SVNCopyDriver {
                     baseName = SVNEncodingUtil.uriEncode(baseName);
                 }
                 try {
-                    return setupCopy(sources, new SVNPath(dst.appendPath(baseName, true).toString()), isMove, 
+                    return setupCopy(sources, new SVNPath(dst.appendPath(baseName, true).toString(), false, false), isMove, 
                             makeParents, commitMessage, revisionProperties, getCommitHandler(), getCommitParameters(), getExternalsHandler());
                 } catch (SVNException second) {
                     throw second;
