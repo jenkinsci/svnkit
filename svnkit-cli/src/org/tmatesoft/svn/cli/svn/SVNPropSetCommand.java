@@ -97,13 +97,23 @@ public class SVNPropSetCommand extends SVNPropertiesCommand {
                 }
                 propertyValue = SVNPropertyValue.create(stringValue);
             } else {
-                propertyValue = SVNPropertyValue.create(getSVNEnvironment().popArgument());
+                String argument = getSVNEnvironment().popArgument();
+                if (argument == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
+                }
+                propertyValue = SVNPropertyValue.create(argument);
             }
         } else {
             if (getSVNEnvironment().getFileData() != null) {
                 propertyValue = SVNPropertyValue.create(propertyName, getSVNEnvironment().getFileData());
             } else {
-                propertyValue = SVNPropertyValue.create(propertyName, getSVNEnvironment().popArgument().getBytes());
+                String argument = getSVNEnvironment().popArgument();
+                if (argument == null) {
+                    SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.CL_INSUFFICIENT_ARGS);
+                    SVNErrorManager.error(err, SVNLogType.CLIENT);
+                }
+                propertyValue = SVNPropertyValue.create(propertyName, argument.getBytes());
             }
         }
 

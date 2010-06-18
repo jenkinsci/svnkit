@@ -820,7 +820,7 @@ public class SVNWCClient extends SVNBasicClient {
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
             final long baseRev = revNumber;
             
-            propValue = SVNPropertiesManager.validatePropertyValue(url.toString(), kind, propName, propValue, 
+            propValue = SVNPropertiesManager.validatePropertyValue(url, kind, propName, propValue, 
                     skipChecks, getOptions(), new ISVNFileContentFetcher() {
 
                 Boolean isBinary = null;

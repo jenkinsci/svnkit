@@ -161,7 +161,7 @@ public class SVNPropertiesManager {
 
 
         if (propValue != null && SVNProperty.isSVNProperty(propName)) {
-            propValue = validatePropertyValue(path.getAbsolutePath(), entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
+            propValue = validatePropertyValue(path, entry.getKind(), propName, propValue, skipChecks, access.getOptions(), new ISVNFileContentFetcher() {
 
                 public void fetchFileContent(OutputStream os) throws SVNException {
                     InputStream is = SVNFileUtil.openFileForReading(path, SVNLogType.WC);
@@ -412,7 +412,7 @@ public class SVNPropertiesManager {
         return false;
     }
 
-    public static SVNPropertyValue validatePropertyValue(String path, SVNNodeKind kind, String name, SVNPropertyValue value, boolean force, ISVNOptions options, ISVNFileContentFetcher fileContentFetcher) throws SVNException {
+    public static SVNPropertyValue validatePropertyValue(Object path, SVNNodeKind kind, String name, SVNPropertyValue value, boolean force, ISVNOptions options, ISVNFileContentFetcher fileContentFetcher) throws SVNException {
         if (value == null) {
             return value;
         }
@@ -479,7 +479,7 @@ public class SVNPropertiesManager {
         return false;
     }
 
-    private static void validatePropertyName(String path, String name, SVNNodeKind kind) throws SVNException {
+    private static void validatePropertyName(Object path, String name, SVNNodeKind kind) throws SVNException {
         SVNErrorMessage err = null;
         if (kind == SVNNodeKind.DIR) {
             if (NOT_ALLOWED_FOR_DIR.contains(name)) {
@@ -512,7 +512,7 @@ public class SVNPropertiesManager {
         }
     }
 
-    public static void validateEOLProperty(String path, ISVNFileContentFetcher fetcher) throws SVNException {
+    public static void validateEOLProperty(Object path, ISVNFileContentFetcher fetcher) throws SVNException {
         SVNTranslatorOutputStream out = new SVNTranslatorOutputStream(SVNFileUtil.DUMMY_OUT, new byte[0], false, null, false);
 
         try {
@@ -537,7 +537,7 @@ public class SVNPropertiesManager {
         }
     }
 
-    private static void handleInconsistentEOL(SVNException svne, String path) throws SVNException {
+    private static void handleInconsistentEOL(SVNException svne, Object path) throws SVNException {
         SVNErrorMessage errorMessage = svne.getErrorMessage();
         while (errorMessage != null && errorMessage.getErrorCode() != SVNErrorCode.IO_INCONSISTENT_EOL) {
             errorMessage = errorMessage.getChildErrorMessage();

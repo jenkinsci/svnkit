@@ -760,8 +760,7 @@ public class SVNCopyDriver extends SVNBasicClient {
                     for (Iterator pathsIter = pathsToExternalsProps.keySet().iterator(); pathsIter.hasNext();) {
                         File localPath = (File) pathsIter.next();
                         String externalsPropString = (String) pathsToExternalsProps.get(localPath);
-                        SVNExternal[] externals = SVNExternal.parseExternals(localPath.getAbsolutePath(),
-                                externalsPropString);
+                        SVNExternal[] externals = SVNExternal.parseExternals(localPath, externalsPropString);
                         boolean introduceVirtualExternalChange = false;
                         newExternals.clear();
                         for (int k = 0; k < externals.length; k++) {

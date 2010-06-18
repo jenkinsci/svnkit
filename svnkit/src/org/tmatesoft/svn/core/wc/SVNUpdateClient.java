@@ -1319,7 +1319,7 @@ public class SVNUpdateClient extends SVNBasicClient {
                 SVNVersionedProperties properties = adminArea.getProperties(adminArea.getThisDirName());
                 String externalsValue = properties.getStringPropertyValue(SVNProperty.EXTERNALS);
                 if (externalsValue != null) {
-                    SVNExternal[] externals = SVNExternal.parseExternals(adminArea.getRoot().getAbsolutePath(), externalsValue);
+                    SVNExternal[] externals = SVNExternal.parseExternals(adminArea.getRoot(), externalsValue);
                     for (int i = 0; i < externals.length; i++) {
                         SVNExternal info = externals[i];
                         File srcPath = new File(adminArea.getRoot(), info.getPath());

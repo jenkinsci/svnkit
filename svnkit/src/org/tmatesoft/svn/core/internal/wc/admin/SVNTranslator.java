@@ -585,7 +585,7 @@ public class SVNTranslator {
         return null;
     }
 
-    public static String getCharset(String charset, String path, ISVNOptions options) throws SVNException {
+    public static String getCharset(String charset, Object path, ISVNOptions options) throws SVNException {
         if (SVNProperty.NATIVE.equals(charset)) {
             charset = options.getNativeCharset();
         }
