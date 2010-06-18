@@ -384,7 +384,7 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             String mimeType1, String mimeType2, SVNProperties originalProperties, SVNProperties diff, boolean[] isTreeConflicted) throws SVNException {
         setIsConflicted(isTreeConflicted, false);
         SVNStatusType[] result = new SVNStatusType[] {null, SVNStatusType.UNKNOWN};
-        SVNProperties newProps = new SVNProperties(originalProperties);
+        SVNProperties fileProps = new SVNProperties(originalProperties);
         for (Iterator propChangesIter = diff.nameSet().iterator(); propChangesIter.hasNext();) {
             String propName = (String) propChangesIter.next();
             if (SVNProperty.isWorkingCopyProperty(propName)) {
@@ -397,14 +397,14 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                 continue;
             }
             SVNPropertyValue propValue = diff.getSVNPropertyValue(propName);
-            newProps.put(propName, propValue);
+            fileProps.put(propName, propValue);
         }
         File mergedFile = getFile(path);
         SVNAdminArea dir = retrieve(mergedFile.getParentFile(), true);
         if (dir == null) {
             if (myIsDryRun && myAddedPath != null && SVNPathUtil.isAncestor(myAddedPath, path)) {
                 result[0] = SVNStatusType.CHANGED;
-                if (!newProps.isEmpty()) {
+                if (!fileProps.isEmpty()) {
                     result[1] = SVNStatusType.CHANGED;
                 }
             } else {
@@ -423,14 +423,33 @@ public class SVNMergeCallback extends AbstractDiffCallback {
             if (!myIsDryRun) {
                 String copyFromURL = null;
                 long copyFromRevision = SVNRepository.INVALID_REVISION;
+                SVNProperties newProps, newBaseProps;
+                File newBaseFile, newFile;
+                
                 if (myMergeDriver.myIsSameRepository) {
                     String targePath = myMergeDriver.myTarget.getAbsolutePath();
                     String minePath = mergedFile.getAbsolutePath();
                     String relativePath = SVNPathUtil.getRelativePath(targePath, minePath);
 
-                    copyFromURL = myURL.appendPath(relativePath, false).toString();    
-                    copyFromRevision = revision2;
+                    if (relativePath != null) {
+                        copyFromURL = myURL.appendPath(relativePath, false).toString();
+                    } else {
+                        copyFromURL = myURL.toString();
+                    }
                     // TODO compare protocols with dir one.
+
+                    copyFromRevision = revision2;
+                    newBaseProps = fileProps;
+                    newProps = null;
+                    newBaseFile = file2;
+                    newFile = null;
+                } else {
+                    copyFromURL = null;
+                    copyFromRevision = -1;
+                    newBaseProps = new SVNProperties();
+                    newProps = fileProps;
+                    newBaseFile = null;
+                    newFile = file2;
                 }
                 
                 SVNTreeConflictDescription existingConflict = getWCAccess().getTreeConflict(mergedFile);
@@ -438,12 +457,12 @@ public class SVNMergeCallback extends AbstractDiffCallback {
                     myMergeDriver.recordTreeConflictOnAdd(mergedFile, getAdminArea(), SVNNodeKind.FILE, SVNConflictAction.ADD, SVNConflictReason.ADDED);
                     setIsConflicted(isTreeConflicted, true);
                 } else {
-                    SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), null, file2, newProps, null, 
+                    SVNWCManager.addRepositoryFile(dir, mergedFile.getName(), newFile, newBaseFile, newBaseProps, newProps, 
                             copyFromURL, copyFromRevision);
                 }
             }
             result[0] = SVNStatusType.CHANGED;
-            if (!newProps.isEmpty()) {
+            if (!fileProps.isEmpty()) {
                 result[1] = SVNStatusType.CHANGED;
             }
         } else if (fileType == SVNFileType.DIRECTORY) {
