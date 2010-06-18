@@ -1119,7 +1119,7 @@ public abstract class SVNAdminArea {
         myAdminRoot = new File(dir, SVNFileUtil.getAdminDirectoryName());
     }
 
-    protected File getBasePropertiesFile(String name, boolean tmp) {
+    public File getBasePropertiesFile(String name, boolean tmp) {
         String path = !tmp ? "" : "tmp/";
         path += getThisDirName().equals(name) ? "dir-prop-base" : "prop-base/" + name + ".svn-base";
         File propertiesFile = getAdminFile(path);

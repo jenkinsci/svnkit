@@ -14,12 +14,14 @@ package org.tmatesoft.svn.core.internal.wc;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -36,6 +38,7 @@ import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.ISVNCleanupHandler;
+import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNChecksumInputStream;
@@ -44,18 +47,17 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNLog;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNVersionedProperties;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc.admin.ISVNEntryHandler;
 import org.tmatesoft.svn.core.io.diff.SVNDeltaProcessor;
 import org.tmatesoft.svn.core.io.diff.SVNDiffWindow;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNConflictAction;
+import org.tmatesoft.svn.core.wc.SVNConflictReason;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
+import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
-import org.tmatesoft.svn.core.wc.SVNConflictAction;
-import org.tmatesoft.svn.core.wc.SVNConflictReason;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNOperation;
 import org.tmatesoft.svn.util.SVNLogType;
 
 
@@ -293,7 +295,6 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         log.addCommand(SVNLog.DELETE_ENTRY, attributes, false);
         attributes.clear();
         if (path.equals(myTarget)) {
-            attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put(SVNLog.NAME_ATTR, name);
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.KIND), kind == SVNNodeKind.DIR ? SVNProperty.KIND_DIR : SVNProperty.KIND_FILE);
             attributes.put(SVNProperty.shortPropertyName(SVNProperty.REVISION), Long.toString(myTargetRevision));
@@ -1011,6 +1012,8 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
         myCurrentDirectory.runLogs();
         maybeBumpDirInfo(myCurrentDirectory);
 
+        handleDuplicateEntries();
+
         if (!myCurrentDirectory.isSkipped && (myCurrentDirectory.isAddExisted || !myCurrentDirectory.IsAdded) && !inDeletedTree(fullPath, true)) {
             if (!(adminArea == myAdminInfo.getAnchor() && !"".equals(myAdminInfo.getTargetName()))) {
                 // skip event for anchor when there is a target.
@@ -1025,6 +1028,73 @@ public class SVNUpdateEditor implements ISVNUpdateEditor, ISVNCleanupHandler {
             }
         }
         myCurrentDirectory = myCurrentDirectory.Parent;
+    }
+    
+    private void handleDuplicateEntries() throws SVNException {
+        if (!SVNFileUtil.isCaseInsensitiveFS()) {
+            return;
+        }        
+        
+        SVNAdminArea area = myCurrentDirectory.getAdminArea();
+        Map entries = area.getEntries();
+        Set duplicates = new HashSet();
+        Set entryNames = new HashSet();
+        for(Iterator names = entries.keySet().iterator(); names.hasNext();) {
+            String name = (String) names.next();
+            SVNEntry entry = (SVNEntry) entries.get(name);
+            if (entry == null || entry.getKind() != SVNNodeKind.FILE || entry.isHidden()) {
+                continue;
+            }
+            name = name.toLowerCase();
+            if (!duplicates.add(name)) {
+                entryNames.add(name);
+            }
+        }
+        if (entryNames.isEmpty()) {
+            return;
+        }
+        SVNLog log = null;
+
+        for(Iterator names = entries.keySet().iterator(); names.hasNext();) {
+            myCurrentDirectory.flushLog();
+            log = myCurrentDirectory.getLog();
+
+            String name = (String) names.next();
+            SVNEntry entry = (SVNEntry) entries.get(name);
+            if (entry == null || entry.getKind() != SVNNodeKind.FILE || entry.isHidden()) {
+                continue;
+            }
+            if (entryNames.contains(name.toLowerCase())) {
+                SVNProperties command = new SVNProperties();
+                
+                command.put(SVNLog.NAME_ATTR, name);
+                command.put(SVNProperty.shortPropertyName(SVNProperty.ABSENT), Boolean.TRUE.toString());
+                command.put(SVNProperty.shortPropertyName(SVNProperty.CHECKSUM), "nameconflict");
+                log.addCommand(SVNLog.MODIFY_ENTRY, command, false);                
+                command.clear();
+                
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextBasePath(name, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();                
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getTextRevertPath(name, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropBasePath(name, SVNNodeKind.FILE, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropPath(name, SVNNodeKind.FILE, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+                command.put(SVNLog.NAME_ATTR, SVNAdminUtil.getPropRevertPath(name, SVNNodeKind.FILE, false));
+                log.addCommand(SVNLog.DELETE, command, false);
+                command.clear();
+                
+                SVNEvent event = SVNEventFactory.createSVNEvent(area.getFile(name), SVNNodeKind.FILE, null, myTargetRevision, SVNEventAction.UPDATE_DELETE, null, null, null);
+                myWCAccess.handleEvent(event);
+            }
+        }
+        myCurrentDirectory.flushLog();
+        myCurrentDirectory.runLogs();
     }
 
     public SVNCommitInfo closeEdit() throws SVNException {

@@ -344,6 +344,8 @@ public class SVNStatusType {
      */
     public static final SVNStatusType STATUS_EXTERNAL = new SVNStatusType(13, "external", 'X');
     
+    public static final SVNStatusType STATUS_NAME_CONFLICT = new SVNStatusType(-1, "name_conflict", 'N');
+    
     /**
      * In a status operation denotes that the item in the Working Copy being 
      * currently processed was merged - that is it was applied the differences
