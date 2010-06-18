@@ -29,7 +29,6 @@ import org.tmatesoft.svn.util.SVNLogType;
  */
 public class SVNPath {
     
-    private boolean myHasPegRevision;
     private String myTarget;
     private SVNRevision myPegRevision = SVNRevision.UNDEFINED;
     private File myFile;
@@ -38,13 +37,17 @@ public class SVNPath {
         this(target, false);
     }
 
-    public SVNPath(String target, boolean hasPegRevision) throws SVNException {
+    public SVNPath(String target, boolean keepPegRevision) throws SVNException {
         myTarget = target;
-        myHasPegRevision = hasPegRevision;
-        if (myHasPegRevision) {
-            parsePegRevision(true);
-        } else {
-            parsePegRevision(false);
+        parsePegRevision(keepPegRevision);
+        myTarget = SVNPathUtil.canonicalizePath(myTarget);
+        assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
+    }
+
+    public SVNPath(String target, boolean keepPegRevision, boolean parsePegRevision) throws SVNException {
+        myTarget = target;
+        if (parsePegRevision) {
+            parsePegRevision(keepPegRevision);
         }
         myTarget = SVNPathUtil.canonicalizePath(myTarget);
         assertControlChars(isURL() ? SVNEncodingUtil.uriDecode(myTarget) : myTarget);
