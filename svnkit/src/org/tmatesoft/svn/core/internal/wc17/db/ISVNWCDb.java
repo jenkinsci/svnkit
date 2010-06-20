@@ -90,6 +90,8 @@ public interface ISVNWCDb {
     int SVN_WC__HAS_WORK_QUEUE = 13;
     long INVALID_FILESIZE = -1;
     long ENTRY_WORKING_SIZE_UNKNOWN = -1;
+    long INVALID_REVNUM = -1;
+    String SDB_FILE = "wc.db";
 
     /** Enumerated constants for how to open a WC datastore. */
     enum WCDbOpenMode {

@@ -1874,4 +1874,8 @@ public class SVNFileUtil {
         return Character.isDigit(ch) || (Character.toUpperCase(ch) >= 'A' && Character.toUpperCase(ch) <= 'F');
     }
 
+    public static boolean isAbsolute(File path) {
+        return path!=null && path.isAbsolute();
+    }
+
 }

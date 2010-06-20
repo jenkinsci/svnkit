@@ -296,7 +296,8 @@ public class SVNEntry17 extends SVNEntry {
     }
 
     public boolean isThisDir() {
-        return "".equals(getName());
+        final String n = getName();
+        return n==null || "".equals(n);
     }
 
     public void scheduleForAddition() {

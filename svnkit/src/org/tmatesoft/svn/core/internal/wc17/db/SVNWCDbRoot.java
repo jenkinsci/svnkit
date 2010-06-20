@@ -1,0 +1,71 @@
+/*
+ * ====================================================================
+ * Copyright (c) 2004-2010 TMate Software Ltd.  All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.  The terms
+ * are also available at http://svnkit.com/license.html.
+ * If newer versions of this license are posted there, you may use a
+ * newer version instead, at your option.
+ * ====================================================================
+ */
+package org.tmatesoft.svn.core.internal.wc17.db;
+
+import java.io.File;
+
+import org.tmatesoft.svn.core.SVNException;
+
+/**
+ * @version 1.3
+ * @author TMate Software Ltd.
+ */
+public class SVNWCDbRoot {
+
+    /** Location of this wcroot in the filesystem. */
+    private File absPath;
+
+    /**
+     * The SQLite database containing the metadata for everything in this
+     * wcroot.
+     */
+    private SVNSqlJetDb sDb;
+
+    /** The WCROOT.id for this directory (and all its children). */
+    private long wcId;
+
+    /**
+     * The format of this wcroot's metadata storage (see wc.h). If the format
+     * has not (yet) been determined, this will be UNKNOWN_FORMAT.
+     */
+    private int format;
+
+    public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, boolean autoUpgrade, boolean enforceEmptyWQ) {
+        // TODO
+    }
+
+    public File getAbsPath() {
+        return absPath;
+    }
+
+    public SVNSqlJetDb getSDb() {
+        return sDb;
+    }
+
+    public long getWcId() {
+        return wcId;
+    }
+
+    public int getFormat() {
+        return format;
+    }
+
+    public void close() {
+        assert (sDb != null);
+        try {
+            sDb.close();
+        } finally {
+            sDb = null;
+        }
+    }
+
+}
