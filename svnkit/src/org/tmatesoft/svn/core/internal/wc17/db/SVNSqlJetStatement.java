@@ -49,4 +49,7 @@ public class SVNSqlJetStatement {
     public void bindChecksumm(int i, SVNChecksum checksum) {
     }
 
+    public void bindBlob(int i, byte[] serialized) {
+    }
+
 }

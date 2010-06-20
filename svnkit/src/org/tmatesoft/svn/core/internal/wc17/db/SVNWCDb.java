@@ -179,7 +179,6 @@ public class SVNWCDb implements ISVNWCDb {
 
     private CreateDbInfo createDb(File dirAbsPath, SVNURL reposRootUrl, String reposUuid, String sdbFileName) {
 
-        SVNSqlJetStatement stmt;
         CreateDbInfo info = new CreateDbInfo();
 
         info.sDb = SVNSqlJetDb.open(dirAbsPath, sdbFileName, SVNSqlJetDb.Mode.RWCreate);
@@ -333,7 +332,29 @@ public class SVNWCDb implements ISVNWCDb {
 
     }
 
-    private void addWorkItems(SVNSqlJetDb sDb, SVNSkel workItems) {
+    private void addWorkItems(SVNSqlJetDb sDb, SVNSkel skel) throws SVNException {
+        /* Maybe there are no work items to insert. */
+        if (skel == null) {
+            return;
+        }
+
+        /* Is the list a single work item? Or a list of work items? */
+        if (skel.isAtom()) {
+            addSingleWorkItem(sDb, skel);
+        } else {
+            /* SKEL is a list-of-lists, aka list of work items. */
+            for (int i = 0; i < skel.getListSize(); i++) {
+                addSingleWorkItem(sDb, skel.getChild(i));
+            }
+        }
+
+    }
+
+    private void addSingleWorkItem(SVNSqlJetDb sDb, SVNSkel workItem) throws SVNException {        
+        final byte[] serialized = workItem.unparse();
+        final SVNSqlJetStatement stmt = sDb.getStatement(SVNWCDbStatements.INSERT_WORK_ITEM);
+        stmt.bindBlob(1, serialized);
+        stmt.insert();
     }
 
     public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, WCDbKind kind, WCDbStatus status, SVNSkel conflict, SVNSkel workItems)
