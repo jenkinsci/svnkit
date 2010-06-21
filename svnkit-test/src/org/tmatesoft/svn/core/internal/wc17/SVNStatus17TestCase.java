@@ -11,6 +11,12 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import java.io.File;
+
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+
 import junit.framework.TestCase;
 
 
@@ -24,8 +30,11 @@ public class SVNStatus17TestCase extends TestCase {
         super("SVNStatus17");
     }
 
-    public void testStatus17(){
-        assertTrue(true);
+    public void testLocalStatus17() throws SVNException{
+        final SVNStatusClient17 client = new SVNStatusClient17(
+                new BasicAuthenticationManager("test","test"), 
+                new DefaultSVNOptions(null, true));
+        client.doStatus(new File("."), false);
     }
     
 }
