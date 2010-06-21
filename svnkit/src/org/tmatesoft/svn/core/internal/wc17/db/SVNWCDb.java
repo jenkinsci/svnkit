@@ -359,261 +359,371 @@ public class SVNWCDb implements ISVNWCDb {
 
     public void addBaseAbsentNode(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, WCDbKind kind, WCDbStatus status, SVNSkel conflict, SVNSkel workItems)
             throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void addBaseDirectory(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate,
             String changedAuthor, List<File> children, SVNDepth depth, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void addBaseFile(File localAbspath, File reposRelpath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate, String changedAuthor,
             SVNChecksum checksum, long translatedSize, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void addBaseSymlink(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long revision, SVNProperties props, long changedRev, Date changedDate,
             String changedAuthor, File target, SVNSkel conflict, SVNSkel workItem) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void addLock(File localAbsPath, WCDbLock lock) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void addWorkQueue(File wcRootAbsPath, SVNSkel workItem) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public boolean checkPristine(File wcRootAbsPath, SVNChecksum sha1Checksum, WCDbCheckMode mode) throws SVNException {
-        return false;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void completedWorkQueue(File wcRootAbsPath, long id) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public long ensureRepository(File localAbsPath, SVNURL reposRootUrl, String reposUuid) throws SVNException {
-        return 0;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbWorkQueueInfo fetchWorkQueue(File wcRootAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public File fromRelPath(File wcRootAbsPath, File localRelPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public List<String> getBaseChildren(File localAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNProperties getBaseDavCache(File localAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbBaseInfo getBaseInfo(File localAbsPath, BaseInfoField... fields) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public String getBaseProp(File localAbsPath, String propName) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public Map<String, String> getBaseProps(File localAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public int getFormatTemp(File localDirAbsPath) throws SVNException {
-        return 0;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNChecksum getPristineMD5(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public File getPristinePath(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNChecksum getPristineSHA1(File wcRootAbsPath, SVNChecksum md5Checksum) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public File getPristineTempDir(File wcRootAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void globalCommit(File localAbspath, long newRevision, Date newDate, String newAuthor, SVNChecksum newChecksum, List<File> newChildren, SVNProperties newDavCache, boolean keepChangelist,
             SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void globalRecordFileinfo(File localAbspath, long translatedSize, Date lastModTime) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void globalRelocate(File localDirAbspath, SVNURL reposRootUrl, boolean singleDb) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void globalUpdate(File localAbsPath, WCDbKind newKind, File newReposRelpath, long newRevision, SVNProperties newProps, long newChangedRev, Date newChangedDate, String newChangedAuthor,
             List<File> newChildren, SVNChecksum newChecksum, File newTarget, SVNProperties newDavCache, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void installPristine(File tempfileAbspath, SVNChecksum sha1Checksum, SVNChecksum md5Checksum) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public boolean isNodeHidden(File localAbspath) throws SVNException {
-        return false;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public boolean isWCLocked(File localAbspath) throws SVNException {
-        return false;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opAddDirectory(File localAbsPath, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opAddFile(File localAbsPath, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opAddSymlink(File localAbsPath, File target, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opCopy(File srcAbsPath, File dstAbspath, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opCopyDir(File localAbsPath, SVNProperties props, long changedRev, Date changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, List<File> children, SVNDepth depth, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opCopyFile(File localAbsPath, SVNProperties props, long changedRev, Date changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, SVNChecksum checksum, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opCopySymlink(File localAbsPath, SVNProperties props, long changedRev, Date changedDate, String changedAuthor, File originalReposRelPath, SVNURL originalRootUrl, String originalUuid,
             long originalRevision, File target, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opDelete(File localAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opMarkConflict(File localAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opMarkResolved(File localAbspath, boolean resolvedText, boolean resolvedProps, boolean resolvedTree) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opModified(File localAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opMove(File srcAbsPath, File dstAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public Map<File, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNTreeConflictDescription opReadTreeConflict(File localAbspath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opRevert(File localAbspath, SVNDepth depth) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opSetChangelist(File localAbsPath, String changelist) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opSetProps(File localAbsPath, SVNProperties props, SVNSkel conflict, SVNSkel workItems) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void opSetTreeConflict(File localAbspath, SVNTreeConflictDescription treeConflict) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void open(WCDbOpenMode mode, SVNConfigFile config, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public List<File> readChildren(File localAbspath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public List<File> readConflictVictims(File localAbspath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public List<SVNTreeConflictDescription> readConflicts(File localAbspath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbInfo readInfo(File localAbsPath, InfoField... fields) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbKind readKind(File localAbspath, boolean allowMissing) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public InputStream readPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNProperties readPristineProperties(File localAbspath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public String readProperty(File localAbsPath, String propname) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public SVNProperties readProperties(File localAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void removeBase(File localAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void removeLock(File localAbsPath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void removePristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void removeWCLock(File localAbspath) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void repairPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbAdditionInfo scanAddition(File localAbsPath, AdditionInfoField... fields) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbRepositoryInfo scanBaseRepository(File localAbsPath, RepositoryInfoField... fields) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbDeletionInfo scanDeletion(File localAbsPath, DeletionInfoField... fields) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void setBaseDavCache(File localAbsPath, SVNProperties props) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void setBasePropsTemp(File localAbsPath, SVNProperties props) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void setWCLock(File localAbspath, int levelsToLock) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public void setWorkingPropsTemp(File localAbsPath, SVNProperties props) throws SVNException {
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public File toRelPath(File localAbsPath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public String getFileExternalTemp(File path) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public boolean determineKeepLocalTemp(File localAbsPath) throws SVNException {
-        return false;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
     public WCDbDirDeletedInfo isDirDeletedTem(File entryAbspath) throws SVNException {
-        return null;
+        // TODO
+        throw new UnsupportedOperationException();
     }
 
 }

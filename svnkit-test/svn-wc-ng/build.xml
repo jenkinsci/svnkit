@@ -73,8 +73,30 @@
 		</exec>
 
 	</target>
+	
+	<target name="do-status-svnkit" depends="compile-svnkit-tests">
+		<junit fork="true" showoutput="true">
+            <classpath>
+                <pathelement location="../../contrib/junit/junit.jar" />
+                <pathelement location="../../contrib/trilead/trilead.jar"/>
+                <pathelement location="../../contrib/jna/jna.jar"/>
+                <pathelement path="../../svnkit/bin"/>
+                <pathelement path="../../svnkit/src" />
+                <pathelement path="../../svnkit-test/src" />
+                <pathelement path="../../svnkit-test/bin" />
+                <pathelement path="../../contrib/sequence/bin" />
+                <pathelement path="../../contrib/javahl/bin" />
+                <pathelement path="../../contrib/javahl/bin-test" />
+            </classpath>
+			<test name="org.tmatesoft.svn.core.internal.wc17.SVNStatus17TestCase"/>
+		</junit>
+	</target>
+	
+	<target name="compile-svnkit-tests">
+		<ant antfile="build.xml" dir="../../" target="compile-tests"/>
+	</target>
 
-	<target name="main" depends="clean, do-checkout-native, do-status-native">
+	<target name="main" depends="clean, do-checkout-native, do-status-native, do-status-svnkit">
 	</target>
 
 </project>
