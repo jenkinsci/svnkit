@@ -76,7 +76,7 @@
 	
 	<target name="do-status-svnkit" depends="compile-svnkit-tests">
 		<junit fork="true" showoutput="true" printsummary="true">
-			<formatter type="plain" />
+			<formatter type="plain" usefile="false"/>
             <classpath>
                 <pathelement location="../../contrib/junit/junit.jar" />
                 <pathelement location="../../contrib/trilead/trilead.jar"/>
