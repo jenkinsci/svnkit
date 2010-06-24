@@ -13,7 +13,9 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNException;
 
 
 /**
@@ -44,7 +46,7 @@ public class SVNSqlJetDb {
     }
 
 
-    public static SVNSqlJetDb open(File dirAbsPath, String sdbFileName, Mode rwcreate) {
+    public static SVNSqlJetDb open(File dirAbsPath, String sdbFileName, Mode rwcreate) throws SVNException, SqlJetException {
         return null;
     }
 
@@ -53,6 +55,11 @@ public class SVNSqlJetDb {
     }
 
     public void execStatement(SVNWCDbStatements statementIndex) {        
+    }
+
+
+    public long fetchWCId() throws SVNException {
+        return 0;
     }
 
 }

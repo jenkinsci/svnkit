@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -392,8 +393,9 @@ public interface ISVNWCDb {
      * <p>
      * DEPTH is the initial depth of the working copy, it must be a definite
      * depth, not svn_depth_unknown.
+     * @throws SqlJetException 
      */
-    void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException;
+    void init(File localAbsPath, File reposRelPath, SVNURL reposRootUrl, String reposUuid, long initialRev, SVNDepth depth) throws SVNException, SqlJetException;
 
     /**
      * Compute the LOCAL_RELPATH for the given LOCAL_ABSPATH.

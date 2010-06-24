@@ -39,7 +39,7 @@ public class SVNWCDbRoot {
      */
     private int format;
 
-    public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, boolean autoUpgrade, boolean enforceEmptyWQ) {
+    public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) {
         // TODO
     }
 
@@ -66,6 +66,10 @@ public class SVNWCDbRoot {
         } finally {
             sDb = null;
         }
+    }
+
+    public boolean determineObstructedFile(String lookforRelpath) {
+        return false;
     }
 
 }

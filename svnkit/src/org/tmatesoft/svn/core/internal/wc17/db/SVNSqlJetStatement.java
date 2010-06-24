@@ -52,4 +52,8 @@ public class SVNSqlJetStatement {
     public void bindBlob(int i, byte[] serialized) {
     }
 
+    public String getString(int i) {
+        return null;
+    }
+
 }

@@ -48,6 +48,10 @@ public class SVNWCDbDir {
     /** Hold onto the old-style access baton that corresponds to this PDH. */
     private SVNWCAccess admAccess;
 
+    public SVNWCDbDir(File localAbsPath) {
+        this.localAbsPath = localAbsPath;
+    }
+
     public boolean isObstructedFile() {
         return obstructedFile;
     }
@@ -79,5 +83,22 @@ public class SVNWCDbDir {
     public void setWCRoot(SVNWCDbRoot wcRoot) {
         this.wcRoot = wcRoot;
     }
+    
+    public void setParent(SVNWCDbDir parent) {
+        this.parent = parent;
+    }
+    
+    public void setObstructedFile(boolean obstructedFile) {
+        this.obstructedFile = obstructedFile;
+    }
 
+    public static boolean isUsable(SVNWCDbDir pdh) {
+        return false;
+    }
+
+    public File computeRelPath() {
+        // TODO
+        return null;
+    }
+    
 }

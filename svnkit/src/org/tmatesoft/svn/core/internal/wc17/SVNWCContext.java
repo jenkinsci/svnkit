@@ -11,6 +11,8 @@
  */
 package org.tmatesoft.svn.core.internal.wc17;
 
+import static org.tmatesoft.svn.core.internal.wc17.db.SVNWCDb.isAbsolute;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -166,10 +168,6 @@ public class SVNWCContext {
         if (eventHandler != null) {
             eventHandler.checkCancelled();
         }
-    }
-
-    private boolean isAbsolute(File localAbsPath) {
-        return localAbsPath != null && localAbsPath.isAbsolute();
     }
 
     private ISVNOptions getOptions() {

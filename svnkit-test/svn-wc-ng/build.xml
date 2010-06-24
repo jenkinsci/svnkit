@@ -81,6 +81,7 @@
                 <pathelement location="../../contrib/junit/junit.jar" />
                 <pathelement location="../../contrib/trilead/trilead.jar"/>
                 <pathelement location="../../contrib/jna/jna.jar"/>
+                <pathelement location="../../contrib/sqljet/sqljet.jar" />
                 <pathelement path="../../svnkit/bin"/>
                 <pathelement path="../../svnkit/src" />
                 <pathelement path="../../svnkit-test/src" />
