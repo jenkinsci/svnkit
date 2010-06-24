@@ -14,7 +14,11 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @version 1.3
@@ -40,8 +44,48 @@ public class SVNWCDbRoot {
      */
     private int format;
 
-    public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) {
-        // TODO
+    public SVNWCDbRoot(File absPath, SVNSqlJetDb sDb, long wcId, int format, boolean autoUpgrade, boolean enforceEmptyWQ) throws SVNException {
+        if (sDb != null) {
+            format = sDb.readSchemaVersion();
+        }
+
+        /* If we construct a wcroot, then we better have a format. */
+        assert (format >= 1);
+
+        /* If this working copy is PRE-1.0, then simply bail out. */
+        if (format < 4) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "Working copy format of ''{0}'' is too old '{1}'", new Object[] {
+                    absPath, format
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        /* If this working copy is from a future version, then bail out. */
+        if (format > ISVNWCDb.WC_FORMAT_17) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_UNSUPPORTED_FORMAT, "This client is too old to work with the working copy at\n" + "''{0}'' (format '{1}').", new Object[] {
+                    absPath, format
+            });
+            SVNErrorManager.error(err, SVNLogType.WC);
+        }
+
+        /* Auto-upgrade the SDB if possible. */
+        if (format < ISVNWCDb.WC_FORMAT_17 && autoUpgrade) {
+            format = sDb.upgrade(absPath, format);
+        }
+
+        /*
+         * Verify that no work items exists. If they do, then our integrity is
+         * suspect and, thus, we cannot use this database.
+         */
+        if (format >= ISVNWCDb.WC_HAS_WORK_QUEUE && enforceEmptyWQ) {
+            sDb.verifyNoWork();
+        }
+
+        this.absPath = absPath;
+        this.sDb = sDb;
+        this.wcId = wcId;
+        this.format = format;
+
     }
 
     public File getAbsPath() {

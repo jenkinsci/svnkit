@@ -74,4 +74,15 @@ public class SVNSqlJetDb {
         return 0;
     }
 
+    public int readSchemaVersion() {
+        return 0;
+    }
+
+    public int upgrade(File absPath, int format) {
+        return 0;
+    }
+
+    public void verifyNoWork() {
+    }
+
 }
