@@ -75,7 +75,8 @@
 	</target>
 	
 	<target name="do-status-svnkit" depends="compile-svnkit-tests">
-		<junit fork="true" showoutput="true" printsummary="true">
+		<echo message="${target.dir}/workingcopy/test"/>
+		<junit dir="${target.dir}/workingcopy/test" fork="true" showoutput="true" printsummary="true">
 			<formatter type="plain" usefile="false"/>
             <classpath>
                 <pathelement location="../../contrib/junit/junit.jar" />

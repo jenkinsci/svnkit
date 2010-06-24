@@ -19,6 +19,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNEventFactory;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc16.SVNBasicDelegate;
@@ -376,9 +377,9 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                     info.setTargetBaseName("");
                     info.setDir(path.getPath());
                 } else {
-                    info.setDirAbsPath(SVNPathUtil.getDirName(info.getTargetAbsPath()));
-                    info.setTargetBaseName(SVNPathUtil.getBaseName(info.getTargetAbsPath()));
-                    info.setDir(SVNPathUtil.getDirName(path.getPath()));
+                    info.setDirAbsPath(SVNFileUtil.getParentFile(info.getTargetAbsFile()).toString());
+                    info.setTargetBaseName(SVNFileUtil.getBasePath(info.getTargetAbsFile()));
+                    info.setDir(SVNFileUtil.getParentFile(new File(path.getPath())).toString());
                     if (kind != SVNNodeKind.FILE) {
                         kind = wcContext.getNodeKind(info.getDirAbsFile(), false);
                         /*
@@ -386,7 +387,7 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
                          * "status on '..' where '..' is not versioned".
                          */
                         if (kind != SVNNodeKind.DIR || "..".equals(path.getPath())) {
-                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "'%s' is not a working copy", path.getPath());
+                            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", path.getPath());
                             SVNErrorManager.error(err, SVNLogType.CLIENT);
                         }
                     }

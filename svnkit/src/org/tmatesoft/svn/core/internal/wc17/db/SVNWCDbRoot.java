@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
@@ -59,7 +60,7 @@ public class SVNWCDbRoot {
         return format;
     }
 
-    public void close() {
+    public void close() throws SqlJetException {
         assert (sDb != null);
         try {
             sDb.close();

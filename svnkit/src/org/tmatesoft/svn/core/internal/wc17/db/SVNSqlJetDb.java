@@ -15,15 +15,17 @@ import java.io.File;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
-
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
- * @author  TMate Software Ltd.
+ * @author TMate Software Ltd.
  */
 public class SVNSqlJetDb {
-    
-    
+
     public static enum Mode {
         /** open the database read-only */
         ReadOnly,
@@ -33,30 +35,40 @@ public class SVNSqlJetDb {
         RWCreate
     };
 
-    
     private SqlJetDb db;
-    
-    
+
+    private SVNSqlJetDb(SqlJetDb db) {
+        this.db = db;
+    }
+
     public SqlJetDb getDb() {
         return db;
     }
 
-
-    public void close(){
+    public void close() throws SqlJetException {
+        if (db != null) {
+            db.close();
+        }
     }
 
-
-    public static SVNSqlJetDb open(File dirAbsPath, String sdbFileName, Mode rwcreate) throws SVNException, SqlJetException {
-        return null;
+    public static SVNSqlJetDb open(File sdbAbsPath, Mode mode) throws SVNException, SqlJetException {
+        if (mode != Mode.RWCreate) {
+            if (!sdbAbsPath.exists()) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.FS_NOT_FOUND, "File not found ''{0}''", sdbAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+        }
+        final SqlJetDb db = SqlJetDb.open(sdbAbsPath, mode != Mode.ReadOnly);
+        SVNSqlJetDb sDb = new SVNSqlJetDb(db);
+        return sDb;
     }
 
     public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) {
         return null;
     }
 
-    public void execStatement(SVNWCDbStatements statementIndex) {        
+    public void execStatement(SVNWCDbStatements statementIndex) {
     }
-
 
     public long fetchWCId() throws SVNException {
         return 0;

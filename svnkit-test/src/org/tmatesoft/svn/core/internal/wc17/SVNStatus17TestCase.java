@@ -34,7 +34,7 @@ public class SVNStatus17TestCase extends TestCase {
         final SVNStatusClient17 client = new SVNStatusClient17(
                 new BasicAuthenticationManager("test","test"), 
                 new DefaultSVNOptions(null, true));
-        client.doStatus(new File("."), false);
+        client.doStatus(new File(""), false);
     }
     
 }

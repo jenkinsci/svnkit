@@ -144,7 +144,11 @@ public class SVNWCDb implements ISVNWCDb {
 
     private void closeManyWCRoots(final Set<SVNWCDbRoot> roots) {
         for (final SVNWCDbRoot wcRoot : roots) {
-            wcRoot.close();
+            try {
+                wcRoot.close();
+            } catch (SqlJetException e) {
+                // TODO
+            }
         }
     }
 
@@ -205,7 +209,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         CreateDbInfo info = new CreateDbInfo();
 
-        info.sDb = SVNSqlJetDb.open(dirAbsPath, sdbFileName, SVNSqlJetDb.Mode.RWCreate);
+        info.sDb = openDb(dirAbsPath, sdbFileName, SVNSqlJetDb.Mode.RWCreate);
 
         /* Create the database's schema. */
         info.sDb.execStatement(SVNWCDbStatements.CREATE_SCHEMA);
@@ -687,7 +691,7 @@ public class SVNWCDb implements ISVNWCDb {
         while (true) {
 
             try {
-                sDb = SVNSqlJetDb.open(localAbsPath, SDB_FILE, sMode);
+                sDb = openDb(localAbsPath, SDB_FILE, sMode);
                 break;
             } catch (SVNException e) {
                 if (!isErrorNOENT(e.getErrorMessage().getErrorCode()))
@@ -719,7 +723,7 @@ public class SVNWCDb implements ISVNWCDb {
             localAbsPath = SVNFileUtil.getParentFile(localAbsPath);
             if (localAbsPath == null) {
                 /* Hit the root without finding a wcroot. */
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "'{0}' is not a working copy", original_abspath);
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_NOT_WORKING_COPY, "''{0}'' is not a working copy", original_abspath);
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
 
@@ -813,7 +817,7 @@ public class SVNWCDb implements ISVNWCDb {
             if (parent_pdh == null || parent_pdh.getWCRoot() == null) {
                 boolean err = false;
                 try {
-                    sDb = SVNSqlJetDb.open(parent_dir, SDB_FILE, sMode);
+                    sDb = openDb(parent_dir, SDB_FILE, sMode);
                 } catch (SVNException e) {
                     err = true;
                     if (!isErrorNOENT(e.getErrorMessage().getErrorCode()))
@@ -922,6 +926,14 @@ public class SVNWCDb implements ISVNWCDb {
         } while (child_pdh != found_pdh && !localAbsPath.equals(child_pdh.getLocalAbsPath()));
 
         return info;
+    }
+
+    private SVNSqlJetDb openDb(File dirAbsPath, String sdbFileName, Mode sMode) throws SVNException, SqlJetException {
+        return SVNSqlJetDb.open(admChild(dirAbsPath, sdbFileName), sMode);
+    }
+
+    private File admChild(File dirAbsPath, String sdbFileName) {
+        return new File(dirAbsPath, SVNPathUtil.append(SVNFileUtil.getAdminDirectoryName(), sdbFileName));
     }
 
     private boolean isErrorNOENT(final SVNErrorCode errorCode) {
