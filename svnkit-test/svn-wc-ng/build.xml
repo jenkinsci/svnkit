@@ -83,6 +83,7 @@
                 <pathelement location="../../contrib/trilead/trilead.jar"/>
                 <pathelement location="../../contrib/jna/jna.jar"/>
                 <pathelement location="../../contrib/sqljet/sqljet.jar" />
+                <pathelement location="../../contrib/sqljet/antlr-runtime-3.1.3.jar" />
                 <pathelement path="../../svnkit/bin"/>
                 <pathelement path="../../svnkit/src" />
                 <pathelement path="../../svnkit-test/src" />
