@@ -23,6 +23,8 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbFields;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
 /**
@@ -114,7 +116,7 @@ public class SVNSqlJetDb {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             // assert (!stmt.isColumnNull("id"));
-            return stmt.getColumnLong("id");
+            return stmt.getColumnLong(SVNWCDbFields.id.name());
         } finally {
             stmt.reset();
         }

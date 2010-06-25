@@ -9,9 +9,9 @@
  * newer version instead, at your option.
  * ====================================================================
  */
-package org.tmatesoft.svn.core.internal.wc17.db;
+package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
-import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectWCRootNullStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
 
 /**
  * @author TMate Software Ltd.
@@ -25,7 +25,7 @@ public enum SVNWCDbStatements {
     INSERT_BASE_NODE, 
     INSERT_BASE_NODE_INCOMPLETE, 
     INSERT_WORK_ITEM, 
-    SELECT_WORKING_NODE, 
+    SELECT_WORKING_NODE(SVNWCDbSelectWorkingNodeStatement.class), 
     SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNullStatement.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;

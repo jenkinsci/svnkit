@@ -12,29 +12,30 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetCursor;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbIndices;
 import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbTables;
 
 /**
- * "select id from wcroot where local_abspath is null; "
+ * "select presence, kind, checksum, translated_size, " \
+ * "  changed_rev, changed_date, changed_author, depth, symlink_target, " \
+ * "  copyfrom_repos_id, copyfrom_repos_path, copyfrom_revnum, " \
+ * "  moved_here, moved_to, last_mod_time, properties " \ "from working_node " \
+ * "where wc_id = ?1 and local_relpath = ?2; " \
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWCRootNullStatement extends SVNSqlJetStatement {
+public class SVNWCDbSelectWorkingNodeStatement extends SVNSqlJetStatement {
 
     private ISqlJetTable table;
 
-    public SVNWCDbSelectWCRootNullStatement(SVNSqlJetDb sDb) throws SVNException {
+    public SVNWCDbSelectWorkingNodeStatement(SVNSqlJetDb sDb) throws SVNException {
         super(sDb);
         try {
-            table = sDb.getDb().getTable(SVNWCDbTables.WCROOT.name());
+            table = sDb.getDb().getTable(SVNWCDbTables.WORKING_NODE.name());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
         }
@@ -42,7 +43,7 @@ public class SVNWCDbSelectWCRootNullStatement extends SVNSqlJetStatement {
 
     protected ISqlJetCursor openCursor() throws SVNException {
         try {
-            return table.lookup(SVNWCDbIndices.I_LOCAL_ABSPATH.name(), null);
+            return table.lookup(null, binds.get(0), binds.get(1));
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;

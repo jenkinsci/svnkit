@@ -46,6 +46,10 @@ public abstract class SVNSqlJetStatement {
         cursor = null;
     }
 
+    public List getBinds() {
+        return binds;
+    }
+    
     public boolean isNeedsReset() {
         return cursor != null;
     }

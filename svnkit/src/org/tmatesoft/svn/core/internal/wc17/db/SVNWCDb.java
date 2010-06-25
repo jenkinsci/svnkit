@@ -45,6 +45,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.Deletio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
@@ -539,7 +540,7 @@ public class SVNWCDb implements ISVNWCDb {
         /* First check the working node. */
         SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
         try {
-            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath.toString());
             boolean have_row = stmt.next();
             if (have_row) {
                 /*
