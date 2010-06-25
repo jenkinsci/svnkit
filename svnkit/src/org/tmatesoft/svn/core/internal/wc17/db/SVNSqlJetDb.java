@@ -12,6 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
@@ -36,9 +40,11 @@ public class SVNSqlJetDb {
     };
 
     private SqlJetDb db;
+    private Map<SVNWCDbStatements, SVNSqlJetStatement> statements;
 
     private SVNSqlJetDb(SqlJetDb db) {
         this.db = db;
+        statements = new HashMap<SVNWCDbStatements, SVNSqlJetStatement>();
     }
 
     public SqlJetDb getDb() {
@@ -63,19 +69,55 @@ public class SVNSqlJetDb {
         return sDb;
     }
 
-    public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) {
-        return null;
+    public SVNSqlJetStatement getStatement(SVNWCDbStatements statementIndex) throws SVNException {
+        assert (statementIndex != null);
+        SVNSqlJetStatement stmt = statements.get(statementIndex);
+        if (stmt == null) {
+            stmt = prepareStatement(statementIndex);
+            statements.put(statementIndex, stmt);
+        }
+        if (stmt != null && stmt.isNeedsReset()) {
+            stmt.reset();
+        }
+        return stmt;
+    }
+
+    private SVNSqlJetStatement prepareStatement(SVNWCDbStatements statementIndex) {
+        final Class<? extends SVNSqlJetStatement> statementClass = statementIndex.getStatementClass();
+        if (statementClass == null) {
+            return null;
+        }
+        try {
+            final Constructor<? extends SVNSqlJetStatement> constructor = statementClass.getConstructor(SVNSqlJetDb.class);
+            final SVNSqlJetStatement stmt = constructor.newInstance(this);
+            return stmt;
+        } catch (Exception e) {
+            // TODO
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public void execStatement(SVNWCDbStatements statementIndex) {
     }
 
     public long fetchWCId() throws SVNException {
-        return 0;
-    }
-
-    public int readSchemaVersion() {
-        return 0;
+        /*
+         * ### cheat. we know there is just one WORKING_COPY row, and it has a
+         * ### NULL value for local_abspath.
+         */
+        final SVNSqlJetStatement stmt = getStatement(SVNWCDbStatements.SELECT_WCROOT_NULL);
+        try {
+            final boolean have_row = stmt.next();
+            if (!have_row) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing a row in WCROOT.");
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+            // assert (!stmt.isColumnNull("id"));
+            return stmt.getColumnLong("id");
+        } finally {
+            stmt.reset();
+        }
     }
 
     public int upgrade(File absPath, int format) {
@@ -83,6 +125,11 @@ public class SVNSqlJetDb {
     }
 
     public void verifyNoWork() {
+    }
+
+    public static void createSqlJetError(SqlJetException e) throws SVNException {
+        SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
+        SVNErrorManager.error(err, SVNLogType.WC);
     }
 
 }

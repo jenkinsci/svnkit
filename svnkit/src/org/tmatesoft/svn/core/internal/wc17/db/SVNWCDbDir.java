@@ -83,22 +83,22 @@ public class SVNWCDbDir {
     public void setWCRoot(SVNWCDbRoot wcRoot) {
         this.wcRoot = wcRoot;
     }
-    
+
     public void setParent(SVNWCDbDir parent) {
         this.parent = parent;
     }
-    
+
     public void setObstructedFile(boolean obstructedFile) {
         this.obstructedFile = obstructedFile;
     }
 
     public static boolean isUsable(SVNWCDbDir pdh) {
-        return false;
+        return pdh != null && pdh.getWCRoot() != null && pdh.getWCRoot().getFormat() == ISVNWCDb.WC_FORMAT_17;
     }
 
     public File computeRelPath() {
         // TODO
         return null;
     }
-    
+
 }

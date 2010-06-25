@@ -11,10 +11,34 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db;
 
+import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbSelectWCRootNullStatement;
+
 /**
  * @author TMate Software Ltd.
  */
 public enum SVNWCDbStatements {
-    CREATE_SCHEMA, INSERT_WCROOT, SELECT_REPOSITORY, INSERT_REPOSITORY, INSERT_BASE_NODE, INSERT_BASE_NODE_INCOMPLETE, INSERT_WORK_ITEM, SELECT_WORKING_NODE
+
+    CREATE_SCHEMA, 
+    INSERT_WCROOT, 
+    SELECT_REPOSITORY, 
+    INSERT_REPOSITORY, 
+    INSERT_BASE_NODE, 
+    INSERT_BASE_NODE_INCOMPLETE, 
+    INSERT_WORK_ITEM, 
+    SELECT_WORKING_NODE, 
+    SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNullStatement.class);
+
+    private Class<? extends SVNSqlJetStatement> statementClass;
+
+    private SVNWCDbStatements(Class<? extends SVNSqlJetStatement> statementClass) {
+        this.statementClass = statementClass;
+    }
+
+    private SVNWCDbStatements() {
+    }
+    
+    public Class<? extends SVNSqlJetStatement> getStatementClass() {
+        return statementClass;
+    }
 
 }

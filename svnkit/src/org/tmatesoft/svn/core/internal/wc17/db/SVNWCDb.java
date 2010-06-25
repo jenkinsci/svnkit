@@ -228,15 +228,16 @@ public class SVNWCDb implements ISVNWCDb {
     /**
      * For a given REPOS_ROOT_URL/REPOS_UUID pair, return the existing REPOS_ID
      * value. If one does not exist, then create a new one.
+     * @throws SVNException 
      */
-    private long createReposId(SVNSqlJetDb sDb, SVNURL reposRootUrl, String reposUuid) {
+    private long createReposId(SVNSqlJetDb sDb, SVNURL reposRootUrl, String reposUuid) throws SVNException {
 
         final SVNSqlJetStatement getStmt = sDb.getStatement(SVNWCDbStatements.SELECT_REPOSITORY);
         try {
             getStmt.bindf("s", reposRootUrl);
             boolean haveRow = getStmt.next();
             if (haveRow) {
-                return getStmt.getLong(0);
+                return getStmt.getColumnLong(0);
             }
         } finally {
             getStmt.reset();
@@ -545,7 +546,7 @@ public class SVNWCDb implements ISVNWCDb {
                  * Note: this can ONLY be an add/copy-here/move-here. It is not
                  * possible to delete a "hidden" node.
                  */
-                WCDbStatus work_status = presenceMap2.get(stmt.getString(0));
+                WCDbStatus work_status = presenceMap2.get(stmt.getColumnString(0));
                 return (work_status == WCDbStatus.Excluded);
             }
         } finally {
