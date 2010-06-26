@@ -101,25 +101,6 @@ public class SVNSqlJetDb {
     public void execStatement(SVNWCDbStatements statementIndex) {
     }
 
-    public long fetchWCId() throws SVNException {
-        /*
-         * ### cheat. we know there is just one WORKING_COPY row, and it has a
-         * ### NULL value for local_abspath.
-         */
-        final SVNSqlJetStatement stmt = getStatement(SVNWCDbStatements.SELECT_WCROOT_NULL);
-        try {
-            final boolean have_row = stmt.next();
-            if (!have_row) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "Missing a row in WCROOT.");
-                SVNErrorManager.error(err, SVNLogType.WC);
-            }
-            // assert (!stmt.isColumnNull("id"));
-            return stmt.getColumnLong(SVNWCDbSchema.WCROOT__Fields.id);
-        } finally {
-            stmt.reset();
-        }
-    }
-
     public int upgrade(File absPath, int format) {
         return 0;
     }
@@ -130,38 +111,6 @@ public class SVNSqlJetDb {
     public static void createSqlJetError(SqlJetException e) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
         SVNErrorManager.error(err, SVNLogType.WC);
-    }
-
-    public static class ReposInfo {
-
-        public String reposRootUrl;
-        public String reposUuid;
-    }
-
-    public ReposInfo fetchReposInfo(long repos_id) throws SVNException {
-
-        ReposInfo info = new ReposInfo();
-
-        SVNSqlJetStatement stmt;
-        boolean have_row;
-
-        stmt = getStatement(SVNWCDbStatements.SELECT_REPOSITORY_BY_ID);
-        try {
-            stmt.bindf("i", repos_id);
-            have_row = stmt.next();
-            if (!have_row) {
-                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "No REPOSITORY table entry for id ''{0}''", repos_id);
-                SVNErrorManager.error(err, SVNLogType.WC);
-                return info;
-            }
-
-            info.reposRootUrl = stmt.getColumnString(SVNWCDbSchema.REPOSITORY_Fields.root);
-            info.reposUuid = stmt.getColumnString(SVNWCDbSchema.REPOSITORY_Fields.root);
-
-        } finally {
-            stmt.reset();
-        }
-        return info;
     }
 
 }

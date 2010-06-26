@@ -1217,7 +1217,7 @@ public interface ISVNWCDb {
      * <p>
      * This function will probably be removed.
      */
-    List<SVNTreeConflictDescription> readConflicts(File localAbspath) throws SVNException;
+    List<SVNTreeConflictDescription> readConflicts(File localAbsPath) throws SVNException;
 
     /**
      * Return the kind of the node in DB at LOCAL_ABSPATH. The WORKING tree will
@@ -1226,13 +1226,13 @@ public interface ISVNWCDb {
      * returned. If the node is missing and ALLOW_MISSING is FALSE, then it will
      * throw {@link SVNErrorCode#WC_PATH_NOT_FOUND}.
      */
-    WCDbKind readKind(File localAbspath, boolean allowMissing) throws SVNException;
+    WCDbKind readKind(File localAbsPath, boolean allowMissing) throws SVNException;
 
     /**
      * Return TRUE if LOCAL_ABSPATH in DB "is not present, and I haven't
      * scheduled something over the top of it."
      */
-    boolean isNodeHidden(File localAbspath) throws SVNException;
+    boolean isNodeHidden(File localAbsPath) throws SVNException;
 
     /**
      * Associate LOCAL_DIR_ABSPATH, and all its children with the repository at
