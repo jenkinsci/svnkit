@@ -49,7 +49,7 @@ public abstract class SVNSqlJetStatement {
     public List getBinds() {
         return binds;
     }
-    
+
     public boolean isNeedsReset() {
         return cursor != null;
     }
@@ -111,13 +111,8 @@ public abstract class SVNSqlJetStatement {
         binds.set(i, serialized);
     }
 
-    public long getColumnLong(int i) throws SVNException {
-        try {
-            return cursor.getInteger(i);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return 0;
-        }
+    public long getColumnLong(Enum f) throws SVNException {
+        return getColumnLong(f.name());
     }
 
     public long getColumnLong(String f) throws SVNException {
@@ -129,13 +124,8 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public String getColumnString(int i) throws SVNException {
-        try {
-            return cursor.getString(i);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return null;
-        }
+    public String getColumnString(Enum f) throws SVNException {
+        return getColumnString(f.name());
     }
 
     public String getColumnString(String f) throws SVNException {
@@ -147,13 +137,8 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public boolean isColumnNull(int i) throws SVNException {
-        try {
-            return cursor.isNull(i);
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return false;
-        }
+    public boolean isColumnNull(Enum f) throws SVNException {
+        return isColumnNull(f.name());
     }
 
     public boolean isColumnNull(String f) throws SVNException {

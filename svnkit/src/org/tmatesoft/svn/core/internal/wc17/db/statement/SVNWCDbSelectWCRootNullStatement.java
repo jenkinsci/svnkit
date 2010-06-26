@@ -12,15 +12,12 @@
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetCursor;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetTable;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbIndices;
-import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbTables;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
 /**
  * "select id from wcroot where local_abspath is null; "
@@ -34,7 +31,7 @@ public class SVNWCDbSelectWCRootNullStatement extends SVNSqlJetStatement {
     public SVNWCDbSelectWCRootNullStatement(SVNSqlJetDb sDb) throws SVNException {
         super(sDb);
         try {
-            table = sDb.getDb().getTable(SVNWCDbTables.WCROOT.name());
+            table = sDb.getDb().getTable(SVNWCDbSchema.WCROOT.name());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
         }
@@ -42,7 +39,7 @@ public class SVNWCDbSelectWCRootNullStatement extends SVNSqlJetStatement {
 
     protected ISqlJetCursor openCursor() throws SVNException {
         try {
-            return table.lookup(SVNWCDbIndices.I_LOCAL_ABSPATH.name(), null);
+            return table.lookup(SVNWCDbSchema.WCROOT__Indices.I_LOCAL_ABSPATH.name(), null);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;

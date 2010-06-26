@@ -17,7 +17,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
-import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbTables;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
 /**
  * "select presence, kind, checksum, translated_size, " \
@@ -35,7 +35,7 @@ public class SVNWCDbSelectWorkingNodeStatement extends SVNSqlJetStatement {
     public SVNWCDbSelectWorkingNodeStatement(SVNSqlJetDb sDb) throws SVNException {
         super(sDb);
         try {
-            table = sDb.getDb().getTable(SVNWCDbTables.WORKING_NODE.name());
+            table = sDb.getDb().getTable(SVNWCDbSchema.WORKING_NODE.name());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
         }

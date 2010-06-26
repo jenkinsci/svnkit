@@ -13,7 +13,6 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +22,6 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.internal.wc17.db.schema.SVNWCDbFields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -116,7 +114,7 @@ public class SVNSqlJetDb {
                 SVNErrorManager.error(err, SVNLogType.WC);
             }
             // assert (!stmt.isColumnNull("id"));
-            return stmt.getColumnLong(SVNWCDbFields.id.name());
+            return stmt.getColumnLong(SVNWCDbSchema.WCROOT__Fields.id);
         } finally {
             stmt.reset();
         }
@@ -132,6 +130,38 @@ public class SVNSqlJetDb {
     public static void createSqlJetError(SqlJetException e) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
         SVNErrorManager.error(err, SVNLogType.WC);
+    }
+
+    public static class ReposInfo {
+
+        public String reposRootUrl;
+        public String reposUuid;
+    }
+
+    public ReposInfo fetchReposInfo(long repos_id) throws SVNException {
+
+        ReposInfo info = new ReposInfo();
+
+        SVNSqlJetStatement stmt;
+        boolean have_row;
+
+        stmt = getStatement(SVNWCDbStatements.SELECT_REPOSITORY_BY_ID);
+        try {
+            stmt.bindf("i", repos_id);
+            have_row = stmt.next();
+            if (!have_row) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_CORRUPT, "No REPOSITORY table entry for id ''{0}''", repos_id);
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return info;
+            }
+
+            info.reposRootUrl = stmt.getColumnString(SVNWCDbSchema.REPOSITORY_Fields.root);
+            info.reposUuid = stmt.getColumnString(SVNWCDbSchema.REPOSITORY_Fields.root);
+
+        } finally {
+            stmt.reset();
+        }
+        return info;
     }
 
 }
