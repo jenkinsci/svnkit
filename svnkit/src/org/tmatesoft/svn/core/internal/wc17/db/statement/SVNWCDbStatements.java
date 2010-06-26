@@ -27,8 +27,9 @@ public enum SVNWCDbStatements {
     INSERT_WORK_ITEM, 
     SELECT_WORKING_NODE(SVNWCDbSelectWorkingNodeStatement.class), 
     SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNullStatement.class), 
+    SELECT_BASE_NODE(SVNWCDbSelectBaseNodeStatement.class), 
     SELECT_BASE_NODE_WITH_LOCK, 
-    SELECT_BASE_NODE, SELECT_REPOSITORY_BY_ID;
+    SELECT_REPOSITORY_BY_ID;
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
