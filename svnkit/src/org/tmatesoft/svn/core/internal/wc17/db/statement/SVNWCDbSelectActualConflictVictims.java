@@ -23,22 +23,22 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE_Fields> {
+public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE__Fields> {
 
     public SVNWCDbSelectActualConflictVictims(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);
     }
 
     protected String getIndexName() {
-        return SVNWCDbSchema.ACTUAL_NODE_Indices.I_ACTUAL_PARENT.toString();
+        return SVNWCDbSchema.ACTUAL_NODE__Indices.I_ACTUAL_PARENT.toString();
     }
 
     protected boolean isFilterPassed() throws SVNException {
-        return !(isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.prop_reject.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_old.toString())
-                && isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_new.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_working.toString()));
+        return !(isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old.toString())
+                && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working.toString()));
     }
 
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.ACTUAL_NODE_Fields.local_relpath);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
     }
 }

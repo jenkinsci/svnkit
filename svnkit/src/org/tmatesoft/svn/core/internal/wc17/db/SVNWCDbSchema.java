@@ -18,8 +18,8 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 public enum SVNWCDbSchema {
 
     WCROOT(WCROOT__Fields.class, WCROOT__Indices.class), BASE_NODE(BASE_NODE__Fields.class, BASE_NODE__Fields.class), WORKING_NODE(WORKING_NODE__Fields.class, WORKING_NODE__Indices.class), LOCK(
-            LOCK__Fields.class), REPOSITORY(REPOSITORY_Fields.class,REPOSITORY_Indices.class), 
-            ACTUAL_NODE(ACTUAL_NODE_Fields.class, ACTUAL_NODE_Indices.class);
+            LOCK__Fields.class), REPOSITORY(REPOSITORY__Fields.class,REPOSITORY__Indices.class), 
+            ACTUAL_NODE(ACTUAL_NODE__Fields.class, ACTUAL_NODE__Indices.class);
 
     final public Class<? extends Enum> fields;
     final public Class<? extends Enum> indices;
@@ -65,15 +65,15 @@ public enum SVNWCDbSchema {
         repos_id, repos_relpath, lock_token, lock_owner, lock_comment, lock_date
     }
     
-    public enum REPOSITORY_Fields {
+    public enum REPOSITORY__Fields {
         id, root, uuid
     }
     
-    public enum REPOSITORY_Indices {
+    public enum REPOSITORY__Indices {
         I_UUID, I_ROOT
     }
     
-    public enum ACTUAL_NODE_Fields {
+    public enum ACTUAL_NODE__Fields {
         wc_id,
         local_relpath,
         parent_relpath,
@@ -91,7 +91,7 @@ public enum SVNWCDbSchema {
         right_checksum;
     }
     
-    public enum ACTUAL_NODE_Indices{
+    public enum ACTUAL_NODE__Indices{
         I_ACTUAL_PARENT, I_ACTUAL_CHANGELIST
     }
 

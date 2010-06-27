@@ -32,7 +32,7 @@ import org.tmatesoft.svn.util.SVNLogType;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectBaseNodeWithLock extends SVNWCDbSelectBaseNodeStatement {
+public class SVNWCDbSelectBaseNodeWithLock extends SVNWCDbSelectBaseNode {
 
     private static class LockStatement extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.LOCK__Fields> {
 

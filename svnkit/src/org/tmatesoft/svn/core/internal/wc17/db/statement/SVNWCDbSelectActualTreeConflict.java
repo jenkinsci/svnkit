@@ -22,14 +22,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectActualTreeConflict extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE_Fields> {
+public class SVNWCDbSelectActualTreeConflict extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE__Fields> {
 
     public SVNWCDbSelectActualTreeConflict(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);
     }
 
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.ACTUAL_NODE_Fields.tree_conflict_data);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
     }
 
 }

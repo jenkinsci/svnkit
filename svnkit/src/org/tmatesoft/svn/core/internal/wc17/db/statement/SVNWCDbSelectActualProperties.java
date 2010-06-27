@@ -21,14 +21,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectActualProperties extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE_Fields> {
+public class SVNWCDbSelectActualProperties extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE__Fields> {
 
     public SVNWCDbSelectActualProperties(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);
     }
 
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.ACTUAL_NODE_Fields.properties);
+        fields.add(SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
     }
 
 }

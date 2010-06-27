@@ -25,9 +25,9 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWorkingNodeStatement extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
+public class SVNWCDbSelectWorkingNode extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
 
-    public SVNWCDbSelectWorkingNodeStatement(SVNSqlJetDb sDb) throws SVNException {
+    public SVNWCDbSelectWorkingNode(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.WORKING_NODE);
     }
 

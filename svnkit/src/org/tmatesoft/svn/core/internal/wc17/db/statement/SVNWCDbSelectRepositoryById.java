@@ -21,15 +21,15 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectRepositoryById extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.REPOSITORY_Fields> {
+public class SVNWCDbSelectRepositoryById extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.REPOSITORY__Fields> {
 
     public SVNWCDbSelectRepositoryById(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.REPOSITORY);
     }
 
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.REPOSITORY_Fields.root);
-        fields.add(SVNWCDbSchema.REPOSITORY_Fields.uuid);
+        fields.add(SVNWCDbSchema.REPOSITORY__Fields.root);
+        fields.add(SVNWCDbSchema.REPOSITORY__Fields.uuid);
     }
 
 }

@@ -47,7 +47,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.Deletio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb.Mode;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema.ACTUAL_NODE_Fields;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema.ACTUAL_NODE__Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
 import org.tmatesoft.svn.core.wc.SVNConflictDescription;
@@ -1336,7 +1336,7 @@ public class SVNWCDb implements ISVNWCDb {
         try {
             stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
             while (stmt.next()) {
-                String child_relpath = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE_Fields.local_relpath);
+                String child_relpath = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.local_relpath);
                 String child_name = SVNFileUtil.getBasePath(new File(child_relpath));
                 found.add(child_name);
             }
@@ -1349,7 +1349,7 @@ public class SVNWCDb implements ISVNWCDb {
         try {
             stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
             if (stmt.next())
-                tree_conflict_data = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE_Fields.tree_conflict_data);
+                tree_conflict_data = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE__Fields.tree_conflict_data);
             else
                 tree_conflict_data = null;
         } finally {
@@ -1598,7 +1598,7 @@ public class SVNWCDb implements ISVNWCDb {
                 }
                 if (f.contains(InfoField.changelist)) {
                     if (have_act)
-                        info.changelist = getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE_Fields.changelist);
+                        info.changelist = getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.changelist);
                     else
                         info.changelist = null;
                 }
@@ -1630,17 +1630,17 @@ public class SVNWCDb implements ISVNWCDb {
                     info.textMod = false;
                 }
                 if (f.contains(InfoField.propsMod)) {
-                    info.propsMod = have_act && !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE_Fields.properties);
+                    info.propsMod = have_act && !isColumnNull(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.properties);
                 }
                 if (f.contains(InfoField.baseShadowed)) {
                     info.baseShadowed = have_base && have_work;
                 }
                 if (f.contains(InfoField.conflicted)) {
                     if (have_act) {
-                        info.conflicted = getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_old) != null || /* old */
-                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_new) != null || /* new */
-                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_working) != null || /* working */
-                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE_Fields.prop_reject) != null; /* prop_reject */
+                        info.conflicted = getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_old) != null || /* old */
+                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_new) != null || /* new */
+                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.conflict_working) != null || /* working */
+                        getColumnText(stmt_act, SVNWCDbSchema.ACTUAL_NODE__Fields.prop_reject) != null; /* prop_reject */
 
                         /*
                          * At the end of this function we check for tree
@@ -1941,8 +1941,8 @@ public class SVNWCDb implements ISVNWCDb {
                 return info;
             }
 
-            info.reposRootUrl = getColumnText(stmt, SVNWCDbSchema.REPOSITORY_Fields.root);
-            info.reposUuid = getColumnText(stmt, SVNWCDbSchema.REPOSITORY_Fields.root);
+            info.reposRootUrl = getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.root);
+            info.reposUuid = getColumnText(stmt, SVNWCDbSchema.REPOSITORY__Fields.root);
 
         } finally {
             stmt.reset();
