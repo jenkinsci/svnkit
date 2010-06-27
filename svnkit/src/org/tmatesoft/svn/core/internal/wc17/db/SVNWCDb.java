@@ -39,6 +39,7 @@ import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
+import org.tmatesoft.svn.core.internal.wc.SVNTreeConflictUtil;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbKind;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbAdditionInfo.AdditionInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbBaseInfo.BaseInfoField;
@@ -46,8 +47,10 @@ import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbDeletionInfo.Deletio
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo.InfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbRepositoryInfo.RepositoryInfoField;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb.Mode;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema.ACTUAL_NODE_Fields;
 import org.tmatesoft.svn.core.internal.wc17.db.statement.SVNWCDbStatements;
 import org.tmatesoft.svn.core.wc.ISVNOptions;
+import org.tmatesoft.svn.core.wc.SVNConflictDescription;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 import org.tmatesoft.svn.util.SVNLogType;
@@ -1243,9 +1246,66 @@ public class SVNWCDb implements ISVNWCDb {
         }
     }
 
-    public List<String> readConflictVictims(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public List<String> readConflictVictims(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+
+        /* The parent should be a working copy directory. */
+        final DirParsedInfo parsed = parseDirLocalAbsPath(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelPath = parsed.localRelPath;
+
+        verifyDirUsable(pdh);
+
+        final SVNSqlJetDb sDb = pdh.getWCRoot().getSDb();
+
+        SVNSqlJetStatement stmt;
+        String tree_conflict_data;
+
+        List<String> victims = new ArrayList<String>();
+
+        /*
+         * ### This will be much easier once we have all conflicts in one field
+         * of actual
+         */
+
+        Set<String> found = new HashSet<String>();
+
+        /* First look for text and property conflicts in ACTUAL */
+        stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_CONFLICT_VICTIMS);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            while (stmt.next()) {
+                String child_relpath = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE_Fields.local_relpath);
+                String child_name = SVNFileUtil.getBasePath(new File(child_relpath));
+                found.add(child_name);
+            }
+        } finally {
+            stmt.reset();
+        }
+
+        /* And add tree conflicts */
+        stmt = sDb.getStatement(SVNWCDbStatements.SELECT_ACTUAL_TREE_CONFLICT);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
+            if (stmt.next())
+                tree_conflict_data = getColumnText(stmt, SVNWCDbSchema.ACTUAL_NODE_Fields.tree_conflict_data);
+            else
+                tree_conflict_data = null;
+        } finally {
+            stmt.reset();
+        }
+
+        if (tree_conflict_data != null) {
+            Map<String, SVNTreeConflictDescription> conflict_items = SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
+            for (String conflict : conflict_items.keySet()) {
+                String child_name = SVNFileUtil.getBasePath(new File(conflict));
+                /* Using a hash avoids duplicates */
+                found.add(child_name);
+            }
+        }
+
+        victims.addAll(found);
+        return victims;
     }
 
     public List<SVNTreeConflictDescription> readConflicts(File localAbspath) throws SVNException {
@@ -1766,6 +1826,10 @@ public class SVNWCDb implements ISVNWCDb {
 
     private static long getColumnInt64(SVNSqlJetStatement stmt, Enum f) throws SVNException {
         return stmt.getColumnLong(f.toString());
+    }
+
+    private byte[] getColumnBlob(SVNSqlJetStatement stmt, Enum f) throws SVNException {
+        return stmt.getBlob(f.toString());
     }
 
     private static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum f) throws SVNException {

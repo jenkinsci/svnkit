@@ -60,4 +60,16 @@ public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
         return binds.toArray();
     }
 
+    public boolean next() throws SVNException {
+        boolean next = super.next();
+        while (next && !isFilterPassed()) {
+            next = super.next();
+        }
+        return next;
+    }
+
+    protected boolean isFilterPassed() throws SVNException {
+        return true;
+    }
+
 }

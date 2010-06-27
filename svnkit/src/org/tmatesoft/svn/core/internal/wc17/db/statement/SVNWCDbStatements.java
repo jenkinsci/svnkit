@@ -32,7 +32,9 @@ public enum SVNWCDbStatements {
     SELECT_REPOSITORY_BY_ID(SVNWCDbSelectRepositoryById.class), 
     SELECT_ACTUAL_NODE(SVNWCDbSelectActualNodeStatement.class), 
     SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),  
-    SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class);
+    SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class), 
+    SELECT_ACTUAL_CONFLICT_VICTIMS(SVNWCDbSelectActualConflictVictims.class), 
+    SELECT_ACTUAL_TREE_CONFLICT(SVNWCDbSelectActualTreeConflict.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 

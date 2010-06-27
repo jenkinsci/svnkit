@@ -188,4 +188,13 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
+    public byte[] getBlob(String f) throws SVNException {
+        try {
+            return cursor.getBlobAsArray(f);
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return null;
+        }
+    }
+
 }
