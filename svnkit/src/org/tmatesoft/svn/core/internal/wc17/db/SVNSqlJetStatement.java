@@ -12,12 +12,10 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
-import org.tmatesoft.sqljet.core.internal.table.SqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
@@ -154,6 +152,8 @@ public abstract class SVNSqlJetStatement {
 
     public long count() throws SVNException {
         try {
+            if (cursor == null || cursor.eof())
+                return 0;
             return cursor.getRowCount();
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
@@ -163,6 +163,8 @@ public abstract class SVNSqlJetStatement {
 
     public long getColumnLong(String f) throws SVNException {
         try {
+            if (cursor == null || cursor.eof())
+                return 0;
             return cursor.getInteger(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
@@ -172,6 +174,8 @@ public abstract class SVNSqlJetStatement {
 
     public String getColumnString(String f) throws SVNException {
         try {
+            if (cursor == null || cursor.eof())
+                return null;
             return cursor.getString(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
@@ -181,6 +185,8 @@ public abstract class SVNSqlJetStatement {
 
     public boolean isColumnNull(String f) throws SVNException {
         try {
+            if (cursor == null || cursor.eof())
+                return true;
             return cursor.isNull(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
@@ -190,6 +196,8 @@ public abstract class SVNSqlJetStatement {
 
     public byte[] getColumnBlob(String f) throws SVNException {
         try {
+            if (cursor == null || cursor.eof())
+                return null;
             return cursor.getBlobAsArray(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
@@ -215,6 +223,11 @@ public abstract class SVNSqlJetStatement {
     public byte[] getColumnBlob(int f) throws SVNException {
         SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
         return null;
+    }
+    
+    public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
+        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
+        return null;        
     }
 
 }

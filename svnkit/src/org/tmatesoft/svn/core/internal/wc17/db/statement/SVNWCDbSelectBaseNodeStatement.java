@@ -34,7 +34,7 @@ public class SVNWCDbSelectBaseNodeStatement extends SVNSqlJetStatement {
     public SVNWCDbSelectBaseNodeStatement(SVNSqlJetDb sDb) throws SVNException {
         super(sDb);
         try {
-            table = sDb.getDb().getTable(SVNWCDbSchema.BASE_NODE.name());
+            table = sDb.getDb().getTable(SVNWCDbSchema.BASE_NODE.toString());
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
         }

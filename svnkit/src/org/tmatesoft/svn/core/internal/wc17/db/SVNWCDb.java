@@ -1344,7 +1344,7 @@ public class SVNWCDb implements ISVNWCDb {
 
         final EnumSet<InfoField> f = getInfoFields(InfoField.class, fields);
 
-        SVNSqlJetStatement stmt_base = pdh.getWCRoot().getSDb().getStatement(f.contains(BaseInfoField.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
+        SVNSqlJetStatement stmt_base = pdh.getWCRoot().getSDb().getStatement(f.contains(InfoField.lock) ? SVNWCDbStatements.SELECT_BASE_NODE_WITH_LOCK : SVNWCDbStatements.SELECT_BASE_NODE);
         SVNSqlJetStatement stmt_work = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_WORKING_NODE);
         SVNSqlJetStatement stmt_act = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
 
@@ -1607,17 +1607,18 @@ public class SVNWCDb implements ISVNWCDb {
                         info.conflicted = false;
                 }
                 if (f.contains(InfoField.lock)) {
-                    if (isColumnNull(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_token))
+                    final SVNSqlJetStatement stmt_base_lock = stmt_base.getJoinedStatement(SVNWCDbSchema.LOCK.toString());
+                    if (isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_token))
                         info.lock = null;
                     else {
                         info.lock = new WCDbLock();
-                        info.lock.token = getColumnText(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_token);
-                        if (!isColumnNull(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_owner))
-                            info.lock.owner = getColumnText(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_owner);
-                        if (!isColumnNull(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_comment))
-                            info.lock.comment = getColumnText(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_comment);
-                        if (!isColumnNull(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_date))
-                            info.lock.date = new Date(getColumnInt64(stmt_base, SVNWCDbSchema.LOCK__Fields.lock_date));
+                        info.lock.token = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_token);
+                        if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_owner))
+                            info.lock.owner = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_owner);
+                        if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_comment))
+                            info.lock.comment = getColumnText(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_comment);
+                        if (!isColumnNull(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date))
+                            info.lock.date = new Date(getColumnInt64(stmt_base_lock, SVNWCDbSchema.LOCK__Fields.lock_date));
                     }
                 }
             } else if (have_act) {
