@@ -23,6 +23,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
+import org.tmatesoft.svn.util.SVNLogType;
 
 /**
  * @author TMate Software Ltd.
@@ -62,11 +64,8 @@ public abstract class SVNSqlJetStatement {
             } catch (SqlJetException e) {
                 SVNSqlJetDb.createSqlJetError(e);
             } finally {
-                try {
-                    sDb.getDb().commit();
-                } catch (SqlJetException e) {
-                    SVNSqlJetDb.createSqlJetError(e);
-                }
+                cursor = null;
+                sDb.commit();
             }
         }
     }
@@ -74,7 +73,7 @@ public abstract class SVNSqlJetStatement {
     public boolean next() throws SVNException {
         try {
             if (cursor == null) {
-                sDb.getDb().beginTransaction(SqlJetTransactionMode.READ_ONLY);
+                sDb.beginTransaction(SqlJetTransactionMode.READ_ONLY);
                 cursor = openCursor();
                 return !cursor.eof();
             }
@@ -85,30 +84,68 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public void bindf(String formats, Object... data) {
+    public void bindf(String format, Object... data) throws SVNException {
         // TODO check formats
-        binds.addAll(Arrays.asList(data));
+        // binds.addAll(Arrays.asList(data));
+
+        for (int i = 0; i < format.length(); i++) {
+            char fmt = format.charAt(i);
+
+            // const void *blob;
+            // apr_size_t blob_size;
+            // const svn_token_map_t *map;
+
+            switch (fmt) {
+                case 's':
+                    bindString(i, data[i].toString());
+                    break;
+
+                case 'i':
+                    if (data[i] instanceof Number) {
+                        bindLong(i, ((Number) data[i]).longValue());
+                    } else {
+                        SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
+                    }
+                    break;
+
+                case 'b':
+                    if (data[i] instanceof byte[]) {
+                        bindBlob(i, (byte[]) data[i]);
+                    }
+                    break;
+
+                case 't':
+                    // map = va_arg(ap, const svn_token_map_t *);
+                    // SVN_ERR(svn_sqlite__bind_token(stmt, count, map,
+                    // va_arg(ap, int)));
+                    break;
+
+                default:
+                    SVNErrorManager.assertionFailure(false, null, SVNLogType.WC);
+            }
+        }
+
     }
 
     public void bindLong(int i, long v) {
-        binds.set(i, v);
+        binds.add(i, v);
     }
 
     public void bindString(int i, String string) {
-        binds.set(i, string);
+        binds.add(i, string);
     }
 
     public void bindProperties(int i, SVNProperties props) throws SVNException {
         SVNSkel.createPropList(props.asMap()).getData();
-        binds.set(i, SVNSkel.createPropList(props.asMap()).getData());
+        binds.add(i, SVNSkel.createPropList(props.asMap()).getData());
     }
 
     public void bindChecksumm(int i, SVNChecksum checksum) {
-        binds.set(i, checksum.getDigest());
+        binds.add(i, checksum.getDigest());
     }
 
     public void bindBlob(int i, byte[] serialized) {
-        binds.set(i, serialized);
+        binds.add(i, serialized);
     }
 
     public long getColumnLong(String f) throws SVNException {

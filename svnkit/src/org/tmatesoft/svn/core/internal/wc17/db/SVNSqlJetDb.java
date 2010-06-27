@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -41,6 +42,8 @@ public class SVNSqlJetDb {
 
     private SqlJetDb db;
     private Map<SVNWCDbStatements, SVNSqlJetStatement> statements;
+
+    private int openCount = 0;
 
     private SVNSqlJetDb(SqlJetDb db) {
         this.db = db;
@@ -82,7 +85,7 @@ public class SVNSqlJetDb {
         return stmt;
     }
 
-    private SVNSqlJetStatement prepareStatement(SVNWCDbStatements statementIndex) {
+    private SVNSqlJetStatement prepareStatement(SVNWCDbStatements statementIndex) throws SVNException {
         final Class<? extends SVNSqlJetStatement> statementClass = statementIndex.getStatementClass();
         if (statementClass == null) {
             return null;
@@ -92,16 +95,18 @@ public class SVNSqlJetDb {
             final SVNSqlJetStatement stmt = constructor.newInstance(this);
             return stmt;
         } catch (Exception e) {
-            // TODO
-            e.printStackTrace();
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.UNSUPPORTED_FEATURE, e);
+            SVNErrorManager.error(err, SVNLogType.WC);
             return null;
         }
     }
 
     public void execStatement(SVNWCDbStatements statementIndex) {
+        // TODO
     }
 
     public int upgrade(File absPath, int format) {
+        // TODO
         return 0;
     }
 
@@ -111,6 +116,36 @@ public class SVNSqlJetDb {
     public static void createSqlJetError(SqlJetException e) throws SVNException {
         SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR, e);
         SVNErrorManager.error(err, SVNLogType.WC);
+    }
+
+    public void beginTransaction(SqlJetTransactionMode mode) throws SVNException {
+        if (mode != null) {
+            openCount++;
+            if (!db.isInTransaction() || mode != db.getTransactionMode()) {
+                try {
+                    db.beginTransaction(mode);
+                } catch (SqlJetException e) {
+                    createSqlJetError(e);
+                }
+            }
+        } else {
+            SVNErrorManager.assertionFailure(mode != null, "transaction mode is null", SVNLogType.WC);
+        }
+    }
+
+    public void commit() throws SVNException {
+        if (openCount > 0) {
+            openCount--;
+            if (openCount == 0) {
+                try {
+                    db.commit();
+                } catch (SqlJetException e) {
+                    createSqlJetError(e);
+                }
+            }
+        } else {
+            SVNErrorManager.assertionFailure(openCount > 0, "no opened transactions", SVNLogType.WC);
+        }
     }
 
 }
