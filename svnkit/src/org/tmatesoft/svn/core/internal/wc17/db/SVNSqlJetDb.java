@@ -87,6 +87,7 @@ public class SVNSqlJetDb {
 
     private SVNSqlJetStatement prepareStatement(SVNWCDbStatements statementIndex) throws SVNException {
         final Class<? extends SVNSqlJetStatement> statementClass = statementIndex.getStatementClass();
+        SVNErrorManager.assertionFailure(statementClass != null, String.format("Statement '%s' not defined", statementIndex.toString()), SVNLogType.WC);
         if (statementClass == null) {
             return null;
         }
@@ -103,7 +104,7 @@ public class SVNSqlJetDb {
 
     public void execStatement(SVNWCDbStatements statementIndex) throws SVNException {
         final SVNSqlJetStatement statement = getStatement(statementIndex);
-        if(statement!=null){
+        if (statement != null) {
             statement.exec();
         }
     }

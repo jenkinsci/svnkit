@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.SVNException;
  * @version 1.3
  * @author TMate Software Ltd.
  */
-public class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
+public abstract class SVNSqlJetSelectStatement extends SVNSqlJetStatement {
 
     private ISqlJetTable table;
 

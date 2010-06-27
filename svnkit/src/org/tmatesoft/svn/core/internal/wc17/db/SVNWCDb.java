@@ -632,9 +632,27 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public Map<String, String> getBaseProps(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNProperties getBaseProps(File localAbsPath) throws SVNException {
+        SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_BASE_PROPS);
+        try {
+            boolean have_row = stmt.next();
+            if (!have_row) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND, "The node ''{0}''  was not found.", localAbsPath);
+                SVNErrorManager.error(err, SVNLogType.WC);
+            }
+
+            SVNProperties props = getColumnProperties(stmt, 0);
+            if (props == null) {
+                /*
+                 * ### is this a DB constraint violation? the column "probably"
+                 * should ### never be null.
+                 */
+                return new SVNProperties();
+            }
+            return props;
+        } finally {
+            stmt.reset();
+        }
     }
 
     public int getFormatTemp(File localDirAbsPath) throws SVNException {
@@ -1654,9 +1672,49 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public SVNProperties readPristineProperties(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNProperties readPristineProperties(File localAbsPath) throws SVNException {
+        boolean have_row;
+
+        SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_WORKING_PROPS);
+        try {
+
+            have_row = stmt.next();
+
+            /*
+             * If there is a WORKING row, then examine its status:
+             * 
+             * For adds/copies/moves, then pristine properties are in this row.
+             * 
+             * For deletes, the pristines may be located here (as a result of a
+             * copy/move-here), or they are located in BASE. ### right now, we
+             * don't have a strong definition yet. moving to the ### proposed
+             * NODE_DATA system will create more determinism around ### where
+             * props are located and their relation to layered operations.
+             */
+            if (have_row) {
+                WCDbStatus presence;
+
+                /*
+                 * For "base-deleted", it is obvious the pristine props are
+                 * located in the BASE table. Fall through to fetch them.
+                 * 
+                 * ### for regular deletes, the properties should be in the
+                 * WORKING ### row. though operation layering and the suggested
+                 * NODE_DATA may ### really be needed to ensure the props are
+                 * always available, ### and what "pristine" really means.
+                 */
+                presence = getColumnToken(stmt, 1, presenceMap2);
+                if (presence != WCDbStatus.BaseDeleted) {
+                    return getColumnProperties(stmt, 0);
+                }
+            }
+        } finally {
+            stmt.reset();
+        }
+
+        /* No WORKING node, so the props must be in the BASE node. */
+        return getBaseProps(localAbsPath);
+
     }
 
     public String readProperty(File localAbsPath, String propname) throws SVNException {
@@ -1665,8 +1723,56 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNProperties readProperties(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        SVNProperties props = null;
+        boolean have_row = false;
+        SVNSqlJetStatement stmt = getStatementForPath(localAbsPath, SVNWCDbStatements.SELECT_ACTUAL_PROPS);
+        try {
+            have_row = stmt.next();
+
+            if (have_row && !isColumnNull(stmt, 0)) {
+                props = getColumnProperties(stmt, 0);
+            } else
+                have_row = false;
+        } finally {
+            stmt.reset();
+        }
+
+        if (have_row && props != null)
+            return props;
+
+        /* No local changes. Return the pristine props for this node. */
+        props = readPristineProperties(localAbsPath);
+        if (props == null) {
+            /*
+             * Pristine properties are not defined for this node. ### we need to
+             * determine whether this node is in a state that ### allows for
+             * ACTUAL properties (ie. not deleted). for now, ### just say all
+             * nodes, no matter the state, have at least an ### empty set of
+             * props.
+             */
+            return new SVNProperties();
+        }
+
+        return props;
+    }
+
+    private SVNProperties getColumnProperties(SVNSqlJetStatement stmt, int f) throws SVNException {
+        final byte[] val = stmt.getColumnBlob(f);
+        if (val == null) {
+            return null;
+        }
+        final SVNSkel skel = SVNSkel.parse(val);
+        return SVNProperties.wrap(skel.parsePropList());
+    }
+
+    private SVNSqlJetStatement getStatementForPath(File localAbsPath, SVNWCDbStatements statementIndex) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+        final DirParsedInfo parsed = parseDirLocalAbsPath(localAbsPath, Mode.ReadWrite);
+        verifyDirUsable(parsed.wcDbDir);
+        final SVNWCDbRoot wcRoot = parsed.wcDbDir.getWCRoot();
+        final SVNSqlJetStatement statement = wcRoot.getSDb().getStatement(statementIndex);
+        statement.bindf("is", wcRoot.getWcId(), parsed.localRelPath);
+        return statement;
     }
 
     public void removeBase(File localAbsPath) throws SVNException {
@@ -1829,7 +1935,23 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private byte[] getColumnBlob(SVNSqlJetStatement stmt, Enum f) throws SVNException {
-        return stmt.getBlob(f.toString());
+        return stmt.getColumnBlob(f.toString());
+    }
+
+    private static String getColumnText(SVNSqlJetStatement stmt, int f) throws SVNException {
+        return stmt.getColumnString(f);
+    }
+
+    private static boolean isColumnNull(SVNSqlJetStatement stmt, int f) throws SVNException {
+        return stmt.isColumnNull(f);
+    }
+
+    private static long getColumnInt64(SVNSqlJetStatement stmt, int f) throws SVNException {
+        return stmt.getColumnLong(f);
+    }
+
+    private byte[] getColumnBlob(SVNSqlJetStatement stmt, int f) throws SVNException {
+        return stmt.getColumnBlob(f);
     }
 
     private static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
@@ -1853,6 +1975,10 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private static <T extends Enum<T>> T getColumnToken(SVNSqlJetStatement stmt, Enum f, Map<String, T> tokenMap) throws SVNException {
+        return tokenMap.get(getColumnText(stmt, f));
+    }
+
+    private static <T extends Enum<T>> T getColumnToken(SVNSqlJetStatement stmt, int f, Map<String, T> tokenMap) throws SVNException {
         return tokenMap.get(getColumnText(stmt, f));
     }
 

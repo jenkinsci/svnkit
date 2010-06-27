@@ -676,7 +676,7 @@ public interface ISVNWCDb {
      * the NULL. <br>
      * If the node is not present in the BASE tree, throw an error.
      */
-    Map<String, String> getBaseProps(File localAbsPath) throws SVNException;
+    SVNProperties getBaseProps(File localAbsPath) throws SVNException;
 
     /**
      * Return a list of the BASE tree node's children's names.

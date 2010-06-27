@@ -152,6 +152,15 @@ public abstract class SVNSqlJetStatement {
         binds.add(i, serialized);
     }
 
+    public long count() throws SVNException {
+        try {
+            return cursor.getRowCount();
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return 0;
+        }
+    }
+
     public long getColumnLong(String f) throws SVNException {
         try {
             return cursor.getInteger(f);
@@ -179,22 +188,33 @@ public abstract class SVNSqlJetStatement {
         }
     }
 
-    public long count() throws SVNException {
-        try {
-            return cursor.getRowCount();
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return 0;
-        }
-    }
-
-    public byte[] getBlob(String f) throws SVNException {
+    public byte[] getColumnBlob(String f) throws SVNException {
         try {
             return cursor.getBlobAsArray(f);
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return null;
         }
+    }
+
+    public long getColumnLong(int f) throws SVNException {
+        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
+        return 0;
+    }
+
+    public String getColumnString(int f) throws SVNException {
+        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
+        return null;
+    }
+
+    public boolean isColumnNull(int f) throws SVNException {
+        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
+        return true;
+    }
+
+    public byte[] getColumnBlob(int f) throws SVNException {
+        SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
+        return null;
     }
 
 }
