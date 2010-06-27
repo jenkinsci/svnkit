@@ -1195,7 +1195,7 @@ public interface ISVNWCDb {
     /**
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB.
      */
-    List<File> readChildren(File localAbspath) throws SVNException;
+    List<String> readChildren(File localAbspath) throws SVNException;
 
     /**
      * Return the basenames of the immediate children of LOCAL_ABSPATH in DB
@@ -1206,7 +1206,7 @@ public interface ISVNWCDb {
      * <p>
      * This function will probably be removed.
      */
-    List<File> readConflictVictims(File localAbspath) throws SVNException;
+    List<String> readConflictVictims(File localAbspath) throws SVNException;
 
     /**
      * Return all conflicts that have LOCAL_ABSPATH as victim.

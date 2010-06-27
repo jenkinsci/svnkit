@@ -1411,7 +1411,7 @@ public class SVNWCContext {
              * versioned directory *does* exist on disk. We don't want to look
              * into that subdir.
              */
-            for (File child : db.readChildren(dirAbspath)) {
+            for (String child : db.readChildren(dirAbspath)) {
                 if (name.equals(child)) {
                     try {
                         pair.entry = readOneEntry(dirAbspath, name, pair.parentEntry);
@@ -1458,11 +1458,11 @@ public class SVNWCContext {
 
         if (entry.isThisDir()) {
             /* get the tree conflict data. */
-            Map<File, SVNTreeConflictDescription> tree_conflicts = null;
+            Map<String, SVNTreeConflictDescription> tree_conflicts = null;
 
-            final List<File> conflict_victims = db.readConflictVictims(dirAbsPath);
+            final List<String> conflict_victims = db.readConflictVictims(dirAbsPath);
 
-            for (File child_name : conflict_victims) {
+            for (String child_name : conflict_victims) {
 
                 File child_abspath = new File(dirAbsPath, child_name.toString());
 
@@ -1471,7 +1471,7 @@ public class SVNWCContext {
                 for (SVNTreeConflictDescription conflict : child_conflicts) {
                     if (conflict.isTreeConflict()) {
                         if (tree_conflicts == null) {
-                            tree_conflicts = new HashMap<File, SVNTreeConflictDescription>();
+                            tree_conflicts = new HashMap<String, SVNTreeConflictDescription>();
                         }
                         tree_conflicts.put(child_name, conflict);
                     }

@@ -177,10 +177,10 @@ public class SVNStatusEditor17 {
         final ISVNWCDb db = myWCContext.getDb();
 
         /* Load list of childnodes. */
-        final List<File> childNodes = db.readChildren(localAbsPath);
+        final List<String> childNodes = db.readChildren(localAbsPath);
         final Map<String, File> nodes = new HashMap<String, File>();
-        for (File childNode : childNodes) {
-            nodes.put(childNode.getName(), childNode);
+        for (String childNode : childNodes) {
+            nodes.put(childNode, new File(childNode));
         }
 
         final WCDbInfo dirInfo = db.readInfo(localAbsPath, InfoField.status, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.depth);
@@ -211,9 +211,9 @@ public class SVNStatusEditor17 {
             /* Create a hash containing all children */
             allChildren.putAll(childrenFiles);
             allChildren.putAll(nodes);
-            List<File> victims = db.readConflictVictims(localAbsPath);
-            for (File confict : victims) {
-                conflicts.put(confict.getName(), confict);
+            List<String> victims = db.readConflictVictims(localAbsPath);
+            for (String confict : victims) {
+                conflicts.put(confict, new File(confict));
             }
             /* Optimize for the no-tree-conflict case */
             allChildren.putAll(conflicts);

@@ -43,6 +43,10 @@ public abstract class SVNSqlJetStatement {
         throw new UnsupportedOperationException();
     }
 
+    public void exec() {
+        throw new UnsupportedOperationException();
+    }
+
     public SVNSqlJetStatement(SVNSqlJetDb sDb) {
         this.sDb = sDb;
         cursor = null;
@@ -172,6 +176,15 @@ public abstract class SVNSqlJetStatement {
         } catch (SqlJetException e) {
             SVNSqlJetDb.createSqlJetError(e);
             return false;
+        }
+    }
+
+    public long count() throws SVNException {
+        try {
+            return cursor.getRowCount();
+        } catch (SqlJetException e) {
+            SVNSqlJetDb.createSqlJetError(e);
+            return 0;
         }
     }
 

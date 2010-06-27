@@ -13,6 +13,8 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -1198,12 +1200,50 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public List<File> readChildren(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public List<String> readChildren(File localAbsPath) throws SVNException {
+        return gatherChildren(localAbsPath, false);
     }
 
-    public List<File> readConflictVictims(File localAbspath) throws SVNException {
+    private List<String> gatherChildren(File localAbsPath, boolean baseOnly) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+
+        final DirParsedInfo parsed = parseDirLocalAbsPath(localAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        File localRelPath = parsed.localRelPath;
+
+        verifyDirUsable(pdh);
+
+        final long wcId = pdh.getWCRoot().getWcId();
+        final SVNSqlJetDb sDb = pdh.getWCRoot().getSDb();
+
+        final List<String> names = new ArrayList<String>();
+
+        final SVNSqlJetStatement base_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_BASE_NODE_CHILDREN);
+        base_stmt.bindf("is", wcId, localRelPath);
+        addChildren(names, base_stmt);
+
+        if (!baseOnly) {
+            final SVNSqlJetStatement work_stmt = sDb.getStatement(SVNWCDbStatements.SELECT_WORKING_NODE_CHILDREN);
+            work_stmt.bindf("is", wcId, localRelPath);
+            addChildren(names, work_stmt);
+        }
+
+        return names;
+    }
+
+    private void addChildren(List<String> children, SVNSqlJetStatement stmt) throws SVNException {
+        try {
+            while (stmt.next()) {
+                String child_relpath = getColumnText(stmt, SVNWCDbSchema.BASE_NODE__Fields.local_relpath);
+                String name = SVNFileUtil.getBasePath(new File(child_relpath));
+                children.add(name);
+            }
+        } finally {
+            stmt.reset();
+        }
+    }
+
+    public List<String> readConflictVictims(File localAbspath) throws SVNException {
         // TODO
         throw new UnsupportedOperationException();
     }

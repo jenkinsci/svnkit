@@ -101,16 +101,11 @@ public class SVNSqlJetDb {
         }
     }
 
-    public void execStatement(SVNWCDbStatements statementIndex) {
-        // TODO
-    }
-
-    public int upgrade(File absPath, int format) {
-        // TODO
-        return 0;
-    }
-
-    public void verifyNoWork() {
+    public void execStatement(SVNWCDbStatements statementIndex) throws SVNException {
+        final SVNSqlJetStatement statement = getStatement(statementIndex);
+        if(statement!=null){
+            statement.exec();
+        }
     }
 
     public static void createSqlJetError(SqlJetException e) throws SVNException {
@@ -146,6 +141,14 @@ public class SVNSqlJetDb {
         } else {
             SVNErrorManager.assertionFailure(openCount > 0, "no opened transactions", SVNLogType.WC);
         }
+    }
+
+    public int upgrade(File absPath, int format) {
+        // TODO
+        return 0;
+    }
+
+    public void verifyNoWork() {
     }
 
 }
