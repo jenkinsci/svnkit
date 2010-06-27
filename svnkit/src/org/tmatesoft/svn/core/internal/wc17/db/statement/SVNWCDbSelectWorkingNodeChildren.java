@@ -13,6 +13,7 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
@@ -22,7 +23,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectStatement {
+public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
 
     public SVNWCDbSelectWorkingNodeChildren(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.WORKING_NODE);
@@ -30,6 +31,10 @@ public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectStatement {
 
     protected String getIndexName() {
         return SVNWCDbSchema.WORKING_NODE__Indices.I_WORKING_PARENT.toString();
+    }
+    
+    protected void defineFields() {
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.local_relpath);
     }
 
 }

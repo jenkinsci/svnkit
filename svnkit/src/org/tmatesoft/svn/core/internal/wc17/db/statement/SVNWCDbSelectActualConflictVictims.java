@@ -13,7 +13,7 @@ package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
 /**
@@ -23,7 +23,7 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectStatement {
+public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.ACTUAL_NODE_Fields> {
 
     public SVNWCDbSelectActualConflictVictims(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.ACTUAL_NODE);
@@ -36,5 +36,9 @@ public class SVNWCDbSelectActualConflictVictims extends SVNSqlJetSelectStatement
     protected boolean isFilterPassed() throws SVNException {
         return !(isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.prop_reject.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_old.toString())
                 && isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_new.toString()) && isColumnNull(SVNWCDbSchema.ACTUAL_NODE_Fields.conflict_working.toString()));
+    }
+
+    protected void defineFields() {
+        fields.add(SVNWCDbSchema.ACTUAL_NODE_Fields.local_relpath);
     }
 }

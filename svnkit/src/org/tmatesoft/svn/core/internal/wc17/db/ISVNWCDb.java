@@ -893,7 +893,7 @@ public interface ISVNWCDb {
     /**
      * Return all the children of localAbsPath that are in tree conflicts.
      */
-    Map<File, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException;
+    Map<String, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException;
 
     /**
      * Get any tree conflict associated with localAbspath in DB.

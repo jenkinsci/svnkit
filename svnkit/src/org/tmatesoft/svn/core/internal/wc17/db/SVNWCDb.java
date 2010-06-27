@@ -1186,14 +1186,57 @@ public class SVNWCDb implements ISVNWCDb {
         throw new UnsupportedOperationException();
     }
 
-    public Map<File, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public Map<String, SVNTreeConflictDescription> opReadAllTreeConflicts(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+
+        final DirParsedInfo parsed = parseDirLocalAbsPath(localAbsPath, Mode.ReadWrite);
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+        final File local_relpath = parsed.localRelPath;
+        verifyDirUsable(pdh);
+
+        String tree_conflict_data;
+
+        /* Get the conflict information for the parent of LOCAL_ABSPATH. */
+
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_ACTUAL_NODE);
+        try {
+            stmt.bindf("is", pdh.getWCRoot().getWcId(), local_relpath);
+            boolean have_row = stmt.next();
+
+            /* No ACTUAL node, no conflict info, no problem. */
+            if (!have_row) {
+                return null;
+            }
+
+            tree_conflict_data = getColumnText(stmt, 5);
+        } finally {
+            stmt.reset();
+        }
+
+        /* No tree conflict data? no problem. */
+        if (tree_conflict_data == null) {
+            return null;
+        }
+
+        return SVNTreeConflictUtil.readTreeConflicts(localAbsPath, tree_conflict_data);
+
     }
 
-    public SVNTreeConflictDescription opReadTreeConflict(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+    public SVNTreeConflictDescription opReadTreeConflict(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+        File parentAbsPath = SVNFileUtil.getParentFile(localAbsPath);
+        try {
+            Map<String, SVNTreeConflictDescription> tree_conflicts = opReadAllTreeConflicts(parentAbsPath);
+            if (tree_conflicts != null)
+                return tree_conflicts.get(SVNFileUtil.getBasePath(localAbsPath));
+            return null;
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                /* We walked off the top of a working copy. */
+                return null;
+            }
+            throw e;
+        }
     }
 
     public void opRevert(File localAbspath, SVNDepth depth) throws SVNException {

@@ -11,12 +11,9 @@
  */
 package org.tmatesoft.svn.core.internal.wc17.db.statement;
 
-import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
-import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
-import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetStatement;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
 /**
@@ -28,26 +25,28 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWorkingNodeStatement extends SVNSqlJetStatement {
-
-    private ISqlJetTable table;
+public class SVNWCDbSelectWorkingNodeStatement extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
 
     public SVNWCDbSelectWorkingNodeStatement(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb);
-        try {
-            table = sDb.getDb().getTable(SVNWCDbSchema.WORKING_NODE.name());
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-        }
+        super(sDb, SVNWCDbSchema.WORKING_NODE);
     }
 
-    protected ISqlJetCursor openCursor() throws SVNException {
-        try {
-            return table.lookup(null, binds.get(0), binds.get(1));
-        } catch (SqlJetException e) {
-            SVNSqlJetDb.createSqlJetError(e);
-            return null;
-        }
+    protected void defineFields() {
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.presence);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.kind);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.checksum);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.translated_size);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.changed_rev);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.changed_author);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.depth);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.symlink_target);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_id);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_repos_path);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.copyfrom_revnum);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.moved_here);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.moved_to);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.last_mod_time);
+        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.properties);
     }
 
 }
