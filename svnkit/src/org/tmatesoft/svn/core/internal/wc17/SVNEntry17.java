@@ -496,8 +496,9 @@ public class SVNEntry17 extends SVNEntry {
         this.schedule = null;
     }
 
-    private boolean isChangedValue(Object oldValue, Object newValue) {
-        return (oldValue == null && newValue != null) || (oldValue != null && newValue == null) || (!oldValue.equals(newValue));
+    private static boolean isChangedValue(Object oldValue, Object newValue) {
+        return (oldValue == null && newValue != null) || (oldValue != null && newValue == null) || 
+            (oldValue != null && newValue != null && !oldValue.equals(newValue));
     }
 
     public void setName(String name) {
