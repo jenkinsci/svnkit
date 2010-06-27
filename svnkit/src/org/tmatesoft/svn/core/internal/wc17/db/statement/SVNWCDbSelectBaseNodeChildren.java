@@ -16,19 +16,17 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
-
 /**
-  select local_relpath from base_node
-  where wc_id = ?1 and parent_relpath = ?2;
-
- * @author  TMate Software Ltd.
+ * select local_relpath from base_node where wc_id = ?1 and parent_relpath = ?2;
+ * 
+ * @author TMate Software Ltd.
  */
 public class SVNWCDbSelectBaseNodeChildren extends SVNSqlJetSelectStatement {
 
     public SVNWCDbSelectBaseNodeChildren(SVNSqlJetDb sDb) throws SVNException {
         super(sDb, SVNWCDbSchema.BASE_NODE);
     }
-    
+
     protected String getIndexName() {
         return SVNWCDbSchema.BASE_NODE__Indices.I_PARENT.toString();
     }

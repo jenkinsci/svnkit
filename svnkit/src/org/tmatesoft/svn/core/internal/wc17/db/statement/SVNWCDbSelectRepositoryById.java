@@ -17,19 +17,14 @@ import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
 
 /**
- * select local_relpath from working_node where wc_id = ?1 and parent_relpath =
- * ?2;
+ * select root, uuid from repository where id = ?1;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectStatement {
+public class SVNWCDbSelectRepositoryById extends SVNSqlJetSelectStatement {
 
-    public SVNWCDbSelectWorkingNodeChildren(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.WORKING_NODE);
-    }
-
-    protected String getIndexName() {
-        return SVNWCDbSchema.WORKING_NODE__Indices.I_WORKING_PARENT.toString();
+    public SVNWCDbSelectRepositoryById(SVNSqlJetDb sDb) throws SVNException {
+        super(sDb, SVNWCDbSchema.REPOSITORY);
     }
 
 }

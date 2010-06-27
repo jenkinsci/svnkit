@@ -29,7 +29,7 @@ public enum SVNWCDbStatements {
     SELECT_WCROOT_NULL(SVNWCDbSelectWCRootNullStatement.class), 
     SELECT_BASE_NODE(SVNWCDbSelectBaseNodeStatement.class), 
     SELECT_BASE_NODE_WITH_LOCK, 
-    SELECT_REPOSITORY_BY_ID, 
+    SELECT_REPOSITORY_BY_ID(SVNWCDbSelectRepositoryById.class), 
     SELECT_ACTUAL_NODE(SVNWCDbSelectActualNodeStatement.class), 
     SELECT_BASE_NODE_CHILDREN(SVNWCDbSelectBaseNodeChildren.class),  
     SELECT_WORKING_NODE_CHILDREN(SVNWCDbSelectWorkingNodeChildren.class);
