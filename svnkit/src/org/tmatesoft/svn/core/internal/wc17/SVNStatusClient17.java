@@ -365,8 +365,9 @@ public class SVNStatusClient17 extends SVNBasicDelegate {
         try {
 
             final SVNWCContextInfo info = new SVNWCContextInfo();
-            info.setTargetAbsPath(SVNPathUtil.canonicalizeAbsolutePath(path.getPath()));
-
+            //info.setTargetAbsPath(SVNPathUtil.canonicalizeAbsolutePath(path.getPath()));
+            info.setTargetAbsPath(path.getAbsolutePath());
+            
             {
                 SVNNodeKind diskKind = SVNFileType.getNodeKind(SVNFileType.getType(info.getTargetAbsFile()));
                 SVNNodeKind kind = wcContext.getNodeKind(info.getTargetAbsFile(), false);

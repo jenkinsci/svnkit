@@ -174,8 +174,8 @@ public class SVNWCDb implements ISVNWCDb {
             if (pdh.getWCRoot() != null && pdh.getWCRoot().getSDb() != null) {
                 roots.add(pdh.getWCRoot());
             }
-            dirData.remove(key);
         }
+        dirData.clear();
         /* Run the cleanup for each WCROOT. */
         closeManyWCRoots(roots);
     }
