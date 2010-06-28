@@ -1128,17 +1128,12 @@ public class SVNWCDb implements ISVNWCDb {
             boolean have_row = stmt.next();
             if (have_row) {
                 long locked_levels = getColumnInt64(stmt, 0);
-
                 /*
                  * The directory in question is considered locked if we find a
                  * lock with depth -1 or the depth of the lock is greater than
                  * or equal to the depth we've recursed.
                  */
                 return (locked_levels == -1 || locked_levels >= recurseDepth);
-            }
-        } catch (SVNException e) {
-            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
-                return false;
             }
         } finally {
             stmt.reset();
@@ -1147,7 +1142,14 @@ public class SVNWCDb implements ISVNWCDb {
         if (parentFile == null) {
             return false;
         }
-        return isWCLocked(parentFile, recurseDepth + 1);
+        try {
+            return isWCLocked(parentFile, recurseDepth + 1);
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                return false;
+            }
+        }
+        return false;
     }
 
     public void opAddDirectory(File localAbsPath, SVNSkel workItems) throws SVNException {
