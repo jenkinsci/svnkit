@@ -651,9 +651,10 @@ public class SVNWCContext {
         }
 
         SVNStatus status = new SVNStatus(url, path, info.kind.toNodeKind(), SVNRevision.create(info.revision), SVNRevision.create(info.changedRev), info.changedDate, info.changedAuthor,
-                final_text_status, final_prop_status, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p, entry.isCopied(), switched_p, file_external_p, new File(entry.getConflictNew()),
-                new File(entry.getConflictOld()), new File(entry.getConflictWorking()), new File(entry.getPropRejectFile()), entry.getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()),
-                repositoryLock, lock, actualProperties.asMap(), info.changelist, ISVNWCDb.WC_FORMAT_17, tree_conflict);
+                final_text_status, final_prop_status, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p, entry.isCopied(), switched_p, file_external_p,
+                entry.getConflictNew() == null ? null : new File(entry.getConflictNew()), entry.getConflictOld() == null ? null : new File(entry.getConflictOld()),
+                entry.getConflictWorking() == null ? null : new File(entry.getConflictWorking()), entry.getPropRejectFile() == null ? null : new File(entry.getPropRejectFile()), entry
+                        .getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()), repositoryLock, lock, actualProperties.asMap(), info.changelist, ISVNWCDb.WC_FORMAT_17, tree_conflict);
         status.setEntry(entry);
 
         return status;
