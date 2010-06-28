@@ -12,6 +12,8 @@
 package org.tmatesoft.svn.core.internal.wc17.db;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +37,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.util.SVNSkel;
 import org.tmatesoft.svn.core.internal.wc.SVNChecksum;
+import org.tmatesoft.svn.core.internal.wc.SVNChecksumKind;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
@@ -374,7 +377,7 @@ public class SVNWCDb implements ISVNWCDb {
         if (ibb.kind == WCDbKind.Dir) {
             stmt.bindString(13, depthToWord(ibb.depth));
         } else if (ibb.kind == WCDbKind.File) {
-            stmt.bindChecksumm(14, ibb.checksum);
+            stmt.bindChecksum(14, ibb.checksum);
             if (ibb.translatedSize != INVALID_FILESIZE)
                 stmt.bindLong(15, ibb.translatedSize);
         } else if (ibb.kind == WCDbKind.Symlink) {
@@ -671,8 +674,28 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNChecksum getPristineSHA1(File wcRootAbsPath, SVNChecksum md5Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(wcRootAbsPath));
+        assert (md5Checksum.getKind() == SVNChecksumKind.MD5);
+
+        final DirParsedInfo parsed = parseDirLocalAbsPath(wcRootAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+
+        SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_SHA1_CHECKSUM);
+        try {
+            stmt.bindChecksum(1, md5Checksum);
+            boolean have_row = stmt.next();
+            if (!have_row) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with MD5 checksum ''{0}'' not found", md5Checksum.toString());
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return null;
+            }
+            SVNChecksum sha1_checksum = getColumnChecksum(stmt, 0);
+            assert (sha1_checksum.getKind() == SVNChecksumKind.SHA1);
+            return sha1_checksum;
+        } finally {
+            stmt.reset();
+        }
     }
 
     public File getPristineTempDir(File wcRootAbsPath) throws SVNException {
@@ -1741,8 +1764,55 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public InputStream readPristine(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(wcRootAbsPath));
+        assert (sha1Checksum != null);
+
+        /*
+         * ### Transitional: accept MD-5 and look up the SHA-1. Return an error
+         * if the pristine text is not in the store.
+         */
+        if (sha1Checksum.getKind() != SVNChecksumKind.SHA1)
+            sha1Checksum = getPristineSHA1(wcRootAbsPath, sha1Checksum);
+        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+
+        final DirParsedInfo parsed = parseDirLocalAbsPath(wcRootAbsPath, Mode.ReadOnly);
+        SVNWCDbDir pdh = parsed.wcDbDir;
+        verifyDirUsable(pdh);
+
+        /* ### should we look in the PRISTINE table for anything? */
+
+        File pristine_abspath = getPristineFileName(pdh, sha1Checksum, false);
+
+        try {
+            return new FileInputStream(pristine_abspath);
+        } catch (FileNotFoundException e) {
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_PATH_NOT_FOUND);
+            SVNErrorManager.error(err, SVNLogType.WC);
+            return null;
+        }
+
+    }
+
+    private File getPristineFileName(SVNWCDbDir pdh, SVNChecksum sha1Checksum, boolean createSubdir) {
+        /* ### code is in transition. make sure we have the proper data. */
+        assert (pdh.getWCRoot() != null);
+        assert (sha1Checksum != null);
+        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+
+        /*
+         * ### need to fix this to use a symbol for ".svn". we don't need ### to
+         * use join_many since we know "/" is the separator for ### internal
+         * canonical paths
+         */
+        String base_dir_abspath = SVNPathUtil.append(SVNPathUtil.append(pdh.getWCRoot().getAbsPath().toString(), SVNFileUtil.getAdminDirectoryName()), PRISTINE_STORAGE_RELPATH);
+
+        String hexdigest = sha1Checksum.getDigest();
+
+        /* We should have a valid checksum and (thus) a valid digest. */
+        assert (hexdigest != null);
+
+        /* The file is located at DIR/.svn/pristine/XX/XXYYZZ... */
+        return new File(SVNPathUtil.append(base_dir_abspath, hexdigest));
     }
 
     public SVNProperties readPristineProperties(File localAbsPath) throws SVNException {
@@ -2043,6 +2113,14 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     private static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, Enum f) throws SVNException {
+        final String digest = getColumnText(stmt, f);
+        if (digest != null) {
+            return SVNChecksum.deserializeChecksum(digest);
+        }
+        return null;
+    }
+
+    private static SVNChecksum getColumnChecksum(SVNSqlJetStatement stmt, int f) throws SVNException {
         final String digest = getColumnText(stmt, f);
         if (digest != null) {
             return SVNChecksum.deserializeChecksum(digest);

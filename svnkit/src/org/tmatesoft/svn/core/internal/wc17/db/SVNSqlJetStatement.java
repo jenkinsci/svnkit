@@ -99,12 +99,12 @@ public abstract class SVNSqlJetStatement {
 
             switch (fmt) {
                 case 's':
-                    bindString(i, data[i].toString());
+                    bindString(i + 1, data[i].toString());
                     break;
 
                 case 'i':
                     if (data[i] instanceof Number) {
-                        bindLong(i, ((Number) data[i]).longValue());
+                        bindLong(i + 1, ((Number) data[i]).longValue());
                     } else {
                         SVNErrorManager.assertionFailure(false, "Number argument required", SVNLogType.WC);
                     }
@@ -112,7 +112,7 @@ public abstract class SVNSqlJetStatement {
 
                 case 'b':
                     if (data[i] instanceof byte[]) {
-                        bindBlob(i, (byte[]) data[i]);
+                        bindBlob(i + 1, (byte[]) data[i]);
                     }
                     break;
 
@@ -130,24 +130,24 @@ public abstract class SVNSqlJetStatement {
     }
 
     public void bindLong(int i, long v) {
-        binds.add(i, v);
+        binds.add(i - 1, v);
     }
 
     public void bindString(int i, String string) {
-        binds.add(i, string);
+        binds.add(i - 1, string);
     }
 
     public void bindProperties(int i, SVNProperties props) throws SVNException {
         SVNSkel.createPropList(props.asMap()).getData();
-        binds.add(i, SVNSkel.createPropList(props.asMap()).getData());
+        binds.add(i - 1, SVNSkel.createPropList(props.asMap()).getData());
     }
 
-    public void bindChecksumm(int i, SVNChecksum checksum) {
-        binds.add(i, checksum.getDigest());
+    public void bindChecksum(int i, SVNChecksum checksum) {
+        binds.add(i - 1, checksum.getDigest());
     }
 
     public void bindBlob(int i, byte[] serialized) {
-        binds.add(i, serialized);
+        binds.add(i - 1, serialized);
     }
 
     public long count() throws SVNException {
@@ -224,10 +224,10 @@ public abstract class SVNSqlJetStatement {
         SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
         return null;
     }
-    
+
     public SVNSqlJetStatement getJoinedStatement(String joinedTable) throws SVNException {
         SVNErrorManager.assertionFailure(false, "unsupported", SVNLogType.WC);
-        return null;        
+        return null;
     }
 
 }

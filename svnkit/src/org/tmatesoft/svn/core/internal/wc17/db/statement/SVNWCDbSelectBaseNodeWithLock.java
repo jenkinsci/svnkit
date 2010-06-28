@@ -64,8 +64,8 @@ public class SVNWCDbSelectBaseNodeWithLock extends SVNWCDbSelectBaseNode {
         lockStatement.reset();
         final boolean next = super.next();
         if (next) {
-            lockStatement.bindLong(0, getColumnLong(SVNWCDbSchema.BASE_NODE__Fields.repos_id.toString()));
-            lockStatement.bindString(1, getColumnString(SVNWCDbSchema.BASE_NODE__Fields.repos_relpath.toString()));
+            lockStatement.bindLong(1, getColumnLong(SVNWCDbSchema.BASE_NODE__Fields.repos_id.toString()));
+            lockStatement.bindString(2, getColumnString(SVNWCDbSchema.BASE_NODE__Fields.repos_relpath.toString()));
             lockStatement.next();
         }
         return next;

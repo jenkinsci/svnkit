@@ -93,6 +93,10 @@ public interface ISVNWCDb {
     long ENTRY_WORKING_SIZE_UNKNOWN = -1;
     long INVALID_REVNUM = -1;
     String SDB_FILE = "wc.db";
+    String SDB_FILE_UPGRADE = "wc.db.upgrade";
+    String PRISTINE_STORAGE_RELPATH = "pristine";
+    String PRISTINE_TEMPDIR_RELPATH = "";
+    String WCROOT_TEMPDIR_RELPATH = "tmp";
 
     /** Enumerated constants for how to open a WC datastore. */
     enum WCDbOpenMode {
