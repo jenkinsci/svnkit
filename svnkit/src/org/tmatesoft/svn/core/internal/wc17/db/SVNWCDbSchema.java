@@ -18,8 +18,7 @@ package org.tmatesoft.svn.core.internal.wc17.db;
 public enum SVNWCDbSchema {
 
     WCROOT(WCROOT__Fields.class, WCROOT__Indices.class), BASE_NODE(BASE_NODE__Fields.class, BASE_NODE__Fields.class), WORKING_NODE(WORKING_NODE__Fields.class, WORKING_NODE__Indices.class), LOCK(
-            LOCK__Fields.class), REPOSITORY(REPOSITORY__Fields.class,REPOSITORY__Indices.class), 
-            ACTUAL_NODE(ACTUAL_NODE__Fields.class, ACTUAL_NODE__Indices.class);
+            LOCK__Fields.class), REPOSITORY(REPOSITORY__Fields.class, REPOSITORY__Indices.class), ACTUAL_NODE(ACTUAL_NODE__Fields.class, ACTUAL_NODE__Indices.class), WC_LOCK(WC_LOCK__Fields.class);
 
     final public Class<? extends Enum> fields;
     final public Class<? extends Enum> indices;
@@ -64,35 +63,25 @@ public enum SVNWCDbSchema {
     public enum LOCK__Fields {
         repos_id, repos_relpath, lock_token, lock_owner, lock_comment, lock_date
     }
-    
+
     public enum REPOSITORY__Fields {
         id, root, uuid
     }
-    
+
     public enum REPOSITORY__Indices {
         I_UUID, I_ROOT
     }
-    
+
     public enum ACTUAL_NODE__Fields {
-        wc_id,
-        local_relpath,
-        parent_relpath,
-        properties,
-        conflict_old,
-        conflict_new,
-        conflict_working,
-        prop_reject,
-        changelist,
-        text_mod,
-        tree_conflict_data,
-        conflict_data,
-        older_checksum,
-        left_checksum,
-        right_checksum;
+        wc_id, local_relpath, parent_relpath, properties, conflict_old, conflict_new, conflict_working, prop_reject, changelist, text_mod, tree_conflict_data, conflict_data, older_checksum, left_checksum, right_checksum;
     }
-    
-    public enum ACTUAL_NODE__Indices{
-        I_ACTUAL_PARENT, I_ACTUAL_CHANGELIST
+
+    public enum ACTUAL_NODE__Indices {
+        I_ACTUAL_PARENT, I_ACTUAL_CHANGELIST;
+    }
+
+    public enum WC_LOCK__Fields {
+        wc_id, local_dir_relpath, locked_levels;
     }
 
 }

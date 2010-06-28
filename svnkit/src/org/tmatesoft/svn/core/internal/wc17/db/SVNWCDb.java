@@ -1119,8 +1119,35 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public boolean isWCLocked(File localAbspath) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        return isWCLocked(localAbspath, 0);
+    }
+
+    private boolean isWCLocked(File localAbspath, long recurseDepth) throws SVNException {
+        final SVNSqlJetStatement stmt = getStatementForPath(localAbspath, SVNWCDbStatements.SELECT_WC_LOCK);
+        try {
+            boolean have_row = stmt.next();
+            if (have_row) {
+                long locked_levels = getColumnInt64(stmt, 0);
+
+                /*
+                 * The directory in question is considered locked if we find a
+                 * lock with depth -1 or the depth of the lock is greater than
+                 * or equal to the depth we've recursed.
+                 */
+                return (locked_levels == -1 || locked_levels >= recurseDepth);
+            }
+        } catch (SVNException e) {
+            if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_WORKING_COPY) {
+                return false;
+            }
+        } finally {
+            stmt.reset();
+        }
+        final File parentFile = SVNFileUtil.getParentFile(localAbspath);
+        if (parentFile == null) {
+            return false;
+        }
+        return isWCLocked(parentFile, recurseDepth + 1);
     }
 
     public void opAddDirectory(File localAbsPath, SVNSkel workItems) throws SVNException {
