@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.internal.wc.SVNFileListUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileType;
+import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb.WCDbInfo;
@@ -160,7 +161,7 @@ public class SVNStatusEditor17 {
             if (children != null) {
                 Map map = new SVNHashMap();
                 for (int i = 0; i < children.length; i++) {
-                    map.put(children[i].getName(), children[i]);
+                    map.put(SVNFileUtil.getBasePath(children[i]), children[i]);
                 }
                 return map;
             }
