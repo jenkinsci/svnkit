@@ -1885,8 +1885,23 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public String getFileExternalTemp(File path) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        final SVNSqlJetStatement stmt = getStatementForPath(path, SVNWCDbStatements.SELECT_FILE_EXTERNAL);
+        try {
+            boolean have_row = stmt.next();
+            /*
+             * ### file externals are pretty bogus right now. they have just a
+             * ### WORKING_NODE for a while, eventually settling into just a
+             * BASE_NODE. ### until we get all that fixed, let's just not worry
+             * about raising ### an error, and just say it isn't a file
+             * external.
+             */
+            if (!have_row)
+                return null;
+            /* see below: *serialized_file_external = ... */
+            return getColumnText(stmt, 0);
+        } finally {
+            stmt.reset();
+        }
     }
 
     public boolean determineKeepLocalTemp(File localAbsPath) throws SVNException {

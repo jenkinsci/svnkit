@@ -15,25 +15,21 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetDb;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNSqlJetSelectFieldsStatement;
 import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema;
+import org.tmatesoft.svn.core.internal.wc17.db.SVNWCDbSchema.BASE_NODE__Fields;
 
 /**
- * select local_relpath from working_node where wc_id = ?1 and parent_relpath =
- * ?2;
+ * select file_external from base_node where wc_id = ?1 and local_relpath = ?2;
  * 
  * @author TMate Software Ltd.
  */
-public class SVNWCDbSelectWorkingNodeChildren extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.WORKING_NODE__Fields> {
+public class SVNWCDBSelectFileExternal extends SVNSqlJetSelectFieldsStatement<SVNWCDbSchema.BASE_NODE__Fields> {
 
-    public SVNWCDbSelectWorkingNodeChildren(SVNSqlJetDb sDb) throws SVNException {
-        super(sDb, SVNWCDbSchema.WORKING_NODE);
+    public SVNWCDBSelectFileExternal(SVNSqlJetDb sDb) throws SVNException {
+        super(sDb, SVNWCDbSchema.BASE_NODE);
     }
 
-    protected String getIndexName() {
-        return SVNWCDbSchema.WORKING_NODE__Indices.I_WORKING_PARENT.toString();
-    }
-    
     protected void defineFields() {
-        fields.add(SVNWCDbSchema.WORKING_NODE__Fields.local_relpath);
+        fields.add(BASE_NODE__Fields.file_external);
     }
 
 }
