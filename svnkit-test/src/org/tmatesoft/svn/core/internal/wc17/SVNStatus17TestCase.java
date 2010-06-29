@@ -12,18 +12,15 @@
 package org.tmatesoft.svn.core.internal.wc17;
 
 import java.io.File;
-import java.util.Collection;
+
+import junit.framework.TestCase;
 
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.auth.BasicAuthenticationManager;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.examples.wc.StatusHandler;
-
-import junit.framework.TestCase;
 
 /**
  * @version 1.3
