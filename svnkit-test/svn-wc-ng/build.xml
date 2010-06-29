@@ -18,7 +18,7 @@
 		
 		<exec dir="${target.dir}" executable="${path.svnadmin}/svnadmin.exe">
 			<env key="USERPROFILE" value="${target.dir}/userprofile"/>
-			<arg line="create ${target.dir}/repository"/>
+			<arg line="create ${target.dir.ux}/repository"/>
 		</exec>
 		
 	</target>
@@ -49,7 +49,7 @@
 		
 		<exec dir="${target.dir}" executable="${path.svn}/svn.exe">
 			<env key="USERPROFILE" value="${target.dir}/userprofile"/>
-			<arg line="import ${target.dir}/import/test file://localhost/${target.dir}/repository/test -m 'initial import'"/>
+			<arg line="import ${target.dir.ux}/import/test file://localhost/${target.dir.ux}/repository/test -m 'initial import'"/>
 		</exec>
 		
 	</target>
@@ -60,7 +60,7 @@
 
 		<exec dir="${target.dir}" executable="${path.svn}/svn.exe">
 			<env key="USERPROFILE" value="${target.dir}/userprofile"/>
-			<arg line="checkout file://localhost/${target.dir}/repository/test workingcopy/test"/>
+			<arg line="checkout file://localhost/${target.dir.ux}/repository/test workingcopy/test"/>
 		</exec>
 
 	</target>
