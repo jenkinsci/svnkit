@@ -664,8 +664,32 @@ public class SVNWCDb implements ISVNWCDb {
     }
 
     public SVNChecksum getPristineMD5(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {
-        // TODO
-        throw new UnsupportedOperationException();
+        assert (isAbsolute(wcRootAbsPath));
+        assert (sha1Checksum != null);
+        assert (sha1Checksum.getKind() == SVNChecksumKind.SHA1);
+
+        final DirParsedInfo parsed = parseDirLocalAbsPath(wcRootAbsPath, Mode.ReadOnly);
+
+        final SVNWCDbDir pdh = parsed.wcDbDir;
+
+        verifyDirUsable(pdh);
+
+        final SVNSqlJetStatement stmt = pdh.getWCRoot().getSDb().getStatement(SVNWCDbStatements.SELECT_PRISTINE_MD5_CHECKSUM);
+
+        try {
+            stmt.bindChecksum(1, sha1Checksum);
+            boolean have_row = stmt.next();
+            if (!have_row) {
+                SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.WC_DB_ERROR, "The pristine text with checksum ''{0}'' not found", sha1Checksum.toString());
+                SVNErrorManager.error(err, SVNLogType.WC);
+                return null;
+            }
+            final SVNChecksum md5Checksum = getColumnChecksum(stmt, 0);
+            assert (md5Checksum.getKind() == SVNChecksumKind.MD5);
+            return md5Checksum;
+        } finally {
+            stmt.reset();
+        }
     }
 
     public File getPristinePath(File wcRootAbsPath, SVNChecksum sha1Checksum) throws SVNException {

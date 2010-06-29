@@ -143,7 +143,7 @@ public abstract class SVNSqlJetStatement {
     }
 
     public void bindChecksum(int i, SVNChecksum checksum) {
-        binds.add(i - 1, checksum.getDigest());
+        binds.add(i - 1, checksum.toString());
     }
 
     public void bindBlob(int i, byte[] serialized) {

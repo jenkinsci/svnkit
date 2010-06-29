@@ -545,13 +545,6 @@ public class SVNWCContext {
                 final_prop_status = SVNStatusType.STATUS_MODIFIED;
 
             if (entry.getPropRejectFile() != null || entry.getConflictOld() != null || entry.getConflictNew() != null || entry.getConflictWorking() != null) {
-                boolean[] text_conflict_p = {
-                    false
-                };
-                boolean[] prop_conflict_p = {
-                    false
-                };
-
                 /*
                  * The entry says there was a conflict, but the user might have
                  * marked it as resolved by deleting the artifact files, so

@@ -40,7 +40,8 @@ public enum SVNWCDbStatements {
     SELECT_BASE_PROPS(SVNWCDbSelectBaseProperties.class), 
     SELECT_FILE_EXTERNAL(SVNWCDBSelectFileExternal.class), 
     SELECT_WC_LOCK(SVNWCDbSelectWCLock.class), 
-    SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class);
+    SELECT_PRISTINE_SHA1_CHECKSUM(SVNWCDbSelectSHA1Checksum.class), 
+    SELECT_PRISTINE_MD5_CHECKSUM(SVNWCDbSelectPristineMD5Checksum.class);
 
     private Class<? extends SVNSqlJetStatement> statementClass;
 
