@@ -1477,6 +1477,12 @@ public class SVNWCDb implements ISVNWCDb {
 
             stmt_act.bindf("is", pdh.getWCRoot().getWcId(), localRelPath);
             boolean have_act = stmt_act.next();
+            
+            if(f.contains(InfoField.haveBase))
+                info.haveBase = have_base;
+            
+            if(f.contains(InfoField.haveWork))
+                info.haveWork = have_work;
 
             if (have_base || have_work) {
                 WCDbKind node_kind;

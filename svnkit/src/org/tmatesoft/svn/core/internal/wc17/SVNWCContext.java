@@ -394,55 +394,46 @@ public class SVNWCContext {
         return status;
     }
 
-    public SVNStatus assembleStatus(File path, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, boolean isIgnored,
-            SVNLock repositoryLock, SVNURL repositoryRoot, SVNWCContext wCContext) throws SVNException {
+    public SVNStatus assembleStatus(File localAbsPath, SVNURL parentReposRootUrl, File parentReposRelPath, SVNNodeKind pathKind, boolean pathSpecial, boolean getAll, SVNLock repositoryLock)
+            throws SVNException {
 
-        boolean locked_p = false;
+        boolean switched_p, copied = false;
 
         /* Defaults for two main variables. */
-        SVNStatusType final_text_status = SVNStatusType.STATUS_NORMAL;
-        SVNStatusType final_prop_status = SVNStatusType.STATUS_NONE;
-        /* And some intermediate results */
-        SVNStatusType pristine_text_status = SVNStatusType.STATUS_NONE;
-        SVNStatusType pristine_prop_status = SVNStatusType.STATUS_NONE;
+        SVNStatusType node_status = SVNStatusType.STATUS_NORMAL;
+        SVNStatusType text_status = SVNStatusType.STATUS_NORMAL;
+        SVNStatusType prop_status = SVNStatusType.STATUS_NONE;
 
-        SVNEntry entry = getEntry(path, false, SVNNodeKind.UNKNOWN, false);
+        final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev,
+                InfoField.changedDate, InfoField.changedAuthor, InfoField.depth, InfoField.changelist, InfoField.propsMod, InfoField.haveBase, InfoField.conflicted, InfoField.lock);
 
-        /*
-         * Find out whether the path is a tree conflict victim. This function
-         * will set tree_conflict to NULL if the path is not a victim.
-         */
-        SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(path);
-        WCDbInfo info = db.readInfo(path, InfoField.status, InfoField.kind, InfoField.revision, InfoField.reposRelPath, InfoField.reposRootUrl, InfoField.changedRev, InfoField.changedDate,
-                InfoField.changedAuthor, InfoField.changelist, InfoField.baseShadowed, InfoField.conflicted, InfoField.lock);
+        if (info.reposRelPath == null) {
+            /* The node is not switched, so imply from parent if possible */
 
-        SVNURL url = getNodeUrl(path);
-        boolean file_external_p = isFileExternal(path);
-
-        /*
-         * File externals are switched files, but they are not shown as such. To
-         * be switched it must have both an URL and a parent with an URL, at the
-         * very least.
-         */
-        // boolean switched_p = !file_external_p ? isSwitched(path) : false;
-        boolean switched_p = false;
-        if (!file_external_p) {
-            if (parentReposRootUrl != null && info.reposRootUrl != null && parentReposRootUrl.equals(info.reposRootUrl)) {
-                String base = path.getName();
-
-                if (info.reposRelPath == null) {
-                    info.reposRelPath = new File(parentReposRelPath, base);
-                    /*
-                     * If _read_info() doesn't give us a repos_relpath, it means
-                     * that it is implied by the parent, thus the path can not
-                     * be switched.
-                     */
-                    switched_p = false;
-                } else {
-                    switched_p = new File(parentReposRelPath, base).equals(info.reposRelPath);
-                }
+            if (parentReposRelPath != null) {
+                info.reposRelPath = new File(parentReposRelPath, localAbsPath.getName());
+            } else if (info.status == WCDbStatus.Added) {
+                final WCDbAdditionInfo scanAddition = db.scanAddition(localAbsPath, AdditionInfoField.reposRelPath, AdditionInfoField.reposRootUrl);
+                info.reposRelPath = scanAddition.reposRelPath;
+                info.reposRootUrl = scanAddition.reposRootUrl;
+            } else if (info.haveBase) {
+                final WCDbRepositoryInfo baseRepo = db.scanBaseRepository(localAbsPath, RepositoryInfoField.relPath, RepositoryInfoField.rootUrl);
+                info.reposRelPath = baseRepo.relPath;
+                info.reposRootUrl = baseRepo.rootUrl;
             }
+
+            switched_p = false;
+        } else if (parentReposRelPath == null) {
+            switched_p = false;
+        } else {
+            /* A node is switched if it doesn't have the implied repos_relpath */
+
+            final String name = SVNPathUtil.getPathAsChild(parentReposRelPath.toString(), info.reposRelPath.toString());
+            switched_p = name == null || !name.equals(localAbsPath.getName());
         }
+
+        if (info.reposRootUrl == null && parentReposRootUrl != null)
+            info.reposRootUrl = parentReposRootUrl;
 
         /*
          * Examine whether our directory metadata is present, and compensate if
@@ -465,38 +456,50 @@ public class SVNWCContext {
         if (info.kind == WCDbKind.Dir) {
             if (info.status == WCDbStatus.Incomplete) {
                 /* Highest precedence. */
-                final_text_status = SVNStatusType.STATUS_INCOMPLETE;
+                node_status = SVNStatusType.STATUS_INCOMPLETE;
             } else if (info.status == WCDbStatus.ObstructedDelete) {
                 /* Deleted directories are never reported as missing. */
                 if (pathKind == SVNNodeKind.NONE)
-                    final_text_status = SVNStatusType.STATUS_DELETED;
+                    node_status = SVNStatusType.STATUS_DELETED;
                 else
-                    final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
+                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
             } else if (info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd) {
                 /*
                  * A present or added directory should be on disk, so it is
                  * reported missing or obstructed.
                  */
                 if (pathKind == SVNNodeKind.NONE)
-                    final_text_status = SVNStatusType.STATUS_MISSING;
+                    node_status = SVNStatusType.STATUS_MISSING;
                 else
-                    final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
+                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
+            } else if (info.status == WCDbStatus.Deleted) {
+                node_status = SVNStatusType.STATUS_DELETED;
+            }
+        } else {
+            if (info.status == WCDbStatus.Deleted)
+                node_status = SVNStatusType.STATUS_DELETED;
+            else if (pathKind != SVNNodeKind.FILE) {
+                /*
+                 * A present or added file should be on disk, so it is reported
+                 * missing or obstructed.
+                 */
+                if (pathKind == SVNNodeKind.NONE)
+                    node_status = SVNStatusType.STATUS_MISSING;
+                else
+                    node_status = SVNStatusType.STATUS_OBSTRUCTED;
             }
         }
 
         /*
-         * If FINAL_TEXT_STATUS is still normal, after the above checks, then we
+         * If NODE_STATUS is still normal, after the above checks, then we
          * should proceed to refine the status.
          * 
          * If it was changed, then the subdir is incomplete or
          * missing/obstructed. It means that no further information is
          * available, and we should skip all this work.
          */
-        SVNProperties pristineProperties = null;
-        SVNProperties actualProperties = null;
-        if (final_text_status == SVNStatusType.STATUS_NORMAL) {
+        if (node_status == SVNStatusType.STATUS_NORMAL || (node_status == SVNStatusType.STATUS_MISSING && info.kind != WCDbKind.Dir)) {
             boolean has_props;
-            boolean prop_modified_p = false;
             boolean text_modified_p = false;
             boolean wc_special;
 
@@ -508,55 +511,84 @@ public class SVNWCContext {
              * precedence over M.
              */
 
-            /* Does the entry have props? */
-            pristineProperties = db.readPristineProperties(path);
-            actualProperties = db.readProperties(path);
-            has_props = ((pristineProperties != null && !pristineProperties.isEmpty()) || (actualProperties != null && !actualProperties.isEmpty()));
+            /* Does the node have props? */
+            if (info.status == WCDbStatus.Deleted)
+                has_props = false; /* Not interesting */
+            else if (info.propsMod)
+                has_props = true;
+            else {
+                SVNProperties props = getPristineProperties(localAbsPath);
+                if (props != null && props.size() > 0)
+                    has_props = true;
+                else {
+                    props = getActialProperties(localAbsPath);
+                    has_props = (props != null && props.size() > 0);
+                }
+            }
+            if (has_props)
+                prop_status = SVNStatusType.STATUS_NORMAL;
+
+            /* If the entry has a property file, see if it has local changes. */
+            /*
+             * ### we could compute this ourself, based on the prop hashes ###
+             * fetched above. but for now, there is some trickery we may ###
+             * need to rely upon in ths function. keep it for now.
+             */
+            /* ### see r944980 as an example of the brittleness of this stuff. */
             if (has_props) {
-                final_prop_status = SVNStatusType.STATUS_NORMAL;
-                /*
-                 * If the entry has a property file, see if it has local
-                 * changes.
-                 */
-                prop_modified_p = isPropertiesDiff(pristineProperties, actualProperties);
+                // #if (SVN_WC__VERSION < SVN_WC__PROPS_IN_DB)
+                // SVN_ERR(svn_wc__props_modified(&prop_modified_p, db,
+                // local_abspath,
+                // scratch_pool));
+                // #endif
+                prop_status = info.propsMod ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NORMAL;
             }
 
-            /* Record actual property status */
-            pristine_prop_status = prop_modified_p ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NORMAL;
-
-            if (has_props) {
-                wc_special = isSpecial(path);
-            } else {
+            if (has_props)
+                wc_special = isSpecial(localAbsPath);
+            else
                 wc_special = false;
-            }
 
             /* If the entry is a file, check for textual modifications */
-            if ((info.kind == WCDbKind.File) && (wc_special == pathSpecial)) {
-
-                text_modified_p = isTextModified(path, false, true);
-                /* Record actual text status */
-                pristine_text_status = text_modified_p ? SVNStatusType.STATUS_MODIFIED : SVNStatusType.STATUS_NORMAL;
-            }
+            if ((info.kind == WCDbKind.File || info.kind == WCDbKind.Symlink) && (wc_special == pathSpecial)) {
+                try {
+                    text_modified_p = isTextModified(localAbsPath, false, true);
+                } catch (SVNException e) {
+                    if (!isErrorAccess(e))
+                        throw e;
+                    /*
+                     * An access denied is very common on Windows when another
+                     * application has the file open. Previously we ignored this
+                     * error in svn_wc__text_modified_internal_p, where it
+                     * should have really errored.
+                     */
+                }
+            } else if (wc_special != pathSpecial)
+                node_status = SVNStatusType.STATUS_OBSTRUCTED;
 
             if (text_modified_p)
-                final_text_status = SVNStatusType.STATUS_MODIFIED;
+                text_status = SVNStatusType.STATUS_MODIFIED;
+        }
 
-            if (prop_modified_p)
-                final_prop_status = SVNStatusType.STATUS_MODIFIED;
+        /*
+         * While tree conflicts aren't stored on the node themselves, check
+         * explicitly for tree conflicts to allow our users to ignore this
+         * detail
+         */
+        if (!info.conflicted) {
+            final SVNTreeConflictDescription tree_conflict = db.opReadTreeConflict(localAbsPath);
+            info.conflicted = (tree_conflict != null);
+        } else {
+            /*
+             * ### Check if the conflict was resolved by removing the marker
+             * files. ### This should really be moved to the users of this API
+             */
+            final ConflictedInfo conflictInfo = getConflicted(localAbsPath, true, true, true);
+            if (!conflictInfo.textConflicted && !conflictInfo.propConflicted && !conflictInfo.treeConflicted)
+                info.conflicted = false;
+        }
 
-            if (entry.getPropRejectFile() != null || entry.getConflictOld() != null || entry.getConflictNew() != null || entry.getConflictWorking() != null) {
-                /*
-                 * The entry says there was a conflict, but the user might have
-                 * marked it as resolved by deleting the artifact files, so
-                 * check for that.
-                 */
-                final ConflictedInfo isConflicted = getIsConflicted(path, true, true, false);
-                if (isConflicted.textConflicted)
-                    final_text_status = SVNStatusType.STATUS_CONFLICTED;
-                if (isConflicted.propConflicted)
-                    final_prop_status = SVNStatusType.STATUS_CONFLICTED;
-            }
-
+        if (node_status == SVNStatusType.STATUS_NORMAL) {
             /*
              * 2. Possibly overwrite the text_status variable with "scheduled"
              * states from the entry (A, D, R). As a group, these states are of
@@ -570,58 +602,27 @@ public class SVNWCContext {
              * fully replace entry->schedule here.
              */
 
-            if (SVNWCSchedule.ADD.name().equalsIgnoreCase(entry.getSchedule()) && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
-                final_text_status = SVNStatusType.STATUS_ADDED;
-                final_prop_status = SVNStatusType.STATUS_NONE;
-            }
-
-            else if (SVNWCSchedule.REPLACE.name().equalsIgnoreCase(entry.getSchedule()) && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
-                final_text_status = SVNStatusType.STATUS_REPLACED;
-                final_prop_status = SVNStatusType.STATUS_NONE;
-            }
-
-            else if (SVNWCSchedule.DELETE.name().equalsIgnoreCase(entry.getSchedule()) && final_text_status != SVNStatusType.STATUS_CONFLICTED) {
-                final_text_status = SVNStatusType.STATUS_DELETED;
-                final_prop_status = SVNStatusType.STATUS_NONE;
-            }
-
-            /*
-             * 3. Highest precedence:
-             * 
-             * a. check to see if file or dir is just missing, or incomplete.
-             * This overrides every possible stateexcept* deletion. (If
-             * something is deleted or scheduled for it, we don't care if the
-             * working file exists.)
-             * 
-             * b. check to see if the file or dir is present in the file system
-             * as the same kind it was versioned as.
-             * 
-             * 4. Check for locked directory (only for directories).
-             */
-
-            if (entry.isIncomplete() && (final_text_status != SVNStatusType.STATUS_DELETED) && (final_text_status != SVNStatusType.STATUS_ADDED)) {
-                final_text_status = SVNStatusType.STATUS_INCOMPLETE;
-            } else if (pathKind == SVNNodeKind.NONE) {
-                if (final_text_status != SVNStatusType.STATUS_DELETED)
-                    final_text_status = SVNStatusType.STATUS_MISSING;
-            }
-            /*
-             * ### We can do this db_kind to node_kind translation since the
-             * cases where db_kind would have been unknown are treated as
-             * unversioned paths and thus have already returned.
-             */
-            else if (pathKind != (info.kind == WCDbKind.Dir ? SVNNodeKind.DIR : SVNNodeKind.FILE)) {
-                final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
-            }
-
-            else if (wc_special != pathSpecial) {
-                final_text_status = SVNStatusType.STATUS_OBSTRUCTED;
-            }
-
-            if (pathKind == SVNNodeKind.DIR && info.kind == WCDbKind.Dir) {
-                locked_p = db.isWCLocked(path);
+            if (info.status == WCDbStatus.Added) {
+                try {
+                    SVNEntry entry = getEntry(localAbsPath, false, SVNNodeKind.UNKNOWN, false);
+                    copied = entry.isCopied();
+                    if (entry.isScheduledForAddition())
+                        node_status = SVNStatusType.STATUS_ADDED;
+                    else if (entry.isScheduledForReplacement())
+                        node_status = SVNStatusType.STATUS_REPLACED;
+                } catch (SVNException e) {
+                    if (e.getErrorMessage().getErrorCode() != SVNErrorCode.NODE_UNEXPECTED_KIND) {
+                        throw e;
+                    }
+                }
             }
         }
+
+        if (node_status == SVNStatusType.STATUS_NORMAL)
+            node_status = text_status;
+
+        if (node_status == SVNStatusType.STATUS_NORMAL && prop_status != SVNStatusType.STATUS_NONE)
+            node_status = prop_status;
 
         /*
          * 5. Easy out: unless we're fetching -every- entry, don't bother to
@@ -629,29 +630,139 @@ public class SVNWCContext {
          */
 
         if (!getAll)
-            if (((final_text_status == SVNStatusType.STATUS_NONE) || (final_text_status == SVNStatusType.STATUS_NORMAL))
-                    && ((final_prop_status == SVNStatusType.STATUS_NONE) || (final_prop_status == SVNStatusType.STATUS_NORMAL)) && (!locked_p) && (!switched_p) && (!file_external_p)
-                    && (info.lock == null) && (repositoryLock == null) && (info.changelist == null) && (tree_conflict == null)) {
+            if (((node_status == SVNStatusType.STATUS_NONE) || (node_status == SVNStatusType.STATUS_NORMAL)) && (!switched_p) && (info.lock == null) && (repositoryLock == null)
+                    && (info.changelist == null) && (!info.conflicted)) {
                 return null;
             }
 
         /* 6. Build and return a status structure. */
 
-        SVNLock lock = null;
-        if (info.lock != null) {
-            final WCDbLock wcdbLock = info.lock;
-            lock = new SVNLock(path.toString(), wcdbLock.token, wcdbLock.owner, wcdbLock.comment, wcdbLock.date, null);
+        SVNStatus17 stat = new SVNStatus17();
+
+        switch (info.kind) {
+            case Dir:
+                stat.setKind(SVNNodeKind.DIR);
+                break;
+            case File:
+            case Symlink:
+                stat.setKind(SVNNodeKind.FILE);
+                break;
+            case Unknown:
+            default:
+                stat.setKind(SVNNodeKind.UNKNOWN);
         }
 
-        SVNStatus status = new SVNStatus(url, path, info.kind.toNodeKind(), SVNRevision.create(info.revision), SVNRevision.create(info.changedRev), info.changedDate, info.changedAuthor,
-                final_text_status, final_prop_status, SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p, entry.isCopied(), switched_p, file_external_p,
-                entry.getConflictNew() == null ? null : new File(entry.getConflictNew()), entry.getConflictOld() == null ? null : new File(entry.getConflictOld()),
-                entry.getConflictWorking() == null ? null : new File(entry.getConflictWorking()), entry.getPropRejectFile() == null ? null : new File(entry.getPropRejectFile()), entry
-                        .getCopyFromURL(), SVNRevision.create(entry.getCopyFromRevision()), repositoryLock, lock, actualProperties.asMap(), info.changelist, ISVNWCDb.WC_FORMAT_17, tree_conflict);
-        status.setEntry(entry);
+        if (info.lock != null) {
+            stat.setLock(new SVNLock(info.reposRelPath.toString(), info.lock.token, info.lock.owner, info.lock.comment, info.lock.date, null));
+        }
 
-        return status;
+        stat.setDepth(info.depth);
+        stat.setNodeStatus(node_status);
+        stat.setTextStatus(text_status);
+        stat.setPropStatus(prop_status);
+        stat.setReposNodeStatus(SVNStatusType.STATUS_NONE); /* default */
+        stat.setReposTextStatus(SVNStatusType.STATUS_NONE); /* default */
+        stat.setReposPropStatus(SVNStatusType.STATUS_NONE); /* default */
+        stat.setSwitched(switched_p);
+        stat.setCopied(copied);
+        stat.setReposLock(repositoryLock);
+        stat.setRevision(info.revision);
+        stat.setChangedRev(info.changedRev);
+        stat.setChangedAuthor(info.changedAuthor);
+        stat.setChangedDate(info.changedDate);
 
+        stat.setOodKind(SVNNodeKind.NONE);
+        stat.setOodChangedRev(INVALID_REVNUM);
+        stat.setOodChangedDate(null);
+        stat.setOodChangedAuthor(null);
+
+        stat.setConflicted(info.conflicted);
+        stat.setVersioned(true);
+        stat.setChangelist(info.changelist);
+        stat.setReposRootUrl(info.reposRootUrl);
+        stat.setReposRelpath(info.reposRelPath);
+
+        return stat.getStatus16(false, null, null, null, null, null, null, null, null, ISVNWCDb.WC_FORMAT_17, null);
+
+        /*
+         * SVNStatus status = new SVNStatus(url, path, info.kind.toNodeKind(),
+         * SVNRevision.create(info.revision),
+         * SVNRevision.create(info.changedRev), info.changedDate,
+         * info.changedAuthor, final_text_status, final_prop_status,
+         * SVNStatusType.STATUS_NONE, SVNStatusType.STATUS_NONE, locked_p,
+         * entry.isCopied(), switched_p, file_external_p, entry.getConflictNew()
+         * == null ? null : new File(entry.getConflictNew()),
+         * entry.getConflictOld() == null ? null : new
+         * File(entry.getConflictOld()), entry.getConflictWorking() == null ?
+         * null : new File(entry.getConflictWorking()),
+         * entry.getPropRejectFile() == null ? null : new
+         * File(entry.getPropRejectFile()), entry .getCopyFromURL(),
+         * SVNRevision.create(entry.getCopyFromRevision()), repositoryLock,
+         * lock, actualProperties.asMap(), info.changelist,
+         * ISVNWCDb.WC_FORMAT_17, tree_conflict);
+         */
+
+    }
+
+    private boolean isErrorAccess(SVNException e) {
+        final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+        return errorCode == SVNErrorCode.FS_NOT_FOUND || errorCode == SVNErrorCode.IO_ERROR;
+        // TODO
+    }
+
+    private SVNProperties getPristineProperties(File localAbsPath) throws SVNException {
+        assert (isAbsolute(localAbsPath));
+
+        /*
+         * Certain node stats do not have properties defined on them. Check the
+         * state, and return NULL for these situations.
+         */
+
+        final WCDbInfo info = db.readInfo(localAbsPath, InfoField.status);
+
+        if (info.status == WCDbStatus.Added) {
+            /*
+             * Resolve the status. copied and moved_here arrive with properties,
+             * while a simple add does not.
+             */
+            final WCDbAdditionInfo addition = db.scanAddition(localAbsPath, AdditionInfoField.status);
+            info.status = addition.status;
+        }
+        if (info.status == WCDbStatus.Added
+        // #if 0
+                /*
+                 * ### the update editor needs to fetch properties while the
+                 * directory ### is still marked incomplete
+                 */
+                // || status == svn_wc__db_status_incomplete
+                // #endif
+                || info.status == WCDbStatus.Excluded || info.status == WCDbStatus.Absent || info.status == WCDbStatus.NotPresent) {
+            return null;
+        }
+
+        /*
+         * The node is obstructed:
+         * 
+         * - subdir is missing, obstructed by a file, or missing admin area - a
+         * file is obstructed by a versioned subdir (### not reported)
+         * 
+         * Thus, properties are not available for this node. Returning NULL
+         * would indicate "not defined" for its state. For obstructions, we
+         * cannot *determine* whether properties should be here or not.
+         * 
+         * ### it would be nice to report an obstruction, rather than simply ###
+         * PROPERTY_NOT_FOUND. but this is transitional until single-db.
+         */
+        if (info.status == WCDbStatus.ObstructedDelete || info.status == WCDbStatus.Obstructed || info.status == WCDbStatus.ObstructedAdd) {
+
+            SVNErrorMessage err = SVNErrorMessage.create(SVNErrorCode.PROPERTY_NOT_FOUND, "Directory ''{0}'' is missing on disk, so the " + "properties are not available.", localAbsPath);
+            SVNErrorManager.error(err, SVNLogType.WC);
+
+        }
+
+        /* status: normal, moved_here, copied, deleted */
+        /* After the above checks, these pristines should always be present. */
+        return db.readPristineProperties(localAbsPath);
     }
 
     private boolean isSpecial(File path) throws SVNException {
@@ -1072,7 +1183,7 @@ public class SVNWCContext {
         public boolean treeConflicted;
     }
 
-    private ConflictedInfo getIsConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
+    private ConflictedInfo getConflicted(File localAbsPath, boolean isTextNeed, boolean isPropNeed, boolean isTreeNeed) throws SVNException {
         final WCDbInfo readInfo = db.readInfo(localAbsPath, InfoField.kind, InfoField.conflicted);
         final ConflictedInfo info = new ConflictedInfo();
         if (!readInfo.conflicted) {

@@ -1123,7 +1123,8 @@ public interface ISVNWCDb {
     class WCDbInfo {
 
         public enum InfoField {
-            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, baseShadowed, conflicted, lock;
+            status, kind, revision, reposRelPath, reposRootUrl, reposUuid, changedRev, changedDate, changedAuthor, lastModTime, depth, checksum, translatedSize, target, changelist, originalReposRelpath, originalRootUrl, originalUuid, originalRevision, textMod, propsMod, baseShadowed, conflicted, lock,
+            haveBase, haveWork;
         }
 
         /* ### derived */
@@ -1162,6 +1163,8 @@ public interface ISVNWCDb {
 
         public boolean conflicted;
         public WCDbLock lock;
+
+        public boolean haveBase, haveWork;
 
     }
 

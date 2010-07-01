@@ -352,7 +352,7 @@ public class SVNStatusEditor17 {
 
         }
 
-        SVNStatus status = myWCContext.assembleStatus(localAbsPath, parentReposRootUrl, parentReposRelPath, pathKind, pathSpecial, getAll, isIgnored, repositoryLock, myRepositoryRoot, myWCContext);
+        SVNStatus status = myWCContext.assembleStatus(localAbsPath, parentReposRootUrl, parentReposRelPath, pathKind, pathSpecial, getAll, repositoryLock);
         if (status != null && handler != null) {
             handler.handleStatus(status);
         }
