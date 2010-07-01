@@ -39,7 +39,7 @@ public class SVNStatus17TestCase extends TestCase {
 
     public void testLocalStatus17Recursive() throws SVNException {
         final SVNStatusClient17 client = new SVNStatusClient17(new BasicAuthenticationManager("test", "test"), new DefaultSVNOptions(null, true));
-        long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, false, false, false, new StatusHandler(false), null);
+        long revision = client.doStatus(new File(""), SVNRevision.WORKING, SVNDepth.INFINITY, false, true, false, false, new StatusHandler(false), null);
     }
 
 }

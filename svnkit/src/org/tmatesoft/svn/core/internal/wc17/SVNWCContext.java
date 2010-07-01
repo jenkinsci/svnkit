@@ -858,7 +858,7 @@ public class SVNWCContext {
                  * means the timestamps won't be equal, so there's no need to
                  * explicitly check the 'absent' value.
                  */
-                if (readInfo.lastModTime != localAbsPath.lastModified()) {
+                if (readInfo.lastModTime != (localAbsPath.lastModified() * 1000)) {
                     compareThem = true;
                 }
             }
