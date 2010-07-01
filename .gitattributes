@@ -95,6 +95,7 @@ svnkit-test/fsfs.conf -text
 svnkit-test/src/org/tigris/subversion/javahl/svnkit_patch1.diff -text
 svnkit-test/svn-wc-ng/build-svn-trunk.sh -text
 svnkit-test/svn-wc-ng/svn-wc-ng.properties -text
+svnkit-test/svn-wc-ng/svn-wc-ng.zip -text
 svnkit-test/test.mac.properties eol=lf
 svnkit-test/test.unix.properties eol=lf
 svnkit-test/test.windows.properties eol=crlf
