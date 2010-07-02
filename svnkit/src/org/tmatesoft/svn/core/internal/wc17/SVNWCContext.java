@@ -1024,7 +1024,7 @@ public class SVNWCContext {
                 }
 
                 try {
-                    same = isSameContents(pristineStream, vStream);
+                    same = !isSameContents(pristineStream, vStream);
                 } catch (IOException e) {
                     SVNTranslator.translationError(versionedFileAbsPath, e);
                 }
@@ -1049,7 +1049,7 @@ public class SVNWCContext {
 
             vStream = SVNFileUtil.openFileForReading(versionedFileAbsPath);
             try {
-                same = isSameContents(vStream, pristineStream);
+                same = !isSameContents(vStream, pristineStream);
             } catch (IOException e) {
                 SVNTranslator.translationError(versionedFileAbsPath, e);
             }
